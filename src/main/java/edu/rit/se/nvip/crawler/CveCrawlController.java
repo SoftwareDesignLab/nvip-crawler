@@ -48,8 +48,10 @@ import edu.uci.ics.crawler4j.frontier.FrontierConfiguration;
 import edu.uci.ics.crawler4j.frontier.SleepycatFrontierConfiguration;
 import edu.uci.ics.crawler4j.robotstxt.RobotstxtConfig;
 import edu.uci.ics.crawler4j.robotstxt.RobotstxtServer;
+import org.apache.logging.log4j.core.util.NullOutputStream;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeDriverService;
 import org.openqa.selenium.chrome.ChromeOptions;
 
 public class CveCrawlController {
@@ -112,12 +114,7 @@ public class CveCrawlController {
         PageFetcher pageFetcher1 = new PageFetcher(config1, normalizer1);
         PageFetcher pageFetcher2 = new PageFetcher(config2, normalizer2);
 
-		System.setProperty("webdriver.chrome.silentOutput", "true");
-		ChromeOptions options = new ChromeOptions();
-		options.addArguments("--headless","--user-agent=Mozilla/5.0");
-		options.addArguments("--remote-allow-origins=*");
-		WebDriverManager.chromedriver().setup();
-		WebDriver driver = new ChromeDriver(options);
+		WebDriver driver = QuickCveCrawler.startDynamicWebDriver();
 
 		try {
 			// set crawl params
