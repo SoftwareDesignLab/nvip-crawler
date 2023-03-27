@@ -23,16 +23,15 @@
  */
 package edu.rit.se.nvip.crawler;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.lang.reflect.Array;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.regex.Pattern;
 
 import edu.rit.se.nvip.crawler.htmlparser.AbstractCveParser;
+import io.github.bonigarcia.wdm.WebDriverManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -46,6 +45,9 @@ import edu.uci.ics.crawler4j.crawler.Page;
 import edu.uci.ics.crawler4j.crawler.WebCrawler;
 import edu.uci.ics.crawler4j.parser.HtmlParseData;
 import edu.uci.ics.crawler4j.url.WebURL;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
 
 /**
  * 
@@ -55,26 +57,32 @@ import edu.uci.ics.crawler4j.url.WebURL;
  *
  */
 public class CveCrawler extends WebCrawler {
-
-	private final Logger nvip_logger = LogManager.getLogger(getClass().getSimpleName());
 	private final static Pattern FILTERS = Pattern.compile(".*(\\.(css|js|gif|jpg" + "|png|mp3|mp4|zip|gz))$");
-	private final List<String> myCrawlDomains;
-	private String outputDir;
-	private final HashMap<String, ArrayList<CompositeVulnerability>> foundCVEs = new HashMap<>();
-	private final CveParserFactory parserFactory = new CveParserFactory();
+	private HashMap<String, CompositeVulnerability> hashMapNvipCve = new HashMap<>();
+	CveParserFactory parserFactory = new CveParserFactory();
+	AbstractCveReconciler cveUtils;
+	CveReconcilerFactory reconcileFactory = new CveReconcilerFactory();
+	DatabaseHelper databaseHelper;
+	NumberFormat formatter = new DecimalFormat("#0.000");
+	private final Logger nvip_logger = LogManager.getLogger(getClass().getSimpleName());
+	private WebDriver driver;
 
+	public CveCrawler(MyProperties propertiesNvip) {
+		super();
+		cveUtils = reconcileFactory.createReconciler(propertiesNvip.getCveReconciliationMethod());
 
-	public CveCrawler(List<String> myCrawlDomains, String outputDir) {
-		this.myCrawlDomains = myCrawlDomains;
-		this.outputDir = outputDir;
+		// initialize db
+		databaseHelper = DatabaseHelper.getInstance();
 	}
 
-	/**
-	 * get Cve data from crawler thread
-	 */
-	@Override
-	public HashMap<String, ArrayList<CompositeVulnerability>> getMyLocalData() {
-		return foundCVEs;
+	public CveCrawler(MyProperties propertiesNvip, WebDriver driver) {
+		super();
+		cveUtils = reconcileFactory.createReconciler(propertiesNvip.getCveReconciliationMethod());
+
+		// initialize db
+		databaseHelper = DatabaseHelper.getInstance();
+
+		this.driver = driver;
 	}
 
 	/**
@@ -85,21 +93,20 @@ public class CveCrawler extends WebCrawler {
 	 */
 	@Override
 	public boolean shouldVisit(Page referringPage, WebURL url) {
-		String href = url.getURL().toLowerCase(Locale.ROOT);
-		if (FILTERS.matcher(href).matches()) {
-			logger.info("{} not allowd", href);
-			return false;
-		}
+		String href = url.getURL().toLowerCase();
+		return !FILTERS.matcher(href).matches();
+	}
 
-		logger.info("Checking if {} is in whitelist", href);
-		for (String crawlDomain : myCrawlDomains) {
-			if (href.startsWith(crawlDomain)) {
-				logger.info("ACCEPTED DOMAIN: {} FOR URL {}", crawlDomain, href);
-				return true;
-			}
+	private String getPageHtml(Page page, String url) {
+		//TODO: should be more robust
+		if (url.contains("redhat") || url.contains("tibco") || url.contains("autodesk")) {
+			logger.info("Getting content from DYNAMIC page {}", url);
+			return QuickCveCrawler.getContentFromDynamicPage(url, driver);
 		}
-
-		return false;
+		logger.info("Getting parse data for static page: {} ", url);
+		HtmlParseData htmlParseData = (HtmlParseData) page.getParseData();
+		String html = htmlParseData.getHtml();
+		return html;
 	}
 
 	/**
@@ -107,40 +114,34 @@ public class CveCrawler extends WebCrawler {
 	 */
 	@Override
 	public void visit(Page page) {
-		String pageURL = page.getWebURL().getURL();
+		logger.info("Visiting...");
+		String pageURL = page.getWebURL().getURL().trim();
+		if (page.getParseData() instanceof HtmlParseData) {
+			logger.info("Getting html...");
+			String html = getPageHtml(page, pageURL);
 
-		if (!shouldVisit(page, page.getWebURL())) {
-			logger.info("Skipping URL: {}", pageURL);
-		} else if (page.getParseData() instanceof HtmlParseData) {
-			logger.info("Parsing {}", pageURL);
-			HtmlParseData htmlParseData = (HtmlParseData) page.getParseData();
-			String html = htmlParseData.getHtml();
+			synchronized (this) {
+				// get vulnerabilities from page
+				List<CompositeVulnerability> vulnerabilityList = parseWebPage(pageURL, html);
 
-			// get vulnerabilities from page
-			List<CompositeVulnerability> vulnerabilityList = new ArrayList<>();
-			try {
-				vulnerabilityList = parseWebPage(pageURL, html);
-			} catch (Exception e) {
-				logger.warn("WARNING: Crawler error when parsing {} --> {}", page.getWebURL(), e.toString());
-				updateCrawlerReport("Crawler error when parsing " +  page.getWebURL() +" --> " + e);
-			}
+				if (vulnerabilityList.isEmpty()) {
+					nvip_logger.warn("No CVEs found at {}! Removing it from DB...", pageURL);
+					databaseHelper.deleteNvipSourceUrl(pageURL); // if we got no CVE from this URL, remove it from crawled URL list.
+				} else
+					for (CompositeVulnerability vulnerability : vulnerabilityList) // reconcile extracted CVEs
+						hashMapNvipCve = cveUtils.addCrawledCveToExistingCveHashMap(hashMapNvipCve, vulnerability, false);
 
-			if (vulnerabilityList.isEmpty()) {
-				nvip_logger.warn("WARNING: No CVEs found at {}!", pageURL);
-				updateCrawlerReport("No CVEs found at " + pageURL + "!");
-			} else {
-				for (CompositeVulnerability vulnerability : vulnerabilityList) {
-					if (foundCVEs.get(vulnerability.getCveId()) != null) {
-						foundCVEs.get(vulnerability.getCveId()).add(vulnerability);
-					} else {
-						ArrayList<CompositeVulnerability> newList = new ArrayList<>();
-						newList.add(vulnerability);
-						foundCVEs.put(vulnerability.getCveId(), newList);
-					}
+				long processedPageCount = getMyController().getFrontier().getNumberOfProcessedPages();
+				if (processedPageCount > 0 && processedPageCount % 250 == 0) {
+					long myQueueLength = getMyController().getFrontier().getNumberOfScheduledPages();
+					String percent = formatter.format(processedPageCount / (myQueueLength * 1.0) * 100);
+					nvip_logger.info("Crawler {} processed {} of total {} pages, %{} done!", getMyId(), processedPageCount, myQueueLength, percent);
 				}
-				nvip_logger.info("{} CVEs found at {}", vulnerabilityList.size(),pageURL);
+
 			}
+
 		}
+
 	}
 
 	/**
@@ -156,16 +157,12 @@ public class CveCrawler extends WebCrawler {
 		return parser.parseWebPage(sSourceURL, sCVEContentHTML);
 	}
 
-	private void updateCrawlerReport(String log) {
-		File reportFile = new File(outputDir);
-		try {
-			reportFile.createNewFile();
-			FileWriter write = new FileWriter(reportFile, true);
-			write.write(log + "\n");
-			write.close();
-		} catch (IOException e) {
-			logger.info("Failure writing report to {}: {}", outputDir, e);
-		}
+	/**
+	 * get Cve data from crawler thread
+	 */
+	@Override
+	public Object getMyLocalData() {
+		return hashMapNvipCve;
 	}
 
 }
