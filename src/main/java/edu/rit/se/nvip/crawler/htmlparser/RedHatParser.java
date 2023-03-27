@@ -23,8 +23,8 @@
  */
 package edu.rit.se.nvip.crawler.htmlparser;
 
-import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -32,9 +32,11 @@ import java.util.List;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import edu.rit.se.nvip.model.CompositeVulnerability;
-import org.openqa.selenium.WebDriver;
 
 /**
  * Web Parser for RedHat CVE Page
@@ -73,6 +75,6 @@ public class RedHatParser extends AbstractCveParser  {
             System.out.println(e);
         }
         return vulnerabilities;
-    }
+	}
 
 }
