@@ -35,6 +35,6 @@ public class EmailDailyCveListTest {
 		EmailDailyCveList emailDailyCveList = new EmailDailyCveList();
 		boolean sent = emailDailyCveList.sendCveNotificationEmailToSystemAdmin();
 		assertTrue(sent);
-	}*/
+	}
 
 }
