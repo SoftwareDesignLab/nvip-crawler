@@ -71,6 +71,8 @@ import org.python.antlr.ast.Str;
 
 import javax.lang.model.util.SimpleElementVisitor6;
 
+import javax.lang.model.util.SimpleElementVisitor6;
+
 /**
  * 
  * The DatabaseHelper class is used to insert and update vulnerabilities found
