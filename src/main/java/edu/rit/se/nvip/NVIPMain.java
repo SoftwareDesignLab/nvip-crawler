@@ -530,8 +530,8 @@ public class NVIPMain {
 	}
 
 	/**
-	 * Insert a stats record to db
-	 *
+	 * Insert a stats record to DB
+	 * 
 	 * @param databaseHelper
 	 * @param totNotInNvd
 	 * @param totNotInMitre
