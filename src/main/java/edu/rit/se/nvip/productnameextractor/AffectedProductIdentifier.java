@@ -208,6 +208,8 @@ public class AffectedProductIdentifier extends Thread implements Runnable {
 	public void insertAffectedProductsToDB(List<CompositeVulnerability> vulnList) {
 		// refresh db conn, it might be timed out if the process takes so much time!
 		DatabaseHelper databaseHelper = DatabaseHelper.getInstance();
+
+		logger.info("Inserting found products to DB!");
 		insertNewCpeItemsIntoDatabase();
 
 		// get all identified affected releases
