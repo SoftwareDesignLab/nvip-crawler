@@ -57,6 +57,7 @@ import edu.rit.se.nvip.model.CompositeVulnerability;
 import edu.rit.se.nvip.utils.MyProperties;
 import edu.rit.se.nvip.utils.PropertyLoader;
 import edu.rit.se.nvip.utils.UtilHelper;
+import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import io.github.bonigarcia.wdm.WebDriverManager;
@@ -159,6 +160,7 @@ public class QuickCveCrawler {
 		ChromeOptions options = new ChromeOptions();
 		options.addArguments("--headless","--user-agent=Mozilla/5.0");
 		options.addArguments("--remote-allow-origins=*");
+		options.addArguments("--enable-javascript");
 		WebDriverManager.chromedriver().setup();
 		ChromeDriverService chromeDriverService = new ChromeDriverService.Builder().build();
 		chromeDriverService.sendOutputTo(NullOutputStream.NULL_OUTPUT_STREAM);
@@ -171,6 +173,8 @@ public class QuickCveCrawler {
 		if (driver == null)
 			driver = startDynamicWebDriver();
 		driver.get(url);
+		if (url.contains("mend.io"))
+			return (String) ((JavascriptExecutor) driver).executeScript("return document.getElementsByTagName('html')[0].innerHTML");
 		return driver.getPageSource();
 	}
 
