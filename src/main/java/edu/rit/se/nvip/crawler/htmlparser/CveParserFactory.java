@@ -147,6 +147,8 @@ public class CveParserFactory {
 			return new LibreOfficeParser("libreoffice");
 		else if (sPageUrl.contains("samba.org"))
 			return new SambaParser("samba.org");
+		else if (sPageUrl.contains("asustor"))
+			return new AsustorParser("asustor");
 
 
 		// sources that you want to ignore
