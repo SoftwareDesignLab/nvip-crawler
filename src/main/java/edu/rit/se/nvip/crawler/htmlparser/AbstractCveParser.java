@@ -34,7 +34,15 @@ import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeDriverService;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.remote.CapabilityType;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.text.PDFTextStripper;
 
+import java.io.*;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -173,6 +181,79 @@ public abstract class AbstractCveParser {
 			}
 		}
 		return new ArrayList<>(versions);
+	}
+
+	/**
+	 * * download pdf file from given url, convert to string, remove downloaded pdf, return string
+	 * @param sPDFLink - online pdf link
+	 * @return - String formatted version of the pdf file listed online
+	 */
+	protected String pdfToString(String sPDFLink) {
+
+		String htmlText = "";
+		// first download pdf file from given url
+		InputStream input = null;
+		OutputStream output = null;
+		HttpURLConnection connection = null;
+		Path path = Paths.get("nvip_data/pdffile.txt");
+		try {
+			URL url = new URL(sPDFLink);
+			connection = (HttpURLConnection) url.openConnection();
+			connection.connect();
+
+			// expect HTTP 200 OK, so we don't mistakenly save error report
+			// instead of the file
+			if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) {
+				return "Server returned HTTP " + connection.getResponseCode()
+						+ " " + connection.getResponseMessage();
+			}
+
+			// this will be useful to display download percentage
+			// might be -1: server did not report the length
+			int fileLength = connection.getContentLength();
+
+			// download the file
+			input = connection.getInputStream();
+			output = Files.newOutputStream(path);
+
+			byte[] data = new byte[4096];
+			int count;
+			while ((count = input.read(data)) != -1) {
+				output.write(data, 0, count);
+			}
+		} catch (Exception e) {
+			return e.toString();
+		} finally {
+			try {
+				if (output != null)
+					output.close();
+				if (input != null)
+					input.close();
+			} catch (IOException ignored) {
+			}
+
+			if (connection != null)
+				connection.disconnect();
+		}
+
+		// convert pdf to String
+		try {
+			PDDocument document = PDDocument.load(path.toFile());
+			PDFTextStripper stripper = new PDFTextStripper();
+			htmlText = stripper.getText(document);
+			document.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		// remove downloaded pdf file
+		try {
+			Files.delete(path);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		return htmlText;
 	}
 
 }

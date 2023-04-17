@@ -149,6 +149,8 @@ public class CveParserFactory {
 			return new SambaParser("samba.org");
 		else if (sPageUrl.contains("asustor"))
 			return new AsustorParser("asustor");
+		else if (sPageUrl.contains("abb.com"))
+			return new ABBParser("abb.com");
 
 
 		// sources that you want to ignore
