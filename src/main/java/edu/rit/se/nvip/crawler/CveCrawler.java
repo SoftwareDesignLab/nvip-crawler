@@ -76,16 +76,6 @@ public class CveCrawler extends WebCrawler {
 		databaseHelper = DatabaseHelper.getInstance();
 	}
 
-	public CveCrawler(MyProperties propertiesNvip, WebDriver driver) {
-		super();
-		cveUtils = reconcileFactory.createReconciler(propertiesNvip.getCveReconciliationMethod());
-
-		// initialize db
-		databaseHelper = DatabaseHelper.getInstance();
-
-		this.driver = driver;
-	}
-
 	/**
 	 * This method receives two parameters. The first parameter is the page in which
 	 * we have discovered this new url and the second parameter is the new url. You
