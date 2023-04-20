@@ -43,7 +43,6 @@ import java.util.Properties;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 import java.time.format.DateTimeFormatter;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 
@@ -67,11 +66,6 @@ import edu.rit.se.nvip.model.Vulnerability;
 import edu.rit.se.nvip.utils.CveUtils;
 import edu.rit.se.nvip.utils.MyProperties;
 import edu.rit.se.nvip.utils.PropertyLoader;
-import org.python.antlr.ast.Str;
-
-import javax.lang.model.util.SimpleElementVisitor6;
-
-import javax.lang.model.util.SimpleElementVisitor6;
 
 /**
  * 
@@ -205,7 +199,7 @@ public class DatabaseHelper {
 
 		if(config == null){
 			logger.info("Attempting to create HIKARI from ENVVARs");
-			config = createHikariConfigFromEnvironment(configFile);
+			config = createHikariConfigFromEnvironment();
 		}
 
 		if(config == null){
@@ -222,10 +216,9 @@ public class DatabaseHelper {
 		}
 	}
 
-	private HikariConfig createHikariConfigFromEnvironment(String configFile) {
+	private HikariConfig createHikariConfigFromEnvironment() {
 
 		String url = System.getenv("HIKARI_URL");
-
 		HikariConfig hikariConfig;
 
 		if (url != null){

@@ -33,10 +33,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import edu.rit.se.nvip.crawler.github.PyPAGithubScraper;
-import edu.rit.se.nvip.crawler.htmlparser.AbstractCveParser;
-import edu.rit.se.nvip.crawler.htmlparser.CveParserFactory;
-import edu.rit.se.nvip.mitre.capec.Capec;
-import edu.rit.se.nvip.mitre.capec.CapecParser;
 
 import edu.rit.se.nvip.patchfinder.JGitCVEPatchDownloader;
 import edu.rit.se.nvip.patchfinder.PatchFinder;
@@ -84,16 +80,23 @@ public class NVIPMain {
 	private static final Logger logger = LogManager.getLogger(NVIPMain.class);
 	private static DatabaseHelper databaseHelper = null;
 	private static MyProperties properties = null;
-
-	static String[] commandLineArgs = new String[1];
+	private static final Map<String, Object> crawlerVars = new HashMap<>();
+	private static final Map<String, Object> dataVars = new HashMap<>();
+	private static final Map<String, Object> patchfinderVars = new HashMap<>();
+	private static final Map<String, Object> emailVars = new HashMap<>();
 
 	/**
 	 * NVIP Main Constructor
 	 * Load properties and prepare initial data
-	 * @param setDB
 	 */
-	public NVIPMain(boolean setDB) {
+	public NVIPMain() {
 		// load properties file
+
+		this.prepareCrawlerVars();
+		this.prepareDataVars();
+		this.preparePatchFinderVars();
+		this.prepareEmailVars();
+
 		properties = new MyProperties();
 		properties = new PropertyLoader().loadConfigFile(properties);
 
@@ -104,18 +107,149 @@ public class NVIPMain {
 		// check required data directories
 		checkDataDirs(properties);
 
-		if (setDB) {
-			// get sources from the file or the database
-			databaseHelper = DatabaseHelper.getInstance();
+		// get sources from the file or the database
+		databaseHelper = DatabaseHelper.getInstance();
 
-			if (!databaseHelper.testDbConnection()) {
-				String configFile = "src/main/resources/db-" + properties.getDatabaseType() + ".properties";
-				logger.error("Error in database connection! Please check if the database configured in {} is up and running!", configFile);
-				System.exit(1);
-			}
+		if (!databaseHelper.testDbConnection()) {
+			String configFile = "src/main/resources/db-" + properties.getDatabaseType() + ".properties";
+			logger.error("Error in database connection! Please check if the database configured in {} is up and running!", configFile);
+			System.exit(1);
+		}
+
+	}
+
+	private void prepareCrawlerVars() {
+		String outputDir = System.getenv("NVIP_OUTPUT_DIR");
+		String seedFileDir = System.getenv("NVIP_SEED_URLS");
+		String whitelistFileDir = System.getenv("NVIP_WHITELIST_URLS");
+		String enableGitHub = System.getenv("NVIP_ENABLE_GITHUB");
+		String crawlerPoliteness = System.getenv("NVIP_CRAWLER_POLITENESS");
+		String maxPages = System.getenv("NVIP_CRAWLER_MAX_PAGES");
+		String depth = System.getenv("NVIP_CRAWLER_DEPTH");
+		String enableReport = System.getenv("NVIP_CRAWLER_REPORT_ENABLE");
+		String crawlerNum = System.getenv("NVIP_NUM_OF_CRAWLER");
+
+		addEnvvarString(NVIPMain.crawlerVars,"outputDir", outputDir, "output/crawlers",
+				"WARNING: Crawler output path not defined in NVIP_OUTPUT_DIR, using default path: output/crawlers");
+
+		addEnvvarString(NVIPMain.crawlerVars,"seedFileDir", seedFileDir, "nvip_data/url-sources/nvip-seeds.txt",
+				"WARNING: Crawler seed file path not defined in NVIP_SEED_URLS, using default path: " + "nvip_data/url-sources/nvip-seeds.txt");
+
+		addEnvvarString(NVIPMain.crawlerVars,"whitelistFileDir", whitelistFileDir, "nvip_data/url-sources/nvip-whitelist.txt",
+				"WARNING: Crawler whitelist file path not defined in NVIP_WHITELIST_URLS, using default path: nvip_data/url-sources/nvip-whitelist.txt");
+
+		addEnvvarBool(NVIPMain.crawlerVars,"enableGitHub", enableGitHub, true,
+				"WARNING: CVE GitHub Enabler not defined in NVIP_ENABLE_GITHUB, allowing CVE GitHub pull on default");
+
+		addEnvvarInt(NVIPMain.crawlerVars,"crawlerPoliteness", crawlerPoliteness, 3000,
+				"WARNING: Crawler Politeness is not defined, using 3000 as default value",
+				"NVIP_CRAWLER_POLITENESS");
+
+		addEnvvarInt(NVIPMain.crawlerVars,"maxPages", maxPages, 3000,
+				"WARNING: Crawler Max Pages not defined in NVIP_CRAWLER_MAX_PAGES, using 3000 as default value",
+				"NVIP_CRAWLER_MAX_PAGES");
+
+		addEnvvarInt(NVIPMain.crawlerVars,"depth", depth, 1,
+				"WARNING: Crawler Depth not defined in NVIP_CRAWLER_DEPTH, using 1 as default value",
+				"NVIP_CRAWLER_DEPTH");
+
+		addEnvvarBool(NVIPMain.crawlerVars,"enableReport", enableReport, true,
+				"WARNING: Crawler Report Enabling not defined in NVIP_CRAWLER_REPORT_ENABLE, allowing report by default");
+
+		addEnvvarInt(NVIPMain.crawlerVars,"crawlerNum", crawlerNum, 10,
+				"WARNING: Number of Crawlers not defined in NVIP_NUM_OF_CRAWLER, using 10 as default value",
+				"NVIP_NUM_OF_CRAWLER");
+	}
+
+	private void prepareDataVars() {
+		String dataDir = System.getenv("NVIP_DATA_DIR");
+
+		addEnvvarString(NVIPMain.dataVars,"dataDir", dataDir, "nvip_data",
+				"WARNING: Data Directory not defined in NVIP_DATA_DIR, using ./nvip_data as default");
+	}
+
+	private void preparePatchFinderVars() {
+		String enablePatchFinder = System.getenv("PATCHFINDER_ENABLED");
+		String patchSourceLimit = System.getenv("PATCHFINDER_SOURCE_LIMIT");
+		String patchfinderMaxThreads = System.getenv("PATCHFINDER_MAX_THREADS");
+
+		addEnvvarBool(NVIPMain.patchfinderVars,"enablePatchFinder", enablePatchFinder, true,
+				"WARNING: PatchFinder Enabling not defined in PATCHFINDER_ENABLED, allowing patchfinder by default");
+
+		addEnvvarInt(NVIPMain.patchfinderVars,"patchSourceLimit", patchSourceLimit, 10,
+				"WARNING: PatchFinder Source Limit not defined in PATCHFINDER_SOURCE_LIMIT, using 10 as default value",
+				"PATCHFINDER_SOURCE_LIMIT");
+
+		addEnvvarInt(NVIPMain.patchfinderVars,"patchfinderMaxThreads", patchfinderMaxThreads, 10,
+				"WARNING: Maximum PatchFinder Threads not defined in PATCHFINDER_MAX_THREADS, using 10 as default value",
+				"PATCHFINDER_MAX_THREADS");
+	}
+
+	private void prepareEmailVars() {
+		String emailUser = System.getenv("NVIP_EMAIL_USER");
+		String emailPassword = System.getenv("NVIP_EMAIL_PASSWORD");
+		String emailFromAddress = System.getenv("NVIP_EMAIL_FROM");
+		String emailPort = System.getenv("NVIP_EMAIL_PORT");
+		String emailHost = System.getenv("NVIP_EMAIL_HOST");
+		String emailMessageUrl = System.getenv("NVIP_EMAIL_MESSAGE_URL");
+
+		addEnvvarString(NVIPMain.emailVars, "emailUser", emailUser, "",
+				"WARNING: No Email User provided in NVIP_EMAIL_USER, disabling email on default");
+
+		addEnvvarString(NVIPMain.emailVars, "emailPassword", emailPassword, "",
+				"WARNING: No Email Password provided in NVIP_EMAIL_PASSWORD, disabling email on default");
+
+		addEnvvarString(NVIPMain.emailVars, "emailFromAddress", emailFromAddress, "",
+				"WARNING: No Email From Address provided in NVIP_EMAIL_FROM, disabling email on default");
+
+		addEnvvarInt(NVIPMain.emailVars, "emailPort", emailPort, -1,
+				"WARNING: No Email Port provided in NVIP_EMAIL_PORT, disabling email on default",
+				"NVIP_EMAIL_PORT");
+		
+		addEnvvarString(NVIPMain.emailVars, "emailHost", emailHost, "",
+				"WARNING: No Email Host provided in NVIP_EMAIL_HOST, disabling email on default");
+
+		addEnvvarString(NVIPMain.emailVars, "emailMessageUrl", emailMessageUrl, "",
+				"WARNING: No Email Message URL Provided in NVIP_EMAIL_MESSAGE_URL, disabling email " +
+						"message links on default");
+	}
+
+
+	private void addEnvvarString(Map<String, Object> envvarMap, String envvarName, String envvarValue,
+								 	String defaultValue, String warningMessage) {
+		if (envvarValue != null && !envvarValue.isEmpty()) {
+			envvarMap.put(envvarName, envvarValue);
+		} else {
+			logger.warn(warningMessage);
+			envvarMap.put(envvarName, defaultValue);
 		}
 	}
 
+	private void addEnvvarBool(Map<String, Object> envvarMap, String envvarName, String envvarValue,
+							   boolean defaultValue, String warningMessage) {
+		if (envvarValue != null && !envvarValue.isEmpty()) {
+			envvarMap.put(envvarName, Boolean.parseBoolean(envvarValue));
+		} else {
+			logger.warn(warningMessage);
+			envvarMap.put(envvarName, defaultValue);
+		}
+	}
+
+	private void addEnvvarInt(Map<String, Object> envvarMap, String envvarName, String envvarValue,
+							  int defaultValue, String warningMessage, String ennvarName) {
+		if (envvarValue != null && !envvarValue.isEmpty()) {
+			try {
+				envvarMap.put(envvarName, Integer.parseInt(envvarValue));
+			} catch (NumberFormatException e) {
+				logger.warn("WARNING: Variable: {} = {} is not an integer, using 1 as default value", ennvarName
+						, defaultValue);
+				envvarMap.put(envvarName, defaultValue);
+			}
+		} else {
+			logger.warn(warningMessage);
+			envvarMap.put(envvarName, defaultValue);
+		}
+	}
 	/**
 	 * Main function
 	 * this is how the NVIP backend runs as of now
@@ -123,11 +257,10 @@ public class NVIPMain {
 	 * @throws Exception
 	 */
 	public static void main(String[] args) throws Exception {
-		commandLineArgs = args;
 		CveLogDiff cveLogger = new CveLogDiff(properties);
 
 		// start nvip
-		NVIPMain nvipMain = new NVIPMain(true);
+		NVIPMain nvipMain = new NVIPMain();
 		List<String> urls = nvipMain.startNvip();
 		if (properties.refreshCVENVDList()) {
 			PullNvdCveMain.pullFeeds(); // update nvd CVEs
