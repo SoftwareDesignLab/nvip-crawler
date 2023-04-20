@@ -23,7 +23,6 @@
  */
 package edu.rit.se.nvip.crawler.htmlparser;
 
-import edu.rit.se.nvip.db.DatabaseHelper;
 import edu.rit.se.nvip.model.AffectedRelease;
 import edu.rit.se.nvip.model.CompositeVulnerability;
 import edu.rit.se.nvip.model.Product;

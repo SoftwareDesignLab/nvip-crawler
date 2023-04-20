@@ -41,7 +41,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import edu.rit.se.nvip.db.DatabaseHelper;
+import edu.rit.se.nvip.cvereconcile.db.DatabaseHelper;
 
 
 /**
