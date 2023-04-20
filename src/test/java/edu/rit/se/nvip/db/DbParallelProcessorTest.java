@@ -23,6 +23,8 @@
  */
 package edu.rit.se.nvip.db;
 
+import edu.rit.se.nvip.cvereconcile.db.DatabaseHelper;
+import edu.rit.se.nvip.cvereconcile.db.DbParallelProcessor;
 import edu.rit.se.nvip.model.CompositeVulnerability;
 import org.junit.Test;
 import org.junit.runner.RunWith;

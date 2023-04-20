@@ -23,7 +23,7 @@
  */
 package edu.rit.se.nvip.utils.email;
 
-import edu.rit.se.nvip.db.DatabaseHelper;
+import edu.rit.se.nvip.cvereconcile.db.DatabaseHelper;
 import edu.rit.se.nvip.utils.MyProperties;
 import edu.rit.se.nvip.utils.PropertyLoader;
 

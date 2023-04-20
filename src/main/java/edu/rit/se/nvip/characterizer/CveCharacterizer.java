@@ -24,10 +24,7 @@
 package edu.rit.se.nvip.characterizer;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,28 +37,14 @@ import edu.rit.se.nvip.automatedcvss.CvssScoreCalculator;
 import edu.rit.se.nvip.automatedcvss.PartialCvssVectorGenerator;
 import edu.rit.se.nvip.characterizer.classifier.AbstractCveClassifier;
 import edu.rit.se.nvip.characterizer.classifier.CveClassifierFactory;
-import edu.rit.se.nvip.characterizer.classifier.EntropyBasedCveClassifier;
-import edu.rit.se.nvip.db.DatabaseHelper;
+import edu.rit.se.nvip.cvereconcile.db.DatabaseHelper;
 import edu.rit.se.nvip.exploitability.ImpactPredictor;
 import edu.rit.se.nvip.exploitability.SeverityPredictor;
 import edu.rit.se.nvip.model.CompositeVulnerability;
 import edu.rit.se.nvip.model.CvssScore;
 import edu.rit.se.nvip.model.VdoCharacteristic;
-import edu.rit.se.nvip.model.Vulnerability;
-import edu.rit.se.nvip.utils.CsvUtils;
 import edu.rit.se.nvip.utils.MyProperties;
 import edu.rit.se.nvip.utils.PropertyLoader;
-import edu.rit.se.nvip.utils.UtilHelper;
-import net.bytebuddy.asm.Advice.This;
-import weka.classifiers.Classifier;
-import weka.classifiers.bayes.NaiveBayes;
-import weka.classifiers.functions.Logistic;
-import weka.classifiers.functions.SMO;
-import weka.classifiers.meta.Vote;
-import weka.classifiers.trees.J48;
-import weka.classifiers.trees.RandomForest;
-import weka.core.converters.ArffSaver;
-import weka.core.converters.CSVSaver;
 
 /**
  * 

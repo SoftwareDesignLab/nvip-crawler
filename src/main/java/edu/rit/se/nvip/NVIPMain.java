@@ -47,8 +47,8 @@ import edu.rit.se.nvip.cveprocess.CveLogDiff;
 import edu.rit.se.nvip.cveprocess.CveProcessor;
 import edu.rit.se.nvip.cvereconcile.AbstractCveReconciler;
 import edu.rit.se.nvip.cvereconcile.CveReconcilerFactory;
-import edu.rit.se.nvip.db.DatabaseHelper;
-import edu.rit.se.nvip.db.DbParallelProcessor;
+import edu.rit.se.nvip.cvereconcile.db.DatabaseHelper;
+import edu.rit.se.nvip.cvereconcile.db.DbParallelProcessor;
 import edu.rit.se.nvip.exploit.ExploitIdentifier;
 import edu.rit.se.nvip.model.CompositeVulnerability;
 import edu.rit.se.nvip.model.CompositeVulnerability.CveReconcileStatus;
@@ -86,6 +86,75 @@ public class NVIPMain {
 	private static final Map<String, Object> emailVars = new HashMap<>();
 
 	/**
+	 * Main function
+	 * this is how the NVIP backend runs as of now
+	 * @param args
+	 * @throws Exception
+	 */
+	public static void main(String[] args) throws Exception {
+		CveLogDiff cveLogger = new CveLogDiff(properties);
+
+		// start nvip
+		NVIPMain nvipMain = new NVIPMain();
+		List<String> urls = nvipMain.grabSeedURLs();
+		if (properties.refreshCVENVDList()) {
+			PullNvdCveMain.pullFeeds(); // update nvd CVEs
+		}
+
+		// Crawler
+		long crawlStartTime = System.currentTimeMillis();
+		HashMap<String, CompositeVulnerability> crawledCVEs = nvipMain.crawlCVEs(urls);
+		long crawlEndTime = System.currentTimeMillis();
+		logger.info("Crawler Finished\nTime: {}", crawlEndTime - crawlStartTime);
+
+		// Process and Reconcile
+		HashMap<String, List<Object>> cveListMap = nvipMain.processCVEs(crawledCVEs);
+		List<CompositeVulnerability> crawledVulnerabilityList = nvipMain.reconcileCVEs(cveListMap);
+
+		// Characterize
+		crawledVulnerabilityList = nvipMain.characterizeCVEs(crawledVulnerabilityList, cveListMap);
+
+		// Prepare stats and Store found CVEs in DB
+		DailyRun dailyRunStats = nvipMain.insertStats(databaseHelper, crawledVulnerabilityList, cveListMap.get("nvd").size(),
+				cveListMap.get("mitre").size(), cveListMap.get("nvd-mitre").size());
+		int runId = dailyRunStats.getRunId();
+		nvipMain.storeCVEs(crawledVulnerabilityList, runId);
+
+		// log .csv files
+		logger.info("Creating output CSV files...");
+		cveLogger.logAndDiffCVEs(crawlStartTime, crawlEndTime, cveListMap, cveListMap.size());
+
+		// record additional available stats
+		dailyRunStats.setCrawlTimeMin((float) ((crawlEndTime - crawlStartTime) / (1000.0 * 60)));
+		databaseHelper.updateDailyRun(runId, dailyRunStats);
+
+		// Exploit Collection
+		if (properties.isExploitScrapingEnabled()) {
+			logger.info("Identifying exploits for {} exploits...", crawledVulnerabilityList.size());
+			ExploitIdentifier exploitIdentifier = new ExploitIdentifier(crawledVulnerabilityList, databaseHelper);
+			int count = exploitIdentifier.identifyAndSaveExploits(crawledVulnerabilityList);
+			logger.info("Extracted exploits for {} CVEs!", count);
+		}
+
+		//Patch Collection
+		nvipMain.spawnProcessToIdentifyAndStoreAffectedReleases(crawledVulnerabilityList);
+
+		if (Boolean.parseBoolean(System.getenv("PATCHFINDER_ENABLED"))) {
+			// Parse for patches and store them in the database
+			PatchFinder patchFinder = new PatchFinder();
+			Map<String, ArrayList<String>> cpes = databaseHelper.getCPEsAndCVE();
+			patchFinder.parseMassURLs(cpes);
+			JGitCVEPatchDownloader jGitCVEPatchDownloader = new JGitCVEPatchDownloader();
+			// repos will be cloned to patch-repos directory, multi-threaded 6 threads.
+			jGitCVEPatchDownloader.parseMulitThread("patch-repos", 6);
+		}
+
+
+		logger.info("Done!");
+	}
+
+
+	/**
 	 * NVIP Main Constructor
 	 * Load properties and prepare initial data
 	 */
@@ -102,12 +171,10 @@ public class NVIPMain {
 
 		UtilHelper.initLog4j(properties);
 
-		printProperties(properties); // print system params
-
 		// check required data directories
-		checkDataDirs(properties);
+		checkDataDirs();
 
-		// get sources from the file or the database
+		// get sources from the seeds file or the database
 		databaseHelper = DatabaseHelper.getInstance();
 
 		if (!databaseHelper.testDbConnection()) {
@@ -205,7 +272,7 @@ public class NVIPMain {
 		addEnvvarInt(NVIPMain.emailVars, "emailPort", emailPort, -1,
 				"WARNING: No Email Port provided in NVIP_EMAIL_PORT, disabling email on default",
 				"NVIP_EMAIL_PORT");
-		
+
 		addEnvvarString(NVIPMain.emailVars, "emailHost", emailHost, "",
 				"WARNING: No Email Host provided in NVIP_EMAIL_HOST, disabling email on default");
 
@@ -250,79 +317,12 @@ public class NVIPMain {
 			envvarMap.put(envvarName, defaultValue);
 		}
 	}
-	/**
-	 * Main function
-	 * this is how the NVIP backend runs as of now
-	 * @param args
-	 * @throws Exception
-	 */
-	public static void main(String[] args) throws Exception {
-		CveLogDiff cveLogger = new CveLogDiff(properties);
-
-		// start nvip
-		NVIPMain nvipMain = new NVIPMain();
-		List<String> urls = nvipMain.startNvip();
-		if (properties.refreshCVENVDList()) {
-			PullNvdCveMain.pullFeeds(); // update nvd CVEs
-		}
-
-		// Crawler
-		long crawlStartTime = System.currentTimeMillis();
-		HashMap<String, CompositeVulnerability> crawledCVEs = nvipMain.crawlCVEs(urls);
-		long crawlEndTime = System.currentTimeMillis();
-		logger.info("Crawler Finished\nTime: {}", crawlEndTime - crawlStartTime);
-
-		// Process and Reconcile
-		HashMap<String, List<Object>> cveListMap = nvipMain.processCVEs(crawledCVEs);
-		List<CompositeVulnerability> crawledVulnerabilityList = nvipMain.reconcileCVEs(cveListMap);
-
-		// Characterize
-		crawledVulnerabilityList = nvipMain.characterizeCVEs(crawledVulnerabilityList, cveListMap);
-
-		// Prepare stats and Store found CVEs in DB
-		DailyRun dailyRunStats = nvipMain.insertStats(databaseHelper, crawledVulnerabilityList, cveListMap.get("nvd").size(),
-				cveListMap.get("mitre").size(), cveListMap.get("nvd-mitre").size());
-		int runId = dailyRunStats.getRunId();
-		nvipMain.storeCVEs(crawledVulnerabilityList, runId);
-
-		// log .csv files
-		logger.info("Creating output CSV files...");
-		cveLogger.logAndDiffCVEs(crawlStartTime, crawlEndTime, cveListMap, cveListMap.size());
-
-		// record additional available stats
-		dailyRunStats.setCrawlTimeMin((float) ((crawlEndTime - crawlStartTime) / (1000.0 * 60)));
-		databaseHelper.updateDailyRun(runId, dailyRunStats);
-
-		// Exploit Collection
-		if (properties.isExploitScrapingEnabled()) {
-			logger.info("Identifying exploits for {} exploits...", crawledVulnerabilityList.size());
-			ExploitIdentifier exploitIdentifier = new ExploitIdentifier(crawledVulnerabilityList, databaseHelper);
-			int count = exploitIdentifier.identifyAndSaveExploits(crawledVulnerabilityList);
-			logger.info("Extracted exploits for {} CVEs!", count);
-		}
-
-		//Patch Collection
-		nvipMain.spawnProcessToIdentifyAndStoreAffectedReleases(crawledVulnerabilityList);
-
-		if (Boolean.parseBoolean(System.getenv("PATCHFINDER_ENABLED"))) {
-			// Parse for patches and store them in the database
-			PatchFinder patchFinder = new PatchFinder();
-			Map<String, ArrayList<String>> cpes = databaseHelper.getCPEsAndCVE();
-			patchFinder.parseMassURLs(cpes);
-			JGitCVEPatchDownloader jGitCVEPatchDownloader = new JGitCVEPatchDownloader();
-			// repos will be cloned to patch-repos directory, multi-threaded 6 threads.
-			jGitCVEPatchDownloader.parseMulitThread("patch-repos", 6);
-		}
-
-
-		logger.info("Done!");
-	}
 
 	/**
 	 * Prepares sourceURLs for NVIPs crawlers
 	 * @return
 	 */
-	public List<String> startNvip() {
+	public List<String> grabSeedURLs() {
 		List<String> urls = new ArrayList<>();
 		try {
 			List<NvipSource> dbsources = databaseHelper.getNvipCveSources();
@@ -332,7 +332,7 @@ public class NVIPMain {
 			for (NvipSource nvipSource : dbsources)
 				urls.add(nvipSource.getUrl());
 
-			File seeds = properties.getSeedURLS();
+			File seeds = new File((String) crawlerVars.get("seedFileDir"));
 			BufferedReader seedReader = new BufferedReader(new FileReader(seeds));
 			List<String> seedURLs = new ArrayList<>();
 			logger.info("Loading the following urls: ");
@@ -374,31 +374,48 @@ public class NVIPMain {
 
 	/**
 	 * check required data dirs before run
-	 * @param propertiesNvip
 	 */
-	private void checkDataDirs(MyProperties propertiesNvip) {
-		String dataDir = propertiesNvip.getDataDir();
+	private void checkDataDirs() {
+		String dataDir = (String) dataVars.get("dataDir");
+		String crawlerSeeds = (String) crawlerVars.get("seedFileDir");
+		String whiteListDir = (String) crawlerVars.get("whitelistDir");
+		String crawlerOutputDir = (String) crawlerVars.get("outputDir");
 
 		if (!new File(dataDir).exists()) {
-			logger.error("The data dir is not configured properly, check the 'dataDir' key in the nvip.properties file, currently configured data dir is {}", dataDir);
+			logger.error("The data dir provided does not exist, check the 'NVIP_DATA_DIR' key in the env.list file, currently configured data dir is {}", dataDir);
 			System.exit(1);
 		}
 
 		String characterizationDir = dataDir + "/characterization";
 		if (!new File(characterizationDir).exists()) {
-			logger.error("No training data for CVE characterization! Make sure you have the directory {} that includes required training data for CVE characterization!", characterizationDir);
+			logger.error("The data dir provided does not include training data for CVE characterization! Make sure you have the directory {} that includes required training data for CVE characterization!", characterizationDir);
 			System.exit(1);
 		}
 
 		String cvssDir = dataDir + "/cvss";
 		if (!new File(cvssDir).exists()) {
-			logger.error("Make sure you have the directory {} that is required for CVSS scoring!", cvssDir);
+			logger.error("The data dir provided does not include CVSS Vectors for CVSS Scoring! Make sure you have the directory {} and the required content!", cvssDir);
 			System.exit(1);
 		}
 
 		String productExtrcationDir = dataDir + "/productnameextraction";
 		if (!new File(productExtrcationDir).exists()) {
-			logger.error("No training data for CPE extraction! Make sure you have the directory {}!", productExtrcationDir);
+			logger.error("The data dir provided does not include training data for CPE extraction! Make sure you have the directory {}!", productExtrcationDir);
+			System.exit(1);
+		}
+
+		if (!new File(crawlerSeeds).exists()) {
+			logger.error("The crawler seeds path provided: {} does not exits!", crawlerSeeds);
+			System.exit(1);
+		}
+
+		if (!new File(whiteListDir).exists()) {
+			logger.error("The whitelist domain file path provided: {} does not exits!", whiteListDir);
+			System.exit(1);
+		}
+
+		if (!new File(crawlerOutputDir).exists()) {
+			logger.error("The crawler output dir provided: {} does not exits!", crawlerOutputDir);
 			System.exit(1);
 		}
 	}
@@ -423,7 +440,7 @@ public class NVIPMain {
 
 		HashMap<String, CompositeVulnerability> cveHashMapGithub = new HashMap<>();
 
-		if (Boolean.parseBoolean(System.getenv("NVIP_ENABLE_GITHUB"))) {
+		if ((Boolean) crawlerVars.get("enableGitHub")) {
 			GithubScraper githubScraper = new GithubScraper();
 			cveHashMapGithub = githubScraper.scrapeGithub();
 		}
@@ -452,12 +469,12 @@ public class NVIPMain {
 		 * Crawl CVE from CNAs
 		 */
 		logger.info("Starting the NVIP crawl process now to look for CVEs at {} locations with {} threads...",
-				urls.size(), properties.getNumberOfCrawlerThreads());
+				urls.size(), crawlerVars.get("crawlerNum"));
 		CveCrawlController crawlerController = new CveCrawlController();
 
 		ArrayList<String> whiteList = new ArrayList<>();
 
-		File whiteListFile = properties.getWhiteListURLS();
+		File whiteListFile = new File((String) crawlerVars.get("whitelistFileDir"));
 		Scanner reader = new Scanner(whiteListFile);
 		while (reader.hasNextLine()) {
 			String domain = reader.nextLine();
@@ -467,7 +484,8 @@ public class NVIPMain {
 			}
 		}
 
-		HashMap<String, ArrayList<CompositeVulnerability>> cveHashMapScrapedFromCNAs = crawlerController.crawl(urls, whiteList);
+		HashMap<String, ArrayList<CompositeVulnerability>> cveHashMapScrapedFromCNAs =
+				crawlerController.crawl(urls, whiteList, crawlerVars);
 
 		return mergeCVEsDerivedFromCNAsAndGit(cveHashMapGithub, list, cveHashMapScrapedFromCNAs);
 	}
