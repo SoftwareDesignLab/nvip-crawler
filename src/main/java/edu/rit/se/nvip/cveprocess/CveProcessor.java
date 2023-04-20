@@ -2,17 +2,17 @@
  * Copyright 2023 Rochester Institute of Technology (RIT). Developed with
  * government support under contract 70RSAT19CB0000020 awarded by the United
  * States Department of Homeland Security.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -37,9 +37,9 @@ import edu.rit.se.nvip.model.CompositeVulnerability;
 import edu.rit.se.nvip.utils.CsvUtils;
 
 /**
- * 
+ *
  * Process CVEs to identify the ones not in NVD and MITRE
- * 
+ *
  * @author axoeec
  *
  */
@@ -68,7 +68,11 @@ public class CveProcessor {
 			/**
 			 * NVD
 			 */
-			List<String> arrNVD = FileUtils.readLines(new File(nvdCvePath));
+			List<String> arrNVD = FileUtils.readLines(new File(nvdCvePath), "UTF-8");
+			if (arrNVD.isEmpty())
+				throw new IOException("Failed to read NVD CSV file... Calculations of 'not in NVD' are going to be off");
+			else
+				logger.info("Successfully read in NVD CSV file for calculations of 'not in NVD'");
 			for (String cve : arrNVD) {
 				String id = cve.split(csvLogger.getSeparatorCharAsRegex())[0]; // get the first item, i.e. the CVE ID
 				cvesInNvd.add(id);
@@ -77,7 +81,11 @@ public class CveProcessor {
 			/**
 			 * MITRE
 			 */
-			arrNVD = FileUtils.readLines(new File(mitreCvePath));
+			arrNVD = FileUtils.readLines(new File(mitreCvePath), "UTF-8");
+			if (arrNVD.isEmpty())
+				throw new IOException("Failed to read MITRE CSV file... Calculations of 'not in MITRE' are going to be off");
+			else
+				logger.info("Successfully read in MITRE CSV file for calculations of 'not in MITRE'");
 			for (String cve : arrNVD) {
 				String id = cve.split(csvLogger.getSeparatorCharAsRegex())[0]; // get the first item, i.e. the CVE ID
 				cvesInMitre.add(id);
@@ -132,6 +140,7 @@ public class CveProcessor {
 				} else {
 					logger.info("CVE: {}, is NOT in NVD", vuln.getCveId());
 					vuln.setNvdSearchResult("NA");
+					vuln.setNvdStatus(0);
 					newCVEDataNotInNvd.add(vuln);
 				}
 
@@ -141,6 +150,7 @@ public class CveProcessor {
 				} else {
 					logger.info("CVE: {}, is NOT in NVD", vuln.getCveId());
 					vuln.setNvdSearchResult("NA");
+					vuln.setMitreStatus(0);
 					newCVEDataNotInMitre.add(vuln);
 				}
 
