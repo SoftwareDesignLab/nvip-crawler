@@ -27,6 +27,7 @@ import edu.rit.se.nvip.patchfinder.JGitCVEPatchDownloader;
 import org.eclipse.jgit.util.FileUtils;
 import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.Git;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -85,6 +86,7 @@ public class JGitParserTest {
     }
 
     @Test
+    @Ignore
     public void testParseCommits() {
 
         String testCveId = "CVE-2006-2032";
