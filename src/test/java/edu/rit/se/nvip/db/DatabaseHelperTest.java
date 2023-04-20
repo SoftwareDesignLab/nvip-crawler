@@ -25,6 +25,7 @@ package edu.rit.se.nvip.db;
 
 import com.zaxxer.hikari.HikariDataSource;
 import com.zaxxer.hikari.HikariPoolMXBean;
+import edu.rit.se.nvip.cvereconcile.db.DatabaseHelper;
 import edu.rit.se.nvip.model.*;
 import edu.rit.se.nvip.model.CompositeVulnerability.CveReconcileStatus;
 import org.apache.logging.log4j.LogManager;
@@ -38,14 +39,11 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import javax.swing.plaf.basic.BasicInternalFrameTitlePane;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.text.DateFormat;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.Date;

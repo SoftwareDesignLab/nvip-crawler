@@ -95,37 +95,22 @@ public class CveCrawlController {
      * @return
      * @throws Exception
      */
-    public HashMap<String, ArrayList<CompositeVulnerability>> crawl(List<String> urls, List<String> whiteList) throws Exception {
+    public HashMap<String, ArrayList<CompositeVulnerability>> crawl(List<String> urls, List<String> whiteList,
+                                                                    Map<String, Object> crawlerVars) throws Exception {
 
         CrawlConfig config1 = new CrawlConfig();
-        CrawlConfig config2 = new CrawlConfig();
-
-        config1.setCrawlStorageFolder(System.getenv("NVIP_OUTPUT_DIR") + "/crawlers/crawler1");
-        config2.setCrawlStorageFolder(System.getenv("NVIP_OUTPUT_DIR") + "/crawlers/crawler2");
-
-        config1.setPolitenessDelay(Integer.parseInt(System.getenv("NVIP_CRAWLER_POLITENESS")));
-        config2.setPolitenessDelay(Integer.parseInt(System.getenv("NVIP_CRAWLER_POLITENESS")));
-
-        config1.setMaxPagesToFetch(Integer.parseInt(System.getenv("NVIP_CRAWLER_MAX_PAGES")));
-        config2.setMaxPagesToFetch(Integer.parseInt(System.getenv("NVIP_CRAWLER_MAX_PAGES")));
-
-        config1.setMaxDepthOfCrawling(Integer.parseInt(System.getenv("NVIP_CRAWLER_DEPTH")));
-        config2.setMaxDepthOfCrawling(Integer.parseInt(System.getenv("NVIP_CRAWLER_DEPTH")));
+        config1.setCrawlStorageFolder((String) crawlerVars.get("outputDir"));
+        config1.setPolitenessDelay((Integer) crawlerVars.get("crawlerPoliteness"));
+        config1.setMaxPagesToFetch((Integer) crawlerVars.get("maxPages"));
+        config1.setMaxDepthOfCrawling((Integer) crawlerVars.get("depth"));
 
         BasicURLNormalizer normalizer1 = BasicURLNormalizer.newBuilder().idnNormalization(BasicURLNormalizer.IdnNormalization.NONE).build();
-        BasicURLNormalizer normalizer2 = BasicURLNormalizer.newBuilder().idnNormalization(BasicURLNormalizer.IdnNormalization.NONE).build();
         PageFetcher pageFetcher1 = new PageFetcher(config1, normalizer1);
-        PageFetcher pageFetcher2 = new PageFetcher(config2, normalizer2);
-
         RobotstxtConfig robotstxtConfig = new RobotstxtConfig();
 
         FrontierConfiguration frontierConfiguration = new SleepycatFrontierConfiguration(config1);
-        FrontierConfiguration frontierConfiguration2 = new SleepycatFrontierConfiguration(config2);
-
         RobotstxtServer robotstxtServer = new RobotstxtServer(robotstxtConfig, pageFetcher1, new SleepycatWebURLFactory());
-
         CrawlController controller1 = new CrawlController(config1, normalizer1, pageFetcher1, robotstxtServer, frontierConfiguration);
-        CrawlController controller2 = new CrawlController(config2, normalizer2, pageFetcher2, robotstxtServer, frontierConfiguration2);
 
         for (String url: urls) {
             try {
@@ -137,10 +122,10 @@ public class CveCrawlController {
         }
 
         String outputFile = "";
-        if (Boolean.parseBoolean(System.getenv("NVIP_CRAWLER_REPORT_ENABLE"))) {
+        if ((Boolean) crawlerVars.get("enableReport")) {
             DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss");
             LocalDateTime now = LocalDateTime.now();
-            outputFile = System.getenv("NVIP_OUTPUT_DIR") + "/crawlers/reports/report" + dtf.format(now) + ".txt";
+            outputFile = crawlerVars.get("outputDir") + "/" + dtf.format(now) + ".txt";
         }
 
         logger.info("CURRENT CRAWL DEPTH ----> " + config1.getMaxDepthOfCrawling());
@@ -148,19 +133,13 @@ public class CveCrawlController {
 
         String finalOutputFile = outputFile;
         CrawlController.WebCrawlerFactory<CveCrawler> factory1 = () -> new CveCrawler(whiteList, finalOutputFile);
-        CrawlController.WebCrawlerFactory<CveCrawler> factory2 = () -> new CveCrawler(whiteList, finalOutputFile);
 
-        controller1.startNonBlocking(factory1, Integer.parseInt(System.getenv("NVIP_NUM_OF_CRAWLER")));
-        controller2.startNonBlocking(factory2, Integer.parseInt(System.getenv("NVIP_NUM_OF_CRAWLER")));
+        controller1.startNonBlocking(factory1, (Integer) crawlerVars.get("crawlerNum"));
 
         controller1.waitUntilFinish();
         logger.info("Crawler 1 is finished.");
 
-        controller2.waitUntilFinish();
-        logger.info("Crawler 2 is finished.");
-
         cveHashMapAll.putAll(getVulnerabilitiesFromCrawlerThreads(controller1));
-        cveHashMapAll.putAll(getVulnerabilitiesFromCrawlerThreads(controller2));
 
         return cveHashMapAll;
     }
