@@ -28,26 +28,13 @@ jobs:
 
       - name: Test and Build Backend with Maven
         run: |
-          mvn install:install-file \
-            -Dfile=sleepycat-5.0.84.jar \
-            -DgroupId=com.sleepycat \
-            -DartifactId=je \
-            -Dversion=5.0.84 \
-            -Dpackaging=jar \
-            -DgeneratePom=true
           mvn dependency:go-offline
-          mvn package -DskipTests
+          mvn package
 
   deploy-crawler:
     runs-on: ubuntu-latest
     needs: build-test-crawler
-    if: ${{ success() && github.ref == 'refs/heads/main' }}
-    steps:
-      - uses: actions/checkout@v3
-
-  package:
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/dev'
+    if: ${{ success() && github.ref == 'refs/heads/dev' }}
     steps:
       - uses: actions/checkout@v3
       - name: Login to GitHub Container Registry
@@ -59,5 +46,5 @@ jobs:
 
       - name: Build and Push Docker Image for Backend
         run: |
-          docker build . -t nvip-crawler:latest -t ghcr.io/softwaredesignlab/nvip-crawler:latest
-          docker push ghcr.io/softwaredesignlab/nvip-crawler:latest
+          docker build . -t nvip-crawler:dev -t ghcr.io/softwaredesignlab/nvip-crawler:dev
+          docker push ghcr.io/softwaredesignlab/nvip-crawler:dev
