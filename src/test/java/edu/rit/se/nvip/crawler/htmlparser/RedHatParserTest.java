@@ -23,6 +23,7 @@
  */
 package edu.rit.se.nvip.crawler.htmlparser;
 
+import edu.rit.se.nvip.crawler.QuickCveCrawler;
 import edu.rit.se.nvip.model.CompositeVulnerability;
 import org.junit.Test;
 
@@ -33,14 +34,13 @@ import static org.junit.Assert.assertEquals;
 
 /**
  * Test RedHat Parser
- * @author aep7128
  */
 public class RedHatParserTest extends AbstractParserTest {
 
 	@Test
 	public void testRedHat() {
 		RedHatParser parser = new RedHatParser("redhat");
-		String html = safeReadHtml("src/test/resources/test-redhat-cve.html");
+		String html = parser.grabDynamicHTML("https://access.redhat.com/security/cve/cve-2023-25725");
 		List<CompositeVulnerability> list = parser.parseWebPage("https://access.redhat.com/security/cve/cve-2023-25725", html);
 
 		assertEquals(1, list.size());
@@ -48,7 +48,7 @@ public class RedHatParserTest extends AbstractParserTest {
 		CompositeVulnerability sample = list.get(0);
 		assertEquals("CVE-2023-25725", sample.getCveId());
 		assertTrue(sample.getDescription().contains("A flaw was found in HAProxy's headers processing that causes HAProxy to drop important headers fields such as Connection, Content-length, Transfer-Encoding,"));
-		assertEquals("2023-02-14T13:03:25", sample.getPublishDate());
-		assertEquals("2023-04-06T10:22:55", sample.getLastModifiedDate());
+		assertEquals("2023-02-14T16:20", sample.getPublishDate());
+		assertEquals("2023-04-20T01:30:39", sample.getLastModifiedDate());
 	}
 }
