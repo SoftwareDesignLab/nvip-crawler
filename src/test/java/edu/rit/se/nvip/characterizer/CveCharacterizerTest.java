@@ -23,7 +23,7 @@
  */
 package edu.rit.se.nvip.characterizer;
 
-import edu.rit.se.nvip.db.DatabaseHelper;
+import edu.rit.se.nvip.cvereconcile.db.DatabaseHelper;
 import edu.rit.se.nvip.model.CompositeVulnerability;
 import edu.rit.se.nvip.utils.CsvUtils;
 import edu.rit.se.nvip.utils.MyProperties;

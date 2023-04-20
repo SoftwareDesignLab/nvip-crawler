@@ -117,7 +117,7 @@ public class NVIPMainTest {
 				"2022-05-02", "2022-05-02",
 				testDescription, "domain"));
 
-		NVIPMain main = new NVIPMain(false);
+		NVIPMain main = new NVIPMain();
 		/*HashMap<String, List<Object>> maps = main.processCVEs(v);
 
 		System.out.println(maps);

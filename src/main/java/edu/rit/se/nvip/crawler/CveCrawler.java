@@ -26,30 +26,20 @@ package edu.rit.se.nvip.crawler;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.lang.reflect.Array;
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
 import java.util.*;
 import java.util.regex.Pattern;
 
 import edu.rit.se.nvip.crawler.htmlparser.AbstractCveParser;
-import io.github.bonigarcia.wdm.WebDriverManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import edu.rit.se.nvip.crawler.htmlparser.CveParserFactory;
-import edu.rit.se.nvip.cvereconcile.AbstractCveReconciler;
-import edu.rit.se.nvip.cvereconcile.CveReconcilerFactory;
-import edu.rit.se.nvip.db.DatabaseHelper;
 import edu.rit.se.nvip.model.CompositeVulnerability;
-import edu.rit.se.nvip.utils.MyProperties;
 import edu.uci.ics.crawler4j.crawler.Page;
 import edu.uci.ics.crawler4j.crawler.WebCrawler;
 import edu.uci.ics.crawler4j.parser.HtmlParseData;
 import edu.uci.ics.crawler4j.url.WebURL;
 import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.chrome.ChromeOptions;
 
 /**
  *
