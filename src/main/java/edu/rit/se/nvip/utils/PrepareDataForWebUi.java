@@ -49,6 +49,9 @@ public class PrepareDataForWebUi {
 				CallableStatement stmt = conn.prepareCall("CALL prepareDailyVulnerabilities(?, ?, ?)");
 		) {
 
+			databaseHelper.prepareDailyVulnerabilities(Timestamp.valueOf(today.minusHours(168)),
+					Timestamp.valueOf(today.plusHours(24)), java.sql.Types.INTEGER);
+
 			stmt.setTimestamp(1, Timestamp.valueOf(today.minusHours(168))); // 7 days
 			stmt.setTimestamp(2, Timestamp.valueOf(today.plusHours(24)));
 
