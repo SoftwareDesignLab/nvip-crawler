@@ -88,7 +88,7 @@ public class DbParallelProcessor {
 			long end = System.currentTimeMillis();
 			logger.info(getClass().getSimpleName() + " time for " + vulnList.size() + " items: " + ((end - start)) + " mseconds!");
 			if (!done) {
-				logger.error("A serious error has accurred! The parallel job was terminated due to timeout before DONE! Check log files!");
+				logger.error("A serious error has occurred! The parallel job was terminated due to timeout before DONE! Check log files!");
 			}
 
 			DatabaseHelper.clearExistingVulnMap(); // clear existing CVEs map!

@@ -41,26 +41,28 @@ public class PrepareDataForWebUi {
 	 * Generate a summary table that will be used by the Web UI.
 	 */
 	public void prepareDataforWebUi() {
-		LocalDateTime today = LocalDateTime.now();
-		DatabaseHelper databaseHelper = DatabaseHelper.getInstance();
+//		LocalDateTime today = LocalDateTime.now();
+//		DatabaseHelper databaseHelper = DatabaseHelper.getInstance();
 
-		try (
-				Connection conn = databaseHelper.getConnection();
-				CallableStatement stmt = conn.prepareCall("CALL prepareDailyVulnerabilities(?, ?, ?)");
-		) {
+//		try (
+//				Connection conn = databaseHelper.getConnection();
+//				CallableStatement stmt = conn.prepareCall("CALL prepareDailyVulnerabilities(?, ?, ?)");
+//		) {
+//
+//			stmt.setTimestamp(1, Timestamp.valueOf(today.minusHours(168))); // 7 days
+//			stmt.setTimestamp(2, Timestamp.valueOf(today.plusHours(24)));
+//
+//			stmt.registerOutParameter(3, java.sql.Types.INTEGER);
+//
+//			stmt.execute();
+//			int count = stmt.getInt(3);
+//
+//			logger.info("Prepared {} CVEs for Web UI", count);
 
-			databaseHelper.prepareDailyVulnerabilities(Timestamp.valueOf(today.minusHours(168)),
-					Timestamp.valueOf(today.plusHours(24)), java.sql.Types.INTEGER);
-
-			stmt.setTimestamp(1, Timestamp.valueOf(today.minusHours(168))); // 7 days
-			stmt.setTimestamp(2, Timestamp.valueOf(today.plusHours(24)));
-
-			stmt.registerOutParameter(3, java.sql.Types.INTEGER);
-
-			stmt.execute();
-			int count = stmt.getInt(3);
-
+			DatabaseHelper databaseHelper = DatabaseHelper.getInstance();
+			int count = databaseHelper.prepareCVEsForUI();
 			logger.info("Prepared {} CVEs for Web UI", count);
+			databaseHelper.trimAggregateTable();
 
 			// send CVE notifactions
 			try {
@@ -70,9 +72,9 @@ public class PrepareDataForWebUi {
 				logger.error("Error sending CVE notification to admins! {}", e1);
 			}
 
-		} catch (Exception e) {
-			logger.error(e.toString());
-		}
+//		} catch (Exception e) {
+//			logger.error(e.toString());
+//		}
 	}
 
 }
