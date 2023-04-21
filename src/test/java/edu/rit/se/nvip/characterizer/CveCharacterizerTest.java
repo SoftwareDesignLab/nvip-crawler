@@ -42,7 +42,6 @@ import static org.junit.Assert.assertTrue;
 public class CveCharacterizerTest {
 
 	@Test
-	@Ignore
 	public void testCveCharacterization() {
 		MyProperties propertiesNvip = new MyProperties();
 		propertiesNvip = new PropertyLoader().loadConfigFile(propertiesNvip);
