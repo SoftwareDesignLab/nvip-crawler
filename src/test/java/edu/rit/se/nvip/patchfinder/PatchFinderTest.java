@@ -23,7 +23,7 @@
  */
 package edu.rit.se.nvip.patchfinder;
 
-import edu.rit.se.nvip.cvereconcile.db.DatabaseHelper;
+import edu.rit.se.nvip.db.DatabaseHelper;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
