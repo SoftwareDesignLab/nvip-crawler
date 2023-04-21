@@ -210,7 +210,6 @@ public class CveLogDiff {
 	 * @param newCVENotExistAnyWhereToday
 	 * @param csvLogger
 	 * @param subDirName
-	 * @param dailyRunStats               TODO
 	 */
 	private String logCveDifferencesComparedToPrevRun(List<Object> newCVENotExistAnyWhereToday, CsvUtils csvLogger,
 			String subDirName) {
