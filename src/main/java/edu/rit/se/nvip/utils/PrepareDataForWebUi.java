@@ -31,7 +31,7 @@ import java.time.LocalDateTime;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import edu.rit.se.nvip.cvereconcile.db.DatabaseHelper;
+import edu.rit.se.nvip.db.DatabaseHelper;
 import edu.rit.se.nvip.utils.email.EmailDailyCveList;
 
 public class PrepareDataForWebUi {

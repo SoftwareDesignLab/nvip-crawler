@@ -37,7 +37,7 @@ import edu.rit.se.nvip.automatedcvss.CvssScoreCalculator;
 import edu.rit.se.nvip.automatedcvss.PartialCvssVectorGenerator;
 import edu.rit.se.nvip.characterizer.classifier.AbstractCveClassifier;
 import edu.rit.se.nvip.characterizer.classifier.CveClassifierFactory;
-import edu.rit.se.nvip.cvereconcile.db.DatabaseHelper;
+import edu.rit.se.nvip.db.DatabaseHelper;
 import edu.rit.se.nvip.exploitability.ImpactPredictor;
 import edu.rit.se.nvip.exploitability.SeverityPredictor;
 import edu.rit.se.nvip.model.CompositeVulnerability;
