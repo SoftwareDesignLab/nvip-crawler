@@ -25,7 +25,6 @@ package edu.rit.se.nvip.db;
 
 import com.zaxxer.hikari.HikariDataSource;
 import com.zaxxer.hikari.HikariPoolMXBean;
-import edu.rit.se.nvip.cvereconcile.db.DatabaseHelper;
 import edu.rit.se.nvip.model.*;
 import edu.rit.se.nvip.model.CompositeVulnerability.CveReconcileStatus;
 import org.apache.logging.log4j.LogManager;
