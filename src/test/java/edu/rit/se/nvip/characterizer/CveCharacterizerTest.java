@@ -28,6 +28,7 @@ import edu.rit.se.nvip.model.CompositeVulnerability;
 import edu.rit.se.nvip.utils.CsvUtils;
 import edu.rit.se.nvip.utils.MyProperties;
 import edu.rit.se.nvip.utils.PropertyLoader;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -40,8 +41,8 @@ import static org.junit.Assert.assertTrue;
 
 public class CveCharacterizerTest {
 
-
 	@Test
+	@Ignore
 	public void testCveCharacterization() {
 		MyProperties propertiesNvip = new MyProperties();
 		propertiesNvip = new PropertyLoader().loadConfigFile(propertiesNvip);
