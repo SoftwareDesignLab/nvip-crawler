@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package edu.rit.se.nvip.cvereconcile.db;
+package edu.rit.se.nvip.db;
 
 import java.util.List;
 import java.util.concurrent.ExecutorService;
