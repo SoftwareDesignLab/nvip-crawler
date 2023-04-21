@@ -35,10 +35,8 @@ jobs:
           mvn package
 
       - name: Publish Test Report
-        uses: mikepenz/action-junit-report@v3
         if: success() || failure()
-        with:
-          report_paths: '**/build/test-results/test/TEST-*.xml'
+        uses: scacap/action-surefire-report@v1
 
   deploy-crawler:
     runs-on: ubuntu-latest
