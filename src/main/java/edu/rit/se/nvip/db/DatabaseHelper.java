@@ -26,11 +26,7 @@ package edu.rit.se.nvip.db;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.text.*;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -2084,5 +2080,276 @@ public class DatabaseHelper {
 		}
 
 		return result;
+	}
+
+	private final String selectNewCVEs = "SELECT v.vuln_id," +
+			"   v.cve_id," +
+			"   v.description," +
+			"   v.platform," +
+			"   v.published_date," +
+			"   v.last_modified_date," +
+			"   v.fixed_date," +
+			"   v.exists_at_nvd," +
+			"   v.exists_at_mitre," +
+			"   vc.vdo_labels," +
+			"   vc.vdo_label_confidences," +
+			"   vc.vdo_noun_groups," +
+			"   vsu.urls," +
+			"   cs.base_severities," +
+			"   cs.severity_confidences," +
+			"   cs.impact_scores," +
+			"   cs.impact_confidences," +
+			"   vap.product_id," +
+			"   vap.cpe," +
+			"   vap.domain," +
+			"   vap.version," +
+			"   expl.publish_date," +
+			"   expl.publisher_url," +
+			"   vu.run_date_time" +
+			"FROM (SELECT vu.vuln_id," +
+			" MAX(drh.run_id)        AS \"run_id\"," +
+			" MAX(drh.run_date_time) AS \"run_date_time\"" +
+			"  FROM dailyrunhistory drh" +
+			"   INNER JOIN vulnerabilityupdate vu ON vu.run_id = drh.run_id" +
+			"  WHERE drh.run_date_time BETWEEN ? AND ?" +
+			"  GROUP BY vu.vuln_id) vu" +
+			" INNER JOIN vulnerability v" +
+			"ON v.vuln_id = vu.vuln_id" +
+			" LEFT JOIN (SELECT vc.cve_id," +
+			"   group_concat(vl.vdo_label_name SEPARATOR ';') AS vdo_labels," +
+			"   group_concat(vc.vdo_confidence SEPARATOR ';') AS vdo_label_confidences," +
+			"   group_concat(ifnull(vn.vdo_noun_group_name, 'None')" +
+			"SEPARATOR" +
+			"';')                                      AS vdo_noun_groups" +
+			"FROM vdocharacteristic vc" +
+			" INNER JOIN vdonoungroup vn ON vn.vdo_noun_group_id = vc.vdo_noun_group_id" +
+			" INNER JOIN vdolabel vl ON vl.vdo_label_id = vc.vdo_label_id" +
+			"GROUP BY vc.cve_id) vc" +
+			"   ON vc.cve_id = v.cve_id" +
+			" LEFT JOIN (SELECT cve_id," +
+			"   group_concat(DISTINCT url SEPARATOR ';') AS urls" +
+			"FROM vulnsourceurl" +
+			"GROUP BY cve_id) vsu" +
+			"   ON vsu.cve_id = v.cve_id" +
+			" LEFT JOIN (SELECT csc.cve_id," +
+			"   group_concat(cse.cvss_severity_class SEPARATOR ';') AS base_severities," +
+			"   group_concat(csc.severity_confidence SEPARATOR ';') AS severity_confidences," +
+			"   group_concat(csc.impact_score SEPARATOR ';')        AS impact_scores," +
+			"   group_concat(csc.impact_confidence SEPARATOR ';')   AS impact_confidences" +
+			"FROM cvssscore csc" +
+			" INNER JOIN cvssseverity cse ON cse.cvss_severity_id = csc.cvss_severity_id" +
+			"GROUP BY csc.cve_id) cs" +
+			"   ON cs.cve_id = v.cve_id" +
+			" LEFT JOIN (SELECT cve_id," +
+			"   group_concat(ar.product_id SEPARATOR ';') AS product_id," +
+			"   group_concat(cpe SEPARATOR ';')           AS cpe," +
+			"   group_concat(domain SEPARATOR ';')        AS domain," +
+			"   group_concat(version SEPARATOR ';')       AS version" +
+			"FROM affectedrelease ar" +
+			" INNER JOIN product p ON p.product_id = ar.product_id" +
+			"GROUP BY cve_id) vap" +
+			"   ON vap.cve_id = v.cve_id" +
+			" LEFT JOIN exploit as expl on expl.vuln_id = v.vuln_id" +
+			"WHERE v.status_id <> 2" +
+			"  and v.description is not null" +
+			"  and v.description not like '%** RESERVED ** This candidate%'" +
+			"  and v.description not like '%** REJECT ** DO NOT USE%'" +
+			"  and length(v.description) >= 50" +
+			"  and vdo_labels is not null" +
+			"ORDER BY v.vuln_id desc;";
+
+
+
+	/**
+	 * Prepare CVEs for UI by grabbing all CVEs from the past week and
+	 * Inserting them into the vulnerabilityaggregate cache table
+	 * @return
+	 */
+	public int prepareCVEsForUI() {
+
+		int insertCount = 0;
+		ResultSet rs;
+		try (Connection connection = getConnection();
+			 PreparedStatement pstmt = connection.prepareStatement(selectNewCVEs);) {
+
+			// Grab CVEs from past run
+			LocalDateTime today = LocalDateTime.now();
+			Timestamp start = Timestamp.valueOf(today.minusHours(5));
+			Timestamp end = Timestamp.valueOf(today.plusHours(5));
+
+			logger.info("Grabbing new CVEs from past run (between {} and {})", start, end);
+
+			pstmt.setTimestamp(1, start); // From past 5 hours (latest run)
+			pstmt.setTimestamp(2, end); // 5 hours ahead in case of time zone differences in CVEs
+
+			rs =  pstmt.executeQuery();
+
+			// Insert each CVE individually
+			while(rs.next()) {
+				boolean inserted = insertCVEIntoAggregate(
+						rs.getInt(1),
+						rs.getString(2),
+						rs.getString(3),
+						rs.getString(4),
+						rs.getDate(5),
+						rs.getDate(6),
+						rs.getDate(7),
+						rs.getInt(8),
+						rs.getInt(9),
+						rs.getString(10),
+						rs.getString(11),
+						rs.getString(12),
+						rs.getString(13),
+						rs.getString(14),
+						rs.getString(15),
+						rs.getString(16),
+						rs.getString(17),
+						rs.getString(18),
+						rs.getString(19),
+						rs.getString(20),
+						rs.getString(21),
+						rs.getDate(22),
+						rs.getString(23),
+						rs.getDate(24)
+				);
+
+				if (inserted) {
+					insertCount++;
+				}
+			}
+
+		} catch (Exception e) {
+			logger.error("ERROR: Failed to update cache table for CVEs for this run\n{}", e.getMessage());
+		}
+
+		return insertCount;
+	}
+
+	private final String insertIntoAggregate = "INSERT INTO vulnerabilityaggregate(" +
+			"vuln_id, " +
+			"cve_id," +
+			"description," +
+			"platform," +
+			"published_date," +
+			"last_modified_date," +
+			"fixed_date," +
+			"exists_at_nvd," +
+			"exists_at_mitre," +
+			"vdo_labels," +
+			"vdo_label_confidences," +
+			"vdo_noun_groups," +
+			"urls," +
+			"base_severities," +
+			"severity_confidences," +
+			"impact_scores," +
+			"impact_confidences," +
+			"product_id," +
+			"cpe," +
+			"domain," +
+			"version," +
+			"exploit_publish_date," +
+			"exploit_url," +
+			"run_date_time" +
+			") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);";
+
+	/**
+	 * for inserting a single CVE into the vulnerabilityaggregate table
+	 * @param vuln_id
+	 * @param cve_id
+	 * @param desc
+	 * @param platform
+	 * @param pubDate
+	 * @param modDate
+	 * @param fixDate
+	 * @param existNvd
+	 * @param existMitre
+	 * @param vdoLabels
+	 * @param vdoConfidences
+	 * @param vdoNGroups
+	 * @param urls
+	 * @param baseSeverities
+	 * @param severConfidences
+	 * @param impScores
+	 * @param impConfidences
+	 * @param productId
+	 * @param cpe
+	 * @param domain
+	 * @param version
+	 * @param exploitDate
+	 * @param exploitUrl
+	 * @param runDatetime
+	 * @return
+	 */
+	private boolean insertCVEIntoAggregate(int vuln_id, String cve_id, String desc, String platform, java.sql.Date pubDate, java.sql.Date modDate,
+										   java.sql.Date fixDate, int existNvd, int existMitre, String vdoLabels, String vdoConfidences,
+										   String vdoNGroups, String urls, String baseSeverities, String severConfidences, String impScores,
+										   String impConfidences, String productId, String cpe, String domain, String version, java.sql.Date exploitDate,
+										   String exploitUrl, java.sql.Date runDatetime) {
+
+		try (Connection connection = getConnection();
+			 PreparedStatement pstmt = connection.prepareStatement(insertIntoAggregate);) {
+
+			pstmt.setInt(1, vuln_id);
+			pstmt.setString(2, cve_id);
+			pstmt.setString(3, desc);
+			pstmt.setString(4, platform);
+			pstmt.setDate(5, pubDate);
+			pstmt.setDate(6, modDate);
+			pstmt.setDate(7, fixDate);
+			pstmt.setInt(8, existNvd);
+			pstmt.setInt(9, existMitre);
+			pstmt.setString(10, vdoLabels);
+			pstmt.setString(11, vdoConfidences);
+			pstmt.setString(12, vdoNGroups);
+			pstmt.setString(13, urls);
+			pstmt.setString(14, baseSeverities);
+			pstmt.setString(15, severConfidences);
+			pstmt.setString(16, impScores);
+			pstmt.setString(17, impConfidences);
+			pstmt.setString(18, productId);
+			pstmt.setString(19, cpe);
+			pstmt.setString(20, domain);
+			pstmt.setString(21, version);
+			pstmt.setDate(22, exploitDate);
+			pstmt.setString(23, exploitUrl);
+			pstmt.setDate(24, runDatetime);
+
+			pstmt.executeUpdate();
+
+			logger.info("Inserted CVE: {} into aggregate table", cve_id);
+			return true;
+
+		} catch (SQLException e) {
+			logger.error("ERROR: Failed ot insert CVE {} into aggregate table\n{}", cve_id, e.getMessage());
+		}
+
+		return false;
+	}
+
+	private final String trimAggregateTable = "DELETE FROM vulnerabilityaggregate WHERE run_date_time < ?;";
+
+	/**
+	 * for removing old entries in aggregate table
+	 * @return
+	 */
+	public void trimAggregateTable() {
+		// Grab CVEs from past run
+		LocalDateTime today = LocalDateTime.now();
+		Timestamp pastWeek = Timestamp.valueOf(today.minusHours(168));
+
+		logger.info("Trimming CVEs before {} from vulnerabilityaggregate table", pastWeek);
+
+		try (Connection connection = getConnection();
+			 PreparedStatement pstmt = connection.prepareStatement(trimAggregateTable);) {
+
+			pstmt.setTimestamp(0, pastWeek);
+			pstmt.execute();
+
+			logger.info("Successfully trimmed CVEs before {} from vulnerabilityaggregate table", pastWeek);
+
+		} catch (SQLException e) {
+			logger.error("ERROR: Failed to remove CVEs before {} from vulnerabilityaggreate", pastWeek);
+		}
+
 	}
 }
