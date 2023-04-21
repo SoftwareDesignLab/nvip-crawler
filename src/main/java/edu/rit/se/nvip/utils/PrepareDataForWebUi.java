@@ -59,10 +59,15 @@ public class PrepareDataForWebUi {
 //
 //			logger.info("Prepared {} CVEs for Web UI", count);
 
+			// Grab CVEs from past run
+			LocalDateTime today = LocalDateTime.now();
+			Timestamp start = Timestamp.valueOf(today.minusHours(5));
+			Timestamp end = Timestamp.valueOf(today.plusHours(5));
+			Timestamp pastWeek = Timestamp.valueOf(today.minusHours(168));
+
 			DatabaseHelper databaseHelper = DatabaseHelper.getInstance();
-			int count = databaseHelper.prepareCVEsForUI();
+			int count = databaseHelper.prepareCVEsForUI(start, end,pastWeek);
 			logger.info("Prepared {} CVEs for Web UI", count);
-			databaseHelper.trimAggregateTable();
 
 			// send CVE notifactions
 			try {
