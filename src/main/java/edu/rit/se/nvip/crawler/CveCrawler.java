@@ -86,7 +86,7 @@ public class CveCrawler extends WebCrawler {
 			return false;
 		}
 
-		logger.info("Checking if {} is in whitelist", href);
+//		logger.info("Checking if {} is in whitelist", href);
 		for (String crawlDomain : myCrawlDomains) {
 			if (href.startsWith(crawlDomain)) {
 				logger.info("ACCEPTED DOMAIN: {} FOR URL {}", crawlDomain, href);

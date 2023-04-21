@@ -92,10 +92,9 @@ public class NVIPMain {
 	 * @throws Exception
 	 */
 	public static void main(String[] args) throws Exception {
-		CveLogDiff cveLogger = new CveLogDiff(properties);
-
 		// start nvip
 		NVIPMain nvipMain = new NVIPMain();
+		CveLogDiff cveLogger = new CveLogDiff(properties);
 		List<String> urls = nvipMain.grabSeedURLs();
 		if (properties.refreshCVENVDList()) {
 			PullNvdCveMain.pullFeeds(); // update nvd CVEs
@@ -378,7 +377,7 @@ public class NVIPMain {
 	private void checkDataDirs() {
 		String dataDir = (String) dataVars.get("dataDir");
 		String crawlerSeeds = (String) crawlerVars.get("seedFileDir");
-		String whiteListDir = (String) crawlerVars.get("whitelistDir");
+		String whitelistFileDir = (String) crawlerVars.get("whitelistFileDir");
 		String crawlerOutputDir = (String) crawlerVars.get("outputDir");
 
 		if (!new File(dataDir).exists()) {
@@ -409,8 +408,8 @@ public class NVIPMain {
 			System.exit(1);
 		}
 
-		if (!new File(whiteListDir).exists()) {
-			logger.error("The whitelist domain file path provided: {} does not exits!", whiteListDir);
+		if (!new File(whitelistFileDir).exists()) {
+			logger.error("The whitelist domain file path provided: {} does not exits!", whitelistFileDir);
 			System.exit(1);
 		}
 
@@ -449,7 +448,7 @@ public class NVIPMain {
 		PyPAGithubScraper pyPaScraper = new PyPAGithubScraper();
 		HashMap<String, CompositeVulnerability> cvePyPAGitHub = pyPaScraper.scrapePyPAGithub();
 
-		logger.info("Merging {} PyPA CVEs with {} found GitHub CVEs", cvePyPAGitHub.size(), cveHashMapGithub.size());
+		logger.info("Merging {} PyPA CVEs with {} found GitHub CVEs\n", cvePyPAGitHub.size(), cveHashMapGithub.size());
 		cveHashMapGithub.putAll(cvePyPAGitHub);
 
 		/**
