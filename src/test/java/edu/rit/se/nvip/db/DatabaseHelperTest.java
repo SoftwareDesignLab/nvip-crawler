@@ -38,10 +38,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.text.ParseException;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -1015,5 +1012,30 @@ public class DatabaseHelperTest {
 			verify(pstmt).setString(1, "cve_id");
 			assertEquals(1357, out);
 		} catch (SQLException ignored) {}
+	}
+
+	@Test
+	public void prepareCVEsForUITest() {
+		LocalDateTime today = LocalDateTime.now();
+		Timestamp start = Timestamp.valueOf(today.minusHours(5));
+		Timestamp end = Timestamp.valueOf(today.plusHours(5));
+		Timestamp pastWeek = Timestamp.valueOf(today.minusHours(168));
+
+		setResNextCount(1);
+		DatabaseHelper spyDB = spy(dbh);
+		ArgumentCaptor<java.sql.Date> captor = ArgumentCaptor.forClass(java.sql.Date.class);
+		int count = spyDB.prepareCVEsForUI(start, end, pastWeek);
+		try {
+			verify(pstmt).setTimestamp(1, start); // From past 5 hours (latest run)
+			verify(pstmt).setTimestamp(2, end);
+			verify(pstmt).executeQuery();
+
+			verify(res, atLeast(16)).getString(anyInt());
+			verify(res, atLeast(3)).getInt(anyInt());
+			verify(res, atLeast(5)).getDate(anyInt());
+
+		} catch (SQLException ignored) {
+		}
+		assertEquals(1, count);
 	}
 }

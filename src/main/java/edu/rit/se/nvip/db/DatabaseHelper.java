@@ -2165,21 +2165,16 @@ public class DatabaseHelper {
 	 * Inserting them into the vulnerabilityaggregate cache table
 	 * @return
 	 */
-	public int prepareCVEsForUI() {
+	public int prepareCVEsForUI(Timestamp start, Timestamp end, Timestamp pastweek) {
 
 		int insertCount = 0;
 		ResultSet rs;
 		try (Connection connection = getConnection();
 			 PreparedStatement pstmt = connection.prepareStatement(selectNewCVEs);) {
 
-			// Grab CVEs from past run
-			LocalDateTime today = LocalDateTime.now();
-			Timestamp start = Timestamp.valueOf(today.minusHours(5));
-			Timestamp end = Timestamp.valueOf(today.plusHours(5));
-
 			logger.info("Grabbing new CVEs from past run (between {} and {})", start, end);
 
-			pstmt.setTimestamp(1, start); // From past 5 hours (latest run)
+			pstmt.setTimestamp(1, start); // From past 5 hours (the latest run)
 			pstmt.setTimestamp(2, end); // 5 hours ahead in case of time zone differences in CVEs
 
 			rs =  pstmt.executeQuery();
@@ -2218,6 +2213,8 @@ public class DatabaseHelper {
 				}
 			}
 
+			// Trim aggregate table
+			trimAggregateTable(pastweek);
 		} catch (Exception e) {
 			logger.error("ERROR: Failed to update cache table for CVEs for this run\n{}", e.getMessage());
 		}
@@ -2253,7 +2250,7 @@ public class DatabaseHelper {
 			") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);";
 
 	/**
-	 * for inserting a single CVE into the vulnerabilityaggregate table
+	 * Helper function for inserting a single CVE into the vulnerabilityaggregate table
 	 * @param vuln_id
 	 * @param cve_id
 	 * @param desc
@@ -2280,7 +2277,7 @@ public class DatabaseHelper {
 	 * @param runDatetime
 	 * @return
 	 */
-	private boolean insertCVEIntoAggregate(int vuln_id, String cve_id, String desc, String platform, java.sql.Date pubDate, java.sql.Date modDate,
+	public boolean insertCVEIntoAggregate(int vuln_id, String cve_id, String desc, String platform, java.sql.Date pubDate, java.sql.Date modDate,
 										   java.sql.Date fixDate, int existNvd, int existMitre, String vdoLabels, String vdoConfidences,
 										   String vdoNGroups, String urls, String baseSeverities, String severConfidences, String impScores,
 										   String impConfidences, String productId, String cpe, String domain, String version, java.sql.Date exploitDate,
@@ -2329,13 +2326,10 @@ public class DatabaseHelper {
 	private final String trimAggregateTable = "DELETE FROM vulnerabilityaggregate WHERE run_date_time < ?;";
 
 	/**
-	 * for removing old entries in aggregate table
+	 * Helper function for removing old entries in aggregate table
 	 * @return
 	 */
-	public void trimAggregateTable() {
-		// Grab CVEs from past run
-		LocalDateTime today = LocalDateTime.now();
-		Timestamp pastWeek = Timestamp.valueOf(today.minusHours(168));
+	public void trimAggregateTable(Timestamp pastWeek) {
 
 		logger.info("Trimming CVEs before {} from vulnerabilityaggregate table", pastWeek);
 
