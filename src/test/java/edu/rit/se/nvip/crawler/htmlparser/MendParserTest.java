@@ -28,7 +28,6 @@ import edu.rit.se.nvip.crawler.QuickCveCrawler;
 import edu.rit.se.nvip.model.CompositeVulnerability;
 import edu.rit.se.nvip.utils.MyProperties;
 import edu.rit.se.nvip.utils.PropertyLoader;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.List;
@@ -55,7 +54,6 @@ public class MendParserTest extends AbstractParserTest{
     }
 
     @Test
-    @Ignore
     public void testMend2() {
 
         String html = QuickCveCrawler.getContentFromDynamicPage("https://www.mend.io/vulnerability-database/CVE-2013-6646", null);

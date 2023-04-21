@@ -648,8 +648,8 @@ public class DatabaseHelperTest {
 		run.setDatabaseTimeMin(90.0);
 		setResNextCount(2);
 		try {
-			when(res.getDouble("gapNvd")).thenReturn(2.71828);
-			when(res.getDouble("gapMitre")).thenReturn(1.61803);
+			when(res.getDouble("gapMitre")).thenReturn(2.71828);
+			when(res.getDouble("gapNvd")).thenReturn(1.61803);
 			int out = dbh.updateDailyRun(1111, run);
 			assertEquals(1111, out);
 			verify(pstmt).setFloat(1, (float) 120.00);
