@@ -82,7 +82,7 @@ public class CveCrawler extends WebCrawler {
 	public boolean shouldVisit(Page referringPage, WebURL url) {
 		String href = url.getURL().toLowerCase(Locale.ROOT);
 		if (FILTERS.matcher(href).matches()) {
-			logger.info("{} not allowd", href);
+			logger.info("{} not allowed", href);
 			return false;
 		}
 
