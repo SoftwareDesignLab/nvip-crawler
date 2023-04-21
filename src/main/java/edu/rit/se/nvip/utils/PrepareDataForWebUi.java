@@ -25,6 +25,7 @@ package edu.rit.se.nvip.utils;
 
 import java.sql.CallableStatement;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
@@ -37,27 +38,15 @@ import edu.rit.se.nvip.utils.email.EmailDailyCveList;
 public class PrepareDataForWebUi {
 	private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
 
+	public static void main(String[] args) {
+		PrepareDataForWebUi prep = new PrepareDataForWebUi();
+		prep.prepareDataforWebUi();
+	}
+
 	/**
 	 * Generate a summary table that will be used by the Web UI.
 	 */
 	public void prepareDataforWebUi() {
-//		LocalDateTime today = LocalDateTime.now();
-//		DatabaseHelper databaseHelper = DatabaseHelper.getInstance();
-
-//		try (
-//				Connection conn = databaseHelper.getConnection();
-//				CallableStatement stmt = conn.prepareCall("CALL prepareDailyVulnerabilities(?, ?, ?)");
-//		) {
-//
-//			stmt.setTimestamp(1, Timestamp.valueOf(today.minusHours(168))); // 7 days
-//			stmt.setTimestamp(2, Timestamp.valueOf(today.plusHours(24)));
-//
-//			stmt.registerOutParameter(3, java.sql.Types.INTEGER);
-//
-//			stmt.execute();
-//			int count = stmt.getInt(3);
-//
-//			logger.info("Prepared {} CVEs for Web UI", count);
 
 			// Grab CVEs from past run
 			LocalDateTime today = LocalDateTime.now();
@@ -65,9 +54,8 @@ public class PrepareDataForWebUi {
 			Timestamp end = Timestamp.valueOf(today.plusHours(5));
 			Timestamp pastWeek = Timestamp.valueOf(today.minusHours(168));
 
-
 			DatabaseHelper databaseHelper = DatabaseHelper.getInstance();
-			int count = databaseHelper.prepareCVEsForUI(start, end,pastWeek);
+			int count = databaseHelper.prepareCVEsForUI(start, end, pastWeek);
 			logger.info("Prepared {} CVEs for Web UI", count);
 
 			// send CVE notifactions
@@ -78,9 +66,6 @@ public class PrepareDataForWebUi {
 				logger.error("Error sending CVE notification to admins! {}", e1);
 			}
 
-//		} catch (Exception e) {
-//			logger.error(e.toString());
-//		}
 	}
 
 }
