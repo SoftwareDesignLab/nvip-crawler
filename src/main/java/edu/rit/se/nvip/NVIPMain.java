@@ -36,6 +36,7 @@ import edu.rit.se.nvip.crawler.github.PyPAGithubScraper;
 
 import edu.rit.se.nvip.patchfinder.JGitCVEPatchDownloader;
 import edu.rit.se.nvip.patchfinder.PatchFinder;
+import org.apache.commons.collections.map.HashedMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -82,6 +83,8 @@ public class NVIPMain {
 	private static MyProperties properties = null;
 	private static final Map<String, Object> crawlerVars = new HashMap<>();
 	private static final Map<String, Object> dataVars = new HashMap<>();
+
+	private static final Map<String, Object> exploitVars = new HashMap<>();
 	private static final Map<String, Object> patchfinderVars = new HashMap<>();
 	private static final Map<String, Object> emailVars = new HashMap<>();
 
@@ -128,7 +131,7 @@ public class NVIPMain {
 		databaseHelper.updateDailyRun(runId, dailyRunStats);
 
 		// Exploit Collection
-		if (properties.isExploitScrapingEnabled()) {
+		if ((boolean) exploitVars.get("exploitFinderEnabled")) {
 			logger.info("Identifying exploits for {} exploits...", crawledVulnerabilityList.size());
 			ExploitIdentifier exploitIdentifier = new ExploitIdentifier(crawledVulnerabilityList, databaseHelper);
 			int count = exploitIdentifier.identifyAndSaveExploits(crawledVulnerabilityList);
@@ -162,6 +165,7 @@ public class NVIPMain {
 
 		this.prepareCrawlerVars();
 		this.prepareDataVars();
+		this.prepareExploitFinderVars();
 		this.preparePatchFinderVars();
 		this.prepareEmailVars();
 
@@ -184,6 +188,10 @@ public class NVIPMain {
 
 	}
 
+	/**
+	 * Prepare Vars for Crawler from envvars
+	 * Sets defaults if envvars aren't found
+	 */
 	private void prepareCrawlerVars() {
 		String outputDir = System.getenv("NVIP_OUTPUT_DIR");
 		String seedFileDir = System.getenv("NVIP_SEED_URLS");
@@ -227,6 +235,10 @@ public class NVIPMain {
 				"NVIP_NUM_OF_CRAWLER");
 	}
 
+	/**
+	 * Prepare Vars for Data dir from envvars
+	 * Sets defaults if envvars aren't found
+	 */
 	private void prepareDataVars() {
 		String dataDir = System.getenv("NVIP_DATA_DIR");
 
@@ -234,6 +246,21 @@ public class NVIPMain {
 				"WARNING: Data Directory not defined in NVIP_DATA_DIR, using ./nvip_data as default");
 	}
 
+	/**
+	 * Prepare Vars for Exploit Finder from envvars
+	 * Sets defaults if envvars aren't found
+	 */
+	private void prepareExploitFinderVars() {
+		String exploitFinderEnabled = System.getenv("EXPLOIT_FINDER_ENABLED");
+
+		addEnvvarBool(NVIPMain.exploitVars, "exploitFinderEnabled", exploitFinderEnabled, true,
+				"WARNING: Exploit Finder Enabler not defined in EXPLOIT_FINDER_ENABLED, enabling by default");
+	}
+
+	/**
+	 * Prepare Vars for Patch Finder from envvars
+	 * Sets defaults if envvars aren't found
+	 */
 	private void preparePatchFinderVars() {
 		String enablePatchFinder = System.getenv("PATCHFINDER_ENABLED");
 		String patchSourceLimit = System.getenv("PATCHFINDER_SOURCE_LIMIT");
@@ -251,6 +278,10 @@ public class NVIPMain {
 				"PATCHFINDER_MAX_THREADS");
 	}
 
+	/**
+	 * Prepare Vars for Email Service from envvars
+	 * Sets defaults if envvars aren't found
+	 */
 	private void prepareEmailVars() {
 		String emailUser = System.getenv("NVIP_EMAIL_USER");
 		String emailPassword = System.getenv("NVIP_EMAIL_PASSWORD");
@@ -280,7 +311,14 @@ public class NVIPMain {
 						"message links on default");
 	}
 
-
+	/**
+	 * Add a String to mapping of envvars
+	 * @param envvarMap
+	 * @param envvarName
+	 * @param envvarValue
+	 * @param defaultValue
+	 * @param warningMessage
+	 */
 	private void addEnvvarString(Map<String, Object> envvarMap, String envvarName, String envvarValue,
 								 	String defaultValue, String warningMessage) {
 		if (envvarValue != null && !envvarValue.isEmpty()) {
@@ -291,6 +329,14 @@ public class NVIPMain {
 		}
 	}
 
+	/**
+	 * Add Boolean value to mapping of envvars
+	 * @param envvarMap
+	 * @param envvarName
+	 * @param envvarValue
+	 * @param defaultValue
+	 * @param warningMessage
+	 */
 	private void addEnvvarBool(Map<String, Object> envvarMap, String envvarName, String envvarValue,
 							   boolean defaultValue, String warningMessage) {
 		if (envvarValue != null && !envvarValue.isEmpty()) {
@@ -301,6 +347,15 @@ public class NVIPMain {
 		}
 	}
 
+	/**
+	 * Add Integer to mapping of envvars
+	 * @param envvarMap
+	 * @param envvarName
+	 * @param envvarValue
+	 * @param defaultValue
+	 * @param warningMessage
+	 * @param ennvarName
+	 */
 	private void addEnvvarInt(Map<String, Object> envvarMap, String envvarName, String envvarValue,
 							  int defaultValue, String warningMessage, String ennvarName) {
 		if (envvarValue != null && !envvarValue.isEmpty()) {
@@ -440,6 +495,7 @@ public class NVIPMain {
 		HashMap<String, CompositeVulnerability> cveHashMapGithub = new HashMap<>();
 
 		if ((Boolean) crawlerVars.get("enableGitHub")) {
+			logger.info("CVE Github pull enabled, scraping CVe GitHub now!");
 			GithubScraper githubScraper = new GithubScraper();
 			cveHashMapGithub = githubScraper.scrapeGithub();
 		}
