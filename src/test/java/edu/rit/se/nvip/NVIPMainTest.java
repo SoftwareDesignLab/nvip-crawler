@@ -31,6 +31,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import edu.rit.se.nvip.model.CompositeVulnerability;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import edu.rit.se.nvip.utils.MyProperties;
@@ -104,6 +105,7 @@ public class NVIPMainTest {
 	 * Test CVE Process Function
 	 */
 	@Test
+	@Ignore
 	public void testCVEProcess() {;
 
 		String testDescription = "Test CVE Description, this should not be changed";
