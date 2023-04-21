@@ -1098,7 +1098,7 @@ public class DatabaseHelper {
 			}
 			pstmt.setTimestamp(10, new java.sql.Timestamp(longDateFormatMySQL.parse(existingAttribs.getCreateDate()).getTime()));
 			pstmt.executeUpdate();
-			logger.info("Recorded CVE status change for CVE {}", vuln.getCveId());
+			//logger.info("Recorded CVE status change for CVE {}", vuln.getCveId());
 		} catch (Exception e) {
 			logger.error("Error recording CVE status change for {}: {}", vuln.getCveId(), e);
 			e.printStackTrace();
