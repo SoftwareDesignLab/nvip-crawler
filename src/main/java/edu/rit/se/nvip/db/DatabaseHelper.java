@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package edu.rit.se.nvip.cvereconcile.db;
+package edu.rit.se.nvip.db;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -1386,11 +1386,11 @@ public class DatabaseHelper {
 			Statement stmt = conn.createStatement();
 			ResultSet rs = stmt.executeQuery(this.selectAverageTimeGapMitre);
 			if (rs.next())
-				dailyRun.setAvgTimeGapMitre(Double.parseDouble(formatter.format(rs.getDouble("gapNvd"))));
+				dailyRun.setAvgTimeGapMitre(Double.parseDouble(formatter.format(rs.getDouble("gapMitre"))));
 
 			rs = stmt.executeQuery(this.selectAverageTimeGapNvd);
 			if (rs.next())
-				dailyRun.setAvgTimeGapNvd(Double.parseDouble(formatter.format(rs.getDouble("gapMitre"))));
+				dailyRun.setAvgTimeGapNvd(Double.parseDouble(formatter.format(rs.getDouble("gapNvd"))));
 
 			pstmt = conn.prepareStatement(updateDailyRunSql);
 
