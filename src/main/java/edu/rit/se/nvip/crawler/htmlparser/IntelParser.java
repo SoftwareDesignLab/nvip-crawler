@@ -70,12 +70,15 @@ public class IntelParser extends AbstractCveParser {
         Elements cves = doc.select("p:contains(CVEID:)");
         for (Element cve : cves) {
             String line = cve.text();
-            String cveID = line.split(": ")[1];
+            String cveID = getCVEID(line);
+            if (cveID.equals("")) continue;
             Element next = cve.nextElementSibling();
-            String description = Objects.requireNonNull(next).text();
+            // skip the Recommendations sections
+            if (next == null || !next.text().contains("Description")) continue;
+            String description = next.text();
             description = description.split(": ")[1];
             vulnList.add(new CompositeVulnerability(
-                0, sSourceURL, cveID, null, publishDate, lastModifiedDate, description, sourceDomainName
+                    0, sSourceURL, cveID, null, publishDate, lastModifiedDate, description, sourceDomainName
             ));
         }
 
