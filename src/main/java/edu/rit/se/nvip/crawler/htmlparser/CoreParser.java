@@ -53,25 +53,36 @@ public class CoreParser extends AbstractCveParser {
 
         // get publish and last update date under the Advisory information section
         Elements advisoryInfo = doc.select("h2:contains(Advisory Information)");
-        Element advisoryPara = Objects.requireNonNull(advisoryInfo.first()).nextElementSibling();
-        String[] pubSplit = Objects.requireNonNull(advisoryPara).text().split("published: ");
-        String[] updateSplit = advisoryPara.text().split("last update: ");
-        String publishDate = pubSplit[1].split(" ")[0];
-        String lastUpdatedDate = updateSplit[1].split(" ")[0];
+        Element advisoryPara = advisoryInfo.first();
+        String publishDate = "";
+        String lastUpdatedDate = "";
+        if (advisoryPara != null) {
+            advisoryPara = advisoryPara.nextElementSibling();
+            if (advisoryPara != null) {
+                String[] pubSplit = advisoryPara.text().split("published: ");
+                String[] updateSplit = advisoryPara.text().split("last update: ");
+                publishDate = pubSplit[1].split(" ")[0];
+                lastUpdatedDate = updateSplit[1].split(" ")[0];
+            }
+        }
 
         // get CVE IDs under Vulnerability Information section
         Element vulnInfo = doc.select("h2:contains(Vulnerability Information)").first();
-        Element vulnPara = Objects.requireNonNull(vulnInfo).nextElementSibling();
-        String[] cveString = Objects.requireNonNull(vulnPara).text().split("CVE Name: ");
+        if (vulnInfo == null) return vulnList;
+        Element vulnPara = vulnInfo.nextElementSibling();
+        if (vulnPara == null) return vulnList;
+        String[] cveString = vulnPara.text().split("CVE Name: ");
         List<String> cves = new ArrayList<>(Arrays.asList(cveString[1].split(", ")));
 
         // get Vulnerability Description for every CVE on page
         StringBuilder vulnDesc = new StringBuilder();
         Element descTitle = doc.select("h2:contains(Vulnerability Description)").first();
-        Element next = Objects.requireNonNull(descTitle).nextElementSibling();
-        while (!Objects.requireNonNull(next).tagName().contains("h")) {
-            vulnDesc.append(next.text());
-            next = next.nextElementSibling();
+        if (descTitle != null) {
+            Element next = descTitle.nextElementSibling();
+            while (next != null && !next.tagName().contains("h")) {
+                vulnDesc.append(next.text());
+                next = next.nextElementSibling();
+            }
         }
         // get Technical Description foreach CVE on the page, combine with main Vulnerability Description
         // Note: good chance these technical descriptions are out of order found in cves list
@@ -80,7 +91,9 @@ public class CoreParser extends AbstractCveParser {
         techDescs.remove(0);
         if (techDescs.size() != 0) {
             for (Element techDescTitle : techDescs) {
-                String desc = Objects.requireNonNull(techDescTitle.nextElementSibling()).text();
+                Element nextTech = techDescTitle.nextElementSibling();
+                if (nextTech == null) continue;
+                String desc = nextTech.text();
                 // if multiple, these might have [ CVE ]
                 if (desc.contains("[CVE-")) {
                     // connect this to one of our above CVEs and add to vuln list
