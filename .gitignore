@@ -5,3 +5,7 @@ logs
 .idea
 nvip.iml
 /target/
+.idea
+nvip.iml
+/logs/
+nvip_data/
