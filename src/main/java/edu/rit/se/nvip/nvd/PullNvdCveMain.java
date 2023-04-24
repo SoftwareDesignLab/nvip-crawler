@@ -23,9 +23,6 @@
  */
 package edu.rit.se.nvip.nvd;
 
-import edu.rit.se.nvip.utils.MyProperties;
-import edu.rit.se.nvip.utils.PropertyLoader;
-
 /**
  * 
  * @author axoeec
@@ -39,13 +36,8 @@ public class PullNvdCveMain {
 	 * https://nvd.nist.gov/feeds/json/cve/1.1/nvdcve-1.1-YYYY.json.zip
 	 *
 	 */
-	public static void pullFeeds() {
-
-		// load property file
-		MyProperties propertiesNvip = new MyProperties();
-		propertiesNvip = new PropertyLoader().loadConfigFile(propertiesNvip);
-
-		String filepath = propertiesNvip.getDataDir()+ "/nvd-cve.csv"; 
+	public static void pullFeeds(String dataDir) {
+		String filepath = dataDir + "/nvd-cve.csv";
 		new NvdCveController().pullNvdCve(filepath, false);
 	}
 

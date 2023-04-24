@@ -100,7 +100,7 @@ public class NVIPMain {
 		CveLogDiff cveLogger = new CveLogDiff(properties);
 		List<String> urls = nvipMain.grabSeedURLs();
 		if (properties.refreshCVENVDList()) {
-			PullNvdCveMain.pullFeeds(); // update nvd CVEs
+			PullNvdCveMain.pullFeeds((String) dataVars.get("dataDir")); // update nvd CVEs
 		}
 
 		// Crawler
@@ -241,9 +241,12 @@ public class NVIPMain {
 	 */
 	private void prepareDataVars() {
 		String dataDir = System.getenv("NVIP_DATA_DIR");
+		String refreshNvdList = System.getenv("NVIP_REFRESH_NVD_LIST");
 
 		addEnvvarString(NVIPMain.dataVars,"dataDir", dataDir, "nvip_data",
 				"WARNING: Data Directory not defined in NVIP_DATA_DIR, using ./nvip_data as default");
+		addEnvvarBool(NVIPMain.dataVars, "refreshNvdList", refreshNvdList, true,
+				"WARNING: Refresh NVD List not defined in NVIP_REFRESH_NVD_LIST, setting true for default");
 	}
 
 	/**
@@ -645,8 +648,8 @@ public class NVIPMain {
 	public HashMap<String, List<Object>> processCVEs(HashMap<String, CompositeVulnerability> cveHashMapAll) {
 		// process
 		logger.info("Comparing CVES against NVD & MITRE..");
-		String cveDataPathNvd = properties.getDataDir() + "/nvd-cve.csv";
-		String cveDataPathMitre = properties.getDataDir() + "/mitre-cve.csv";
+		String cveDataPathNvd = dataVars.get("dataDir") + "/nvd-cve.csv";
+		String cveDataPathMitre = dataVars.get("dataDir") + "/mitre-cve.csv";
 		CveProcessor cveProcessor = new CveProcessor(cveDataPathNvd, cveDataPathMitre);
 		HashMap<String, List<Object>> cveListMap = cveProcessor.checkAgainstNvdMitre(cveHashMapAll); // CVEs not in Nvd, Mitre
 
