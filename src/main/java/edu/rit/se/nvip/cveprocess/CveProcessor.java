@@ -70,7 +70,7 @@ public class CveProcessor {
 			 */
 			List<String> arrNVD = FileUtils.readLines(new File(nvdCvePath), "UTF-8");
 			if (arrNVD.isEmpty())
-				throw new IOException("Failed to read NVD CSV file... Calculations of 'not in NVD' are going to be off");
+				throw new IOException("Failed to read NVD CSV file: " + nvdCvePath + "  ... Calculations of 'not in NVD' are going to be off");
 			else
 				logger.info("Successfully read in NVD CSV file for calculations of 'not in NVD'");
 			for (String cve : arrNVD) {
@@ -83,7 +83,7 @@ public class CveProcessor {
 			 */
 			arrNVD = FileUtils.readLines(new File(mitreCvePath), "UTF-8");
 			if (arrNVD.isEmpty())
-				throw new IOException("Failed to read MITRE CSV file... Calculations of 'not in MITRE' are going to be off");
+				throw new IOException("Failed to read MITRE CSV file" + mitreCvePath + "... Calculations of 'not in MITRE' are going to be off");
 			else
 				logger.info("Successfully read in MITRE CSV file for calculations of 'not in MITRE'");
 			for (String cve : arrNVD) {
@@ -92,7 +92,8 @@ public class CveProcessor {
 			}
 
 		} catch (IOException e) {
-			logger.error("Error while loading NVD/MITRE CVEs!" + e);
+			logger.error("ERROR: Failed to load NVD/MITRE CVEs!\n{}\nPlease check file paths for nvd CVE and mitre CVE .csv files, " +
+					"or disable it in the NVIP_REFRESH_NVD_LIST envvar", e.getMessage());
 			System.exit(1); // This is a serious error, exit!
 		}
 		logger.info("Loaded cve data for NVD(" + cvesInNvd.size() + ") and MITRE(" + cvesInNvd.size() + ")");
