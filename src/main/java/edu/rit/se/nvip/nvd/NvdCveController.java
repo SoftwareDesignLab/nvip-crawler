@@ -85,7 +85,7 @@ public class NvdCveController {
 			file.delete(); // delete
 
 		// get root path from command line
-		logger.info("The output CSV will be at: " + filepath);
+		logger.info("The output CSV will be at: {}", filepath);
 
 		if (extractNamedEntities) {
 			// initialize StanfordCoreNLPAnnotator
@@ -107,8 +107,8 @@ public class NvdCveController {
 
 		for (int year = START_YEAR; year <= END_YEAR; year++) {
 
-			// pull and parse CVE feeds from NVD
-			//logger.info("\tPulling CVEs for " + year + "...");
+			//pull and parse CVE feeds from NVD
+			logger.info("\tPulling CVEs for {}...", year);
 
 			try {
 				// get all CVEs
@@ -118,16 +118,16 @@ public class NvdCveController {
 
 				if (extractNamedEntities) {
 					// annotate
-					logger.info("\tAnnotating " + listCVEData.size() + " CVEs for year " + year);
+					logger.info("\tAnnotating {} CVEs for year {}", listCVEData.size(), year);
 					listCVEData = coreNLP.annotateCVEList(listCVEData);
-					logger.info("\tDONE! Annotated " + listCVEData.size() + " CVEs");
+					logger.info("\tDONE! Annotated {} CVEs", listCVEData.size());
 				}
 
 				// write annotated descriptions to CSV
 				int count = csvLogger.writeListToCSV(listCVEData, filepath, true);
 				totCount += count;
 				if (count > 0) {
-					logger.info("\tWrote " + count + " entries to CSV file: " + filepath);
+					logger.info("\tWrote {} entries to CSV file: {}", count, filepath);
 				}
 
 				// add references from this json list
@@ -137,14 +137,14 @@ public class NvdCveController {
 				nvdCveCpeHashMap.putAll(myCVEParser.getCPEs(jsonList));
 			} catch (Exception e) {
 				String url = nvdJsonFeedUrl.replaceAll("YYYY", year + "");
-				logger.error("Error pulling NVD CVES for year {}, url: (), error: {}", year, url, e);
+				logger.error("ERROR: Failed to pull NVD CVES for year {}, url: {}\n{}", year, url, e.getMessage());
 			}
 		}
 
-		logger.info("\n\tWrote a total of *** " + totCount + " *** entries to CSV file: " + filepath);
+		logger.info("Wrote a total of *** {} *** entries to CSV file: {}", totCount, filepath);
 
 		// process&store references
-		processCVeReferences(nvdRefUrlHash, filepath);
+		processCVEReferences(nvdRefUrlHash, filepath);
 
 		logCPEInfo(filepath, nvdCveCpeHashMap);
 
@@ -157,7 +157,7 @@ public class NvdCveController {
 	 * @param nvdRefUrlHash
 	 * @param filepath
 	 */
-	private void processCVeReferences(Map<String, Integer> nvdRefUrlHash, String filepath) {
+	private void processCVEReferences(Map<String, Integer> nvdRefUrlHash, String filepath) {
 		UrlUtils urlUtils = new UrlUtils();
 		int count = 0;
 		Map<String, Integer> nvdBaseRefUrlHash = new HashMap<>();
@@ -171,8 +171,8 @@ public class NvdCveController {
 				}
 
 				count++;
-//				if (count % 10000 == 0)
-//					logger.info("Processed " + count + " URLs...");
+				if (count % 10000 == 0)
+					logger.info("Processed {} URLs...", count);
 
 			}
 
@@ -187,10 +187,11 @@ public class NvdCveController {
 			FileUtils.writeLines(new File(sBaseReferencePath), listBaseRefUrls, false);
 
 			int totInvalid = nvdRefUrlHash.keySet().size() - listFullRefUrls.size();
-			logger.info("\nScraped " + count + " total NVD full-reference URLs." + "\nThe # of invalid full-references: " + totInvalid + "\nThe # of recorded full-references " + listFullRefUrls.size()
-					+ "\nTotal # of unique base URLs: " + nvdBaseRefUrlHash.keySet().size() + "\nReference URLs are stored at: " + sFullReferencePath + " and " + sBaseReferencePath);
+			logger.info("\nScraped {} total NVD full-reference URLs.\nThe # of invalid full-references: {}\nThe # of recorded full-references: {}" +
+							"\nTotal # of unique base URLs: {}\nReference URLs are stored at: {} and {}",
+					count, totInvalid, listFullRefUrls.size(), nvdBaseRefUrlHash.keySet().size(), sFullReferencePath, sBaseReferencePath);
 		} catch (IOException e) {
-			logger.error("Error while processing NVD references! " + e);
+			logger.error("Error while processing NVD references!\n{}", e.getMessage());
 		}
 	}
 
@@ -269,7 +270,7 @@ public class NvdCveController {
 				}
 				bf.flush();
 			} catch (IOException e) {
-				logger.error("Error logging CPE: " + e);
+				logger.error("ERROR: Failed to log CPE: {}", e.getMessage());
 			}
 		}
 	}
