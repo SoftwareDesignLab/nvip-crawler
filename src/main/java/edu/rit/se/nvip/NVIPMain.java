@@ -99,7 +99,7 @@ public class NVIPMain {
 		NVIPMain nvipMain = new NVIPMain();
 		CveLogDiff cveLogger = new CveLogDiff(properties);
 		List<String> urls = nvipMain.grabSeedURLs();
-		if (properties.refreshCVENVDList()) {
+		if ((Boolean) dataVars.get("refreshNvdList")) {
 			PullNvdCveMain.pullFeeds((String) dataVars.get("dataDir")); // update nvd CVEs
 		}
 
