@@ -52,6 +52,7 @@ public class AndroidParser extends AbstractCveParser {
         Element datesEl = doc.select("em").first();
         String publishedDate = "";
         String lastModifiedDate = "";
+        StringBuilder description = new StringBuilder();
         if (datesEl != null) {
             // if only published is present, have lastModified also be published
             // sometimes they are separated by just a pipe (|) sometimes they are separated by just "Updated"
@@ -72,6 +73,14 @@ public class AndroidParser extends AbstractCveParser {
                 datesSplit = updatedSplit;
                 publishedDate = lastModifiedDate = datesSplit[0].split("Published")[1].trim();
             }
+
+            // get large description under dates
+            // go until we do not see a <p> tag
+            Element next = datesEl.nextElementSibling();
+            while(next != null && next.tagName().equals("p")) {
+                description.append(next.text());
+                next = next.nextElementSibling();
+            }
         }
 
         // get each table in bulletin
@@ -86,7 +95,7 @@ public class AndroidParser extends AbstractCveParser {
                 continue;
             if (table.parent() == null) continue;
             Element prev = table.parent().previousElementSibling();
-            String description = prev == null ? "" : prev.text();
+            String thisDesc = description + (prev == null ? "" : prev.text());
             Elements rows = table.child(1).children();
             // foreach CVE append other useful columns to desc and add to vulnList
             // first get names of columns to map to when appending
@@ -100,7 +109,7 @@ public class AndroidParser extends AbstractCveParser {
                 Element row = rows.get(i);
                 // note: CVE ID is not always the first column in the table
                 String cveId = "";
-                StringBuilder usefulDesc = new StringBuilder(description);
+                StringBuilder usefulDesc = new StringBuilder(thisDesc);
                 Elements cells = row.children();
                 for (int j = 0 ; j < cells.size() ; j++) {
                     Element cell = cells.get(j);
