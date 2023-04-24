@@ -800,7 +800,7 @@ public class NVIPMain {
 	 * @param runId
 	 */
 	private void storeCVEs(List<CompositeVulnerability> crawledVulnerabilityList, int runId) {
-		double dbTime = 0;
+		double dbTime;
 		try {
 			long databaseStoreStartTime = System.currentTimeMillis();
 			logger.info("Storing crawled {} CVEs into the NVIP database with run id: {}", crawledVulnerabilityList.size(), runId);
