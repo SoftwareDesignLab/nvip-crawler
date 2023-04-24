@@ -83,6 +83,7 @@ public class NVIPMain {
 	private static final Map<String, Object> crawlerVars = new HashMap<>();
 	private static final Map<String, Object> dataVars = new HashMap<>();
 
+	private static final Map<String, Object> characterizationVars = new HashMap<>();
 	private static final Map<String, Object> exploitVars = new HashMap<>();
 	private static final Map<String, Object> patchfinderVars = new HashMap<>();
 	private static final Map<String, Object> emailVars = new HashMap<>();
@@ -113,7 +114,7 @@ public class NVIPMain {
 		List<CompositeVulnerability> crawledVulnerabilityList = nvipMain.reconcileCVEs(cveListMap);
 
 		// Characterize
-		crawledVulnerabilityList = nvipMain.characterizeCVEs(crawledVulnerabilityList, cveListMap);
+		crawledVulnerabilityList = nvipMain.characterizeCVEs(crawledVulnerabilityList);
 
 		// Prepare stats and Store found CVEs in DB
 		DailyRun dailyRunStats = nvipMain.insertStats(databaseHelper, crawledVulnerabilityList, cveListMap.get("nvd").size(),
@@ -164,6 +165,7 @@ public class NVIPMain {
 
 		this.prepareCrawlerVars();
 		this.prepareDataVars();
+		this.prepareCharacterizationVars();
 		this.prepareExploitFinderVars();
 		this.preparePatchFinderVars();
 		this.prepareEmailVars();
@@ -241,11 +243,23 @@ public class NVIPMain {
 	private void prepareDataVars() {
 		String dataDir = System.getenv("NVIP_DATA_DIR");
 		String refreshNvdList = System.getenv("NVIP_REFRESH_NVD_LIST");
+		String reconcilerMethod = System.getenv("NVIP_RECONCILER_METHOD");
 
 		addEnvvarString(NVIPMain.dataVars,"dataDir", dataDir, "nvip_data",
 				"WARNING: Data Directory not defined in NVIP_DATA_DIR, using ./nvip_data as default");
 		addEnvvarBool(NVIPMain.dataVars, "refreshNvdList", refreshNvdList, true,
 				"WARNING: Refresh NVD List not defined in NVIP_REFRESH_NVD_LIST, setting true for default");
+		addEnvvarString(NVIPMain.dataVars,"reconcilerMethod", reconcilerMethod, "APACHE_OPEN_NLP",
+				"WARNING: Reconciler Method not defined in NVIP_RECONCILER_METHOD, using APACHE_OPEN_NLP as default");
+	}
+
+	private void prepareCharacterizationVars() {
+		String cveCharacterizationLimit = System.getenv("NVIP_CVE_CHARACTERIZATION_LIMIT");
+
+		addEnvvarInt(NVIPMain.characterizationVars, "cveCharacterizationLimit", cveCharacterizationLimit, 5000,
+				"WARNING: CVE Characterization limit not determined at NVIP_CVE_CHARACTERIZATION_LIMIT, using 5000 as default",
+				"NVIP_CVE_CHARACTERIZATION_LIMIT");
+
 	}
 
 	/**
@@ -640,6 +654,7 @@ public class NVIPMain {
 	}
 
 	/**
+	 * Identify New CVE and
 	 * Process CVEs by comparing pulled CVEs to NVD and MITRE
 	 * @param cveHashMapAll
 	 * @return
@@ -655,34 +670,34 @@ public class NVIPMain {
 	}
 
 	/**
-	 * Identify NEW CVEs. Reconcile for Characterization and DB processes
+	 * Reconcile for Characterization and DB processes
 	 *
 	 * @param cveListMap
 	 * @return
 	 */
 	private List<CompositeVulnerability> reconcileCVEs(HashMap<String, List<Object>> cveListMap) {
 		List<CompositeVulnerability> crawledVulnerabilityList = cveListMap.get("all").stream().map(e -> (CompositeVulnerability) e).collect(Collectors.toList());
-		identifyNewOrUpdatedCve(crawledVulnerabilityList, databaseHelper, properties);
+		identifyNewOrUpdatedCve(crawledVulnerabilityList, databaseHelper);
 		return crawledVulnerabilityList;
 	}
 
 	/**
-	 * Identify new CVEs in the crawled CVE list, to determine which ones to
+	 * Identify updated CVEs in the crawled CVE list, to determine which ones to
 	 * characterize. We do not want to characterize all crawled CVEs (that'd be toooo slow). The output of
 	 * this method is used while storing CVEs into the DB as well. DatabaseHelper
 	 * will update/insert new CVEs only!
 	 *
 	 *
-	 * @param crawledVulnerabilityList
+	 * @param crawledVulnerabilityList list of all crawled CVEs from current run
 	 * @param databaseHelper
 	 * @return
 	 */
-	private List<CompositeVulnerability> identifyNewOrUpdatedCve(List<CompositeVulnerability> crawledVulnerabilityList, DatabaseHelper databaseHelper, MyProperties propertiesNvip) {
+	private List<CompositeVulnerability> identifyNewOrUpdatedCve(List<CompositeVulnerability> crawledVulnerabilityList, DatabaseHelper databaseHelper) {
 
 		logger.info("Reconciling {} CVEs...", crawledVulnerabilityList.size());
 		long startTime = System.currentTimeMillis();
 		CveReconcilerFactory reconcileFactory = new CveReconcilerFactory();
-		AbstractCveReconciler cveReconciler = reconcileFactory.createReconciler(propertiesNvip.getCveReconciliationMethod());
+		AbstractCveReconciler cveReconciler = reconcileFactory.createReconciler((String) dataVars.get("reconcilerMethod"));
 
 		Map<String, Vulnerability> existingVulnMap = databaseHelper.getExistingVulnerabilities();
 
@@ -721,10 +736,9 @@ public class NVIPMain {
 	/**
 	 * Use Characterizer Model to characterize CVEs and generate VDO/CVSS
 	 * @param crawledVulnerabilityList
-	 * @param cveListMap
 	 * @return
 	 */
-	private List<CompositeVulnerability> characterizeCVEs(List<CompositeVulnerability> crawledVulnerabilityList, HashMap<String, List<Object>> cveListMap) {
+	private List<CompositeVulnerability> characterizeCVEs(List<CompositeVulnerability> crawledVulnerabilityList) {
 		// Parse CAPECs page to link CVEs to a given Attack Pattern in characterizer
 		// CapecParser capecParser = new CapecParser();
 		// ArrayList<Capec> capecs = capecParser.parseWebPage(crawler);
@@ -736,7 +750,8 @@ public class NVIPMain {
 		CveCharacterizer cveCharacterizer = new CveCharacterizer(trainingDataInfo[0], trainingDataInfo[1], properties.getCveCharacterizationApproach(),
 				properties.getCveCharacterizationMethod(), false);
 
-		return cveCharacterizer.characterizeCveList(crawledVulnerabilityList, databaseHelper);
+		return cveCharacterizer.characterizeCveList(crawledVulnerabilityList, databaseHelper,
+				(Integer) characterizationVars.get("cveCharacterizationLimit"));
 	}
 
 	/**
