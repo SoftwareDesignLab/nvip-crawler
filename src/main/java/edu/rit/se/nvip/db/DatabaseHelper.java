@@ -655,10 +655,10 @@ public class DatabaseHelper {
 		if (existingVulnMap.size() == 0) {
 			synchronized (DatabaseHelper.class) {
 				if (existingVulnMap.size() == 0) {
-					int vulnId = 0;
+					int vulnId;
 					String cveId, description, createdDate;
 					int existAtNvd, existAtMitre;
-					existingVulnMap = new HashMap<String, Vulnerability>();
+					existingVulnMap = new HashMap<>();
 					try (Connection connection = getConnection();) {
 
 						String selectSql = "SELECT vuln_id, cve_id, description, created_date, exists_at_nvd, exists_at_mitre from vulnerability";
@@ -676,9 +676,9 @@ public class DatabaseHelper {
 									createdDate);
 							existingVulnMap.put(cveId, existingVulnInfo);
 						}
-						logger.info("NVIP has loaded " + existingVulnMap.size() + " existing CVE items from DB!");
+						logger.info("NVIP has loaded {} existing CVE items from DB!", existingVulnMap.size());
 					} catch (Exception e) {
-						logger.error("Error while getting existing vulnerabilities from DB: Exception: " + e.toString());
+						logger.error("Error while getting existing vulnerabilities from DB\nException: {}", e.getMessage());
 						logger.error(
 								"This is a serious error! NVIP will not be able to decide whether to insert or update! Exiting...");
 						System.exit(1);

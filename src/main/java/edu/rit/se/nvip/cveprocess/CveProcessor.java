@@ -126,16 +126,14 @@ public class CveProcessor {
 
 				allCveData.add(vuln);
 
-				if(vuln.isFoundNewDescriptionForReservedCve()) {
+				if (vuln.isFoundNewDescriptionForReservedCve()) {
 					logger.info("CVE: {} has new description for Reserved Cve", vuln.getCveId());
 					vuln.setMitreStatus(1);
 					vuln.setNvdStatus(1);
-					newCVEDataNotInMitre.add(vuln);
-					newCVEDataNotInNvd.add(vuln);
 					continue;
 				}
 
-				if(cvesInNvd.contains(vuln.getCveId())){
+				if (cvesInNvd.contains(vuln.getCveId())){
 					logger.info("CVE: {} is in NVD: Setting status to 1", vuln.getCveId());
 					vuln.setNvdStatus(1);
 				} else {
@@ -145,7 +143,7 @@ public class CveProcessor {
 					newCVEDataNotInNvd.add(vuln);
 				}
 
-				if(cvesInMitre.contains(vuln.getCveId())){
+				if (cvesInMitre.contains(vuln.getCveId())){
 					logger.info("CVE: {} is in NVD: Setting status to 1", vuln.getCveId());
 					vuln.setMitreStatus(1);
 				} else {
