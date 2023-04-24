@@ -25,10 +25,7 @@ package edu.rit.se.nvip.crawler.htmlparser;
 
 import edu.rit.se.nvip.model.CompositeVulnerability;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -71,8 +68,8 @@ public class CoreParser extends AbstractCveParser {
         if (vulnInfo == null) return vulnList;
         Element vulnPara = vulnInfo.nextElementSibling();
         if (vulnPara == null) return vulnList;
-        String[] cveString = vulnPara.text().split("CVE Name: ");
-        List<String> cves = new ArrayList<>(Arrays.asList(cveString[1].split(", ")));
+        // usually separated by , or ;
+        Set<String> cves = getCVEs(vulnPara.text());
 
         // get Vulnerability Description for every CVE on page
         StringBuilder vulnDesc = new StringBuilder();
@@ -97,14 +94,15 @@ public class CoreParser extends AbstractCveParser {
                 // if multiple, these might have [ CVE ]
                 if (desc.contains("[CVE-")) {
                     // connect this to one of our above CVEs and add to vuln list
-                    for (int i = 0 ; i < cves.size() ; i++) {
-                        String c = cves.get(i);
+                    Iterator<String> iter = cves.iterator();
+                    while(iter.hasNext()) {
+                        String c = iter.next();
                         if (desc.contains(c)) {
                             desc = desc.split(c+"]")[1];
                             vulnList.add(new CompositeVulnerability(
                                0, sSourceURL, c, null, publishDate, lastUpdatedDate, vulnDesc + desc, sourceDomainName
                             ));
-                            cves.remove(c);
+                            iter.remove();
                         }
                     }
                 }
@@ -121,8 +119,7 @@ public class CoreParser extends AbstractCveParser {
             }
         }
         if (cves.size() != 0) {
-            for (int i = 0 ; i < cves.size() ; i++) {
-                String c = cves.get(i);
+            for (String c : cves) {
                 vulnList.add(new CompositeVulnerability(
                         0, sSourceURL, c, null, publishDate, lastUpdatedDate, vulnDesc.toString(), sourceDomainName
                 ));
