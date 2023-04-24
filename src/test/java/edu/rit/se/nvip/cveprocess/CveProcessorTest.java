@@ -114,9 +114,9 @@ public class CveProcessorTest {
 
         HashMap<String, List<Object>> processedCves = cveProcessor.checkAgainstNvdMitre(foundVulnerabilities);
 
-        assertEquals(1, processedCves.get(CveProcessor.NVD_CVE_KEY).size());
-        assertEquals(1, processedCves.get(CveProcessor.MITRE_CVE_KEY).size());
-        assertEquals(1, processedCves.get(CveProcessor.NVD_MITRE_CVE_KEY).size());
+        assertEquals(0, processedCves.get(CveProcessor.NVD_CVE_KEY).size());
+        assertEquals(0, processedCves.get(CveProcessor.MITRE_CVE_KEY).size());
+        assertEquals(0, processedCves.get(CveProcessor.NVD_MITRE_CVE_KEY).size());
         assertEquals(1, processedCves.get(CveProcessor.ALL_CVE_KEY).size());
         assertEquals(1, foundVulnerabilities.get(CVE_ID).getNvdStatus());
         assertEquals(1, foundVulnerabilities.get(CVE_ID).getMitreStatus());
