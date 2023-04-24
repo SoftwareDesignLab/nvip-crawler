@@ -723,66 +723,64 @@ public class DatabaseHelper {
 							updateCount++;
 						else
 							noChangeCount++;
+					} else {
+						try (PreparedStatement pstmt = connection.prepareStatement(insertVulnSql);) {
 
-						continue;
-					}
+							pstmt.setString(1, vuln.getCveId());
+							pstmt.setString(2, vuln.getDescription());
+							pstmt.setString(3, vuln.getPlatform());
+							pstmt.setString(4, vuln.getPatch());
+							pstmt.setString(5, formatDate(vuln.getPublishDate()));
 
-					try (PreparedStatement pstmt = connection.prepareStatement(insertVulnSql);) {
+							pstmt.setString(6, formatDate(vuln.getLastModifiedDate())); // during insert create date is last modified date
+							pstmt.setString(7, formatDate(vuln.getLastModifiedDate()));
+							pstmt.setString(8, formatDate(vuln.getFixDate()));
+							/**
+							 * Bug fix: indexes 9 and 10 were wrong
+							 */
+							pstmt.setInt(9, vuln.getNvdStatus());
+							pstmt.setInt(10, vuln.getMitreStatus());
+							pstmt.setInt(11, vuln.getTimeGapNvd());
+							pstmt.setInt(12, vuln.getTimeGapMitre());
+							pstmt.executeUpdate();
+						} catch (Exception e) {
+							logger.error("ERROR: Failed to insert CVE: {}\n{}", vuln.getCveId(), e.toString());
+							continue; // if you have an error here, skip the rest!
+						}
 
-						pstmt.setString(1, vuln.getCveId());
-						pstmt.setString(2, vuln.getDescription());
-						pstmt.setString(3, vuln.getPlatform());
-						pstmt.setString(4, vuln.getPatch());
-						pstmt.setString(5, formatDate(vuln.getPublishDate()));
-
-						pstmt.setString(6, formatDate(vuln.getLastModifiedDate())); // during insert create date is last modified date
-						pstmt.setString(7, formatDate(vuln.getLastModifiedDate()));
-						pstmt.setString(8, formatDate(vuln.getFixDate()));
 						/**
-						 * Bug fix: indexes 9 and 10 were wrong
+						 * insert sources
 						 */
-						pstmt.setInt(9, vuln.getNvdStatus());
-						pstmt.setInt(10, vuln.getMitreStatus());
-						pstmt.setInt(11, vuln.getTimeGapNvd());
-						pstmt.setInt(12, vuln.getTimeGapMitre());
-						pstmt.executeUpdate();
-					} catch (Exception e) {
-						logger.error("ERROR: Failed to insert CVE: {}\n{}", vuln.getCveId(), e.toString());
-						continue; // if you have an error here, skip the rest!
+						insertVulnSource(vuln.getVulnSourceList(), connection);
+
+						/**
+						 * insert VDO
+						 */
+						insertVdoCharacteristic(vuln.getVdoCharacteristicInfo(), connection);
+
+						/**
+						 * insert CVSS
+						 */
+						insertCvssScore(vuln.getCvssScoreInfo(), connection);
+
+						/**
+						 * record updates
+						 */
+						List<Integer> vulnIdList = getVulnerabilityIdList(vuln.getCveId(), connection);
+						for (Integer vulnId : vulnIdList)
+							insertVulnerabilityUpdate(vulnId, "description", "New CVE: " + vuln.getCveId(), runId, connection);
+
+						insertCount++;
 					}
-
-					/**
-					 * insert sources
-					 */
-					insertVulnSource(vuln.getVulnSourceList(), connection);
-
-					/**
-					 * insert VDO
-					 */
-					insertVdoCharacteristic(vuln.getVdoCharacteristicInfo(), connection);
-
-					/**
-					 * insert CVSS
-					 */
-					insertCvssScore(vuln.getCvssScoreInfo(), connection);
-
-					/**
-					 * record updates
-					 */
-					List<Integer> vulnIdList = getVulnerabilityIdList(vuln.getCveId(), connection);
-					for (Integer vulnId : vulnIdList)
-						insertVulnerabilityUpdate(vulnId, "description", "New CVE: " + vuln.getCveId(), runId, connection);
-
-					insertCount++;
 				} catch (Exception e) {
-					logger.error(e.toString());
+					logger.error("ERROR: Failed to insert CVE: {}\n{}", vuln.getCveId(), e.toString());
 				}
 
-			} // for loop
+			}
 
 			int total = updateCount + insertCount + noChangeCount;
-			logger.info("DatabaseHelper updated/inserted/notchanged " + total + " [" + updateCount + "/" + insertCount + "/"
-					+ noChangeCount + "] of " + vulnList.size() + " vulnerabilities.");
+			logger.info("DatabaseHelper updated/inserted/notchanged {} [ {}/{}/{} ] of {} vulnerabilities.",
+					total, updateCount, insertCount, noChangeCount, vulnList.size());
 
 			// do time gap analysis for CVEs in vulnList
 			checkNvdMitreStatusForCrawledVulnerabilityList(connection, vulnList, existingVulnMap);
@@ -815,7 +813,6 @@ public class DatabaseHelper {
 
 		try (PreparedStatement pstmt = connection.prepareStatement(updateVulnSql);) {
 			// update vulnerability
-
 			pstmt.setString(1, vuln.getDescription());
 			pstmt.setString(2, vuln.getPlatform());
 			pstmt.setString(3, vuln.getPatch());
@@ -877,13 +874,14 @@ public class DatabaseHelper {
 			pstmt.setInt(4, runId);
 			pstmt.executeUpdate();
 		} catch (SQLException e) {
-			logger.error("Error while logging vuln updates! " + e.getMessage() + "\n" + pstmt.toString());
+			logger.error("Error while logging vuln updates!\n{}", e.getMessage());
 			return false;
 		} finally {
 			try {
 				if (pstmt != null)
 					pstmt.close();
 			} catch (SQLException e) {
+				logger.error("ERROR: Failed to close connection for Inserting Vuln Update:\n{}", e.getMessage());
 			}
 		}
 		return true;
@@ -1122,8 +1120,8 @@ public class DatabaseHelper {
 			List<CompositeVulnerability> crawledVulnerabilityList, Map<String, Vulnerability> existingVulnMap) {
 		int existingCveCount = 0, newCveCount = 0, timeGapCount = 0;
 		try {
-			logger.info("Checking time gaps for " + crawledVulnerabilityList.size() + " CVEs! # of total CVEs in DB: "
-					+ existingVulnMap.size());
+			logger.info("Checking time gaps for {} CVEs! # of total CVEs in DB: {}",
+					crawledVulnerabilityList.size(), existingVulnMap.size());
 
 			for (CompositeVulnerability vuln : crawledVulnerabilityList) {
 				try {
@@ -1324,7 +1322,7 @@ public class DatabaseHelper {
 	 */
 	public int insertDailyRun(DailyRun dailyRun) {
 		logger.info("Inserting Daily Run Stats...");
-		ResultSet rs = null;
+		ResultSet rs;
 		int maxRunId = -1;
 		Connection conn = null;
 		try {

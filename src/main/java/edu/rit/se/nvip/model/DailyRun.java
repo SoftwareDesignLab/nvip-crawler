@@ -57,9 +57,7 @@ public class DailyRun {
 		this.avgTimeGapMitre = avgTimeGapMitre;
 	}
 
-	public DailyRun() {
-
-	}
+	public DailyRun() {}
 
 	public String getRunDateTime() {
 		return runDateTime;

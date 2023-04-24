@@ -59,11 +59,11 @@ public class DbParallelProcessor {
 		boolean done = false;
 		long start = System.currentTimeMillis();
 
-		int numOfRecordsPErThread = 25000;
-		List<List<CompositeVulnerability>> vulnList2 = ListUtils.partition(vulnList, numOfRecordsPErThread);
+		int numOfRecordsPerThread = 25000;
+		List<List<CompositeVulnerability>> vulnList2 = ListUtils.partition(vulnList, numOfRecordsPerThread);
 
-		int numberOfThreads = vulnList.size() / numOfRecordsPErThread + 1;
-		logger.info("Spawning {} threads to record {} CVEs", numOfRecordsPErThread, vulnList.size());
+		int numberOfThreads = vulnList.size() / numOfRecordsPerThread + 1;
+		logger.info("Spawning {} threads to record {} CVEs", numOfRecordsPerThread, vulnList.size());
 		ExecutorService pool = Executors.newFixedThreadPool(numberOfThreads);
 
 		/**
@@ -120,9 +120,9 @@ public class DbParallelProcessor {
 
 		// run process
 		public void run() {
-			logger.info("Active, Idle and Total connections BEFORE insert: " + databaseHelper.getConnectionStatus());
+			logger.info("Active, Idle and Total connections BEFORE insert: {}", databaseHelper.getConnectionStatus());
 			databaseHelper.recordVulnerabilityList(vulnList, runId);
-			logger.info("Active, Idle and Total connections AFTER insert (before shutdown): " + databaseHelper.getConnectionStatus());
+			logger.info("Active, Idle and Total connections AFTER insert (before shutdown): {}", databaseHelper.getConnectionStatus());
 			databaseHelper.shutdown();
 		}
 	}
