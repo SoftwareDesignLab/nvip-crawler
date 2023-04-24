@@ -32,6 +32,7 @@ import org.jsoup.select.Elements;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class JVNParser extends AbstractCveParser {
 
@@ -40,14 +41,6 @@ public class JVNParser extends AbstractCveParser {
      * @param domainName - jvn domain
      */
     public JVNParser(String domainName) { sourceDomainName = domainName; }
-
-    private ArrayList<String> getCVEIdsFromText(String[] text) {
-        ArrayList<String> cves = new ArrayList<>();
-        for (String str : text)
-            if (str.matches(".*?\\bCVE-\\b.*?"))
-                cves.add(str);
-        return cves;
-    }
 
     @Override
     public List<CompositeVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
@@ -63,6 +56,7 @@ public class JVNParser extends AbstractCveParser {
         if (headBar != null) {
             String headBarText = headBar.text();
             String[] split = headBarText.split("最終更新日：");
+            if (split.length == 1) return vulnList;
             lastUpdated = split[1].trim().replaceAll("　", "");
             String[] pubSplit = split[0].split("公開日：");
             // weird spaces found in parsing text, make sure we get rid of those as well
@@ -97,8 +91,8 @@ public class JVNParser extends AbstractCveParser {
         if (potentialImpact != null && potentialImpact.parent() != null && potentialImpact.parent().parent() != null)
             potentialImpactText = potentialImpact.parent().parent().text();
 
-        ArrayList<String> detailedCVEs = getCVEIdsFromText(detailedInformationText.split(" "));
-        ArrayList<String> impactCVEs = getCVEIdsFromText(potentialImpactText.split(" "));
+        Set<String> detailedCVEs = getCVEs(detailedInformationText);
+        Set<String> impactCVEs = getCVEs(potentialImpactText);
 
         // remove duplicates
         ArrayList<String> combined = new ArrayList<>(cveTexts);
