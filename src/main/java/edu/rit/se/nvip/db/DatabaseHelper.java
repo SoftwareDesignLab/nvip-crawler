@@ -915,7 +915,7 @@ public class DatabaseHelper {
 	private boolean checkNvdMitreStatusForVulnerability(CompositeVulnerability vuln, Connection connection,
 			Vulnerability existingAttribs) {
 		boolean timeGapFound = false;
-		PreparedStatement pstmt = null;
+		PreparedStatement pstmt;
 		boolean vulnAlreadyInNvd = existingAttribs.doesExistInNvd();
 		boolean vulnAlreaadyInMitre = existingAttribs.doesExistInMitre();
 
