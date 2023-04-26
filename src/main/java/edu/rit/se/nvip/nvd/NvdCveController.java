@@ -68,7 +68,9 @@ public class NvdCveController {
 	public static void main(String[] args) {
 		NvdCveController nvd = new NvdCveController();
 		JsonArray list = nvd.pullCVEs();
-		System.out.println(list);
+		List<String[]> cves = new NvdCveParser().parseCVEs(list);
+		CsvUtils csv = new CsvUtils();
+		csv.writeListToCSV(cves, "test.csv", true);
 	}
 
 
@@ -97,8 +99,13 @@ public class NvdCveController {
 
 		// delete existing?
 		File file = new File(filepath);
+		boolean deleted = false;
 		if (file.exists())
-			file.delete();
+			deleted = file.delete();
+		if (!deleted)
+			logger.warn("Failed to delete existing file: {}", filepath);
+		else
+			logger.info("Deleted existing file: {}", filepath);
 
 		logger.info("The output CSV will be at: {}", filepath);
 
@@ -125,10 +132,10 @@ public class NvdCveController {
 			}
 
 			// add references from this json list
-			nvdRefUrlHash.putAll(myCVEParser.getCveReferences(jsonList));
+//			nvdRefUrlHash.putAll(myCVEParser.getCveReferences(jsonList));
 
 			// add references from this json list
-			nvdCveCpeHashMap.putAll(myCVEParser.getCPEs(jsonList));
+//			nvdCveCpeHashMap.putAll(myCVEParser.getCPEs(jsonList));
 		} catch (Exception e) {
 			String url = nvdJsonFeedUrl.replaceAll("<StartDate>", this.startDate).replaceAll("<EndDate>", this.endDate);
 			logger.error("ERROR: Failed to pull NVD CVES for year {}, url: {}\n{}", this.startDate, url, e.getMessage());
