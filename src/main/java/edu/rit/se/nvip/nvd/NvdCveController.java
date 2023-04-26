@@ -23,34 +23,28 @@
  */
 package edu.rit.se.nvip.nvd;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 
+import com.google.gson.JsonArray;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
-import edu.rit.se.nvip.nlp.StanfordCoreNlp;
 import edu.rit.se.nvip.utils.CsvUtils;
 import edu.rit.se.nvip.utils.UrlUtils;
-import edu.rit.se.nvip.utils.UtilHelper;
+
+import javax.json.Json;
 
 /**
  * 
@@ -63,38 +57,50 @@ import edu.rit.se.nvip.utils.UtilHelper;
 public class NvdCveController {
 	private final Logger logger = LogManager.getLogger(NvdCveController.class);
 
-	// Parameters
-	private static final int START_YEAR = 2002, END_YEAR = Calendar.getInstance().get(Calendar.YEAR);
-	private static final String nvdJsonFeedUrl = "https://nvd.nist.gov/feeds/json/cve/1.1/nvdcve-1.1-YYYY.json.zip";
+	private static final String nvdJsonFeedUrl = "https://services.nvd.nist.gov/rest/json/cves/2.0/?pubStartDate=<StartDate>&pubEndDate=<EndDate>";
 	String[] header = new String[] { "CVE-ID", "Description", "BaseScore", "BaseSeverity", "ImpactScore", "ExploitabilityScore", "CWE", "Advisory", "Patch", "Exploit" };
 
 	boolean logCPEInfo = true;
+
+	private String startDate;
+	private String endDate;
+
+	public static void main(String[] args) {
+		NvdCveController nvd = new NvdCveController();
+		JsonArray list = nvd.pullCVEs();
+		System.out.println(list);
+	}
+
+
+	/**
+	 * Constructor for NvdCveController
+	 * Sets today and yesterday times on construction
+	 */
+	public NvdCveController() {
+		LocalDateTime today = LocalDateTime.now();
+		LocalDateTime yesterday = LocalDateTime.now().minusDays(1);
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'hh:mm:ss");
+
+		System.out.println(today);
+
+		this.startDate = yesterday.format(formatter);
+		this.endDate = today.format(formatter);
+	}
 
 	/**
 	 * Main method of NVD_CVE_Reader
 	 * 
 	 * @param filepath
 	 */
-	public int pullNvdCve(String filepath, boolean extractNamedEntities) {
+	public int pullNvdCve(String filepath) {
 		CsvUtils csvLogger = new CsvUtils(); // create output CSV file and append header
-		StanfordCoreNlp coreNLP = null;
 
 		// delete existing?
 		File file = new File(filepath);
 		if (file.exists())
-			file.delete(); // delete
+			file.delete();
 
-		// get root path from command line
 		logger.info("The output CSV will be at: {}", filepath);
-
-		if (extractNamedEntities) {
-			// initialize StanfordCoreNLPAnnotator
-			logger.info("Initializing StanfordCoreNLPAnnotator...");
-			coreNLP = new StanfordCoreNlp();
-			logger.info("\tDONE! Initialized StanfordCoreNLPAnnotator");
-			UtilHelper.printMemory(); // check memory after NLP engine initialization
-			header = new String[] { "CVE-ID", "Annotated Description" };
-		}
 
 		csvLogger.writeHeaderToCSV(filepath, header, false);
 
@@ -105,40 +111,27 @@ public class NvdCveController {
 		Map<String, Integer> nvdRefUrlHash = new HashMap<>();
 		Map<String, List<String>> nvdCveCpeHashMap = new HashMap<>();
 
-		for (int year = START_YEAR; year <= END_YEAR; year++) {
+		try {
+			// get all CVEs
+			JsonArray jsonList = pullCVEs();
+			List<String[]> listCVEData = myCVEParser.parseCVEs(jsonList);
+			logger.info("Pulled {} CVEs", listCVEData.size());
 
-			//pull and parse CVE feeds from NVD
-			logger.info("\tPulling CVEs for {}...", year);
-
-			try {
-				// get all CVEs
-				ArrayList<JsonObject> jsonList = pullCVEs(year);
-				List<String[]> listCVEData = myCVEParser.parseCVEs(jsonList);
-				//logger.info("\tDONE! Pulled " + listCVEData.size() + " CVEs");
-
-				if (extractNamedEntities) {
-					// annotate
-					logger.info("\tAnnotating {} CVEs for year {}", listCVEData.size(), year);
-					listCVEData = coreNLP.annotateCVEList(listCVEData);
-					logger.info("\tDONE! Annotated {} CVEs", listCVEData.size());
-				}
-
-				// write annotated descriptions to CSV
-				int count = csvLogger.writeListToCSV(listCVEData, filepath, true);
-				totCount += count;
-				if (count > 0) {
-					logger.info("\tWrote {} entries to CSV file: {}", count, filepath);
-				}
-
-				// add references from this json list
-				nvdRefUrlHash.putAll(myCVEParser.getCveReferences(jsonList));
-
-				// add references from this json list
-				nvdCveCpeHashMap.putAll(myCVEParser.getCPEs(jsonList));
-			} catch (Exception e) {
-				String url = nvdJsonFeedUrl.replaceAll("YYYY", year + "");
-				logger.error("ERROR: Failed to pull NVD CVES for year {}, url: {}\n{}", year, url, e.getMessage());
+			// write annotated descriptions to CSV
+			int count = csvLogger.writeListToCSV(listCVEData, filepath, true);
+			totCount += count;
+			if (count > 0) {
+				logger.info("Wrote {} entries to CSV file: {}", count, filepath);
 			}
+
+			// add references from this json list
+			nvdRefUrlHash.putAll(myCVEParser.getCveReferences(jsonList));
+
+			// add references from this json list
+			nvdCveCpeHashMap.putAll(myCVEParser.getCPEs(jsonList));
+		} catch (Exception e) {
+			String url = nvdJsonFeedUrl.replaceAll("<StartDate>", this.startDate).replaceAll("<EndDate>", this.endDate);
+			logger.error("ERROR: Failed to pull NVD CVES for year {}, url: {}\n{}", this.startDate, url, e.getMessage());
 		}
 
 		logger.info("Wrote a total of *** {} *** entries to CSV file: {}", totCount, filepath);
@@ -198,54 +191,30 @@ public class NvdCveController {
 	/**
 	 * get CVEs as JSON object from NVD for <year>
 	 * 
-	 * @param year <year> as a 4 digit int
-	 * 
 	 * @return list of JSON objects (one json object for each json file in the zip)
 	 */
-	private ArrayList<JsonObject> pullCVEs(int year) {
-		String sURL = nvdJsonFeedUrl.replaceAll("YYYY", year + "");
-		ArrayList<JsonObject> jsonList = new ArrayList<>();
-		StringBuffer sBuilder;
+	private JsonArray pullCVEs() {
+		String sURL = nvdJsonFeedUrl.replaceAll("<StartDate>", this.startDate).replaceAll("<EndDate>", this.endDate);
+		JsonObject json = new JsonObject();
+		StringBuilder sBuilder= new StringBuilder();;
 
 		try {
 			URL url = new URL(sURL);
-			HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
-			httpURLConnection.setRequestMethod("GET");
-			InputStream inputStream = httpURLConnection.getInputStream();
-			ZipInputStream zipInputStream = new ZipInputStream(inputStream);
-
-			ZipEntry zipEntry = zipInputStream.getNextEntry();
-
-			while (zipEntry != null) {
-				if (!zipEntry.isDirectory()) {
-
-					// get contents of the entry
-					char[] buffer = new char[4096];
-					sBuilder = new StringBuffer();
-					Reader reader = new InputStreamReader(zipInputStream, StandardCharsets.UTF_8);
-					int charsRead;
-					while ((charsRead = reader.read(buffer, 0, buffer.length)) > 0) {
-						sBuilder.append(buffer, 0, charsRead);
-					}
-
-					//logger.info("\tExtracted " + zipEntry.getName() + " FROM " + sURL);
-
-					// parse entry contents
-					//logger.info("\tParsing " + zipEntry.getName());
-					String sJsonContent = sBuilder.toString();
-					JsonObject json = JsonParser.parseString(sJsonContent).getAsJsonObject();
-					jsonList.add(json);
-					//logger.info("\tDONE! Parsed " + zipEntry.getName());
-				}
-				zipEntry = zipInputStream.getNextEntry(); // next entry?
+			HttpURLConnection con = (HttpURLConnection) url.openConnection();
+			con.setRequestMethod("GET");
+			BufferedReader reader = new BufferedReader(new InputStreamReader(con.getInputStream()));
+			String inputLine;
+			while ((inputLine = reader.readLine()) != null) {
+				sBuilder.append(inputLine);
 			}
-			zipInputStream.close(); // close zip stream
-
+			reader.close();
+			json = JsonParser.parseString(sBuilder.toString()).getAsJsonObject();
+			con.disconnect();
 		} catch (Exception e) {
-			logger.error("Exception while reading feed from :" + sURL + "\tDetails:" + e);
+			logger.error("Exception while reading feed from :" + sURL + "\nDetails:" + e);
 		}
 
-		return jsonList; // the list includes a json object for each json file in the zip
+		return json.getAsJsonArray("vulnerabilities"); // the list includes a json object for each json file in the zip
 	}
 
 	/**

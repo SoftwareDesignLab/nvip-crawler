@@ -35,8 +35,6 @@ import java.util.stream.Collectors;
 import edu.rit.se.nvip.crawler.github.PyPAGithubScraper;
 
 import edu.rit.se.nvip.nvd.NvdCveController;
-import edu.rit.se.nvip.patchfinder.JGitCVEPatchDownloader;
-import edu.rit.se.nvip.patchfinder.PatchFinder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -50,7 +48,6 @@ import edu.rit.se.nvip.cvereconcile.AbstractCveReconciler;
 import edu.rit.se.nvip.cvereconcile.CveReconcilerFactory;
 import edu.rit.se.nvip.db.DatabaseHelper;
 import edu.rit.se.nvip.db.DbParallelProcessor;
-import edu.rit.se.nvip.exploit.ExploitIdentifier;
 import edu.rit.se.nvip.model.CompositeVulnerability;
 import edu.rit.se.nvip.model.CompositeVulnerability.CveReconcileStatus;
 import edu.rit.se.nvip.model.DailyRun;
@@ -102,7 +99,7 @@ public class NVIPMain {
 		if ((Boolean) dataVars.get("refreshNvdList")) {
 			logger.info("Refreshing NVD CVE List");
 			String filepath = dataVars.get("dataDir") + "/nvd-cve.csv";
-			new NvdCveController().pullNvdCve(filepath, false);
+			new NvdCveController().pullNvdCve(filepath);
 		}
 
 //		// Crawler
