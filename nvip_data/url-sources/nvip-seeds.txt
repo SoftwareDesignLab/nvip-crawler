@@ -80,6 +80,7 @@ https://www.whatsapp.com/security/advisories
 https://www.silver-peak.com/support/user-documentation/security-advisories
 https://www.proofpoint.com/us/security/security-advisories
 https://www.zyxel.com/us/en/support/security_advisories.shtml
+https://www.zyxel.com/global/en/support/security-advisories
 https://www.arista.com/en/support/advisories-notices/security-advisories
 https://jira.sonarsource.com/browse/SONARSCCVS-6?jql=text%20~%20%22CVE%22
 https://www.npmjs.com/advisories
@@ -121,4 +122,19 @@ https://www.dragos.com/advisories/
 https://cybersecurityworks.com/zerodays-vulnerability-list/
 https://www.veritas.com/content/support/en_US/security/
 https://security-advisory.acronis.com/advisories
+https://strapi.io/blog/security-disclosure-of-vulnerabilities-cve
+https://www.ghostccamm.com/blog/
+https://github.com/pay-rails/pay/security/advisories/
+https://support.norton.com/sp/static/external/tools/security-advisories.html
+https://advisories.octopus.com/post/
+https://www.secomea.com/support/cybersecurity-advisory/
+https://checkmk.com/werks
+https://vulncheck.com/advisories/
+https://www.papercut.com/kb/#featured-articles
+https://github.com/epiphyt/form-block/security/advisories/
+https://github.com/LianKee/SODA/tree/main/CVEs
+https://patchstack.com/database/
+https://zuso.ai/Advisory
+https://github.com/kiwitcms/Kiwi/security/advisories/
+https://cybir.com/2023/cve/
 
