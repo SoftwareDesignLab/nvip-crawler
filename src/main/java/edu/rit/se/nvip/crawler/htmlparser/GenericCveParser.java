@@ -44,17 +44,21 @@ import edu.rit.se.nvip.utils.UtilHelper;
 
 /**
  * 
- * Generic Cve parser for NVIP PoC. We need to implement specific parsers for
- * CNAs that implement edu.rit.se.nvip.crawler.htmlparser.CveParserInterface.
- * 
- * @author
+ * Generic Cve parser for NVIP PoC that splits into
+ * different parser strategies based on page given
  *
  */
 public class GenericCveParser extends AbstractCveParser  {
-	private Logger logger = LogManager.getLogger(getClass().getSimpleName());
+	private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
+	private ParserStrategy parserStrategy;
 	
 	public GenericCveParser(String domainName) {
 		sourceDomainName = domainName;
+	}
+
+	public GenericCveParser(String domainName, ParserStrategy parserStrategy) {
+		sourceDomainName = domainName;
+		this.parserStrategy = parserStrategy;
 	}
 
 	/**
