@@ -57,27 +57,47 @@ public class NvdCveParser {
 		// parse all CVEs in all JSONs (if multiple)
 		for (JsonElement json : jsonList) {
 
+			// { id, sourceIdentifier, published, lastModified, vulnStatus, descriptions, metrics, weaknesses, references }
 			JsonObject cve = (JsonObject) json;
-
-			String cveId = cve.getAsJsonObject("cve").get("id").getAsString();
-			String description = cve.getAsJsonArray("descriptions").get(0).getAsJsonObject().get("value").getAsString();
-			JsonArray cvss = cve.getAsJsonObject("metrics").getAsJsonArray("cvssMetricV31");
-			String baseScore = "";
-			String baseSeverity = "";
+			cve = cve.getAsJsonObject("cve");
+			String cveId = cve.get("id").getAsString();
+			// descriptions -> [ { lang, value } ]
+			JsonArray descriptions = cve.getAsJsonArray("descriptions");
+			String description = descriptions.get(0).getAsJsonObject().get("value").getAsString();
+			// metrics -> cvssMetricV31 -> [ { cvssData { 12 } } ]
+			JsonObject metrics = cve.getAsJsonObject("metrics");
 			String impactScore = "";
 			String exploitabilityScore = "";
-			String associatedCwes = "";
-
-
-			if (cvss.size() >= 0) {
-
+			String baseScore = "";
+			String baseSeverity = "";
+			if (!metrics.isJsonNull() && !metrics.entrySet().isEmpty()) {
+				System.out.println(cveId);
+				JsonElement metric = metrics.get("cvssMetricV31");
+				JsonObject cvssMetrics;
+				if (metric == null)
+					metric = metrics.get("cvssMetricV30");
+				if (metric != null) {
+					cvssMetrics = metric.getAsJsonArray().get(0).getAsJsonObject();
+					if (!cvssMetrics.isJsonNull() && !cvssMetrics.entrySet().isEmpty()) {
+						impactScore = cvssMetrics.get("impactScore").getAsString();
+						exploitabilityScore = cvssMetrics.get("exploitabilityScore").getAsString();
+						JsonObject cvssData = cvssMetrics.getAsJsonObject("cvssData");
+						if (!cvssData.isJsonNull() && !cvssData.entrySet().isEmpty()) {
+							baseScore = cvssData.get("baseScore").getAsString();
+							baseSeverity = cvssData.get("baseSeverity").getAsString();
+						}
+					}
+				}
+			}
+			String cwe = "";
+			JsonArray weaknesses = cve.getAsJsonArray("weaknesses");
+			if (weaknesses != null && weaknesses.size() != 0) {
+				cwe = weaknesses.get(0).getAsJsonObject().get("description").getAsJsonArray().get(0).getAsJsonObject().get("value").getAsString();
 			}
 
-
-			// parse json
-			List<String[]> data = parseCveJson((JsonObject) json);
-			allData.add(new String[]{cveId, description, baseScore, baseSeverity, impactScore, exploitabilityScore, associatedCwes, sbAdvisories.toString(), sbPatches.toString(), sbExploits.toString()});
-			allData.addAll(data);
+			// nothing regarding Advisory, Patch, Exploit in JSON response
+			// those will be left as empty strings
+			allData.add(new String[]{cveId, description, baseScore, baseSeverity, impactScore, exploitabilityScore, cwe, "", "", ""});
 		}
 
 		return allData;
