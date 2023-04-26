@@ -4,10 +4,10 @@ import edu.rit.se.nvip.model.CompositeVulnerability;
 
 import java.util.List;
 
-public class ParseTable implements ParserStrategy {
+public class ParseTable extends AbstractCveParser implements ParserStrategy {
 
     @Override
-    public List<CompositeVulnerability> parseWebPageGeneric(String sSourceURL, String sCVEContentHTML) {
+    public List<CompositeVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
         return null;
     }
 }
