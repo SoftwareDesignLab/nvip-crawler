@@ -19,7 +19,7 @@ public class ParseCVEDescription extends AbstractCveParser implements ParserStra
 
     @Override
     public List<CompositeVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
-        List<CompositeVulnerability> vulnerabilities = new ArrayList<CompositeVulnerability>();
+        List<CompositeVulnerability> vulnerabilities = new ArrayList<>();
 
         Document document = Jsoup.parse(sCVEContentHTML);
         Elements myHTMLElements = document.select(":matchesOwn(" + regexAllCVERelatedContent + ")");
@@ -28,7 +28,7 @@ public class ParseCVEDescription extends AbstractCveParser implements ParserStra
         Map<String, Integer> cveIDsInPage = getUniqueCVEIDs(sCVEContent, false);
 
         /*
-         * Case 1: if no CVEID regex exists in the page then ignore this source
+         * Case 1: if no CVE ID regex exists in the page then ignore this source
          */
         if (cveIDsInPage.size() == 0) {
             logger.debug("No CVE related content was found at URL: " + sSourceURL);
@@ -50,7 +50,7 @@ public class ParseCVEDescription extends AbstractCveParser implements ParserStra
          */
         if (cveIDsInPage.size() == 1) {
             /*
-              the whole page content includes a single CVEID. Extract platform/version and
+              the whole page content includes a single CVE ID. Extract platform/version and
               description, save and return.
              */
 
@@ -70,12 +70,12 @@ public class ParseCVEDescription extends AbstractCveParser implements ParserStra
           https://www.exploit-db.com/exploits/42518
          */
 
-        Map<String, CompositeVulnerability> vulnMap = new HashMap<String, CompositeVulnerability>();
+        Map<String, CompositeVulnerability> vulnMap = new HashMap<>();
 
         /*
           Do some pre-processing on the page elements
          */
-        myHTMLElements = preProcessPageElements(myHTMLElements);
+        preProcessPageElements(myHTMLElements);
 
         List<String> allSentences = myHTMLElements.eachText();
         for (int indexSentence = 0; indexSentence < allSentences.size(); indexSentence++) {
@@ -93,7 +93,6 @@ public class ParseCVEDescription extends AbstractCveParser implements ParserStra
               Case 3.2: Multiple CVE IDs on the tag, check if you need to split the tag text
               further???
              */
-
             boolean aBlockOfCveIdsInTheSentence = false;
             if (cveIDsInSentence.length > 1) {
 
@@ -104,10 +103,10 @@ public class ParseCVEDescription extends AbstractCveParser implements ParserStra
                 if (!aBlockOfCveIdsInTheSentence) {
 
                     /*
-                      Case 3.2.1: There are multiple CVEs in the tag and they are apart from each
+                      Case 3.2.1: There are multiple CVEs in the tag, and they are apart from each
                       other. Split the tag into multiple sentences. Conditions: (1) Make sure that
-                      the sentence is long enough to contain valuable info for each CVEID.
-                      (2):Split the tag if it worths to split (not a link etc.)
+                      the sentence is long enough to contain valuable info for each CVE ID.
+                      (2):Split the tag if it is worth it to split (not a link etc.)
                      */
                     boolean bTheSentenceHasValuableInfo = sentenceContainsValuableInfoForCVE(currentSentence, cveIDsInSentence.length);
                     Element tag = myHTMLElements.get(indexSentence);
@@ -138,18 +137,18 @@ public class ParseCVEDescription extends AbstractCveParser implements ParserStra
                 }
             }
 
-            // If we are here, then this sentence must have at least one CVEID
+            // If we are here, then this sentence must have at least one CVE ID
             String cveIDOfCurrentSentence = getFirstCveIdFromString(currentSentence);
             if (cveIDOfCurrentSentence == null) {
-                logger.error("Opps! There must be something wrong! Check this page! Sentence Index: " + indexSentence + ", CurrentSentence: " + currentSentence + "\n All Sentences: " + allSentences.toString());
+                logger.error("Oops! There must be something wrong! Check this page! Sentence Index: " + indexSentence + ", CurrentSentence: " + currentSentence + "\n All Sentences: " + allSentences);
             }
 
-            // if there is a prior sentence start from there
-            int startIndex = findAGoodStartIndexToStartLookingForVulnerabilityAttributes(myHTMLElements, indexSentence);
+            // if there is a prior sentence start looking for vulnerability attributes from there
+            int startIndex = findStartIndex(myHTMLElements, indexSentence);
 
             /*
               extract version info. Start from the suggested startIndex and search
-              sentences till you hit a new CVEID. First look at the current sentence!
+              sentences till you hit a new CVE ID. First look at the current sentence!
              */
 
             String version = getPlatformVersion(allSentences.get(indexSentence));
@@ -162,15 +161,15 @@ public class ParseCVEDescription extends AbstractCveParser implements ParserStra
                 if (nextCVEID == null || nextCVEID.equalsIgnoreCase(cveIDOfCurrentSentence)) {
                     version = getPlatformVersion(sentenceToLook);
                 } else
-                    break; // either you found it or hit to the next CVEID!
+                    break; // either you found it or hit to the next CVE ID!
 
                 index++;
             }
 
             /*
-              extract description. Search sentences till you hit another CVEID
+              extract description. Search sentences till you hit another CVE ID
              */
-            StringBuffer sbDescription = new StringBuffer();
+            StringBuilder sbDescription = new StringBuilder();
             for (int i = startIndex; i < allSentences.size(); i++) {
                 String aSentence = allSentences.get(i);
                 String nextCVEID = getFirstCveIdFromString(aSentence);
@@ -184,9 +183,9 @@ public class ParseCVEDescription extends AbstractCveParser implements ParserStra
             // add vulnerability
             String dateTimeNow = UtilHelper.longDateFormat.format(new Date());
             if (aBlockOfCveIdsInTheSentence)
-                for (int i = 0; i < cveIDsInSentence.length; i++) {
+                for (Object o : cveIDsInSentence) {
                     if (sentenceContainsValuableInfoForCVE(sbDescription.toString(), cveIDsInSentence.length)) {
-                        CompositeVulnerability vuln = new CompositeVulnerability(0, sSourceURL, (String) cveIDsInSentence[i], version, null, dateTimeNow, sbDescription.toString(), null);
+                        CompositeVulnerability vuln = new CompositeVulnerability(0, sSourceURL, (String) o, version, null, dateTimeNow, sbDescription.toString(), null);
                         vulnMap.put(vuln.getCveId(), vuln);
                     }
                 }
@@ -206,11 +205,9 @@ public class ParseCVEDescription extends AbstractCveParser implements ParserStra
 
     /**
      * Merge very short tags
-     *
-     * @param myHTMLElements
-     * @return
+     * @param myHTMLElements - elements matching CVE-related text
      */
-    private Elements preProcessPageElements(Elements myHTMLElements) {
+    private void preProcessPageElements(Elements myHTMLElements) {
         Pattern pattern = Pattern.compile(regexCVEID);
         int index = 0;
         while (index < myHTMLElements.size()) {
@@ -225,34 +222,32 @@ public class ParseCVEDescription extends AbstractCveParser implements ParserStra
             }
             index++;
         }
-
-        return myHTMLElements;
     }
 
     /**
-     * if you have a repeating CVE IDs then consider them as a single one
-     *
-     * @param cveIDDistances
-     * @return
+     * if you have a repeating CVE IDs, then consider them as a single one
+     * check if we can merge them
+     * @param cveIDDistances how similar are the IDs
+     * @return - true if we can merge them, false otherwise
      */
     private boolean checkCveIdDistances(Object[] cveIDDistances) {
         boolean areCVEsVeryClose = true;
 
-        for (int i = 0; i < cveIDDistances.length; i++)
-            areCVEsVeryClose = areCVEsVeryClose && ((Integer) cveIDDistances[i]).intValue() < 10;
+        for (Object cveIDDistance : cveIDDistances)
+            areCVEsVeryClose = areCVEsVeryClose && (Integer) cveIDDistance < 10;
 
         return areCVEsVeryClose;
     }
 
     /**
-     * If the currentIndex includes a CVEID, suggests if we should look back or not
+     * If the currentIndex includes a CVE ID, suggests if we should look back or not
      * to extract vulnerability attributes?
      *
-     * @param myHTMLElements
-     * @param currentIndex
-     * @return
+     * @param myHTMLElements - elements containing CVE-related text
+     * @param currentIndex - index we should start at looking myHTMLElements
+     * @return - suggested starting point to look for vulnerability attributes
      */
-    private int findAGoodStartIndexToStartLookingForVulnerabilityAttributes(Elements myHTMLElements, int currentIndex) {
+    private int findStartIndex(Elements myHTMLElements, int currentIndex) {
         int suggestedIndex = currentIndex;
 
         Element element = myHTMLElements.get(currentIndex);
@@ -263,22 +258,20 @@ public class ParseCVEDescription extends AbstractCveParser implements ParserStra
                 suggestedIndex = currentIndex - 2; // this is a list tag, so look backwards
                 if (suggestedIndex < 0)
                     suggestedIndex = 0;
-            } else
-                suggestedIndex = currentIndex;
-
+            }
         }
         return suggestedIndex;
     }
 
     /**
-     * if a single tag text includes multiple CVEIDs then split the text according
-     * to CVEID regex (as delimiter) and consider each part as a new sentence.
-     *
+     * if a single tag text includes multiple CVE IDs then split the text according
+     * to CVE ID regex (as delimiter) and consider each part as a new sentence.
+     * <p>
      * Add the CVE-XXXX-YYYY delimiter either to the end of the split text or to its
      * start. Look if a split text (the prev one) contains newline. If yes,
      * CVE-XXXX-YYYY is assumed to belong to the text that follows it
      *
-     * @param tagText
+     * @param tagText - sentence we are tokenizing
      * @return The list of split sentences
      */
     private List<String> tokenizeTagTextAccordingToCVEIDRegex(String tagText) {
@@ -289,7 +282,7 @@ public class ParseCVEDescription extends AbstractCveParser implements ParserStra
         String prevText;
         String currDelimiter;
         boolean bCVEBelongsToNextText = true;
-        String sentenceToAdd = "";
+        String sentenceToAdd;
         int matchCount = 0;
 
         String shortTextFRomPrevMatch = "";
@@ -299,10 +292,9 @@ public class ParseCVEDescription extends AbstractCveParser implements ParserStra
             currDelimiter = m.group();
             prevText = shortTextFRomPrevMatch + tagText.substring(prevIndex, m.start());
             shortTextFRomPrevMatch = "";
-            bCVEBelongsToNextText = (prevText.indexOf("\n") >= 0);
+            bCVEBelongsToNextText = (prevText.contains("\n"));
 
             if (prevIndex == 0) {
-
                 if (bCVEBelongsToNextText)
                     sentenceToAdd = prevText;
                 else
@@ -324,7 +316,6 @@ public class ParseCVEDescription extends AbstractCveParser implements ParserStra
             }
 
         }
-
         // get the text after last delimiter
         String tailText = shortTextFRomPrevMatch + tagText.substring(prevIndex);
         if (bCVEBelongsToNextText)
@@ -343,9 +334,9 @@ public class ParseCVEDescription extends AbstractCveParser implements ParserStra
     /**
      * Is this sentence long enough to describe the specified # of CVE ID(s)?
      *
-     * @param sentence
-     * @param numberOfCVEs TODO
-     * @return
+     * @param sentence     - sentence we are checking
+     * @param numberOfCVEs - number of supposed CVEs in the sentence
+     * @return - true if the sentence is long enough, false otherwise
      */
     private boolean sentenceContainsValuableInfoForCVE(String sentence, int numberOfCVEs) {
         return sentence.length() > (3 * numberOfCVEs * regexCVEID.length());
@@ -355,8 +346,8 @@ public class ParseCVEDescription extends AbstractCveParser implements ParserStra
      * Search for Version regex X.Y.Z or X.Y in a given sentence. Find the first
      * capitalized word before the regex to extract version info
      *
-     * @param sentence
-     * @return
+     * @param sentence - sentence we are searching
+     * @return - version info in String format
      */
     private String getPlatformVersion(String sentence) {
         String version = null;
@@ -364,17 +355,17 @@ public class ParseCVEDescription extends AbstractCveParser implements ParserStra
         Pattern pattern = Pattern.compile(regexVersionInfo);
         Matcher matcher = pattern.matcher(sentence);
 
-        while (matcher.find()) {
+        if (matcher.find()) {
             version = matcher.group(0);
             if (version == null)
                 return null;
 
             int beginIndex = sentence.lastIndexOf(version);
             int regexStart = beginIndex;
-            beginIndex = beginIndex > 0 ? beginIndex-- : 0;
+            beginIndex = beginIndex > 0 ? beginIndex - 1 : 0;
 
-            /**
-             * Find the first capitalized word before the regex to extract version info
+            /*
+              Find the first capitalized word before the regex to extract version info
              */
             boolean firstCaps = false;
             boolean spaceAfterCaps = false;
@@ -397,35 +388,32 @@ public class ParseCVEDescription extends AbstractCveParser implements ParserStra
             beginIndex++; // skip space
             version = sentence.substring(beginIndex, regexStart + version.length());
 
-            /**
-             * if the previous word is not a product name? May be like at/in/of etc. still
-             * return null
+            /*
+              if the previous word is not a product name? May be like at/in/of etc. still
+              return null
              */
             if (regexStart - beginIndex < 5)
                 return null;
-
-            break;
         }
         return version;
     }
 
     /**
-     * get CVE IDs
-     *
-     * @param strContent
-     * @param parsingASentence TODO
-     * @return
+     * find unique CVE IDs in a given string of content
+     * @param strContent - content we are searching
+     * @param parsingASentence - are we parsing a sentence or a whole document?
+     * @return - a map of unique CVE IDs and their distance from the previous CVE ID
      */
     private Map<String, Integer> getUniqueCVEIDs(String strContent, boolean parsingASentence) {
         Pattern pattern = Pattern.compile(regexCVEID);
         Matcher matcher = pattern.matcher(strContent);
 
-        /**
-         * The hash map key is the CVE ID and the value is its distance from the CVE ID
-         * before it. We use this proximity info to see if we have something like
-         * "CVE-2016-2108, CVE-2016-2107, CVE-2016-2105, CVE-2016-2106" in a sentence.
-         * If yes the sentence context is assumed to be related to all CVE IDs in the
-         * sentence
+        /*
+          The hash map key is the CVE ID and the value is its distance from the CVE ID
+          before it. We use this proximity info to see if we have something like
+          "CVE-2016-2108, CVE-2016-2107, CVE-2016-2105, CVE-2016-2106" in a sentence.
+          If yes the sentence context is assumed to be related to all CVE IDs in the
+          sentence
          */
         Map<String, Integer> cveIDs = new HashMap<>();
 
@@ -445,19 +433,16 @@ public class ParseCVEDescription extends AbstractCveParser implements ParserStra
     }
 
     /**
-     *
-     * @param strContent
-     * @return
+     * Find the first CVE ID in a given string of content
+     * @param strContent - string we are searching
+     * @return - first CVE ID in the string
      */
     private String getFirstCveIdFromString(String strContent) {
         String cveID = null;
         Pattern pattern = Pattern.compile(regexCVEID);
         Matcher matcher = pattern.matcher(strContent);
-
-        while (matcher.find()) {
+        if (matcher.find())
             cveID = matcher.group(0);
-            break;
-        }
         return cveID;
     }
 }
