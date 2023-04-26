@@ -122,10 +122,11 @@ public class NVIPMain {
 		//  2.) Store run stats
 		//  3.) log csv files
 		//  we shouldn't be updating dailyrun after insert, it should all be one run
+		int runId = databaseHelper.getLatestRunId();
+
+		nvipMain.storeCVEs(crawledVulnerabilityList, runId);
 		DailyRun dailyRunStats = nvipMain.insertStats(databaseHelper, crawledVulnerabilityList, cveListMap.get("nvd").size(),
 				cveListMap.get("mitre").size(), cveListMap.get("nvd-mitre").size());
-		int runId = dailyRunStats.getRunId();
-		nvipMain.storeCVEs(crawledVulnerabilityList, runId);
 
 		// log .csv files
 		logger.info("Creating output CSV files...");
@@ -155,7 +156,6 @@ public class NVIPMain {
 			// repos will be cloned to patch-repos directory, multi-threaded 6 threads.
 			jGitCVEPatchDownloader.parseMulitThread("patch-repos", 6);
 		}
-
 
 		logger.info("Done!");
 	}

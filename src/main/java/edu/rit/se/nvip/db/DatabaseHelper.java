@@ -113,8 +113,8 @@ public class DatabaseHelper {
 			+ "not_in_both_count, new_cve_count, added_cve_count, updated_cve_count) VALUES (?,?,?,?,?,?,?,?,?);";
 	private final String updateDailyRunSql = "UPDATE dailyrunhistory SET crawl_time_min = ?, db_time_min = ?, total_cve_count = ?, not_in_nvd_count = ?, "
 			+ "not_in_mitre_count = ?, not_in_both_count = ?, new_cve_count = ?, avg_time_gap_nvd = ?, avg_time_gap_mitre = ? WHERE (run_id = ?);";
-	private final String selectAverageTimeGapNvd = "SELECT avg(v.time_gap_nvd) as gapNvd from vulnerability v where Date(v.created_date) = CURDATE()";
-	private final String selectAverageTimeGapMitre = "SELECT avg(v.time_gap_mitre) as gapMitre from vulnerability v where Date(v.created_date) = CURDATE()";
+	private final String selectAverageTimeGapNvd = "SELECT avg(v.time_gap_nvd) as gapNvd from vulnerability v where Date(v.created_date) >= CURDATE()";
+	private final String selectAverageTimeGapMitre = "SELECT avg(v.time_gap_mitre) as gapMitre from vulnerability v where Date(v.created_date) >= CURDATE()";
 
 	private final String insertVdoCharacteristicSql = "INSERT INTO vdocharacteristic (cve_id, vdo_label_id,vdo_confidence,vdo_noun_group_id) VALUES (?,?,?,?);";
 	private final String deleteVdoCharacteristicSql = "DELETE FROM vdocharacteristic WHERE cve_id=?;";
@@ -1361,6 +1361,30 @@ public class DatabaseHelper {
 		return maxRunId;
 	}
 
+
+	/**
+	 * For getting the latest run ID from dailyrunhistory
+	 * @return
+	 */
+	public int getLatestRunId() {
+		int maxRunId = -1;
+
+		try {
+			Connection conn = getConnection();
+			Statement stmt = conn.createStatement();
+
+			String maxRunIdSQL = "SELECT max(run_id) as run_id FROM dailyrunhistory";
+			ResultSet rs = stmt.executeQuery(maxRunIdSQL);
+			if (rs.next()) {
+				maxRunId = rs.getInt("run_id");
+			}
+		} catch (Exception e) {
+			logger.error("ERROR: Error when trying to input Daily Run Stats\n{}", e.toString());
+		}
+
+		return maxRunId;
+	}
+
 	/**
 	 * update DailyRun
 	 * 
@@ -1391,6 +1415,7 @@ public class DatabaseHelper {
 			float crawlTime = Float.parseFloat(df.format(dailyRun.getCrawlTimeMin()));
 			pstmt.setFloat(1, crawlTime);
 			double dbTime = Double.parseDouble(df.format(dailyRun.getDatabaseTimeMin()));
+
 			pstmt.setDouble(2, dbTime);
 			pstmt.setInt(3, dailyRun.getTotalCveCount());
 			pstmt.setInt(4, dailyRun.getNotInNvdCount());
@@ -1404,6 +1429,9 @@ public class DatabaseHelper {
 			pstmt.setDouble(9, avgMitreTime);
 			pstmt.setInt(10, runId);
 			pstmt.executeUpdate();
+
+			logger.info("AVG NVD TIME: {}", avgNvdTime);
+			logger.info("AVG MITRE TIME: {}", avgMitreTime);
 
 		} catch (Exception e) {
 			try {
