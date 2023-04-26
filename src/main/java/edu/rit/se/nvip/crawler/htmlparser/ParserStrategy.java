@@ -6,5 +6,5 @@ import java.util.List;
 
 public interface ParserStrategy {
 
-    List<CompositeVulnerability> parseWebPageGeneric(String sSourceURL, String sCVEContentHTML);
+    List<CompositeVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML);
 }
