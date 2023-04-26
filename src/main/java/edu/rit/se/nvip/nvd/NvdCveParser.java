@@ -52,12 +52,31 @@ public class NvdCveParser {
 	 * @param jsonList <year> as a 4 digit int
 	 * @return list of CVE IDs and Descriptions
 	 */
-	public List<String[]> parseCVEs(ArrayList<JsonObject> jsonList) {
+	public List<String[]> parseCVEs(JsonArray jsonList) {
 		List<String[]> allData = new ArrayList<>();
 		// parse all CVEs in all JSONs (if multiple)
-		for (JsonObject json : jsonList) {
+		for (JsonElement json : jsonList) {
+
+			JsonObject cve = (JsonObject) json;
+
+			String cveId = cve.getAsJsonObject("cve").get("id").getAsString();
+			String description = cve.getAsJsonArray("descriptions").get(0).getAsJsonObject().get("value").getAsString();
+			JsonArray cvss = cve.getAsJsonObject("metrics").getAsJsonArray("cvssMetricV31");
+			String baseScore = "";
+			String baseSeverity = "";
+			String impactScore = "";
+			String exploitabilityScore = "";
+			String associatedCwes = "";
+
+
+			if (cvss.size() >= 0) {
+
+			}
+
+
 			// parse json
-			List<String[]> data = parseCveJson(json);
+			List<String[]> data = parseCveJson((JsonObject) json);
+			allData.add(new String[]{cveId, description, baseScore, baseSeverity, impactScore, exploitabilityScore, associatedCwes, sbAdvisories.toString(), sbPatches.toString(), sbExploits.toString()});
 			allData.addAll(data);
 		}
 
