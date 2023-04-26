@@ -88,7 +88,7 @@ https://www.whatsapp.com/security/advisories
 https://www.silver-peak.com/support/user-documentation/security-advisories
 https://www.proofpoint.com/us/security/security-advisories
 https://www.zyxel.com/us/en/support/security_advisories.shtml
-https://www.arista.com/en/support/advisories-notices/security-advisories
+https://www.arista.com/en/support/advisories-notices/security-advisory/
 https://jira.sonarsource.com/browse/SONARSCCVS-6?jql=text%20~%20%22CVE%22
 https://www.npmjs.com/advisories
 https://www.wibu.com/us/support/security-advisories.html
