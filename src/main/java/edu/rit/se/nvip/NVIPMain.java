@@ -34,6 +34,7 @@ import java.util.stream.Collectors;
 
 import edu.rit.se.nvip.crawler.github.PyPAGithubScraper;
 
+import edu.rit.se.nvip.nvd.NvdCveController;
 import edu.rit.se.nvip.patchfinder.JGitCVEPatchDownloader;
 import edu.rit.se.nvip.patchfinder.PatchFinder;
 import org.apache.logging.log4j.LogManager;
@@ -55,7 +56,6 @@ import edu.rit.se.nvip.model.CompositeVulnerability.CveReconcileStatus;
 import edu.rit.se.nvip.model.DailyRun;
 import edu.rit.se.nvip.model.NvipSource;
 import edu.rit.se.nvip.model.Vulnerability;
-import edu.rit.se.nvip.nvd.PullNvdCveMain;
 import edu.rit.se.nvip.productnameextractor.AffectedProductIdentifier;
 import edu.rit.se.nvip.utils.CveUtils;
 import edu.rit.se.nvip.utils.MyProperties;
@@ -100,62 +100,64 @@ public class NVIPMain {
 		CveLogDiff cveLogger = new CveLogDiff(properties);
 		List<String> urls = nvipMain.grabSeedURLs();
 		if ((Boolean) dataVars.get("refreshNvdList")) {
-			PullNvdCveMain.pullFeeds((String) dataVars.get("dataDir")); // update nvd CVEs
+			logger.info("Refreshing NVD CVE List");
+			String filepath = dataVars.get("dataDir") + "/nvd-cve.csv";
+			new NvdCveController().pullNvdCve(filepath, false);
 		}
 
-		// Crawler
-		long crawlStartTime = System.currentTimeMillis();
-		HashMap<String, CompositeVulnerability> crawledCVEs = nvipMain.crawlCVEs(urls);
-		long crawlEndTime = System.currentTimeMillis();
-		logger.info("Crawler Finished\nTime: {}", crawlEndTime - crawlStartTime);
+//		// Crawler
+//		long crawlStartTime = System.currentTimeMillis();
+//		HashMap<String, CompositeVulnerability> crawledCVEs = nvipMain.crawlCVEs(urls);
+//		long crawlEndTime = System.currentTimeMillis();
+//		logger.info("Crawler Finished\nTime: {}", crawlEndTime - crawlStartTime);
+//
+//		// Process and Reconcile
+//		HashMap<String, List<Object>> cveListMap = nvipMain.processCVEs(crawledCVEs);
+//		List<CompositeVulnerability> crawledVulnerabilityList = nvipMain.reconcileCVEs(cveListMap);
+//
+//		// Characterize
+//		crawledVulnerabilityList = nvipMain.characterizeCVEs(crawledVulnerabilityList);
+//
+//		// Prepare stats and Store found CVEs in DB
+//		// TODO: Refactor this to use this logic
+//		//  1.) Store CVEs
+//		//  2.) Store run stats
+//		//  3.) log csv files
+//		//  we shouldn't be updating dailyrun after insert, it should all be one run
+//		int runId = databaseHelper.getLatestRunId();
+//
+//		nvipMain.storeCVEs(crawledVulnerabilityList, runId);
+//		DailyRun dailyRunStats = nvipMain.insertStats(databaseHelper, crawledVulnerabilityList, cveListMap.get("nvd").size(),
+//				cveListMap.get("mitre").size(), cveListMap.get("nvd-mitre").size());
+//
+//		// log .csv files
+//		logger.info("Creating output CSV files...");
+//		cveLogger.logAndDiffCVEs(crawlStartTime, crawlEndTime, cveListMap, cveListMap.size());
+//
+//		// record additional available stats
+//		dailyRunStats.setCrawlTimeMin((float) ((crawlEndTime - crawlStartTime) / (1000.0 * 60)));
+//		databaseHelper.updateDailyRun(runId, dailyRunStats);
 
-		// Process and Reconcile
-		HashMap<String, List<Object>> cveListMap = nvipMain.processCVEs(crawledCVEs);
-		List<CompositeVulnerability> crawledVulnerabilityList = nvipMain.reconcileCVEs(cveListMap);
-
-		// Characterize
-		crawledVulnerabilityList = nvipMain.characterizeCVEs(crawledVulnerabilityList);
-
-		// Prepare stats and Store found CVEs in DB
-		// TODO: Refactor this to use this logic
-		//  1.) Store CVEs
-		//  2.) Store run stats
-		//  3.) log csv files
-		//  we shouldn't be updating dailyrun after insert, it should all be one run
-		int runId = databaseHelper.getLatestRunId();
-
-		nvipMain.storeCVEs(crawledVulnerabilityList, runId);
-		DailyRun dailyRunStats = nvipMain.insertStats(databaseHelper, crawledVulnerabilityList, cveListMap.get("nvd").size(),
-				cveListMap.get("mitre").size(), cveListMap.get("nvd-mitre").size());
-
-		// log .csv files
-		logger.info("Creating output CSV files...");
-		cveLogger.logAndDiffCVEs(crawlStartTime, crawlEndTime, cveListMap, cveListMap.size());
-
-		// record additional available stats
-		dailyRunStats.setCrawlTimeMin((float) ((crawlEndTime - crawlStartTime) / (1000.0 * 60)));
-		databaseHelper.updateDailyRun(runId, dailyRunStats);
-
-		// Exploit Collection
-		if ((boolean) exploitVars.get("exploitFinderEnabled")) {
-			logger.info("Identifying exploits for {} exploits...", crawledVulnerabilityList.size());
-			ExploitIdentifier exploitIdentifier = new ExploitIdentifier(crawledVulnerabilityList, databaseHelper);
-			int count = exploitIdentifier.identifyAndSaveExploits(crawledVulnerabilityList);
-			logger.info("Extracted exploits for {} CVEs!", count);
-		}
-
-		//Patch Collection
-		nvipMain.spawnProcessToIdentifyAndStoreAffectedReleases(crawledVulnerabilityList);
-
-		if (Boolean.parseBoolean(System.getenv("PATCHFINDER_ENABLED"))) {
-			// Parse for patches and store them in the database
-			PatchFinder patchFinder = new PatchFinder();
-			Map<String, ArrayList<String>> cpes = databaseHelper.getCPEsAndCVE();
-			patchFinder.parseMassURLs(cpes);
-			JGitCVEPatchDownloader jGitCVEPatchDownloader = new JGitCVEPatchDownloader();
-			// repos will be cloned to patch-repos directory, multi-threaded 6 threads.
-			jGitCVEPatchDownloader.parseMulitThread("patch-repos", 6);
-		}
+//		// Exploit Collection
+//		if ((boolean) exploitVars.get("exploitFinderEnabled")) {
+//			logger.info("Identifying exploits for {} exploits...", crawledVulnerabilityList.size());
+//			ExploitIdentifier exploitIdentifier = new ExploitIdentifier(crawledVulnerabilityList, databaseHelper);
+//			int count = exploitIdentifier.identifyAndSaveExploits(crawledVulnerabilityList);
+//			logger.info("Extracted exploits for {} CVEs!", count);
+//		}
+//
+//		//Patch Collection
+//		nvipMain.spawnProcessToIdentifyAndStoreAffectedReleases(crawledVulnerabilityList);
+//
+//		if (Boolean.parseBoolean(System.getenv("PATCHFINDER_ENABLED"))) {
+//			// Parse for patches and store them in the database
+//			PatchFinder patchFinder = new PatchFinder();
+//			Map<String, ArrayList<String>> cpes = databaseHelper.getCPEsAndCVE();
+//			patchFinder.parseMassURLs(cpes);
+//			JGitCVEPatchDownloader jGitCVEPatchDownloader = new JGitCVEPatchDownloader();
+//			// repos will be cloned to patch-repos directory, multi-threaded 6 threads.
+//			jGitCVEPatchDownloader.parseMulitThread("patch-repos", 6);
+//		}
 
 		logger.info("Done!");
 	}
@@ -407,6 +409,8 @@ public class NVIPMain {
 			for (NvipSource nvipSource : dbsources)
 				urls.add(nvipSource.getUrl());
 
+			logger.info("Loaded {} source URLs from database!", urls.size());
+
 			File seeds = new File((String) crawlerVars.get("seedFileDir"));
 			BufferedReader seedReader = new BufferedReader(new FileReader(seeds));
 			List<String> seedURLs = new ArrayList<>();
@@ -425,8 +429,8 @@ public class NVIPMain {
 					urls.add(seedURL);
 			}
 
-			logger.info("Loaded {} source URLs from database!", urls.size());
-			UtilHelper.setProperties(properties);
+			logger.info("Loaded {} total seed URLs", urls.size());
+
 		} catch (IOException e) {
 			logger.error("Error while starting NVIP: {}", e.toString());
 		}
