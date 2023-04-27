@@ -320,7 +320,7 @@ public class DbParallelProcessor {
 					 * to be able to calculate a time gap for it (later on) when it is included in
 					 * Mitre with a proper description (not reserved etc.)!
 					 */
-					int hours = 0;
+					int hours;
 					if (recordTimeGap) {
 						if (createdDateTime == null) {
 							// Just use the current date if the create date isn't provided
@@ -333,26 +333,18 @@ public class DbParallelProcessor {
 						if (!vulnAlreadyInNvd && vuln.doesExistInNvd()) {
 							// if it did not exist in NVD, but found now, record time gap!
 							vuln.setTimeGapNvd(hours);
-							pstmt = connection.prepareStatement(updateNvdTimeGapSql);
-							pstmt.setInt(1, vuln.getTimeGapNvd());
-							pstmt.setString(2, vuln.getCveId());
-							pstmt.executeUpdate();
-
+							databaseHelper.updateNvdTimeGap(vuln.getTimeGapNvd(), vuln.getCveId());
 							logger.info("CVE added to NVD! There is {} hours gap!\tCve data: {}", hours, vuln.toString());
 							timeGapFound = true;
 
 							// record time gap
-							addToCveStatusChangeHistory(vuln, connection, existingAttribs, "NVD", existingAttribs.getNvdStatus(),
+							databaseHelper.addToCveStatusChangeHistory(vuln, existingAttribs, "NVD", existingAttribs.getNvdStatus(),
 									vuln.getNvdStatus(), true, hours);
 						}
 						if (!vulnAlreaadyInMitre && vuln.doesExistInMitre()) {
 							// if it did not exist in MITRE, but found now, record time gap!
 							vuln.setTimeGapMitre(hours);
-							pstmt = connection.prepareStatement(updateMitreTimeGapSql);
-							pstmt.setInt(1, vuln.getTimeGapMitre());
-							pstmt.setString(2, vuln.getCveId());
-							pstmt.executeUpdate();
-
+							databaseHelper.updateMitreTimeGap(vuln.getTimeGapMitre(), vuln.getCveId());
 							logger.info("CVE added to MITRE! There is {} hours gap!\tCve data: {}", hours, vuln.toString());
 							timeGapFound = true;
 
