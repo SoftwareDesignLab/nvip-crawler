@@ -693,106 +693,6 @@ public class DatabaseHelper {
 	}
 
 	/**
-	 * Takes in a list of vulnerabilities (vulnList) and inserts each into the
-	 * Vulnerability table in the database. If the CveId exists in the Vulnerability
-	 * table already, then the updateVuln function is called.
-	 * 
-	 * @param vulnList List of Vulnerability objects to be inserted
-	 * @return true if successfully inserted, false if an exception occurred.
-	 */
-	public boolean recordVulnerabilityList(List<CompositeVulnerability> vulnList, int runId) {
-		/**
-		 * load existing vulnerabilities. this is supposed to be done once for during
-		 * each run! Using a static map, to make sure each thread does not call this
-		 * separately!
-		 */
-		existingVulnMap = getExistingVulnerabilities();
-		try (Connection connection = getConnection()) {
-			int insertCount = 0, updateCount = 0, noChangeCount = 0;
-			for (int i = 0; i < vulnList.size(); i++) {
-				CompositeVulnerability vuln = vulnList.get(i);
-
-				if (i % 500 == 0 && i > 0)
-					logger.info("Updated/inserted/notchanged {}/{}/{} of {} vulnerabilities", updateCount, insertCount,
-							noChangeCount, vulnList.size());
-
-				try {
-					if (existingVulnMap.containsKey(vuln.getCveId())) {
-						int count = updateVulnerability(vuln, connection, existingVulnMap, runId);
-						if (count > 0)
-							updateCount++;
-						else
-							noChangeCount++;
-					} else {
-						try (PreparedStatement pstmt = connection.prepareStatement(insertVulnSql);) {
-
-							pstmt.setString(1, vuln.getCveId());
-							pstmt.setString(2, vuln.getDescription());
-							pstmt.setString(3, vuln.getPlatform());
-							pstmt.setString(4, vuln.getPatch());
-							pstmt.setString(5, formatDate(vuln.getPublishDate()));
-
-							pstmt.setString(6, formatDate(vuln.getLastModifiedDate())); // during insert create date is last modified date
-							pstmt.setString(7, formatDate(vuln.getLastModifiedDate()));
-							pstmt.setString(8, formatDate(vuln.getFixDate()));
-							/**
-							 * Bug fix: indexes 9 and 10 were wrong
-							 */
-							pstmt.setInt(9, vuln.getNvdStatus());
-							pstmt.setInt(10, vuln.getMitreStatus());
-							pstmt.setInt(11, vuln.getTimeGapNvd());
-							pstmt.setInt(12, vuln.getTimeGapMitre());
-							pstmt.executeUpdate();
-						} catch (Exception e) {
-							logger.error("ERROR: Failed to insert CVE: {}\n{}", vuln.getCveId(), e.toString());
-							continue; // if you have an error here, skip the rest!
-						}
-
-						/**
-						 * insert sources
-						 */
-						insertVulnSource(vuln.getVulnSourceList(), connection);
-
-						/**
-						 * insert VDO
-						 */
-						insertVdoCharacteristic(vuln.getVdoCharacteristicInfo(), connection);
-
-						/**
-						 * insert CVSS
-						 */
-						insertCvssScore(vuln.getCvssScoreInfo(), connection);
-
-						/**
-						 * record updates
-						 */
-						List<Integer> vulnIdList = getVulnerabilityIdList(vuln.getCveId(), connection);
-						for (Integer vulnId : vulnIdList)
-							insertVulnerabilityUpdate(vulnId, "description", "New CVE: " + vuln.getCveId(), runId, connection);
-
-						insertCount++;
-					}
-				} catch (Exception e) {
-					logger.error("ERROR: Failed to insert CVE: {}\n{}", vuln.getCveId(), e.toString());
-				}
-
-			}
-
-			int total = updateCount + insertCount + noChangeCount;
-			logger.info("DatabaseHelper updated/inserted/notchanged {} [ {}/{}/{} ] of {} vulnerabilities.",
-					total, updateCount, insertCount, noChangeCount, vulnList.size());
-
-			// do time gap analysis for CVEs in vulnList
-			checkNvdMitreStatusForCrawledVulnerabilityList(connection, vulnList, existingVulnMap);
-
-		} catch (Exception e) {
-			logger.error(e.getMessage());
-			return false;
-		}
-		return true;
-	}
-
-	/**
 	 * For Inserting a Vulnerability into the vulnerability table
 	 */
 	public void insertVulnerability(CompositeVulnerability vuln) {
@@ -826,21 +726,14 @@ public class DatabaseHelper {
 	 * in.
 	 * 
 	 * @param vuln            Vulnerability object to be updated in database
-	 * @param connection      HikariCP connection to database
 	 * @param existingVulnMap list of exiting vulnerabilities
 	 * @throws SQLException
 	 */
 	public int updateVulnerability(CompositeVulnerability vuln,
 			Map<String, Vulnerability> existingVulnMap, int runId) throws SQLException {
 
-		Vulnerability existingAttribs = existingVulnMap.get(vuln.getCveId());
-
-		// check reconcile status, is an update needed?
-		// if no need to update then return
-		if (vuln.getCveReconcileStatus() == CompositeVulnerability.CveReconcileStatus.DO_NOT_CHANGE)
-			return 0;
-
-		try (Connection connection = getConnection(); PreparedStatement pstmt = connection.prepareStatement(updateVulnSql);) {
+		try (Connection connection = getConnection();
+			 PreparedStatement pstmt = connection.prepareStatement(updateVulnSql)) {
 			// update vulnerability
 			pstmt.setString(1, vuln.getDescription());
 			pstmt.setString(2, vuln.getPlatform());
@@ -855,30 +748,6 @@ public class DatabaseHelper {
 			// you may still continue updating other vuln attribs below!
 			logger.error("Error while updating CVE: {} Exception: {}:{}", vuln.getCveId(), e1.toString(), e1.getMessage());
 		}
-
-		/**
-		 * update sources
-		 */
-		deleteVulnSource(vuln.getCveId(), connection); // clear existing ones
-		insertVulnSource(vuln.getVulnSourceList(), connection); // add them
-
-		/**
-		 * update vdo
-		 */
-		updateVdoLabels(vuln.getCveId(), vuln.getVdoCharacteristicInfo(), connection);
-
-		/**
-		 * update cvss scores
-		 */
-		deleteCvssScore(vuln.getCveId(), connection); // clear existing ones
-		insertCvssScore(vuln.getCvssScoreInfo(), connection); // add them
-
-		/**
-		 * record updates if there is an existing vuln
-		 */
-		if (existingAttribs != null)
-			insertVulnerabilityUpdate(existingAttribs.getVulnID(), "description", existingAttribs.getDescription(), runId,
-					connection);
 
 		return 1;
 	}
@@ -911,7 +780,6 @@ public class DatabaseHelper {
 	 * Record CVE status changes in NVD/MITRE
 	 * 
 	 * @param vuln
-	 * @param connection
 	 * @param existingAttribs
 	 * @param comparedAgainst
 	 * @param oldStatus
@@ -1013,23 +881,6 @@ public class DatabaseHelper {
 		} catch (SQLException e) {
 			logger.error("ERROR: Failed to update Mitre Status for CVE: {}\n{}", cveId, e);
 		}
-	}
-
-	/**
-	 * Check if we need to record any time gaps for any CVE!
-	 * 
-	 * Simply check if an existing vulnerability (that did not exist at NVD/MITRE)
-	 * is there NOW!
-	 * 
-	 * @param connection
-	 * @param crawledVulnerabilityList
-	 * @param existingVulnMap
-	 */
-	public int[] checkNvdMitreStatusForCrawledVulnerabilityList(Connection connection,
-			List<CompositeVulnerability> crawledVulnerabilityList, Map<String, Vulnerability> existingVulnMap) {
-
-
-		return new int[] { existingCveCount, newCveCount, timeGapCount };
 	}
 
 	/**
@@ -1139,7 +990,6 @@ public class DatabaseHelper {
 	 * With the same connection
 	 * 
 	 * @param vulnSourceList
-	 * @param conn
 	 * @return
 	 */
 	public boolean insertVulnSource(List<VulnSource> vulnSourceList) {
@@ -1341,7 +1191,6 @@ public class DatabaseHelper {
 	 * Insert vdo characteristic
 	 * 
 	 * @param vdoCharacteristicList
-	 * @param conn
 	 * @return
 	 */
 	public boolean insertVdoCharacteristic(List<VdoCharacteristic> vdoCharacteristicList) {
@@ -1368,18 +1217,21 @@ public class DatabaseHelper {
 	 * 
 	 * @param cveId
 	 * @param vdoCharacteristicList
-	 * @param conn
 	 */
-	private void updateVdoLabels(String cveId, List<VdoCharacteristic> vdoCharacteristicList, Connection conn) {
+	public void updateVdoLabels(String cveId, List<VdoCharacteristic> vdoCharacteristicList) {
 
-		try (PreparedStatement pstmt = conn.prepareStatement(deleteVdoCharacteristicSql);) {
+		// Delete existing VDO Labels
+		try (Connection connection = getConnection();
+			 PreparedStatement pstmt = connection.prepareStatement(deleteVdoCharacteristicSql);) {
 			pstmt.setString(1, cveId);
 			pstmt.executeUpdate();
 		} catch (SQLException e) {
 			logger.error(e.toString());
 		}
 
-		try (PreparedStatement pstmt = conn.prepareStatement(insertVdoCharacteristicSql);) {
+		// Insert new ones
+		try (Connection connection = getConnection();
+			 PreparedStatement pstmt = connection.prepareStatement(insertVdoCharacteristicSql);) {
 			for (int i = 0; i < vdoCharacteristicList.size(); i++) {
 				pstmt.setString(1, vdoCharacteristicList.get(i).getCveId());
 				pstmt.setInt(2, vdoCharacteristicList.get(i).getVdoLabelId());
@@ -1422,8 +1274,9 @@ public class DatabaseHelper {
 	 * @param cveId
 	 * @return
 	 */
-	public int deleteCvssScore(String cveId, Connection conn) {
-		try (PreparedStatement pstmt = conn.prepareStatement(deleteCvssScoreSql);) {
+	public int deleteCvssScore(String cveId) {
+		try (Connection connection = getConnection();
+			 PreparedStatement pstmt = connection.prepareStatement(deleteCvssScoreSql);) {
 			pstmt.setString(1, cveId);
 			return pstmt.executeUpdate();
 		} catch (SQLException e) {

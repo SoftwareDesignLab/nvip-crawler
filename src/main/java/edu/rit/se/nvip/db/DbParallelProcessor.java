@@ -23,8 +23,6 @@
  */
 package edu.rit.se.nvip.db;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -133,6 +131,12 @@ public class DbParallelProcessor {
 			logger.info("Active, Idle and Total connections BEFORE insert: {}", databaseHelper.getConnectionStatus());
 			Map<String, Vulnerability> existingVulnMap = databaseHelper.getExistingVulnerabilities();
 
+			/**
+			 * Takes in a list of vulnerabilities (vulnList) and inserts each into the
+			 * Vulnerability table in the database. If the CveId exists in the Vulnerability
+			 * table already, then the updateVuln function is called.
+			 *
+			 */
 			int insertCount = 0, updateCount = 0, noChangeCount = 0;
 			for (int i = 0; i < vulnList.size(); i++) {
 				CompositeVulnerability vuln = vulnList.get(i);
@@ -143,7 +147,39 @@ public class DbParallelProcessor {
 
 				try {
 					if (existingVulnMap.containsKey(vuln.getCveId())) {
-						int count = databaseHelper.updateVulnerability(vuln, existingVulnMap, runId);
+						// check reconcile status, is an update needed?
+						// if no need to update then return
+						int count;
+						Vulnerability existingAttribs = existingVulnMap.get(vuln.getCveId());
+						if (vuln.getCveReconcileStatus() == CompositeVulnerability.CveReconcileStatus.DO_NOT_CHANGE) {
+							count = 0;
+						} else {
+							count = databaseHelper.updateVulnerability(vuln, existingVulnMap, runId);
+							/**
+							 * update sources
+							 */
+							databaseHelper.deleteVulnSource(vuln.getCveId()); // clear existing ones
+							databaseHelper.insertVulnSource(vuln.getVulnSourceList()); // add them
+
+							/**
+							 * update vdo
+							 */
+							databaseHelper.updateVdoLabels(vuln.getCveId(), vuln.getVdoCharacteristicInfo());
+
+							/**
+							 * update cvss scores
+							 */
+							databaseHelper.deleteCvssScore(vuln.getCveId()); // clear existing ones
+							databaseHelper.insertCvssScore(vuln.getCvssScoreInfo()); // add them
+
+							/**
+							 * record updates if there is an existing vuln
+							 */
+							if (existingAttribs != null)
+								databaseHelper.insertVulnerabilityUpdate(existingAttribs.getVulnID(), "description",
+										existingAttribs.getDescription(), runId);
+						}
+
 						if (count > 0)
 							updateCount++;
 						else
@@ -211,7 +247,7 @@ public class DbParallelProcessor {
 			}
 
 			// do time gap analysis for CVEs in vulnList
-			databaseHelper.checkNvdMitreStatusForCrawledVulnerabilityList(vulnList, existingVulnMap);
+			//databaseHelper.checkNvdMitreStatusForCrawledVulnerabilityList(vulnList, existingVulnMap);
 
 
 			logger.info("Active, Idle and Total connections AFTER insert (before shutdown): {}", databaseHelper.getConnectionStatus());
@@ -241,13 +277,10 @@ public class DbParallelProcessor {
 		 * reserved/rejected etc.
 		 *
 		 * @param vuln
-		 * @param connection
 		 * @param existingAttribs
 		 */
-		private boolean checkNvdMitreStatusForVulnerability(CompositeVulnerability vuln, Connection connection,
-															Vulnerability existingAttribs) {
+		private boolean checkNvdMitreStatusForVulnerability(CompositeVulnerability vuln, Vulnerability existingAttribs) {
 			boolean timeGapFound = false;
-			PreparedStatement pstmt;
 			boolean vulnAlreadyInNvd = existingAttribs.doesExistInNvd();
 			boolean vulnAlreaadyInMitre = existingAttribs.doesExistInMitre();
 
