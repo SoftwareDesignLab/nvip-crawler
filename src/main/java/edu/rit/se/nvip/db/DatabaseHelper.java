@@ -1102,10 +1102,8 @@ public class DatabaseHelper {
 	public int getLatestRunId() {
 		int maxRunId = -1;
 
-		try {
-			Connection conn = getConnection();
-			Statement stmt = conn.createStatement();
-
+		try (Connection conn = getConnection();
+			 Statement stmt = conn.createStatement();) {
 			String maxRunIdSQL = "SELECT max(run_id) as run_id FROM dailyrunhistory";
 			ResultSet rs = stmt.executeQuery(maxRunIdSQL);
 			if (rs.next()) {

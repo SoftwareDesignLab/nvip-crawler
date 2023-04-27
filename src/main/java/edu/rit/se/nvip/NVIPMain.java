@@ -130,7 +130,11 @@ public class NVIPMain {
 
 		dailyRunStats.calculateAddedUpdateCVEs(crawledVulnerabilityList);
 
-		//nvipMain.insertStats(dailyRunStats);
+		databaseHelper.insertDailyRun(dailyRunStats);
+		logger.info("Run @ {}\nSummary:\nTotal CVEs found from this run: {}\nTotal CVEs not in NVD: {}" +
+						"\nTotal CVEs not in Mitre: {}\nTotal CVEs not in both: {}", dailyRunStats.getRunDateTime(),
+				dailyRunStats.getTotalCveCount(), dailyRunStats.getNotInNvdCount(), dailyRunStats.getNotInMitreCount(),
+				dailyRunStats.getNotInBothCount(), dailyRunStats.getAddedCveCount(), dailyRunStats.getUpdatedCveCount());
 
 		// log .csv files
 //		logger.info("Creating output CSV files...");
@@ -762,52 +766,6 @@ public class NVIPMain {
 	}
 
 	/**
-	 * Insert a stats record to db
-	 *
-	 * @param databaseHelper
-	 * @param totNotInNvd
-	 * @param totNotInMitre
-	 * @param totNotInBoth
-	 * @return
-	 */
-	private DailyRun insertStats(DatabaseHelper databaseHelper, List<CompositeVulnerability> crawledVulnerabilityList,
-								 int totNotInNvd, int totNotInMitre, int totNotInBoth) {
-		// insert a record to keep track of daily run history
-		logger.info("Preparing Daily Run Stats...");
-		DailyRun dailyRunStats = new DailyRun();
-		try {
-			dailyRunStats.setRunDateTime(UtilHelper.longDateFormat.format(new Date()));
-			dailyRunStats.setTotalCveCount(crawledVulnerabilityList.size());
-			dailyRunStats.setNotInNvdCount(totNotInNvd);
-			dailyRunStats.setNotInMitreCount(totNotInMitre);
-			dailyRunStats.setNotInBothCount(totNotInBoth);
-
-			// Count added/updated CVEs
-			int addedCveCount = 0, updatedCveCount = 0;
-			for (CompositeVulnerability vuln : crawledVulnerabilityList) {
-				if (vuln.getCveReconcileStatus().equals(CveReconcileStatus.INSERT))
-					addedCveCount++;
-				else if (vuln.getCveReconcileStatus().equals(CveReconcileStatus.UPDATE))
-					updatedCveCount++;
-			}
-			dailyRunStats.setAddedCveCount(addedCveCount);
-			dailyRunStats.setUpdatedCveCount(updatedCveCount);
-
-			logger.info("Run @ {}\nSummary:\nTotal CVEs found from this run: {}\nTotal CVEs not in NVD: {}" +
-					"\nTotal CVEs not in Mitre: {}\nTotal CVEs not in both: {}", dailyRunStats.getRunDateTime(),
-					dailyRunStats.getTotalCveCount(), dailyRunStats.getNotInNvdCount(), dailyRunStats.getNotInMitreCount(),
-					dailyRunStats.getNotInBothCount(), dailyRunStats.getAddedCveCount(), dailyRunStats.getUpdatedCveCount());
-
-			int runId = databaseHelper.insertDailyRun(dailyRunStats);
-			dailyRunStats.setRunId(runId);
-		} catch (Exception e1) {
-			logger.error("ERROR: Error while recording stats! Could not get a run ID! - {}", e1.toString());
-			System.exit(1);
-		}
-		return dailyRunStats;
-	}
-
-	/**
 	 * Store all processed CVEs in the DB
 	 * @param crawledVulnerabilityList
 	 * @param runId
@@ -826,9 +784,7 @@ public class NVIPMain {
 		}
 
 	}
-
-
-
+	
 
 	/**
 	 * This method spawns a background process to identify affected product(s) for
