@@ -266,12 +266,9 @@ public class DbParallelProcessor {
 
 			if (nvdStatusChanged || mitreStatusChanged) {
 
-				LocalDateTime createdDateTime = null;
-
 				boolean recordTimeGap = (existingAttribs.getCreateDate() != null)
 						&& ((!vulnAlreadyInNvd && vuln.doesExistInNvd()) || (!vulnAlreaadyInMitre && vuln.doesExistInMitre()))
 						&& !CveUtils.isCveReservedEtc(vuln.getDescription());
-
 
 				/**
 				 * Record status changes.
@@ -295,10 +292,14 @@ public class DbParallelProcessor {
 					if (!vulnAlreadyInNvd && vuln.doesExistInNvd()) {
 						databaseHelper.addToCveStatusChangeHistory(vuln, existingAttribs, "NVD", existingAttribs.getNvdStatus(),
 								vuln.getNvdStatus(), true, vuln.getTimeGapNvd());
+						logger.info("Changed NVD Time Gap  CVE {} from {} to {}", vuln.getCveId(), existingAttribs.getTimeGapNvd(),
+								vuln.getTimeGapNvd());
 					}
 					if (!vulnAlreaadyInMitre && vuln.doesExistInMitre()) {
 						databaseHelper.addToCveStatusChangeHistory(vuln, existingAttribs, "MITRE", existingAttribs.getMitreStatus(),
 								vuln.getMitreStatus(), true, vuln.getTimeGapMitre());
+						logger.info("Changed NVD Time Gap  CVE {} from {} to {}", vuln.getCveId(), existingAttribs.getTimeGapMitre(),
+								vuln.getTimeGapMitre());
 					}
 				} else {
 					if (nvdStatusChanged)
