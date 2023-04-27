@@ -919,11 +919,12 @@ public class DatabaseHelper {
 	 * @param timeGapFound
 	 * @param timeGap
 	 */
-	public boolean addToCveStatusChangeHistory(CompositeVulnerability vuln, Connection connection,
+	public boolean addToCveStatusChangeHistory(CompositeVulnerability vuln,
 			Vulnerability existingAttribs, String comparedAgainst, int oldStatus, int newStatus,
 			boolean timeGapFound, int timeGap) {
 
-		try (PreparedStatement pstmt = connection.prepareStatement(insertCveStatusSql);) {
+		try (Connection connection = getConnection();
+			 PreparedStatement pstmt = connection.prepareStatement(insertCveStatusSql);) {
 			pstmt.setInt(1, existingAttribs.getVulnID());
 			pstmt.setString(2, vuln.getCveId());
 			pstmt.setString(3, comparedAgainst);
@@ -942,10 +943,8 @@ public class DatabaseHelper {
 			}
 			pstmt.setTimestamp(10, new java.sql.Timestamp(longDateFormatMySQL.parse(existingAttribs.getCreateDate()).getTime()));
 			pstmt.executeUpdate();
-			//logger.info("Recorded CVE status change for CVE {}", vuln.getCveId());
 		} catch (Exception e) {
-			logger.error("Error recording CVE status change for {}: {}", vuln.getCveId(), e);
-			e.printStackTrace();
+			logger.error("Error recording CVE status change for {}:\n{}", vuln.getCveId(), e);
 			return false;
 		}
 
@@ -964,7 +963,7 @@ public class DatabaseHelper {
 			pstmt.setString(2, cveId);
 			pstmt.executeUpdate();
 		} catch (SQLException e) {
-			logger.error("ERROR: Failed to update NVD Status for CVE: {}", cveId);
+			logger.error("ERROR: Failed to update NVD Status for CVE: {}\n{}", cveId, e);
 		}
 	}
 
@@ -980,10 +979,41 @@ public class DatabaseHelper {
 			pstmt.setString(2, cveId);
 			pstmt.executeUpdate();
 		} catch (SQLException e) {
-			logger.error("ERROR: Failed to update Mitre Status for CVE: {}", cveId);
+			logger.error("ERROR: Failed to update Mitre Status for CVE: {}\n{}", cveId, e);
 		}
 	}
 
+	/**
+	 * For Updating the NVD time gap in a vulnerability
+	 * @param timeGap
+	 * @param cveId
+	 */
+	public void updateNvdTimeGap(int timeGap, String cveId) {
+		try (Connection connection = getConnection();
+			 PreparedStatement pstmt = connection.prepareStatement(updateNvdTimeGapSql)) {
+			pstmt.setInt(1, timeGap);
+			pstmt.setString(2, cveId);
+			pstmt.executeUpdate();
+		} catch (SQLException e) {
+			logger.error("ERROR: Failed to update Mitre Status for CVE: {}\n{}", cveId, e);
+		}
+	}
+
+	/**
+	 * For updating MITRe time gaps in a vulnerability
+	 * @param timeGap
+	 * @param cveId
+	 */
+	public void updateMitreTimeGap(int timeGap, String cveId) {
+		try (Connection connection = getConnection();
+			 PreparedStatement pstmt = connection.prepareStatement(updateMitreTimeGapSql)) {
+			pstmt.setInt(1, timeGap);
+			pstmt.setString(2, cveId);
+			pstmt.executeUpdate();
+		} catch (SQLException e) {
+			logger.error("ERROR: Failed to update Mitre Status for CVE: {}\n{}", cveId, e);
+		}
+	}
 
 	/**
 	 * Check if we need to record any time gaps for any CVE!
