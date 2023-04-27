@@ -349,17 +349,17 @@ public class DbParallelProcessor {
 							timeGapFound = true;
 
 							// record time gap
-							addToCveStatusChangeHistory(vuln, connection, existingAttribs, "MITRE", existingAttribs.getMitreStatus(),
+							databaseHelper.addToCveStatusChangeHistory(vuln, existingAttribs, "MITRE", existingAttribs.getMitreStatus(),
 									vuln.getMitreStatus(), true, hours);
 						}
 					} else {
 						// just a status change without a time-gap record
 						if (nvdStatusChanged)
-							addToCveStatusChangeHistory(vuln, connection, existingAttribs, "NVD", existingAttribs.getNvdStatus(),
+							databaseHelper.addToCveStatusChangeHistory(vuln, existingAttribs, "NVD", existingAttribs.getNvdStatus(),
 									vuln.getNvdStatus(), false, 0);
 
 						if (mitreStatusChanged)
-							addToCveStatusChangeHistory(vuln, connection, existingAttribs, "MITRE", existingAttribs.getMitreStatus(),
+							databaseHelper.addToCveStatusChangeHistory(vuln, existingAttribs, "MITRE", existingAttribs.getMitreStatus(),
 									vuln.getMitreStatus(), false, 0);
 					}
 
