@@ -133,3 +133,5 @@ https://patchstack.com/database/
 https://zuso.ai/Advisory
 https://github.com/kiwitcms/Kiwi/security/advisories/
 https://cybir.com/2023/cve/
+https://jfrog.com/help/r/jfrog-release-information/
+https://www.jfrog.com/confluence/display/JFROG/Fixed+Security+Vulnerabilities
