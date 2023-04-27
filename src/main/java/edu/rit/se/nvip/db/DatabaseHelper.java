@@ -75,10 +75,6 @@ public class DatabaseHelper {
 	private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
 	String databaseType = "mysql";
 
-	/**
-	 * Database needs its own date formats for concurrent execution.
-	 */
-	private final DateFormat longDateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
 	public final DateFormat longDateFormatMySQL = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
 	/**
