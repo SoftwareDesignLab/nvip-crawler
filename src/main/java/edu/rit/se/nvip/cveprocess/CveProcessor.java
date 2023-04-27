@@ -27,6 +27,8 @@ import java.io.File;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 import edu.rit.se.nvip.db.DatabaseHelper;
@@ -120,13 +122,11 @@ public class CveProcessor {
 	 * @param hashMapNvipCve
 	 * @return
 	 */
-	public HashMap<String, List<Object>> checkAgainstNvdMitre(Map<String, CompositeVulnerability> hashMapNvipCve) {
+	public HashMap<String, List<Object>> checkAgainstNvdMitre(Map<String, CompositeVulnerability> hashMapNvipCve,
+															  Map<String, Vulnerability> existingCves) {
 
 		// TODO: Grab current vulns in DB, and verify these vulns are still not in NVD before running comparison
-		//  We only pull from last months CVEs for NVD, so there'll be issues if we don't keep track of current records
-		DatabaseHelper databaseHelper = DatabaseHelper.getInstance();
-		Map<String, Vulnerability> existingCves = databaseHelper.getExistingVulnerabilities();
-
+		//  We only pull from last months CVEs for NVD, so there'll be issues if we don't compare with current records
 		HashMap<String, List<Object>> newCVEMap = new HashMap<>();
 		logger.info("Comparing with NVD and MITRE");
 		// get list from hash map
@@ -153,11 +153,23 @@ public class CveProcessor {
 					continue;
 				}
 
+
 				if (cvesInNvd.containsKey(vuln.getCveId())){
 					logger.info("CVE: {} is in NVD: Setting status to 1", vuln.getCveId());
 					vuln.setNvdStatus(1);
 				} else if (existingCves.containsKey(vuln.getCveId()) && existingCves.get(vuln.getCveId()).getNvdStatus() == 0) {
-					logger.info("CVE: {}, is NOT in NVD", vuln.getCveId());
+					long monthsBetween = ChronoUnit.MONTHS.between(LocalDateTime.now(), existingCves.get(vuln.getCveId()).getCreatedDateAsDate());
+					if (monthsBetween <= 1 && monthsBetween >= 0) {
+						logger.info("CVE: {}, is NOT in NVD", vuln.getCveId());
+						vuln.setNvdSearchResult("NA");
+						vuln.setNvdStatus(0);
+						newCVEDataNotInNvd.add(vuln);
+					} else {
+						logger.info("CVE: {} is from over a month ago, will assume it's in NVD: Setting status to 1", vuln.getCveId());
+						vuln.setNvdStatus(1);
+					}
+				} else if (!existingCves.containsKey(vuln.getCveId())) {
+					logger.info("CVE: {} is not in NVIP and not in NVD: Keeping status as 0", vuln.getCveId());
 					vuln.setNvdSearchResult("NA");
 					vuln.setNvdStatus(0);
 					newCVEDataNotInNvd.add(vuln);
@@ -170,17 +182,28 @@ public class CveProcessor {
 					logger.info("CVE: {} is in Mitre: Setting status to 1", vuln.getCveId());
 					vuln.setMitreStatus(1);
 				} else if (existingCves.containsKey(vuln.getCveId()) && existingCves.get(vuln.getCveId()).getMitreStatus() == 0) {
-					logger.info("CVE: {}, is NOT in Mitre", vuln.getCveId());
+					long monthsBetween = ChronoUnit.MONTHS.between(LocalDateTime.now(),existingCves.get(vuln.getCveId()).getCreatedDateAsDate());
+					if (monthsBetween <= 1 && monthsBetween >= 0) {
+						logger.info("CVE: {}, is NOT in Mitre", vuln.getCveId());
+						vuln.setMitreSearchResult("NA");
+						vuln.setMitreStatus(0);
+						newCVEDataNotInMitre.add(vuln);
+					} else {
+						logger.info("CVE: {} is from over a month ago, will assume it's in MITRE: Setting status to 1", vuln.getCveId());
+						vuln.setMitreStatus(1);
+					}
+				} else if (!existingCves.containsKey(vuln.getCveId())) {
+					logger.info("CVE: {} is not in NVIP and not in MITRE: Keeping status as 0", vuln.getCveId());
 					vuln.setMitreSearchResult("NA");
 					vuln.setMitreStatus(0);
 					newCVEDataNotInMitre.add(vuln);
 				} else {
 					logger.info("CVE: {} is already in DB and is in MITRE: Keeping status as 1", vuln.getCveId());
-					vuln.setNvdStatus(1);
+					vuln.setMitreStatus(1);
 				}
 
 			} catch (Exception e) {
-				logger.error("ERROR: Error while checking against NVD/MITRE, CVE: {}", vuln.getCveId());
+				logger.error("ERROR: Error while checking against NVD/MITRE, CVE: {}\n{}", vuln.getCveId(), e.toString());
 			}
 		}
 
@@ -207,10 +230,7 @@ public class CveProcessor {
 	 * @param hashMapNvipCve
 	 * @return
 	 */
-	public HashMap<String, List<Object>> checkTimeGaps(Map<String, List<Object>> hashMapNvipCve) {
-
-		DatabaseHelper dbHelper = DatabaseHelper.getInstance();
-		Map<String, Vulnerability> existingCves = dbHelper.getExistingVulnerabilities();
+	public HashMap<String, List<Object>> checkTimeGaps(Map<String, List<Object>> hashMapNvipCve, Map<String, Vulnerability> existingCves) {
 
 		for (Object cveInNvd: hashMapNvipCve.get(NVD_CVE_KEY)) {
 			CompositeVulnerability cve = (CompositeVulnerability) cveInNvd;

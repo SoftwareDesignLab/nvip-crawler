@@ -50,7 +50,7 @@ public class HuntrParserTest extends AbstractParserTest {
         assertEquals("2023-02-19", vuln.getPublishDate());
         // ensure proper '6 days ago' parse
         LocalDate today = LocalDate.now();
-        LocalDate lastModified = LocalDate.parse(vuln.getLastModifiedDate());
+        LocalDate lastModified = LocalDate.parse(vuln.getLastModifiedDate().toString());
         long between = ChronoUnit.DAYS.between(lastModified, today);
         assertEquals(6, between);
     }
