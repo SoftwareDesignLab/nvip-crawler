@@ -232,7 +232,7 @@ public class CveProcessor {
 	 */
 	public HashMap<String, List<Object>> checkTimeGaps(Map<String, List<Object>> hashMapNvipCve, Map<String, Vulnerability> existingCves) {
 
-
+		logger.info("Calculating Time Gaps for NVD...");
 
 		for (Object cveInNvd: hashMapNvipCve.get(ALL_CVE_KEY)) {
 			CompositeVulnerability cve = (CompositeVulnerability) cveInNvd;
@@ -241,11 +241,16 @@ public class CveProcessor {
 					Vulnerability existingCveAttributes = existingCves.get(cve.getCveId());
 
 					if (existingCveAttributes.getNvdStatus() == 0 && cve.getNvdStatus() == 1) {
-						LocalDateTime createdDate = existingCveAttributes.getCreatedDateAsDate();
-						LocalDateTime currentCreateDate = cve.getCreatedDateAsDate();
+						try {
+							logger.info("Calculating NVD Time Gap for {}", cve.getCveId());
+							LocalDateTime createdDate = existingCveAttributes.getCreatedDateAsDate();
+							LocalDateTime currentCreateDate = cve.getCreatedDateAsDate();
 
-						int timeGapNvd = (int) Duration.between(createdDate, currentCreateDate).toHours();
-						cve.setTimeGapNvd(timeGapNvd);
+							int timeGapNvd = (int) Duration.between(createdDate, currentCreateDate).toHours();
+							cve.setTimeGapNvd(timeGapNvd);
+						} catch (Exception e) {
+							logger.error("ERROR: Failed to calculate Time Gap for CVE: {}\n{}", cve.getCveId(), e);
+						}
 					}
 				}
 			}

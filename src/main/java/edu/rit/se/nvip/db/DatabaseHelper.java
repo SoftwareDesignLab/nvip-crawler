@@ -727,9 +727,9 @@ public class DatabaseHelper {
 			pstmt.setString(1, vuln.getDescription());
 			pstmt.setString(2, vuln.getPlatform());
 			pstmt.setString(3, vuln.getPatch());
-			pstmt.setString(4, vuln.getPublishDate().toString());
-			pstmt.setString(5, vuln.getLastModifiedDate().toString());
-			pstmt.setString(6, vuln.getFixDate().toString());
+			pstmt.setString(4, vuln.getPublishDate());
+			pstmt.setString(5, vuln.getLastModifiedDate());
+			pstmt.setString(6, vuln.getFixDate());
 			pstmt.setString(7, vuln.getCveId()); // WHERE clause in SQL statement
 
 			pstmt.executeUpdate();
