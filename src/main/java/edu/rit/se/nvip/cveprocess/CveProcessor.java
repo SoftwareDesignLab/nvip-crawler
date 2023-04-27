@@ -78,9 +78,13 @@ public class CveProcessor {
 			else
 				logger.info("Successfully read in NVD CSV file for calculations of 'not in NVD'");
 			for (String cve : arrNVD) {
-				String id = cve.split(csvLogger.getSeparatorCharAsRegex())[0]; // get the first item, i.e. the CVE ID
-				String pubdate = cve.split(csvLogger.getSeparatorCharAsRegex())[2];
-				cvesInNvd.put(id, pubdate);
+				String[] pieces = cve.split(csvLogger.getSeparatorCharAsRegex());
+				String id = pieces[0];
+				if (pieces.length > 2) {
+					cvesInNvd.put(id, pieces[2]);
+				} else {
+					cvesInNvd.put(id, null);
+				}
 			}
 
 			/**
@@ -92,9 +96,13 @@ public class CveProcessor {
 			else
 				logger.info("Successfully read in MITRE CSV file for calculations of 'not in MITRE'");
 			for (String cve : arrNVD) {
-				String id = cve.split(csvLogger.getSeparatorCharAsRegex())[0]; // get the first item, i.e. the CVE ID
-				String pubdate = cve.split(csvLogger.getSeparatorCharAsRegex())[2];
-				cvesInMitre.put(id, pubdate);
+				String[] pieces = cve.split(csvLogger.getSeparatorCharAsRegex());
+				String id = pieces[0];
+				if (pieces.length > 2) {
+					cvesInMitre.put(id, pieces[2]);
+				} else {
+					cvesInMitre.put(id, null);
+				}
 			}
 
 		} catch (IOException e) {
@@ -198,8 +206,8 @@ public class CveProcessor {
 				Vulnerability existingCveAttributes = existingCves.get(cve.getCveId());
 
 				if (existingCveAttributes.getNvdStatus() == 0 && cve.getNvdStatus() == 1) {
-					LocalDateTime createdDate = existingCveAttributes.getCreateDate();
-					LocalDateTime currentCreateDate = cve.getCreateDate();
+					LocalDateTime createdDate = LocalDateTime.parse(existingCveAttributes.getCreateDate());
+					LocalDateTime currentCreateDate = LocalDateTime.parse(cve.getCreateDate());
 
 					int timeGapNvd = (int) Duration.between(createdDate, currentCreateDate).toHours();
 					cve.setTimeGapNvd(timeGapNvd);

@@ -29,7 +29,6 @@ import java.io.InputStream;
 import java.sql.*;
 import java.text.*;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -38,9 +37,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
-import java.time.format.DateTimeFormatter;
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -59,7 +55,6 @@ import edu.rit.se.nvip.model.Product;
 import edu.rit.se.nvip.model.VdoCharacteristic;
 import edu.rit.se.nvip.model.VulnSource;
 import edu.rit.se.nvip.model.Vulnerability;
-import edu.rit.se.nvip.utils.CveUtils;
 import edu.rit.se.nvip.utils.MyProperties;
 import edu.rit.se.nvip.utils.PropertyLoader;
 
@@ -722,11 +717,9 @@ public class DatabaseHelper {
 	 * in.
 	 * 
 	 * @param vuln            Vulnerability object to be updated in database
-	 * @param existingVulnMap list of exiting vulnerabilities
 	 * @throws SQLException
 	 */
-	public int updateVulnerability(CompositeVulnerability vuln,
-			Map<String, Vulnerability> existingVulnMap, int runId) throws SQLException {
+	public int updateVulnerability(CompositeVulnerability vuln) throws SQLException {
 
 		try (Connection connection = getConnection();
 			 PreparedStatement pstmt = connection.prepareStatement(updateVulnSql)) {
