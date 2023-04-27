@@ -51,12 +51,12 @@ public class CveProcessor {
 
 	private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
 
-	private Set<String> cvesInNvd = new HashSet<>();
-	private Set<String> cvesInMitre = new HashSet<>();
+	private Map<String, String> cvesInNvd = new HashMap<>();
+	private Map<String, String> cvesInMitre = new HashMap<>();
 
 	CveReconciler cveUtils = new CveReconciler();
 
-	public CveProcessor(Set<String> nvdCves, Set<String> mitreCves){
+	public CveProcessor(HashMap<String, String> nvdCves, HashMap<String, String> mitreCves){
 		this.cvesInNvd = nvdCves;
 		this.cvesInMitre = mitreCves;
 	}
@@ -75,7 +75,8 @@ public class CveProcessor {
 				logger.info("Successfully read in NVD CSV file for calculations of 'not in NVD'");
 			for (String cve : arrNVD) {
 				String id = cve.split(csvLogger.getSeparatorCharAsRegex())[0]; // get the first item, i.e. the CVE ID
-				cvesInNvd.add(id);
+				String pubdate = cve.split(csvLogger.getSeparatorCharAsRegex())[2];
+				cvesInNvd.put(id, pubdate);
 			}
 
 			/**
@@ -88,7 +89,8 @@ public class CveProcessor {
 				logger.info("Successfully read in MITRE CSV file for calculations of 'not in MITRE'");
 			for (String cve : arrNVD) {
 				String id = cve.split(csvLogger.getSeparatorCharAsRegex())[0]; // get the first item, i.e. the CVE ID
-				cvesInMitre.add(id);
+				String pubdate = cve.split(csvLogger.getSeparatorCharAsRegex())[2];
+				cvesInMitre.put(id, pubdate);
 			}
 
 		} catch (IOException e) {
@@ -133,7 +135,7 @@ public class CveProcessor {
 					continue;
 				}
 
-				if (cvesInNvd.contains(vuln.getCveId())){
+				if (cvesInNvd.containsKey(vuln.getCveId())){
 					logger.info("CVE: {} is in NVD: Setting status to 1", vuln.getCveId());
 					vuln.setNvdStatus(1);
 				} else {
@@ -143,7 +145,7 @@ public class CveProcessor {
 					newCVEDataNotInNvd.add(vuln);
 				}
 
-				if (cvesInMitre.contains(vuln.getCveId())){
+				if (cvesInMitre.containsKey(vuln.getCveId())){
 					logger.info("CVE: {} is in NVD: Setting status to 1", vuln.getCveId());
 					vuln.setMitreStatus(1);
 				} else {
@@ -172,4 +174,14 @@ public class CveProcessor {
 		return newCVEMap;
 	}
 
+	public HashMap<String, List<Object>> checkTimeGaps(Map<String, List<Object>> hashMapNvipCve) {
+
+		for (Object cveInNvd: hashMapNvipCve.get(NVD_CVE_KEY)) {
+			cveInNvd = (CompositeVulnerability) cveInNvd;
+
+			if
+		}
+
+		return hashMapNvipCve;
+	}
 }

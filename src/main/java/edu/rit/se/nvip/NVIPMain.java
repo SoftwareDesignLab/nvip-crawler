@@ -135,13 +135,13 @@ public class NVIPMain {
 						"\nTotal CVEs not in Mitre: {}\nTotal CVEs not in both: {}", dailyRunStats.getRunDateTime(),
 				dailyRunStats.getTotalCveCount(), dailyRunStats.getNotInNvdCount(), dailyRunStats.getNotInMitreCount(),
 				dailyRunStats.getNotInBothCount(), dailyRunStats.getAddedCveCount(), dailyRunStats.getUpdatedCveCount());
-
+		databaseHelper.updateDailyRun(runId, dailyRunStats);
 		// log .csv files
 //		logger.info("Creating output CSV files...");
 //		cveLogger.logAndDiffCVEs(crawlStartTime, crawlEndTime, cveListMap, cveListMap.size());
 
 		// record additional available stats
-		databaseHelper.updateDailyRun(runId, dailyRunStats);
+
 
 //		// Exploit Collection
 //		if ((boolean) exploitVars.get("exploitFinderEnabled")) {
@@ -676,8 +676,10 @@ public class NVIPMain {
 		String cveDataPathNvd = dataVars.get("dataDir") + "/nvd-cve.csv";
 		String cveDataPathMitre = dataVars.get("dataDir") + "/mitre-cve.csv";
 		CveProcessor cveProcessor = new CveProcessor(cveDataPathNvd, cveDataPathMitre);
+		HashMap<String, List<Object>> checkedCVEs = cveProcessor.checkAgainstNvdMitre(cveHashMapAll);
+		HashMap<String, List<Object>> checkedCvesWithTimeGaps = cveProcessor.checkTimeGaps(checkedCVEs);
 
-		return cveProcessor.checkAgainstNvdMitre(cveHashMapAll);
+		return checkedCvesWithTimeGaps;
 	}
 
 	/**
@@ -784,7 +786,7 @@ public class NVIPMain {
 		}
 
 	}
-	
+
 
 	/**
 	 * This method spawns a background process to identify affected product(s) for
