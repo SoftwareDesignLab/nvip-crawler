@@ -302,17 +302,12 @@ public class DbParallelProcessor {
 					 */
 					if (nvdStatusChanged) {
 						databaseHelper.updateNvdStatus(vuln.getNvdStatus(), vuln.getCveId());
-
 						logger.info("Changed NVD status of CVE {} from {} to {}", vuln.getCveId(), existingAttribs.getNvdStatus(),
 								vuln.getNvdStatus());
 					}
 
 					if (mitreStatusChanged) {
-						pstmt = connection.prepareStatement(updateMitreStatusSql);
-						pstmt.setInt(1, vuln.getMitreStatus());
-						pstmt.setString(2, vuln.getCveId());
-						pstmt.executeUpdate();
-
+						databaseHelper.updateMitreStatus(vuln.getMitreStatus(), vuln.getCveId());
 						logger.info("Changed MITRE status of CVE {} from {} to {}", vuln.getCveId(), existingAttribs.getMitreStatus(),
 								vuln.getMitreStatus());
 					}
