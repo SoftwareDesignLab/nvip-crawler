@@ -71,7 +71,6 @@ public class NvdCveParser {
 			String baseScore = "";
 			String baseSeverity = "";
 			if (!metrics.isJsonNull() && !metrics.entrySet().isEmpty()) {
-				System.out.println(cveId);
 				JsonElement metric = metrics.get("cvssMetricV31");
 				JsonObject cvssMetrics;
 				if (metric == null)
