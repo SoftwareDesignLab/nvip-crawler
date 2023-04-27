@@ -23,11 +23,15 @@
  */
 package edu.rit.se.nvip.db;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import edu.rit.se.nvip.model.Vulnerability;
 import org.apache.commons.collections4.ListUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -121,6 +125,64 @@ public class DbParallelProcessor {
 		// run process
 		public void run() {
 			logger.info("Active, Idle and Total connections BEFORE insert: {}", databaseHelper.getConnectionStatus());
+			Map<String, Vulnerability> existingVulnMap = databaseHelper.getExistingVulnerabilities();
+
+			int insertCount = 0, updateCount = 0, noChangeCount = 0;
+			for (int i = 0; i < vulnList.size(); i++) {
+				CompositeVulnerability vuln = vulnList.get(i);
+
+				if (i % 500 == 0 && i > 0)
+					logger.info("Updated/inserted/notchanged {}/{}/{} of {} vulnerabilities", updateCount, insertCount,
+							noChangeCount, vulnList.size());
+
+				try {
+					if (existingVulnMap.containsKey(vuln.getCveId())) {
+						int count = databaseHelper.updateVulnerability(vuln, existingVulnMap, runId);
+						if (count > 0)
+							updateCount++;
+						else
+							noChangeCount++;
+					} else {
+						databaseHelper.insertVulnerability(vuln);
+
+						/**
+						 * insert sources
+						 */
+						insertVulnSource(vuln.getVulnSourceList(), connection);
+
+						/**
+						 * insert VDO
+						 */
+						insertVdoCharacteristic(vuln.getVdoCharacteristicInfo(), connection);
+
+						/**
+						 * insert CVSS
+						 */
+						insertCvssScore(vuln.getCvssScoreInfo(), connection);
+
+						/**
+						 * record updates
+						 */
+						List<Integer> vulnIdList = getVulnerabilityIdList(vuln.getCveId(), connection);
+						for (Integer vulnId : vulnIdList)
+							insertVulnerabilityUpdate(vulnId, "description", "New CVE: " + vuln.getCveId(), runId, connection);
+
+						insertCount++;
+					}
+				} catch (Exception e) {
+					logger.error("ERROR: Failed to insert CVE: {}\n{}", vuln.getCveId(), e.toString());
+				}
+
+			}
+
+			int total = updateCount + insertCount + noChangeCount;
+			logger.info("DatabaseHelper updated/inserted/notchanged {} [ {}/{}/{} ] of {} vulnerabilities.",
+					total, updateCount, insertCount, noChangeCount, vulnList.size());
+
+			// do time gap analysis for CVEs in vulnList
+			checkNvdMitreStatusForCrawledVulnerabilityList(connection, vulnList, existingVulnMap);
+
+
 			databaseHelper.recordVulnerabilityList(vulnList, runId);
 			logger.info("Active, Idle and Total connections AFTER insert (before shutdown): {}", databaseHelper.getConnectionStatus());
 			databaseHelper.shutdown();
