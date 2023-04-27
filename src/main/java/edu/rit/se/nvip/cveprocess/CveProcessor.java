@@ -25,8 +25,12 @@ package edu.rit.se.nvip.cveprocess;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.*;
 
+import edu.rit.se.nvip.db.DatabaseHelper;
+import edu.rit.se.nvip.model.Vulnerability;
 import org.apache.commons.collections4.SetUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
@@ -174,14 +178,35 @@ public class CveProcessor {
 		return newCVEMap;
 	}
 
+	/**
+	 * Calculate Time Gaps between NVD by comparing the
+	 * current date with the date the CVE was created in NVIP
+	 *
+	 * This is for CVEs that changed NVD status to exists_in_nvd,
+	 * hence this is when NVD adds the vulnerability
+	 * @param hashMapNvipCve
+	 * @return
+	 */
 	public HashMap<String, List<Object>> checkTimeGaps(Map<String, List<Object>> hashMapNvipCve) {
 
-		for (Object cveInNvd: hashMapNvipCve.get(NVD_CVE_KEY)) {
-			cveInNvd = (CompositeVulnerability) cveInNvd;
+		DatabaseHelper dbHelper = DatabaseHelper.getInstance();
+		Map<String, Vulnerability> existingCves = dbHelper.getExistingVulnerabilities();
 
-			if
+		for (Object cveInNvd: hashMapNvipCve.get(NVD_CVE_KEY)) {
+			CompositeVulnerability cve = (CompositeVulnerability) cveInNvd;
+			if (existingCves.containsKey(cve.getCveId())) {
+				Vulnerability existingCveAttributes = existingCves.get(cve.getCveId());
+
+				if (existingCveAttributes.getNvdStatus() == 0 && cve.getNvdStatus() == 1) {
+					LocalDateTime createdDate = existingCveAttributes.getCreateDate();
+					LocalDateTime currentCreateDate = cve.getCreateDate();
+
+					int timeGapNvd = (int) Duration.between(createdDate, currentCreateDate).toHours();
+					cve.setTimeGapNvd(timeGapNvd);
+				}
+			}
 		}
 
-		return hashMapNvipCve;
+		return (HashMap<String, List<Object>>) hashMapNvipCve;
 	}
 }
