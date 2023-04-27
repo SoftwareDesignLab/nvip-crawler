@@ -63,7 +63,7 @@ public class NvdCveParser {
 			String cveId = cve.get("id").getAsString();
 			// descriptions -> [ { lang, value } ]
 			JsonArray descriptions = cve.getAsJsonArray("descriptions");
-			String description = descriptions.get(0).getAsJsonObject().get("value").getAsString();
+			String description = descriptions.get(0).getAsJsonObject().get("value").getAsString().replace("\n", "");
 			// metrics -> cvssMetricV31 -> [ { cvssData { 12 } } ]
 			JsonObject metrics = cve.getAsJsonObject("metrics");
 			String impactScore = "";
