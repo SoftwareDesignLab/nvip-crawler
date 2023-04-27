@@ -952,6 +952,11 @@ public class DatabaseHelper {
 		return true;
 	}
 
+	/**
+	 * For Updating the Nvd status of a CVE
+	 * @param newStatus
+	 * @param cveId
+	 */
 	public void updateNvdStatus(int newStatus, String cveId) {
 		try (Connection connection = getConnection();
 			PreparedStatement pstmt = connection.prepareStatement(updateNvdStatusSql)) {
@@ -961,8 +966,24 @@ public class DatabaseHelper {
 		} catch (SQLException e) {
 			logger.error("ERROR: Failed to update NVD Status for CVE: {}", cveId);
 		}
-
 	}
+
+	/**
+	 * For Updating the Mitre status of a CVE
+	 * @param newstatus
+	 * @param cveId
+	 */
+	public void updateMitreStatus(int newstatus, String cveId) {
+		try (Connection connection = getConnection();
+			PreparedStatement pstmt = connection.prepareStatement(updateMitreStatusSql);) {
+			pstmt.setInt(1, newstatus);
+			pstmt.setString(2, cveId);
+			pstmt.executeUpdate();
+		} catch (SQLException e) {
+			logger.error("ERROR: Failed to update Mitre Status for CVE: {}", cveId);
+		}
+	}
+
 
 	/**
 	 * Check if we need to record any time gaps for any CVE!
