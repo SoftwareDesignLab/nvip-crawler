@@ -17,7 +17,7 @@ import static org.mockito.Mockito.mock;
 
 public class CveProcessorTest {
 
-    private final String CVE_ID = "CVE-1999-0001";
+    private final String CVE_ID = "CVE-2023-4444";
 
     private CveProcessor cveProcessor = new CveProcessor(new HashMap<>(), new HashMap<>());
     private Map<String, CompositeVulnerability> foundVulnerabilities = new HashMap<>();

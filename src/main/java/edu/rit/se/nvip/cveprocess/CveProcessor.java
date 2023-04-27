@@ -125,8 +125,6 @@ public class CveProcessor {
 	public HashMap<String, List<Object>> checkAgainstNvdMitre(Map<String, CompositeVulnerability> hashMapNvipCve,
 															  Map<String, Vulnerability> existingCves) {
 
-		// TODO: Grab current vulns in DB, and verify these vulns are still not in NVD before running comparison
-		//  We only pull from last months CVEs for NVD, so there'll be issues if we don't compare with current records
 		HashMap<String, List<Object>> newCVEMap = new HashMap<>();
 		logger.info("Comparing with NVD and MITRE");
 		// get list from hash map
@@ -232,14 +230,36 @@ public class CveProcessor {
 	 */
 	public HashMap<String, List<Object>> checkTimeGaps(Map<String, List<Object>> hashMapNvipCve, Map<String, Vulnerability> existingCves) {
 
-		logger.info("Calculating Time Gaps for NVD...");
+		logger.info("Calculating NVD Time Gaps for {} CVEs", hashMapNvipCve.get(ALL_CVE_KEY).size() - hashMapNvipCve.get(NVD_CVE_KEY).size());
 
 		for (Object cveInNvd: hashMapNvipCve.get(ALL_CVE_KEY)) {
 			CompositeVulnerability cve = (CompositeVulnerability) cveInNvd;
-			if (!hashMapNvipCve.get(NVD_CVE_KEY).contains(cve)) {
-				if (existingCves.containsKey(cve.getCveId())) {
-					Vulnerability existingCveAttributes = existingCves.get(cve.getCveId());
 
+			/**
+			 * We are not expecting a time gap more than 1 year. If CVE is from prior years
+			 * skip time gap check
+			 */
+			String[] cveParts = cve.getCveId().split("-");
+
+			if (cveParts.length <= 1) {
+				logger.info("CVE: {} is not eligible for time gap checks, skipping this cve", cve.getCveId());
+				continue;
+			}
+
+			int cveYear = Integer.parseInt(cveParts[1]);
+			int currentYear = Calendar.getInstance().get(Calendar.YEAR);
+			boolean calculateGap = (cveYear == currentYear);
+
+			if (!calculateGap) {
+				logger.info("CVE: {} is too old, skipping this cve!", cve.getCveId());
+				continue;
+			}
+
+			if (!hashMapNvipCve.get(NVD_CVE_KEY).contains(cve)) {
+				logger.info("Checking if CVE: {} is in NVIP", cve.getCveId());
+				if (existingCves.containsKey(cve.getCveId())) {
+					logger.info("CVE: {} is in NVIP, is it found in NVD", cve.getCveId());
+					Vulnerability existingCveAttributes = existingCves.get(cve.getCveId());
 					if (existingCveAttributes.getNvdStatus() == 0 && cve.getNvdStatus() == 1) {
 						try {
 							logger.info("Calculating NVD Time Gap for {}", cve.getCveId());
@@ -250,7 +270,10 @@ public class CveProcessor {
 							cve.setTimeGapNvd(timeGapNvd);
 						} catch (Exception e) {
 							logger.error("ERROR: Failed to calculate Time Gap for CVE: {}\n{}", cve.getCveId(), e);
+							e.printStackTrace();
 						}
+					} else {
+						logger.info("CVE: {} is in NVIP but not found in NVD yet", cve.getCveId());
 					}
 				}
 			}

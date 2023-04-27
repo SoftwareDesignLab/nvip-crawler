@@ -667,6 +667,7 @@ public class NVIPMain {
 	/**
 	 * Identify New CVE and
 	 * Process CVEs by comparing pulled CVEs to NVD and MITRE
+	 * Calculate Time Gaps afterwards, if any
 	 * @param cveHashMapAll
 	 * @return
 	 */
