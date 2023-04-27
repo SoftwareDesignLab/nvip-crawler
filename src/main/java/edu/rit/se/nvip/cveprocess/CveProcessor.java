@@ -39,6 +39,7 @@ import org.apache.logging.log4j.Logger;
 import edu.rit.se.nvip.cvereconcile.CveReconciler;
 import edu.rit.se.nvip.model.CompositeVulnerability;
 import edu.rit.se.nvip.utils.CsvUtils;
+import org.jdom2.CDATA;
 
 /**
  *
@@ -121,6 +122,11 @@ public class CveProcessor {
 	 */
 	public HashMap<String, List<Object>> checkAgainstNvdMitre(Map<String, CompositeVulnerability> hashMapNvipCve) {
 
+		// TODO: Grab current vulns in DB, and verify these vulns are still not in NVD before running comparison
+		//  We only pull from last months CVEs for NVD, so there'll be issues if we don't keep track of current records
+		DatabaseHelper databaseHelper = DatabaseHelper.getInstance();
+		Map<String, Vulnerability> existingCves = databaseHelper.getExistingVulnerabilities();
+
 		HashMap<String, List<Object>> newCVEMap = new HashMap<>();
 		logger.info("Comparing with NVD and MITRE");
 		// get list from hash map
@@ -150,21 +156,27 @@ public class CveProcessor {
 				if (cvesInNvd.containsKey(vuln.getCveId())){
 					logger.info("CVE: {} is in NVD: Setting status to 1", vuln.getCveId());
 					vuln.setNvdStatus(1);
-				} else {
+				} else if (existingCves.containsKey(vuln.getCveId()) && existingCves.get(vuln.getCveId()).getNvdStatus() == 0) {
 					logger.info("CVE: {}, is NOT in NVD", vuln.getCveId());
 					vuln.setNvdSearchResult("NA");
 					vuln.setNvdStatus(0);
 					newCVEDataNotInNvd.add(vuln);
+				} else {
+					logger.info("CVE: {} is already in DB and is in NVD: Keeping status as 1", vuln.getCveId());
+					vuln.setNvdStatus(1);
 				}
 
 				if (cvesInMitre.containsKey(vuln.getCveId())){
-					logger.info("CVE: {} is in NVD: Setting status to 1", vuln.getCveId());
+					logger.info("CVE: {} is in Mitre: Setting status to 1", vuln.getCveId());
 					vuln.setMitreStatus(1);
-				} else {
-					logger.info("CVE: {}, is NOT in NVD", vuln.getCveId());
-					vuln.setNvdSearchResult("NA");
+				} else if (existingCves.containsKey(vuln.getCveId()) && existingCves.get(vuln.getCveId()).getMitreStatus() == 0) {
+					logger.info("CVE: {}, is NOT in Mitre", vuln.getCveId());
+					vuln.setMitreSearchResult("NA");
 					vuln.setMitreStatus(0);
 					newCVEDataNotInMitre.add(vuln);
+				} else {
+					logger.info("CVE: {} is already in DB and is in MITRE: Keeping status as 1", vuln.getCveId());
+					vuln.setNvdStatus(1);
 				}
 
 			} catch (Exception e) {
