@@ -80,12 +80,10 @@ public class NvdCveController {
 	 */
 	public NvdCveController() {
 		LocalDateTime today = LocalDateTime.now();
-		LocalDateTime yesterday = LocalDateTime.now().minusDays(1);
+		LocalDateTime lastMonth = LocalDateTime.now().minusDays(30);
 		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'hh:mm:ss");
 
-		System.out.println(today);
-
-		this.startDate = yesterday.format(formatter);
+		this.startDate = lastMonth.format(formatter);
 		this.endDate = today.format(formatter);
 	}
 

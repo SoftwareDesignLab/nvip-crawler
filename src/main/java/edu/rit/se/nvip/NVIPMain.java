@@ -102,38 +102,42 @@ public class NVIPMain {
 			new NvdCveController().pullNvdCve(filepath);
 		}
 
-//		// Crawler
-//		long crawlStartTime = System.currentTimeMillis();
-//		HashMap<String, CompositeVulnerability> crawledCVEs = nvipMain.crawlCVEs(urls);
-//		long crawlEndTime = System.currentTimeMillis();
-//		logger.info("Crawler Finished\nTime: {}", crawlEndTime - crawlStartTime);
-//
-//		// Process and Reconcile
-//		HashMap<String, List<Object>> cveListMap = nvipMain.processCVEs(crawledCVEs);
-//		List<CompositeVulnerability> crawledVulnerabilityList = nvipMain.reconcileCVEs(cveListMap);
-//
-//		// Characterize
-//		crawledVulnerabilityList = nvipMain.characterizeCVEs(crawledVulnerabilityList);
-//
-//		// Prepare stats and Store found CVEs in DB
-//		// TODO: Refactor this to use this logic
-//		//  1.) Store CVEs
-//		//  2.) Store run stats
-//		//  3.) log csv files
-//		//  we shouldn't be updating dailyrun after insert, it should all be one run
-//		int runId = databaseHelper.getLatestRunId();
-//
-//		nvipMain.storeCVEs(crawledVulnerabilityList, runId);
-//		DailyRun dailyRunStats = nvipMain.insertStats(databaseHelper, crawledVulnerabilityList, cveListMap.get("nvd").size(),
-//				cveListMap.get("mitre").size(), cveListMap.get("nvd-mitre").size());
-//
-//		// log .csv files
+		// Crawler
+		long crawlStartTime = System.currentTimeMillis();
+		HashMap<String, CompositeVulnerability> crawledCVEs = nvipMain.crawlCVEs(urls);
+		long crawlEndTime = System.currentTimeMillis();
+		logger.info("Crawler Finished\nTime: {}", crawlEndTime - crawlStartTime);
+
+		// Process and Reconcile
+		HashMap<String, List<Object>> cveListMap = nvipMain.processCVEs(crawledCVEs);
+		List<CompositeVulnerability> crawledVulnerabilityList = nvipMain.reconcileCVEs(cveListMap);
+
+		// Characterize
+		crawledVulnerabilityList = nvipMain.characterizeCVEs(crawledVulnerabilityList);
+
+		// Prepare stats and Store found CVEs in DB
+		// TODO: Refactor this to use this logic
+		//  1.) Store CVEs
+		//  2.) Store run stats
+		//  3.) log csv files
+		//  we shouldn't be updating dailyrun after insert, it should all be one run
+		int runId = databaseHelper.getLatestRunId();
+		nvipMain.storeCVEs(crawledVulnerabilityList, runId);
+
+		DailyRun dailyRunStats = new DailyRun(UtilHelper.longDateFormat.format(new Date()),
+				(float) ((crawlEndTime - crawlStartTime) / (1000.0 * 60)), crawledVulnerabilityList.size(), cveListMap.get("nvd").size(),
+				cveListMap.get("mitre").size(), cveListMap.get("nvd-mitre").size());
+
+		dailyRunStats.calculateAddedUpdateCVEs(crawledVulnerabilityList);
+
+		nvipMain.insertStats(dailyRunStats);
+
+		// log .csv files
 //		logger.info("Creating output CSV files...");
 //		cveLogger.logAndDiffCVEs(crawlStartTime, crawlEndTime, cveListMap, cveListMap.size());
-//
-//		// record additional available stats
-//		dailyRunStats.setCrawlTimeMin((float) ((crawlEndTime - crawlStartTime) / (1000.0 * 60)));
-//		databaseHelper.updateDailyRun(runId, dailyRunStats);
+
+		// record additional available stats
+		databaseHelper.updateDailyRun(runId, dailyRunStats);
 
 //		// Exploit Collection
 //		if ((boolean) exploitVars.get("exploitFinderEnabled")) {
@@ -561,8 +565,7 @@ public class NVIPMain {
 			}
 		}
 
-		HashMap<String, ArrayList<CompositeVulnerability>> cveHashMapScrapedFromCNAs =
-				crawlerController.crawl(urls, whiteList, crawlerVars);
+		HashMap<String, ArrayList<CompositeVulnerability>> cveHashMapScrapedFromCNAs = crawlerController.crawl(urls, whiteList, crawlerVars);
 
 		return mergeCVEsDerivedFromCNAsAndGit(cveHashMapGithub, list, cveHashMapScrapedFromCNAs);
 	}
@@ -595,7 +598,6 @@ public class NVIPMain {
 		}
 
 		// include all CVEs from CNAs
-
 		NlpUtil nlpUtil = new NlpUtil();
 
 		int cveCountReservedInGit = 0;
@@ -631,7 +633,6 @@ public class NVIPMain {
 					// did we find garbage or valid description?
 					if (nlpUtil.sentenceDetect(vulnCna.getDescription()) != null)
 						vulnCna.setFoundNewDescriptionForReservedCve(true);
-
 				} else {
 					newDescr = vulnGit.getDescription(); // overwriting, assuming Git descriptions are worded better!
 				}
@@ -769,7 +770,8 @@ public class NVIPMain {
 	 * @param totNotInBoth
 	 * @return
 	 */
-	private DailyRun insertStats(DatabaseHelper databaseHelper, List<CompositeVulnerability> crawledVulnerabilityList, int totNotInNvd, int totNotInMitre, int totNotInBoth) {
+	private DailyRun insertStats(DatabaseHelper databaseHelper, List<CompositeVulnerability> crawledVulnerabilityList,
+								 int totNotInNvd, int totNotInMitre, int totNotInBoth) {
 		// insert a record to keep track of daily run history
 		logger.info("Preparing Daily Run Stats...");
 		DailyRun dailyRunStats = new DailyRun();
@@ -790,6 +792,11 @@ public class NVIPMain {
 			}
 			dailyRunStats.setAddedCveCount(addedCveCount);
 			dailyRunStats.setUpdatedCveCount(updatedCveCount);
+
+			logger.info("Run @ {}\nSummary:\nTotal CVEs found from this run: {}\nTotal CVEs not in NVD: {}" +
+					"\nTotal CVEs not in Mitre: {}\nTotal CVEs not in both: {}", dailyRunStats.getRunDateTime(),
+					dailyRunStats.getTotalCveCount(), dailyRunStats.getNotInNvdCount(), dailyRunStats.getNotInMitreCount(),
+					dailyRunStats.getNotInBothCount(), dailyRunStats.getAddedCveCount(), dailyRunStats.getUpdatedCveCount());
 
 			int runId = databaseHelper.insertDailyRun(dailyRunStats);
 			dailyRunStats.setRunId(runId);
