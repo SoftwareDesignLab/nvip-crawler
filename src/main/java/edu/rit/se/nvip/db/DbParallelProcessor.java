@@ -26,8 +26,7 @@ package edu.rit.se.nvip.db;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.Calendar;
-import java.util.Date;
+
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -279,7 +278,7 @@ public class DbParallelProcessor {
 		 * @param vuln
 		 * @param existingAttribs
 		 */
-		private boolean checkNvdMitreStatusForVulnerability(CompositeVulnerability vuln, Vulnerability existingAttribs) {
+		public boolean checkNvdMitreStatusForVulnerability(CompositeVulnerability vuln, Vulnerability existingAttribs) {
 			boolean timeGapFound = false;
 			boolean vulnAlreadyInNvd = existingAttribs.doesExistInNvd();
 			boolean vulnAlreaadyInMitre = existingAttribs.doesExistInMitre();
@@ -292,8 +291,8 @@ public class DbParallelProcessor {
 
 			if (nvdStatusChanged || mitreStatusChanged) {
 
-				Date createdDateTime = null;
-				Date lastModifiedDateTime;
+				LocalDateTime createdDateTime = null;
+				LocalDateTime lastModifiedDateTime = null;
 				try {
 					boolean recordTimeGap = (existingAttribs.getCreateDate() != null)
 							&& ((!vulnAlreadyInNvd && vuln.doesExistInNvd()) || (!vulnAlreaadyInMitre && vuln.doesExistInMitre()))
@@ -310,21 +309,20 @@ public class DbParallelProcessor {
 					}
 
 					int cveYear = Integer.parseInt(cveParts[1]);
-					int currentYear = Calendar.getInstance().get(Calendar.YEAR);
-					boolean calculateGap = (cveYear == currentYear);
-					if (!calculateGap)
+					int currentYear = LocalDateTime.now().getYear();
+					boolean isCurrentYear = (cveYear == currentYear);
+					if (!isCurrentYear)
 						recordTimeGap = false;
 
 					if (existingAttribs.getCreateDate() == null || existingAttribs.getCreateDate().toString().isEmpty()) {
-						return recordTimeGap;
+						recordTimeGap = false;
 					} else {
-						createdDateTime = databaseHelper.longDateFormatMySQL.parse(existingAttribs.getCreateDate().toString());
+						createdDateTime = existingAttribs.getCreateDate();
 					}
 
 					try {
-						lastModifiedDateTime = databaseHelper.longDateFormatMySQL.parse(vuln.getLastModifiedDate().toString());
+						lastModifiedDateTime = existingAttribs.getLastModifiedDate();
 					} catch (Exception e) {
-						lastModifiedDateTime = new Date();
 						logger.warn("WARNING: Could not parse last modified date of Cve: {}, Err: {}\nCve data: {}",
 								vuln.getLastModifiedDate(), e.toString(), vuln.toString());
 						recordTimeGap = false;
@@ -355,14 +353,7 @@ public class DbParallelProcessor {
 					 */
 					int hours;
 					if (recordTimeGap) {
-						if (createdDateTime == null) {
-							// Just use the current date if the create date isn't provided
-							DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-							LocalDateTime now = LocalDateTime.now();
-							createdDateTime = new Date(dtf.format(now));
-							logger.info("CreateDateTime: {}", createdDateTime);
-						}
-						hours = (int) ChronoUnit.HOURS.between(createdDateTime.toInstant(), lastModifiedDateTime.toInstant());
+						hours = (int) ChronoUnit.HOURS.between(createdDateTime, vuln.getCreateDate());
 						if (!vulnAlreadyInNvd && vuln.doesExistInNvd()) {
 							// if it did not exist in NVD, but found now, record time gap!
 							vuln.setTimeGapNvd(hours);
