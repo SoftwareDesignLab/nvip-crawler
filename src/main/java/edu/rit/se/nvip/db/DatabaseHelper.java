@@ -702,11 +702,11 @@ public class DatabaseHelper {
 			pstmt.setString(2, vuln.getDescription());
 			pstmt.setString(3, vuln.getPlatform());
 			pstmt.setString(4, vuln.getPatch());
-			pstmt.setString(5, formatDate(vuln.getPublishDate()));
+			pstmt.setString(5, vuln.getPublishDate().toString());
 
-			pstmt.setString(6, formatDate(vuln.getLastModifiedDate())); // during insert create date is last modified date
-			pstmt.setString(7, formatDate(vuln.getLastModifiedDate()));
-			pstmt.setString(8, formatDate(vuln.getFixDate()));
+			pstmt.setString(6, vuln.getLastModifiedDate().toString()); // during insert create date is last modified date
+			pstmt.setString(7, vuln.getLastModifiedDate().toString());
+			pstmt.setString(8, vuln.getFixDate().toString());
 			/**
 			 * Bug fix: indexes 9 and 10 were wrong
 			 */
@@ -738,9 +738,9 @@ public class DatabaseHelper {
 			pstmt.setString(1, vuln.getDescription());
 			pstmt.setString(2, vuln.getPlatform());
 			pstmt.setString(3, vuln.getPatch());
-			pstmt.setString(4, formatDate(vuln.getPublishDate()));
-			pstmt.setString(5, formatDate(vuln.getLastModifiedDate()));
-			pstmt.setString(6, formatDate(vuln.getFixDate()));
+			pstmt.setString(4, vuln.getPublishDate().toString());
+			pstmt.setString(5, vuln.getLastModifiedDate().toString());
+			pstmt.setString(6, vuln.getFixDate().toString());
 			pstmt.setString(7, vuln.getCveId()); // WHERE clause in SQL statement
 
 			pstmt.executeUpdate();
@@ -804,12 +804,12 @@ public class DatabaseHelper {
 			pstmt.setInt(7, timeGapRecorded);
 			pstmt.setInt(8, timeGap);
 			try {
-				pstmt.setTimestamp(9, new java.sql.Timestamp(longDateFormatMySQL.parse(formatDate(vuln.getLastModifiedDate())).getTime()));
+				pstmt.setTimestamp(9, new java.sql.Timestamp(longDateFormatMySQL.parse(formatDate(vuln.getLastModifiedDate().toString())).getTime()));
 			} catch (Exception e) {
 				logger.warn("WARNING: Failed to parse last modified date: {}", vuln.getLastModifiedDate());
-				pstmt.setTimestamp(9, new java.sql.Timestamp(longDateFormatMySQL.parse(formatDate(vuln.getPublishDate())).getTime()));
+				pstmt.setTimestamp(9, new java.sql.Timestamp(longDateFormatMySQL.parse(formatDate(vuln.getPublishDate().toString())).getTime()));
 			}
-			pstmt.setTimestamp(10, new java.sql.Timestamp(longDateFormatMySQL.parse(existingAttribs.getCreateDate()).getTime()));
+			pstmt.setTimestamp(10, new java.sql.Timestamp(longDateFormatMySQL.parse(existingAttribs.getCreateDate().toString()).getTime()));
 			pstmt.executeUpdate();
 		} catch (Exception e) {
 			logger.error("Error recording CVE status change for {}:\n{}", vuln.getCveId(), e);
@@ -1605,10 +1605,10 @@ public class DatabaseHelper {
 			 * vdo characters
 			 */
 			if (!vuln.getVdoCharacteristicInfo().isEmpty()) {
-				updateVdoLabels(vuln.getCveId(), vuln.getVdoCharacteristicInfo(), connection);
+				updateVdoLabels(vuln.getCveId(), vuln.getVdoCharacteristicInfo());
 
-				deleteCvssScore(vuln.getCveId(), connection); // clear existing ones
-				insertCvssScore(vuln.getCvssScoreInfo(), connection); // add them
+				deleteCvssScore(vuln.getCveId()); // clear existing ones
+				insertCvssScore(vuln.getCvssScoreInfo()); // add them
 			}
 			return 1; // done
 		} catch (Exception e) {
