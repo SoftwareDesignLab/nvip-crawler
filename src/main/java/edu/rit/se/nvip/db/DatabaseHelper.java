@@ -707,7 +707,7 @@ public class DatabaseHelper {
 		 * separately!
 		 */
 		existingVulnMap = getExistingVulnerabilities();
-		try (Connection connection = getConnection();) {
+		try (Connection connection = getConnection()) {
 			int insertCount = 0, updateCount = 0, noChangeCount = 0;
 			for (int i = 0; i < vulnList.size(); i++) {
 				CompositeVulnerability vuln = vulnList.get(i);
@@ -793,6 +793,35 @@ public class DatabaseHelper {
 	}
 
 	/**
+	 * For Inserting a Vulnerability into the vulnerability table
+	 */
+	public void insertVulnerability(CompositeVulnerability vuln) {
+		try (Connection connection = getConnection(); PreparedStatement pstmt = connection.prepareStatement(insertVulnSql);) {
+
+			pstmt.setString(1, vuln.getCveId());
+			pstmt.setString(2, vuln.getDescription());
+			pstmt.setString(3, vuln.getPlatform());
+			pstmt.setString(4, vuln.getPatch());
+			pstmt.setString(5, formatDate(vuln.getPublishDate()));
+
+			pstmt.setString(6, formatDate(vuln.getLastModifiedDate())); // during insert create date is last modified date
+			pstmt.setString(7, formatDate(vuln.getLastModifiedDate()));
+			pstmt.setString(8, formatDate(vuln.getFixDate()));
+			/**
+			 * Bug fix: indexes 9 and 10 were wrong
+			 */
+			pstmt.setInt(9, vuln.getNvdStatus());
+			pstmt.setInt(10, vuln.getMitreStatus());
+			pstmt.setInt(11, vuln.getTimeGapNvd());
+			pstmt.setInt(12, vuln.getTimeGapMitre());
+			pstmt.executeUpdate();
+		} catch (Exception e) {
+			logger.error("ERROR: Failed to insert CVE: {}\n{}", vuln.getCveId(), e.toString());
+		}
+	}
+
+
+	/**
 	 * Updates the Vulnerability table with the Vulnerability object (vuln) passed
 	 * in.
 	 * 
@@ -801,7 +830,7 @@ public class DatabaseHelper {
 	 * @param existingVulnMap list of exiting vulnerabilities
 	 * @throws SQLException
 	 */
-	public int updateVulnerability(CompositeVulnerability vuln, Connection connection,
+	public int updateVulnerability(CompositeVulnerability vuln,
 			Map<String, Vulnerability> existingVulnMap, int runId) throws SQLException {
 
 		Vulnerability existingAttribs = existingVulnMap.get(vuln.getCveId());
@@ -811,7 +840,7 @@ public class DatabaseHelper {
 		if (vuln.getCveReconcileStatus() == CompositeVulnerability.CveReconcileStatus.DO_NOT_CHANGE)
 			return 0;
 
-		try (PreparedStatement pstmt = connection.prepareStatement(updateVulnSql);) {
+		try (Connection connection = getConnection(); PreparedStatement pstmt = connection.prepareStatement(updateVulnSql);) {
 			// update vulnerability
 			pstmt.setString(1, vuln.getDescription());
 			pstmt.setString(2, vuln.getPlatform());
