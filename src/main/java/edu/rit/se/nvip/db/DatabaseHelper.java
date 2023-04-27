@@ -1284,8 +1284,8 @@ public class DatabaseHelper {
 	 * @param conn
 	 * @return
 	 */
-	public boolean insertVulnSource(List<VulnSource> vulnSourceList, Connection conn) {
-		try (PreparedStatement pstmt = conn.prepareStatement(insertVulnSourceSql);) {
+	public boolean insertVulnSource(List<VulnSource> vulnSourceList) {
+		try (Connection connection = getConnection(); PreparedStatement pstmt = connection.prepareStatement(insertVulnSourceSql);) {
 			for (int i = 0; i < vulnSourceList.size(); i++) {
 				pstmt.setString(1, vulnSourceList.get(i).getCveId());
 				pstmt.setString(2, vulnSourceList.get(i).getUrl());

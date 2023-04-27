@@ -148,7 +148,7 @@ public class DbParallelProcessor {
 						/**
 						 * insert sources
 						 */
-						insertVulnSource(vuln.getVulnSourceList(), connection);
+						databaseHelper.insertVulnSource(vuln.getVulnSourceList());
 
 						/**
 						 * insert VDO
