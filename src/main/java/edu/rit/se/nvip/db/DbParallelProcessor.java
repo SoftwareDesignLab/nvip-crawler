@@ -271,21 +271,6 @@ public class DbParallelProcessor {
 						&& !CveUtils.isCveReservedEtc(vuln.getDescription());
 
 				/**
-				 * Record status changes.
-				 */
-				if (nvdStatusChanged) {
-					databaseHelper.updateNvdStatus(vuln.getNvdStatus(), vuln.getCveId());
-					logger.info("Changed NVD status of CVE {} from {} to {}", vuln.getCveId(), existingAttribs.getNvdStatus(),
-							vuln.getNvdStatus());
-				}
-
-				if (mitreStatusChanged) {
-					databaseHelper.updateMitreStatus(vuln.getMitreStatus(), vuln.getCveId());
-					logger.info("Changed MITRE status of CVE {} from {} to {}", vuln.getCveId(), existingAttribs.getMitreStatus(),
-							vuln.getMitreStatus());
-				}
-
-				/**
 				 * Record time gaps in history, if any
 				 */
 				if (recordTimeGap) {
@@ -302,13 +287,20 @@ public class DbParallelProcessor {
 								vuln.getTimeGapMitre());
 					}
 				} else {
-					if (nvdStatusChanged)
+					if (nvdStatusChanged) {
 						databaseHelper.addToCveStatusChangeHistory(vuln, existingAttribs, "NVD", existingAttribs.getNvdStatus(),
 								vuln.getNvdStatus(), false, 0);
+						logger.info("ADDING to history --> Changed NVD status of CVE {} from {} to {}", vuln.getCveId(), existingAttribs.getNvdStatus(),
+								vuln.getNvdStatus());
+					}
 
-					if (mitreStatusChanged)
+					if (mitreStatusChanged) {
 						databaseHelper.addToCveStatusChangeHistory(vuln, existingAttribs, "MITRE", existingAttribs.getMitreStatus(),
 								vuln.getMitreStatus(), false, 0);
+						logger.info("ADDING to history --> Changed MITRE status of CVE {} from {} to {}", vuln.getCveId(), existingAttribs.getNvdStatus(),
+								vuln.getNvdStatus());
+					}
+
 				}
 			}
 		}
