@@ -256,20 +256,27 @@ public class CveProcessor {
 			}
 
 			if (!hashMapNvipCve.get(NVD_CVE_KEY).contains(cve)) {
-				logger.info("Checking if CVE: {} is in NVIP", cve.getCveId());
+				//logger.info("Checking if CVE: {} is in NVIP", cve.getCveId());
 				if (existingCves.containsKey(cve.getCveId())) {
-					logger.info("CVE: {} is in NVIP, is it found in NVD", cve.getCveId());
+					//logger.info("CVE: {} is in NVIP, is it found in NVD?", cve.getCveId());
 					Vulnerability existingCveAttributes = existingCves.get(cve.getCveId());
 					if (existingCveAttributes.getNvdStatus() == 0 && cve.getNvdStatus() == 1) {
 						try {
 							logger.info("Calculating NVD Time Gap for {}", cve.getCveId());
 							LocalDateTime createdDate = existingCveAttributes.getCreatedDateAsDate();
 							LocalDateTime currentCreateDate = cve.getCreatedDateAsDate();
-
 							int timeGapNvd = (int) Duration.between(createdDate, currentCreateDate).toHours();
-							cve.setTimeGapNvd(timeGapNvd);
+
+							if (timeGapNvd < 0) {
+								cve.setTimeGapNvd(timeGapNvd);
+								logger.info("Calculated Time Gap: {} for CVE: {}", timeGapNvd, cve.getCveId());
+							} else {
+								cve.setTimeGapNvd(0);
+								logger.info("Calculated Negative Time Gap: {} for CVE: {}, will setting time gap as 0", timeGapNvd, cve.getCveId());
+							}
+
 						} catch (Exception e) {
-							logger.error("ERROR: Failed to calculate Time Gap for CVE: {}\n{}", cve.getCveId(), e);
+							//logger.error("ERROR: Failed to calculate Time Gap for CVE: {}\n{}", cve.getCveId(), e);
 							e.printStackTrace();
 						}
 					} else {
