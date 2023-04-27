@@ -64,6 +64,10 @@ public class NvdCveParser {
 			// descriptions -> [ { lang, value } ]
 			JsonArray descriptions = cve.getAsJsonArray("descriptions");
 			String description = descriptions.get(0).getAsJsonObject().get("value").getAsString().replace("\n", "");
+
+			String publishDate = cve.get("published").getAsString();
+			String lastModifiedDate = cve.get("lastModified").getAsString();
+
 			// metrics -> cvssMetricV31 -> [ { cvssData { 12 } } ]
 			JsonObject metrics = cve.getAsJsonObject("metrics");
 			String impactScore = "";
@@ -96,130 +100,10 @@ public class NvdCveParser {
 
 			// nothing regarding Advisory, Patch, Exploit in JSON response
 			// those will be left as empty strings
-			allData.add(new String[]{cveId, description, baseScore, baseSeverity, impactScore, exploitabilityScore, cwe, "", "", ""});
+			allData.add(new String[]{cveId, description, publishDate, lastModifiedDate, baseScore, baseSeverity, impactScore, exploitabilityScore, cwe, "", "", ""});
 		}
 
 		return allData;
-	}
-
-	/**
-	 * Parse CVEs in a given <json> and return CVE IDs and Descriptions.
-	 * 
-	 * @param json a <json> object for CVEs
-	 * @return list of CVE IDs and Descriptions
-	 */
-	private List<String[]> parseCveJson(JsonObject json) {
-
-		List<String[]> allData = new ArrayList<>();
-		JsonArray items = json.getAsJsonArray("CVE_Items");
-
-		for (JsonElement jsonElement : items) {
-			JsonObject jsonCVE = (JsonObject) jsonElement;
-			String sID = jsonCVE.getAsJsonObject("cve").getAsJsonObject("CVE_data_meta").get("ID").getAsString();
-			sID = sID.replace("\"", "");
-
-			JsonArray descriptions = jsonCVE.getAsJsonObject("cve").getAsJsonObject("description").getAsJsonArray("description_data");
-			String sDescription = ((JsonObject) descriptions.get(0)).get("value").getAsString();
-
-			// clear content: replace <Operating System Command> (OSC) and â€" etc
-			sDescription = sDescription.replaceAll("[^\\p{Print}]", " ");
-			sDescription = sDescription.replaceAll("[ ,|'|\\\"|â€�|\\|]", " ");
-
-			String baseScore = "?", baseSeverity = "?";
-			String impactScore = "?", exploitabilityScore = "?";
-			try {
-
-				JsonObject scoreJson;
-				JsonObject cvssJson;
-				try {
-					scoreJson = jsonCVE.getAsJsonObject("impact").getAsJsonObject("baseMetricV3");
-					cvssJson = scoreJson.getAsJsonObject("cvssV3");
-					baseSeverity = cvssJson.get("baseSeverity").getAsString();
-
-				} catch (Exception e1) {
-					scoreJson = jsonCVE.getAsJsonObject("impact").getAsJsonObject("baseMetricV2");
-					cvssJson = scoreJson.getAsJsonObject("cvssV2");
-					baseSeverity = scoreJson.get("severity").getAsString();
-				}
-
-				try {
-					baseScore = cvssJson.get("baseScore").getAsString();
-				} catch (Exception ignored) {
-				}
-
-				impactScore = scoreJson.get("impactScore").getAsString();
-				exploitabilityScore = scoreJson.get("exploitabilityScore").getAsString();
-			} catch (Exception ignored) {
-			}
-
-			// get CWE
-			String associatedCwes = "";
-			StringBuilder sbCwe = new StringBuilder();
-			try {
-				JsonObject cweObj = jsonCVE.getAsJsonObject("cve").getAsJsonObject("problemtype");
-				if (cweObj != null) {
-					JsonArray problemtype_data_arr = cweObj.getAsJsonArray("problemtype_data");
-					if (problemtype_data_arr != null) {
-						JsonArray description_arr = problemtype_data_arr.get(0).getAsJsonObject().getAsJsonArray("description");
-						if (description_arr != null) {
-							for (JsonElement element : description_arr) {
-								String item = ((JsonObject) element).get("value").getAsString();
-								sbCwe.append(item).append(";");
-							}
-
-						}
-					}
-				}
-			} catch (Exception e) {
-				e.printStackTrace();
-			} finally {
-				if (sbCwe.toString().length() > 0) {
-					associatedCwes = sbCwe.toString();
-					associatedCwes = associatedCwes.substring(0, associatedCwes.length() - 1); // remove last;
-				}
-			}
-
-			// get advisories/patches/exploits
-			StringBuilder sbPatches = new StringBuilder();
-			StringBuilder sbAdvisories = new StringBuilder();
-			StringBuilder sbExploits = new StringBuilder();
-			try {
-
-				JsonArray advisories = jsonCVE.getAsJsonObject("cve").getAsJsonObject("references").getAsJsonArray("reference_data");
-				for (JsonElement element : advisories) {
-					JsonObject obj = (JsonObject) element;
-					JsonArray jsonArr = obj.get("tags").getAsJsonArray();
-
-					if (jsonArr.size() == 0)
-						continue;
-
-					// get tags
-					StringBuilder tags = new StringBuilder();
-					for (JsonElement tag : jsonArr)
-						tags.append(tag).append(";");
-
-					// url
-					String url = obj.get("url").getAsString();
-
-					if (tags.toString().contains("Advisory"))
-						sbAdvisories.append(url).append(";");
-
-					if (tags.toString().contains("Patch"))
-						sbPatches.append(url).append(";");
-
-					if (tags.toString().contains("Exploit"))
-						sbExploits.append(url).append(";");
-				}
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-
-			allData.add(new String[]{sID, sDescription, baseScore, baseSeverity, impactScore, exploitabilityScore, associatedCwes, sbAdvisories.toString(), sbPatches.toString(), sbExploits.toString()});
-		}
-
-		return allData;
-
 	}
 
 	/**

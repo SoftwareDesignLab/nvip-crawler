@@ -315,14 +315,14 @@ public class DbParallelProcessor {
 					if (!calculateGap)
 						recordTimeGap = false;
 
-					if (existingAttribs.getCreateDate() == null || existingAttribs.getCreateDate().isEmpty()) {
+					if (existingAttribs.getCreateDate() == null || existingAttribs.getCreateDate().toString().isEmpty()) {
 						return recordTimeGap;
 					} else {
-						createdDateTime = longDateFormatMySQL.parse(existingAttribs.getCreateDate());
+						createdDateTime = longDateFormatMySQL.parse(existingAttribs.getCreateDate().toString());
 					}
 
 					try {
-						lastModifiedDateTime = longDateFormatMySQL.parse(formatDate(vuln.getLastModifiedDate()));
+						lastModifiedDateTime = longDateFormatMySQL.parse(vuln.getLastModifiedDate().toString());
 					} catch (Exception e) {
 						lastModifiedDateTime = new Date();
 						logger.warn("WARNING: Could not parse last modified date of Cve: {}, Err: {}\nCve data: {}",
