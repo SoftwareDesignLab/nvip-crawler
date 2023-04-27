@@ -225,7 +225,7 @@ public class NVIPMain {
 		addEnvvarString(NVIPMain.crawlerVars,"whitelistFileDir", whitelistFileDir, "nvip_data/url-sources/nvip-whitelist.txt",
 				"WARNING: Crawler whitelist file path not defined in NVIP_WHITELIST_URLS, using default path: nvip_data/url-sources/nvip-whitelist.txt");
 
-		addEnvvarBool(NVIPMain.crawlerVars,"enableGitHub", enableGitHub, true,
+		addEnvvarBool(NVIPMain.crawlerVars,"enableGitHub", enableGitHub, false,
 				"WARNING: CVE GitHub Enabler not defined in NVIP_ENABLE_GITHUB, allowing CVE GitHub pull on default");
 
 		addEnvvarInt(NVIPMain.crawlerVars,"crawlerPoliteness", crawlerPoliteness, 3000,

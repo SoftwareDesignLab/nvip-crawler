@@ -24,8 +24,6 @@
 package edu.rit.se.nvip.db;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 
 import java.util.List;
 import java.util.Map;
@@ -153,7 +151,7 @@ public class DbParallelProcessor {
 						if (vuln.getCveReconcileStatus() == CompositeVulnerability.CveReconcileStatus.DO_NOT_CHANGE) {
 							count = 0;
 						} else {
-							count = databaseHelper.updateVulnerability(vuln, existingVulnMap, runId);
+							count = databaseHelper.updateVulnerability(vuln);
 
 							/**
 							 * Update NVD and MITRE status'
@@ -233,15 +231,16 @@ public class DbParallelProcessor {
 			logger.info("DatabaseHelper updated/inserted/notchanged {} [ {}/{}/{} ] of {} vulnerabilities.",
 					total, updateCount, insertCount, noChangeCount, vulnList.size());
 
+			int newCveCount = 0;
 			for (CompositeVulnerability vuln : vulnList) {
 				Vulnerability existingAttribs = existingVulnMap.get(vuln.getCveId());
 				if (existingVulnMap.containsKey(vuln.getCveId())) {
 					// Update CVE History
-					updateCVEHistory(vuln, existingAttribs)
+					updateCVEHistory(vuln, existingAttribs);
 				} else
 					newCveCount++;
 			}
-			logger.info("Done! Checked time gaps for {} (of {}) CVEs! # of new CVEs: {}", existingCveCount,
+			logger.info("Done! Checked time gaps for {} (of {}) CVEs! # of new CVEs: {}", existingVulnMap.size(),
 					vulnList.size(), newCveCount);
 
 			logger.info("Active, Idle and Total connections AFTER insert (before shutdown): {}", databaseHelper.getConnectionStatus());
@@ -292,15 +291,14 @@ public class DbParallelProcessor {
 				/**
 				 * Record time gaps in history, if any
 				 */
-				int hours;
 				if (recordTimeGap) {
 					if (!vulnAlreadyInNvd && vuln.doesExistInNvd()) {
 						databaseHelper.addToCveStatusChangeHistory(vuln, existingAttribs, "NVD", existingAttribs.getNvdStatus(),
-								vuln.getNvdStatus(), true, hours);
+								vuln.getNvdStatus(), true, vuln.getTimeGapNvd());
 					}
 					if (!vulnAlreaadyInMitre && vuln.doesExistInMitre()) {
 						databaseHelper.addToCveStatusChangeHistory(vuln, existingAttribs, "MITRE", existingAttribs.getMitreStatus(),
-								vuln.getMitreStatus(), true, hours);
+								vuln.getMitreStatus(), true, vuln.getTimeGapMitre());
 					}
 				} else {
 					if (nvdStatusChanged)
