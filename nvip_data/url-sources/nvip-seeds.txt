@@ -52,6 +52,7 @@ https://tools.cisco.com/security/center/publicationListing.x
 https://typo3.org/help/security-advisories
 https://www.exploit-db.com/
 https://www.jfrog.com/confluence/display/JFROG/Fixed+Security+Vulnerabilities
+https://jfrog.com/help/r/jfrog-release-information/jfrog-security-advisories
 https://www.oracle.com/security-alerts/
 https://www.securitytracker.com/topics/topics.html
 https://www.smartertools.com/smartermail/release-notes/current
