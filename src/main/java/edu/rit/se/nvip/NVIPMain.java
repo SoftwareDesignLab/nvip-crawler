@@ -34,7 +34,10 @@ import java.util.stream.Collectors;
 
 import edu.rit.se.nvip.crawler.github.PyPAGithubScraper;
 
+import edu.rit.se.nvip.exploit.ExploitIdentifier;
 import edu.rit.se.nvip.nvd.NvdCveController;
+import edu.rit.se.nvip.patchfinder.JGitCVEPatchDownloader;
+import edu.rit.se.nvip.patchfinder.PatchFinder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -137,32 +140,29 @@ public class NVIPMain {
 				dailyRunStats.getNotInBothCount(), dailyRunStats.getAddedCveCount(), dailyRunStats.getUpdatedCveCount());
 		databaseHelper.updateDailyRun(runId, dailyRunStats);
 		// log .csv files
-//		logger.info("Creating output CSV files...");
-//		cveLogger.logAndDiffCVEs(crawlStartTime, crawlEndTime, cveListMap, cveListMap.size());
+		logger.info("Creating output CSV files...");
+		cveLogger.logAndDiffCVEs(crawlStartTime, crawlEndTime, cveListMap, cveListMap.size());
 
-		// record additional available stats
+		// Exploit Collection
+		if ((boolean) exploitVars.get("exploitFinderEnabled")) {
+			logger.info("Identifying exploits for {} exploits...", crawledVulnerabilityList.size());
+			ExploitIdentifier exploitIdentifier = new ExploitIdentifier(crawledVulnerabilityList, databaseHelper);
+			int count = exploitIdentifier.identifyAndSaveExploits(crawledVulnerabilityList);
+			logger.info("Extracted exploits for {} CVEs!", count);
+		}
 
+		//Patch Collection
+		nvipMain.spawnProcessToIdentifyAndStoreAffectedReleases(crawledVulnerabilityList);
 
-//		// Exploit Collection
-//		if ((boolean) exploitVars.get("exploitFinderEnabled")) {
-//			logger.info("Identifying exploits for {} exploits...", crawledVulnerabilityList.size());
-//			ExploitIdentifier exploitIdentifier = new ExploitIdentifier(crawledVulnerabilityList, databaseHelper);
-//			int count = exploitIdentifier.identifyAndSaveExploits(crawledVulnerabilityList);
-//			logger.info("Extracted exploits for {} CVEs!", count);
-//		}
-//
-//		//Patch Collection
-//		nvipMain.spawnProcessToIdentifyAndStoreAffectedReleases(crawledVulnerabilityList);
-//
-//		if (Boolean.parseBoolean(System.getenv("PATCHFINDER_ENABLED"))) {
-//			// Parse for patches and store them in the database
-//			PatchFinder patchFinder = new PatchFinder();
-//			Map<String, ArrayList<String>> cpes = databaseHelper.getCPEsAndCVE();
-//			patchFinder.parseMassURLs(cpes);
-//			JGitCVEPatchDownloader jGitCVEPatchDownloader = new JGitCVEPatchDownloader();
-//			// repos will be cloned to patch-repos directory, multi-threaded 6 threads.
-//			jGitCVEPatchDownloader.parseMulitThread("patch-repos", 6);
-//		}
+		if (Boolean.parseBoolean(System.getenv("PATCHFINDER_ENABLED"))) {
+			// Parse for patches and store them in the database
+			PatchFinder patchFinder = new PatchFinder();
+			Map<String, ArrayList<String>> cpes = databaseHelper.getCPEsAndCVE();
+			patchFinder.parseMassURLs(cpes);
+			JGitCVEPatchDownloader jGitCVEPatchDownloader = new JGitCVEPatchDownloader();
+			// repos will be cloned to patch-repos directory, multi-threaded 6 threads.
+			jGitCVEPatchDownloader.parseMulitThread("patch-repos", 6);
+		}
 
 		logger.info("Done!");
 	}
