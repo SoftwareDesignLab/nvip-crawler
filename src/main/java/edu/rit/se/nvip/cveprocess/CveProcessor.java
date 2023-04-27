@@ -225,6 +225,8 @@ public class CveProcessor {
 	 *
 	 * This is for CVEs that changed NVD status to exists_in_nvd,
 	 * hence this is when NVD adds the vulnerability
+	 *
+	 * Note this only checks time gaps between NVIP and NVD, MITRE time gaps are not calculated (yet)
 	 * @param hashMapNvipCve
 	 * @return
 	 */
@@ -268,11 +270,14 @@ public class CveProcessor {
 							int timeGapNvd = (int) Duration.between(createdDate, currentCreateDate).toHours();
 
 							if (timeGapNvd < 0) {
-								cve.setTimeGapNvd(timeGapNvd);
-								logger.info("Calculated Time Gap: {} for CVE: {}", timeGapNvd, cve.getCveId());
-							} else {
 								cve.setTimeGapNvd(0);
 								logger.info("Calculated Negative Time Gap: {} for CVE: {}, will setting time gap as 0", timeGapNvd, cve.getCveId());
+							} else if (existingCveAttributes.getTimeGapNvd() > 0) {
+								cve.setTimeGapNvd(existingCveAttributes.getTimeGapNvd());
+								logger.info("CVE: {} Already has a NVD time gap of {}", cve.getCveId(), existingCveAttributes.getTimeGapNvd());
+							} else {
+								cve.setTimeGapNvd(timeGapNvd);
+								logger.info("Calculated Time Gap: {} for CVE: {}", timeGapNvd, cve.getCveId());
 							}
 
 						} catch (Exception e) {
