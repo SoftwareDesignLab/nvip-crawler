@@ -231,17 +231,14 @@ public class DbParallelProcessor {
 			logger.info("DatabaseHelper updated/inserted/notchanged {} [ {}/{}/{} ] of {} vulnerabilities.",
 					total, updateCount, insertCount, noChangeCount, vulnList.size());
 
-			int newCveCount = 0;
+			// For logging CVE Update History
 			for (CompositeVulnerability vuln : vulnList) {
 				Vulnerability existingAttribs = existingVulnMap.get(vuln.getCveId());
 				if (existingVulnMap.containsKey(vuln.getCveId())) {
 					// Update CVE History
 					updateCVEHistory(vuln, existingAttribs);
-				} else
-					newCveCount++;
+				}
 			}
-			logger.info("Done! Checked time gaps for {} (of {}) CVEs! # of new CVEs: {}", existingVulnMap.size(),
-					vulnList.size(), newCveCount);
 
 			logger.info("Active, Idle and Total connections AFTER insert (before shutdown): {}", databaseHelper.getConnectionStatus());
 			databaseHelper.shutdown();
