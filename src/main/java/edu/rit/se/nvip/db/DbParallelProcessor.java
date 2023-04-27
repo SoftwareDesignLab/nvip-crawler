@@ -195,7 +195,7 @@ public class DbParallelProcessor {
 						if (existingVulnMap.containsKey(vuln.getCveId())) {
 							Vulnerability existingAttribs = existingVulnMap.get(vuln.getCveId());
 							// check time gap for vuln
-							if (databaseHelper.checkNvdMitreStatusForVulnerability(vuln, existingAttribs))
+							if (checkNvdMitreStatusForVulnerability(vuln, existingAttribs))
 								timeGapCount++;
 							existingCveCount++;
 						} else
@@ -256,14 +256,12 @@ public class DbParallelProcessor {
 			 */
 			boolean nvdStatusChanged = (existingAttribs.getNvdStatus() != vuln.getNvdStatus());
 			boolean mitreStatusChanged = (existingAttribs.getMitreStatus() != vuln.getMitreStatus());
-			boolean nvdOrMitreStatusChanged = nvdStatusChanged || mitreStatusChanged;
 
-			if (nvdOrMitreStatusChanged) {
+			if (nvdStatusChanged || mitreStatusChanged) {
 
 				Date createdDateTime = null;
-				Date lastModifiedDateTime = null;
+				Date lastModifiedDateTime;
 				try {
-
 					boolean recordTimeGap = (existingAttribs.getCreateDate() != null)
 							&& ((!vulnAlreadyInNvd && vuln.doesExistInNvd()) || (!vulnAlreaadyInMitre && vuln.doesExistInMitre()))
 							&& !CveUtils.isCveReservedEtc(vuln.getDescription());
@@ -285,9 +283,7 @@ public class DbParallelProcessor {
 						recordTimeGap = false;
 
 					if (existingAttribs.getCreateDate() == null || existingAttribs.getCreateDate().isEmpty()) {
-						DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-						LocalDateTime now = LocalDateTime.now();
-						createdDateTime = longDateFormatMySQL.parse(formatDate(now.toString()));
+						return recordTimeGap;
 					} else {
 						createdDateTime = longDateFormatMySQL.parse(existingAttribs.getCreateDate());
 					}
@@ -305,10 +301,8 @@ public class DbParallelProcessor {
 					 * Record status changes.
 					 */
 					if (nvdStatusChanged) {
-						pstmt = connection.prepareStatement(updateNvdStatusSql);
-						pstmt.setInt(1, vuln.getNvdStatus());
-						pstmt.setString(2, vuln.getCveId());
-						pstmt.executeUpdate();
+						databaseHelper.updateNvdStatus(vuln.getNvdStatus(), vuln.getCveId());
+
 						logger.info("Changed NVD status of CVE {} from {} to {}", vuln.getCveId(), existingAttribs.getNvdStatus(),
 								vuln.getNvdStatus());
 					}

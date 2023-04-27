@@ -952,6 +952,18 @@ public class DatabaseHelper {
 		return true;
 	}
 
+	public void updateNvdStatus(int newStatus, String cveId) {
+		try (Connection connection = getConnection();
+			PreparedStatement pstmt = connection.prepareStatement(updateNvdStatusSql)) {
+			pstmt.setInt(1,newStatus);
+			pstmt.setString(2, cveId);
+			pstmt.executeUpdate();
+		} catch (SQLException e) {
+			logger.error("ERROR: Failed to update NVD Status for CVE: {}", cveId);
+		}
+
+	}
+
 	/**
 	 * Check if we need to record any time gaps for any CVE!
 	 * 
