@@ -130,7 +130,7 @@ public class NVIPMain {
 
 		dailyRunStats.calculateAddedUpdateCVEs(crawledVulnerabilityList);
 
-		nvipMain.insertStats(dailyRunStats);
+		//nvipMain.insertStats(dailyRunStats);
 
 		// log .csv files
 //		logger.info("Creating output CSV files...");

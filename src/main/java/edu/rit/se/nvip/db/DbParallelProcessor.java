@@ -318,11 +318,11 @@ public class DbParallelProcessor {
 					if (existingAttribs.getCreateDate() == null || existingAttribs.getCreateDate().toString().isEmpty()) {
 						return recordTimeGap;
 					} else {
-						createdDateTime = longDateFormatMySQL.parse(existingAttribs.getCreateDate().toString());
+						createdDateTime = databaseHelper.longDateFormatMySQL.parse(existingAttribs.getCreateDate().toString());
 					}
 
 					try {
-						lastModifiedDateTime = longDateFormatMySQL.parse(vuln.getLastModifiedDate().toString());
+						lastModifiedDateTime = databaseHelper.longDateFormatMySQL.parse(vuln.getLastModifiedDate().toString());
 					} catch (Exception e) {
 						lastModifiedDateTime = new Date();
 						logger.warn("WARNING: Could not parse last modified date of Cve: {}, Err: {}\nCve data: {}",
