@@ -160,7 +160,7 @@ public class CveProcessor {
 				} else if (existingCves.containsKey(vuln.getCveId()) && existingCves.get(vuln.getCveId()).getNvdStatus() == 0) {
 					long monthsBetween = ChronoUnit.MONTHS.between(LocalDateTime.now(), existingCves.get(vuln.getCveId()).getCreatedDateAsDate());
 					if (monthsBetween <= 1 && monthsBetween >= 0) {
-						logger.info("CVE: {}, is NOT in NVD", vuln.getCveId());
+						logger.info("CVE: {}, is in NVIP and NOT in NVD", vuln.getCveId());
 						vuln.setNvdSearchResult("NA");
 						vuln.setNvdStatus(0);
 						newCVEDataNotInNvd.add(vuln);
@@ -169,12 +169,12 @@ public class CveProcessor {
 						vuln.setNvdStatus(1);
 					}
 				} else if (!existingCves.containsKey(vuln.getCveId())) {
-					logger.info("CVE: {} is not in NVIP and not in NVD: Keeping status as 0", vuln.getCveId());
+					logger.info("CVE: {} is NOT in NVIP and NOT in NVD: Keeping status as 0", vuln.getCveId());
 					vuln.setNvdSearchResult("NA");
 					vuln.setNvdStatus(0);
 					newCVEDataNotInNvd.add(vuln);
 				} else {
-					logger.info("CVE: {} is already in DB and is in NVD: Keeping status as 1", vuln.getCveId());
+					logger.info("CVE: {} is already in NVIP and is in NVD: Keeping status as 1", vuln.getCveId());
 					vuln.setNvdStatus(1);
 				}
 
@@ -232,19 +232,24 @@ public class CveProcessor {
 	 */
 	public HashMap<String, List<Object>> checkTimeGaps(Map<String, List<Object>> hashMapNvipCve, Map<String, Vulnerability> existingCves) {
 
-		for (Object cveInNvd: hashMapNvipCve.get(NVD_CVE_KEY)) {
+
+
+		for (Object cveInNvd: hashMapNvipCve.get(ALL_CVE_KEY)) {
 			CompositeVulnerability cve = (CompositeVulnerability) cveInNvd;
-			if (existingCves.containsKey(cve.getCveId())) {
-				Vulnerability existingCveAttributes = existingCves.get(cve.getCveId());
+			if (!hashMapNvipCve.get(NVD_CVE_KEY).contains(cve)) {
+				if (existingCves.containsKey(cve.getCveId())) {
+					Vulnerability existingCveAttributes = existingCves.get(cve.getCveId());
 
-				if (existingCveAttributes.getNvdStatus() == 0 && cve.getNvdStatus() == 1) {
-					LocalDateTime createdDate = LocalDateTime.parse(existingCveAttributes.getCreateDate());
-					LocalDateTime currentCreateDate = LocalDateTime.parse(cve.getCreateDate());
+					if (existingCveAttributes.getNvdStatus() == 0 && cve.getNvdStatus() == 1) {
+						LocalDateTime createdDate = existingCveAttributes.getCreatedDateAsDate();
+						LocalDateTime currentCreateDate = cve.getCreatedDateAsDate();
 
-					int timeGapNvd = (int) Duration.between(createdDate, currentCreateDate).toHours();
-					cve.setTimeGapNvd(timeGapNvd);
+						int timeGapNvd = (int) Duration.between(createdDate, currentCreateDate).toHours();
+						cve.setTimeGapNvd(timeGapNvd);
+					}
 				}
 			}
+
 		}
 
 		return (HashMap<String, List<Object>>) hashMapNvipCve;
