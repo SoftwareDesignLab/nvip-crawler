@@ -677,9 +677,8 @@ public class NVIPMain {
 		String cveDataPathMitre = dataVars.get("dataDir") + "/mitre-cve.csv";
 		CveProcessor cveProcessor = new CveProcessor(cveDataPathNvd, cveDataPathMitre);
 		HashMap<String, List<Object>> checkedCVEs = cveProcessor.checkAgainstNvdMitre(cveHashMapAll);
-		HashMap<String, List<Object>> checkedCvesWithTimeGaps = cveProcessor.checkTimeGaps(checkedCVEs);
 
-		return checkedCvesWithTimeGaps;
+		return cveProcessor.checkTimeGaps(checkedCVEs);
 	}
 
 	/**
