@@ -119,11 +119,6 @@ public class NVIPMain {
 		crawledVulnerabilityList = nvipMain.characterizeCVEs(crawledVulnerabilityList);
 
 		// Prepare stats and Store found CVEs in DB
-		// TODO: Refactor this to use this logic
-		//  1.) Store CVEs
-		//  2.) Store run stats
-		//  3.) log csv files
-		//  we shouldn't be updating dailyrun after insert, it should all be one run
 		int runId = databaseHelper.getLatestRunId();
 		nvipMain.storeCVEs(crawledVulnerabilityList, runId);
 
@@ -143,7 +138,7 @@ public class NVIPMain {
 				dailyRunStats.getTotalCveCount(), dailyRunStats.getNotInNvdCount(), dailyRunStats.getNotInMitreCount(),
 				dailyRunStats.getNotInBothCount(), dailyRunStats.getAddedCveCount(), dailyRunStats.getUpdatedCveCount(),
 				dailyRunStats.getAvgTimeGapNvd(), dailyRunStats.getAvgTimeGapMitre());
-		//databaseHelper.updateDailyRun(runId, dailyRunStats);
+
 		// log .csv files
 		logger.info("Creating output CSV files...");
 		cveLogger.logAndDiffCVEs(crawlStartTime, crawlEndTime, cveListMap, cveListMap.size());
