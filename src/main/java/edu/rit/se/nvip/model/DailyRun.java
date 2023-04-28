@@ -117,6 +117,7 @@ public class DailyRun {
 		return newCveCount;
 	}
 
+	public void setNewCveCount(int newCveCount) { this.newCveCount = newCveCount; }
 	public double getAvgTimeGapNvd() {
 		return avgTimeGapNvd;
 	}
