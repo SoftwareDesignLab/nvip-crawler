@@ -133,12 +133,17 @@ public class NVIPMain {
 
 		dailyRunStats.calculateAddedUpdateCVEs(crawledVulnerabilityList);
 
+		logger.info("Calculating Average Time Gaps...");
+		dailyRunStats.calculateAvgTimeGaps(crawledVulnerabilityList);
+
 		databaseHelper.insertDailyRun(dailyRunStats);
 		logger.info("Run @ {}\nSummary:\nTotal CVEs found from this run: {}\nTotal CVEs not in NVD: {}" +
-						"\nTotal CVEs not in Mitre: {}\nTotal CVEs not in both: {}", dailyRunStats.getRunDateTime(),
+						"\nTotal CVEs not in Mitre: {}\nTotal CVEs not in both: {}\nTotal CVEs Added: {}\nTotal CVEs Updated: {}" +
+						"\nAvg NVD Time Gap: {}\n Avg MITRe Time Gap: {}\n", dailyRunStats.getRunDateTime(),
 				dailyRunStats.getTotalCveCount(), dailyRunStats.getNotInNvdCount(), dailyRunStats.getNotInMitreCount(),
-				dailyRunStats.getNotInBothCount(), dailyRunStats.getAddedCveCount(), dailyRunStats.getUpdatedCveCount());
-		databaseHelper.updateDailyRun(runId, dailyRunStats);
+				dailyRunStats.getNotInBothCount(), dailyRunStats.getAddedCveCount(), dailyRunStats.getUpdatedCveCount(),
+				dailyRunStats.getAvgTimeGapNvd(), dailyRunStats.getAvgTimeGapMitre());
+		//databaseHelper.updateDailyRun(runId, dailyRunStats);
 		// log .csv files
 		logger.info("Creating output CSV files...");
 		cveLogger.logAndDiffCVEs(crawlStartTime, crawlEndTime, cveListMap, cveListMap.size());

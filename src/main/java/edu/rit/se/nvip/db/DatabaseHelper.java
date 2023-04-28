@@ -101,7 +101,7 @@ public class DatabaseHelper {
 	private final String selectAllNvipSourceSql = "SELECT * FROM nvipsourceurl;";
 
 	private final String insertDailyRunSql = "INSERT INTO dailyrunhistory (run_date_time, crawl_time_min, total_cve_count, not_in_nvd_count, not_in_mitre_count,"
-			+ "not_in_both_count, new_cve_count, added_cve_count, updated_cve_count) VALUES (?,?,?,?,?,?,?,?,?);";
+			+ "not_in_both_count, new_cve_count, avg_time_gap_nvd, avg_time_gap_mitre, added_cve_count, updated_cve_count) VALUES (?,?,?,?,?,?,?,?,?,?,?);";
 	private final String updateDailyRunSql = "UPDATE dailyrunhistory SET crawl_time_min = ?, db_time_min = ?, total_cve_count = ?, not_in_nvd_count = ?, "
 			+ "not_in_mitre_count = ?, not_in_both_count = ?, new_cve_count = ?, avg_time_gap_nvd = ?, avg_time_gap_mitre = ? WHERE (run_id = ?);";
 	private final String selectAverageTimeGapNvd = "SELECT avg(v.time_gap_nvd) as gapNvd from vulnerability v where Date(v.created_date) >= CURDATE()";
@@ -1063,8 +1063,10 @@ public class DatabaseHelper {
 			pstmt.setInt(5, dailyRun.getNotInMitreCount());
 			pstmt.setInt(6, dailyRun.getNotInBothCount());
 			pstmt.setInt(7, dailyRun.getNewCveCount());
-			pstmt.setInt(8, dailyRun.getAddedCveCount());
-			pstmt.setInt(9, dailyRun.getUpdatedCveCount());
+			pstmt.setDouble(8, dailyRun.getAvgTimeGapNvd());
+			pstmt.setDouble(9, dailyRun.getAvgTimeGapMitre());
+			pstmt.setInt(10, dailyRun.getAddedCveCount());
+			pstmt.setInt(11, dailyRun.getUpdatedCveCount());
 			pstmt.executeUpdate();
 
 			logger.info("Daily Run Stats Inputted Successfully!");
