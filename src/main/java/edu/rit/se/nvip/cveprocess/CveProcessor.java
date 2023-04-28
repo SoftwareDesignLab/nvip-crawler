@@ -157,7 +157,7 @@ public class CveProcessor {
 					vuln.setNvdStatus(1);
 				} else if (existingCves.containsKey(vuln.getCveId()) && existingCves.get(vuln.getCveId()).getNvdStatus() == 0) {
 					long monthsBetween = ChronoUnit.MONTHS.between(LocalDateTime.now(), existingCves.get(vuln.getCveId()).getCreatedDateAsDate());
-					if (monthsBetween <= 1 && monthsBetween >= 0) {
+					if (checkAgeOfCVEByYear(vuln.getCveId()) &&  monthsBetween <= 1 && monthsBetween >= 0) {
 						logger.info("CVE: {}, is in NVIP and NOT in NVD", vuln.getCveId());
 						vuln.setNvdSearchResult("NA");
 						vuln.setNvdStatus(0);
@@ -181,7 +181,7 @@ public class CveProcessor {
 					vuln.setMitreStatus(1);
 				} else if (existingCves.containsKey(vuln.getCveId()) && existingCves.get(vuln.getCveId()).getMitreStatus() == 0) {
 					long monthsBetween = ChronoUnit.MONTHS.between(LocalDateTime.now(),existingCves.get(vuln.getCveId()).getCreatedDateAsDate());
-					if (monthsBetween <= 1 && monthsBetween >= 0) {
+					if (checkAgeOfCVEByYear(vuln.getCveId()) && monthsBetween <= 1 && monthsBetween >= 0) {
 						logger.info("CVE: {}, is NOT in Mitre", vuln.getCveId());
 						vuln.setMitreSearchResult("NA");
 						vuln.setMitreStatus(0);
@@ -237,27 +237,7 @@ public class CveProcessor {
 		for (Object cveInNvd: hashMapNvipCve.get(ALL_CVE_KEY)) {
 			CompositeVulnerability cve = (CompositeVulnerability) cveInNvd;
 
-			/**
-			 * We are not expecting a time gap more than 1 year. If CVE is from prior years
-			 * skip time gap check
-			 */
-			String[] cveParts = cve.getCveId().split("-");
-
-			if (cveParts.length <= 1) {
-				logger.info("CVE: {} is not eligible for time gap checks, skipping this cve", cve.getCveId());
-				continue;
-			}
-
-			int cveYear = Integer.parseInt(cveParts[1]);
-			int currentYear = Calendar.getInstance().get(Calendar.YEAR);
-			boolean calculateGap = (cveYear == currentYear);
-
-			if (!calculateGap) {
-				logger.info("CVE: {} is too old, skipping this cve!", cve.getCveId());
-				continue;
-			}
-
-			if (!hashMapNvipCve.get(NVD_CVE_KEY).contains(cve)) {
+			if (!hashMapNvipCve.get(NVD_CVE_KEY).contains(cve) && checkAgeOfCVEByYear(cve.getCveId())) {
 				//logger.info("Checking if CVE: {} is in NVIP", cve.getCveId());
 				if (existingCves.containsKey(cve.getCveId())) {
 					//logger.info("CVE: {} is in NVIP, is it found in NVD?", cve.getCveId());
@@ -281,7 +261,7 @@ public class CveProcessor {
 							}
 
 						} catch (Exception e) {
-							//logger.error("ERROR: Failed to calculate Time Gap for CVE: {}\n{}", cve.getCveId(), e);
+							logger.error("ERROR: Failed to calculate Time Gap for CVE: {}\n{}", cve.getCveId(), e);
 							e.printStackTrace();
 						}
 					} else {
@@ -293,5 +273,35 @@ public class CveProcessor {
 		}
 
 		return (HashMap<String, List<Object>>) hashMapNvipCve;
+	}
+
+	/**
+	 * for checking the age of a CVE, if the year in the CVE isn't the currnet year,
+	 * then the CVE is too old and shouldn't be compared to NVD/MITRE
+	 * @param cveId
+	 * @return
+	 */
+	public boolean checkAgeOfCVEByYear(String cveId) {
+		/**
+		 * We are not expecting a time gap more than 1 year. If CVE is from prior years
+		 * skip time gap check
+		 */
+		String[] cveParts = cveId.split("-");
+
+		if (cveParts.length <= 1) {
+			logger.info("CVE: {} is not eligible for time gap checks, skipping this cve", cveId);
+			return false;
+		}
+
+		int cveYear = Integer.parseInt(cveParts[1]);
+		int currentYear = Calendar.getInstance().get(Calendar.YEAR);
+		boolean calculateGap = (cveYear == currentYear);
+
+		if (!calculateGap) {
+			logger.info("CVE: {} is too old, skipping this cve!", cveId);
+			return false;
+		}
+
+		return true;
 	}
 }
