@@ -96,6 +96,23 @@ public class DailyRun {
 		this.updatedCveCount = updatedCveCount;
 	}
 
+
+	public void calculateAvgTimeGaps(List<CompositeVulnerability> crawledVulnerabilityList) {
+		// Add up all time gaps, then get the mean average
+		int totalTimeGapNvd = 0;
+		int totalTimeGapMitre = 0;
+		for (CompositeVulnerability cve: crawledVulnerabilityList) {
+			totalTimeGapNvd += cve.getTimeGapNvd();
+			totalTimeGapMitre += cve.getTimeGapMitre();
+		}
+
+		double avgNvdtimeGap = totalTimeGapNvd / crawledVulnerabilityList.size();
+		this.setAvgTimeGapNvd(avgNvdtimeGap);
+
+		double avgMitreTimeGap = totalTimeGapMitre / crawledVulnerabilityList.size();
+		this.setAvgTimeGapMitre(avgMitreTimeGap);
+	}
+
 	public int getNewCveCount() {
 		return newCveCount;
 	}
