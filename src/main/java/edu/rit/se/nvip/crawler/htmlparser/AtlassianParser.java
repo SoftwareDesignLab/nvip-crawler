@@ -107,9 +107,13 @@ public class AtlassianParser extends AbstractCveParser {
         Document doc = Jsoup.parse(sCVEContentHTML);
 
         // the top-most table, containing info on summary, release date, affected products, and CVE id's
-        Element table = doc.getElementsByClass("wrapped confluenceTable").get(0);
+        Elements tables = doc.getElementsByClass("wrapped confluenceTable");
+        if (tables.size() == 0) return vulnList;
+        Element table = tables.get(0);
         // get the rows of the table
-        Elements rows = table.children().get(1).children();
+        Elements tableChildren = table.children();
+        if (tableChildren.size() <= 1) return vulnList;
+        Elements rows = tableChildren.get(1).children();
 
         // take the "Last modified on" date at the bottom
         Elements lastModifiedEl = doc.getElementsByClass("content-page-last-modified-date");

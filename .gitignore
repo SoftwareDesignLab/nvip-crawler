@@ -1,11 +1,10 @@
 logs
 **/.settings
 *.log
+/logs/
 *.csv
 .idea
 nvip.iml
 /target/
 .idea
-logs/
 output/
-nvip.iml

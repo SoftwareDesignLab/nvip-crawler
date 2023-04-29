@@ -2,17 +2,17 @@
  * Copyright 2023 Rochester Institute of Technology (RIT). Developed with
  * government support under contract 70RSAT19CB0000020 awarded by the United
  * States Department of Homeland Security.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -24,6 +24,9 @@
 package edu.rit.se.nvip.crawler.htmlparser;
 
 import edu.rit.se.nvip.model.CompositeVulnerability;
+import edu.rit.se.nvip.utils.UtilHelper;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.text.PDFTextStripper;
 import io.github.bonigarcia.wdm.WebDriverManager;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriverService;
@@ -34,8 +37,6 @@ import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeDriverService;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.remote.CapabilityType;
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.text.PDFTextStripper;
 
 import java.io.*;
 import java.net.HttpURLConnection;
@@ -45,6 +46,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.DateFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -56,7 +58,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * 
+ *
  * @author axoeec
  *
  */
@@ -68,11 +70,12 @@ public abstract class AbstractCveParser {
 	protected final String regexDateFormat = "([a-zA-Z]+ [0-9]+, [0-9]+)";
 	protected final String regexDateFormatNumeric = "[0-9]+[-/][0-9]+[-/][0-9]+";
 	protected final String regexDateYearMonthDay = "\\d{4}-(0?[1-9]|1[012])-(0?[1-9]|[12][0-9]|3[01])*";
+	protected final String regexDates = "(?i:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*?\\s+\\d{1,2}(?:[a-z]{2})?(?:\\s+|,\\s*)\\d{4}\\b";
 	protected final String regexChinese = "\\p{IsHan}";
 	protected final DateFormat dateFormat_MMMddCommaYYYY = new SimpleDateFormat("MMM dd, yyyy", Locale.ENGLISH);
 	protected final DateFormat dateFormat_MMMddYYYY = new SimpleDateFormat("MMM dd yyyy", Locale.ENGLISH);
 	protected final DateFormat dateFormat_yyyy_MM_dd = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH);
-	
+
 	protected String sourceDomainName = null;
 
 	protected static volatile WebDriver driver = null;
@@ -96,7 +99,7 @@ public abstract class AbstractCveParser {
 	 * @param url
 	 * @return
 	 */
-	 protected String grabDynamicHTML(String url) {
+	protected String grabDynamicHTML(String url) {
 
 		// null in unit tests for now
 		if (driver == null)
@@ -110,7 +113,7 @@ public abstract class AbstractCveParser {
 
 	/**
 	 * get unique CVEs
-	 * 
+	 *
 	 * @param sCVEContentHTML
 	 * @return
 	 */
@@ -124,9 +127,29 @@ public abstract class AbstractCveParser {
 		return uniqueCves;
 	}
 
+	protected String getCVEID(String sCVEContentHTML) {
+		String cve = "";
+		Pattern cvePattern = Pattern.compile(regexCVEID);
+		Matcher cveMatcher = cvePattern.matcher(sCVEContentHTML);
+		if (cveMatcher.find())
+			cve = cveMatcher.group();
+
+		return cve;
+	}
+
+	protected String getCVEDate(String dateContentHTML) {
+		String date = "";
+		Pattern cvePattern = Pattern.compile(regexDates);
+		Matcher cveMatcher = cvePattern.matcher(dateContentHTML);
+		if (cveMatcher.find())
+			date = cveMatcher.group();
+
+		return date;
+	}
+
 	/**
 	 * Check if HTML contains Chinese chars?
-	 * 
+	 *
 	 * @param sHTML
 	 * @return
 	 */

@@ -31,7 +31,6 @@ import org.jsoup.select.Elements;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 public class AndroidParser extends AbstractCveParser {
 
@@ -51,16 +50,37 @@ public class AndroidParser extends AbstractCveParser {
         // get publish and modified dates under title
         // this is the first element with em tag
         Element datesEl = doc.select("em").first();
-        // if only published is present, have lastModified also be published
-        String[] datesSplit = Objects.requireNonNull(datesEl).text().split("\\|");
-        String publishedDate;
-        String lastModifiedDate;
-        if (datesSplit.length == 1) {
-            publishedDate = lastModifiedDate = datesSplit[0].split("Published")[1].trim();
-        }
-        else {
-            publishedDate = datesSplit[0].split("Published")[1].trim();
-            lastModifiedDate = datesSplit[1].split("Updated")[1].trim();
+        String publishedDate = "";
+        String lastModifiedDate = "";
+        StringBuilder description = new StringBuilder();
+        if (datesEl != null) {
+            // if only published is present, have lastModified also be published
+            // sometimes they are separated by just a pipe (|) sometimes they are separated by just "Updated"
+            String[] datesSplit;
+            String[] updatedSplit = datesEl.text().split("Updated");
+            String[] pipeSplit = datesEl.text().split("\\|");
+            if (updatedSplit.length > 1) {
+                datesSplit = updatedSplit;
+                publishedDate = datesSplit[0].split("Published")[1].replace("|", "").trim();
+                lastModifiedDate = datesSplit[1].replace("|", "").trim();
+            }
+            else if (pipeSplit.length > 1) {
+                datesSplit = pipeSplit;
+                publishedDate = datesSplit[0].split("Published")[1].replace("|", "").trim();
+                lastModifiedDate = datesSplit[1].replace("|", "").trim();
+            }
+            else {
+                datesSplit = updatedSplit;
+                publishedDate = lastModifiedDate = datesSplit[0].split("Published")[1].trim();
+            }
+
+            // get large description under dates
+            // go until we do not see a <p> tag
+            Element next = datesEl.nextElementSibling();
+            while(next != null && next.tagName().equals("p")) {
+                description.append(next.text());
+                next = next.nextElementSibling();
+            }
         }
 
         // get each table in bulletin
@@ -68,32 +88,42 @@ public class AndroidParser extends AbstractCveParser {
         Elements tables = doc.select("table:contains(CVE)");
         // foreach table get description above it and parse each CVE id
         for (Element table : tables) {
-            Element prev = Objects.requireNonNull(table.parent()).previousElementSibling();
-            String description = prev == null ? "" : prev.text();
+            // if CVE keyword is found in a table w/ less than 3 columns or w/ no
+            // CVE header it is unlikely to have useful CVE information in it
+            if (table.children().select("th:contains(CVE)").size() == 0 ||
+                    table.children().select("th").size() < 3)
+                continue;
+            if (table.parent() == null) continue;
+            Element prev = table.parent().previousElementSibling();
+            String thisDesc = description + (prev == null ? "" : prev.text());
             Elements rows = table.child(1).children();
             // foreach CVE append other useful columns to desc and add to vulnList
             // first get names of columns to map to when appending
             ArrayList<String> categoryNames = new ArrayList<>();
             Elements columnNames = rows.get(0).children();
+            Element cveColHeader = columnNames.select(":contains(CVE)").first();
+            int cveIndex = columnNames.indexOf(cveColHeader);
             for (Element columnName : columnNames) categoryNames.add(columnName.text());
+            // start for loop after the header row
             for (int i = 1 ; i < rows.size() ; i++) {
                 Element row = rows.get(i);
                 // note: CVE ID is not always the first column in the table
                 String cveId = "";
-                StringBuilder usefulDesc = new StringBuilder(description);
+                StringBuilder usefulDesc = new StringBuilder(thisDesc);
                 Elements cells = row.children();
                 for (int j = 0 ; j < cells.size() ; j++) {
                     Element cell = cells.get(j);
                     String cellText = cell.text();
-                    if (cellText.contains("CVE-"))
-                        cveId = cellText;
+                    if (j == cveIndex)
+                        cveId = getCVEID(cellText);
                     else {
                         String col = ";" + categoryNames.get(j) + ": " + cellText;
                         usefulDesc.append(col);
                     }
                 }
+                if (cveId.equals("")) continue;
                 vulnList.add(new CompositeVulnerability(
-                   0, sSourceURL, cveId, null, publishedDate, lastModifiedDate, usefulDesc.toString(), sourceDomainName
+                        0, sSourceURL, cveId, null, publishedDate, lastModifiedDate, usefulDesc.toString(), sourceDomainName
                 ));
             }
         }
