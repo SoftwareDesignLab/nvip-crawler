@@ -23,6 +23,9 @@
  */
 package edu.rit.se.nvip.model;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * 
  * @author axoeec
@@ -44,22 +47,16 @@ public class DailyRun {
 	int addedCveCount = 0;
 	int updatedCveCount = 0;
 
-	public DailyRun(String runDateTime, float crawlTimeMin, int totalCveCount, int notInNvdCount, int notInMitreCount, int notInBothCount, int newCveCount, float avgTimeGapNvd,
-			float avgTimeGapMitre) {
+	public DailyRun(String runDateTime, float crawlTimeMin, int totalCveCount, int notInNvdCount, int notInMitreCount, int notInBothCount) {
 		this.runDateTime = runDateTime;
 		this.crawlTimeMin = crawlTimeMin;
 		this.totalCveCount = totalCveCount;
 		this.notInNvdCount = notInNvdCount;
 		this.notInMitreCount = notInMitreCount;
 		this.notInBothCount = notInBothCount;
-		this.newCveCount = newCveCount;
-		this.avgTimeGapNvd = avgTimeGapNvd;
-		this.avgTimeGapMitre = avgTimeGapMitre;
 	}
 
-	public DailyRun() {
-
-	}
+	public DailyRun() {}
 
 	public String getRunDateTime() {
 		return runDateTime;
@@ -85,10 +82,42 @@ public class DailyRun {
 		return notInBothCount;
 	}
 
+	public void calculateAddedUpdateCVEs(List<CompositeVulnerability> crawledVulnerabilityList) {
+		// Count added/updated CVEs
+		int addedCveCount = 0, updatedCveCount = 0;
+		for (CompositeVulnerability vuln : crawledVulnerabilityList) {
+			if (vuln.getCveReconcileStatus().equals(CompositeVulnerability.CveReconcileStatus.INSERT))
+				addedCveCount++;
+			else if (vuln.getCveReconcileStatus().equals(CompositeVulnerability.CveReconcileStatus.UPDATE))
+				updatedCveCount++;
+		}
+
+		this.addedCveCount = addedCveCount;
+		this.updatedCveCount = updatedCveCount;
+	}
+
+
+	public void calculateAvgTimeGaps(List<CompositeVulnerability> crawledVulnerabilityList) {
+		// Add up all time gaps, then get the mean average
+		int totalTimeGapNvd = 0;
+		int totalTimeGapMitre = 0;
+		for (CompositeVulnerability cve: crawledVulnerabilityList) {
+			totalTimeGapNvd += cve.getTimeGapNvd();
+			totalTimeGapMitre += cve.getTimeGapMitre();
+		}
+
+		double avgNvdtimeGap = totalTimeGapNvd / crawledVulnerabilityList.size();
+		this.setAvgTimeGapNvd(avgNvdtimeGap);
+
+		double avgMitreTimeGap = totalTimeGapMitre / crawledVulnerabilityList.size();
+		this.setAvgTimeGapMitre(avgMitreTimeGap);
+	}
+
 	public int getNewCveCount() {
 		return newCveCount;
 	}
 
+	public void setNewCveCount(int newCveCount) { this.newCveCount = newCveCount; }
 	public double getAvgTimeGapNvd() {
 		return avgTimeGapNvd;
 	}
@@ -101,9 +130,7 @@ public class DailyRun {
 		this.runDateTime = runDateTime;
 	}
 
-	public void setCrawlTimeMin(float crawlTimeMin) {
-		this.crawlTimeMin = crawlTimeMin;
-	}
+	public void setCrawlTimeMin(float crawlTimeMin) { this.crawlTimeMin = crawlTimeMin;}
 
 	public void setTotalCveCount(int totalCveCount) {
 		this.totalCveCount = totalCveCount;
@@ -141,9 +168,7 @@ public class DailyRun {
 		return runId;
 	}
 
-	public void setRunId(int runId) {
-		this.runId = runId;
-	}
+	public void setRunId(int runId) { this.runId = runId;}
 
 	public int getAddedCveCount() {
 		return addedCveCount;

@@ -90,7 +90,7 @@ public class VendorAssessment {
 	 * refresh CVEs, Advisories, Patches etc
 	 */
 	private void refreshAdvisoriesAndPatches(String cvePath) {
-		new NvdCveController().pullNvdCve(cvePath, false);
+		new NvdCveController().pullNvdCve(cvePath);
 	}
 
 	/**

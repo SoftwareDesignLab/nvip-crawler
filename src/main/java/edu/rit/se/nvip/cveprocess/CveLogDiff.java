@@ -24,7 +24,6 @@
 package edu.rit.se.nvip.cveprocess;
 
 import java.io.File;
-import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -310,53 +309,6 @@ public class CveLogDiff {
 
 		return sBuffer.toString();
 
-	}
-
-	/**
-	 * Update the list of crawled URLs so far!
-	 * 
-	 * @param newList
-	 * @param crawlUrlSourcesPath
-	 */
-	public void logCrawledURLs(List<String> newList, String crawlUrlSourcesPath) {
-
-		HashMap<String, Integer> hashMapAllURLs = new HashMap<>();
-		int countPrev = 0, countNew = newList.size(), countCombined = 0;
-
-		try {
-
-			File file = new File(crawlUrlSourcesPath);
-			if (!file.exists())
-				file.createNewFile();
-
-			// load old list
-			List<String> prevList = FileUtils.readLines(new File(crawlUrlSourcesPath));
-			for (String url : prevList)
-				hashMapAllURLs.put(url, 0);
-			countPrev = prevList.size();
-
-			// append new ones
-			for (Object url : newList)
-				hashMapAllURLs.put((String) url, 0);
-
-			// get combined list from hash map
-			List<String> combinedList = new ArrayList<String>();
-			for (String key : hashMapAllURLs.keySet())
-				combinedList.add(key);
-
-			FileUtils.writeLines(file, combinedList, false);
-			countCombined = combinedList.size();
-
-			logger.info("Refreshed crawl URL list at: " + crawlUrlSourcesPath + ", # of URLS: Existing: " + countPrev
-					+ ", Current: " + countNew + ", Combined: " + countCombined);
-
-			String sourceUrlPathNvipResources = "src/main/resources/cvesources/nvip-url-sources.csv";
-			FileUtils.writeLines(new File(sourceUrlPathNvipResources), combinedList, false);
-			logger.info("Logged " + countCombined + " source URLs to " + sourceUrlPathNvipResources);
-
-		} catch (IOException e) {
-			logger.error("Error while refreshing crawled URLs: " + e);
-		}
 	}
 
 }

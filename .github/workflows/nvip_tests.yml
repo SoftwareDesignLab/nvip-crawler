@@ -32,7 +32,7 @@ jobs:
       - name: Test and Build Backend with Maven
         run: |
           mvn dependency:go-offline
-          mvn package -DskipTests
+          mvn package
 
       - name: Publish Test Report
         if: success() || failure()

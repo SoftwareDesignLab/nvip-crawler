@@ -55,9 +55,6 @@ public class UtilHelper {
 		logger.info("Memory (MB), Total: " + total + ", Used: " + used + ", Used %:" + ((int) ((used * 1.0) / total * 100)));
 	}
 
-	public static void setProperties(MyProperties properties) {
-	}
-
 
 	public static Date getPastDate(Calendar cal, int days) {
 		cal.add(Calendar.DATE, -days);
