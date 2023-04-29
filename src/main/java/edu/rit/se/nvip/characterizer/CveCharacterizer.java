@@ -181,7 +181,16 @@ public class CveCharacterizer {
 				vulnerability = cveList.get(i);
 				String cveDesc = vulnerability.getDescription();
 				if (cveDesc == null || cveDesc.length() < 50) {
-					logger.warn("WARNING: Bad Description for Characterization of {}", cveDesc);
+					if (cveDesc.length() > 1 && cveDesc.length() < 50)
+						logger.warn("WARNING: Description too small for {} at {}. Desc: {}",
+								vulnerability.getCveId(),
+								vulnerability.getSourceURL(),
+								cveDesc);
+					else
+						logger.warn("WARNING: BAD or MISSING Description '{}' for {} at {}",
+								cveDesc,
+								vulnerability.getCveId(),
+								vulnerability.getSourceURL());
 					countBadDescription++;
 					continue; // if no description or old CVE skip!
 				}

@@ -60,18 +60,24 @@ public class BoschSecurityParser extends AbstractCveParser{
 
         Document doc = Jsoup.parse(sCVEContentHTML);
         try {
-            Elements dates = Objects.requireNonNull(Objects.requireNonNull(doc.getElementById("advisory-information")).nextElementSibling()).children();
+            Element advisoryInformation = doc.getElementById("advisory-information");
+            if (advisoryInformation == null) return vulns;
+            advisoryInformation = advisoryInformation.nextElementSibling();
+            if (advisoryInformation == null) return vulns;
+            Elements dates = advisoryInformation.children();
 
             String publishDate = dates.get(2).children().get(1).text().substring(10).trim();
             String updateDate = dates.get(3).children().get(1).text().substring(13).trim();
 
             Elements headers = doc.getElementsByTag("h3");
             for (Element header : headers) {
-                if (header.id().contains("cve-")) {
+                if (header.id().contains("cve-") && !header.id().contains("cvss")) {
                     String cveId = header.id().toUpperCase();
-                    String description = Objects.requireNonNull(header.nextElementSibling()).text().substring(17);
-
-                    vulns.add(new CompositeVulnerability(0, sSourceURL, cveId, null, publishDate, updateDate, description, sourceDomainName));
+                    Element next = header.nextElementSibling();
+                    if (next != null) {
+                        String description = next.text().substring(17);
+                        vulns.add(new CompositeVulnerability(0, sSourceURL, cveId, null, publishDate, updateDate, description, sourceDomainName));
+                    }
                 }
             }
         } catch (Exception ignored) {
