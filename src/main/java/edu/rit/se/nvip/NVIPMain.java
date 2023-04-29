@@ -34,9 +34,10 @@ import java.util.stream.Collectors;
 
 import edu.rit.se.nvip.crawler.github.PyPAGithubScraper;
 
+import edu.rit.se.nvip.exploit.ExploitIdentifier;
+import edu.rit.se.nvip.nvd.NvdCveController;
 import edu.rit.se.nvip.patchfinder.JGitCVEPatchDownloader;
 import edu.rit.se.nvip.patchfinder.PatchFinder;
-import org.apache.commons.collections.map.HashedMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -50,13 +51,11 @@ import edu.rit.se.nvip.cvereconcile.AbstractCveReconciler;
 import edu.rit.se.nvip.cvereconcile.CveReconcilerFactory;
 import edu.rit.se.nvip.db.DatabaseHelper;
 import edu.rit.se.nvip.db.DbParallelProcessor;
-import edu.rit.se.nvip.exploit.ExploitIdentifier;
 import edu.rit.se.nvip.model.CompositeVulnerability;
 import edu.rit.se.nvip.model.CompositeVulnerability.CveReconcileStatus;
 import edu.rit.se.nvip.model.DailyRun;
 import edu.rit.se.nvip.model.NvipSource;
 import edu.rit.se.nvip.model.Vulnerability;
-import edu.rit.se.nvip.nvd.PullNvdCveMain;
 import edu.rit.se.nvip.productnameextractor.AffectedProductIdentifier;
 import edu.rit.se.nvip.utils.CveUtils;
 import edu.rit.se.nvip.utils.MyProperties;
@@ -84,6 +83,7 @@ public class NVIPMain {
 	private static final Map<String, Object> crawlerVars = new HashMap<>();
 	private static final Map<String, Object> dataVars = new HashMap<>();
 
+	private static final Map<String, Object> characterizationVars = new HashMap<>();
 	private static final Map<String, Object> exploitVars = new HashMap<>();
 	private static final Map<String, Object> patchfinderVars = new HashMap<>();
 	private static final Map<String, Object> emailVars = new HashMap<>();
@@ -99,8 +99,10 @@ public class NVIPMain {
 		NVIPMain nvipMain = new NVIPMain();
 		CveLogDiff cveLogger = new CveLogDiff(properties);
 		List<String> urls = nvipMain.grabSeedURLs();
-		if (properties.refreshCVENVDList()) {
-			PullNvdCveMain.pullFeeds(); // update nvd CVEs
+		if ((Boolean) dataVars.get("refreshNvdList")) {
+			logger.info("Refreshing NVD CVE List");
+			String filepath = dataVars.get("dataDir") + "/nvd-cve.csv";
+			new NvdCveController().pullNvdCve(filepath);
 		}
 
 		// Crawler
@@ -114,21 +116,32 @@ public class NVIPMain {
 		List<CompositeVulnerability> crawledVulnerabilityList = nvipMain.reconcileCVEs(cveListMap);
 
 		// Characterize
-		crawledVulnerabilityList = nvipMain.characterizeCVEs(crawledVulnerabilityList, cveListMap);
+		crawledVulnerabilityList = nvipMain.characterizeCVEs(crawledVulnerabilityList);
 
 		// Prepare stats and Store found CVEs in DB
-		DailyRun dailyRunStats = nvipMain.insertStats(databaseHelper, crawledVulnerabilityList, cveListMap.get("nvd").size(),
-				cveListMap.get("mitre").size(), cveListMap.get("nvd-mitre").size());
-		int runId = dailyRunStats.getRunId();
+		int runId = databaseHelper.getLatestRunId();
 		nvipMain.storeCVEs(crawledVulnerabilityList, runId);
+
+		DailyRun dailyRunStats = new DailyRun(UtilHelper.longDateFormat.format(new Date()),
+				(float) ((crawlEndTime - crawlStartTime) / (1000.0 * 60)), crawledVulnerabilityList.size(), cveListMap.get("nvd").size(),
+				cveListMap.get("mitre").size(), cveListMap.get("nvd-mitre").size());
+
+		dailyRunStats.calculateAddedUpdateCVEs(crawledVulnerabilityList);
+
+		logger.info("Calculating Average Time Gaps...");
+		dailyRunStats.calculateAvgTimeGaps(crawledVulnerabilityList);
+
+		databaseHelper.insertDailyRun(dailyRunStats);
+		logger.info("Run @ {}\nSummary:\nTotal CVEs found from this run: {}\nTotal CVEs not in NVD: {}" +
+						"\nTotal CVEs not in Mitre: {}\nTotal CVEs not in both: {}\nTotal CVEs Added: {}\nTotal CVEs Updated: {}" +
+						"\nAvg NVD Time Gap: {}\n Avg MITRe Time Gap: {}\n", dailyRunStats.getRunDateTime(),
+				dailyRunStats.getTotalCveCount(), dailyRunStats.getNotInNvdCount(), dailyRunStats.getNotInMitreCount(),
+				dailyRunStats.getNotInBothCount(), dailyRunStats.getAddedCveCount(), dailyRunStats.getUpdatedCveCount(),
+				dailyRunStats.getAvgTimeGapNvd(), dailyRunStats.getAvgTimeGapMitre());
 
 		// log .csv files
 		logger.info("Creating output CSV files...");
 		cveLogger.logAndDiffCVEs(crawlStartTime, crawlEndTime, cveListMap, cveListMap.size());
-
-		// record additional available stats
-		dailyRunStats.setCrawlTimeMin((float) ((crawlEndTime - crawlStartTime) / (1000.0 * 60)));
-		databaseHelper.updateDailyRun(runId, dailyRunStats);
 
 		// Exploit Collection
 		if ((boolean) exploitVars.get("exploitFinderEnabled")) {
@@ -151,7 +164,6 @@ public class NVIPMain {
 			jGitCVEPatchDownloader.parseMulitThread("patch-repos", 6);
 		}
 
-
 		logger.info("Done!");
 	}
 
@@ -165,6 +177,7 @@ public class NVIPMain {
 
 		this.prepareCrawlerVars();
 		this.prepareDataVars();
+		this.prepareCharacterizationVars();
 		this.prepareExploitFinderVars();
 		this.preparePatchFinderVars();
 		this.prepareEmailVars();
@@ -212,7 +225,7 @@ public class NVIPMain {
 		addEnvvarString(NVIPMain.crawlerVars,"whitelistFileDir", whitelistFileDir, "nvip_data/url-sources/nvip-whitelist.txt",
 				"WARNING: Crawler whitelist file path not defined in NVIP_WHITELIST_URLS, using default path: nvip_data/url-sources/nvip-whitelist.txt");
 
-		addEnvvarBool(NVIPMain.crawlerVars,"enableGitHub", enableGitHub, true,
+		addEnvvarBool(NVIPMain.crawlerVars,"enableGitHub", enableGitHub, false,
 				"WARNING: CVE GitHub Enabler not defined in NVIP_ENABLE_GITHUB, allowing CVE GitHub pull on default");
 
 		addEnvvarInt(NVIPMain.crawlerVars,"crawlerPoliteness", crawlerPoliteness, 3000,
@@ -241,9 +254,24 @@ public class NVIPMain {
 	 */
 	private void prepareDataVars() {
 		String dataDir = System.getenv("NVIP_DATA_DIR");
+		String refreshNvdList = System.getenv("NVIP_REFRESH_NVD_LIST");
+		String reconcilerMethod = System.getenv("NVIP_RECONCILER_METHOD");
 
 		addEnvvarString(NVIPMain.dataVars,"dataDir", dataDir, "nvip_data",
 				"WARNING: Data Directory not defined in NVIP_DATA_DIR, using ./nvip_data as default");
+		addEnvvarBool(NVIPMain.dataVars, "refreshNvdList", refreshNvdList, true,
+				"WARNING: Refresh NVD List not defined in NVIP_REFRESH_NVD_LIST, setting true for default");
+		addEnvvarString(NVIPMain.dataVars,"reconcilerMethod", reconcilerMethod, "APACHE_OPEN_NLP",
+				"WARNING: Reconciler Method not defined in NVIP_RECONCILER_METHOD, using APACHE_OPEN_NLP as default");
+	}
+
+	private void prepareCharacterizationVars() {
+		String cveCharacterizationLimit = System.getenv("NVIP_CVE_CHARACTERIZATION_LIMIT");
+
+		addEnvvarInt(NVIPMain.characterizationVars, "cveCharacterizationLimit", cveCharacterizationLimit, 5000,
+				"WARNING: CVE Characterization limit not determined at NVIP_CVE_CHARACTERIZATION_LIMIT, using 5000 as default",
+				"NVIP_CVE_CHARACTERIZATION_LIMIT");
+
 	}
 
 	/**
@@ -386,6 +414,8 @@ public class NVIPMain {
 			for (NvipSource nvipSource : dbsources)
 				urls.add(nvipSource.getUrl());
 
+			logger.info("Loaded {} source URLs from database!", urls.size());
+
 			File seeds = new File((String) crawlerVars.get("seedFileDir"));
 			BufferedReader seedReader = new BufferedReader(new FileReader(seeds));
 			List<String> seedURLs = new ArrayList<>();
@@ -404,8 +434,8 @@ public class NVIPMain {
 					urls.add(seedURL);
 			}
 
-			logger.info("Loaded {} source URLs from database!", urls.size());
-			UtilHelper.setProperties(properties);
+			logger.info("Loaded {} total seed URLs", urls.size());
+
 		} catch (IOException e) {
 			logger.error("Error while starting NVIP: {}", e.toString());
 		}
@@ -539,8 +569,7 @@ public class NVIPMain {
 			}
 		}
 
-		HashMap<String, ArrayList<CompositeVulnerability>> cveHashMapScrapedFromCNAs =
-				crawlerController.crawl(urls, whiteList, crawlerVars);
+		HashMap<String, ArrayList<CompositeVulnerability>> cveHashMapScrapedFromCNAs = crawlerController.crawl(urls, whiteList, crawlerVars);
 
 		return mergeCVEsDerivedFromCNAsAndGit(cveHashMapGithub, list, cveHashMapScrapedFromCNAs);
 	}
@@ -573,7 +602,6 @@ public class NVIPMain {
 		}
 
 		// include all CVEs from CNAs
-
 		NlpUtil nlpUtil = new NlpUtil();
 
 		int cveCountReservedInGit = 0;
@@ -609,7 +637,6 @@ public class NVIPMain {
 					// did we find garbage or valid description?
 					if (nlpUtil.sentenceDetect(vulnCna.getDescription()) != null)
 						vulnCna.setFoundNewDescriptionForReservedCve(true);
-
 				} else {
 					newDescr = vulnGit.getDescription(); // overwriting, assuming Git descriptions are worded better!
 				}
@@ -638,50 +665,54 @@ public class NVIPMain {
 	}
 
 	/**
+	 * Identify New CVE and
 	 * Process CVEs by comparing pulled CVEs to NVD and MITRE
+	 * Calculate Time Gaps afterwards, if any
 	 * @param cveHashMapAll
 	 * @return
 	 */
 	public HashMap<String, List<Object>> processCVEs(HashMap<String, CompositeVulnerability> cveHashMapAll) {
 		// process
 		logger.info("Comparing CVES against NVD & MITRE..");
-		String cveDataPathNvd = properties.getDataDir() + "/nvd-cve.csv";
-		String cveDataPathMitre = properties.getDataDir() + "/mitre-cve.csv";
+		String cveDataPathNvd = dataVars.get("dataDir") + "/nvd-cve.csv";
+		String cveDataPathMitre = dataVars.get("dataDir") + "/mitre-cve.csv";
 		CveProcessor cveProcessor = new CveProcessor(cveDataPathNvd, cveDataPathMitre);
-		HashMap<String, List<Object>> cveListMap = cveProcessor.checkAgainstNvdMitre(cveHashMapAll); // CVEs not in Nvd, Mitre
+		Map<String, Vulnerability> existingCves = databaseHelper.getExistingVulnerabilities();
 
-		return cveListMap;
+		HashMap<String, List<Object>> checkedCVEs = cveProcessor.checkAgainstNvdMitre(cveHashMapAll, existingCves);
+
+		return cveProcessor.checkTimeGaps(checkedCVEs, existingCves);
 	}
 
 	/**
-	 * Identify NEW CVEs. Reconcile for Characterization and DB processes
+	 * Reconcile for Characterization and DB processes
 	 *
 	 * @param cveListMap
 	 * @return
 	 */
 	private List<CompositeVulnerability> reconcileCVEs(HashMap<String, List<Object>> cveListMap) {
 		List<CompositeVulnerability> crawledVulnerabilityList = cveListMap.get("all").stream().map(e -> (CompositeVulnerability) e).collect(Collectors.toList());
-		identifyNewOrUpdatedCve(crawledVulnerabilityList, databaseHelper, properties);
+		identifyNewOrUpdatedCve(crawledVulnerabilityList, databaseHelper);
 		return crawledVulnerabilityList;
 	}
 
 	/**
-	 * Identify new CVEs in the crawled CVE list, to determine which ones to
+	 * Identify updated CVEs in the crawled CVE list, to determine which ones to
 	 * characterize. We do not want to characterize all crawled CVEs (that'd be toooo slow). The output of
 	 * this method is used while storing CVEs into the DB as well. DatabaseHelper
 	 * will update/insert new CVEs only!
 	 *
 	 *
-	 * @param crawledVulnerabilityList
+	 * @param crawledVulnerabilityList list of all crawled CVEs from current run
 	 * @param databaseHelper
 	 * @return
 	 */
-	private List<CompositeVulnerability> identifyNewOrUpdatedCve(List<CompositeVulnerability> crawledVulnerabilityList, DatabaseHelper databaseHelper, MyProperties propertiesNvip) {
+	private List<CompositeVulnerability> identifyNewOrUpdatedCve(List<CompositeVulnerability> crawledVulnerabilityList, DatabaseHelper databaseHelper) {
 
 		logger.info("Reconciling {} CVEs...", crawledVulnerabilityList.size());
 		long startTime = System.currentTimeMillis();
 		CveReconcilerFactory reconcileFactory = new CveReconcilerFactory();
-		AbstractCveReconciler cveReconciler = reconcileFactory.createReconciler(propertiesNvip.getCveReconciliationMethod());
+		AbstractCveReconciler cveReconciler = reconcileFactory.createReconciler((String) dataVars.get("reconcilerMethod"));
 
 		Map<String, Vulnerability> existingVulnMap = databaseHelper.getExistingVulnerabilities();
 
@@ -720,10 +751,9 @@ public class NVIPMain {
 	/**
 	 * Use Characterizer Model to characterize CVEs and generate VDO/CVSS
 	 * @param crawledVulnerabilityList
-	 * @param cveListMap
 	 * @return
 	 */
-	private List<CompositeVulnerability> characterizeCVEs(List<CompositeVulnerability> crawledVulnerabilityList, HashMap<String, List<Object>> cveListMap) {
+	private List<CompositeVulnerability> characterizeCVEs(List<CompositeVulnerability> crawledVulnerabilityList) {
 		// Parse CAPECs page to link CVEs to a given Attack Pattern in characterizer
 		// CapecParser capecParser = new CapecParser();
 		// ArrayList<Capec> capecs = capecParser.parseWebPage(crawler);
@@ -735,47 +765,8 @@ public class NVIPMain {
 		CveCharacterizer cveCharacterizer = new CveCharacterizer(trainingDataInfo[0], trainingDataInfo[1], properties.getCveCharacterizationApproach(),
 				properties.getCveCharacterizationMethod(), false);
 
-		return cveCharacterizer.characterizeCveList(crawledVulnerabilityList, databaseHelper);
-	}
-
-	/**
-	 * Insert a stats record to db
-	 *
-	 * @param databaseHelper
-	 * @param totNotInNvd
-	 * @param totNotInMitre
-	 * @param totNotInBoth
-	 * @return
-	 */
-	private DailyRun insertStats(DatabaseHelper databaseHelper, List<CompositeVulnerability> crawledVulnerabilityList, int totNotInNvd, int totNotInMitre, int totNotInBoth) {
-		// insert a record to keep track of daily run history
-		logger.info("Preparing Daily Run Stats...");
-		DailyRun dailyRunStats = new DailyRun();
-		try {
-			dailyRunStats.setRunDateTime(UtilHelper.longDateFormat.format(new Date()));
-			dailyRunStats.setTotalCveCount(crawledVulnerabilityList.size());
-			dailyRunStats.setNotInNvdCount(totNotInNvd);
-			dailyRunStats.setNotInMitreCount(totNotInMitre);
-			dailyRunStats.setNotInBothCount(totNotInBoth);
-
-			// Count added/updated CVEs
-			int addedCveCount = 0, updatedCveCount = 0;
-			for (CompositeVulnerability vuln : crawledVulnerabilityList) {
-				if (vuln.getCveReconcileStatus().equals(CveReconcileStatus.INSERT))
-					addedCveCount++;
-				else if (vuln.getCveReconcileStatus().equals(CveReconcileStatus.UPDATE))
-					updatedCveCount++;
-			}
-			dailyRunStats.setAddedCveCount(addedCveCount);
-			dailyRunStats.setUpdatedCveCount(updatedCveCount);
-
-			int runId = databaseHelper.insertDailyRun(dailyRunStats);
-			dailyRunStats.setRunId(runId);
-		} catch (Exception e1) {
-			logger.error("ERROR: Error while recording stats! Could not get a run ID! - {}", e1.toString());
-			System.exit(1);
-		}
-		return dailyRunStats;
+		return cveCharacterizer.characterizeCveList(crawledVulnerabilityList, databaseHelper,
+				(Integer) characterizationVars.get("cveCharacterizationLimit"));
 	}
 
 	/**
@@ -784,7 +775,7 @@ public class NVIPMain {
 	 * @param runId
 	 */
 	private void storeCVEs(List<CompositeVulnerability> crawledVulnerabilityList, int runId) {
-		double dbTime = 0;
+		double dbTime;
 		try {
 			long databaseStoreStartTime = System.currentTimeMillis();
 			logger.info("Storing crawled {} CVEs into the NVIP database with run id: {}", crawledVulnerabilityList.size(), runId);
@@ -797,8 +788,6 @@ public class NVIPMain {
 		}
 
 	}
-
-
 
 
 	/**

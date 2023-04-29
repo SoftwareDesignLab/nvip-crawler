@@ -1,3 +1,9 @@
+logs
+**/.settings
+*.log
+*.csv
+.idea
+nvip.iml
 /target/
 .idea
 logs/
