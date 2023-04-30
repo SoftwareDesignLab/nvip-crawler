@@ -326,8 +326,8 @@ public class DatabaseHelper {
 			date = date.substring(0, 10) + " " + date.substring(11, 19);
 		}
 
-//		Pattern dateRegex = Pattern.compile("(\\d{4}-\\d{2}-\\d{2}|\\d{2}\\/\\d{2}\\/\\d{4})");
-		Pattern dateRegex = Pattern.compile("(?i:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*?\\s+\\d{1,2}(?:[a-z]{2})?(?:\\s+|,\\s*)\\d{4}\\b");
+		Pattern dateRegex = Pattern.compile("(\\d{4}-\\d{2}-\\d{2}|\\d{2}\\/\\d{2}\\/\\d{4})");
+		// Pattern dateRegex = Pattern.compile("(?i:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*?\\s+\\d{1,2}(?:[a-z]{2})?(?:\\s+|,\\s*)\\d{4}\\b");
 		Matcher regexMatcher = dateRegex.matcher(date);
 
 		if (regexMatcher.find()) {

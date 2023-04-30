@@ -188,12 +188,13 @@ public class DatabaseHelperTest {
 		String testDate1 = "06/09/2020";
 		String testDate2 = "June 1, 2020";
 		String testDate3 = "August 10, 2020";
-		String testDate4 = "2022-11-08T17:02:51.666229Z";
-		String testDate5 = "2020-05-23 01:04:05";
+		String testDate4 = "2022-11-08T00:00:00";
+		String testDate5 = "2020-05-23 00:00:00";
 		String testDate6 = "";
 		String testDate7 = "2023/03/29 18:34:30";
 		String brokenDate1 = "03/29/2023.)../CVE-ID or something";
 		String brokenDate2 = "(((((03/29/2023.)../CVE-ID or something";
+		String testDate8 = "2020-06-09";
 
 		String formatDate1 = this.dbh.formatDate(testDate1);
 		String formatDate2 = this.dbh.formatDate(testDate2);
@@ -204,6 +205,7 @@ public class DatabaseHelperTest {
 		String formatDate7 = this.dbh.formatDate(testDate7);
 		String formatDate8 = this.dbh.formatDate(brokenDate1);
 		String formatDate9 = this.dbh.formatDate(brokenDate2);
+		String formatDate10 = this.dbh.formatDate(testDate8);
 
 		assertEquals(formatDate1, "2020-06-09 00:00:00");
 		assertEquals(formatDate2, "2020-06-01 00:00:00");
@@ -214,6 +216,7 @@ public class DatabaseHelperTest {
 		assertEquals(formatDate7, "2023-03-29 18:34:30");
 		assertEquals(formatDate8, "2023-03-29 00:00:00");
 		assertEquals(formatDate9, "2023-03-29 00:00:00");
+		assertEquals(formatDate10, "2020-06-09 00:00:00");
 	}
 
 	@Test
