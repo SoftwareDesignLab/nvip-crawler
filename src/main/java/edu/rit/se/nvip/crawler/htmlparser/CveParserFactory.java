@@ -153,6 +153,8 @@ public class CveParserFactory {
 			return new ABBParser("abb.com");
 		else if (sPageUrl.contains("eaton"))
 			return new EatonParser("eaton");
+		else if (sPageUrl.contains("arista"))
+			return new AristaParser("arista");
 
 
 		// sources that you want to ignore
