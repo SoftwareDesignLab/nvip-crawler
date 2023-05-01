@@ -64,6 +64,7 @@ public class CrawlerMain {
 
         System.out.println(crawledCVEs);
 
+
         /**
          * TODO: Finish NVD Comparison stuff,
          *  then update DB communications to prepare DailyRun
