@@ -5,4 +5,5 @@ logs
 .idea
 nvip.iml
 /target/
+/crawler/target/
 output/
