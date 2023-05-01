@@ -136,6 +136,8 @@ public class DatabaseHelper {
 	private final String getCVEAndDescription = "SELECT cve_id, description FROM vulnerability WHERE description NOT LIKE '%** RESERVED **%' AND cve_id LIKE '%CVE-2021%'";
 	private final String getVulnIdByCveId = "SELECT vuln_id FROM vulnerability WHERE cve_id = ?";
 
+	private final String insertIntoNvdData = "INSERT INTO nvd_data (cve_id, published_date) VALUES (?, ?)";
+
 	private static DatabaseHelper databaseHelper = null;
 	private static Map<String, Vulnerability> existingVulnMap = new HashMap<String, Vulnerability>();
 
@@ -2082,5 +2084,31 @@ public class DatabaseHelper {
 			logger.error("ERROR: Failed to remove CVEs before {} from vulnerabilityaggreate\n{}", pastWeek, e.getMessage());
 		}
 
+	}
+
+	/**
+	 * For Inserting a CVe from NVD into nvd_data table
+	 * @param cveId
+	 * @param publishedDate
+	 * @return
+	 */
+	public int insertNvdCve(String cveId, String publishedDate) {
+
+		try (Connection connection = getConnection();
+			 PreparedStatement pstmt = connection.prepareStatement(insertIntoNvdData);) {
+
+			pstmt.setString(0, cveId);
+			pstmt.setTimestamp(1, Timestamp.valueOf(publishedDate));
+
+			pstmt.execute();
+
+			logger.info("Successfully Inserted CVE {} with Published Date {} into nvd_data", cveId, publishedDate);
+
+			return 1;
+		} catch (Exception e) {
+			logger.error("ERROR: Failed to insert CVE {} with Published Date {} into nvd_data table", cveId, publishedDate);
+		}
+
+		return 0;
 	}
 }

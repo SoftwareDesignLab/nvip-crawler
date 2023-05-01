@@ -53,11 +53,8 @@ public class CrawlerMain {
         CrawlerMain crawlerMain = new CrawlerMain();
         if ((Boolean) dataVars.get("refreshNvdList")) {
             logger.info("Refreshing NVD CVE List");
-            String filepath = dataVars.get("dataDir") + "/nvd-cve.csv";
-            new NvdCveController().pullNvdCve(filepath);
+            new NvdCveController().updateNvdDataTable((String) dataVars.get("nvdUrl"));
         }
-
-
 
         // Crawler
         long crawlStartTime = System.currentTimeMillis();
@@ -129,12 +126,15 @@ public class CrawlerMain {
     private void prepareDataVars() {
         String dataDir = System.getenv("NVIP_DATA_DIR");
         String refreshNvdList = System.getenv("NVIP_REFRESH_NVD_LIST");
+        String nvdUrl = System.getenv("NVIP_NVD_URL");
         String reconcilerMethod = System.getenv("NVIP_RECONCILER_METHOD");
 
         addEnvvarString(CrawlerMain.dataVars,"dataDir", dataDir, "nvip_data",
                 "WARNING: Data Directory not defined in NVIP_DATA_DIR, using ./nvip_data as default");
         addEnvvarBool(CrawlerMain.dataVars, "refreshNvdList", refreshNvdList, true,
                 "WARNING: Refresh NVD List not defined in NVIP_REFRESH_NVD_LIST, setting true for default");
+        addEnvvarString(CrawlerMain.dataVars, "nvdUrl", nvdUrl, "https://services.nvd.nist.gov/rest/json/cves/2.0?pubStartDate=<StartDate>&pubEndDate=<EndDate>",
+                "WARNING: NVD URL is not defined in NVIP_NVD_URL, setting NVD 2.0 API URL as default");
         addEnvvarString(CrawlerMain.dataVars,"reconcilerMethod", reconcilerMethod, "APACHE_OPEN_NLP",
                 "WARNING: Reconciler Method not defined in NVIP_RECONCILER_METHOD, using APACHE_OPEN_NLP as default");
     }

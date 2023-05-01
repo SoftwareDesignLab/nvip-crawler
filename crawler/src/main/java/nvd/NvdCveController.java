@@ -26,15 +26,19 @@ package nvd;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import db.DatabaseHelper;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eclipse.egit.github.core.util.UrlUtils;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import utils.CsvUtils;
 
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -53,8 +57,8 @@ import java.util.Map;
 public class NvdCveController {
 	private final Logger logger = LogManager.getLogger(NvdCveController.class);
 
+	private static DatabaseHelper databaseHelper;
 	private static final String nvdJsonFeedUrl = "https://services.nvd.nist.gov/rest/json/cves/2.0/?pubStartDate=<StartDate>&pubEndDate=<EndDate>";
-	String[] header = new String[] { "CVE-ID", "Description", "BaseScore", "BaseSeverity", "ImpactScore", "ExploitabilityScore", "CWE", "Advisory", "Patch", "Exploit" };
 
 	boolean logCPEInfo = true;
 
@@ -72,7 +76,7 @@ public class NvdCveController {
 
 	/**
 	 * Constructor for NvdCveController
-	 * Sets today and yesterday times on construction
+	 * Sets today and last month's times on construction
 	 */
 	public NvdCveController() {
 		LocalDateTime today = LocalDateTime.now();
@@ -81,29 +85,82 @@ public class NvdCveController {
 
 		this.startDate = lastMonth.format(formatter);
 		this.endDate = today.format(formatter);
+
+		databaseHelper = DatabaseHelper.getInstance();
 	}
+
+	public void updateNvdDataTable(String url) {
+		String nvdUrl = "https://services.nvd.nist.gov/rest/json/cves/2.0?pubStartDate=" + startDate + "&pubEndDate=" + endDate;
+		// fetch the CVEs from NVD
+		HashMap<String, String> cves = fetchCvesFromNvd(url.replaceAll("<StartDate>", this.startDate)
+				.replaceAll("<EndDate>", this.endDate));
+
+		logger.info("Grabbed {} cves from NVD for the past month", cves.size());
+
+		int totalUpdated = 0;
+
+		for (String cveId: cves.keySet()) {
+			totalUpdated += databaseHelper.insertNvdCve(cveId, cves.get(cveId));
+		}
+
+		logger.info("Inserted {} new CVEs from NVD into NVD Database Table", totalUpdated);
+	}
+
+	private HashMap<String, String> fetchCvesFromNvd(String nvdUrl) {
+		HashMap<String, String> nvdCves = new HashMap<>();
+		try {
+			URL url = new URL(nvdUrl);
+			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+			conn.setRequestMethod("GET");
+			conn.setRequestProperty("Accept", "application/json");
+
+			if (conn.getResponseCode() != 200) {
+				logger.error("Failed to connect to NVD API. Error Code: {}", conn.getResponseCode());
+				throw new RuntimeException("Failed : HTTP error code : " + conn.getResponseCode());
+			} else {
+
+				BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
+
+				StringBuilder responseBuilder = new StringBuilder();
+				String output;
+				while ((output = br.readLine()) != null) {
+					responseBuilder.append(output);
+				}
+
+				conn.disconnect();
+
+				JSONObject jsonResponse = new JSONObject(responseBuilder.toString());
+				JSONArray cveItems = jsonResponse.getJSONArray("vulnerabilities");
+
+				for (int i = 0; i < cveItems.length(); i++) {
+					JSONObject cveItem = cveItems.getJSONObject(i);
+					JSONObject cve = cveItem.getJSONObject("cve");
+					String cveId = cve.getString("id");
+					String publishedDate = cve.getString("published");
+
+					// Adjust published date substring to be mySql acceptable
+					nvdCves.put(cveId, publishedDate.substring(0, 10) + " " + publishedDate.substring(11, 16) + ":00");
+				}
+			}
+		} catch (IOException e) {
+			logger.error("ERROR: Failed to grab CVEs from NVD: {}", e.getMessage());
+		}
+
+		return nvdCves;
+	}
+
+
 
 	/**
 	 * Main method of NVD_CVE_Reader
-	 * 
-	 * @param filepath
+	 *
 	 */
-	public int pullNvdCve(String filepath) {
-		CsvUtils csvLogger = new CsvUtils(); // create output CSV file and append header
+	public int pullNvdCve() {
+		//CsvUtils csvLogger = new CsvUtils(); // create output CSV file and append header
 
-		// delete existing?
-		File file = new File(filepath);
-		boolean deleted = false;
-		if (file.exists())
-			deleted = file.delete();
-		if (!deleted)
-			logger.warn("Failed to delete existing file: {}", filepath);
-		else
-			logger.info("Deleted existing file: {}", filepath);
+		logger.info("Pulling NVD to update NVD Data table. This may take a moment...");
 
-		logger.info("The output CSV will be at: {}", filepath);
-
-		csvLogger.writeHeaderToCSV(filepath, header, false);
+//		csvLogger.writeHeaderToCSV(filepath, header, false);
 
 		// Pull yearly CVE data from NVD
 		NvdCveParser myCVEParser = new NvdCveParser(); // init parser
