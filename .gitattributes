@@ -1,3 +1,4 @@
 nvip_data filter=lfs diff=lfs merge=lfs -text
 crawler/target filter=lfs diff=lfs merge=lfs -text
+crawler/target/nvip_lib filter=lfs diff=lfs merge=lfs -text
 *.jar filter=lfs diff=lfs merge=lfs -text
