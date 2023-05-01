@@ -43,7 +43,6 @@ import org.apache.logging.log4j.Logger;
 
 import edu.rit.se.nvip.characterizer.CveCharacterizer;
 import edu.rit.se.nvip.crawler.CveCrawlController;
-import edu.rit.se.nvip.crawler.QuickCveCrawler;
 import edu.rit.se.nvip.crawler.github.GithubScraper;
 import edu.rit.se.nvip.cveprocess.CveLogDiff;
 import edu.rit.se.nvip.cveprocess.CveProcessor;
@@ -539,7 +538,9 @@ public class NVIPMain {
 
 		/**
 		 * Scrape CVE summary pages (frequently updated CVE providers)
-		 */
+		 * TODO: Get rid of this, it scrapes from tenable and since tenable
+		 *  is scraped first it overrides most of the other CVEs
+
 		int countCVEsNotInMitreGithub = 0;
 		QuickCveCrawler crawler = new QuickCveCrawler();
 		List<CompositeVulnerability> list = crawler.getCVEsfromKnownSummaryPages();
@@ -549,6 +550,9 @@ public class NVIPMain {
 				cveHashMapGithub.put(vuln.getCveId(), vuln);
 			}
 		logger.info("{} of {} CVEs found in the CNA summary pages did not exist in the Mitre GitHub repo.", countCVEsNotInMitreGithub, list.size());
+		 */
+
+		List<CompositeVulnerability> list = new ArrayList<>(0);
 
 		/**
 		 * Crawl CVE from CNAs
@@ -590,6 +594,7 @@ public class NVIPMain {
 	 */
 	public HashMap<String, CompositeVulnerability> mergeCVEsDerivedFromCNAsAndGit(HashMap<String, CompositeVulnerability> cveHashMapGithub, List<CompositeVulnerability> list,
 																				  HashMap<String, ArrayList<CompositeVulnerability>> cveHashMapScrapedFromCNAs) {
+
 		logger.info("Merging {} scraped CVEs with {} Github", cveHashMapScrapedFromCNAs.size(), list.size() + cveHashMapGithub.size());
 		final String reservedStr = "** RESERVED **";
 		HashMap<String, CompositeVulnerability> cveHashMapAll = new HashMap<>(); // merged CVEs
