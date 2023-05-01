@@ -46,13 +46,11 @@ import java.util.concurrent.TimeUnit;
 public class DbParallelProcessor {
 	private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
 
-	public DbParallelProcessor() {
-
-	}
+	public DbParallelProcessor() {}
 
 	/**
 	 * Generate a thread pool and run in parallel
-	 * 
+	 *
 	 * @param vulnList
 	 * @return
 	 */
