@@ -2,8 +2,8 @@ import crawler.CveCrawlController;
 import crawler.github.GithubScraper;
 import crawler.github.PyPAGithubScraper;
 import db.DatabaseHelper;
-import it.unimi.dsi.fastutil.Hash;
 import model.CompositeVulnerability;
+import model.DailyRun;
 import model.NvipSource;
 import nvd.NvdCveController;
 import utils.UtilHelper;
@@ -15,6 +15,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.*;
 
 public class CrawlerMain {
@@ -64,11 +65,68 @@ public class CrawlerMain {
 
         System.out.println(crawledCVEs);
 
+        // Compare with NVD
+        HashMap<String, Double> stats = crawlerMain.compareWithNvd(crawledCVEs);
+
+        // Get Average Time Gaps From NVD
+
+        // Prepare Stats and insert to DB
+        DailyRun runStats = new DailyRun(String.valueOf(LocalDateTime.now()), crawlEndTime - crawlStartTime, crawledCVEs.size(),
+                stats.get("notInNvd").intValue(), 0, stats.get("notInNvd").intValue());
+
+        crawlerMain.insertRawCVEs(crawledCVEs);
+//        crawlerMain.prepareRunTimeStats();
 
         /**
          * TODO: Finish NVD Comparison stuff,
          *  then update DB communications to prepare DailyRun
          */
+
+        logger.info("Done!");
+    }
+
+    /**
+     * For Comparing with NVD CVEs
+     * @param crawledCves
+     * @return
+     */
+    private HashMap<String, Double> compareWithNvd(HashMap<String, ArrayList<CompositeVulnerability>> crawledCves) {
+        HashMap<String, Double> stats = new HashMap<>();
+
+        int inNvd = 0;
+        int notInNvd = 0;
+
+        logger.info("Comparing Cves with what's in NVD...");
+
+        for (String cveId: crawledCves.keySet()) {
+            if (databaseHelper.checkIfInNvd(cveId)) {
+                logger.info("CVE {} is in NVD", cveId);
+                inNvd++;
+            } else {
+                logger.info("CVE {} is not in NVD", cveId);
+                notInNvd++;
+            };
+        }
+
+        stats.put("inNvd", inNvd + 0.0);
+        stats.put("notInNvd", notInNvd + 0.0);
+
+        logger.info("Finished comparison:\n{} CVEs are in NVD\n{} CVEs are not in NVD", inNvd, notInNvd);
+
+        return stats;
+
+    }
+
+    private void insertRawCVEs(HashMap<String, ArrayList<CompositeVulnerability>> crawledCves) {
+        logger.info("Inserting {} CVEs to DB", crawledCves.size());
+
+        for (String cveId: crawledCves.keySet()) {
+            for (CompositeVulnerability vuln: crawledCves.get(cveId)) {
+                logger.info("Inserting CVE {} into DB" ,cveId);
+                //databaseHelper.insertVulnerability(vuln);
+
+            }
+        }
 
     }
 
@@ -284,31 +342,12 @@ public class CrawlerMain {
      * NVIP Source URLs in DB and seeds txt file
      *
      *
-     * @param urls
      * @return
      */
     protected HashMap<String, ArrayList<CompositeVulnerability>> crawlCVEs() throws Exception {
-
-        /**
-         * Scrape CVE summary pages (frequently updated CVE providers)
-         * TODO: Get rid of this, it scrapes from tenable and since tenable
-         *  is scraped first it overrides most of the other CVEs
-
-         int countCVEsNotInMitreGithub = 0;
-         QuickCveCrawler crawler = new QuickCveCrawler();
-         List<CompositeVulnerability> list = crawler.getCVEsfromKnownSummaryPages();
-         for (CompositeVulnerability vuln : list)
-         if (!cveHashMapGithub.containsKey(vuln.getCveId())) {
-         countCVEsNotInMitreGithub++;
-         cveHashMapGithub.put(vuln.getCveId(), vuln);
-         }
-         logger.info("{} of {} CVEs found in the CNA summary pages did not exist in the Mitre GitHub repo.", countCVEsNotInMitreGithub, list.size());
-         */
-
         /**
          * Crawl CVE from CNAs
          */
-
         List<String> urls = grabSeedURLs();
 
         logger.info("Starting the NVIP crawl process now to look for CVEs at {} locations with {} threads...",
