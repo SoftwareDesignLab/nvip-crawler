@@ -12,6 +12,6 @@ CREATE TABLE `affectedproduct` (
   `version` TINYTEXT DEFAULT NULL,
   `vendor` TINYTEXT DEFAULT NULL,
   PRIMARY KEY (`affected_product_id`),
-  KEY `AffectedProduct_Index_CveId` (`cve_id`),
+  KEY `affected_product_id_index` (`affected_product_id`),
   CONSTRAINT `affectedproduct_cve_id_fk` FOREIGN KEY (`cve_id`) REFERENCES `vulnerability` (`cve_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=6202 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
