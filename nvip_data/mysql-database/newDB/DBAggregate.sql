@@ -5,12 +5,13 @@
 
 DROP TABLE IF EXISTS `vulnerabilityaggregate`;
 CREATE TABLE `vulnerabilityaggregate` (
-  `vuln_id` int NOT NULL,
-  `cve_id` varchar(20) NOT NULL,
-  `description` mediumtext NOT NULL,
-  `published_date` datetime NOT NULL,
-  `last_modified_date` datetime DEFAULT NULL,
-  `fixed_date` datetime DEFAULT NULL,
+  `vuln_id` INT NOT NULL,
+  `cve_id` VARCHAR(20) NOT NULL,
+  `description` MEDIUMTEXT NOT NULL,
+  `created_date` DATETIME NOT NULL,
+  `published_date` DATETIME NOT NULL,
+  `last_modified_date` DATETIME DEFAULT NULL,
+  `fixed_date` DATETIME DEFAULT NULL,
   `exists_at_nvd` TINYTEXT NOT NULL,
   `exists_at_mitre` TINYTEXT NOT NULL,
   `vdo_labels` TINYTEXT NOT NULL,
@@ -23,7 +24,7 @@ CREATE TABLE `vulnerabilityaggregate` (
   `exploit_publish_date` DATETIME DEFAULT NULL,
   `exploit_url` TINYTEXT DEFAULT NULL,
   `runhistory_id` INT NOT NULL,
-  KEY `aggregate_cve_id` (`cve_id`),
+  UNIQUE KEY `aggregate_vuln_id` (`vuln_id`),
   KEY `aggregate_run_date_time_id` (`runhistory_id`),
   CONSTRAINT `aggregate_cve_id` FOREIGN KEY (`cve_id`) REFERENCES `vulnerability` (`cve_id`),
   CONSTRAINT `aggregate_run_date_time_id` FOREIGN KEY (`runhistory_id`) REFERENCES `runhistory` (`runhistory_id`)
