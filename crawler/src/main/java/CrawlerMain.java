@@ -63,23 +63,24 @@ public class CrawlerMain {
         long crawlEndTime = System.currentTimeMillis();
         logger.info("Crawler Finished\nTime: {}", crawlEndTime - crawlStartTime);
 
-        System.out.println(crawledCVEs);
+        // System.out.println(crawledCVEs);
 
+        /**
+         * TODO: NVD Comparison will be after reconcilation
+         *
         // Compare with NVD
-        HashMap<String, Double> stats = crawlerMain.compareWithNvd(crawledCVEs);
+        // HashMap<String, Double> stats = crawlerMain.compareWithNvd(crawledCVEs);
 
         // Get Average Time Gaps From NVD
 
         // Prepare Stats and insert to DB
         DailyRun runStats = new DailyRun(String.valueOf(LocalDateTime.now()), crawlEndTime - crawlStartTime, crawledCVEs.size(),
                 stats.get("notInNvd").intValue(), 0, stats.get("notInNvd").intValue());
-
+        */
         crawlerMain.insertRawCVEs(crawledCVEs);
-//        crawlerMain.prepareRunTimeStats();
 
         /**
-         * TODO: Finish NVD Comparison stuff,
-         *  then update DB communications to prepare DailyRun
+         *  TODO: Then update DB communications to prepare DailyRun
          */
 
         logger.info("Done!");
@@ -117,16 +118,25 @@ public class CrawlerMain {
 
     }
 
+    /**
+     * Iterate through each crawled CVE and add them to the raw descriptions table
+     * @param crawledCves
+     */
     private void insertRawCVEs(HashMap<String, ArrayList<CompositeVulnerability>> crawledCves) {
         logger.info("Inserting {} CVEs to DB", crawledCves.size());
 
+        int insertedCVEs = 0;
+
         for (String cveId: crawledCves.keySet()) {
             for (CompositeVulnerability vuln: crawledCves.get(cveId)) {
-                logger.info("Inserting CVE {} into DB" ,cveId);
-                //databaseHelper.insertVulnerability(vuln);
-
+                if (databaseHelper.checkIfInRawDescriptions(vuln.getDescription())) {
+                    logger.info("Inserting raw CVE {} into DB" ,cveId);
+                    insertedCVEs += databaseHelper.insertRawVulnerability(vuln);
+                }
             }
         }
+
+        logger.info("Inserted {} raw CVE entries in rawdescriptions", insertedCVEs);
 
     }
 

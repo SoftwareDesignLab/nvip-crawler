@@ -39,6 +39,7 @@ import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -99,6 +100,9 @@ public class DatabaseHelper {
 	private final String insertIntoNvdData = "INSERT INTO nvd_data (cve_id, published_date) VALUES (?, ?)";
 
 	private final String checkIfInNVD = "SELECT COUNT(*) as numInNvd FROM nvd_data WHERE cve_id = ?";
+
+	private final String insertCrawledData = "";
+
 	private static DatabaseHelper databaseHelper = null;
 	private static Map<String, Vulnerability> existingVulnMap = new HashMap<>();
 
@@ -964,12 +968,67 @@ public class DatabaseHelper {
 			pstmt.setString(0, cveId);
 
 			ResultSet rs = pstmt.executeQuery();
+			if (rs.next())
+				return rs.getInt("numInNvd") > 0;
 
-			return rs.getInt("numInNvd") > 0;
 		} catch (Exception e) {
 			logger.error("ERROR: Failed to insert CVE {} with Published Date {} into nvd_data table", cveId);
 		}
 
 		return false;
+	}
+
+	private final String insertRawData = "INSERT INTO rawdescription (raw_description, cve_id, created_date, published_date, last_modified_date, source_url) " +
+			"VALUES (?, ?, ?, ?, ?, ?)";
+
+	/**
+	 * for inserting crawled data to rawdescriptions
+	 * @param vuln
+	 * @return
+	 */
+	public int insertRawVulnerability(CompositeVulnerability vuln) {
+		try (Connection connection = getConnection();
+			 PreparedStatement pstmt = connection.prepareStatement(insertRawData);) {
+
+			pstmt.setString(0, vuln.getDescription());
+			pstmt.setString(1, vuln.getCveId());
+			pstmt.setTimestamp(2, Timestamp.valueOf(vuln.getCreatedDateAsDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
+			pstmt.setTimestamp(3, Timestamp.valueOf(vuln.getPublishDateAsDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
+			pstmt.setTimestamp(4, Timestamp.valueOf(vuln.getLastModifiedDateAsDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
+			pstmt.setTimestamp(5, Timestamp.valueOf(vuln.getCreatedDateAsDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
+			pstmt.setString(6, vuln.getSourceURL().get(0));
+
+			pstmt.execute();
+
+			return 1;
+		} catch (Exception e) {
+			logger.error("ERROR: Failed to insert data for CVE {} into rawdescription table\n{}", vuln.getCveId(), e);
+		}
+
+		return 0;
+	}
+
+	private final String checkIfInRawDesc = "SELECT COUNT(*) numInRawDesc FROM rawdescription WHERE raw_description = ?";
+
+	/**
+	 * For checking if a description is already in rawdescription
+	 * Compares descriptions for now
+	 * @return
+	 */
+	public boolean checkIfInRawDescriptions(String description) {
+
+		try (Connection connection = getConnection();
+			 PreparedStatement pstmt = connection.prepareStatement(checkIfInRawDesc)) {
+			pstmt.setString(0, description);
+			ResultSet rs = pstmt.executeQuery();
+
+			if (rs.next())
+				return rs.getInt("numInRawDesc") > 0;
+		} catch (Exception e) {
+			logger.error("ERROR: Failed to check description {} in rawdescription table\n{}", description, e);
+		}
+
+		return false;
+
 	}
 }
