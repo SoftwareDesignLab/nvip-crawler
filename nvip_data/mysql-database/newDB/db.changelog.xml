@@ -154,7 +154,16 @@
             <column name="raw_description" type="MEDIUMTEXT">
                 <constraints nullable="false"/>
             </column>
+            <column name="cve_id" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
             <column name="created_date" type="DATETIME">
+                <constraints nullable="false"/>
+            </column>
+            <column name="published_date" type="DATETIME">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_modified_date" type="DATETIME">
                 <constraints nullable="false"/>
             </column>
             <column name="source_url" type="TINYTEXT">
