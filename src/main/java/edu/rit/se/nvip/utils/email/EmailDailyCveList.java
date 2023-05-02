@@ -66,12 +66,15 @@ public class EmailDailyCveList {
 		try {
 			ArrayList<ArrayList<String>> data = db.getEmailsRoleId();
 			HashMap<String, String> newCves = db.getCVEByRunDate(new Date(System.currentTimeMillis()));
+			logger.info("Preparing Emails");
 			if (newCves.size() > 0) {
 				for (ArrayList<String> info : data) {
 					if (Integer.parseInt(info.get(2)) == 1) {
 						sendEmail(info.get(0), newCves);
 					}
 				}
+			} else {
+				logger.warn("There are no new CVEs, skipping emails");
 			}
 			return true;
 		} catch (Exception e) {

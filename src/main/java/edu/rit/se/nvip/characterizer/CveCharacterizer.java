@@ -95,7 +95,7 @@ public class CveCharacterizer {
 				String sCommaSeparatedAttribRows = nvipPreProcessor.preProcessFile(trainingDataFileName);
 
 				FileUtils.writeStringToFile(new File(preProcessedTrainingDataFile), sCommaSeparatedAttribRows, false);
-				logger.info("Raw training data at " + trainingDataFileName + " is processed and a CSV file is generated at " + preProcessedTrainingDataFile);
+				logger.info("Raw training data at {} is processed and a CSV file is generated at {}", trainingDataFileName, preProcessedTrainingDataFile);
 
 				// get CVE classification model
 				CveClassifierFactory cveCharacterizerFactory = new CveClassifierFactory();
@@ -110,8 +110,9 @@ public class CveCharacterizer {
 			}
 
 		} catch (Exception e) {
-			logger.error("An error occurred while tarining a classifier for CVE Characterizer! NVIP will not crash but CVE Characterizer will NOT work properly. Check your training data at "
-					+ trainingDataPath + "\tException: " + e);
+			logger.error("An error occurred while tarining a classifier for CVE Characterizer! NVIP will not crash but " +
+					"CVE Characterizer will NOT work properly. Check your training data at {}\nException: {}",
+					trainingDataPath, e.getMessage());
 		}
 
 		try {
@@ -153,7 +154,7 @@ public class CveCharacterizer {
 	 * 
 	 * @param cveList
 	 */
-	public List<CompositeVulnerability> characterizeCveList(List<CompositeVulnerability> cveList, DatabaseHelper databaseHelper) {
+	public List<CompositeVulnerability> characterizeCveList(List<CompositeVulnerability> cveList, DatabaseHelper databaseHelper, int limit) {
 
 		long start = System.currentTimeMillis();
 		int totCharacterized = 0;
@@ -173,14 +174,23 @@ public class CveCharacterizer {
 			 * system has not been run for a long time. The process could be time consuming
 			 * for too many CVEs
 			 */
-			if (totCharacterized > 5000)
+			if (totCharacterized > limit)
 				break;
 
 			try {
 				vulnerability = cveList.get(i);
 				String cveDesc = vulnerability.getDescription();
 				if (cveDesc == null || cveDesc.length() < 50) {
-					logger.warn("WARNING: Bad Description for Characterization of {}", cveDesc);
+					if (cveDesc.length() > 1 && cveDesc.length() < 50)
+						logger.warn("WARNING: Description too small for {} at {}. Desc: {}",
+								vulnerability.getCveId(),
+								vulnerability.getSourceURL(),
+								cveDesc);
+					else
+						logger.warn("WARNING: BAD or MISSING Description '{}' for {} at {}",
+								cveDesc,
+								vulnerability.getCveId(),
+								vulnerability.getSourceURL());
 					countBadDescription++;
 					continue; // if no description or old CVE skip!
 				}

@@ -81,9 +81,8 @@ public class CveCharacterizerTest {
 			vulnList.add(vuln);
 		}
 
-		List<CompositeVulnerability> newList = cveCharacterizer.characterizeCveList(vulnList, db);
+		List<CompositeVulnerability> newList = cveCharacterizer.characterizeCveList(vulnList, db, 5000);
 		assertEquals(10, newList.size());
 
-		//Test getCvssScoreFromVdoLabels
 	}
 }
