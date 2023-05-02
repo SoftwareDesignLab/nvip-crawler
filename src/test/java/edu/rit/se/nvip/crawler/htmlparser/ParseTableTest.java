@@ -13,10 +13,10 @@ public class ParseTableTest extends AbstractParserTest {
         ParseTable parser = new ParseTable("https://www.qnap.com/en/security-advisories?ref=security_advisory_details");
         List<CompositeVulnerability> vulnerabilities = parser.parseWebPage("https://www.qnap.com/en/security-advisories?ref=security_advisory_details", null);
 
-        assertEquals(213, vulnerabilities.size());
+        assertEquals(385, vulnerabilities.size());
         CompositeVulnerability vuln = getVulnerability(vulnerabilities, "CVE-2023-22809");
         assertNotNull(vuln);
-        assertEquals("2023-03-30", vuln.getPublishDate());
+        assertEquals("2023-04-20", vuln.getPublishDate());
         assertTrue(vuln.getDescription().contains("A vulnerability has been reported in sudo. The vulnerability affects the following QNAP operating system"));
         assertFalse(vuln.getDescription().contains("Multiple vulnerabilities have been reported in OpenSSL. These vulnerabilities affect the following QNAP operating systems: QTS, QuTS hero, QuTScloud, QVP (QVR Pro appliances), QVR, QES"));
     }
