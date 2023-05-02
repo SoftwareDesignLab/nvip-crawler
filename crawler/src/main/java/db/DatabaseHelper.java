@@ -942,8 +942,8 @@ public class DatabaseHelper {
 		try (Connection connection = getConnection();
 			 PreparedStatement pstmt = connection.prepareStatement(insertIntoNvdData);) {
 
-			pstmt.setString(0, cveId);
-			pstmt.setTimestamp(1, Timestamp.valueOf(publishedDate));
+			pstmt.setString(1, cveId);
+			pstmt.setTimestamp(2, Timestamp.valueOf(publishedDate));
 
 			pstmt.execute();
 
@@ -965,7 +965,7 @@ public class DatabaseHelper {
 		try (Connection connection = getConnection();
 			 PreparedStatement pstmt = connection.prepareStatement(checkIfInNVD);) {
 
-			pstmt.setString(0, cveId);
+			pstmt.setString(1, cveId);
 
 			ResultSet rs = pstmt.executeQuery();
 			if (rs.next())
@@ -990,13 +990,13 @@ public class DatabaseHelper {
 		try (Connection connection = getConnection();
 			 PreparedStatement pstmt = connection.prepareStatement(insertRawData);) {
 
-			pstmt.setString(0, vuln.getDescription());
-			pstmt.setString(1, vuln.getCveId());
-			pstmt.setTimestamp(2, Timestamp.valueOf(vuln.getCreatedDateAsDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
-			pstmt.setTimestamp(3, Timestamp.valueOf(vuln.getPublishDateAsDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
-			pstmt.setTimestamp(4, Timestamp.valueOf(vuln.getLastModifiedDateAsDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
-			pstmt.setTimestamp(5, Timestamp.valueOf(vuln.getCreatedDateAsDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
-			pstmt.setString(6, vuln.getSourceURL().get(0));
+			pstmt.setString(1, vuln.getDescription());
+			pstmt.setString(2, vuln.getCveId());
+			pstmt.setTimestamp(3, Timestamp.valueOf(vuln.getCreatedDateAsDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
+			pstmt.setTimestamp(4, Timestamp.valueOf(vuln.getPublishDateAsDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
+			pstmt.setTimestamp(5, Timestamp.valueOf(vuln.getLastModifiedDateAsDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
+			pstmt.setTimestamp(6, Timestamp.valueOf(vuln.getCreatedDateAsDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
+			pstmt.setString(7, vuln.getSourceURL().get(0));
 
 			pstmt.execute();
 
@@ -1019,7 +1019,7 @@ public class DatabaseHelper {
 
 		try (Connection connection = getConnection();
 			 PreparedStatement pstmt = connection.prepareStatement(checkIfInRawDesc)) {
-			pstmt.setString(0, description);
+			pstmt.setString(1, description);
 			ResultSet rs = pstmt.executeQuery();
 
 			if (rs.next())
