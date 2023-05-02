@@ -13,9 +13,7 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.By;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -35,6 +33,8 @@ public class ParseTable extends AbstractCveParser implements ParserStrategy {
 
     String sourceUrl = "";
 
+    Set<String> allCVEs = new HashSet<>();
+
     public ParseTable(String sourceDomainName) {
         this.sourceDomainName = sourceDomainName;
     }
@@ -51,6 +51,7 @@ public class ParseTable extends AbstractCveParser implements ParserStrategy {
         String rowText = row.text();
         Set<String> cveIDs = getCVEs(rowText);
         ArrayList<String> cveList = new ArrayList<>(cveIDs);
+        allCVEs.addAll(cveList);
         if (cveIDs.isEmpty()) return rowVulns;
 
         // click on row and see if we can grab any more html
@@ -122,10 +123,9 @@ public class ParseTable extends AbstractCveParser implements ParserStrategy {
 
         // get the page
         driver.get(sSourceURL);
+        String sourceHtml = driver.getPageSource();
 
-        String diff = StringUtils.difference("table", "tableeeeeeee");
-
-        Document doc = Jsoup.parse(driver.getPageSource());
+        Document doc = Jsoup.parse(sourceHtml);
         // get the main table by looking for table header that contains CVE
         Element tableHeader = doc.select("thead:contains(CVE)").first();
         if (tableHeader == null) return vulnList;
@@ -137,9 +137,38 @@ public class ParseTable extends AbstractCveParser implements ParserStrategy {
         }
 
 
+        // assumes the button class contains next text
+        try {
+            WebElement nextButton = driver.findElement(By.xpath("//*[contains(@class,'next')]"));
+            nextButton.click();
+            logger.info("next button clicked");
+            String diff = StringUtils.difference(sourceHtml, driver.getPageSource());
+            // we want to see a brand new page that we also have not seen before
+            // so if there is a difference, and the difference contains CVE ids that we have not seen before, keep going
+            while (!diff.equals("")) {
+                Set<String> thisPageCVEs = getCVEs(diff);
+                if (!Collections.disjoint(thisPageCVEs, allCVEs)) break;
+                logger.info("new page source found");
 
+                doc = Jsoup.parse(diff);
+                // get the main table by looking for table header that contains CVE
+                tableHeader = doc.select("thead:contains(CVE)").first();
+                if (tableHeader == null) return vulnList;
+                tableRows = tableHeader.nextElementSibling();
+                if (tableRows == null) return vulnList;
+                for (Element row : tableRows.children()) {
+                    List<CompositeVulnerability> rowVulns = rowToVuln(row);
+                    vulnList.addAll(rowVulns);
+                }
 
-        //TODO: functionality to click on next page until done
+                nextButton = driver.findElement(By.xpath("//*[contains(@class,'next')]"));
+                nextButton.click();
+                diff = StringUtils.difference(sourceHtml, driver.getPageSource());
+            }
+        } catch (NoSuchElementException e) {
+            logger.info("No next button found");
+            return vulnList;
+        }
 
         return vulnList;
     }
