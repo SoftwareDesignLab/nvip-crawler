@@ -100,6 +100,8 @@ public class CurlParser extends AbstractCveParser {
             if (cves.size() == 0) return retVal;
         }
 
+        if (descriptionBuilder.toString().equals("")) return retVal;
+
         for (String cve : cves) {
             retVal.add(new CompositeVulnerability(
                     0,

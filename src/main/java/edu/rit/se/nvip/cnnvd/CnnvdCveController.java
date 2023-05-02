@@ -260,7 +260,7 @@ public class CnnvdCveController {
 		List<String[]> arr = new ArrayList<>();
 
 		for (CnnvdVulnerability vuln : pageVulnerabilities)
-			arr.add(new String[] { vuln.getCveId(), vuln.getChinaCveId(), vuln.getHazardLevel(), Arrays.deepToString(vuln.getVulnerabilitySource().toArray()), vuln.getPublishDate(), vuln.getUpdateDate(), pageURL });
+			arr.add(new String[] { vuln.getCveId(), vuln.getChinaCveId(), vuln.getHazardLevel(), Arrays.deepToString(vuln.getVulnerabilitySource().toArray()), vuln.getPublishDate().toString(), vuln.getUpdateDate(), pageURL });
 
 		return arr;
 

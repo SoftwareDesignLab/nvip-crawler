@@ -2,17 +2,17 @@
  * Copyright 2023 Rochester Institute of Technology (RIT). Developed with
  * government support under contract 70RSAT19CB0000020 awarded by the United
  * States Department of Homeland Security.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -44,13 +44,13 @@ import edu.rit.se.nvip.utils.UtilHelper;
 /**
  *
  * Parse TalosIntelligence CVEs
- * 
+ *
  * @author Ahmet Okutan
  *
  */
 public class TalosIntelligenceParser extends AbstractCveParser  {
 	private Logger logger = LogManager.getLogger(getClass().getSimpleName());
-	
+
 	public TalosIntelligenceParser(String domainName) {
 		sourceDomainName = domainName;
 	}
@@ -77,7 +77,7 @@ public class TalosIntelligenceParser extends AbstractCveParser  {
 	/**
 	 * Parse pages like:
 	 * https://talosintelligence.com/vulnerability_reports/TALOS-2020-1124
-	 * 
+	 *
 	 * @param sSourceURL
 	 * @param sCVEContentHTML
 	 * @return
@@ -92,7 +92,7 @@ public class TalosIntelligenceParser extends AbstractCveParser  {
 			StringBuilder platform = new StringBuilder();
 			String lastModifiedDate = UtilHelper.longDateFormat.format(new Date());
 
-			Elements allElements = document.getElementsByTag("h5");
+			Elements allElements = document.select("h3, h5");
 
 			for (Element element : allElements) {
 				String text = element.text().toLowerCase();
@@ -147,7 +147,7 @@ public class TalosIntelligenceParser extends AbstractCveParser  {
 				}
 
 			}
-
+			if (description.toString().equals("")) return vulnerabilities;
 			for (String cveId : uniqueCves)
 				vulnerabilities.add(new CompositeVulnerability(0, sSourceURL, cveId, platform.toString(), publishDate, lastModifiedDate, description.toString(), sourceDomainName));
 		} catch (Exception e) {

@@ -24,6 +24,7 @@
 package edu.rit.se.nvip.crawler.htmlparser;
 import edu.rit.se.nvip.model.CompositeVulnerability;
 import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
 
 import java.util.ArrayList;
 import java.util.List;

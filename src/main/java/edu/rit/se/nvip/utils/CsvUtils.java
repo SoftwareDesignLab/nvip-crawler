@@ -64,7 +64,7 @@ public class CsvUtils {
 	 */
 	public int writeListToCSV(List<String[]> allData, String filepath, boolean appendMode) {
 		try {
-
+			logger.info("Writing to CSV: {}", filepath);
 			FileWriter fileWriter = new FileWriter(filepath, appendMode);
 			CSVWriter writer = new CSVWriter(fileWriter, mySeparatorChar, CSVWriter.NO_QUOTE_CHARACTER, CSVWriter.NO_ESCAPE_CHARACTER, CSVWriter.DEFAULT_LINE_END);
 			writer.writeAll(allData);
