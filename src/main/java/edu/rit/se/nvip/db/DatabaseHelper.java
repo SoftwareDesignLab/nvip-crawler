@@ -696,11 +696,11 @@ public class DatabaseHelper {
 			pstmt.setString(2, vuln.getDescription());
 			pstmt.setString(3, vuln.getPlatform());
 			pstmt.setString(4, vuln.getPatch());
-			pstmt.setString(5, vuln.getPublishDate().toString());
+			pstmt.setString(5, formatDate(vuln.getPublishDate()));
 
-			pstmt.setString(6, vuln.getLastModifiedDate().toString()); // during insert create date is last modified date
-			pstmt.setString(7, vuln.getLastModifiedDate().toString());
-			pstmt.setString(8, vuln.getFixDate().toString());
+			pstmt.setString(6, formatDate(vuln.getLastModifiedDate())); // during insert create date is last modified date
+			pstmt.setString(7, formatDate(vuln.getLastModifiedDate()));
+			pstmt.setString(8, formatDate(vuln.getFixDate()));
 			/**
 			 * Bug fix: indexes 9 and 10 were wrong
 			 */
@@ -730,9 +730,9 @@ public class DatabaseHelper {
 			pstmt.setString(1, vuln.getDescription());
 			pstmt.setString(2, vuln.getPlatform());
 			pstmt.setString(3, vuln.getPatch());
-			pstmt.setString(4, vuln.getPublishDate());
-			pstmt.setString(5, vuln.getLastModifiedDate());
-			pstmt.setString(6, vuln.getFixDate());
+			pstmt.setString(4, formatDate(vuln.getPublishDate()));
+			pstmt.setString(5, formatDate(vuln.getLastModifiedDate()));
+			pstmt.setString(6, formatDate(vuln.getFixDate()));
 			pstmt.setString(7, vuln.getCveId()); // WHERE clause in SQL statement
 
 			pstmt.executeUpdate();
