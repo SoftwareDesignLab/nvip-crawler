@@ -23,14 +23,14 @@
  */
 package edu.rit.se.nvip.crawler.htmlparser;
 
-import model.RawVulnerability;
+import edu.rit.se.nvip.model.RawVulnerability;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Node;
 import org.jsoup.nodes.TextNode;
 import org.jsoup.select.Elements;
-import utils.UtilHelper;
+import edu.rit.se.nvip.utils.UtilHelper;
 
 import java.text.DateFormat;
 import java.text.ParseException;

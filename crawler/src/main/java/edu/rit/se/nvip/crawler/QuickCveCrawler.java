@@ -23,10 +23,10 @@
  */
 package edu.rit.se.nvip.crawler;
 
-import cnnvd.CnnvdCveParser;
+import edu.rit.se.nvip.cnnvd.CnnvdCveParser;
 import io.github.bonigarcia.wdm.WebDriverManager;
-import model.CnnvdVulnerability;
-import model.RawVulnerability;
+import edu.rit.se.nvip.model.CnnvdVulnerability;
+import edu.rit.se.nvip.model.RawVulnerability;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.util.NullOutputStream;
@@ -39,7 +39,7 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeDriverService;
 import org.openqa.selenium.chrome.ChromeOptions;
-import utils.UtilHelper;
+import edu.rit.se.nvip.utils.UtilHelper;
 
 import javax.net.ssl.SSLException;
 import java.io.BufferedReader;

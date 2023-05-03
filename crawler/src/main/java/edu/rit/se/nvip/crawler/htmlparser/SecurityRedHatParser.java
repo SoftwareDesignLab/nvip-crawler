@@ -23,12 +23,12 @@
  */
 package edu.rit.se.nvip.crawler.htmlparser;
 
-import model.RawVulnerability;
+import edu.rit.se.nvip.model.RawVulnerability;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-import utils.UtilHelper;
+import edu.rit.se.nvip.utils.UtilHelper;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -37,8 +37,6 @@ import java.util.List;
 /**
     Parser for RedHat Security Page
     (ex. https://access.redhat.com/security/cve/cve-2023-25725)
-    @author aep7128
-
  */
 
 

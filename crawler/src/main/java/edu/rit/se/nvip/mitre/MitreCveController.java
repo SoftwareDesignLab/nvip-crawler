@@ -25,13 +25,13 @@ package edu.rit.se.nvip.mitre;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import model.RawVulnerability;
+import edu.rit.se.nvip.model.RawVulnerability;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import utils.CsvUtils;
-import utils.GitController;
-import utils.UtilHelper;
+import edu.rit.se.nvip.utils.CsvUtils;
+import edu.rit.se.nvip.utils.GitController;
+import edu.rit.se.nvip.utils.UtilHelper;
 
 import java.io.File;
 import java.util.*;

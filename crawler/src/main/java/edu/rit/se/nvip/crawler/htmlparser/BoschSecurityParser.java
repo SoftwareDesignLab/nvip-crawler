@@ -23,7 +23,7 @@
  */
 package edu.rit.se.nvip.crawler.htmlparser;
 
-import model.RawVulnerability;
+import edu.rit.se.nvip.model.RawVulnerability;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -34,7 +34,6 @@ import java.util.List;
 
 /**
  * Web Parser for Bosch Security Advisory Boards
- * @author aep7128
  */
 public class BoschSecurityParser extends AbstractCveParser {
 

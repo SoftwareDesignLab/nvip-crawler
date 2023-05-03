@@ -24,7 +24,7 @@
 package edu.rit.se.nvip.crawler.htmlparser;
 
 import io.github.bonigarcia.wdm.WebDriverManager;
-import model.RawVulnerability;
+import edu.rit.se.nvip.model.RawVulnerability;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.openqa.selenium.JavascriptExecutor;

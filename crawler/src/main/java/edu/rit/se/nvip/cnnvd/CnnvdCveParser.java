@@ -23,7 +23,7 @@
  */
 package edu.rit.se.nvip.cnnvd;
 
-import model.CnnvdVulnerability;
+import edu.rit.se.nvip.model.CnnvdVulnerability;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jsoup.Jsoup;
