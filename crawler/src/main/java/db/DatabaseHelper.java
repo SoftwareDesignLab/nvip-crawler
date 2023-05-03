@@ -237,49 +237,6 @@ public class DatabaseHelper {
 	}
 
 	/**
-	 * For formatting inputted dates to mysql dates
-	 * @return
-	 */
-	public String formatDate(String date) {
-		Date dateObj;
-		String formattedDate = "";
-		SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-
-		if (date == null || date.isEmpty()) {
-			dateObj = new Date();
-			formattedDate = df.format(dateObj);
-			return formattedDate;
-		}
-
-		if (date.contains("T")) {
-			date = date.substring(0, 10) + " " + date.substring(11, 19);
-		}
-
-		Pattern dateRegex = Pattern.compile("(\\d{4}-\\d{2}-\\d{2}|\\d{2}\\/\\d{2}\\/\\d{4})");
-		// Pattern dateRegex = Pattern.compile("(?i:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*?\\s+\\d{1,2}(?:[a-z]{2})?(?:\\s+|,\\s*)\\d{4}\\b");
-		Matcher regexMatcher = dateRegex.matcher(date);
-
-		if (regexMatcher.find()) {
-			date = regexMatcher.group() + " 00:00:00";
-			// mitigate unparseable date error by getting rid of ordinal in date
-			date = date.replaceFirst("(?<=\\d)(?:st|nd|rd|th)", "");
-		}
-
-		try {
-			try {
-				dateObj = new Date(date);
-				formattedDate = df.format(dateObj);
-			} catch (IllegalArgumentException e) {
-				dateObj = df.parse(date);
-				formattedDate = df.format(dateObj);
-			}
-		} catch (Exception e) {
-			logger.info("ERROR: Failed to parse date: {}\n{}", date, e.toString());
-		}
-		return formattedDate;
-	}
-
-	/**
 	 * Get existing vulnerabilities hash map. This method was added to improve
 	 * DatabaseHelper, NOT to query each CVEID during a CVE update! Existing
 	 * vulnerabilities are read only once, and this hash map is queried during
@@ -439,12 +396,12 @@ public class DatabaseHelper {
 			pstmt.setInt(7, timeGapRecorded);
 			pstmt.setInt(8, timeGap);
 			try {
-				pstmt.setTimestamp(9, new Timestamp(longDateFormatMySQL.parse(formatDate(vuln.getLastModifiedDate().toString())).getTime()));
+				pstmt.setTimestamp(9, new Timestamp(longDateFormatMySQL.parse(vuln.getLastModifiedDate()).getTime()));
 			} catch (Exception e) {
 				logger.warn("WARNING: Failed to parse last modified date: {}", vuln.getLastModifiedDate());
-				pstmt.setTimestamp(9, new Timestamp(longDateFormatMySQL.parse(formatDate(vuln.getPublishDate().toString())).getTime()));
+				pstmt.setTimestamp(9, new Timestamp(longDateFormatMySQL.parse(vuln.getPublishDate()).getTime()));
 			}
-			pstmt.setTimestamp(10, new Timestamp(longDateFormatMySQL.parse(existingAttribs.getCreateDate().toString()).getTime()));
+			pstmt.setTimestamp(10, new Timestamp(longDateFormatMySQL.parse(existingAttribs.getCreateDate()).getTime()));
 			pstmt.executeUpdate();
 		} catch (Exception e) {
 			logger.error("Error recording CVE status change for {}:\n{}", vuln.getCveId(), e);
