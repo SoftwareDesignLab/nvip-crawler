@@ -1,6 +1,6 @@
 package crawler.htmlparser;
 
-import model.CompositeVulnerability;
+import model.RawVulnerability;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
@@ -18,9 +18,9 @@ public class EatonParser extends AbstractCveParser {
     public EatonParser(String domainName) { sourceDomainName = domainName; }
 
     @Override
-    public List<CompositeVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
+    public List<RawVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
 
-        List<CompositeVulnerability> vulnList = new ArrayList<>();
+        List<RawVulnerability> vulnList = new ArrayList<>();
         Document doc = Jsoup.parse(sCVEContentHTML);
         Elements pdfV = doc.select("pdf-viewer");
         if (pdfV.size() == 0) {
@@ -60,7 +60,7 @@ public class EatonParser extends AbstractCveParser {
                 lastModifiedDate = uniqueDates.stream().reduce((one, two) -> two).get();
             }
             for (String cve : cves)
-                vulnList.add(new CompositeVulnerability(
+                vulnList.add(new RawVulnerability(
                         0, sSourceURL, cve, null, publishDate, lastModifiedDate, description, sourceDomainName
                 ));
 

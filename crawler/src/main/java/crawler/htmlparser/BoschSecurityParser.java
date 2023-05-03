@@ -23,7 +23,7 @@
  */
 package crawler.htmlparser;
 
-import model.CompositeVulnerability;
+import model.RawVulnerability;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -53,9 +53,9 @@ public class BoschSecurityParser extends AbstractCveParser{
      * @return
      */
     @Override
-    public List<CompositeVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
+    public List<RawVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
 
-        List<CompositeVulnerability> vulns = new ArrayList<>();
+        List<RawVulnerability> vulns = new ArrayList<>();
 
         Document doc = Jsoup.parse(sCVEContentHTML);
         try {
@@ -75,7 +75,7 @@ public class BoschSecurityParser extends AbstractCveParser{
                     Element next = header.nextElementSibling();
                     if (next != null) {
                         String description = next.text().substring(17);
-                        vulns.add(new CompositeVulnerability(0, sSourceURL, cveId, null, publishDate, updateDate, description, sourceDomainName));
+                        vulns.add(new RawVulnerability(0, sSourceURL, cveId, null, publishDate, updateDate, description, sourceDomainName));
                     }
                 }
             }

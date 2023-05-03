@@ -23,7 +23,7 @@
  */
 package crawler.htmlparser;
 
-import model.CompositeVulnerability;
+import model.RawVulnerability;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jsoup.Jsoup;
@@ -58,8 +58,8 @@ public class GenericCveParser extends AbstractCveParser  {
 	 * @param sCVEContentHTML
 	 */
 	@Override
-	public List<CompositeVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
-		List<CompositeVulnerability> vulnerabilities = new ArrayList<>();
+	public List<RawVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
+		List<RawVulnerability> vulnerabilities = new ArrayList<>();
 
 		Document document = Jsoup.parse(sCVEContentHTML);
 		Elements myHTMLElements = document.select(":matchesOwn(" + regexAllCVERelatedContent + ")");
@@ -98,7 +98,7 @@ public class GenericCveParser extends AbstractCveParser  {
 			String version = getPlatformVersion(sCVEContent);
 
 			// save vulnerability
-			CompositeVulnerability vuln = new CompositeVulnerability(0, sSourceURL, cveId, version, null, UtilHelper.longDateFormat.format(new Date()), sCVEContent, null);
+			RawVulnerability vuln = new RawVulnerability(0, sSourceURL, cveId, version, null, UtilHelper.longDateFormat.format(new Date()), sCVEContent, null);
 			vulnerabilities.add(vuln);
 			return vulnerabilities;
 		}
@@ -110,7 +110,7 @@ public class GenericCveParser extends AbstractCveParser  {
 		 * https://www.exploit-db.com/exploits/42518
 		 */
 
-		Map<String, CompositeVulnerability> vulnMap = new HashMap<String, CompositeVulnerability>();
+		Map<String, RawVulnerability> vulnMap = new HashMap<String, RawVulnerability>();
 
 		/**
 		 * Do some pre-processing on the page elements
@@ -226,13 +226,13 @@ public class GenericCveParser extends AbstractCveParser  {
 			if (aBlockOfCveIdsInTheSentence)
 				for (int i = 0; i < cveIDsInSentence.length; i++) {
 					if (sentenceContainsValuableInfoForCVE(sbDescription.toString(), cveIDsInSentence.length)) {
-						CompositeVulnerability vuln = new CompositeVulnerability(0, sSourceURL, (String) cveIDsInSentence[i], version, null, dateTimeNow, sbDescription.toString(), null);
+						RawVulnerability vuln = new RawVulnerability(0, sSourceURL, (String) cveIDsInSentence[i], version, null, dateTimeNow, sbDescription.toString(), null);
 						vulnMap.put(vuln.getCveId(), vuln);
 					}
 				}
 			else {
 				if (sentenceContainsValuableInfoForCVE(sbDescription.toString(), 1)) {
-					CompositeVulnerability vuln = new CompositeVulnerability(0, sSourceURL, cveIDOfCurrentSentence, version, null, dateTimeNow, sbDescription.toString(), null);
+					RawVulnerability vuln = new RawVulnerability(0, sSourceURL, cveIDOfCurrentSentence, version, null, dateTimeNow, sbDescription.toString(), null);
 					vulnMap.put(vuln.getCveId(), vuln);
 				} else {
 					logger.debug("Ignoring this CVE! ID: " + cveIDOfCurrentSentence + ", Description: " + sbDescription);

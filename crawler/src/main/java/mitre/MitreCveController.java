@@ -29,7 +29,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import model.CompositeVulnerability;
+import model.RawVulnerability;
 import utils.CsvUtils;
 import utils.GitController;
 import utils.UtilHelper;
@@ -61,7 +61,7 @@ public class MitreCveController {
 	 * updates if any. Then it recursively loads all json files in the local repo,
 	 * parses them and creates a CSV file at the output path.
 	 */
-	public HashMap<String, CompositeVulnerability> getMitreCVEsFromGitRepo(String localPath, String remotePath, String outputCSVpath) {
+	public HashMap<String, RawVulnerability> getMitreCVEsFromGitRepo(String localPath, String remotePath, String outputCSVpath) {
 
 		GitController gitController = new GitController(localPath, remotePath);
 		logger.info("Checking local Git CVE repo...");
@@ -106,13 +106,13 @@ public class MitreCveController {
 		logger.info("Wrote *** {} **** MITRE CVE items to {}", count, outputCSVpath);
 
 		// add all CVEs to a map
-		HashMap<String, CompositeVulnerability> gitHubCveMap = new HashMap<>();
+		HashMap<String, RawVulnerability> gitHubCveMap = new HashMap<>();
 		for (String[] cve : cveData) {
 			String cveId = cve[0];
 			String sourceUrl = remotePath;
 			String date = UtilHelper.longDateFormat.format(new Date());
 			String description = cve[1];
-			CompositeVulnerability vuln = new CompositeVulnerability(0, sourceUrl, cveId, "N/A", date, date, description, null);
+			RawVulnerability vuln = new RawVulnerability(0, sourceUrl, cveId, "N/A", date, date, description, null);
 			gitHubCveMap.put(cveId, vuln);
 		}
 

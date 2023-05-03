@@ -23,7 +23,7 @@
  */
 package crawler.htmlparser;
 
-import model.CompositeVulnerability;
+import model.RawVulnerability;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -48,9 +48,9 @@ public class JenkinsParser extends AbstractCveParser {
 
 
     @Override
-    public List<CompositeVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
+    public List<RawVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
 
-        List<CompositeVulnerability> vulnList = new ArrayList<>();
+        List<RawVulnerability> vulnList = new ArrayList<>();
         Document doc = Jsoup.parse(sCVEContentHTML);
 
         // Get 'Jenkins Security Advisory YYYY-MM-DD' title
@@ -77,7 +77,7 @@ public class JenkinsParser extends AbstractCveParser {
             }
             // finally assemble and add to vulnList
             for (String cve : cves)
-                vulnList.add(new CompositeVulnerability(
+                vulnList.add(new RawVulnerability(
                         0, sSourceURL, cve, null, date, date, description.toString(), sourceDomainName
                 ));
         }

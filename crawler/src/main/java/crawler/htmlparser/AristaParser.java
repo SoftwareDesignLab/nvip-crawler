@@ -1,6 +1,6 @@
 package crawler.htmlparser;
 
-import model.CompositeVulnerability;
+import model.RawVulnerability;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -14,9 +14,9 @@ public class AristaParser extends AbstractCveParser {
 
     public AristaParser(String domainName) {sourceDomainName = domainName;}
 
-    public List<CompositeVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
+    public List<RawVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
 
-        List<CompositeVulnerability> vulnList = new ArrayList<>();
+        List<RawVulnerability> vulnList = new ArrayList<>();
         Document doc = Jsoup.parse(sCVEContentHTML);
 
         // get last modified date and publish date from table at top of page
@@ -66,7 +66,7 @@ public class AristaParser extends AbstractCveParser {
         // get CVEs on page, usually towards top of page
         Set<String> cves = getCVEs(doc.text());
         for (String cve : cves)
-            vulnList.add(new CompositeVulnerability(
+            vulnList.add(new RawVulnerability(
                     0, sSourceURL, cve, null, publishedDate, lastModifiedDate, description.toString(), sourceDomainName
             ));
 

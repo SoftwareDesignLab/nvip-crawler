@@ -23,7 +23,7 @@
  */
 package crawler.htmlparser;
 
-import model.CompositeVulnerability;
+import model.RawVulnerability;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -44,9 +44,9 @@ public class MozillaParser extends AbstractCveParser {
     public MozillaParser(String domainName) { sourceDomainName = domainName; }
 
     @Override
-    public List<CompositeVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
+    public List<RawVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
 
-        List<CompositeVulnerability> vulnList = new ArrayList<>();
+        List<RawVulnerability> vulnList = new ArrayList<>();
 
         Document doc = Jsoup.parse(sCVEContentHTML);
 
@@ -64,7 +64,7 @@ public class MozillaParser extends AbstractCveParser {
             String cve = Objects.requireNonNull(children.select("h4").first()).id();
             Element descEl = Objects.requireNonNull(children.select("h5:contains(Description)").first()).nextElementSibling();
             String description = Objects.requireNonNull(descEl).text();
-            vulnList.add(new CompositeVulnerability(
+            vulnList.add(new RawVulnerability(
                0, sSourceURL, cve, null, date, date, description, sourceDomainName
             ));
         }

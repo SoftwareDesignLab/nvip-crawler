@@ -1,6 +1,6 @@
 package crawler.htmlparser;
 
-import model.CompositeVulnerability;
+import model.RawVulnerability;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -23,9 +23,9 @@ public class AsustorParser extends AbstractCveParser {
     }
 
     @Override
-    public List<CompositeVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
+    public List<RawVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
 
-        List<CompositeVulnerability> vulnList = new ArrayList<>();
+        List<RawVulnerability> vulnList = new ArrayList<>();
         Document doc = Jsoup.parse(sCVEContentHTML);
 
         // get CVEs in ul under Detail h3 tag
@@ -84,10 +84,10 @@ public class AsustorParser extends AbstractCveParser {
             }
         }
 
-        // create CompositeVulnerability foreach CVE and add to vulnList
+        // create RawVulnerability foreach CVE and add to vulnList
         for (String cve : cves) {
             String description = descriptions.get(cve);
-            CompositeVulnerability vuln = new CompositeVulnerability(
+            RawVulnerability vuln = new RawVulnerability(
                     0, sSourceURL, cve, null, publishDate, lastUpdatedDate, description, sourceDomainName
             );
             vulnList.add(vuln);

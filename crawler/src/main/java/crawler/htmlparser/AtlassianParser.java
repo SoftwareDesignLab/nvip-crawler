@@ -23,7 +23,7 @@
  */
 package crawler.htmlparser;
 
-import model.CompositeVulnerability;
+import model.RawVulnerability;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -36,7 +36,7 @@ import java.util.Objects;
 
 public class AtlassianParser extends AbstractCveParser {
 
-    private final List<CompositeVulnerability> vulnList = new ArrayList<>();
+    private final List<RawVulnerability> vulnList = new ArrayList<>();
     private ArrayList<String> cvesOnPage = new ArrayList<>();
     private String lastModifiedDate;
     private String publishDate;
@@ -88,7 +88,7 @@ public class AtlassianParser extends AbstractCveParser {
                 description.append(next.text());
                 next = next.nextElementSibling();
             }
-            vulnList.add(new CompositeVulnerability(
+            vulnList.add(new RawVulnerability(
                     0,
                     sSourceURL,
                     cvesOnPage.get(i),
@@ -102,7 +102,7 @@ public class AtlassianParser extends AbstractCveParser {
     }
 
     @Override
-    public List<CompositeVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
+    public List<RawVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
 
         Document doc = Jsoup.parse(sCVEContentHTML);
 
@@ -158,7 +158,7 @@ public class AtlassianParser extends AbstractCveParser {
                 next = next.nextElementSibling();
             }
             for (String cve : cvesOnPage) {
-                vulnList.add(new CompositeVulnerability(0, sSourceURL, cve, null, publishDate, lastModifiedDate, description.toString(), sourceDomainName));
+                vulnList.add(new RawVulnerability(0, sSourceURL, cve, null, publishDate, lastModifiedDate, description.toString(), sourceDomainName));
             }
         }
 

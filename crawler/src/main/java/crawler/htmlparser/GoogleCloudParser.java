@@ -23,7 +23,7 @@
  */
 package crawler.htmlparser;
 
-import model.CompositeVulnerability;
+import model.RawVulnerability;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -48,8 +48,8 @@ public class GoogleCloudParser extends AbstractCveParser  {
 	}
 
     @Override
-	public List<CompositeVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
-		List<CompositeVulnerability> vulns = new ArrayList<>();
+	public List<RawVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
+		List<RawVulnerability> vulns = new ArrayList<>();
 		Document doc = Jsoup.parse(sCVEContentHTML);
         Element htmlTag = doc.select("html").first();
         if (htmlTag == null || !htmlTag.attr("lang").equals("en"))
@@ -99,7 +99,7 @@ public class GoogleCloudParser extends AbstractCveParser  {
                     }
 
                     for (String cve: cves) {
-                        vulns.add(new CompositeVulnerability(0, sSourceURL, cve, null, publishedDate, lastModifiedDate, description, sourceDomainName));
+                        vulns.add(new RawVulnerability(0, sSourceURL, cve, null, publishedDate, lastModifiedDate, description, sourceDomainName));
                     }
                     cves = new ArrayList<>();
                     description = "";

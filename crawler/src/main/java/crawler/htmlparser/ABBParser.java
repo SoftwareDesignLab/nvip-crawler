@@ -1,6 +1,6 @@
 package crawler.htmlparser;
 
-import model.CompositeVulnerability;
+import model.RawVulnerability;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
@@ -23,9 +23,9 @@ public class ABBParser extends AbstractCveParser {
     }
 
     @Override
-    public List<CompositeVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
+    public List<RawVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
 
-        List<CompositeVulnerability> vulnList = new ArrayList<>();
+        List<RawVulnerability> vulnList = new ArrayList<>();
         Document doc = Jsoup.parse(sCVEContentHTML);
         Elements pdfV = doc.select("pdf-viewer");
         if (pdfV.size() == 0) {
@@ -58,7 +58,7 @@ public class ABBParser extends AbstractCveParser {
 
             // usually just 1 but we will loop over the set just to be sure
             for (String cve : cves)
-                vulnList.add(new CompositeVulnerability(
+                vulnList.add(new RawVulnerability(
                         0, sSourceURL, cve, null, date, date, description, sourceDomainName
                 ));
         }

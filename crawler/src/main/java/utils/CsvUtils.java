@@ -24,7 +24,7 @@
 package utils;
 
 import com.opencsv.*;
-import model.CompositeVulnerability;
+import model.RawVulnerability;
 import model.VdoCharacteristic;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -64,56 +64,6 @@ public class CsvUtils {
 			writer.close();
 		} catch (IOException e) {
 			logger.error("Exception while writing list to CSV file!" + e);
-			return 0;
-		}
-
-		return allData.size();
-	}
-
-	/**
-	 * Write a list of objects to CSV
-	 * 
-	 * @param allData
-	 * @param filepath
-	 * @param appendMode
-	 * @return
-	 */
-	public int writeObjectListToCSV(List<Object> allData, String filepath, boolean appendMode) {
-		try {
-
-			List<String[]> arr = new ArrayList<>();
-
-			for (Object obj : allData)
-				if (obj instanceof CompositeVulnerability) {
-					CompositeVulnerability vuln = (CompositeVulnerability) obj;
-					try {
-
-						if (vuln.getDescription() == null)
-							continue; // ignore CVEs with no description
-
-						String description = vuln.getDescription().replace(mySeparatorChar + "", "").replace("\n", "");
-						String sourceUrl = Arrays.deepToString(vuln.getSourceURL().toArray());
-
-						StringBuilder vdoCharacteristic = new StringBuilder();
-						StringBuilder vdoConfidence = new StringBuilder();
-						if (vuln.getVdoCharacteristic().size() > 0) {
-							for (VdoCharacteristic vdo : vuln.getVdoCharacteristic()) {
-								vdoCharacteristic.append(vdo.getVdoLabelId()).append(",");
-								vdoConfidence.append(vdo.getVdoConfidence()).append(",");
-							}
-						}
-
-						arr.add(new String[] { vuln.getCveId(), vuln.getPlatform(), description, sourceUrl, vdoCharacteristic.toString(), vdoConfidence.toString(), vuln.getNvdSearchResult(), vuln.getMitreSearchResult(), vuln.getNvipNote() });
-					} catch (Exception e) {
-						logger.error("Error while adding Vulnerability to list!" + " Vuln: " + vuln + ". " + e);
-					}
-				}
-			FileWriter fileWriter = new FileWriter(filepath, appendMode);
-			CSVWriter writer = new CSVWriter(fileWriter, mySeparatorChar, CSVWriter.NO_QUOTE_CHARACTER, CSVWriter.NO_ESCAPE_CHARACTER, CSVWriter.DEFAULT_LINE_END);
-			writer.writeAll(arr);
-			writer.close();
-		} catch (Exception e) {
-			logger.error("Exception while writing List<Vulnerability> to CSV!" + e);
 			return 0;
 		}
 

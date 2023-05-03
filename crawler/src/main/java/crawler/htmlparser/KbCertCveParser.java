@@ -24,7 +24,7 @@
 package crawler.htmlparser;
 
 import model.AffectedRelease;
-import model.CompositeVulnerability;
+import model.RawVulnerability;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -53,8 +53,8 @@ public class KbCertCveParser extends AbstractCveParser  {
 	}
 
 	@Override
-	public List<CompositeVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
-		List<CompositeVulnerability> vulnerabilities = new ArrayList<>();
+	public List<RawVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
+		List<RawVulnerability> vulnerabilities = new ArrayList<>();
 		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 		Document document = Jsoup.parse(sCVEContentHTML);
 
@@ -110,7 +110,7 @@ public class KbCertCveParser extends AbstractCveParser  {
 			Iterator<String> iterator = uniqueIds.iterator();
 			while (iterator.hasNext()) {
 				String cveId = iterator.next();
-				CompositeVulnerability vuln = new CompositeVulnerability(0, sSourceURL, cveId, null, publishDate, lastModifiedDate, description, sourceDomainName);
+				RawVulnerability vuln = new RawVulnerability(0, sSourceURL, cveId, null, publishDate, lastModifiedDate, description, sourceDomainName);
 				vulnerabilities.add(vuln);
 			}
 		}
@@ -129,7 +129,7 @@ public class KbCertCveParser extends AbstractCveParser  {
 				if (matcher.find()) {
 					if (currCve != null) {
 						String desc = currDesc.toString();
-						CompositeVulnerability vuln = new CompositeVulnerability(0, sSourceURL, currCve, null, publishDate, lastModifiedDate, desc, sourceDomainName);
+						RawVulnerability vuln = new RawVulnerability(0, sSourceURL, currCve, null, publishDate, lastModifiedDate, desc, sourceDomainName);
 						vulnerabilities.add(vuln);
 					}
 					currCve = matcher.group();
@@ -140,7 +140,7 @@ public class KbCertCveParser extends AbstractCveParser  {
 				}
 			}
 			String desc = currDesc.toString();
-			CompositeVulnerability vuln = new CompositeVulnerability(0, sSourceURL, currCve, null, publishDate, lastModifiedDate, desc, sourceDomainName);
+			RawVulnerability vuln = new RawVulnerability(0, sSourceURL, currCve, null, publishDate, lastModifiedDate, desc, sourceDomainName);
 			vulnerabilities.add(vuln);
 
 		}

@@ -24,7 +24,7 @@
 package crawler.htmlparser;
 
 import com.google.common.collect.Iterables;
-import model.CompositeVulnerability;
+import model.RawVulnerability;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -41,8 +41,8 @@ public class AutodeskParser extends AbstractCveParser {
 
     public AutodeskParser(String domainName) {sourceDomainName = domainName;}
     @Override
-    public List<CompositeVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
-        List<CompositeVulnerability> retVal = new ArrayList<>();
+    public List<RawVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
+        List<RawVulnerability> retVal = new ArrayList<>();
 
         Document doc = Jsoup.parse(sCVEContentHTML);
         // get publish/revision dates from the summary info near the top
@@ -73,7 +73,7 @@ public class AutodeskParser extends AbstractCveParser {
                     for (int i = 1; i < rows.size(); i++) {
                         for (String cve : getCVEs(rows.get(i).html())) {
                             String des = String.format("%s\n%s: %s", summary, leftLabel, rows.get(i).children().get(0).text());
-                            retVal.add(new CompositeVulnerability(
+                            retVal.add(new RawVulnerability(
                                    0,
                                    sSourceURL,
                                    cve,
@@ -90,7 +90,7 @@ public class AutodeskParser extends AbstractCveParser {
                 else if (descriptionParent.tagName().equals("ol")) {
                     for (Element li : descriptionParent.children()) {
                         int desStart = li.text().indexOf(":") + 2;
-                        retVal.add(new CompositeVulnerability(
+                        retVal.add(new RawVulnerability(
                                 0,
                                 sSourceURL,
                                 Iterables.getOnlyElement(getCVEs(li.text())),

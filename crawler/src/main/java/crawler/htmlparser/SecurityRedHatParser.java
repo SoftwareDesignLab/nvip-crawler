@@ -23,7 +23,7 @@
  */
 package crawler.htmlparser;
 
-import model.CompositeVulnerability;
+import model.RawVulnerability;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -49,8 +49,8 @@ public class SecurityRedHatParser extends AbstractCveParser  {
 	}
 
     @Override
-	public List<CompositeVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
-		List<CompositeVulnerability> vulnerabilities = new ArrayList<>();
+	public List<RawVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
+		List<RawVulnerability> vulnerabilities = new ArrayList<>();
         Document doc = Jsoup.parse(sCVEContentHTML);
         String lastModifiedDate = UtilHelper.longDateFormat.format(new Date());
 
@@ -61,7 +61,7 @@ public class SecurityRedHatParser extends AbstractCveParser  {
             String description = row.select("td.td-synopsis > span").text();
             String date = row.select("td-date > span").text();
 
-            vulnerabilities.add(new CompositeVulnerability(0, sSourceURL, cve, null, date, lastModifiedDate, description, sourceDomainName));    
+            vulnerabilities.add(new RawVulnerability(0, sSourceURL, cve, null, date, lastModifiedDate, description, sourceDomainName));    
         }
 		
         return vulnerabilities;

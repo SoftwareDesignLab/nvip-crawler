@@ -23,7 +23,7 @@
  */
 package crawler.htmlparser;
 
-import model.CompositeVulnerability;
+import model.RawVulnerability;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -44,9 +44,9 @@ public class MendParser extends AbstractCveParser {
     }
 
     @Override
-    public List<CompositeVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
+    public List<RawVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
 
-        List<CompositeVulnerability> vulnList = new ArrayList<>();
+        List<RawVulnerability> vulnList = new ArrayList<>();
 
         Document doc = Jsoup.parse(sCVEContentHTML);
         // get the CVE ID in the h1 title
@@ -63,7 +63,7 @@ public class MendParser extends AbstractCveParser {
         Elements descEl = dateAndDesc.select("p");
         String description = dateAndDesc.select("p").get(0).text();
 
-        vulnList.add(new CompositeVulnerability(0, sSourceURL, cveId, null, publishedDate, publishedDate, description, sourceDomainName));
+        vulnList.add(new RawVulnerability(0, sSourceURL, cveId, null, publishedDate, publishedDate, description, sourceDomainName));
 
         return vulnList;
     }

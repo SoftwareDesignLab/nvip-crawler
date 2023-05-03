@@ -1,6 +1,6 @@
 package crawler.htmlparser;
 
-import model.CompositeVulnerability;
+import model.RawVulnerability;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -41,9 +41,9 @@ public class CyberArkRootParser extends AbstractCveParser {
      * @return - CVE list from bulletin table
      */
     @Override
-    public List<CompositeVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
+    public List<RawVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
 
-        List<CompositeVulnerability> vulnList = new ArrayList<>();
+        List<RawVulnerability> vulnList = new ArrayList<>();
         Document doc = Jsoup.parse(sCVEContentHTML);
 
         // table columns are the following:
@@ -68,7 +68,7 @@ public class CyberArkRootParser extends AbstractCveParser {
             String cwe = getCellValue(row, "Vulnerability Type / CWE:");
             String description = vendor + " " + product + " " + cwe;
 
-            vulnList.add(new CompositeVulnerability(
+            vulnList.add(new RawVulnerability(
                     0, sSourceURL, cveId, null, date, date, description, sourceDomainName
             ));
         }

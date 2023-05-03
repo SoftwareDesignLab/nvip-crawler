@@ -23,7 +23,7 @@
  */
 package crawler.htmlparser;
 
-import model.CompositeVulnerability;
+import model.RawVulnerability;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -54,8 +54,8 @@ public class VMWareAdvisoriesParser extends AbstractCveParser  {
 	 * @return
 	 */
 	@Override
-	public List<CompositeVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
-		List<CompositeVulnerability> vulns = new ArrayList<>();
+	public List<RawVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
+		List<RawVulnerability> vulns = new ArrayList<>();
 
 		Set<String> uniqueCves = getCVEs(sCVEContentHTML);
 		if (uniqueCves.isEmpty())
@@ -90,9 +90,9 @@ public class VMWareAdvisoriesParser extends AbstractCveParser  {
 
 					if (Objects.requireNonNull(sibling).text().equals("Description")) {
 						description = Objects.requireNonNull(sibling.nextElementSibling()).text();
-						vulns.add(new CompositeVulnerability(0, sSourceURL, currentCVE, null, publishDate, updatedDate, description, sourceDomainName));
+						vulns.add(new RawVulnerability(0, sSourceURL, currentCVE, null, publishDate, updatedDate, description, sourceDomainName));
 					} else if (Objects.requireNonNull(sibling).text().length() > 30) {
-						vulns.add(new CompositeVulnerability(0, sSourceURL, currentCVE, null, publishDate, updatedDate, sibling.text(), sourceDomainName));
+						vulns.add(new RawVulnerability(0, sSourceURL, currentCVE, null, publishDate, updatedDate, sibling.text(), sourceDomainName));
 					}
 				}
 			}

@@ -23,7 +23,7 @@
  */
 package crawler.htmlparser;
 
-import model.CompositeVulnerability;
+import model.RawVulnerability;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jsoup.Jsoup;
@@ -50,7 +50,7 @@ public class PacketStormParser extends AbstractCveParser  {
 	String lastModifiedDate = UtilHelper.longDateFormat.format(new Date());
 
 	@Override
-	public List<CompositeVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
+	public List<RawVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
 		if (sSourceURL.contains(".html")) {
 			return parseSingleHTMLPage(sSourceURL, sCVEContentHTML);
 		} else {
@@ -79,9 +79,9 @@ public class PacketStormParser extends AbstractCveParser  {
 	 * @param sCVEContentHTML
 	 * @return
 	 */
-	private List<CompositeVulnerability> parseCVEListPage(String sSourceURL, String sCVEContentHTML) {
+	private List<RawVulnerability> parseCVEListPage(String sSourceURL, String sCVEContentHTML) {
 
-		List<CompositeVulnerability> allVulns = new ArrayList<>();
+		List<RawVulnerability> allVulns = new ArrayList<>();
 		Set<String> uniqueCves = getCVEs(sCVEContentHTML);
 		if (uniqueCves.size() == 0)
 			return allVulns;
@@ -100,7 +100,7 @@ public class PacketStormParser extends AbstractCveParser  {
 				if (element.getElementsByClass("cve").size() == 0)
 					continue;
 
-				List<CompositeVulnerability> itemVulns = new ArrayList<>();
+				List<RawVulnerability> itemVulns = new ArrayList<>();
 
 				// get unique CVEs in this list item
 				uniqueCves = getCVEs(element.text());
@@ -119,7 +119,7 @@ public class PacketStormParser extends AbstractCveParser  {
 				publishDate = getDate(sSourceURL, elements);
 
 				for (String cve : uniqueCves)
-					itemVulns.add(new CompositeVulnerability(0, sSourceURL, cve, listTitle, publishDate, lastModifiedDate, description, sourceDomainName));
+					itemVulns.add(new RawVulnerability(0, sSourceURL, cve, listTitle, publishDate, lastModifiedDate, description, sourceDomainName));
 
 				allVulns.addAll(itemVulns);
 
@@ -182,8 +182,8 @@ public class PacketStormParser extends AbstractCveParser  {
 	 * @param sCVEContentHTML
 	 * @return
 	 */
-	private List<CompositeVulnerability> parseSingleHTMLPage(String sSourceURL, String sCVEContentHTML) {
-		List<CompositeVulnerability> vulns = new ArrayList<>();
+	private List<RawVulnerability> parseSingleHTMLPage(String sSourceURL, String sCVEContentHTML) {
+		List<RawVulnerability> vulns = new ArrayList<>();
 		Set<String> uniqueCves = getCVEs(sCVEContentHTML);
 		if (uniqueCves.size() == 0)
 			return vulns;
@@ -208,7 +208,7 @@ public class PacketStormParser extends AbstractCveParser  {
 			publishDate = getDate(sSourceURL, dates);
 
 			for (String cve : uniqueCves)
-				vulns.add(new CompositeVulnerability(0, sSourceURL, cve, null, publishDate, lastModifiedDate, description, sourceDomainName));
+				vulns.add(new RawVulnerability(0, sSourceURL, cve, null, publishDate, lastModifiedDate, description, sourceDomainName));
 
 			/**
 			 * get version from the remaining text
