@@ -138,7 +138,7 @@ public class ArubaParser extends AbstractCveParser {
                 String[] detailsSections = detailsSection.split("---------");
                 description = overviewSection + splitDetailsSection(omitEmptyStrings(detailsSections), cve);
                 vulnList.add(new RawVulnerability(
-                        0, sSourceURL, cve, null, publishDate, lastUpdated, description, sourceDomainName
+                        sSourceURL, cve, publishDate, lastUpdated, description
                 ));
             }
         }
@@ -146,7 +146,7 @@ public class ArubaParser extends AbstractCveParser {
             description = overviewSection + detailsSection;
             ArrayList<String> cveList = new ArrayList<>(cves);
             vulnList.add(new RawVulnerability(
-                    0, sSourceURL, cveList.get(0), null, publishDate, lastUpdated, description, sourceDomainName
+                    sSourceURL, cveList.get(0), publishDate, lastUpdated, description
             ));
         }
 

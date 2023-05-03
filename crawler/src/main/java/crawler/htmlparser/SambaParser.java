@@ -53,8 +53,7 @@ public class SambaParser extends AbstractCveParser {
         // we would need a way to grab those too
 
         // for now just add to list
-        vulnList.add(new RawVulnerability(
-                0, sSourceURL, cve, null, "", "", description.toString(), sourceDomainName
+        vulnList.add(new RawVulnerability(sSourceURL, cve, "", "", description.toString()
         ));
 
         return vulnList;

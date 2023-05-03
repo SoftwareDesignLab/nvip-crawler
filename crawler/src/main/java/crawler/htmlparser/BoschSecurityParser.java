@@ -75,7 +75,7 @@ public class BoschSecurityParser extends AbstractCveParser{
                     Element next = header.nextElementSibling();
                     if (next != null) {
                         String description = next.text().substring(17);
-                        vulns.add(new RawVulnerability(0, sSourceURL, cveId, null, publishDate, updateDate, description, sourceDomainName));
+                        vulns.add(new RawVulnerability(sSourceURL, cveId, publishDate, updateDate, description));
                     }
                 }
             }

@@ -102,7 +102,7 @@ public class CoreParser extends AbstractCveParser {
                         if (desc.contains(c)) {
                             desc = desc.split(c+"]")[1];
                             vulnList.add(new RawVulnerability(
-                               0, sSourceURL, c, null, publishDate, lastUpdatedDate, vulnDesc + desc, sourceDomainName
+                               sSourceURL, c, publishDate, lastUpdatedDate, vulnDesc + desc
                             ));
                             iter.remove();
                         }
@@ -123,7 +123,7 @@ public class CoreParser extends AbstractCveParser {
         if (cves.size() != 0) {
             for (String c : cves) {
                 vulnList.add(new RawVulnerability(
-                        0, sSourceURL, c, null, publishDate, lastUpdatedDate, vulnDesc.toString(), sourceDomainName
+                        sSourceURL, c, publishDate, lastUpdatedDate, vulnDesc.toString()
                 ));
                 cves.remove(c);
             }

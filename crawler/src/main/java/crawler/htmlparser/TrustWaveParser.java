@@ -91,8 +91,7 @@ public class TrustWaveParser extends AbstractCveParser {
                 description.append(next.text());
                 next = next.nextElementSibling();
             }
-            vulnList.add(new RawVulnerability(
-                    0, sSourceURL, cveId, null, date, date, description.toString(), sourceDomainName
+            vulnList.add(new RawVulnerability(sSourceURL, cveId, date, date, description.toString()
             ));
         }
         // check to see if CVE in title, if any CVE id found does not match current vulnList, add it
@@ -132,8 +131,7 @@ public class TrustWaveParser extends AbstractCveParser {
             }
             // add it to vuln list
             for (String remainingCVE : titleCVEs) {
-                vulnList.add(new RawVulnerability(
-                   0, sSourceURL, remainingCVE, null, date, date, description, sourceDomainName
+                vulnList.add(new RawVulnerability(sSourceURL, remainingCVE, date, date, description
                 ));
             }
         }

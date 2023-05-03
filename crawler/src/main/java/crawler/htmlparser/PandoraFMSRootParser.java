@@ -35,8 +35,7 @@ public class PandoraFMSRootParser extends AbstractCveParser {
             // get Publication date from third column
             String publishDate = cells.get(2).text();
             // add to vulns list
-            vulnList.add(new RawVulnerability(
-                    0, sSourceURL, cve, null, publishDate, publishDate, description, sourceDomainName
+            vulnList.add(new RawVulnerability(sSourceURL, cve, publishDate, publishDate, description
             ));
         }
 

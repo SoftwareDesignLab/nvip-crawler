@@ -61,7 +61,7 @@ public class SecurityRedHatParser extends AbstractCveParser  {
             String description = row.select("td.td-synopsis > span").text();
             String date = row.select("td-date > span").text();
 
-            vulnerabilities.add(new RawVulnerability(0, sSourceURL, cve, null, date, lastModifiedDate, description, sourceDomainName));    
+            vulnerabilities.add(new RawVulnerability(sSourceURL, cve, date, lastModifiedDate, description));
         }
 		
         return vulnerabilities;

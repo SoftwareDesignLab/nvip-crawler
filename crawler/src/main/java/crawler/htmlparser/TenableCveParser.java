@@ -113,7 +113,7 @@ public class TenableCveParser extends AbstractCveParser  {
 		}
 
 		for (String c : uniqueCves) {
-			RawVulnerability vuln = new RawVulnerability(0, sSourceURL, c, null, publishDate, updateDate, description, sourceDomainName);
+			RawVulnerability vuln = new RawVulnerability(sSourceURL, c, publishDate, updateDate, description);
 			vulns.add(vuln);
 		}
 
@@ -132,7 +132,7 @@ public class TenableCveParser extends AbstractCveParser  {
 		for (Element element : tdList) {
 			cve = element.getElementsByTag("a").text();
 			description = element.nextElementSibling().text();
-			RawVulnerability vuln = new RawVulnerability(0, sSourceURL, cve, null, dateTimeNow, dateTimeNow, description, sourceDomainName);
+			RawVulnerability vuln = new RawVulnerability(sSourceURL, cve, dateTimeNow, dateTimeNow, description);
 			list.add(vuln);
 		}
 

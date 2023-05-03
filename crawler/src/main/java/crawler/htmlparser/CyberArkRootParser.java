@@ -69,7 +69,7 @@ public class CyberArkRootParser extends AbstractCveParser {
             String description = vendor + " " + product + " " + cwe;
 
             vulnList.add(new RawVulnerability(
-                    0, sSourceURL, cveId, null, date, date, description, sourceDomainName
+                    sSourceURL, cveId, date, date, description
             ));
         }
 

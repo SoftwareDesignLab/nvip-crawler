@@ -107,7 +107,7 @@ public class JVNParser extends AbstractCveParser {
         // 'potential impact' sections
         for (String cve : cveIds)
             vulnList.add(new RawVulnerability(
-               0, sSourceURL, cve, null, publishedDate, lastUpdated, detailedInformationText + potentialImpactText, sourceDomainName
+               sSourceURL, cve, publishedDate, lastUpdated, detailedInformationText + potentialImpactText
             ));
 
         return vulnList;

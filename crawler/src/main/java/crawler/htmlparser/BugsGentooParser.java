@@ -88,7 +88,7 @@ public class BugsGentooParser extends AbstractCveParser  {
 				matcher = pattern.matcher(cves[0]);
 
 				if (matcher.find()) {
-					vulns.add(new RawVulnerability(0, sSourceURL, cves[0], null, publishDate, lastModified, textItems.get(0), sourceDomainName));
+					vulns.add(new RawVulnerability(sSourceURL, cves[0], publishDate, lastModified, textItems.get(0)));
 				}
 
 			} else {
@@ -124,7 +124,7 @@ public class BugsGentooParser extends AbstractCveParser  {
 							k++;
 						}*/
 
-						vulns.add(new RawVulnerability(0, sSourceURL, cveId, null, publishDate, lastModified, commentDescription, sourceDomainName));
+						vulns.add(new RawVulnerability(sSourceURL, cveId, publishDate, lastModified, commentDescription));
 					}
 					i -= k;
 				}

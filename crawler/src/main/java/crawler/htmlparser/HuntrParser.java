@@ -104,7 +104,7 @@ public class HuntrParser extends AbstractCveParser {
         if (lastModified == null) lastModified = reportedDate;
 
         vulnList.add(new RawVulnerability(
-           0, sSourceURL, cveId, null, reportedDate, lastModified, description, sourceDomainName
+           sSourceURL, cveId, reportedDate, lastModified, description
         ));
 
         return vulnList;

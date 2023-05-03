@@ -47,7 +47,7 @@ public class DragosParser extends AbstractCveParser {
 
         for (String cve : cves)
             vulnList.add(new RawVulnerability(
-                    0, sSourceURL, cve, null, date, date, title, sourceDomainName
+                    sSourceURL, cve, date, date, title
             ));
 
         return vulnList;

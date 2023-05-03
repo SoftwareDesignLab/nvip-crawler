@@ -89,14 +89,7 @@ public class AtlassianParser extends AbstractCveParser {
                 next = next.nextElementSibling();
             }
             vulnList.add(new RawVulnerability(
-                    0,
-                    sSourceURL,
-                    cvesOnPage.get(i),
-                    "atlassian",
-                    publishDate,
-                    lastModifiedDate,
-                    description.toString(),
-                    sourceDomainName
+                    sSourceURL, cvesOnPage.get(i), publishDate, lastModifiedDate, description.toString()
             ));
         }
     }
@@ -158,7 +151,8 @@ public class AtlassianParser extends AbstractCveParser {
                 next = next.nextElementSibling();
             }
             for (String cve : cvesOnPage) {
-                vulnList.add(new RawVulnerability(0, sSourceURL, cve, null, publishDate, lastModifiedDate, description.toString(), sourceDomainName));
+                vulnList.add(new RawVulnerability(
+                        sSourceURL, cve, publishDate, lastModifiedDate, description.toString()));
             }
         }
 

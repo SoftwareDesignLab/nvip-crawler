@@ -66,7 +66,7 @@ public class MicrosoftParser extends AbstractCveParser {
         String faq = Objects.requireNonNull(Objects.requireNonNull(faqTitle).nextElementSibling()).text();
 
         vulnList.add(new RawVulnerability(
-           0, sSourceURL, cveId, null, publishDate, lastModifiedDate, title + faq, sourceDomainName
+           sSourceURL, cveId, publishDate, lastModifiedDate, title + faq
         ));
 
         return vulnList;

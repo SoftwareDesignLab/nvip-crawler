@@ -110,7 +110,7 @@ public class KbCertCveParser extends AbstractCveParser  {
 			Iterator<String> iterator = uniqueIds.iterator();
 			while (iterator.hasNext()) {
 				String cveId = iterator.next();
-				RawVulnerability vuln = new RawVulnerability(0, sSourceURL, cveId, null, publishDate, lastModifiedDate, description, sourceDomainName);
+				RawVulnerability vuln = new RawVulnerability(sSourceURL, cveId, publishDate, lastModifiedDate, description);
 				vulnerabilities.add(vuln);
 			}
 		}
@@ -129,7 +129,7 @@ public class KbCertCveParser extends AbstractCveParser  {
 				if (matcher.find()) {
 					if (currCve != null) {
 						String desc = currDesc.toString();
-						RawVulnerability vuln = new RawVulnerability(0, sSourceURL, currCve, null, publishDate, lastModifiedDate, desc, sourceDomainName);
+						RawVulnerability vuln = new RawVulnerability(sSourceURL, currCve, publishDate, lastModifiedDate, desc);
 						vulnerabilities.add(vuln);
 					}
 					currCve = matcher.group();
@@ -140,7 +140,7 @@ public class KbCertCveParser extends AbstractCveParser  {
 				}
 			}
 			String desc = currDesc.toString();
-			RawVulnerability vuln = new RawVulnerability(0, sSourceURL, currCve, null, publishDate, lastModifiedDate, desc, sourceDomainName);
+			RawVulnerability vuln = new RawVulnerability(sSourceURL, currCve, publishDate, lastModifiedDate, desc);
 			vulnerabilities.add(vuln);
 
 		}

@@ -74,8 +74,7 @@ public class SnykParser extends AbstractCveParser {
                     if (next != null)
                         description.append(next.text());
                 }
-                vulnList.add(new RawVulnerability(
-                        0, sSourceURL, cveId, null, publishedDate, publishedDate, description.toString(), sourceDomainName
+                vulnList.add(new RawVulnerability(sSourceURL, cveId, publishedDate, publishedDate, description.toString()
                 ));
             }
         }
