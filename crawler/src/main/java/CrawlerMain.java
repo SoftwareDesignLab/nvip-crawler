@@ -57,65 +57,30 @@ public class CrawlerMain {
             new NvdCveController().updateNvdDataTable((String) dataVars.get("nvdUrl"));
         }
 
+        HashMap<String, CompositeVulnerability> pyCves = crawlerMain.getCvesFromPythonGitHub();
+
         // Crawler
         long crawlStartTime = System.currentTimeMillis();
         HashMap<String, ArrayList<CompositeVulnerability>> crawledCVEs = crawlerMain.crawlCVEs();
         long crawlEndTime = System.currentTimeMillis();
         logger.info("Crawler Finished\nTime: {}", crawlEndTime - crawlStartTime);
 
-        // System.out.println(crawledCVEs);
-
-        /**
-         * TODO: NVD Comparison will be after reconcilation
-         *
-        // Compare with NVD
-        // HashMap<String, Double> stats = crawlerMain.compareWithNvd(crawledCVEs);
-
-        // Get Average Time Gaps From NVD
-
-        // Prepare Stats and insert to DB
-        DailyRun runStats = new DailyRun(String.valueOf(LocalDateTime.now()), crawlEndTime - crawlStartTime, crawledCVEs.size(),
-                stats.get("notInNvd").intValue(), 0, stats.get("notInNvd").intValue());
-        */
-        crawlerMain.insertRawCVEs(crawledCVEs);
-
-        /**
-         *  TODO: Then update DB communications to prepare DailyRun
-         */
-
-        logger.info("Done!");
-    }
-
-    /**
-     * For Comparing with NVD CVEs
-     * @param crawledCves
-     * @return
-     */
-    private HashMap<String, Double> compareWithNvd(HashMap<String, ArrayList<CompositeVulnerability>> crawledCves) {
-        HashMap<String, Double> stats = new HashMap<>();
-
-        int inNvd = 0;
-        int notInNvd = 0;
-
-        logger.info("Comparing Cves with what's in NVD...");
-
-        for (String cveId: crawledCves.keySet()) {
-            if (databaseHelper.checkIfInNvd(cveId)) {
-                logger.info("CVE {} is in NVD", cveId);
-                inNvd++;
+        // Merge CVEs found in python GitHub with CVEs that were crawled
+        logger.info("Merging Python CVEs with Crawled CVEs");
+        for (String pyCve: pyCves.keySet()) {
+            if (crawledCVEs.containsKey(pyCve)) {
+                crawledCVEs.get(pyCve).add(pyCves.get(pyCve));
             } else {
-                logger.info("CVE {} is not in NVD", cveId);
-                notInNvd++;
-            };
+                ArrayList<CompositeVulnerability> newCveList = new ArrayList<>();
+                newCveList.add(pyCves.get(pyCve));
+                crawledCVEs.put(pyCve, newCveList);
+            }
         }
 
-        stats.put("inNvd", inNvd + 0.0);
-        stats.put("notInNvd", notInNvd + 0.0);
+        logger.info("Done! Preparing to insert all raw data found in this run!");
 
-        logger.info("Finished comparison:\n{} CVEs are in NVD\n{} CVEs are not in NVD", inNvd, notInNvd);
-
-        return stats;
-
+        crawlerMain.insertRawCVEs(crawledCVEs);
+        logger.info("Done!");
     }
 
     /**
