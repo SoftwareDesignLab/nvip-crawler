@@ -78,7 +78,7 @@ public class JenkinsParser extends AbstractCveParser {
             // finally assemble and add to vulnList
             for (String cve : cves)
                 vulnList.add(new RawVulnerability(
-                        0, sSourceURL, cve, null, date, date, description.toString(), sourceDomainName
+                        sSourceURL, cve, date, date, description.toString()
                 ));
         }
 

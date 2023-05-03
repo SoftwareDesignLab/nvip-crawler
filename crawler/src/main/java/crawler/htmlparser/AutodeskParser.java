@@ -73,16 +73,7 @@ public class AutodeskParser extends AbstractCveParser {
                     for (int i = 1; i < rows.size(); i++) {
                         for (String cve : getCVEs(rows.get(i).html())) {
                             String des = String.format("%s\n%s: %s", summary, leftLabel, rows.get(i).children().get(0).text());
-                            retVal.add(new RawVulnerability(
-                                   0,
-                                   sSourceURL,
-                                   cve,
-                                   "autodesk",
-                                   revDate,
-                                   pubDate,
-                                   des,
-                                   sourceDomainName
-                            ));
+                            retVal.add(new RawVulnerability(sSourceURL, cve, revDate, pubDate, des));
                         }
                     }
                 }
@@ -91,14 +82,11 @@ public class AutodeskParser extends AbstractCveParser {
                     for (Element li : descriptionParent.children()) {
                         int desStart = li.text().indexOf(":") + 2;
                         retVal.add(new RawVulnerability(
-                                0,
                                 sSourceURL,
                                 Iterables.getOnlyElement(getCVEs(li.text())),
-                                "autodesk",
                                 revDate,
                                 pubDate,
-                                li.text().substring(desStart),
-                                sourceDomainName
+                                li.text().substring(desStart)
                         ));
                     }
                 }

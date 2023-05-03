@@ -61,8 +61,7 @@ public class ZeroDaysParser extends AbstractCveParser {
                 lastModifiedDate = lastDate.children().select("strong").text().replace(":", "");
         }
 
-        vulnList.add(new RawVulnerability(
-                0, sSourceURL, cve, null, publishDate, lastModifiedDate, description.toString(), sourceDomainName
+        vulnList.add(new RawVulnerability(sSourceURL, cve, publishDate, lastModifiedDate, description.toString()
         ));
 
         return vulnList;

@@ -115,7 +115,7 @@ public class AliasRoboParser extends AbstractCveParser {
             lastModifiedDate = publishDate;
 
         vulnList.add(new RawVulnerability(
-                0, sSourceURL, cveId, null, publishDate, lastModifiedDate, description, sourceDomainName
+                sSourceURL, cveId, publishDate, lastModifiedDate, description
         ));
 
         return vulnList;

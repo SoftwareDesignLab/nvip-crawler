@@ -116,7 +116,7 @@ public class BugzillaParser extends AbstractCveParser {
 			}
 
 			for (String cveId : uniqueCves)
-				vulnerabilities.add(new RawVulnerability(0, sSourceURL, cveId, platform, publishDate, lastModifiedDate, description, sourceDomainName));
+				vulnerabilities.add(new RawVulnerability(sSourceURL, cveId, publishDate, lastModifiedDate, description));
 
 		} catch (Exception e) {
 			logger.error("An error occurred while parsing Bugzilla URL: " + sSourceURL);

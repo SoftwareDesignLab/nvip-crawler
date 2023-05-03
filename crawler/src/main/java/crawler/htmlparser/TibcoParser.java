@@ -72,8 +72,7 @@ public class TibcoParser extends AbstractCveParser {
                 Objects.requireNonNull(
                         descHeader.nextElementSibling()).nextElementSibling()).text();
 
-        vulnList.add(new RawVulnerability(
-                0, sSourceURL, cveId, null, publishDate, lastModifiedDate, description, sourceDomainName
+        vulnList.add(new RawVulnerability(sSourceURL, cveId, publishDate, lastModifiedDate, description
         ));
 
         return vulnList;

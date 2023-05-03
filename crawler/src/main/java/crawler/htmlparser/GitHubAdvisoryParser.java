@@ -83,7 +83,7 @@ public class GitHubAdvisoryParser extends AbstractCveParser {
         }
 
         vulnList.add(new RawVulnerability(
-           0, sSourceURL, cveId, null, publishDate, lastModifiedDate, description.toString(), sourceDomainName
+           sSourceURL, cveId, publishDate, lastModifiedDate, description.toString()
         ));
 
         return vulnList;

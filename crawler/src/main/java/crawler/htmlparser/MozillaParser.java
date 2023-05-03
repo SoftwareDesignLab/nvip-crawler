@@ -65,7 +65,7 @@ public class MozillaParser extends AbstractCveParser {
             Element descEl = Objects.requireNonNull(children.select("h5:contains(Description)").first()).nextElementSibling();
             String description = Objects.requireNonNull(descEl).text();
             vulnList.add(new RawVulnerability(
-               0, sSourceURL, cve, null, date, date, description, sourceDomainName
+               sSourceURL, cve, date, date, description
             ));
         }
         return vulnList;

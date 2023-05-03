@@ -103,14 +103,11 @@ public class CurlParser extends AbstractCveParser {
 
         for (String cve : cves) {
             retVal.add(new RawVulnerability(
-                    0,
                     sSourceURL,
                     cve,
-                    "curl",
                     date,
                     date,
-                    descriptionBuilder.toString(),
-                    sourceDomainName
+                    descriptionBuilder.toString()
             ));
         }
 

@@ -98,7 +98,7 @@ public class GenericCveParser extends AbstractCveParser  {
 			String version = getPlatformVersion(sCVEContent);
 
 			// save vulnerability
-			RawVulnerability vuln = new RawVulnerability(0, sSourceURL, cveId, version, null, UtilHelper.longDateFormat.format(new Date()), sCVEContent, null);
+			RawVulnerability vuln = new RawVulnerability(sSourceURL, cveId, version, UtilHelper.longDateFormat.format(new Date()), sCVEContent);
 			vulnerabilities.add(vuln);
 			return vulnerabilities;
 		}
@@ -226,13 +226,13 @@ public class GenericCveParser extends AbstractCveParser  {
 			if (aBlockOfCveIdsInTheSentence)
 				for (int i = 0; i < cveIDsInSentence.length; i++) {
 					if (sentenceContainsValuableInfoForCVE(sbDescription.toString(), cveIDsInSentence.length)) {
-						RawVulnerability vuln = new RawVulnerability(0, sSourceURL, (String) cveIDsInSentence[i], version, null, dateTimeNow, sbDescription.toString(), null);
+						RawVulnerability vuln = new RawVulnerability(sSourceURL, (String) cveIDsInSentence[i], dateTimeNow, dateTimeNow, sbDescription.toString());
 						vulnMap.put(vuln.getCveId(), vuln);
 					}
 				}
 			else {
 				if (sentenceContainsValuableInfoForCVE(sbDescription.toString(), 1)) {
-					RawVulnerability vuln = new RawVulnerability(0, sSourceURL, cveIDOfCurrentSentence, version, null, dateTimeNow, sbDescription.toString(), null);
+					RawVulnerability vuln = new RawVulnerability(sSourceURL, cveIDOfCurrentSentence, dateTimeNow, dateTimeNow, sbDescription.toString());
 					vulnMap.put(vuln.getCveId(), vuln);
 				} else {
 					logger.debug("Ignoring this CVE! ID: " + cveIDOfCurrentSentence + ", Description: " + sbDescription);

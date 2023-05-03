@@ -101,7 +101,7 @@ public class SecurityGentooParser extends AbstractCveParser  {
 		}
 
 		for (String cve : uniqueCves) {
-			vulns.add(new RawVulnerability(0, sSourceURL, cve, null, publishDate, lastModified, description, sourceDomainName));
+			vulns.add(new RawVulnerability(sSourceURL, cve, publishDate, lastModified, description));
 		}
 
 

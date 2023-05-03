@@ -58,9 +58,7 @@ public class ABBParser extends AbstractCveParser {
 
             // usually just 1 but we will loop over the set just to be sure
             for (String cve : cves)
-                vulnList.add(new RawVulnerability(
-                        0, sSourceURL, cve, null, date, date, description, sourceDomainName
-                ));
+                vulnList.add(new RawVulnerability(sSourceURL, cve,  date, date, description));
         }
         return vulnList;
     }
