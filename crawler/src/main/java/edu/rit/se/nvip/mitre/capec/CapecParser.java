@@ -1,6 +1,6 @@
 package edu.rit.se.nvip.mitre.capec;
 
-import crawler.QuickCveCrawler;
+import edu.rit.se.nvip.crawler.QuickCveCrawler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jsoup.Jsoup;

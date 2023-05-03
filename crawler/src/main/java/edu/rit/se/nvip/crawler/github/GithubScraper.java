@@ -23,8 +23,8 @@
  */
 package edu.rit.se.nvip.crawler.github;
 
-import mitre.MitreCveController;
-import model.RawVulnerability;
+import edu.rit.se.nvip.mitre.MitreCveController;
+import edu.rit.se.nvip.model.RawVulnerability;
 
 import java.util.HashMap;
 

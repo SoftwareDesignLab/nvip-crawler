@@ -1,15 +1,15 @@
 package edu.rit.se.nvip;
 
-import crawler.CveCrawlController;
-import crawler.github.GithubScraper;
-import crawler.github.PyPAGithubScraper;
-import db.DatabaseHelper;
-import model.NvipSource;
-import model.RawVulnerability;
-import nvd.NvdCveController;
+import edu.rit.se.nvip.crawler.CveCrawlController;
+import edu.rit.se.nvip.crawler.github.GithubScraper;
+import edu.rit.se.nvip.crawler.github.PyPAGithubScraper;
+import edu.rit.se.nvip.db.DatabaseHelper;
+import edu.rit.se.nvip.model.NvipSource;
+import edu.rit.se.nvip.model.RawVulnerability;
+import edu.rit.se.nvip.nvd.NvdCveController;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import utils.UtilHelper;
+import edu.rit.se.nvip.utils.UtilHelper;
 
 import java.io.BufferedReader;
 import java.io.File;

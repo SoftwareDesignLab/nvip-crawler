@@ -23,7 +23,7 @@
  */
 package edu.rit.se.nvip.crawler.htmlparser;
 
-import model.RawVulnerability;
+import edu.rit.se.nvip.model.RawVulnerability;
 
 import java.util.ArrayList;
 import java.util.List;
