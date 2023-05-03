@@ -81,14 +81,11 @@ public class CveCrawler extends WebCrawler {
 	public boolean shouldVisit(Page referringPage, WebURL url) {
 		String href = url.getURL().toLowerCase(Locale.ROOT);
 		if (FILTERS.matcher(href).matches()) {
-			//logger.info("{} not allowed", href);
 			return false;
 		}
 
-//		logger.info("Checking if {} is in whitelist", href);
 		for (String crawlDomain : myCrawlDomains) {
 			if (href.startsWith(crawlDomain)) {
-				//logger.info("ACCEPTED DOMAIN: {} FOR URL {}", crawlDomain, href);
 				return true;
 			}
 		}
