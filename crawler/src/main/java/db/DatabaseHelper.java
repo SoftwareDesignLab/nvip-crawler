@@ -1031,43 +1031,23 @@ public class DatabaseHelper {
 
 	}
 
-	private final String insertCVEJob = "INSERT INTO cvejobtrack (cve_id, status) VALUES (?, ?) ";
+	private final String insertCVEJob = "INSERT INTO cvejobtrack (cve_id) VALUES (?, ?) ";
 
 	/**
 	 * Add status for CVE in Job Tracker Table
 	 * @param cveId
-	 * @param status
 	 */
-	public void addJobForVE(String cveId, String status) {
+	public void addJobForCVE(String cveId) {
 
 		try (Connection connection = getConnection();
 			 PreparedStatement pstmt = connection.prepareStatement(insertCVEJob)) {
 			pstmt.setString(1, cveId);
-			pstmt.setString(2, status);
 			pstmt.executeUpdate();
 
 		} catch (Exception e) {
-			logger.error("ERROR: Failed to add status {} to {} in cvejobtrack table\n{}", status, cveId, e);
+			logger.error("ERROR: Failed to add CVE {} in cvejobtrack table\n{}", cveId, e);
 		}
 
 	}
 
-	private final String checkCveExists = "SELECT COUNT(*) as cveCount FROM vulnerability where cve_id = ?";
-
-	public boolean checkIfCveExists(String cveId) {
-
-		try (Connection connection = getConnection();
-			 PreparedStatement pstmt = connection.prepareStatement(checkCveExists)) {
-			pstmt.setString(1, cveId);
-			ResultSet rs = pstmt.executeQuery();
-
-			if (rs.next())
-				return rs.getInt("cveCount") > 0;
-		} catch (Exception e) {
-			logger.error("ERROR: Failed to check if CVE {} is in vulnerability table\n{}", cveId, e);
-		}
-
-		return false;
-
-	}
 }
