@@ -485,5 +485,23 @@
             referencedColumnNames="runhistory_id"
             constraintName="aggregate_run_date_time_id"/>
     </changeSet>
+
+    <changeSet author="cvejobtrack" id="cvejobtrack">
+        <createTable tableName="cvejobtrack">
+            <column name="cve_id" type="VARCHAR(20)">
+                <constraints primaryKey="true" nullable="false" unique="true"/>
+            </column>
+            <column name="status" type="TINYTEXT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex
+            indexName="cvejobtrack_index_cve_id"
+            tableName="cvejobtrack"
+            unique="true">
+            <column name="cve_id"/>
+        </createIndex>
+    </changeSet>
     
 </databaseChangeLog>
