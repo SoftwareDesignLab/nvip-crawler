@@ -24,7 +24,7 @@
 package crawler.htmlparser;
 
 import model.AffectedRelease;
-import model.CompositeVulnerability;
+import model.RawVulnerability;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jsoup.Jsoup;
@@ -51,8 +51,8 @@ public class SeclistsParser extends AbstractCveParser  {
 	}
 
 	@Override
-	public List<CompositeVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
-		List<CompositeVulnerability> vulns = new ArrayList<>();
+	public List<RawVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
+		List<RawVulnerability> vulns = new ArrayList<>();
 
 		Document doc = Jsoup.parse(sCVEContentHTML);
 
@@ -87,14 +87,14 @@ public class SeclistsParser extends AbstractCveParser  {
 			}
 		}
 
-		List<AffectedRelease> affectedReleases = new ArrayList<>();
-
-		for (String cve : uniqueCves) {
-			CompositeVulnerability v = new CompositeVulnerability(0, sSourceURL, cve, "", publishDate, updateString, text, sourceDomainName);
-			vulns.add(v);
-			for (AffectedRelease a : affectedReleases)
-				v.addAffectedRelease(a);
-		}
+//		List<AffectedRelease> affectedReleases = new ArrayList<>();
+//
+//		for (String cve : uniqueCves) {
+//			RawVulnerability v = new RawVulnerability(0, sSourceURL, cve, "", publishDate, updateString, text, sourceDomainName);
+//			vulns.add(v);
+//			for (AffectedRelease a : affectedReleases)
+//
+//		}
 
 		return vulns;
 	}

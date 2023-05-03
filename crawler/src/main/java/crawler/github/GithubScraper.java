@@ -24,7 +24,7 @@
 package crawler.github;
 
 import mitre.MitreCveController;
-import model.CompositeVulnerability;
+import model.RawVulnerability;
 
 import java.util.HashMap;
 
@@ -40,7 +40,7 @@ public class GithubScraper {
 	 * 
 	 * @return
 	 */
-	public HashMap<String, CompositeVulnerability> scrapeGithub() {
+	public HashMap<String, RawVulnerability> scrapeGithub() {
 
 		String remotePath = "https://github.com/CVEProject/cvelist.git";
 		String localPath = "";//propertiesNvip.getDataDir() + "/mitre-cve";

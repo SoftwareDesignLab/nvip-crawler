@@ -23,7 +23,7 @@
  */
 package crawler.htmlparser;
 
-import model.CompositeVulnerability;
+import model.RawVulnerability;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -42,9 +42,9 @@ public class AcronisParser extends AbstractCveParser {
     public AcronisParser(String domainName) { sourceDomainName = domainName; }
 
     @Override
-    public List<CompositeVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
+    public List<RawVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
 
-        List<CompositeVulnerability> vulnList = new ArrayList<>();
+        List<RawVulnerability> vulnList = new ArrayList<>();
 
         Document doc = Jsoup.parse(sCVEContentHTML);
 
@@ -97,7 +97,7 @@ public class AcronisParser extends AbstractCveParser {
             lastModifiedDate = publishDate;
 
         for (String cve : cves)
-            vulnList.add(new CompositeVulnerability(
+            vulnList.add(new RawVulnerability(
                     0, sSourceURL, cve, null, publishDate, lastModifiedDate, description, sourceDomainName
             ));
 

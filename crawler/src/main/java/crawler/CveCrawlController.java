@@ -24,7 +24,7 @@
 package crawler;
 
 import crawlercommons.filters.basic.BasicURLNormalizer;
-import model.CompositeVulnerability;
+import model.RawVulnerability;
 import edu.uci.ics.crawler4j.crawler.CrawlConfig;
 import edu.uci.ics.crawler4j.crawler.CrawlController;
 import edu.uci.ics.crawler4j.fetcher.PageFetcher;
@@ -45,7 +45,7 @@ public class CveCrawlController {
     public static final String DEFAULT_USER_AGENT = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0";
 
     private static final Logger logger = LogManager.getLogger(CveCrawlController.class.getSimpleName());
-    private final HashMap<String, ArrayList<CompositeVulnerability>> cveHashMapAll = new HashMap<>();
+    private final HashMap<String, ArrayList<RawVulnerability>> cveHashMapAll = new HashMap<>();
 
     public static void main(String[] args) throws Exception {
 
@@ -65,7 +65,7 @@ public class CveCrawlController {
 //        }
 //
 //        long crawlStartTime = System.currentTimeMillis();
-//        HashMap<String, ArrayList<CompositeVulnerability>> data = new CveCrawlController().crawlwProps(urls, whiteList);
+//        HashMap<String, ArrayList<RawVulnerability>> data = new CveCrawlController().crawlwProps(urls, whiteList);
 //        long crawlEndTime = System.currentTimeMillis();
 //        logger.info("Crawler Finished\nTime: {}", crawlEndTime - crawlStartTime);
 
@@ -79,7 +79,7 @@ public class CveCrawlController {
      * @return
      * @throws Exception
      */
-    public HashMap<String, ArrayList<CompositeVulnerability>> crawl(List<String> urls, List<String> whiteList,
+    public HashMap<String, ArrayList<RawVulnerability>> crawl(List<String> urls, List<String> whiteList,
                                                                     Map<String, Object> crawlerVars) throws Exception {
 
         CrawlConfig config1 = new CrawlConfig();
@@ -135,15 +135,15 @@ public class CveCrawlController {
      * @param controller
      * @return the updated map
      */
-    private synchronized HashMap<String, ArrayList<CompositeVulnerability>> getVulnerabilitiesFromCrawlerThreads(CrawlController controller) {
+    private synchronized HashMap<String, ArrayList<RawVulnerability>> getVulnerabilitiesFromCrawlerThreads(CrawlController controller) {
 
         List<Object> crawlersLocalData = controller.getCrawlersLocalData();
-        HashMap<String, ArrayList<CompositeVulnerability>> cveDataCrawler;
+        HashMap<String, ArrayList<RawVulnerability>> cveDataCrawler;
         int nCrawlerID = 1;
 
         for (Object crawlerData : crawlersLocalData) {
             try {
-                cveDataCrawler = (HashMap<String, ArrayList<CompositeVulnerability>>) crawlerData;
+                cveDataCrawler = (HashMap<String, ArrayList<RawVulnerability>>) crawlerData;
 
                 for (String cveid : cveDataCrawler.keySet()) {
                     if (cveHashMapAll.get(cveid) != null) {

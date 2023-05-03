@@ -23,7 +23,7 @@
  */
 package crawler.htmlparser;
 
-import model.CompositeVulnerability;
+import model.RawVulnerability;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
@@ -90,9 +90,9 @@ public class ArubaParser extends AbstractCveParser {
     }
 
     @Override
-    public List<CompositeVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
+    public List<RawVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
 
-        List<CompositeVulnerability> vulnList = new ArrayList<>();
+        List<RawVulnerability> vulnList = new ArrayList<>();
 
         Document doc = Jsoup.parse(sCVEContentHTML);
 
@@ -137,7 +137,7 @@ public class ArubaParser extends AbstractCveParser {
             for (String cve : cves) {
                 String[] detailsSections = detailsSection.split("---------");
                 description = overviewSection + splitDetailsSection(omitEmptyStrings(detailsSections), cve);
-                vulnList.add(new CompositeVulnerability(
+                vulnList.add(new RawVulnerability(
                         0, sSourceURL, cve, null, publishDate, lastUpdated, description, sourceDomainName
                 ));
             }
@@ -145,7 +145,7 @@ public class ArubaParser extends AbstractCveParser {
         else {
             description = overviewSection + detailsSection;
             ArrayList<String> cveList = new ArrayList<>(cves);
-            vulnList.add(new CompositeVulnerability(
+            vulnList.add(new RawVulnerability(
                     0, sSourceURL, cveList.get(0), null, publishDate, lastUpdated, description, sourceDomainName
             ));
         }

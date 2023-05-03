@@ -24,7 +24,7 @@
 package crawler.htmlparser;
 
 import io.github.bonigarcia.wdm.WebDriverManager;
-import model.CompositeVulnerability;
+import model.RawVulnerability;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.openqa.selenium.JavascriptExecutor;
@@ -66,7 +66,7 @@ public abstract class AbstractCveParser {
 
 	protected static volatile WebDriver driver = null;
 
-	public abstract List<CompositeVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML);
+	public abstract List<RawVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML);
 
 	public static WebDriver startDynamicWebDriver() {
 		System.setProperty("webdriver.chrome.silentOutput", "true");

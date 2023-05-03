@@ -23,7 +23,7 @@
  */
 package crawler.htmlparser;
 
-import model.CompositeVulnerability;
+import model.RawVulnerability;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jsoup.Jsoup;
@@ -53,8 +53,8 @@ public class BugzillaParser extends AbstractCveParser {
 	}
 
 	@Override
-	public List<CompositeVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
-		List<CompositeVulnerability> vulnerabilities = new ArrayList<>();
+	public List<RawVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
+		List<RawVulnerability> vulnerabilities = new ArrayList<>();
 
 		if (sSourceURL.contains("www.bugzilla.org"))
 			return vulnerabilities;
@@ -80,8 +80,8 @@ public class BugzillaParser extends AbstractCveParser {
 	 * @param sCVEContentHTML
 	 * @return
 	 */
-	private List<CompositeVulnerability> parseVulnPage(Set<String> uniqueCves, String sSourceURL, String sCVEContentHTML) {
-		List<CompositeVulnerability> vulnerabilities = new ArrayList<>();
+	private List<RawVulnerability> parseVulnPage(Set<String> uniqueCves, String sSourceURL, String sCVEContentHTML) {
+		List<RawVulnerability> vulnerabilities = new ArrayList<>();
 		try {
 			Document document = Jsoup.parse(sCVEContentHTML);
 
@@ -116,7 +116,7 @@ public class BugzillaParser extends AbstractCveParser {
 			}
 
 			for (String cveId : uniqueCves)
-				vulnerabilities.add(new CompositeVulnerability(0, sSourceURL, cveId, platform, publishDate, lastModifiedDate, description, sourceDomainName));
+				vulnerabilities.add(new RawVulnerability(0, sSourceURL, cveId, platform, publishDate, lastModifiedDate, description, sourceDomainName));
 
 		} catch (Exception e) {
 			logger.error("An error occurred while parsing Bugzilla URL: " + sSourceURL);

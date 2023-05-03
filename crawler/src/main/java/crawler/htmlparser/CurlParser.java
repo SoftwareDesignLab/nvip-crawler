@@ -23,7 +23,7 @@
  */
 package crawler.htmlparser;
 
-import model.CompositeVulnerability;
+import model.RawVulnerability;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -42,10 +42,10 @@ public class CurlParser extends AbstractCveParser {
         sourceDomainName = domainName;
     }
     @Override
-    public List<CompositeVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
+    public List<RawVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
         Document doc = Jsoup.parse(sCVEContentHTML);
         Set<String> cves = new HashSet<>();
-        List<CompositeVulnerability> retVal = new ArrayList<>();
+        List<RawVulnerability> retVal = new ArrayList<>();
 
         boolean inDescription = false;
         boolean inTimeline = false;
@@ -102,7 +102,7 @@ public class CurlParser extends AbstractCveParser {
         if (descriptionBuilder.toString().equals("")) return retVal;
 
         for (String cve : cves) {
-            retVal.add(new CompositeVulnerability(
+            retVal.add(new RawVulnerability(
                     0,
                     sSourceURL,
                     cve,

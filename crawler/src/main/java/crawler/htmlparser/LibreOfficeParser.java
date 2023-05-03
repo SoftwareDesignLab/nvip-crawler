@@ -1,6 +1,6 @@
 package crawler.htmlparser;
 
-import model.CompositeVulnerability;
+import model.RawVulnerability;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -17,9 +17,9 @@ public class LibreOfficeParser extends AbstractCveParser {
     public LibreOfficeParser(String domainName) { sourceDomainName = domainName; }
 
     @Override
-    public List<CompositeVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
+    public List<RawVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
 
-        List<CompositeVulnerability> vulnList = new ArrayList<>();
+        List<RawVulnerability> vulnList = new ArrayList<>();
         Document doc = Jsoup.parse(sCVEContentHTML);
 
         // get CVE from title h3 tag
@@ -59,7 +59,7 @@ public class LibreOfficeParser extends AbstractCveParser {
         else
             description = doc.text();
         // add to vulns list
-        vulnList.add(new CompositeVulnerability(
+        vulnList.add(new RawVulnerability(
                 0, sSourceURL, cve, null, publishDate, lastModifiedDate, description, sourceDomainName
         ));
 

@@ -23,7 +23,7 @@
  */
 package crawler.htmlparser;
 
-import model.CompositeVulnerability;
+import model.RawVulnerability;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -54,9 +54,9 @@ public class TrustWaveParser extends AbstractCveParser {
     }
 
     @Override
-    public List<CompositeVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
+    public List<RawVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
 
-        List<CompositeVulnerability> vulnList = new ArrayList<>();
+        List<RawVulnerability> vulnList = new ArrayList<>();
 
         Document doc = Jsoup.parse(sCVEContentHTML);
 
@@ -91,7 +91,7 @@ public class TrustWaveParser extends AbstractCveParser {
                 description.append(next.text());
                 next = next.nextElementSibling();
             }
-            vulnList.add(new CompositeVulnerability(
+            vulnList.add(new RawVulnerability(
                     0, sSourceURL, cveId, null, date, date, description.toString(), sourceDomainName
             ));
         }
@@ -132,7 +132,7 @@ public class TrustWaveParser extends AbstractCveParser {
             }
             // add it to vuln list
             for (String remainingCVE : titleCVEs) {
-                vulnList.add(new CompositeVulnerability(
+                vulnList.add(new RawVulnerability(
                    0, sSourceURL, remainingCVE, null, date, date, description, sourceDomainName
                 ));
             }

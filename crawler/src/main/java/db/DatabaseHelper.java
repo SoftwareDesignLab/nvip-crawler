@@ -332,7 +332,7 @@ public class DatabaseHelper {
 	/**
 	 * For Inserting a Vulnerability into the vulnerability table
 	 */
-	public void insertVulnerability(CompositeVulnerability vuln) {
+	public void insertVulnerability(RawVulnerability vuln) {
 		try (Connection connection = getConnection(); PreparedStatement pstmt = connection.prepareStatement(insertVulnSql);) {
 
 			pstmt.setString(1, vuln.getCveId());
@@ -365,7 +365,7 @@ public class DatabaseHelper {
 	 * @param vuln            Vulnerability object to be updated in database
 	 * @throws SQLException
 	 */
-	public int updateVulnerability(CompositeVulnerability vuln) throws SQLException {
+	public int updateVulnerability(RawVulnerability vuln) throws SQLException {
 
 		try (Connection connection = getConnection();
 			 PreparedStatement pstmt = connection.prepareStatement(updateVulnSql)) {
@@ -422,7 +422,7 @@ public class DatabaseHelper {
 	 * @param timeGapFound
 	 * @param timeGap
 	 */
-	public boolean addToCveStatusChangeHistory(CompositeVulnerability vuln,
+	public boolean addToCveStatusChangeHistory(RawVulnerability vuln,
 			Vulnerability existingAttribs, String comparedAgainst, int oldStatus, int newStatus,
 			boolean timeGapFound, int timeGap) {
 
@@ -986,7 +986,7 @@ public class DatabaseHelper {
 	 * @param vuln
 	 * @return
 	 */
-	public int insertRawVulnerability(CompositeVulnerability vuln) {
+	public int insertRawVulnerability(RawVulnerability vuln) {
 		try (Connection connection = getConnection();
 			 PreparedStatement pstmt = connection.prepareStatement(insertRawData);) {
 
@@ -995,7 +995,7 @@ public class DatabaseHelper {
 			pstmt.setTimestamp(3, Timestamp.valueOf(vuln.getCreatedDateAsDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
 			pstmt.setTimestamp(4, Timestamp.valueOf(vuln.getPublishDateAsDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
 			pstmt.setTimestamp(5, Timestamp.valueOf(vuln.getLastModifiedDateAsDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
-			pstmt.setString(6, vuln.getSourceURL().get(0));
+			pstmt.setString(6, vuln.getSourceURL());
 
 			pstmt.execute();
 

@@ -81,13 +81,13 @@ public class DailyRun {
 		return notInBothCount;
 	}
 
-	public void calculateAddedUpdateCVEs(List<CompositeVulnerability> crawledVulnerabilityList) {
+	public void calculateAddedUpdateCVEs(List<RawVulnerability> crawledVulnerabilityList) {
 		// Count added/updated CVEs
 		int addedCveCount = 0, updatedCveCount = 0;
-		for (CompositeVulnerability vuln : crawledVulnerabilityList) {
-			if (vuln.getCveReconcileStatus().equals(CompositeVulnerability.CveReconcileStatus.INSERT))
+		for (RawVulnerability vuln : crawledVulnerabilityList) {
+			if (vuln.getCveReconcileStatus().equals(RawVulnerability.CveReconcileStatus.INSERT))
 				addedCveCount++;
-			else if (vuln.getCveReconcileStatus().equals(CompositeVulnerability.CveReconcileStatus.UPDATE))
+			else if (vuln.getCveReconcileStatus().equals(RawVulnerability.CveReconcileStatus.UPDATE))
 				updatedCveCount++;
 		}
 
@@ -96,11 +96,11 @@ public class DailyRun {
 	}
 
 
-	public void calculateAvgTimeGaps(List<CompositeVulnerability> crawledVulnerabilityList) {
+	public void calculateAvgTimeGaps(List<RawVulnerability> crawledVulnerabilityList) {
 		// Add up all time gaps, then get the mean average
 		int totalTimeGapNvd = 0;
 		int totalTimeGapMitre = 0;
-		for (CompositeVulnerability cve: crawledVulnerabilityList) {
+		for (RawVulnerability cve: crawledVulnerabilityList) {
 			totalTimeGapNvd += cve.getTimeGapNvd();
 			totalTimeGapMitre += cve.getTimeGapMitre();
 		}

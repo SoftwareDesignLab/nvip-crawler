@@ -2,7 +2,7 @@ import crawler.CveCrawlController;
 import crawler.github.GithubScraper;
 import crawler.github.PyPAGithubScraper;
 import db.DatabaseHelper;
-import model.CompositeVulnerability;
+import model.RawVulnerability;
 import model.DailyRun;
 import model.NvipSource;
 import nvd.NvdCveController;
@@ -50,18 +50,17 @@ public class CrawlerMain {
     public static void main(String[] args) throws Exception {
 
         logger.info("Starting Crawler...");
-
         CrawlerMain crawlerMain = new CrawlerMain();
         if ((Boolean) dataVars.get("refreshNvdList")) {
             logger.info("Refreshing NVD CVE List");
             new NvdCveController().updateNvdDataTable((String) dataVars.get("nvdUrl"));
         }
 
-        HashMap<String, CompositeVulnerability> pyCves = crawlerMain.getCvesFromPythonGitHub();
+        HashMap<String, RawVulnerability> pyCves = crawlerMain.getCvesFromPythonGitHub();
 
         // Crawler
         long crawlStartTime = System.currentTimeMillis();
-        HashMap<String, ArrayList<CompositeVulnerability>> crawledCVEs = crawlerMain.crawlCVEs();
+        HashMap<String, ArrayList<RawVulnerability>> crawledCVEs = crawlerMain.crawlCVEs();
         long crawlEndTime = System.currentTimeMillis();
         logger.info("Crawler Finished\nTime: {}", crawlEndTime - crawlStartTime);
 
@@ -71,7 +70,7 @@ public class CrawlerMain {
             if (crawledCVEs.containsKey(pyCve)) {
                 crawledCVEs.get(pyCve).add(pyCves.get(pyCve));
             } else {
-                ArrayList<CompositeVulnerability> newCveList = new ArrayList<>();
+                ArrayList<RawVulnerability> newCveList = new ArrayList<>();
                 newCveList.add(pyCves.get(pyCve));
                 crawledCVEs.put(pyCve, newCveList);
             }
@@ -87,13 +86,13 @@ public class CrawlerMain {
      * Iterate through each crawled CVE and add them to the raw descriptions table
      * @param crawledCves
      */
-    private void insertRawCVEs(HashMap<String, ArrayList<CompositeVulnerability>> crawledCves) {
+    private void insertRawCVEs(HashMap<String, ArrayList<RawVulnerability>> crawledCves) {
         logger.info("Inserting {} CVEs to DB", crawledCves.size());
 
         int insertedCVEs = 0;
 
         for (String cveId: crawledCves.keySet()) {
-            for (CompositeVulnerability vuln: crawledCves.get(cveId)) {
+            for (RawVulnerability vuln: crawledCves.get(cveId)) {
                 if (!databaseHelper.checkIfInRawDescriptions(vuln.getDescription())) {
                     logger.info("Inserting new raw description for CVE {} into DB" ,cveId);
                     insertedCVEs += databaseHelper.insertRawVulnerability(vuln);
@@ -320,7 +319,7 @@ public class CrawlerMain {
      *
      * @return
      */
-    protected HashMap<String, ArrayList<CompositeVulnerability>> crawlCVEs() throws Exception {
+    protected HashMap<String, ArrayList<RawVulnerability>> crawlCVEs() throws Exception {
         /**
          * Crawl CVE from CNAs
          */
@@ -351,10 +350,10 @@ public class CrawlerMain {
      * For getting CVEs from PyPA GitHub
      * @return
      */
-    protected HashMap<String, CompositeVulnerability> getCvesFromPythonGitHub() {
+    protected HashMap<String, RawVulnerability> getCvesFromPythonGitHub() {
         // scrape CVEs from PyPA advisory database GitHub Repo
         PyPAGithubScraper pyPaScraper = new PyPAGithubScraper();
-        HashMap<String, CompositeVulnerability> cvePyPAGitHub = pyPaScraper.scrapePyPAGithub();
+        HashMap<String, RawVulnerability> cvePyPAGitHub = pyPaScraper.scrapePyPAGithub();
 
         return cvePyPAGitHub;
     }
@@ -362,8 +361,8 @@ public class CrawlerMain {
      * Grab CVEs from CVE GitHub
      * @return
      */
-    protected HashMap<String, CompositeVulnerability> getCvesFromGitHub() {
-        HashMap<String, CompositeVulnerability> cveHashMapGithub = new HashMap<>();
+    protected HashMap<String, RawVulnerability> getCvesFromGitHub() {
+        HashMap<String, RawVulnerability> cveHashMapGithub = new HashMap<>();
 
         if ((Boolean) crawlerVars.get("enableGitHub")) {
             logger.info("CVE Github pull enabled, scraping CVe GitHub now!");

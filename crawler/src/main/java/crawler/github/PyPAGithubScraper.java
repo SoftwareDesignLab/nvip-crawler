@@ -23,7 +23,7 @@
  */
 package crawler.github;
 
-import model.CompositeVulnerability;
+import model.RawVulnerability;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eclipse.jgit.util.FileUtils;
@@ -47,11 +47,11 @@ public class PyPAGithubScraper {
 
     }
 
-    public HashMap<String, CompositeVulnerability> scrapePyPAGithub() {
+    public HashMap<String, RawVulnerability> scrapePyPAGithub() {
         // clone or update pypa/advisory-database repo
         updateGitRepo();
         // extract CVEs from YAML files in /vulns subdirectories
-        HashMap<String, CompositeVulnerability> vulnMap = extractCVEsFromVulns();
+        HashMap<String, RawVulnerability> vulnMap = extractCVEsFromVulns();
         // delete git repo once finished
         deleteRepository();
         logger.info("PyPA scraper completed.");
@@ -59,11 +59,11 @@ public class PyPAGithubScraper {
         return vulnMap;
     }
 
-    private HashMap<String, CompositeVulnerability> extractCVEsFromVulns() {
+    private HashMap<String, RawVulnerability> extractCVEsFromVulns() {
         logger.info("Extracting CVEs from /vulns dir...");
         File vulnDir = Paths.get("", pypaDir, "vulns").toFile();
         File[] directories = vulnDir.listFiles();
-        HashMap<String, CompositeVulnerability> vulnMap = new HashMap<>();
+        HashMap<String, RawVulnerability> vulnMap = new HashMap<>();
         if (directories == null) {
             logger.error("Failed to parse PyPA directories... returning.");
             return vulnMap;
@@ -82,8 +82,8 @@ public class PyPAGithubScraper {
                     PyPAYamlFile parsedFile = new PyPAYamlFile(file);
                     ArrayList<String> cvesInFile = parsedFile.getCves();
                     for (String c : cvesInFile) {
-                        vulnMap.put(c, (new CompositeVulnerability(
-                                0, "", c, null, parsedFile.getPublished(), parsedFile.getModified(), parsedFile.getDetails(), ""
+                        vulnMap.put(c, (new RawVulnerability(
+                                "", c, parsedFile.getPublished(), parsedFile.getModified(), parsedFile.getDetails()
                         )));
                     }
                 }

@@ -23,7 +23,7 @@
  */
 package crawler.htmlparser;
 
-import model.CompositeVulnerability;
+import model.RawVulnerability;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,7 +35,7 @@ import java.util.List;
  */
 public class NullParser extends AbstractCveParser  {
 	@Override
-	public List<CompositeVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
+	public List<RawVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
 		return new ArrayList<>();
 	}
 }

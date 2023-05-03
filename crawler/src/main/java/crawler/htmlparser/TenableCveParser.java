@@ -23,7 +23,7 @@
  */
 package crawler.htmlparser;
 
-import model.CompositeVulnerability;
+import model.RawVulnerability;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jsoup.Jsoup;
@@ -54,12 +54,12 @@ public class TenableCveParser extends AbstractCveParser  {
 	}
 
 	@Override
-	public List<CompositeVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
+	public List<RawVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
 
 		if (sSourceURL.contains("/cve/newest") || sSourceURL.contains("/cve/updated"))
 			return getCVEsFromSummaryPage(sSourceURL, sCVEContentHTML);
 
-		List<CompositeVulnerability> vulns = new ArrayList<>();
+		List<RawVulnerability> vulns = new ArrayList<>();
 		String description = "";
 
 		Document doc = Jsoup.parse(sCVEContentHTML);
@@ -113,15 +113,15 @@ public class TenableCveParser extends AbstractCveParser  {
 		}
 
 		for (String c : uniqueCves) {
-			CompositeVulnerability vuln = new CompositeVulnerability(0, sSourceURL, c, null, publishDate, updateDate, description, sourceDomainName);
+			RawVulnerability vuln = new RawVulnerability(0, sSourceURL, c, null, publishDate, updateDate, description, sourceDomainName);
 			vulns.add(vuln);
 		}
 
 		return vulns;
 	}
 
-	private List<CompositeVulnerability> getCVEsFromSummaryPage(String sSourceURL, String sCVEContentHTML) {
-		List<CompositeVulnerability> list = new ArrayList<>();
+	private List<RawVulnerability> getCVEsFromSummaryPage(String sSourceURL, String sCVEContentHTML) {
+		List<RawVulnerability> list = new ArrayList<>();
 		String description = "";
 		String cve;
 
@@ -132,7 +132,7 @@ public class TenableCveParser extends AbstractCveParser  {
 		for (Element element : tdList) {
 			cve = element.getElementsByTag("a").text();
 			description = element.nextElementSibling().text();
-			CompositeVulnerability vuln = new CompositeVulnerability(0, sSourceURL, cve, null, dateTimeNow, dateTimeNow, description, sourceDomainName);
+			RawVulnerability vuln = new RawVulnerability(0, sSourceURL, cve, null, dateTimeNow, dateTimeNow, description, sourceDomainName);
 			list.add(vuln);
 		}
 

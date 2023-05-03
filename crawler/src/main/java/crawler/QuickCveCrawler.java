@@ -26,7 +26,7 @@ package crawler;
 import cnnvd.CnnvdCveParser;
 import io.github.bonigarcia.wdm.WebDriverManager;
 import model.CnnvdVulnerability;
-import model.CompositeVulnerability;
+import model.RawVulnerability;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.util.NullOutputStream;
@@ -67,9 +67,9 @@ public class QuickCveCrawler {
 	private Logger logger = LogManager.getLogger(getClass().getSimpleName());
 	private static final String USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36";
 
-	public List<CompositeVulnerability> getCVEsfromKnownSummaryPages() {
+	public List<RawVulnerability> getCVEsfromKnownSummaryPages() {
 
-		List<CompositeVulnerability> list = new ArrayList<>();
+		List<RawVulnerability> list = new ArrayList<>();
 		CveCrawler crawler = new CveCrawler(new ArrayList<>(), "");
 
 		// Seclists
@@ -94,7 +94,7 @@ public class QuickCveCrawler {
 	 * @param list
 	 * @return
 	 */
-	public List<CompositeVulnerability> getPacketStrormCveUpdates(CveCrawler crawler, List<CompositeVulnerability> list) {
+	public List<RawVulnerability> getPacketStrormCveUpdates(CveCrawler crawler, List<RawVulnerability> list) {
 		try {
 			String url = "https://packetstormsecurity.com/files/date/";
 			DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd");
@@ -129,7 +129,7 @@ public class QuickCveCrawler {
 	 * @param list
 	 * @return
 	 */
-	public List<CompositeVulnerability> getTenableCveUpdates(CveCrawler crawler, List<CompositeVulnerability> list) {
+	public List<RawVulnerability> getTenableCveUpdates(CveCrawler crawler, List<RawVulnerability> list) {
 		String url = "https://www.tenable.com/cve/newest";
 
 		try {
@@ -201,7 +201,7 @@ public class QuickCveCrawler {
 	 * @param list
 	 * @return
 	 */
-	public List<CompositeVulnerability> getCnnvdCveUpdates(List<CompositeVulnerability> list) {
+	public List<RawVulnerability> getCnnvdCveUpdates(List<RawVulnerability> list) {
 		try {
 			String sUrlForCveListPage = "http://www.cnnvd.org.cn/web/vulnerability/querylist.tag?pageno=$pageno$&repairLd=";
 			CnnvdCveParser chinaCveParser = new CnnvdCveParser();
@@ -234,7 +234,7 @@ public class QuickCveCrawler {
 
 						String description = "New vulnerability from CNNVD! Details:  " + vuln.toString();
 						// add vuln
-						CompositeVulnerability vulnComposite = new CompositeVulnerability(0, cveURLItem, vuln.getCveId(), null, dateTimeNow, dateTimeNow, description, "cnnvd");
+						RawVulnerability vulnComposite = new RawVulnerability(0, cveURLItem, vuln.getCveId(), null, dateTimeNow, dateTimeNow, description, "cnnvd");
 						list.add(vulnComposite);
 						Thread.sleep(r.nextInt(100) + 1000); // random wait
 					} catch (Exception e) {
@@ -263,7 +263,7 @@ public class QuickCveCrawler {
 	 * @param list
 	 * @return
 	 */
-	public List<CompositeVulnerability> getSeclistsCveUpdates(CveCrawler crawler, List<CompositeVulnerability> list) {
+	public List<RawVulnerability> getSeclistsCveUpdates(CveCrawler crawler, List<RawVulnerability> list) {
 		Random r = new Random(100);
 		String url = "https://seclists.org/oss-sec/{x}/q{y}";
 

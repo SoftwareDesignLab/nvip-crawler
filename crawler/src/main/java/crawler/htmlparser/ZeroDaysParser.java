@@ -1,6 +1,6 @@
 package crawler.htmlparser;
 
-import model.CompositeVulnerability;
+import model.RawVulnerability;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -17,9 +17,9 @@ public class ZeroDaysParser extends AbstractCveParser {
     public ZeroDaysParser(String domainName) { sourceDomainName = domainName; }
 
     @Override
-    public List<CompositeVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
+    public List<RawVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
 
-        List<CompositeVulnerability> vulnList = new ArrayList<>();
+        List<RawVulnerability> vulnList = new ArrayList<>();
         Document doc = Jsoup.parse(sCVEContentHTML);
 
         Element rightColumn = doc.select("div.second-half").first();
@@ -61,7 +61,7 @@ public class ZeroDaysParser extends AbstractCveParser {
                 lastModifiedDate = lastDate.children().select("strong").text().replace(":", "");
         }
 
-        vulnList.add(new CompositeVulnerability(
+        vulnList.add(new RawVulnerability(
                 0, sSourceURL, cve, null, publishDate, lastModifiedDate, description.toString(), sourceDomainName
         ));
 

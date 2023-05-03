@@ -23,7 +23,7 @@
  */
 package crawler.htmlparser;
 
-import model.CompositeVulnerability;
+import model.RawVulnerability;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jsoup.Jsoup;
@@ -54,8 +54,8 @@ public class TalosIntelligenceParser extends AbstractCveParser  {
 	}
 
 	@Override
-	public List<CompositeVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
-		List<CompositeVulnerability> vulnerabilities = new ArrayList<>();
+	public List<RawVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
+		List<RawVulnerability> vulnerabilities = new ArrayList<>();
 
 		if (sSourceURL.contains("blog.talosintelligence.com") || sSourceURL.contains("/newsletters/"))
 			return vulnerabilities;
@@ -80,8 +80,8 @@ public class TalosIntelligenceParser extends AbstractCveParser  {
 	 * @param sCVEContentHTML
 	 * @return
 	 */
-	private List<CompositeVulnerability> parseVulnPage(Set<String> uniqueCves, String sSourceURL, String sCVEContentHTML) {
-		List<CompositeVulnerability> vulnerabilities = new ArrayList<>();
+	private List<RawVulnerability> parseVulnPage(Set<String> uniqueCves, String sSourceURL, String sCVEContentHTML) {
+		List<RawVulnerability> vulnerabilities = new ArrayList<>();
 		try {
 			Document document = Jsoup.parse(sCVEContentHTML);
 
@@ -147,7 +147,7 @@ public class TalosIntelligenceParser extends AbstractCveParser  {
 			}
 			if (description.toString().equals("")) return vulnerabilities;
 			for (String cveId : uniqueCves)
-				vulnerabilities.add(new CompositeVulnerability(0, sSourceURL, cveId, platform.toString(), publishDate, lastModifiedDate, description.toString(), sourceDomainName));
+				vulnerabilities.add(new RawVulnerability(0, sSourceURL, cveId, platform.toString(), publishDate, lastModifiedDate, description.toString(), sourceDomainName));
 		} catch (Exception e) {
 			logger.error("An error occurred while parsing TalosIntelligence URL: " + sSourceURL);
 		}

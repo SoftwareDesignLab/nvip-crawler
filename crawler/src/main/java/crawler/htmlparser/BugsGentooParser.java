@@ -23,7 +23,7 @@
  */
 package crawler.htmlparser;
 
-import model.CompositeVulnerability;
+import model.RawVulnerability;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
@@ -52,8 +52,8 @@ public class BugsGentooParser extends AbstractCveParser  {
 	 * @return
 	 */
 	@Override
-	public List<CompositeVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
-		List<CompositeVulnerability> vulns = new ArrayList<>();
+	public List<RawVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
+		List<RawVulnerability> vulns = new ArrayList<>();
 
 		Set<String> uniqueCves = getCVEs(sCVEContentHTML);
 
@@ -88,7 +88,7 @@ public class BugsGentooParser extends AbstractCveParser  {
 				matcher = pattern.matcher(cves[0]);
 
 				if (matcher.find()) {
-					vulns.add(new CompositeVulnerability(0, sSourceURL, cves[0], null, publishDate, lastModified, textItems.get(0), sourceDomainName));
+					vulns.add(new RawVulnerability(0, sSourceURL, cves[0], null, publishDate, lastModified, textItems.get(0), sourceDomainName));
 				}
 
 			} else {
@@ -124,7 +124,7 @@ public class BugsGentooParser extends AbstractCveParser  {
 							k++;
 						}*/
 
-						vulns.add(new CompositeVulnerability(0, sSourceURL, cveId, null, publishDate, lastModified, commentDescription, sourceDomainName));
+						vulns.add(new RawVulnerability(0, sSourceURL, cveId, null, publishDate, lastModified, commentDescription, sourceDomainName));
 					}
 					i -= k;
 				}

@@ -29,7 +29,7 @@ import edu.uci.ics.crawler4j.crawler.Page;
 import edu.uci.ics.crawler4j.crawler.WebCrawler;
 import edu.uci.ics.crawler4j.parser.HtmlParseData;
 import edu.uci.ics.crawler4j.url.WebURL;
-import model.CompositeVulnerability;
+import model.RawVulnerability;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.WebDriver;
@@ -54,7 +54,7 @@ public class CveCrawler extends WebCrawler {
 	private final static Pattern FILTERS = Pattern.compile(".*(\\.(css|js|gif|jpg" + "|png|mp3|mp4|zip|gz))$");
 	private final List<String> myCrawlDomains;
 	private String outputDir;
-	private final HashMap<String, ArrayList<CompositeVulnerability>> foundCVEs = new HashMap<>();
+	private final HashMap<String, ArrayList<RawVulnerability>> foundCVEs = new HashMap<>();
 	private final CveParserFactory parserFactory = new CveParserFactory();
 
 
@@ -67,7 +67,7 @@ public class CveCrawler extends WebCrawler {
 	 * get Cve data from crawler thread
 	 */
 	@Override
-	public HashMap<String, ArrayList<CompositeVulnerability>> getMyLocalData() {
+	public HashMap<String, ArrayList<RawVulnerability>> getMyLocalData() {
 		return foundCVEs;
 	}
 
@@ -122,7 +122,7 @@ public class CveCrawler extends WebCrawler {
 			String html = htmlParseData.getHtml();
 
 			// get vulnerabilities from page
-			List<CompositeVulnerability> vulnerabilityList = new ArrayList<>();
+			List<RawVulnerability> vulnerabilityList = new ArrayList<>();
 			try {
 				vulnerabilityList = parseWebPage(pageURL, html);
 			} catch (Exception e) {
@@ -134,11 +134,11 @@ public class CveCrawler extends WebCrawler {
 				nvip_logger.warn("WARNING: No CVEs found at {}!", pageURL);
 				updateCrawlerReport("No CVEs found at " + pageURL + "!");
 			} else {
-				for (CompositeVulnerability vulnerability : vulnerabilityList) {
+				for (RawVulnerability vulnerability : vulnerabilityList) {
 					if (foundCVEs.get(vulnerability.getCveId()) != null) {
 						foundCVEs.get(vulnerability.getCveId()).add(vulnerability);
 					} else {
-						ArrayList<CompositeVulnerability> newList = new ArrayList<>();
+						ArrayList<RawVulnerability> newList = new ArrayList<>();
 						newList.add(vulnerability);
 						foundCVEs.put(vulnerability.getCveId(), newList);
 					}
@@ -155,7 +155,7 @@ public class CveCrawler extends WebCrawler {
 	 * @param sCVEContentHTML
 	 * @return
 	 */
-	public List<CompositeVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
+	public List<RawVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
 		// get parser and parse
 		AbstractCveParser parser = parserFactory.createParser(sSourceURL);
 		return parser.parseWebPage(sSourceURL, sCVEContentHTML);

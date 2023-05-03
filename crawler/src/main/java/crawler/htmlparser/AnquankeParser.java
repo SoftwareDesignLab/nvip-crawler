@@ -23,7 +23,7 @@
  */
 package crawler.htmlparser;
 
-import model.CompositeVulnerability;
+import model.RawVulnerability;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jsoup.Jsoup;
@@ -60,8 +60,8 @@ public class AnquankeParser extends AbstractCveParser  {
 	 * @return - List of CVEs
 	 */
 	@Override
-	public List<CompositeVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
-		List<CompositeVulnerability> vulnerabilities = new ArrayList<>();
+	public List<RawVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
+		List<RawVulnerability> vulnerabilities = new ArrayList<>();
 		try {
 			Document document = Jsoup.parse(sCVEContentHTML);
 
@@ -104,7 +104,7 @@ public class AnquankeParser extends AbstractCveParser  {
 				}
 			}
 
-			vulnerabilities.add(new CompositeVulnerability(
+			vulnerabilities.add(new RawVulnerability(
 					0, sSourceURL, cve, null, date, date, description.toString(), sourceDomainName
 			));
 

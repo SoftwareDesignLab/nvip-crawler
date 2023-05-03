@@ -23,7 +23,7 @@
  */
 package crawler.htmlparser;
 
-import model.CompositeVulnerability;
+import model.RawVulnerability;
 import model.Product;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -50,8 +50,8 @@ public class TenableSecurityParser extends AbstractCveParser  {
 	}
 	
 	@Override
-	public List<CompositeVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
-		List<CompositeVulnerability> vulns = new ArrayList<>();
+	public List<RawVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
+		List<RawVulnerability> vulns = new ArrayList<>();
 		List<Product> products = new ArrayList<>();
 		boolean foundProducts = false;
 
@@ -109,7 +109,7 @@ public class TenableSecurityParser extends AbstractCveParser  {
 		}
 
 		for (String cve : uniqueCves) {
-			CompositeVulnerability vuln = new CompositeVulnerability(0, sSourceURL, cve, null, releaseDateString, updateDateString, desc, sourceDomainName);
+			RawVulnerability vuln = new RawVulnerability(0, sSourceURL, cve, null, releaseDateString, updateDateString, desc, sourceDomainName);
 			vulns.add(vuln);
 		}
 
