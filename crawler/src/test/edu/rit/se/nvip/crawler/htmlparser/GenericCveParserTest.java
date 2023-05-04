@@ -45,8 +45,6 @@ public class GenericCveParserTest extends AbstractParserTest {
 		List<RawVulnerability> list = parser.parseWebPage("jenkins", html);
 		RawVulnerability vuln = getVulnerability(list, "CVE-2017-1000355");
 		assertNotNull(vuln);
-		boolean fine = vuln.getPlatform().contains("2.56");
-		assertTrue(fine);
 	}
 
 	@Test

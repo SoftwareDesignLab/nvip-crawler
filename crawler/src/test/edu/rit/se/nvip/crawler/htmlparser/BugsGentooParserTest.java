@@ -59,8 +59,8 @@ public class BugsGentooParserTest extends AbstractParserTest {
 
         assertEquals("A TOCTOU (time-of-check time-of-use) race condition was found in the way systemd, a system and service manager, used to update file permissions and SELinux security contexts. A local attacker could use this flaw to conduct symbolic link attacks possibly leading to their ability to modify permissions / security context of a path different than originally intended / requested. Issue found by Florian Weimer, Red Hat Product Security Team",
                 vuln1.getDescription());
-        assertEquals("2016-11-23 20:58 UTC", vuln1.getPublishDate());
-        assertEquals("2019-04-02 05:19 UTC", vuln1.getLastModifiedDate());
+        assertEquals("2016-11-23 20:58:00", vuln1.getPublishDate());
+        assertEquals("2019-04-02 05:19:00", vuln1.getLastModifiedDate());
 
     }
 
@@ -87,8 +87,8 @@ public class BugsGentooParserTest extends AbstractParserTest {
                 vuln1.getDescription());
         assertEquals("Netdata is an open source option for real-time infrastructure monitoring and troubleshooting. Each Netdata Agent has an automatically generated MACHINE GUID. It is generated when the agent first starts and it is saved to disk, so that it will persist across restarts and reboots. Anyone who has access to a Netdata Agent has access to its MACHINE_GUID. Streaming is a feature that allows a Netdata Agent to act as parent for other Netdata Agents (children), offloading children from various functions (increased data retention, ML, health monitoring, etc) that can now be handled by the parent Agent. Configuration is done via `stream.conf`. On the parent side, users configure in `stream.conf` an API key (any random UUID can do) to provide common configuration for all children using this API key and per MACHINE GUID configuration to customize the configuration for each child. The way this was implemented, allowed an attacker to use a valid MACHINE_GUID as an API key. This affects all users who expose their Netdata Agents (children) to non-trusted users and they also expose to the same users Netdata Agent parents that aggregate data from all these children. The problem has been fixed in: Netdata agent v1.37 (stable) and Netdata agent v1.36.0-409 (nightly). As a workaround, do not enable streaming by default. If you have previously enabled this, it can be disabled. Limiting access to the port on the recipient Agent to trusted child connections may mitigate the impact of this vulnerability.",
                 vuln2.getDescription());
-        assertEquals("2023-01-15 04:09 UTC", vuln1.getPublishDate());
-        assertEquals("2023-01-15 04:09 UTC", vuln1.getLastModifiedDate());
+        assertEquals("2023-01-15 04:09:00", vuln1.getPublishDate());
+        assertEquals("2023-01-15 04:09:00", vuln1.getLastModifiedDate());
     }
 
 

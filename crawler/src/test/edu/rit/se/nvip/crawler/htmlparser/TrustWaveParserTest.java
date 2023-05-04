@@ -49,8 +49,8 @@ public class TrustWaveParserTest extends AbstractParserTest {
         assertEquals(1, list.size());
         RawVulnerability vuln = list.get(0);
         assertEquals("CVE-2022-37461", vuln.getCveId());
-        assertEquals("September 29, 2022", vuln.getPublishDate());
-        assertEquals("September 29, 2022", vuln.getLastModifiedDate());
+        assertEquals("2022-09-29 00:00:00", vuln.getPublishDate());
+        assertEquals("2022-09-29 00:00:00", vuln.getLastModifiedDate());
         assertTrue(vuln.getDescription().contains("Sensitive information and credentials for various services integrated"));
     }
 
@@ -69,8 +69,8 @@ public class TrustWaveParserTest extends AbstractParserTest {
         RawVulnerability vuln2 = list.get(1);
         assertEquals("CVE-2022-3602", vuln.getCveId());
         assertEquals("CVE-2022-3786", vuln2.getCveId());
-        assertEquals("November 04, 2022", vuln.getPublishDate());
-        assertEquals("November 04, 2022", vuln.getLastModifiedDate());
+        assertEquals("2022-11-04 00:00:00", vuln.getPublishDate());
+        assertEquals("2022-11-04 00:00:00", vuln.getLastModifiedDate());
         String desc1 = "overflow four attacker-controlled bytes on the stack";
         String desc2 = "overflow an arbitrary number of bytes containing the";
         assertTrue(vuln.getDescription().contains(desc1));
@@ -96,8 +96,8 @@ public class TrustWaveParserTest extends AbstractParserTest {
         assertEquals("CVE-2022-21381", vuln.getCveId());
         assertEquals("CVE-2022-21382", vuln2.getCveId());
         assertEquals("CVE-2022-21383", vuln3.getCveId());
-        assertEquals("August 23, 2022", vuln.getPublishDate());
-        assertEquals("August 23, 2022", vuln.getLastModifiedDate());
+        assertEquals("2022-08-23 00:00:00", vuln.getPublishDate());
+        assertEquals("2022-08-23 00:00:00", vuln.getLastModifiedDate());
         String desc1 = "authenticated low privileged user to download arbitrary files";
         String desc2 = "user attempts to download the configuration file from the server";
         String desc3 = "user selects a file and clicks download, the application will send";

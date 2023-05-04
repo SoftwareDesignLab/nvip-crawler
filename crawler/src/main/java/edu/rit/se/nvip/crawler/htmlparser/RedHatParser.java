@@ -48,8 +48,6 @@ public class RedHatParser extends AbstractCveParser {
 	public List<RawVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
 
         List<RawVulnerability> vulnerabilities = new ArrayList<>();
-        String pattern = "yyyy/MM/dd";
-        SimpleDateFormat formatter = new SimpleDateFormat(pattern);
 
         try {
             Document doc = Jsoup.parse(sCVEContentHTML);

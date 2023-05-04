@@ -21,7 +21,7 @@ public class ABBParserTest extends AbstractParserTest {
         RawVulnerability vuln = list.get(0);
         assertEquals("CVE-2023-0580", vuln.getCveId());
         assertTrue(vuln.getDescription().contains("An attacker who successfully exploited this vulnerability could gain access to the protected application"));
-        assertEquals("2023-03-27", vuln.getPublishDate());
-        assertEquals("2023-03-27", vuln.getLastModifiedDate());
+        assertEquals("2023-03-27 00:00:00", vuln.getPublishDate());
+        assertEquals("2023-03-27 00:00:00", vuln.getLastModifiedDate());
     }
 }

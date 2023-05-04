@@ -22,8 +22,8 @@ public class AristaParserTest extends AbstractParserTest {
         RawVulnerability vuln = getVulnerability(list, "CVE-2023-24546");
         assertNotNull(vuln);
         assertTrue(vuln.getDescription().contains("This advisory impacts the Arista CloudVision Portal products when run on-premise"));
-        assertEquals("March 7, 2023", vuln.getPublishDate());
-        assertEquals("March 7, 2023", vuln.getLastModifiedDate());
+        assertEquals("2023-03-07 00:00:00", vuln.getPublishDate());
+        assertEquals("2023-03-07 00:00:00", vuln.getLastModifiedDate());
     }
 
 
@@ -38,7 +38,7 @@ public class AristaParserTest extends AbstractParserTest {
         RawVulnerability vuln = getVulnerability(list, "CVE-2021-28509");
         assertNotNull(vuln);
         assertTrue(vuln.getDescription().contains("This advisory documents the impact of an internally found vulnerability in Arista EOS state streaming telemetry agent TerminAttr and OpenConfig transport protocols."));
-        assertEquals("May 25th 2022", vuln.getPublishDate());
-        assertEquals("May 27th 2022", vuln.getLastModifiedDate());
+        assertEquals("2022-05-25 00:00:00", vuln.getPublishDate());
+        assertEquals("2022-05-27 00:00:00", vuln.getLastModifiedDate());
     }
 }

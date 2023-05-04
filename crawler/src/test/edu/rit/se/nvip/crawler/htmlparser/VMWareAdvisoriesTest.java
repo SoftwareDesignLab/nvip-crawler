@@ -62,8 +62,8 @@ public class VMWareAdvisoriesTest extends AbstractParserTest {
 
 		assertEquals(vuln.getCveId(), "CVE-2023-20854");
 		assertEquals(vuln.getDescription(), "VMware Workstation contains an arbitrary file deletion vulnerability. VMware has evaluated the severity of this issue to be in the Important severity range with a maximum CVSSv3 base score of 7.8.");
-		assertEquals(vuln.getPublishDate(), "2023-02-02");
-		assertEquals(vuln.getLastModifiedDate(), "2023-02-02");
+		assertEquals(vuln.getPublishDate(), "2023-02-02 00:00:00");
+		assertEquals(vuln.getLastModifiedDate(), "2023-02-02 00:00:00");
 
 	}
 
@@ -84,8 +84,8 @@ public class VMWareAdvisoriesTest extends AbstractParserTest {
 
 		assertEquals("CVE-2022-31706", vuln.getCveId());
 		assertEquals("The vRealize Log Insight contains a Directory Traversal Vulnerability. VMware has evaluated the severity of this issue to be in the critical severity range with a maximum CVSSv3 base score of 9.8.", vuln.getDescription());
-		assertEquals("2023-01-24", vuln.getPublishDate());
-		assertEquals("2023-01-31", vuln.getLastModifiedDate());
+		assertEquals("2023-01-24 00:00:00", vuln.getPublishDate());
+		assertEquals("2023-01-31 00:00:00", vuln.getLastModifiedDate());
 
 	}
 

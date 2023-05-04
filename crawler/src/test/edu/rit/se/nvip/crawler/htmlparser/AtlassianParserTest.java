@@ -44,8 +44,8 @@ public class AtlassianParserTest extends AbstractParserTest {
         assertEquals("CVE-2022-36804", vuln.getCveId());
         assertTrue(vuln.getDescription().contains("command injection vulnerability in multiple API endpoints"));
         assertFalse(vuln.getDescription().contains("evaluate its applicability to your own IT environment"));
-        assertEquals("24 Aug 2022 10 AM PDT", vuln.getPublishDate());
-        assertEquals("Aug 24, 2022", vuln.getLastModifiedDate());
+        assertEquals("2022-08-24 10:00:00", vuln.getPublishDate());
+        assertEquals("2022-08-24 00:00:00", vuln.getLastModifiedDate());
 
     }
 
@@ -67,8 +67,8 @@ public class AtlassianParserTest extends AbstractParserTest {
         assertFalse(vuln1.getDescription().contains(desc2));
         assertTrue(vuln2.getDescription().contains(desc2));
         assertFalse(vuln2.getDescription().contains(desc1));
-        assertEquals("15 Feb 2023 10:00 AM PDT", vuln1.getPublishDate());
-        assertEquals("Feb 17, 2023", vuln2.getLastModifiedDate());
+        assertEquals("2023-02-15 10:00:00", vuln1.getPublishDate());
+        assertEquals("2023-02-17 00:00:00", vuln2.getLastModifiedDate());
     }
 
     @Test
@@ -82,8 +82,8 @@ public class AtlassianParserTest extends AbstractParserTest {
         RawVulnerability vuln = list.get(0);
         assertEquals("CVE-2019-15006", vuln.getCveId());
         assertTrue(vuln.getDescription().contains("An attacker could perform the described attack by denying their victim access"));
-        assertEquals("18 Dec 2019 10:00 AM PST", vuln.getPublishDate());
-        assertEquals("Jan 8, 2020", vuln.getLastModifiedDate());
+        assertEquals("2019-12-18 10:00:00", vuln.getPublishDate());
+        assertEquals("2020-01-08 00:00:00", vuln.getLastModifiedDate());
     }
 
     @Test
@@ -113,7 +113,7 @@ public class AtlassianParserTest extends AbstractParserTest {
         assertTrue(vuln3.getDescription().contains(desc3));
         assertFalse(vuln3.getDescription().contains(desc1));
         assertFalse(vuln3.getDescription().contains(desc2));
-        assertEquals("15 Jan 2020 10 AM PDT", vuln1.getPublishDate());
-        assertEquals("Jan 28, 2020", vuln2.getLastModifiedDate());
+        assertEquals("2020-01-15 10:00:00", vuln1.getPublishDate());
+        assertEquals("2020-01-28 00:00:00", vuln2.getLastModifiedDate());
     }
 }

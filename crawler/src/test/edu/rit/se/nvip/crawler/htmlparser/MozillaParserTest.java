@@ -43,8 +43,8 @@ public class MozillaParserTest extends AbstractParserTest {
         assertEquals(1, list.size());
         RawVulnerability vuln = list.get(0);
         assertEquals("CVE-2020-16048", vuln.getCveId());
-        assertEquals("February 5, 2021", vuln.getPublishDate());
-        assertEquals("February 5, 2021", vuln.getLastModifiedDate());
+        assertEquals("2021-02-05 00:00:00", vuln.getPublishDate());
+        assertEquals("2021-02-05 00:00:00", vuln.getLastModifiedDate());
         assertTrue(vuln.getDescription().contains("simply multiplied the row pitch with the pixel height"));
     }
 
@@ -58,8 +58,8 @@ public class MozillaParserTest extends AbstractParserTest {
         assertEquals(13, list.size());
         RawVulnerability vuln = list.get(2);
         assertEquals("CVE-2023-25730", vuln.getCveId());
-        assertEquals("February 15, 2023", vuln.getPublishDate());
-        assertEquals("February 15, 2023", vuln.getLastModifiedDate());
+        assertEquals("2023-02-15 00:00:00", vuln.getPublishDate());
+        assertEquals("2023-02-15 00:00:00", vuln.getLastModifiedDate());
         assertTrue(vuln.getDescription().contains("resulting in potential user confusion or spoofing attacks"));
         assertFalse(vuln.getDescription().contains("iframe's unredacted URI when interaction"));
     }
