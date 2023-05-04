@@ -959,18 +959,19 @@ public class DatabaseHelper {
 		return 0;
 	}
 
-	private final String checkIfInRawDesc = "SELECT COUNT(*) numInRawDesc FROM rawdescription WHERE raw_description = ?";
+	private final String checkIfInRawDesc = "SELECT COUNT(*) numInRawDesc FROM rawdescription WHERE cve_id = ? AND raw_description = ?";
 
 	/**
 	 * For checking if a description is already in rawdescription
 	 * Compares descriptions for now
 	 * @return
 	 */
-	public boolean checkIfInRawDescriptions(String description) {
+	public boolean checkIfInRawDescriptions(String cveId, String description) {
 
 		try (Connection connection = getConnection();
 			 PreparedStatement pstmt = connection.prepareStatement(checkIfInRawDesc)) {
-			pstmt.setString(1, description);
+			pstmt.setString(1, cveId);
+			pstmt.setString(2, description);
 			ResultSet rs = pstmt.executeQuery();
 
 			if (rs.next())
