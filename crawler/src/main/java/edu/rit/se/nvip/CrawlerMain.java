@@ -91,7 +91,7 @@ public class CrawlerMain {
 
         for (String cveId: crawledCves.keySet()) {
             for (RawVulnerability vuln: crawledCves.get(cveId)) {
-                if (!databaseHelper.checkIfInRawDescriptions(vuln.getDescription())) {
+                if (!databaseHelper.checkIfInRawDescriptions(vuln.getCveId(), vuln.getDescription())) {
                     logger.info("Inserting new raw description for CVE {} into DB" ,cveId);
                     insertedCVEs += databaseHelper.insertRawVulnerability(vuln);
                     databaseHelper.addJobForCVE(vuln.getCveId());
