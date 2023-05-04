@@ -51,18 +51,11 @@ public class KbCertCveParser extends AbstractCveParser {
 	@Override
 	public List<RawVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
 		List<RawVulnerability> vulnerabilities = new ArrayList<>();
-		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 		Document document = Jsoup.parse(sCVEContentHTML);
 
-		String lastModifiedDate = UtilHelper.longDateFormat.format(new Date());
+		String lastModified = UtilHelper.longDateFormat.format(new Date());
 
 		String publishDate = document.head().getElementsByAttributeValue("name", "published_at").attr("content");
-		try {
-			LocalDateTime published = LocalDateTime.parse(publishDate, formatter);
-			publishDate = UtilHelper.longDateFormat.format(published);
-		} catch (Exception pe) {
-			pe.printStackTrace();
-		}
 
 		Elements myHTMLElements = document.select(":matchesOwn(" + regexAllCVERelatedContent + ")");
 		String sCVEContent = myHTMLElements.text();
@@ -71,16 +64,9 @@ public class KbCertCveParser extends AbstractCveParser {
 		String regexLastRevised = "(Last Revised|Updated): [0-9]+-[0-9]+-[0-9]+";
 		Pattern lastRevisedPattern = Pattern.compile(regexLastRevised);
 		Matcher matcher = lastRevisedPattern.matcher(allText);
-		String lastModified;
 		if (matcher.find()) {
 			String[] splitLine = matcher.group().split(" ");
 			lastModified = splitLine[splitLine.length - 1]; // format: yyyy-MM-dd
-			try {
-				LocalDateTime date = LocalDateTime.parse(lastModified, formatter);
-				UtilHelper.longDateFormat.format(date);
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
 		}
 
 		Pattern pattern = Pattern.compile(regexCVEID);
@@ -106,7 +92,7 @@ public class KbCertCveParser extends AbstractCveParser {
 			Iterator<String> iterator = uniqueIds.iterator();
 			while (iterator.hasNext()) {
 				String cveId = iterator.next();
-				RawVulnerability vuln = new RawVulnerability(sSourceURL, cveId, publishDate, lastModifiedDate, description);
+				RawVulnerability vuln = new RawVulnerability(sSourceURL, cveId, publishDate, lastModified, description);
 				vulnerabilities.add(vuln);
 			}
 		}
@@ -125,7 +111,7 @@ public class KbCertCveParser extends AbstractCveParser {
 				if (matcher.find()) {
 					if (currCve != null) {
 						String desc = currDesc.toString();
-						RawVulnerability vuln = new RawVulnerability(sSourceURL, currCve, publishDate, lastModifiedDate, desc);
+						RawVulnerability vuln = new RawVulnerability(sSourceURL, currCve, publishDate, lastModified, desc);
 						vulnerabilities.add(vuln);
 					}
 					currCve = matcher.group();
@@ -136,7 +122,7 @@ public class KbCertCveParser extends AbstractCveParser {
 				}
 			}
 			String desc = currDesc.toString();
-			RawVulnerability vuln = new RawVulnerability(sSourceURL, currCve, publishDate, lastModifiedDate, desc);
+			RawVulnerability vuln = new RawVulnerability(sSourceURL, currCve, publishDate, lastModified, desc);
 			vulnerabilities.add(vuln);
 
 		}
