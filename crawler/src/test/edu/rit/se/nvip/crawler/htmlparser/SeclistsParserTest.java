@@ -41,7 +41,7 @@ public class SeclistsParserTest extends AbstractParserTest {
 		assertEquals("CVE-2016-0763", vuln.getCveId());
 		assertTrue(vuln.getDescription().contains("ResourceLinkFactory.setGlobalContext() is a public method"));
 		assertFalse(vuln.getDescription().contains("Bugtraq"));
-		assertEquals("2016/02/22 11:23:30", vuln.getPublishDate());
+		assertEquals("2016-02-22 11:23:30", vuln.getPublishDate());
 	}
 
 	@Test
@@ -53,7 +53,7 @@ public class SeclistsParserTest extends AbstractParserTest {
 		assertEquals("CVE-2015-2807", vuln.getCveId());
 		assertTrue(vuln.getDescription().contains("Publicly exploitable XSS in WordPress plugin"));
 		assertFalse(vuln.getDescription().contains("Nmap Security"));
-		assertEquals("2015/08/26 15:15:14", vuln.getPublishDate());
+		assertEquals("2015-08-26 15:15:14", vuln.getPublishDate());
 	}
 
 	@Test
@@ -65,7 +65,7 @@ public class SeclistsParserTest extends AbstractParserTest {
 		assertEquals("CVE-2022-44877", vuln.getCveId());
 		assertTrue(vuln.getDescription().contains("Bash commands can be run"));
 		assertFalse(vuln.getDescription().contains("mailing list archives"));
-		assertEquals("2023/01/03 19:20:15", vuln.getPublishDate());
+		assertEquals("2023-01-03 19:20:15", vuln.getPublishDate());
 	}
 
 }

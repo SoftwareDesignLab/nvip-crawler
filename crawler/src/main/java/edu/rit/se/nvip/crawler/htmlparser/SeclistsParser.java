@@ -78,7 +78,6 @@ public class SeclistsParser extends AbstractCveParser {
 			if (line.toLowerCase().trim().startsWith("date")) {
 				try {
 					publishDate = UtilHelper.longDateFormat.format(dateFormat.parse(line.trim()));
-
 				} catch (ParseException e) {
 					logger.error("Failed to parse date on {}, format not known!", sSourceURL);
 					publishDate = null;
@@ -86,14 +85,10 @@ public class SeclistsParser extends AbstractCveParser {
 			}
 		}
 
-//		List<AffectedRelease> affectedReleases = new ArrayList<>();
-//
-//		for (String cve : uniqueCves) {
-//			RawVulnerability v = new RawVulnerability(0, sSourceURL, cve, "", publishDate, updateString, text, sourceDomainName);
-//			vulns.add(v);
-//			for (AffectedRelease a : affectedReleases)
-//
-//		}
+		for (String cve : uniqueCves) {
+			RawVulnerability v = new RawVulnerability(sSourceURL, cve, publishDate, updateString, text);
+			vulns.add(v);
+		}
 
 		return vulns;
 	}

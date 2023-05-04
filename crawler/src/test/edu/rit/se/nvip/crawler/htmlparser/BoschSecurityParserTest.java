@@ -57,8 +57,8 @@ public class BoschSecurityParserTest extends AbstractParserTest {
                 vuln1.getDescription());
         assertEquals("Race condition in the __find_get_block_slow function in the ISO9660 filesystem in Linux 2.6.18 and possibly other versions allows local users to cause a denial of service (infinite loop) by mounting a crafted ISO9660 filesystem containing malformed data structures.",
                 vuln2.getDescription());
-        assertEquals("23 Nov 2022", vuln1.getPublishDate());
-        assertEquals("23 Nov 2022", vuln1.getLastModifiedDate());
+        assertEquals("2022-11-23 00:00:00", vuln1.getPublishDate());
+        assertEquals("2022-11-23 00:00:00", vuln1.getLastModifiedDate());
 
     }
 }

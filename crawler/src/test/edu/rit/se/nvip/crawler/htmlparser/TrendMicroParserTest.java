@@ -44,6 +44,6 @@ public class TrendMicroParserTest extends AbstractParserTest {
         assertEquals("CVE-2023-21818", vuln75.getCveId());
         assertTrue(vuln75.getDescription().contains("Secure Channel Denial of Service"));
         assertFalse(vuln75.getDescription().contains("timed and handcrafted traffic can cause internal errors"));
-        assertEquals("February 14, 2023", vuln75.getPublishDate());
+        assertEquals("2023-02-14 00:00:00", vuln75.getPublishDate());
     }
 }

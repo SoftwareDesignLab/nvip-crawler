@@ -49,7 +49,7 @@ public class TenableCveParserTest extends AbstractParserTest {
 		assertEquals(1, list.size());
 		RawVulnerability vuln = list.get(0);
 		assertEquals("CVE-2022-21953", vuln.getCveId());
-		assertEquals("2023/02/07 00:00:00", vuln.getPublishDate());
+		assertEquals("2023-02-07 00:00:00", vuln.getPublishDate());
 		assertEquals(TEST_DESCRIPTION, vuln.getDescription());
 	}
 

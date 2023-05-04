@@ -40,8 +40,8 @@ public class BugzillaParserTest extends AbstractParserTest {
 		assertEquals(1, list.size());
 		RawVulnerability vuln = list.get(0);
 		assertEquals("CVE-2013-1747", vuln.getCveId());
-		assertEquals("2013/03/29 00:00:00", vuln.getPublishDate());
-		assertEquals("2020/10/31 00:00:00", vuln.getLastModifiedDate());
+		assertEquals("2013-03-29 00:00:00", vuln.getPublishDate());
+		assertEquals("2020-10-31 00:00:00", vuln.getLastModifiedDate());
 		assertTrue(vuln.getDescription().contains("DoS (assertion failure, crash) via a KICK command"));
 	}
 
@@ -52,7 +52,7 @@ public class BugzillaParserTest extends AbstractParserTest {
 		assertEquals(1, list.size());
 		RawVulnerability vuln = list.get(0);
 		assertEquals("CVE-2018-3736", vuln.getCveId());
-		assertEquals("2018/05/10 00:00:00", vuln.getPublishDate());
+		assertEquals("2018-05-10 00:00:00", vuln.getPublishDate());
 		assertTrue(vuln.getDescription().contains("nodejs-https-proxy-agent: Unsanitized options passed to Buffer()"));
 	}
 }

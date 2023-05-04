@@ -48,7 +48,7 @@ public class MendParserTest extends AbstractParserTest{
         RawVulnerability vuln = list.get(0);
         assertEquals("CVE-2023-22736", vuln.getCveId());
         assertTrue(vuln.getDescription().contains("Making sure all AppProjects' sourceNamespaces are"));
-        assertEquals("January 26, 2023", vuln.getPublishDate());
+        assertEquals("2023-01-26 00:00:00", vuln.getPublishDate());
     }
 
     @Test

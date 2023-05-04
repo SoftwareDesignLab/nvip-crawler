@@ -49,11 +49,7 @@ public class HuntrParserTest extends AbstractParserTest {
         assertTrue(vuln.getDescription().contains("division by zero in fuction"));
         assertFalse(vuln.getDescription().contains("was it not verification as a vulnerability?"));
         assertEquals("2023-02-19 00:00:00", vuln.getPublishDate());
-        // ensure proper '6 days ago' parse
-        LocalDate today = LocalDate.now();
-        LocalDate lastModified = LocalDate.parse(vuln.getLastModifiedDate().toString());
-        long between = ChronoUnit.DAYS.between(lastModified, today);
-        assertEquals(6, between);
+        assertEquals("2023-04-28 00:00:00", vuln.getLastModifiedDate());
     }
 
     @Test

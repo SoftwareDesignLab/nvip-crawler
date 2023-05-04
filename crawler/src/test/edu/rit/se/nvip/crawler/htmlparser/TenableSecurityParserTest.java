@@ -40,7 +40,7 @@ public class TenableSecurityParserTest extends AbstractParserTest {
         assertEquals(1, list.size());
         RawVulnerability vuln = list.get(0);
         assertEquals("CVE-2023-0587", vuln.getCveId());
-        assertEquals("2023/01/30 00:00:00", vuln.getPublishDate());
+        assertEquals("2023-01-30 00:00:00", vuln.getPublishDate());
         assertTrue(vuln.getDescription().contains("A file upload vulnerability in exists in Trend Micro Apex One"));
         assertFalse(vuln.getDescription().contains("View More Research Advisories"));
     }
@@ -52,8 +52,8 @@ public class TenableSecurityParserTest extends AbstractParserTest {
         assertEquals(1, list.size());
         RawVulnerability vuln = list.get(0);
         assertEquals("CVE-2022-4390", vuln.getCveId());
-        assertEquals("2022/12/02 00:00:00", vuln.getPublishDate());
-        assertEquals("2022/12/09 00:00:00", vuln.getLastModifiedDate());
+        assertEquals("2022-12-02 00:00:00", vuln.getPublishDate());
+        assertEquals("2022-12-09 00:00:00", vuln.getLastModifiedDate());
         assertTrue(vuln.getDescription().contains("A network misconfiguration is present"));
         assertFalse(vuln.getDescription().contains("View More Research Advisories"));
     }
@@ -66,8 +66,8 @@ public class TenableSecurityParserTest extends AbstractParserTest {
         assertEquals(4, list.size());
         RawVulnerability vuln = getVulnerability(list, "CVE-2014-3570");
         assertNotNull(vuln);
-        assertEquals("2015/02/03 00:00:00", vuln.getPublishDate());
-        assertEquals("2017/02/28 00:00:00", vuln.getLastModifiedDate());
+        assertEquals("2015-02-03 00:00:00", vuln.getPublishDate());
+        assertEquals("2017-02-28 00:00:00", vuln.getLastModifiedDate());
         assertTrue(vuln.getDescription().contains("OpenSSL contains a flaw in the dtls1_buffer_record"));
     }
 
@@ -79,8 +79,8 @@ public class TenableSecurityParserTest extends AbstractParserTest {
         assertEquals(9, list.size());
         RawVulnerability vuln = getVulnerability(list, "CVE-2015-0204");
         assertNotNull(vuln);
-        assertEquals("2015/03/30 00:00:00", vuln.getPublishDate());
-        assertEquals("2017/02/28 00:00:00", vuln.getLastModifiedDate());
+        assertEquals("2015-03-30 00:00:00", vuln.getPublishDate());
+        assertEquals("2017-02-28 00:00:00", vuln.getLastModifiedDate());
         assertTrue(vuln.getDescription().contains("OpenSSL contains an invalid read flaw in"));
     }
 

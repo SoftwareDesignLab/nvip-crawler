@@ -21,8 +21,8 @@ public class ZeroDaysParserTest extends AbstractParserTest {
         RawVulnerability vuln = list.get(0);
         assertEquals("CVE-2022-28291", vuln.getCveId());
         assertTrue(vuln.getDescription().contains("An authenticated user with debug privileges can retrieve stored Nessus policy"));
-        assertEquals("May 2, 2022", vuln.getPublishDate());
-        assertEquals("October 18, 2022", vuln.getLastModifiedDate());
+        assertEquals("2022-05-02 00:00:00", vuln.getPublishDate());
+        assertEquals("2022-10-18 00:00:00", vuln.getLastModifiedDate());
     }
 
 }

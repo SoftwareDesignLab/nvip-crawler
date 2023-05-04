@@ -44,7 +44,7 @@ public class SnykParserTest extends AbstractParserTest {
         RawVulnerability vuln = list.get(0);
         assertEquals("CVE-2023-26489", vuln.getCveId());
         assertTrue(vuln.getDescription().contains("translates code from an intermediate representation"));
-        assertEquals("9 Mar 2023", vuln.getPublishDate());
+        assertEquals("2023-03-09 00:00:00", vuln.getPublishDate());
     }
 
     @Test
@@ -68,6 +68,6 @@ public class SnykParserTest extends AbstractParserTest {
         RawVulnerability vuln = list.get(0);
         assertEquals("CVE-2021-36401", vuln.getCveId());
         assertTrue(vuln.getDescription().contains("Escaping means that the application is coded to mark key char"));
-        assertEquals("8 Mar 2023", vuln.getPublishDate());
+        assertEquals("2023-03-08 00:00:00", vuln.getPublishDate());
     }
 }

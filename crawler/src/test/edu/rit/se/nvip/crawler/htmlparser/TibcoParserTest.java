@@ -48,7 +48,7 @@ public class TibcoParserTest extends AbstractParserTest{
         assertEquals("CVE-2022-41567", vuln.getCveId());
         assertTrue(vuln.getDescription().contains("attacker with network access to execute a cross-site scripting"));
         assertFalse(vuln.getDescription().contains("The information on this page is being provided to you on an \"AS IS\" and \"AS-AVAILABLE\" basis"));
-        assertEquals("February 22, 2023", vuln.getPublishDate());
+        assertEquals("2023-02-22 00:00:00", vuln.getPublishDate());
     }
 
 }

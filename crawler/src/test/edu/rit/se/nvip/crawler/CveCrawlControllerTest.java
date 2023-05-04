@@ -1,6 +1,5 @@
 package edu.rit.se.nvip.crawler;
 
-import edu.rit.se.nvip.crawler.CveCrawlController;
 import edu.rit.se.nvip.model.RawVulnerability;
 import org.junit.Test;
 
