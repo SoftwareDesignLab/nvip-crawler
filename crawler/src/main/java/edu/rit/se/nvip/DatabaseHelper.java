@@ -98,7 +98,6 @@ public class DatabaseHelper {
 	private final String checkIfInNVD = "SELECT COUNT(*) as numInNvd FROM nvd_data WHERE cve_id = ?";
 
 	private final String insertCrawledData = "";
-
 	private static DatabaseHelper databaseHelper = null;
 	private static Map<String, Vulnerability> existingVulnMap = new HashMap<>();
 
@@ -984,7 +983,7 @@ public class DatabaseHelper {
 
 	}
 
-	private final String insertCVEJob = "INSERT INTO cvejobtrack (cve_id) VALUES (?, ?) ";
+	private final String insertCVEJob = "INSERT INTO cvejobtrack (cve_id) VALUES (?) ";
 
 	/**
 	 * Add status for CVE in Job Tracker Table
