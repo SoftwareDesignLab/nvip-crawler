@@ -1871,9 +1871,9 @@ public class DatabaseHelper {
 			" INNER JOIN vulnerability v" +
 			" ON v.vuln_id = vu.vuln_id" +
 			" LEFT JOIN (SELECT vc.cve_id," +
-			"   group_concat(DISTINCT vl.vdo_label_name SEPARATOR ';') AS vdo_labels," +
-			"   group_concat(DISTINCT vc.vdo_confidence SEPARATOR ';') AS vdo_label_confidences," +
-			"   group_concat(DISTINCT ifnull(vn.vdo_noun_group_name, 'None')" +
+			"   group_concat(vl.vdo_label_name SEPARATOR ';') AS vdo_labels," +
+			"   group_concat(vc.vdo_confidence SEPARATOR ';') AS vdo_label_confidences," +
+			"   group_concat(ifnull(vn.vdo_noun_group_name, 'None')" +
 			" SEPARATOR" +
 			" ';')                                      AS vdo_noun_groups" +
 			" FROM vdocharacteristic vc" +
