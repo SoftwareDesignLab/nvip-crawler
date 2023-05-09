@@ -54,7 +54,8 @@ public class NvdCveController {
 
 	public static void main(String[] args) {
 		NvdCveController nvd = new NvdCveController();
-		nvd.updateNvdDataTable("https://services.nvd.nist.gov/rest/json/cves/2.0?pubStartDate=<StartDate>&pubEndDate=<EndDate>");
+		//nvd.updateNvdDataTable("https://services.nvd.nist.gov/rest/json/cves/2.0?pubStartDate=<StartDate>&pubEndDate=<EndDate>");
+		//nvd.compareRawDescriptionsWithNVD();
 	}
 
 
@@ -71,6 +72,30 @@ public class NvdCveController {
 		this.endDate = today.format(formatter);
 
 		databaseHelper = DatabaseHelper.getInstance();
+	}
+
+	public void compareRawCVEsWithNVD() {
+		// Get raw CVE ID and Created date
+		HashMap<String, LocalDateTime> rawCves = new HashMap<>();
+
+		// Get NVD CVEs
+		HashMap<String, LocalDateTime> nvdCves = new HashMap<>();
+
+		//Run comparison by iterating raw CVEs
+		int notInNvd = 0;
+		double avgTimeGap = 0;
+
+
+		for (String rawCve: rawCves.keySet()) {
+			if (nvdCves.containsKey(rawCve)) {
+
+			} else {
+
+			}
+		}
+
+		//Print Results
+
 	}
 
 	public void updateNvdDataTable(String url) {

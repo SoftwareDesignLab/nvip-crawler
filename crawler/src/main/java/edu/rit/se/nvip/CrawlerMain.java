@@ -94,7 +94,9 @@ public class CrawlerMain {
                 if (!databaseHelper.checkIfInRawDescriptions(vuln.getCveId(), vuln.getDescription())) {
                     logger.info("Inserting new raw description for CVE {} into DB" ,cveId);
                     insertedCVEs += databaseHelper.insertRawVulnerability(vuln);
-                    databaseHelper.addJobForCVE(vuln.getCveId());
+                    if (!databaseHelper.isCveInJobTrack(vuln.getCveId())) {
+                        databaseHelper.addJobForCVE(vuln.getCveId());
+                    }
                 }
             }
         }

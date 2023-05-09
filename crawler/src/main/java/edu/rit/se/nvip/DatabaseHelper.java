@@ -1003,4 +1003,27 @@ public class DatabaseHelper {
 
 	}
 
+	private final String checkifInJobTrack = "SELECT COUNT(*) numInJobtrack FROM cvejobtrack WHERE cve_id = ?";
+
+	/**
+	 * Checks if a CVEID is already in cvejobtrack table
+	 * @param cveId
+	 * @return
+	 */
+	public boolean isCveInJobTrack(String cveId) {
+
+		try (Connection connection = getConnection();
+			 PreparedStatement pstmt = connection.prepareStatement(checkifInJobTrack)) {
+			pstmt.setString(1, cveId);
+			ResultSet rs = pstmt.executeQuery();
+
+			if (rs.next())
+				return rs.getInt("numInJobtrack") > 0;
+		} catch (Exception e) {
+			logger.error("ERROR: Failed to check CVE {} in cvejobtrack table\n{}", cveId, e);
+		}
+
+		return false;
+
+	}
 }
