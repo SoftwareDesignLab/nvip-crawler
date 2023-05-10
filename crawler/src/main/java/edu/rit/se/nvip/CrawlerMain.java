@@ -328,7 +328,7 @@ public class CrawlerMain {
         while (reader.hasNextLine()) {
             String domain = reader.nextLine();
             if (domain.length() > 5) {
-                logger.info("Added {} to whitelist", domain);
+                //logger.info("Added {} to whitelist", domain);
                 whiteList.add(domain);
             }
         }
