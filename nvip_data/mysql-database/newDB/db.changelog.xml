@@ -504,4 +504,25 @@
         </createIndex>
     </changeSet>
     
+    <changeSet author="nvddata" id="nvddata">
+        <createTable tableName="nvddata">
+            <column name="cve_id" type="VARCHAR(20)">
+                <constraints primaryKey="true" nullable="false" unique="true"/>
+            </column>
+            <column name="published_date" type="DATETIME">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="TINYTEXT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex
+            indexName="nvddata_index_cve_id"
+            tableName="nvddata"
+            unique="true">
+            <column name="cve_id"/>
+        </createIndex>
+    </changeSet>
+
 </databaseChangeLog>
