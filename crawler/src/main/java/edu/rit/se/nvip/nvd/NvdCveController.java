@@ -93,6 +93,8 @@ public class NvdCveController {
 
 		double avgTimeGap = 0;
 
+		logger.info("Comparing with NVD, this may take some time....");
+
 		for (String rawCve: rawCves.keySet()) {
 			for (NvdVulnerability nvdCve: nvdCves) {
 				boolean checked = false;
