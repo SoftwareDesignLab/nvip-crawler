@@ -423,26 +423,6 @@ public class DatabaseHelper {
 		return false;
 	}
 
-	private String getAllNvdCVEs = "SELECT cve_id, published_date, status FROM nvddata";
-
-	public ArrayList<NvdVulnerability> getAllNvdCVEs() {
-
-		ArrayList<NvdVulnerability> nvdVulnerabilities = new ArrayList<>();
-
-		try (Connection connection = getConnection();
-			 PreparedStatement pstmt = connection.prepareStatement(getAllNvdCVEs)) {
-			ResultSet rs = pstmt.executeQuery();
-
-			while (rs.next()) {
-				nvdVulnerabilities.add(new NvdVulnerability(rs.getString("cve_id"), rs.getTimestamp("published_date").toLocalDateTime(), rs.getString("status")));
-			}
-		} catch (Exception e) {
-			logger.error("ERROR: Failed to grab NVD CVEs from nvddata table\n{}", e);
-		}
-
-		return nvdVulnerabilities;
-	}
-
 	private final String insertRawData = "INSERT INTO rawdescription (raw_description, cve_id, created_date, published_date, last_modified_date, source_url) " +
 			"VALUES (?, ?, ?, ?, ?, ?)";
 
@@ -540,10 +520,13 @@ public class DatabaseHelper {
 
 	}
 
-	private final String getRawCVEs = "SELECT cve_id, published_date FROM rawdescription";
+	private final String getRawCVEs = "SELECT DISTINCT cve_id, published_date FROM rawdescription order by cve_id desc";
 
-
-	public HashMap<String, LocalDateTime> getRawCVEs() {
+	/**
+	 * For getting raw CVE Data for NVD Comparison
+	 * @return
+	 */
+	public HashMap<String, LocalDateTime> getRawCVEForNVDComparisons() {
 
 		HashMap<String, LocalDateTime> rawCves = new HashMap<>();
 
@@ -559,5 +542,33 @@ public class DatabaseHelper {
 		}
 
 		return rawCves;
+	}
+
+	private String getAllNvdCVEs = "SELECT cve_id, published_date, status FROM nvddata order by cve_id desc";
+
+	/**
+	 * for Getting NVD CVEs in nvddata
+	 * @return
+	 */
+	public ArrayList<NvdVulnerability> getAllNvdCVEs() {
+
+		ArrayList<NvdVulnerability> nvdVulnerabilities = new ArrayList<>();
+
+		try (Connection connection = getConnection();
+			 PreparedStatement pstmt = connection.prepareStatement(getAllNvdCVEs)) {
+			ResultSet rs = pstmt.executeQuery();
+
+			while (rs.next()) {
+
+				try {
+					nvdVulnerabilities.add(new NvdVulnerability(rs.getString("cve_id"), rs.getTimestamp("published_date").toLocalDateTime(), rs.getString("status")));
+				} catch (Exception ignore) {}
+
+			}
+		} catch (Exception e) {
+			logger.error("ERROR: Failed to grab NVD CVEs from nvddata table\n{}", e.toString());
+		}
+
+		return nvdVulnerabilities;
 	}
 }

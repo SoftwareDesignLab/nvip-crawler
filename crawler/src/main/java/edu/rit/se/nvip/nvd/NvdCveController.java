@@ -78,7 +78,7 @@ public class NvdCveController {
 
 	public void compareRawCVEsWithNVD() {
 		// Get raw CVE ID and Created date
-		HashMap<String, LocalDateTime> rawCves = databaseHelper.getRawCVEs();
+		HashMap<String, LocalDateTime> rawCves = databaseHelper.getRawCVEForNVDComparisons();
 
 		// Get NVD CVEs
 		ArrayList<NvdVulnerability> nvdCves = databaseHelper.getAllNvdCVEs();
@@ -95,6 +95,7 @@ public class NvdCveController {
 
 		for (String rawCve: rawCves.keySet()) {
 			for (NvdVulnerability nvdCve: nvdCves) {
+				boolean checked = false;
 				if (nvdCve.getCveId().equals(rawCve)) {
 					switch (nvdCve.getStatus()) {
 						case "Received": {
@@ -122,8 +123,6 @@ public class NvdCveController {
 							break;
 						}
 					}
-				} else {
-					notInNvd++;
 				}
 			}
 		}
