@@ -274,15 +274,6 @@ public class CrawlerMain {
     public List<String> grabSeedURLs() {
         List<String> urls = new ArrayList<>();
         try {
-            List<NvipSource> dbsources = databaseHelper.getNvipCveSources();
-            if (dbsources.isEmpty())
-                logger.error("No source URLs in the database to crawl! Please make sure to include at least one source URL in the 'nvipsourceurl' table!");
-
-            for (NvipSource nvipSource : dbsources)
-                urls.add(nvipSource.getUrl());
-
-            logger.info("Loaded {} source URLs from database!", urls.size());
-
             File seeds = new File((String) crawlerVars.get("seedFileDir"));
             BufferedReader seedReader = new BufferedReader(new FileReader(seeds));
             List<String> seedURLs = new ArrayList<>();

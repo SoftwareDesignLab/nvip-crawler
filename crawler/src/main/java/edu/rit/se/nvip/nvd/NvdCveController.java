@@ -24,6 +24,7 @@
 package edu.rit.se.nvip.nvd;
 
 import edu.rit.se.nvip.DatabaseHelper;
+import edu.rit.se.nvip.model.NvdVulnerability;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.JSONArray;
@@ -36,6 +37,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 /**
@@ -55,7 +57,7 @@ public class NvdCveController {
 	public static void main(String[] args) {
 		NvdCveController nvd = new NvdCveController();
 		//nvd.updateNvdDataTable("https://services.nvd.nist.gov/rest/json/cves/2.0?pubStartDate=<StartDate>&pubEndDate=<EndDate>");
-		//nvd.compareRawDescriptionsWithNVD();
+		nvd.compareRawCVEsWithNVD();
 	}
 
 
@@ -76,26 +78,65 @@ public class NvdCveController {
 
 	public void compareRawCVEsWithNVD() {
 		// Get raw CVE ID and Created date
-		HashMap<String, LocalDateTime> rawCves = new HashMap<>();
+		HashMap<String, LocalDateTime> rawCves = databaseHelper.getRawCVEs();
 
 		// Get NVD CVEs
-		HashMap<String, LocalDateTime> nvdCves = new HashMap<>();
+		ArrayList<NvdVulnerability> nvdCves = databaseHelper.getAllNvdCVEs();
 
 		//Run comparison by iterating raw CVEs
+		int inNvd = 0;
 		int notInNvd = 0;
+		int received = 0;
+		int analyzed = 0;
+		int awaitingAnalysis = 0;
+		int underGoingAnalysis = 0;
+
 		double avgTimeGap = 0;
 
-
 		for (String rawCve: rawCves.keySet()) {
-			if (nvdCves.containsKey(rawCve)) {
-
-			} else {
-
+			for (NvdVulnerability nvdCve: nvdCves) {
+				if (nvdCve.getCveId().equals(rawCve)) {
+					switch (nvdCve.getStatus()) {
+						case "Received": {
+							received++;
+							notInNvd++;
+							break;
+						}
+						case "Undergoing Analysis": {
+							underGoingAnalysis++;
+							notInNvd++;
+							break;
+						}
+						case "Awaiting Analysis": {
+							awaitingAnalysis++;
+							notInNvd++;
+							break;
+						}
+						case "Analyzed": {
+							analyzed++;
+							inNvd++;
+							break;
+						}
+						default: {
+							inNvd++;
+							break;
+						}
+					}
+				} else {
+					notInNvd++;
+				}
 			}
 		}
 
 		//Print Results
-
+		logger.info("NVD Comparison Results\n" +
+				"{} in NVD\n" +
+				"{} not in NVD\n" +
+				"{} analyzed in NVD\n" +
+				"{} received by NVD\n" +
+				"{} undergoing analysis in NVD\n" +
+				"{} awaiting analysis in NVD",
+				inNvd, notInNvd, analyzed, received, underGoingAnalysis, awaitingAnalysis);
 	}
 
 	public void updateNvdDataTable(String url) {
