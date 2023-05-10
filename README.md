@@ -17,37 +17,121 @@ It scrapes disclosed CVEs, scores/characterizes them automatically and stores th
 * NVIP requires at least Java version 8.
   - Download Link: https://www.oracle.com/java/technologies/javase/javase8-archive-downloads.html
 
-* It uses MySQL (version 8) to store CVEs. The database muste be created before running the system. The database dump is provided at '/nvip_data/mysql-database'. 
+
+* It uses MySQL (version 8) to store CVEs. The database muste be created before running the system. The current database dump is provided at '/nvip_data/mysql-database'. 
   - Download Link: https://dev.mysql.com/downloads/installer/
+
 
 * Java Maven is used to compile the project with its requirements.
   - Download Link: https://maven.apache.org/download.cgi
 
-* Because the crawling process is a multi-threaded process and the characterization and product name extraction trains AI/ML models, minimum 8GB RAM is needed to run the system. (Suggested JVM parameters: -Xms8g -Xmx16g) 
+
+* We also use Docker for building and deploying the project.
+  - Download Link: https://docs.docker.com/engine/install/
+
+
+* Because the crawling process is a multi-threaded process and the characterization and product name extraction trains AI/ML models, minimum 8GB RAM is needed to run the system.
 
 ## Summary of Open Source Technologies/Systems Used
+* NVIP uses Crawler4j to conduct multi-threaded web crawling for CVE data: https://github.com/rzo1/crawler4j
+
 * NVIP uses WEKA (The workbench for machine learning) to train Machine Learning models for CVE characterization: https://www.cs.waikato.ac.nz/ml/weka/
 
 * MySQL database is used to store crawled and characterized CVEs: https://www.mysql.com/
 
 * The Apache Open NLP is used for CVE reconciliation: https://opennlp.apache.org/ 
 
-* The Deeplearning4j framework is used to train Deep Learning (LSTM) models for product name extraction: https://deeplearning4j.org/
+* The DeepLearning4j framework is used to train Deep Learning (LSTM) models for product name extraction: https://deeplearning4j.org/
 
-# Installation Guide (Docker)
+* NVIP also uses Log4j for logging errors and state: https://logging.apache.org/log4j/2.x/javadoc.html
+# Installation and Setup Guide (Docker)
 
 ## 1. Install Docker and Build via Docker CLI
 
 #### 1. Build Backend Image
     $ docker build -t nvip_backend .
 
-#### 2. Run Docker Image
-    $ docker run -m=10g nvip_backend
-
-OR
-
-#### 3. Run with Env List
+#### 2. Run with Env List
     $ docker run -m=10g --env-file env.list nvip_backend
+
+The env.list file contains a set of environment variables that the backend requires in order to run.
+These variables contain default values for if they're not specified, but it is advised to have them configured based on your usage.
+
+A list of the environment variables is provided below:
+
+## Database
+
+* HIKARI_URL: JDBC URL used for connecting to the MySQL Database.
+  - There is no default value.
+  - Use mysql://localhost:3306 for running locally, and mysql://host.docker.internal:3306 to run with docker
+
+
+* HIKARI_USER: Database username used to login to the MySQL database
+  - There is no default value
+  
+
+* HIKARI_PASSWORD: Database password used to login to the MySQL database
+  - There is no default value
+
+
+* NVIP_DATA_DIR: Directory path for data resources used by NVIP at runtime
+  - Default value: nvip_data
+
+
+* NVIP_REFRESH_NVD_LIST: Boolean parameter that determines whether or not NVIP should refresh the existing NVD data in the nvd-cve.csv file
+  - Default value: true
+
+
+* NVIP_PARALLEL_PROCESS_THREAD_LIMIT: Maximum # of threads for the DBParallelProcess class to use
+  - Default value: 9
+
+## Runtime Data
+
+* NVIP_OUTPUT_DIR: Output directory path for the web crawler(s)
+  - Default value: output/crawlers
+
+
+* NVIP_SEED_URLS: Directory path for seed URLs .txt file for NVIP's web crawler(s)
+  - Default value: nvip_data/url-sources/nvip-seeds.txt
+
+
+* NVIP_WHITELIST_URLS: Directory path for whitelisted URLs/domains for NVIP's web crawler(s)
+  - Default value: nvip_data/url-sources/nvip-whitelist.txt
+
+
+* NVIP_ENABLE_GITHUB: Boolean parameter for enabling pulling CVEs from CVE GitHib repo: https://github.com/CVEProject/cvelist
+  - Default value: true
+
+## Crawler
+
+* NVIP_CRAWLER_POLITENESS: Time (ms) for how long the crawler should wait for each page to load
+  - Default value: 3000
+
+
+* NVIP_CRAWLER_MAX_PAGES: Maximum # of pages for the crawler to navigate to
+  - Default value: 3000
+
+
+* NVIP_CRAWLER_DEPTH: Maximum depth for the web crawler
+  - Default value: 1
+
+
+* NVIP_CRAWLER_REPORT_ENABLED: Boolean parameter for enabling error report for crawler sources. Output is logged in the specified output directory
+  - Default value: true
+
+
+* NVIP_NUM_OF_CRAWLER: Max # of crawler threads
+  - Default value: 10
+
+## Characterizer
+
+## Exploit Finder
+
+## Patch Finder
+
+## Email Notification Service
+
+
 
 # Installation Guide (Default)
 
