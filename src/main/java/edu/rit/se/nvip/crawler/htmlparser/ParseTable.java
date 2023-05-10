@@ -42,7 +42,7 @@ public class ParseTable extends AbstractCveParser implements ParserStrategy {
 
     public void clickAcceptCookies() {
         try {
-            WebElement cookiesButton = driver.findElement(By.xpath("//button[text()='Agree' or text()='Accept' or text()='Accept Cookies']"));
+            WebElement cookiesButton = driver.findElement(By.xpath("//button[text()='Agree' or text()='Accept' or text()='Accept Cookies' or text()='Accept all']"));
             cookiesButton.click();
             logger.info("Accepted Cookies for page " + sourceUrl);
         } catch (NoSuchElementException e) {
