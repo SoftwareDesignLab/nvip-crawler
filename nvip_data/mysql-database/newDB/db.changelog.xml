@@ -491,9 +491,6 @@
             <column name="cve_id" type="VARCHAR(20)">
                 <constraints primaryKey="true" nullable="false" unique="true"/>
             </column>
-            <column name="status" type="TINYTEXT">
-                <constraints nullable="false"/>
-            </column>
         </createTable>
 
         <createIndex
