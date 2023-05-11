@@ -271,4 +271,60 @@ A list of the environment variables is provided below:
   - There is no default value.
 
 
+# Component Documentation
 
+
+### Overview
+This project consists of 8 main components
+
+*  **CVE Web Crawler**
+   - Uses Multi Threaded Web Crawling for navigating source pages to grab raw CVE data
+   
+
+*  **CVE Reconciler** 
+   - Reconciles information found for CVEs, each CVE will likely have data from multiple sources.
+   To merge that data, the reconciler uses an automated Natural Language Process model for finding the best 
+   description for each CVE.
+
+
+
+*  **CVE Characterizer**
+   - This component provides automated CVSS scores and VDO Labels for each CVE via a Natural Language Processing model, which is trained
+   via the data provided in `nvip_data` (Model is also here as well)
+   - NIST's CVSS score summary: https://nvd.nist.gov/vuln-metrics/cvss
+   - NIST's VDO Label summary: https://csrc.nist.gov/csrc/media/publications/nistir/8138/draft/documents/nistir_8138_draft.pdf 
+
+
+*  **CVE Processor**
+   - This component processes the compiled CVEs by storing them in the Database, then compares each CVE in NVIP to the 
+   CVEs in NVD and MITRE to compare performance of NVIP vs NVD and MITRE.
+   - NVD: https://nvd.nist.gov/
+   - MITRE:  https://www.cve.org/
+   - For comparing with NVD, we're currently transitioning to NVD's 2.0 API: https://nvd.nist.gov/developers/vulnerabilities 
+
+
+*  **CVE Product Extractor**
+   - This component identifies affected products in a CVE via a Named Entity Recognition (NER) model.
+   - The model and it's training data is provided in `nvip_data`
+   - Each extracted product is converted as a Common Product Enumeration (CPE) string 
+   - CPE Definition and Dictionary(s): https://nvd.nist.gov/products/cpe
+
+
+*  **CVE Exploit Finder**
+   - This component identifies exploits for CVEs in NVIP
+   - Currently, we just pull exploit data from ExploitDB: https://gitlab.com/exploit-database/exploitdb
+    
+
+*  **CVE Patch Finder**
+   - This component identifies possible patches for CVEs
+   - Patches are found by crawling available repos for the affected products of a CVE
+   - Each repo is cloned, then each commit is navigated to identify patches by checking for keywords in the commit messages
+   - Product repos are cloned in `nvip_data`, then deleted afterwards after being used
+   - **NOTE** This component relies directly on the affected product data from product extraction
+
+
+*  **NVIP Cache Updater and NVIP Email Notifications Service**
+   - This last component makes sure the Web App is up-to-date with the recent vulnerabilities found in NVIP.
+   - This is done via collecting the CVEs found in the past week (7 days), and adds them to the `vulnerabilityaggregate` table in the database.
+   - The `vulnerabilityaggregate` table acts as a cache table for the Web API.
+   - After the cache is updated, the service sends an email notification to all admin users in NVIP. Each email notification contains a list of CVEs added to NVIP.
