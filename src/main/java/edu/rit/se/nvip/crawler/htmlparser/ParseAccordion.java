@@ -1,16 +1,14 @@
 package edu.rit.se.nvip.crawler.htmlparser;
 
 import edu.rit.se.nvip.model.CompositeVulnerability;
+import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-import org.openqa.selenium.By;
-import org.openqa.selenium.NoSuchElementException;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
+import org.openqa.selenium.*;
 import org.openqa.selenium.interactions.Actions;
 
 import java.util.ArrayList;
@@ -67,27 +65,17 @@ public class ParseAccordion extends AbstractCveParser implements ParserStrategy 
         else return isRootAccordion(par);
     }
 
-    /**
-     * Parse accordion element
-     * @param accordion - accordion element to be parsed
-     * @return - list of vulnerabilities parsed from accordion children
-     */
-    private List<CompositeVulnerability> parseAccordion(Element accordion) {
+    private List<CompositeVulnerability> parseCVEsFromAccordion(String accordionText) {
         List<CompositeVulnerability> cves = new ArrayList<>();
-        Elements accordionChildren = accordion.children();
-        for (Element child : accordionChildren) {
-            Set<String> thisAccCVES = getCVEs(child.text());
-            if (thisAccCVES.isEmpty()) continue;
-//            String date = getCVEDate(child.text());
-            GenericDate date = new GenericDate(child.text());
-            String rawDate = date.getRawDate();
-            String description = child.text();
-            for (String cve : thisAccCVES) {
-                CompositeVulnerability vuln = new CompositeVulnerability(
-                        0, sourceUrl, cve, null, rawDate, rawDate, description, sourceDomainName
-                );
-                cves.add(vuln);
-            }
+        Set<String> thisAccCVES = getCVEs(accordionText);
+        if (thisAccCVES.isEmpty()) return cves;
+        GenericDate date = new GenericDate(accordionText);
+        String rawDate = date.getRawDate();
+        for (String cve : thisAccCVES) {
+            CompositeVulnerability vuln = new CompositeVulnerability(
+                    0, sourceUrl, cve, null, rawDate, rawDate, accordionText, sourceDomainName
+            );
+            cves.add(vuln);
         }
         return cves;
     }
@@ -102,7 +90,8 @@ public class ParseAccordion extends AbstractCveParser implements ParserStrategy 
 
         // search for class name containing "accordion"
         // parse and grab accordion root
-        Document doc = Jsoup.parse(driver.getPageSource());
+        String originalHtml = driver.getPageSource();
+        Document doc = Jsoup.parse(originalHtml);
         Elements accordions = doc.select("accordion, bolt-accordion, acc, div[class*=accordion], div[id*=accordion]");
         // make sure we are only looking at root accordions
         accordions.removeIf(el -> !isRootAccordion(el));
@@ -110,7 +99,23 @@ public class ParseAccordion extends AbstractCveParser implements ParserStrategy 
         // some bootstrap pages or pages with buttons might have hidden data until you click on it
         // go through each accordion child and click on it
         for (Element accordion : accordions) {
-            vulnList.addAll(parseAccordion(accordion));
+            Elements accordionChildren = accordion.children();
+            for (Element child : accordionChildren) {
+                StringBuilder childText = new StringBuilder(child.text());
+                String diff = "";
+                // try and click on child to see if we can gain any more CVE info from it
+                try {
+                    WebElement childWebElement = driver.findElement(By.xpath(jsoupToXpath(child)));
+                    actions.moveToElement(childWebElement).click().perform();
+                    String newHtml = driver.getPageSource();
+                    diff = StringUtils.difference(originalHtml, newHtml);
+                } catch (NoSuchElementException | ElementNotInteractableException e) {
+                    logger.info("Could not click on accordion child");
+                }
+                if (!diff.equals(""))
+                    childText.append(diff, 0, 200);
+                vulnList.addAll(parseCVEsFromAccordion(childText.toString()));
+            }
         }
         // or sometimes there is a decent amount of header and body elements next to each other
         // Ex: ASUS
@@ -131,20 +136,7 @@ public class ParseAccordion extends AbstractCveParser implements ParserStrategy 
                         accText.append(next.text());
                         next = next.nextElementSibling();
                     }
-
-                    //TODO: duplicated code fragment with up above
-                    Set<String> thisAccCVES = getCVEs(accText.toString());
-                    if (thisAccCVES.isEmpty()) continue;
-                    GenericDate date = new GenericDate(accText.toString());
-                    String rawDate = date.getRawDate();
-                    String description = accText.toString();
-                    for (String cve : thisAccCVES) {
-                        CompositeVulnerability vuln = new CompositeVulnerability(
-                                0, sourceUrl, cve, null, rawDate, rawDate, description, sourceDomainName
-                        );
-                        vulnList.add(vuln);
-                    }
-
+                    vulnList.addAll(parseCVEsFromAccordion(accText.toString()));
                 }
             }
         }
