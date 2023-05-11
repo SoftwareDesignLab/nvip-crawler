@@ -34,7 +34,6 @@ public class GenericDate {
         DATE_FORMATS.put(Pattern.compile("^\\d{4}/\\d{1,2}/\\d{1,2}\\s\\d{1,2}:\\d{2}:\\d{2}$"), "yyyy/MM/dd HH:mm:ss");
         DATE_FORMATS.put(Pattern.compile("^\\d{1,2}\\s[a-z]{3}\\s\\d{4}\\s\\d{1,2}:\\d{2}:\\d{2}$"), "dd MMM yyyy HH:mm:ss");
         DATE_FORMATS.put(Pattern.compile("^\\d{1,2}\\s[a-z]{4,}\\s\\d{4}\\s\\d{1,2}:\\d{2}:\\d{2}$"), "dd MMMM yyyy HH:mm:ss");
-        DATE_FORMATS.put(Pattern.compile("(\\b(?:January|February|March|April|May|June|July|August|September|October|November|December)\\b)\\s(\\d{4})"), "MMMM YYYY");
     }
 
 
@@ -67,11 +66,20 @@ public class GenericDate {
                 return DATE_FORMATS.get(regexp);
             }
         }
-        return null; // Unknown format.
+        // fall through - try matching at least a month and year
+        Pattern monthRegExp = Pattern.compile("(\\b(?:January|February|March|April|May|June|July|August|September|October|November|December)\\b)\\s(\\d{4})");
+        Matcher matcher = monthRegExp.matcher(dateString);
+        if (matcher.find()) {
+            rawDate = matcher.group();
+            return "MMMM yyyy";
+        }
+        // Unknown format, return null
+        return null;
     }
 
     public LocalDate parseDate(String date) {
         String format = matchRawDate(date);
+
         return null;
     }
 

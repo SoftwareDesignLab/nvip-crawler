@@ -28,6 +28,8 @@ import edu.rit.se.nvip.utils.UtilHelper;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
 import io.github.bonigarcia.wdm.WebDriverManager;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriverService;
 import org.openqa.selenium.firefox.FirefoxDriver;
@@ -228,6 +230,59 @@ public abstract class AbstractCveParser {
 			ie.printStackTrace();
 		}
 		return pdfText;
+	}
+
+	public static String jsoupToXpath(Element element) {
+		// Initialize the XPath with the root element
+		String xpath = "/";
+		// Initialize a list to store the XPath components
+		List<String> components = new ArrayList<>();
+
+		// Determine the child element to start the traversal from
+		Element child = element.tagName().isEmpty() ? element.parent() : element;
+
+		// Traverse up the DOM tree until the root element is reached
+		while (child.parent() != null){
+			// Get the parent element
+			Element parent = child.parent();
+			// Get the siblings of the child element
+			Elements siblings = parent.children();
+			// Initialize a variable to store the XPath component for the child element
+			String componentToAdd = null;
+
+			// If the child element is the only one of its kind among its siblings, use its tag name as the component
+			if (siblings.size() == 1) {
+				componentToAdd = child.tagName();
+			} else {
+				// If there are multiple siblings with the same tag name, use an index to differentiate between them
+				int x = 1;
+				for(Element sibling: siblings){
+					if (child.tagName().equals(sibling.tagName())){
+						if (child == sibling){
+							break;
+						} else {
+							x++;
+						}
+					}
+				}
+				componentToAdd = String.format("%s[%d]", child.tagName(), x);
+			}
+			// Add the XPath component for the child element to the list of components
+			components.add(componentToAdd);
+			// Move up the DOM tree to the parent element
+			child = parent;
+		}
+
+		// Reverse the list of components to get the XPath in the correct order
+		List<String> reversedComponents = new ArrayList<>();
+		for (int i = components.size()-1; i > 0; i--){
+			reversedComponents.add(components.get(i));
+		}
+		// Join the reversed components into a single XPath string
+		xpath = xpath + String.join("/", reversedComponents);
+
+		// Return the final XPath
+		return xpath;
 	}
 
 }
