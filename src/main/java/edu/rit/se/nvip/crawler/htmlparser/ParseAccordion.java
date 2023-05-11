@@ -14,7 +14,6 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.interactions.Actions;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -64,7 +63,7 @@ public class ParseAccordion extends AbstractCveParser implements ParserStrategy 
     public boolean isRootAccordion(Element el) {
         Element par = el.parent();
         if (par == null) return true;
-        else if (par.tagName().contains("accordion") || par.id().contains("accordion")) return false;
+        else if (par.className().contains("accordion") || par.id().contains("accordion")) return false;
         else return isRootAccordion(par);
     }
 
@@ -79,11 +78,13 @@ public class ParseAccordion extends AbstractCveParser implements ParserStrategy 
         for (Element child : accordionChildren) {
             Set<String> thisAccCVES = getCVEs(child.text());
             if (thisAccCVES.isEmpty()) continue;
-            String date = getCVEDate(child.text());
+//            String date = getCVEDate(child.text());
+            GenericDate date = new GenericDate(child.text());
+            String rawDate = date.getRawDate();
             String description = child.text();
             for (String cve : thisAccCVES) {
                 CompositeVulnerability vuln = new CompositeVulnerability(
-                        0, sourceUrl, cve, null, date, date, description, sourceDomainName
+                        0, sourceUrl, cve, null, rawDate, rawDate, description, sourceDomainName
                 );
                 cves.add(vuln);
             }
@@ -102,7 +103,7 @@ public class ParseAccordion extends AbstractCveParser implements ParserStrategy 
         // search for class name containing "accordion"
         // parse and grab accordion root
         Document doc = Jsoup.parse(driver.getPageSource());
-        Elements accordions = doc.select("div[class*=accordion], div[id*=accordion]");
+        Elements accordions = doc.select("accordion, bolt-accordion, acc, div[class*=accordion], div[id*=accordion]");
         // make sure we are only looking at root accordions
         accordions.removeIf(el -> !isRootAccordion(el));
         // sometimes data is always visible from html source just hidden
@@ -110,6 +111,42 @@ public class ParseAccordion extends AbstractCveParser implements ParserStrategy 
         // go through each accordion child and click on it
         for (Element accordion : accordions) {
             vulnList.addAll(parseAccordion(accordion));
+        }
+        // or sometimes there is a decent amount of header and body elements next to each other
+        // Ex: ASUS
+        Elements headers = doc.select("h1, h2, h3, h4, h5, h6, div[id*=header], div[class*=header]");
+        Elements bodies = doc.select("p, div[id*=body], div[class*=body]");
+        // we can consider pages that carry at least 20 of each, then we can assume this
+        // is either a large accordion or list style page we can parse
+        if (headers.size() > 20 && bodies.size() > 20) {
+            for (Element header : headers) {
+                // get next element, if it is contained in bodies, we can assume the two point to the same vuln
+                Element next = header.nextElementSibling();
+                if (next == null) continue;
+                else if (bodies.contains(next)) {
+                    StringBuilder accText = new StringBuilder();
+                    accText.append(header.text());
+                    while (next != null && !headers.contains(next)) {
+                        accText.append(" ");
+                        accText.append(next.text());
+                        next = next.nextElementSibling();
+                    }
+
+                    //TODO: duplicated code fragment with up above
+                    Set<String> thisAccCVES = getCVEs(accText.toString());
+                    if (thisAccCVES.isEmpty()) continue;
+                    GenericDate date = new GenericDate(accText.toString());
+                    String rawDate = date.getRawDate();
+                    String description = accText.toString();
+                    for (String cve : thisAccCVES) {
+                        CompositeVulnerability vuln = new CompositeVulnerability(
+                                0, sourceUrl, cve, null, rawDate, rawDate, description, sourceDomainName
+                        );
+                        vulnList.add(vuln);
+                    }
+
+                }
+            }
         }
         return vulnList;
     }
