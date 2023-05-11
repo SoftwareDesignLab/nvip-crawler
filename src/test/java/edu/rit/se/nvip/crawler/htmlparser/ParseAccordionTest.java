@@ -20,7 +20,7 @@ public class ParseAccordionTest extends AbstractParserTest{
         assertNotNull(vuln);
         assertEquals("December 2022", vuln.getPublishDate());
         assertTrue(vuln.getDescription().contains("Incorrect default permissions in the installation folder for NI LabVIEW"));
-        assertFalse(vuln.getDescription().contains("NI has discovered an improper input validation in NI System"));
+        assertFalse(vuln.getDescription().contains("An update is available for FlexLogger 2019"));
     }
 
     @Test
