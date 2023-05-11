@@ -118,10 +118,6 @@ public class NVIPMain {
 		// Characterize
 		crawledVulnerabilityList = nvipMain.characterizeCVEs(crawledVulnerabilityList);
 
-		// Prepare stats and Store found CVEs in DB
-		int runId = databaseHelper.getLatestRunId();
-		nvipMain.storeCVEs(crawledVulnerabilityList, runId);
-
 		DailyRun dailyRunStats = new DailyRun(UtilHelper.longDateFormat.format(new Date()),
 				(float) ((crawlEndTime - crawlStartTime) / (1000.0 * 60)), crawledVulnerabilityList.size(), cveListMap.get("nvd").size(),
 				cveListMap.get("mitre").size(), cveListMap.get("nvd-mitre").size());
@@ -138,6 +134,10 @@ public class NVIPMain {
 				dailyRunStats.getTotalCveCount(), dailyRunStats.getNotInNvdCount(), dailyRunStats.getNotInMitreCount(),
 				dailyRunStats.getNotInBothCount(), dailyRunStats.getAddedCveCount(), dailyRunStats.getUpdatedCveCount(),
 				dailyRunStats.getAvgTimeGapNvd(), dailyRunStats.getAvgTimeGapMitre());
+
+		// Prepare stats and Store found CVEs in DB
+		int runId = databaseHelper.getLatestRunId();
+		nvipMain.storeCVEs(crawledVulnerabilityList, runId);
 
 		// log .csv files
 		logger.info("Creating output CSV files...");
