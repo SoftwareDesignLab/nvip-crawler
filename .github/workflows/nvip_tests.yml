@@ -41,7 +41,7 @@ jobs:
   deploy-crawler:
     runs-on: ubuntu-latest
     needs: build-test-crawler
-    if: ${{ success() && github.ref == 'refs/heads/dev' }}
+    if: ${{ success() && github.ref == 'refs/heads/main' }}
     steps:
       - uses: actions/checkout@v3
       - name: Login to GitHub Container Registry
@@ -53,5 +53,5 @@ jobs:
 
       - name: Build and Push Docker Image for Backend
         run: |
-          docker build . -t nvip-crawler:dev -t ghcr.io/softwaredesignlab/nvip-crawler:dev
-          docker push ghcr.io/softwaredesignlab/nvip-crawler:dev
+          docker build . -t nvip-crawler:latest -t ghcr.io/softwaredesignlab/nvip-crawler:latest
+          docker push ghcr.io/softwaredesignlab/nvip-crawler:latest
