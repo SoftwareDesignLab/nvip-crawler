@@ -26,6 +26,7 @@ It scrapes disclosed CVEs, scores/characterizes them automatically and stores th
   - Download Link: https://www.liquibase.com/download
 
 
+
 * Java Maven is used to compile the project with its requirements.
   - Download Link: https://maven.apache.org/download.cgi
 
@@ -43,16 +44,20 @@ It scrapes disclosed CVEs, scores/characterizes them automatically and stores th
 * NVIP uses WEKA (The workbench for machine learning) to train Machine Learning models for CVE characterization: https://www.cs.waikato.ac.nz/ml/weka/
 
 
+
 * MySQL database is used to store crawled and characterized CVEs: https://www.mysql.com/
 
 
+
 * The Apache Open NLP is used for CVE reconciliation: https://opennlp.apache.org/ 
+
 
 
 * The DeepLearning4j framework is used to train Deep Learning (LSTM) models for product name extraction: https://deeplearning4j.org/
 
 
 * NVIP also uses Log4j for logging errors and state: https://logging.apache.org/log4j/2.x/javadoc.html
+
 
 # Installation and Setup Guide (w/ Docker)
 
