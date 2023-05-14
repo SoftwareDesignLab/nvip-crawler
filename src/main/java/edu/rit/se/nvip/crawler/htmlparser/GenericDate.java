@@ -13,10 +13,10 @@ public class GenericDate {
         DATE_FORMATS = new HashMap<>();
         DATE_FORMATS.put(Pattern.compile("^\\d{8}$"), "yyyyMMdd");
         DATE_FORMATS.put(Pattern.compile("^\\d{1,2}-\\d{1,2}-\\d{4}$"), "dd-MM-yyyy");
-        DATE_FORMATS.put(Pattern.compile("^\\d{4}-\\d{1,2}-\\d{1,2}$"), "yyyy-MM-dd");
+        DATE_FORMATS.put(Pattern.compile("([12]\\d{3}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01]))"), "yyyy-MM-dd");
         DATE_FORMATS.put(Pattern.compile("(0?[1-9]|1[012])[- \\/.](0?[1-9]|[12][0-9]|3[01])[- \\/.]((?:19|20)\\d\\d)"), "MM/DD/YYYY");
         DATE_FORMATS.put(Pattern.compile("^\\d{4}/\\d{1,2}/\\d{1,2}$"), "yyyy/MM/dd");
-        DATE_FORMATS.put(Pattern.compile("^\\d{1,2}\\s[a-z]{3}\\s\\d{4}$"), "dd MMM yyyy");
+        DATE_FORMATS.put(Pattern.compile("([1-9]|[12]\\d|3[01])\\s(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\\s([12]\\d{3})"), "dd MMM yyyy");
         DATE_FORMATS.put(Pattern.compile("^\\d{1,2}\\s[a-z]{4,}\\s\\d{4}$"), "dd MMMM yyyy");
         DATE_FORMATS.put(Pattern.compile("^\\d{12}$"), "yyyyMMddHHmm");
         DATE_FORMATS.put(Pattern.compile("^\\d{8}\\s\\d{4}$"), "yyyyMMdd HHmm");
