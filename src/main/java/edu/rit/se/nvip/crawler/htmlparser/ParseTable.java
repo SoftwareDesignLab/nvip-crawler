@@ -15,8 +15,6 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.time.Duration;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class ParseTable extends AbstractCveParser implements ParserStrategy {
 
@@ -69,10 +67,12 @@ public class ParseTable extends AbstractCveParser implements ParserStrategy {
         // click on row and see if we can grab any more html
         String diff = "";
         String htmlBefore = "";
+        WebElement rowElement = null;
         try {
-            String xPathContainsCVE = "//tr[td//text()[contains(.,'%s')]]";
-            WebElement rowElement = driver.findElement(By.xpath(String.format(xPathContainsCVE, cveList.get(0))));
-
+//            String xPathContainsCVE = "//tr[td//text()[contains(.,'%s')]]";
+//            WebElement rowElement = driver.findElement(By.xpath(String.format(xPathContainsCVE, cveList.get(0))));
+            rowElement = driver.findElement(By.xpath(jsoupToXpath(row)));
+            // try and click element and every child of element
             htmlBefore = driver.findElement(By.tagName("tbody")).getAttribute("innerHTML");
             actions.scrollToElement(rowElement).perform();
             rowElement.click();
@@ -81,12 +81,12 @@ public class ParseTable extends AbstractCveParser implements ParserStrategy {
         } catch (NoSuchElementException e) {
             logger.error("Row not found for " + cveIDs);
         }
-        String description;
+        String description = "";
         // if we gain new information from clicking, add it onto our html to parse
         if (!diff.equals("")) {
             StringBuilder newHtml = new StringBuilder();
             // first cut off diff where the rest is contained in the before text
-            while (!htmlBefore.contains(diff)) {
+            while (!htmlBefore.contains(diff) && diff.length() > 10) {
 //                logger.info("cutting off diff..." + diff.substring(0, 10));
                 newHtml.append(diff, 0, 10);
                 diff = diff.substring(10);
@@ -98,22 +98,10 @@ public class ParseTable extends AbstractCveParser implements ParserStrategy {
 //            logger.info("no new information gained from clicking");
             description = rowText;
         }
-        // TODO: change this date logic with a more generalized format selection and usage
-        //      currently this most likely is not enough for all cases of dates in tables
-        //      NVIP-crawler#9
         String date = "";
-        Pattern longDatePattern = Pattern.compile(regexDates);
-        Pattern yyyyMMddPattern = Pattern.compile("([12]\\d{3}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01]))");
-        Pattern ddMMMyyyyPattern = Pattern.compile("([1-9]|[12]\\d|3[01])\\s(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\\s([12]\\d{3})");
-        Matcher longMatch = longDatePattern.matcher(rowText);
-        Matcher shortMatch = yyyyMMddPattern.matcher(rowText);
-        Matcher shortMatch2 = ddMMMyyyyPattern.matcher(rowText);
-        if (longMatch.find())
-            date = longMatch.group();
-        else if (shortMatch.find())
-            date = shortMatch.group();
-        else if (shortMatch2.find())
-            date = shortMatch2.group();
+        GenericDate genericDate = new GenericDate(rowText);
+        if (genericDate.getRawDate() != null)
+            date = genericDate.getRawDate();
         else
             logger.warn("No date found for " + cveIDs);
 
@@ -155,16 +143,18 @@ public class ParseTable extends AbstractCveParser implements ParserStrategy {
             WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(5));
             By nextButtonBy = By.xpath("//*[contains(@class,'next')]");
             WebElement nextButton = wait.until(ExpectedConditions.elementToBeClickable(nextButtonBy));
-            if (nextButton.isDisplayed() && nextButton.isEnabled()) {
-                actions.scrollToElement(nextButton).perform();
-                nextButton.click();
-            }
+            actions.scrollToElement(nextButton).perform();
+            nextButton.click();
+//            if (nextButton.isDisplayed() && nextButton.isEnabled()) {
+//            }
             logger.info("Next button clicked for Table at " + sourceUrl);
             nextPage = StringUtils.difference(sourceHtml, driver.getPageSource());
         } catch (NoSuchElementException | TimeoutException e) {
             logger.info("No Next button found for Table at " + sourceUrl);
         } catch (ElementNotInteractableException ei) {
             logger.warn("Next Button found raises ElementNotInteractableException...");
+        } catch (StaleElementReferenceException s) {
+            logger.warn("Next Button found raises StaleElementReferenceException...");
         }
         return nextPage;
     }
