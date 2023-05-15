@@ -20,50 +20,146 @@ public class ParseList extends AbstractCveParser implements ParserStrategy {
 
     private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
 
-    // Needs to be tested on a website with a list and CVE IDs
+    private String grabDate(String sourceHtml){
+        String date = getCVEDate(sourceHtml);
+        if(date == ""){
+            Pattern dayMonthYearPattern = Pattern.compile("([1-9]|[12]\\d|3[01])\\s"
+                + "(Jan(uary)?|Feb(ruary)?|Mar(ch)?|Apr(il)?|May|Jun(e)?|Jul(y)?|Aug(ust)?|Sep(tember)?|Oct(ober)?|Nov(ember)?|Dec(ember)?)"
+                + "\\s([12]\\d{3})");
+            Matcher dateMatcher = dayMonthYearPattern.matcher(sourceHtml);
+            if(dateMatcher.find())
+                date = dateMatcher.group();
+        }
+        return date;
+    }
+
     @Override
     public List<CompositeVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
         List<CompositeVulnerability> vulnList = new ArrayList<>();
 
         // Grab all of the li elements from the page
         Document doc = Jsoup.parse(sCVEContentHTML);
+
+        //Check <li>
         Elements lists = doc.select("li:contains(CVE)");
 
         for (Element list : lists) {
-            String list_text = list.text();
-
-            String cve = getCVEID(list_text);
-
-            String date = getCVEDate(list_text);
-
-            // Check if there is something that has details/description
-            Element desc_el = list.select(":contains(detail), :contains(description)").first();
+            String cve = null;
+            String date = null;
             String desc = null;
 
-            if(desc_el != null){
-                desc = desc_el.text();
+            if(list.childrenSize() == 2){
+                String list_txt = list.text();
+                cve = getCVEID(list_txt);
+                date = grabDate(list_txt);
+                desc = list.child(1).text();
             }
             else{
-                // Check the first <p> if its CVE related
-                desc_el = list.select("p:matchesOwn(" + regexAllCVERelatedContent + ")").first();
+                Element cve_el = list.select(":containsOwn(CVE)").first();
+                cve = getCVEID(cve_el.text());
 
+                // First check the next sibling element if its CVE related If so, its prolly the desc
+                Element desc_el = cve_el.nextElementSibling();
                 if(desc_el != null){
-                    desc = desc_el.text();
-                }
-                else{
-                    // If there is no <p> that has CVE stuff, check the inner text of the <li>
-                    String test = list.ownText();
                     Pattern cvePattern = Pattern.compile(regexAllCVERelatedContent);
-                    Matcher cveMatcher = cvePattern.matcher(test);
-                    if (cveMatcher.find())
-                        desc = cveMatcher.group();
+                    Matcher cveMatcher = cvePattern.matcher(desc_el.text());
+
+                    if (!cveMatcher.find()){
+                        // Next element after the CVE ID is not the desc, see if 
+                        // theres someting that defines detail/descrption/summery
+                        desc_el = list.select(":containsOwn(detail), :containsOwn(description)").first();
+
+                        if(desc_el == null){
+                            // If theres no detail/description/summary, grab first <p> that has CVE related content
+                            desc_el = list.select("p:matchesOwn(" + regexAllCVERelatedContent + ")").first();
+                        }
+                    }
+                    // All else fails, grab the inner text of the <li>
+                    if (desc_el == null)
+                        desc = list.ownText();
+                    else
+                        desc = desc_el.text();
+
+                    date = grabDate(list.text());
+                    if(date == ""){
+                        logger.warn("No publish date for " + cve);
+                    }
                 }
             }
 
             CompositeVulnerability vuln = new CompositeVulnerability(0, sSourceURL, cve, null, date, null, desc, sourceDomainName);
-            logger.info(vuln);
+            // logger.info(vuln.getCveId());
+            // logger.info(vuln.getDescription());
+            // logger.info(vuln.getPublishDate() + "\n");
+            vulnList.add(vuln);
         }
 
+        // Grab all <dl> elements
+        // From what I can see it follows the format of
+        // <dl>
+        //      <dt>
+        //      <dd>
+        //      <dd>
+        //      ...
+        //      <dt>
+        //      <dd>
+        //      <dd>
+        //      ...
+        // </dl>
+        Elements dlists = doc.select("dl:contains(CVE)");
+
+        for(Element dlist : dlists){
+            Elements children = dlist.children();
+            CompositeVulnerability vuln = null;
+
+            String cve = null;
+            String date = null;
+
+            StringBuilder sb = new StringBuilder();
+
+            for(Element child : children){
+                // Once you hit a <dt> apart from the first one, create new vuln with data from prev <dd>
+                if(child.tagName() == "dt" && cve != null){
+                    String desc = sb.toString();
+                    vuln = new CompositeVulnerability(0, sSourceURL, cve, null, date, null, desc, sourceDomainName);
+                    // logger.info(vuln.getCveId());
+                    // logger.info(vuln.getDescription());
+                    // logger.info(vuln.getPublishDate() + "\n");
+                    vulnList.add(vuln);
+
+                    // Reset vars for next listing
+                    cve = null;
+                    date = null;
+                    sb.delete(0, sb.length());
+                }
+
+
+                String dlist_txt = child.text();
+
+                // Check for CVE if not already grabbed
+                if(cve == null || cve == ""){
+                    cve = getCVEID(dlist_txt);
+                }
+
+                //Check for date if not already grabbed
+                if(date == null || date == ""){
+                    date = grabDate(dlist_txt);
+                }
+
+                // Grab description to append (desc might be in multiple <dd>)
+                Element desc_el = child.select(":matchesOwn(" + regexAllCVERelatedContent + ")").first();
+
+                if(desc_el != null){
+                    // Make sure it isn't the CVE ID
+                    Pattern cvePattern = Pattern.compile(regexCVEID);
+                    Matcher cveMatcher = cvePattern.matcher(desc_el.text());
+                    if (!cveMatcher.find())
+                        sb.append(desc_el.text());
+                        sb.append(" ");
+                }
+            }
+
+        }
         return vulnList;
     }
 }
