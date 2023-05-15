@@ -20,6 +20,14 @@ public class ParseList extends AbstractCveParser implements ParserStrategy {
 
     private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
 
+    /**
+     * Generic parser list strategy
+     * @param sourceDomainName - domain name of source
+     */
+    public ParseList(String sourceDomainName) {
+        this.sourceDomainName = sourceDomainName;
+    }
+
     private String grabDate(String sourceHtml){
         String date = getCVEDate(sourceHtml);
         if(date == ""){
