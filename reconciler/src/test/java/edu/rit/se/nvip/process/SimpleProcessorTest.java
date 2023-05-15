@@ -14,4 +14,5 @@ class SimpleProcessorTest {
         p.process(new HashSet<>());
         // that's all!, just need not errors to be thrown
     }
+
 }
