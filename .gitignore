@@ -6,3 +6,6 @@ logs
 nvip.iml
 /target/
 /crawler/target/
+/nvip_data/productnameextraction/w2v_model_250.bin
+/nvip_data/mysql-database/newDB/mysql-connector-j-8.0.33.jar
+/sleepycat-5.0.84.jar
