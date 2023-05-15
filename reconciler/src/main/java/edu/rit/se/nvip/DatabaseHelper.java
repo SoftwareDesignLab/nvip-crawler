@@ -35,7 +35,7 @@ public class DatabaseHelper {
     private static final String INSERT_VULNERABILITY = "INSERT INTO vulnerability (cve_id, description_id, created_date, published_date, last_modified_date) VALUES (?, ?, ?, ?, ?)";
     private static final String UPDATE_VULNERABILITY = "UPDATE vulnerability SET description_id = ?, published_date = ?, last_modified_date = ? WHERE cve_id = ?";
     private static final String INSERT_JT = "INSERT INTO rawdescriptionjt (description_id, raw_description_id) VALUES (?, ?)";
-    private static final String INSERT_DESCRIPTION = "INSERT INTO description (description, created_date, gpt_func) VALUES (?, ?, ?)";
+    private static final String INSERT_DESCRIPTION = "INSERT INTO description (description, created_date, gpt_func, cve_id) VALUES (?, ?, ?, ?)";
     private static final String DELETE_JOB = "DELETE FROM cvejobtrack WHERE cve_id = ?";
 
     public static synchronized DatabaseHelper getInstance() {
@@ -295,6 +295,7 @@ public class DatabaseHelper {
         descriptionStatement.setString(1, vuln.getDescription());
         descriptionStatement.setTimestamp(2, vuln.getDescriptionCreateDate());
         descriptionStatement.setString(3, vuln.getBuildString());
+        descriptionStatement.setString(4, vuln.getCveId());
     }
 
     private void populateJTInsert(PreparedStatement jtStatement, CompositeVulnerability vuln, RawVulnerability rawVuln) throws SQLException {
