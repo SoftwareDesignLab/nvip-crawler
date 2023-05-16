@@ -9,7 +9,7 @@
             <column name="cve_id" type="VARCHAR(20)">
                 <constraints nullable="false"/>
             </column>
-            <column name="description" type="MEDIUMTEXT">
+            <column name="description_id" type="INT">
                 <constraints nullable="false"/>
             </column>
             <column name="created_date" type="DATETIME">
@@ -39,6 +39,13 @@
             unique="false">
             <column name="cve_id"/>
         </createIndex>
+
+        <addForeignKeyConstraint
+            baseTableName="vulnerability"
+            baseColumnNames="description_id"
+            referencedTableName="description"
+            referencedColumnNames="description_id"
+            constraintName="description_id_fk"/>
     </changeSet>
     
     <changeSet author="affectedproduct" id="affectedproduct">
@@ -117,9 +124,6 @@
             <column name="description_id" type="INT" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
-            <column name="cve_id" type="VARCHAR(20)">
-                <constraints nullable="false"/>
-            </column>
             <column name="description" type="MEDIUMTEXT">
                 <constraints nullable="false"/>
             </column>
@@ -167,6 +171,9 @@
                 <constraints nullable="false"/>
             </column>
             <column name="source_url" type="TINYTEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_garbage" type="INT">
                 <constraints nullable="false"/>
             </column>
         </createTable>
