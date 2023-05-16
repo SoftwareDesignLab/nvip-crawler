@@ -51,7 +51,7 @@ import static org.mockito.Mockito.*;
 
 /**
  * Collection of tests for the DatabaseHelper class. The general approach here it to use mocking/spying in order to
- * sever dependenies on database connections. Generally, SQL arguments are verified, execute commands are verified, and
+ * sever dependencies on database connections. Generally, SQL arguments are verified, execute commands are verified, and
  * return values are verified where applicable.
  *
  */
