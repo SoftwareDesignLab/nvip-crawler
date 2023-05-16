@@ -27,6 +27,8 @@ public class ParseTable extends AbstractCveParser implements ParserStrategy {
      */
     WebDriver driver = startDynamicWebDriver();
 
+    WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(5));
+
     // init actions to be able to click around
     Actions actions = new Actions(driver);
 
@@ -69,17 +71,17 @@ public class ParseTable extends AbstractCveParser implements ParserStrategy {
         String htmlBefore = "";
         WebElement rowElement = null;
         try {
-//            String xPathContainsCVE = "//tr[td//text()[contains(.,'%s')]]";
-//            WebElement rowElement = driver.findElement(By.xpath(String.format(xPathContainsCVE, cveList.get(0))));
-            rowElement = driver.findElement(By.xpath(jsoupToXpath(row)));
+            String xPathContainsCVE = "//tr[td//text()[contains(.,'%s')]]";
+            rowElement = driver.findElement(By.xpath(String.format(xPathContainsCVE, cveList.get(0))));
+            // logger.info("Found row for " + cveIDs);
             // try and click element and every child of element
             htmlBefore = driver.findElement(By.tagName("tbody")).getAttribute("innerHTML");
             actions.scrollToElement(rowElement).perform();
-            rowElement.click();
+            actions.click(rowElement).perform();
             String htmlAfter = driver.findElement(By.tagName("tbody")).getAttribute("innerHTML");
             diff = StringUtils.difference(htmlBefore, htmlAfter);
         } catch (NoSuchElementException e) {
-            logger.error("Row not found for " + cveIDs);
+            // logger.info("Row not found for " + cveIDs);
         }
         String description = "";
         // if we gain new information from clicking, add it onto our html to parse
@@ -87,17 +89,13 @@ public class ParseTable extends AbstractCveParser implements ParserStrategy {
             StringBuilder newHtml = new StringBuilder();
             // first cut off diff where the rest is contained in the before text
             while (!htmlBefore.contains(diff) && diff.length() > 10) {
-//                logger.info("cutting off diff..." + diff.substring(0, 10));
                 newHtml.append(diff, 0, 10);
                 diff = diff.substring(10);
             }
             Element newHtmlElements = Jsoup.parse(newHtml.toString());
             description = newHtmlElements.text();
         }
-        else {
-//            logger.info("no new information gained from clicking");
-            description = rowText;
-        }
+        else description = rowText;
         String date = "";
         GenericDate genericDate = new GenericDate(rowText);
         if (genericDate.getRawDate() != null)
@@ -140,13 +138,10 @@ public class ParseTable extends AbstractCveParser implements ParserStrategy {
     private String getNextPage(String sourceHtml) {
         String nextPage = "";
         try {
-            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(5));
             By nextButtonBy = By.xpath("//*[contains(@class,'next')]");
             WebElement nextButton = wait.until(ExpectedConditions.elementToBeClickable(nextButtonBy));
             actions.scrollToElement(nextButton).perform();
-            nextButton.click();
-//            if (nextButton.isDisplayed() && nextButton.isEnabled()) {
-//            }
+            actions.click(nextButton).perform();
             logger.info("Next button clicked for Table at " + sourceUrl);
             nextPage = StringUtils.difference(sourceHtml, driver.getPageSource());
         } catch (NoSuchElementException | TimeoutException e) {
@@ -164,6 +159,8 @@ public class ParseTable extends AbstractCveParser implements ParserStrategy {
         sourceUrl = sSourceURL;
         // get the page
         driver.get(sSourceURL);
+        // implicitly wait to make sure table is fully loaded before parsing
+        driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(3));
         String sourceHtml = driver.getPageSource();
         // click on any cookie agree button before trying to parse and click on anything else
         clickAcceptCookies();
