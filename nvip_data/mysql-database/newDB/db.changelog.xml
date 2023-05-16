@@ -526,4 +526,37 @@
         </createIndex>
     </changeSet>
 
+    <changeSet author="description" id="drop_descriptin_cve_fk">
+        <dropForeignKeyConstraint
+            baseTableName="description"
+            constraintName="description_cve_id_fk"/>
+    </changeSet>
+
+    <changeSet author="vulnerability" id="drop_vulnerability_description_string">
+        <dropColumn tableName="vulnerability"
+                   columnName="description"/>
+    </changeSet>
+
+    <changeSet author="vulnerability" id="add_vulnerability_description_id">
+        <addColumn tableName="vulnerability">
+            <column name="description_id" type="INT"/>
+        </addColumn>
+        <addForeignKeyConstraint baseTableName="vulnerability"
+                                 baseColumnNames="description_id"
+                                 constraintName="description_id_fk"
+                                 referencedTableName="description"
+                                 referencedColumnNames="description_id"/>
+    </changeSet>
+
+    <changeSet author="rawdescription" id="rawdescription_add_is_garbage">
+        <addColumn tableName="rawdescription">
+            <column name="is_garbage" type="INT" defaultValueNumeric="0"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="vulnerability" id="vulnerability_drop_status">
+        <dropColumn tableName="vulnerability"
+                    columnName="status"/>
+    </changeSet>
+
 </databaseChangeLog>
