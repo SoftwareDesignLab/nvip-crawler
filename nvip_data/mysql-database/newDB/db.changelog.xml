@@ -21,9 +21,6 @@
             <column name="last_modified_date" type="DATETIME">
                 <constraints nullable="false"/>
             </column>
-            <column name="status" type="TINYTEXT">
-                <constraints nullable="false"/>
-            </column>
         </createTable>
 
         <createIndex
