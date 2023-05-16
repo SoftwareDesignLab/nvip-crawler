@@ -6,7 +6,7 @@ import edu.rit.se.nvip.model.CompositeVulnerability;
 import edu.rit.se.nvip.model.RawVulnerability;
 import edu.rit.se.nvip.process.Processor;
 import edu.rit.se.nvip.process.ProcessorFactory;
-import edu.rit.se.nvip.reconciler.AbstractReconciler;
+import edu.rit.se.nvip.reconciler.Reconciler;
 import edu.rit.se.nvip.reconciler.ReconcilerFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -16,7 +16,7 @@ import java.util.*;
 public class ReconcilerController {
     private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
     private final DatabaseHelper dbh;
-    private final AbstractReconciler reconciler;
+    private final Reconciler reconciler;
     private final List<Filter> filters = new ArrayList<>();
     private final List<Processor> processors = new ArrayList<>();
 

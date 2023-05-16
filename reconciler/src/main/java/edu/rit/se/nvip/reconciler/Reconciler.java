@@ -40,7 +40,7 @@ import org.checkerframework.checker.nullness.qual.NonNull;
  * @author Igor Khokhlov
  *
  */
-public abstract class AbstractReconciler {
+public abstract class Reconciler {
 	private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
 	protected Map<String, Integer> knownCveSources = new HashMap<>();
 

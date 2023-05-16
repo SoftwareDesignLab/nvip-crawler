@@ -187,5 +187,35 @@ public class CompositeDescription {
             }
             return OPEN_PAREN + children.stream().map(DescriptionTree::toString).collect(Collectors.joining("" + SEPARATOR)) + CLOSE_PAREN;
         }
+
+        public boolean equalUpToOrder(DescriptionTree that) {
+            if (this.size() == 0) {
+                if (that.size() == 0) {
+                    return this.rawDescriptionId == that.rawDescriptionId;
+                }
+                return false;
+            }
+            if (this.children.size() != that.children.size()) {
+                return false;
+            }
+            Set<DescriptionTree> matchedOtherChildren = new HashSet<>();
+            for (DescriptionTree child : this.children) {
+                boolean matched = false;
+                for (DescriptionTree otherChild : that.children) {
+                    if (child.equalUpToOrder(otherChild) && !matchedOtherChildren.contains(otherChild)) {
+                        matchedOtherChildren.add(otherChild);
+                        matched = true;
+                    }
+                }
+                if (!matched) {return false;}
+            }
+            return true;
+        }
+    }
+
+    public static boolean equivalentBuildStrings(String s1, String s2) {
+        DescriptionTree tree1 = new DescriptionTree(s1);
+        DescriptionTree tree2 = new DescriptionTree(s2);
+        return tree1.equalUpToOrder(tree2);
     }
 }

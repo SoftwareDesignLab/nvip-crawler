@@ -34,7 +34,7 @@ public class ReconcilerFactory {
 	public static final String STANFORD_CORE_NLP = "STANFORD_CORE_NLP";
 	public static final String APACHE_OPEN_NLP = "APACHE_OPEN_NLP";
 
-	public static AbstractReconciler createReconciler(String type) {
+	public static Reconciler createReconciler(String type) {
 
 		switch (type) {
 			case SIMPLE:
