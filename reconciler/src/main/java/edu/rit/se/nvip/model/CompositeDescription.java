@@ -205,6 +205,7 @@ public class CompositeDescription {
                     if (child.equalUpToOrder(otherChild) && !matchedOtherChildren.contains(otherChild)) {
                         matchedOtherChildren.add(otherChild);
                         matched = true;
+                        break;
                     }
                 }
                 if (!matched) {return false;}
