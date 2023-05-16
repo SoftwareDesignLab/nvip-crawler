@@ -1,77 +1,6 @@
 <?xml version="1.1" encoding="UTF-8" standalone="no"?>
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:pro="http://www.liquibase.org/xml/ns/pro" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-latest.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
     
-    <changeSet author="affectedproduct" id="affectedproduct">
-        <createTable tableName="affectedproduct">
-            <column name="affected_product_id" type="INT" autoIncrement="true">
-                <constraints primaryKey="true" nullable="false"/>
-            </column>
-            <column name="cve_id" type="VARCHAR(20)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="cpe" type="VARCHAR(300)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="release_date" type="DATETIME">
-                <constraints nullable="false"/>
-            </column>
-            <column name="product_name" type="TINYTEXT">
-                <constraints nullable="false"/>
-            </column>
-            <column name="version" type="TINYTEXT">
-                <constraints nullable="true"/>
-            </column>
-            <column name="vendor" type="TINYTEXT">
-                <constraints nullable="true"/>
-            </column>
-        </createTable>
-
-        <createIndex
-            indexName="affected_product_id_index"
-            tableName="affectedproduct"
-            unique="false">
-            <column name="affected_product_id"/>
-        </createIndex>
-
-        <addForeignKeyConstraint
-            baseTableName="affectedproduct"
-            baseColumnNames="cve_id"
-            referencedTableName="vulnerability"
-            referencedColumnNames="cve_id"
-            constraintName="affectedproduct_cve_id_fk"/>
-    </changeSet>
-
-    <changeSet author="cvss" id="cvss">
-        <createTable tableName="cvss">
-            <column name="cve_id" type="VARCHAR(20)">
-                <constraints primaryKey="true" nullable="false"/>
-            </column>
-            <column name="create_date" type="DATETIME">
-                <constraints nullable="false"/>
-            </column>
-            <column name="base_score" type="DOUBLE">
-                <constraints nullable="false"/>
-            </column>
-            <column name="impact_score" type="DOUBLE">
-                <constraints nullable="false"/>
-            </column>
-        </createTable>
-
-        <createIndex
-            indexName="cvss_cve_id_index"
-            tableName="cvss"
-            unique="false">
-            <column name="cve_id"/>
-        </createIndex>
-
-        <addForeignKeyConstraint
-            baseTableName="cvss"
-            baseColumnNames="cve_id"
-            referencedTableName="vulnerability"
-            referencedColumnNames="cve_id"
-            constraintName="cvssscore_cve_id_fk"/>
-    </changeSet>
-
     <changeSet author="description" id="description">
         <createTable tableName="description">
             <column name="description_id" type="INT" autoIncrement="true">
@@ -89,18 +18,11 @@
         </createTable>
 
         <createIndex
-            indexName="description_index_cve_id"
+            indexName="description_index_desc_id"
             tableName="description"
             unique="false">
-            <column name="cve_id"/>
+            <column name="description_id"/>
         </createIndex>
-
-        <addForeignKeyConstraint
-            baseTableName="description"
-            baseColumnNames="cve_id"
-            referencedTableName="vulnerability"
-            referencedColumnNames="cve_id"
-            constraintName="description_cve_id_fk"/>
     </changeSet>
 
     <changeSet author="rawdescription" id="rawdescription">
@@ -172,6 +94,121 @@
             referencedTableName="rawdescription"
             referencedColumnNames="raw_description_id"
             constraintName="description_joint_raw_description_id_fk"/>
+    </changeSet>
+
+    <changeSet author="vulnerability" id="vulnerability">
+        <createTable tableName="vulnerability">
+            <column name="vuln_id" type="INT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="cve_id" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description_id" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_date" type="DATETIME">
+                <constraints nullable="false"/>
+            </column>
+            <column name="published_date" type="DATETIME">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_modified_date" type="DATETIME">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex
+            indexName="vuln_id_UNIQUE"
+            tableName="vulnerability"
+            unique="true">
+            <column name="vuln_id"/>
+        </createIndex>
+
+         <createIndex
+            indexName="vulnerability_index_cve_id"
+            tableName="vulnerability"
+            unique="false">
+            <column name="cve_id"/>
+        </createIndex>
+
+        <addForeignKeyConstraint
+            baseTableName="vulnerability"
+            baseColumnNames="description_id"
+            referencedTableName="description"
+            referencedColumnNames="description_id"
+            constraintName="description_id_fk"/>
+    </changeSet>
+
+    <changeSet author="affectedproduct" id="affectedproduct">
+        <createTable tableName="affectedproduct">
+            <column name="affected_product_id" type="INT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="cve_id" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="cpe" type="VARCHAR(300)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="release_date" type="DATETIME">
+                <constraints nullable="false"/>
+            </column>
+            <column name="product_name" type="TINYTEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="version" type="TINYTEXT">
+                <constraints nullable="true"/>
+            </column>
+            <column name="vendor" type="TINYTEXT">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+
+        <createIndex
+            indexName="affected_product_id_index"
+            tableName="affectedproduct"
+            unique="false">
+            <column name="affected_product_id"/>
+        </createIndex>
+
+        <addForeignKeyConstraint
+            baseTableName="affectedproduct"
+            baseColumnNames="cve_id"
+            referencedTableName="vulnerability"
+            referencedColumnNames="cve_id"
+            constraintName="affectedproduct_cve_id_fk"/>
+    </changeSet>
+
+    <changeSet author="cvss" id="cvss">
+        <createTable tableName="cvss">
+            <column name="cve_id" type="VARCHAR(20)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="create_date" type="DATETIME">
+                <constraints nullable="false"/>
+            </column>
+            <column name="base_score" type="DOUBLE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="impact_score" type="DOUBLE">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex
+            indexName="cvss_cve_id_index"
+            tableName="cvss"
+            unique="false">
+            <column name="cve_id"/>
+        </createIndex>
+
+        <addForeignKeyConstraint
+            baseTableName="cvss"
+            baseColumnNames="cve_id"
+            referencedTableName="vulnerability"
+            referencedColumnNames="cve_id"
+            constraintName="cvssscore_cve_id_fk"/>
     </changeSet>
 
     <changeSet author="exploit" id="exploit">
@@ -482,76 +519,6 @@
         </createIndex>
     </changeSet>
 
-    <changeSet author="description" id="drop_descriptin_cve_fk">
-        <dropForeignKeyConstraint
-            baseTableName="description"
-            constraintName="description_cve_id_fk"/>
-    </changeSet>
-
-    <changeSet author="vulnerability" id="drop_vulnerability_description_string">
-        <dropColumn tableName="vulnerability"
-                   columnName="description"/>
-    </changeSet>
-
-    <changeSet author="vulnerability" id="add_vulnerability_description_id">
-        <addColumn tableName="vulnerability">
-            <column name="description_id" type="INT"/>
-        </addColumn>
-        <addForeignKeyConstraint baseTableName="vulnerability"
-                                 baseColumnNames="description_id"
-                                 constraintName="description_id_fk"
-                                 referencedTableName="description"
-                                 referencedColumnNames="description_id"/>
-    </changeSet>
-
-    <changeSet author="rawdescription" id="rawdescription_add_is_garbage">
-        <addColumn tableName="rawdescription">
-            <column name="is_garbage" type="INT" defaultValueNumeric="0"/>
-        </addColumn>
-    </changeSet>
-
-    <changeSet author="vulnerability" id="vulnerability">
-        <createTable tableName="vulnerability">
-            <column name="vuln_id" type="INT" autoIncrement="true">
-                <constraints primaryKey="true" nullable="false"/>
-            </column>
-            <column name="cve_id" type="VARCHAR(20)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="description_id" type="INT">
-                <constraints nullable="false"/>
-            </column>
-            <column name="created_date" type="DATETIME">
-                <constraints nullable="false"/>
-            </column>
-            <column name="published_date" type="DATETIME">
-                <constraints nullable="false"/>
-            </column>
-            <column name="last_modified_date" type="DATETIME">
-                <constraints nullable="false"/>
-            </column>
-        </createTable>
-
-        <createIndex
-            indexName="vuln_id_UNIQUE"
-            tableName="vulnerability"
-            unique="true">
-            <column name="vuln_id"/>
-        </createIndex>
-
-         <createIndex
-            indexName="vulnerability_index_cve_id"
-            tableName="vulnerability"
-            unique="false">
-            <column name="cve_id"/>
-        </createIndex>
-
-        <addForeignKeyConstraint
-            baseTableName="vulnerability"
-            baseColumnNames="description_id"
-            referencedTableName="description"
-            referencedColumnNames="description_id"
-            constraintName="description_id_fk"/>
-    </changeSet>
+    
 
 </databaseChangeLog>
