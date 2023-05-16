@@ -48,8 +48,8 @@
             <column name="source_url" type="TINYTEXT">
                 <constraints nullable="false"/>
             </column>
-            <column name="is_garbage" type="INT">
-                <constraints nullable="false"/>
+            <column name="is_garbage" type="INT" defaultValue="0">
+                <constraints nullable="false" />
             </column>
         </createTable>
 
