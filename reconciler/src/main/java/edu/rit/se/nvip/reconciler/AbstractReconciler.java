@@ -108,7 +108,7 @@ public abstract class AbstractReconciler {
 		CompositeVulnerability reconciledVuln = existingVuln;
 		Set<RawVulnerability> vulnsToUse = new HashSet<>(newVulns);
 		if (reconciledVuln == null) {
-			Iterator<RawVulnerability> it = newVulns.iterator();
+			Iterator<RawVulnerability> it = vulnsToUse.iterator();
 			reconciledVuln = new CompositeVulnerability(it.next());
 			it.remove();
 		}
