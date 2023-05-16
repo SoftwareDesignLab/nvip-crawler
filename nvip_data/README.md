@@ -26,3 +26,13 @@ This repo contains the data/resources needed to run the NVIP project.
 You should clone this directory (nvip_data) and add its path as NVIP data path in the 'nvip.properties' file of the nvip_backend project.
 > Ex: dataDir = ../nvip_data
 
+### Command for Liquibase
+Once you have a database created, run this command in the mysql-database/newDB
+directory
+
+> liquibase --changeLogFile=db.changelog.xml --classpath=./mysql-connector-j-8.0.33.jar --url="jdbc:mysql://localhost:3306/DB Name" 
+> --username=USERNAME --password=PASSWORD update
+
+- USERNAME --> MySQL Username
+- PASSWORD --> MySQL Password
+- DB Name --> MySQL DB Name
