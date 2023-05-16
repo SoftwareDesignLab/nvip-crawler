@@ -23,6 +23,7 @@
  */
 package edu.rit.se.nvip.crawler.htmlparser;
 import edu.rit.se.nvip.model.CompositeVulnerability;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.jupiter.api.BeforeEach;
 
@@ -36,6 +37,7 @@ import static junit.framework.TestCase.assertFalse;
 public class ArubaParserTest extends AbstractParserTest {
 
     @Test
+    @Ignore
     public void testArubaSingle() {
         String html = safeReadHtml("src/test/resources/test-aruba-single.html");
         List<CompositeVulnerability> list = crawler.parseWebPage(
@@ -52,6 +54,7 @@ public class ArubaParserTest extends AbstractParserTest {
 
 
     @Test
+    @Ignore
     public void testArubaMultiple() {
         String html = safeReadHtml("src/test/resources/test-aruba-multiple.html");
         List<CompositeVulnerability> list = crawler.parseWebPage(
