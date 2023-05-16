@@ -25,7 +25,6 @@ package edu.rit.se.nvip.reconciler;
 
 import java.io.InputStream;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -46,7 +45,7 @@ import opennlp.tools.tokenize.WhitespaceTokenizer;
  *
  */
 
-public class ApacheOpenNLPReconciler extends AbstractPairwiseChoosingReconciler {
+public class ApacheOpenNLPReconciler extends PairwiseChoosingReconciler {
 
 	private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
 
