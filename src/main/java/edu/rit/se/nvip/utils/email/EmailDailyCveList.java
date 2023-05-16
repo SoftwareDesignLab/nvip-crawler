@@ -233,7 +233,7 @@ public class EmailDailyCveList {
 			props.put("email_user", System.getenv("NVIP_EMAIL_USER"));
 			props.put("email_password", System.getenv("NVIP_EMAIL_PASSWORD"));
 			props.put("email_port", System.getenv("NVIP_EMAIL_PORT"));
-			props.put("email_url", System.getenv("NVIP_EMAIL_URL"));
+			props.put("email_url", System.getenv("NVIP_EMAIL_MESSAGE_URL"));
 			props.put("email_host", System.getenv("NVIP_EMAIL_HOST"));
 		} catch (Exception e) {
 			logger.error("ERROR: Failed to grab properties for NVIP Email\n{}", e.toString());
@@ -246,7 +246,7 @@ public class EmailDailyCveList {
 
 	/**
 	 * Generic email function
-	 * Credentials are in props
+	 * Credentials are in envvars
 	 */
 	public void sendFromEmailGeneric(String to, String subject, String body, boolean asHtml) {
 		HashMap<String, String> vars = getPropValues();
@@ -268,7 +268,7 @@ public class EmailDailyCveList {
 
 		MimeMessage message = new MimeMessage(session);
 		try {
-			message.setFrom(new InternetAddress(vars.get("email_address")));
+			message.setFrom(new InternetAddress(vars.get("email_from")));
 			message.setRecipient(Message.RecipientType.TO, new InternetAddress(to));
 			message.setSubject(subject);
 
