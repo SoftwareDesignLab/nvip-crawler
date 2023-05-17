@@ -37,7 +37,7 @@ import edu.stanford.nlp.pipeline.StanfordCoreNLP;
  *
  */
 
-public class StanfordCoreNLPReconciler extends AbstractPairwiseChoosingReconciler {
+public class StanfordCoreNLPReconciler extends PairwiseChoosingReconciler {
 
 	// Identifier of an unidentified language part in Stanford NLP library
 	final String unknwnPrt = "GW";
