@@ -20,12 +20,14 @@ public class ParseBulletin extends AbstractCveParser implements ParserStrategy {
      * @return array of substring bounds
      */
     private int[] getSubstringBounds(String text, String keyword) {
+        // bounds to isolate date text for individual CVE ID's in bulletin
+        final int DATE_BOUNDS = 40;
+
         int[] bounds = new int[2];
         int keywordIndex = text.toLowerCase().indexOf(keyword);
         if (keywordIndex == -1) return bounds;
-//        bounds[0] = Math.max(keywordIndex - 40, 0);
         bounds[0] = keywordIndex;
-        bounds[1] = Math.min(keywordIndex + 40, text.length());
+        bounds[1] = Math.min(keywordIndex + DATE_BOUNDS, text.length());
         return bounds;
     }
 
@@ -64,6 +66,9 @@ public class ParseBulletin extends AbstractCveParser implements ParserStrategy {
 
     @Override
     public List<CompositeVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
+        // bounds to grab relevant description text for bulletins
+        final int SUBSTRING_BOUNDS = 300;
+
         List<CompositeVulnerability> vulnList = new ArrayList<>();
         Document doc = Jsoup.parse(sCVEContentHTML);
         String docText = doc.text();
@@ -76,7 +81,7 @@ public class ParseBulletin extends AbstractCveParser implements ParserStrategy {
             // if not found, skip
             if (cveIndex == -1) continue;
             // grab text around it
-            String cveText = docText.substring(cveIndex - 300, cveIndex + 300);
+            String cveText = docText.substring(cveIndex - SUBSTRING_BOUNDS, cveIndex + SUBSTRING_BOUNDS);
             GenericDate cveDate = extractDate(cveText);
             GenericDate lastModifiedDate = extractLastModifiedDate(cveText);
             if (cveDate.getRawDate() == null) {
