@@ -40,6 +40,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -86,7 +87,7 @@ public class NvdCveController {
 	 *
 	 * @param vulns
 	 */
-	public void compareReconciledCVEsWithNVD(Set<CompositeVulnerability> vulns) {
+	public Set<CompositeVulnerability> compareReconciledCVEsWithNVD(Set<CompositeVulnerability> vulns) {
 		// Get NVD CVEs
 		ArrayList<NvdVulnerability> nvdCves = databaseHelper.getAllNvdCVEs();
 
@@ -101,7 +102,6 @@ public class NvdCveController {
 		double avgTimeGap = 0;
 
 		logger.info("Comparing with NVD, this may take some time....");
-
 
 		// For each composite vulnerability, iterate through NVD vulns to see if there's a match in the CVE IDs
 		// If there's a match, check status of the CVE in NVD, otherwise mark it as not in NVD
@@ -137,6 +137,7 @@ public class NvdCveController {
 							analyzed++;
 							inNvd++;
 							checked = true;
+							vuln.setNvdStatus(CompositeVulnerability.NvdStatus.IN_NVD);
 							break;
 						}
 						default: {
@@ -161,24 +162,30 @@ public class NvdCveController {
 				"{} undergoing analysis in NVD\n" +
 				"{} awaiting analysis in NVD",
 				inNvd, notInNvd, analyzed, received, underGoingAnalysis, awaitingAnalysis);
+
+
+		return vulns;
 	}
 
 	/**
 	 * For updating NVD table with recent CVEs
 	 * Grabs CVEs via API request to NVD API
+	 *
+	 * TODO: Need to add logic for checking if a vulnerability is already in the table, then update status if needed
+	 *
 	 * @param url
 	 */
 	public void updateNvdDataTable(String url) {
 		// fetch the CVEs from NVD
-		HashMap<String, String> cves = fetchCvesFromNvd(url.replaceAll("<StartDate>", this.startDate)
+		Set<NvdVulnerability> NvdCves = fetchCvesFromNvd(url.replaceAll("<StartDate>", this.startDate)
 				.replaceAll("<EndDate>", this.endDate));
 
-		logger.info("Grabbed {} cves from NVD for the past month", cves.size());
+		logger.info("Grabbed {} cves from NVD for the past month", NvdCves.size());
 
 		int totalUpdated = 0;
 
-		for (String cveId: cves.keySet()) {
-			totalUpdated += databaseHelper.insertNvdCve(cveId, cves.get(cveId));
+		for (NvdVulnerability NvdCve: NvdCves) {
+			totalUpdated += databaseHelper.insertNvdCve(NvdCve);
 		}
 
 		logger.info("Inserted {} new CVEs from NVD into NVD Database Table", totalUpdated);
@@ -186,12 +193,12 @@ public class NvdCveController {
 
 
 	/**
-	 * For grabbing NVD cves from the oast month
+	 * For grabbing NVD cves from the past month
 	 * @param nvdUrl
 	 * @return
 	 */
-	private HashMap<String, String> fetchCvesFromNvd(String nvdUrl) {
-		HashMap<String, String> nvdCves = new HashMap<>();
+	private Set<NvdVulnerability> fetchCvesFromNvd(String nvdUrl) {
+		Set<NvdVulnerability> nvdCves = new HashSet<>();
 		try {
 			URL url = new URL(nvdUrl);
 			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -221,9 +228,10 @@ public class NvdCveController {
 					JSONObject cve = cveItem.getJSONObject("cve");
 					String cveId = cve.getString("id");
 					String publishedDate = cve.getString("published");
+					String status = cve.getString("vulnStatus");
 
 					// Adjust published date substring to be mySql acceptable
-					nvdCves.put(cveId, publishedDate.substring(0, 10) + " " + publishedDate.substring(11, 16) + ":00");
+					nvdCves.add(new NvdVulnerability(cveId, LocalDateTime.parse(publishedDate.substring(0, 16) + ":00"), status));
 				}
 			}
 		} catch (IOException e) {
