@@ -23,19 +23,13 @@
  */
 package edu.rit.se.nvip.reconciler;
 
-import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import edu.rit.se.nvip.reconciler.models.ApacheOpenNLPModel;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import opennlp.tools.postag.POSModel;
-import opennlp.tools.postag.POSTaggerME;
-import opennlp.tools.sentdetect.SentenceDetector;
-import opennlp.tools.sentdetect.SentenceDetectorME;
-import opennlp.tools.sentdetect.SentenceModel;
 import opennlp.tools.tokenize.WhitespaceTokenizer;
 
 /**
@@ -51,35 +45,15 @@ public class ApacheOpenNLPReconciler extends PairwiseChoosingReconciler {
 
 	// Identifier of an unidentified language part
 	final String unknwnPrt = "``";
-
-	POSTaggerME tagger = null;
-	POSModel model = null;
-	SentenceModel sentenceModel = null;
-	SentenceDetector sentenceDetector = null;
-	String modelPath = "nlp/en-pos-perceptron.bin";
-	String sentenceModelPath = "nlp/en-sent.bin";
+	ApacheOpenNLPModel model = null;
 
 	public ApacheOpenNLPReconciler() {
 		super();
-		initialize();
 	}
 
-	public void initialize() {
-		try {
-			InputStream modelStream = this.getClass().getClassLoader().getResourceAsStream(modelPath);
-			model = new POSModel(modelStream);
-			tagger = new POSTaggerME(model);
-			modelStream.close();
-
-			InputStream modelIn = this.getClass().getClassLoader().getResourceAsStream(sentenceModelPath);
-			sentenceModel = new SentenceModel(modelIn);
-			sentenceDetector = new SentenceDetectorME(sentenceModel);
-			modelIn.close();
-
-		} catch (Exception e) {
-			logger.error("A serious error has occurred while loading the models for CVE reconciliation! Exiting!" + e.toString());
-			System.exit(1);
-		}
+	public void attachModel(ApacheOpenNLPModel model) {
+		this.model = model;
+		model.initialize();
 	}
 
 
@@ -213,12 +187,12 @@ public class ApacheOpenNLPReconciler extends PairwiseChoosingReconciler {
 	 * @param sentences
 	 * @return diversity object in a form of a Map object
 	 */
-	public Map<String, Integer> docLangParts(String[] sentences) {
+	private Map<String, Integer> docLangParts(String[] sentences) {
 		Map<String, Integer> counts = new HashMap<>();
 
 		for (String sent : sentences) {
 			String[] whitespaceTokenizerLine = WhitespaceTokenizer.INSTANCE.tokenize(sent);
-			String[] tags = tagger.tag(whitespaceTokenizerLine);
+			String[] tags = model.tag(whitespaceTokenizerLine);
 			for (String part : tags) {
 				if (counts.containsKey(part)) {
 					counts.put(part, counts.get(part) + 1);
@@ -230,8 +204,8 @@ public class ApacheOpenNLPReconciler extends PairwiseChoosingReconciler {
 		return counts;
 	}
 
-	public String[] detectSentences(String paragraph) {
-		return sentenceDetector.sentDetect(paragraph);
+	private String[] detectSentences(String paragraph) {
+		return model.sentDetect(paragraph);
 	}
 
 }
