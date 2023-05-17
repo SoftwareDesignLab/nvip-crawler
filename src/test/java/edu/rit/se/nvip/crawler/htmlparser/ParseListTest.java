@@ -2,11 +2,13 @@ package edu.rit.se.nvip.crawler.htmlparser;
 
 import edu.rit.se.nvip.model.CompositeVulnerability;
 
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
 import java.util.List;
+import java.time.LocalDate;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static junit.framework.TestCase.assertTrue;
+import static org.junit.Assert.*;
 
 public class ParseListTest extends AbstractParserTest {
 
@@ -22,7 +24,8 @@ public class ParseListTest extends AbstractParserTest {
         assertTrue(list.size() > 9);
         CompositeVulnerability vuln = getVulnerability(list, "CVE-2022-24666");
         assertNotNull(vuln);
-        assertEquals("", vuln.getPublishDate());
+        String current_date = LocalDate.now().toString();
+        assertEquals(current_date, vuln.getPublishDate());
         assertTrue(vuln.getDescription().contains("A program using swift-nio-http2 is vulnerable to a denial of service attack"));
     }
 
@@ -38,7 +41,8 @@ public class ParseListTest extends AbstractParserTest {
         assertTrue(list.size() > 19);
         CompositeVulnerability vuln = getVulnerability(list, "CVE-2022-24077");
         assertNotNull(vuln);
-        assertEquals("", vuln.getPublishDate());
+        String current_date = LocalDate.now().toString();
+        assertEquals(current_date, vuln.getPublishDate());
         assertTrue(vuln.getDescription().contains("Naver Cloud Explorer Beta allows the attacker to execute arbitrary code"));
     }
 
