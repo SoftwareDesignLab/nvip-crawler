@@ -1,7 +1,7 @@
 <?xml version="1.1" encoding="UTF-8" standalone="no"?>
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:pro="http://www.liquibase.org/xml/ns/pro" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-latest.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
-    <changeSet author="andrew" id="modify_is_grabage_column">
+    <!-- <changeSet author="andrew" id="modify_is_grabage_column">
         <dropColumn tableName="rawdescription" columnName="is_garbage"/>
     
         <addColumn tableName="rawdescription">
@@ -9,7 +9,14 @@
                 <constraints nullable="false" />
             </column>
         </addColumn>
-    </changeSet>
+    </changeSet> -->
 
+    <changeSet author="andrew" id="modify_is_cveid_column">
+        <addColumn tableName="description">
+            <column name="cve_id" type="TINYTEXT">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
 
 </databaseChangeLog>
