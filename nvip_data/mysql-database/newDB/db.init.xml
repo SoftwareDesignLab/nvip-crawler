@@ -15,6 +15,9 @@
             <column name="gpt_func" type="TINYTEXT">
                 <constraints nullable="false"/>
             </column>
+            <column name="cve_id" type="TINYTEXT">
+                <constraints nullable="false"/>
+            </column>
         </createTable>
 
         <createIndex
