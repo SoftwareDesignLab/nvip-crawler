@@ -42,7 +42,9 @@ public class ReconcilerController {
                 reconciledVulns.add(vuln);
             }
         }
+
         runProcessors(reconciledVulns);
+
         int upsertCount = 0;
         for (CompositeVulnerability vuln : reconciledVulns) {
             int status = dbh.insertOrUpdateVulnerabilityFull(vuln);

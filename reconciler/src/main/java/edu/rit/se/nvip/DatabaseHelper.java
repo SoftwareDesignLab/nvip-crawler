@@ -10,7 +10,6 @@ import edu.rit.se.nvip.model.RawVulnerability;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import java.sql.*;
-import java.time.LocalDateTime;
 import java.util.*;
 
 public class DatabaseHelper {
@@ -40,9 +39,8 @@ public class DatabaseHelper {
     private static final String INSERT_DESCRIPTION = "INSERT INTO description (description, created_date, gpt_func, cve_id) VALUES (?, ?, ?, ?)";
     private static final String DELETE_JOB = "DELETE FROM cvejobtrack WHERE cve_id = ?";
 
-    private final String GET_RAW_CVES = "SELECT DISTINCT cve_id, published_date FROM rawdescription order by cve_id desc";
-
     private String GET_ALL_NEW_CVES = "SELECT cve_id, published_date, status FROM nvddata order by cve_id desc";
+    private final String insertIntoNvdData = "INSERT INTO nvd_data (cve_id, published_date, status) VALUES (?, ?, ?)";
 
     public static synchronized DatabaseHelper getInstance() {
         if (databaseHelper == null) {
@@ -252,6 +250,8 @@ public class DatabaseHelper {
             default:
                 return 0;
         }
+
+
         try (Connection conn = getConnection();
              PreparedStatement descriptionStatement = conn.prepareStatement(INSERT_DESCRIPTION, Statement.RETURN_GENERATED_KEYS);
              PreparedStatement jtStatement = conn.prepareStatement(INSERT_JT);
@@ -348,82 +348,6 @@ public class DatabaseHelper {
 
 
     /**
-     * just for some informal sandbox testing, look away
-     * @param rawVulns
-     */
-    public void insertForTest(List<RawVulnerability> rawVulns) {
-        String query = "INSERT INTO rawdescription (cve_id, raw_description, created_date, published_date, last_modified_date, source_url) VALUES (?, ?, ?, ?, ?, ?)";
-        String query2 = "INSERT INTO cvejobtrack (cve_id) VALUES (?)";
-        Set<String> jobbedCves = new HashSet<>();
-        try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(query); PreparedStatement pstmt2 = conn.prepareStatement(query2);
-        PreparedStatement delete1 = conn.prepareStatement("DELETE FROM cvejobtrack"); PreparedStatement delete2 = conn.prepareStatement("DELETE FROM rawdescription")) {
-            delete1.executeUpdate();
-            delete2.executeUpdate();
-
-            for (RawVulnerability vuln : rawVulns) {
-                pstmt.setString(1, vuln.getCveId());
-                pstmt.setString(2, vuln.getDescription());
-                pstmt.setTimestamp(3, vuln.getCreateDate());
-                pstmt.setTimestamp(4, vuln.getPublishDate());
-                pstmt.setTimestamp(5, vuln.getLastModifiedDate());
-                pstmt.setString(6, vuln.getSourceUrl());
-                pstmt.addBatch();
-
-                if (!jobbedCves.contains(vuln.getCveId())) {
-                    pstmt2.setString(1, vuln.getCveId());
-                    pstmt2.addBatch();
-                    jobbedCves.add(vuln.getCveId());
-                }
-            }
-            pstmt.executeBatch();
-            pstmt2.executeUpdate();
-
-        } catch (SQLException ex) {
-            logger.error(ex);
-        }
-    }
-
-    public void insertRawVuln(RawVulnerability vuln) {
-        String query = "INSERT INTO rawdescription (raw_description, created_date, published_date, last_modified_date, source_url, cve_id) VALUES (?, ?, ?, ?, ?, ?)";
-
-
-        try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(query)) {
-            pstmt.setString(1, vuln.getDescription());
-            pstmt.setTimestamp(2, vuln.getCreateDate());
-            pstmt.setTimestamp(3, vuln.getPublishDate());
-            pstmt.setTimestamp(4, vuln.getLastModifiedDate());
-            pstmt.setString(5, vuln.getSourceUrl());
-            pstmt.setString(6, vuln.getCveId());
-            pstmt.executeUpdate();
-        } catch (SQLException ex) {
-            logger.error(ex);
-        }
-    }
-
-
-    /**
-     * For getting raw CVE Data for NVD Comparison
-     * @return
-     */
-    public HashMap<String, LocalDateTime> getRawCVEForNVDComparisons() {
-
-        HashMap<String, LocalDateTime> rawCves = new HashMap<>();
-
-        try (Connection connection = getConnection();
-             PreparedStatement pstmt = connection.prepareStatement(GET_RAW_CVES)) {
-            ResultSet rs = pstmt.executeQuery();
-
-            while (rs.next()) {
-                rawCves.put(rs.getString("cve_id"), rs.getTimestamp("published_date").toLocalDateTime());
-            }
-        } catch (Exception e) {
-            logger.error("ERROR: Failed to grab raw CVEs from rawdescription table\n{}", e);
-        }
-
-        return rawCves;
-    }
-
-    /**
      * for Getting NVD CVEs in nvddata
      * @return
      */
@@ -447,6 +371,32 @@ public class DatabaseHelper {
         }
 
         return nvdVulnerabilities;
+    }
+
+
+    /**
+     * for inserting a NVD Vulnerability in the nvddata table
+     * @param nvdCve
+     * @return
+     */
+    public int insertNvdCve(NvdVulnerability nvdCve) {
+
+        try (Connection connection = getConnection();
+             PreparedStatement pstmt = connection.prepareStatement(insertIntoNvdData);) {
+
+            pstmt.setString(1, nvdCve.getCveId());
+            pstmt.setTimestamp(2, nvdCve.getPublishDate());
+            pstmt.setString(3, nvdCve.getStatus());
+            pstmt.execute();
+
+            logger.info("Successfully Inserted CVE {} with Published Date {} and Status {} into nvd_data", nvdCve.getCveId(), nvdCve.getPublishDate(), nvdCve.getStatus());
+
+            return 1;
+        } catch (Exception e) {
+            logger.error("ERROR: Failed to insert CVE {} with Published Date {} ans Status {} into nvd_data table", nvdCve.getCveId(), nvdCve.getPublishDate(), nvdCve.getStatus());
+        }
+
+        return 0;
     }
 
 }
