@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.time.LocalDate;
 
 public class ParseList extends AbstractCveParser implements ParserStrategy {
 
@@ -56,10 +57,10 @@ public class ParseList extends AbstractCveParser implements ParserStrategy {
             String date = null;
             String desc = null;
 
+            String list_txt = list.text();
+
             if(list.childrenSize() == 2){
-                String list_txt = list.text();
                 cve = getCVEID(list_txt);
-                date = grabDate(list_txt);
                 desc = list.child(1).text();
             }
             else{
@@ -87,12 +88,13 @@ public class ParseList extends AbstractCveParser implements ParserStrategy {
                         desc = list.ownText();
                     else
                         desc = desc_el.text();
-
-                    date = grabDate(list.text());
-                    if(date == ""){
-                        logger.warn("No publish date for " + cve);
-                    }
                 }
+            }
+
+            date = grabDate(list_txt);
+            if(date == ""){
+                logger.warn("No publish date for " + cve + ", using current date");
+                date = LocalDate.now().toString();
             }
 
             CompositeVulnerability vuln = new CompositeVulnerability(0, sSourceURL, cve, null, date, null, desc, sourceDomainName);
