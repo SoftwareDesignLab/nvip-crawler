@@ -23,6 +23,8 @@
  */
 package edu.rit.se.nvip.reconciler;
 
+import edu.rit.se.nvip.reconciler.models.ApacheOpenNLPModel;
+
 /**
  * @author axoeec
  *
@@ -44,6 +46,8 @@ public class ReconcilerFactory {
 			case STANFORD_CORE_NLP:
 				return new StanfordCoreNLPReconciler();
 			case APACHE_OPEN_NLP:
+				ApacheOpenNLPReconciler out = new ApacheOpenNLPReconciler();
+				out.attachModel(new ApacheOpenNLPModel());
 				return new ApacheOpenNLPReconciler();
 			default:
 				return new SimpleReconciler();
