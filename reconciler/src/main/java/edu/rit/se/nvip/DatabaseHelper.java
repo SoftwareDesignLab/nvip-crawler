@@ -5,10 +5,12 @@ import com.zaxxer.hikari.HikariDataSource;
 import com.zaxxer.hikari.pool.HikariPool;
 import edu.rit.se.nvip.model.CompositeDescription;
 import edu.rit.se.nvip.model.CompositeVulnerability;
+import edu.rit.se.nvip.model.NvdVulnerability;
 import edu.rit.se.nvip.model.RawVulnerability;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import java.sql.*;
+import java.time.LocalDateTime;
 import java.util.*;
 
 public class DatabaseHelper {
@@ -37,6 +39,10 @@ public class DatabaseHelper {
     private static final String INSERT_JT = "INSERT INTO rawdescriptionjt (description_id, raw_description_id) VALUES (?, ?)";
     private static final String INSERT_DESCRIPTION = "INSERT INTO description (description, created_date, gpt_func, cve_id) VALUES (?, ?, ?, ?)";
     private static final String DELETE_JOB = "DELETE FROM cvejobtrack WHERE cve_id = ?";
+
+    private final String GET_RAW_CVES = "SELECT DISTINCT cve_id, published_date FROM rawdescription order by cve_id desc";
+
+    private String GET_ALL_NEW_CVES = "SELECT cve_id, published_date, status FROM nvddata order by cve_id desc";
 
     public static synchronized DatabaseHelper getInstance() {
         if (databaseHelper == null) {
@@ -393,4 +399,54 @@ public class DatabaseHelper {
             logger.error(ex);
         }
     }
+
+
+    /**
+     * For getting raw CVE Data for NVD Comparison
+     * @return
+     */
+    public HashMap<String, LocalDateTime> getRawCVEForNVDComparisons() {
+
+        HashMap<String, LocalDateTime> rawCves = new HashMap<>();
+
+        try (Connection connection = getConnection();
+             PreparedStatement pstmt = connection.prepareStatement(GET_RAW_CVES)) {
+            ResultSet rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                rawCves.put(rs.getString("cve_id"), rs.getTimestamp("published_date").toLocalDateTime());
+            }
+        } catch (Exception e) {
+            logger.error("ERROR: Failed to grab raw CVEs from rawdescription table\n{}", e);
+        }
+
+        return rawCves;
+    }
+
+    /**
+     * for Getting NVD CVEs in nvddata
+     * @return
+     */
+    public ArrayList<NvdVulnerability> getAllNvdCVEs() {
+
+        ArrayList<NvdVulnerability> nvdVulnerabilities = new ArrayList<>();
+
+        try (Connection connection = getConnection();
+             PreparedStatement pstmt = connection.prepareStatement(GET_ALL_NEW_CVES)) {
+            ResultSet rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+
+                try {
+                    nvdVulnerabilities.add(new NvdVulnerability(rs.getString("cve_id"), rs.getTimestamp("published_date").toLocalDateTime(), rs.getString("status")));
+                } catch (Exception ignore) {}
+
+            }
+        } catch (Exception e) {
+            logger.error("ERROR: Failed to grab NVD CVEs from nvddata table\n{}", e.toString());
+        }
+
+        return nvdVulnerabilities;
+    }
+
 }

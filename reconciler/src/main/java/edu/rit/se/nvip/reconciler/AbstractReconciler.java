@@ -57,7 +57,8 @@ public abstract class AbstractReconciler {
 	}
 
 	/**
-	 * Merges information from RawVulnerabilities into a CompositeVulnerability. Date reconciliation is trivially order-based and happens internally within the CompostiteVulnerability class
+	 * Merges information from RawVulnerabilities into a CompositeVulnerability. Date reconciliation is trivially order-based
+	 * and happens internally within the CompostiteVulnerability class
 	 * @param existingVuln A (possibly null) CompositeVulnerability
 	 * @param newVulns A non-null list of RawVulnerabilities with the same CVE-XXX-XXXX identifier as the existingVuln
 	 * @return A CompositeVulnerability containing merged and updated information

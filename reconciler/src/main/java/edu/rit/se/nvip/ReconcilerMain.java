@@ -23,9 +23,11 @@ public class ReconcilerMain {
         // reconcilers still have a Map<String, Integer> knownCveSources, but the old implementation always sets the int to 0.
         // I think the int is supposed to represent a notion of priority, but since the value is never referenced I will continue keeping them 0
         Map<String, Integer> sourceMap = new HashMap<>();
+
         for (String source : (List<String>) envVars.get("knownSources")) {
             sourceMap.put(source, 0);
         }
+
         ReconcilerController rc = new ReconcilerController(
                 (List<String>) envVars.get("filterList"),
                 (String) envVars.get("reconcilerType"),
