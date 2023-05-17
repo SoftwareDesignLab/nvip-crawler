@@ -4,6 +4,7 @@ import edu.rit.se.nvip.model.CompositeVulnerability;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -22,7 +23,8 @@ public class ParseBulletin extends AbstractCveParser implements ParserStrategy {
         int[] bounds = new int[2];
         int keywordIndex = text.toLowerCase().indexOf(keyword);
         if (keywordIndex == -1) return bounds;
-        bounds[0] = Math.max(keywordIndex - 40, 0);
+//        bounds[0] = Math.max(keywordIndex - 40, 0);
+        bounds[0] = keywordIndex;
         bounds[1] = Math.min(keywordIndex + 40, text.length());
         return bounds;
     }
@@ -39,7 +41,15 @@ public class ParseBulletin extends AbstractCveParser implements ParserStrategy {
             // grab date around created
             int[] bounds = getSubstringBounds(text, "created");
             return new GenericDate(text.substring(bounds[0], bounds[1]));
-        } else if (text.toLowerCase().contains("modified")) {
+        }
+        // otherwise try to find any sort of date in the text (this might give back rogue dates in descriptions, etc...)
+        return new GenericDate(text);
+    }
+
+    private GenericDate extractLastModifiedDate(String text) {
+        // search for "Published" "Created" "Modified" "Updated" keywords, grab dates around it
+        // check a subtext for a date based on these keywords
+        if (text.toLowerCase().contains("modified")) {
             // grab date around modified
             int[] bounds = getSubstringBounds(text, "modified");
             return new GenericDate(text.substring(bounds[0], bounds[1]));
@@ -68,12 +78,22 @@ public class ParseBulletin extends AbstractCveParser implements ParserStrategy {
             // grab text around it
             String cveText = docText.substring(cveIndex - 300, cveIndex + 300);
             GenericDate cveDate = extractDate(cveText);
-            if (cveDate.getRawDate() == null) cveDate = extractDate(docText);
-            //TODO: if date is null make it create date... (today)
+            GenericDate lastModifiedDate = extractLastModifiedDate(cveText);
+            if (cveDate.getRawDate() == null) {
+                cveDate = extractDate(docText);
+                if (cveDate.getRawDate() == null) {
+                    cveDate = new GenericDate(LocalDate.now().toString());
+                }
+            }
+            if (lastModifiedDate.getRawDate() == null) {
+                lastModifiedDate = extractLastModifiedDate(docText);
+                if (lastModifiedDate.getRawDate() == null)
+                    lastModifiedDate = cveDate;
+            }
 
             // create new composite vulnerability
             CompositeVulnerability vuln = new CompositeVulnerability(
-                    0, sSourceURL, cve, null, cveDate.getRawDate(), cveDate.getRawDate(), cveText, sourceDomainName
+                    0, sSourceURL, cve, null, cveDate.getRawDate(), lastModifiedDate.getRawDate(), cveText, sourceDomainName
             );
             // add to list
             vulnList.add(vuln);
