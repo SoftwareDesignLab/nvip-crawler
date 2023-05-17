@@ -48,7 +48,7 @@ public class ReconcilerFactory {
 			case APACHE_OPEN_NLP:
 				ApacheOpenNLPReconciler out = new ApacheOpenNLPReconciler();
 				out.attachModel(new ApacheOpenNLPModel());
-				return new ApacheOpenNLPReconciler();
+				return out;
 			default:
 				return new SimpleReconciler();
 		}
