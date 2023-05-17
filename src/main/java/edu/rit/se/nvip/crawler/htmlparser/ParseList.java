@@ -131,6 +131,11 @@ public class ParseList extends AbstractCveParser implements ParserStrategy {
                 // Once you hit a <dt> apart from the first one, create new vuln with data from prev <dd>
                 if(child.tagName() == "dt" && cve != null){
                     String desc = sb.toString();
+                    if(date == "" || date == null){
+                        logger.warn("No publish date for " + cve + ", using current date");
+                        date = LocalDate.now().toString();
+                    }
+
                     vuln = new CompositeVulnerability(0, sSourceURL, cve, null, date, null, desc, sourceDomainName);
                     // logger.info(vuln.getCveId());
                     // logger.info(vuln.getDescription());
