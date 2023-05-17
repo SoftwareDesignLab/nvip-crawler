@@ -17,7 +17,6 @@ import static org.junit.Assert.*;
 public class ParseBulletinTest extends AbstractParserTest {
 
     // test against Android Bulletin
-    // taken from AndroidParserTest TODO: combine with AndroidParserTest
     @Test
     public void testParseBulletinAndroid() {
         ParseBulletin parser = new ParseBulletin("https://source.android.com/docs/security/bulletin/2023-02-01");
@@ -31,11 +30,11 @@ public class ParseBulletinTest extends AbstractParserTest {
         assertNotNull(vuln);
         assertTrue(vuln.getDescription().contains("with no additional execution privileges needed"));
         assertEquals("February 6, 2023", vuln.getPublishDate());
+        assertEquals("February 8, 2023", vuln.getLastModifiedDate());
     }
 
 
     // test against Google Cloud Bulletin
-    // taken from GoogleCloudBulletinTest TODO: combine with GoogleCloudBulletinTest
     @Test
     public void testParseBulletinGoogle() throws IOException {
         String html = FileUtils.readFileToString(new File("src/test/resources/test-google-cloud-bulletin.html"), StandardCharsets.US_ASCII);
@@ -51,6 +50,7 @@ public class ParseBulletinTest extends AbstractParserTest {
         assertEquals("2023-01-11", vuln1.getLastModifiedDate());
         assertTrue(vuln1.getDescription().contains("OpenSSL v3.0.6 that can potentially cause a crash."));
         assertEquals("2022-11-09", vuln6.getPublishDate());
+        assertEquals("2023-01-19", vuln6.getLastModifiedDate());
         assertTrue(vuln6.getDescription().contains("Linux kernel that can lead to a full container break out to root on the node."));
     }
 }
