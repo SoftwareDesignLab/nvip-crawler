@@ -24,6 +24,7 @@
 package edu.rit.se.nvip.nvd;
 
 import edu.rit.se.nvip.DatabaseHelper;
+import edu.rit.se.nvip.model.CompositeVulnerability;
 import edu.rit.se.nvip.model.NvdVulnerability;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -39,6 +40,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Set;
 
 /**
  * 
@@ -57,7 +59,7 @@ public class NvdCveController {
 	public static void main(String[] args) {
 		NvdCveController nvd = new NvdCveController();
 		//nvd.updateNvdDataTable("https://services.nvd.nist.gov/rest/json/cves/2.0?pubStartDate=<StartDate>&pubEndDate=<EndDate>");
-		nvd.compareRawCVEsWithNVD();
+		//nvd.compareReconciledCVEsWithNVD();
 	}
 
 
@@ -76,7 +78,15 @@ public class NvdCveController {
 		databaseHelper = DatabaseHelper.getInstance();
 	}
 
-	public void compareRawCVEsWithNVD() {
+	/**
+	 * For comparing Reconciled CVEs with NVD,
+	 * Grabs CVEs from nvddata table to run comparison
+	 *
+	 * Calculates # of CVEs not in NVD, as well as average time gaps
+	 *
+	 * @param vulns
+	 */
+	public void compareReconciledCVEsWithNVD(Set<CompositeVulnerability> vulns) {
 		// Get NVD CVEs
 		ArrayList<NvdVulnerability> nvdCves = databaseHelper.getAllNvdCVEs();
 
@@ -92,38 +102,54 @@ public class NvdCveController {
 
 		logger.info("Comparing with NVD, this may take some time....");
 
-		for (String rawCve: rawCves.keySet()) {
+
+		// For each composite vulnerability, iterate through NVD vulns to see if there's a match in the CVE IDs
+		// If there's a match, check status of the CVE in NVD, otherwise mark it as not in NVD
+		for (CompositeVulnerability vuln: vulns) {
+			boolean checked = false;
+
 			for (NvdVulnerability nvdCve: nvdCves) {
-				boolean checked = false;
-				if (nvdCve.getCveId().equals(rawCve)) {
+
+				if (checked)
+					break;
+
+				if (nvdCve.getCveId().equals(vuln.getCveId())) {
 					switch (nvdCve.getStatus()) {
 						case "Received": {
 							received++;
 							notInNvd++;
+							checked = true;
 							break;
 						}
 						case "Undergoing Analysis": {
 							underGoingAnalysis++;
 							notInNvd++;
+							checked = true;
 							break;
 						}
 						case "Awaiting Analysis": {
 							awaitingAnalysis++;
 							notInNvd++;
+							checked = true;
 							break;
 						}
 						case "Analyzed": {
 							analyzed++;
 							inNvd++;
+							checked = true;
 							break;
 						}
 						default: {
-							inNvd++;
 							break;
 						}
 					}
 				}
 			}
+
+			if (!checked) {
+				notInNvd++;
+			}
+
 		}
 
 		//Print Results
@@ -137,6 +163,11 @@ public class NvdCveController {
 				inNvd, notInNvd, analyzed, received, underGoingAnalysis, awaitingAnalysis);
 	}
 
+	/**
+	 * For updating NVD table with recent CVEs
+	 * Grabs CVEs via API request to NVD API
+	 * @param url
+	 */
 	public void updateNvdDataTable(String url) {
 		// fetch the CVEs from NVD
 		HashMap<String, String> cves = fetchCvesFromNvd(url.replaceAll("<StartDate>", this.startDate)
@@ -153,6 +184,12 @@ public class NvdCveController {
 		logger.info("Inserted {} new CVEs from NVD into NVD Database Table", totalUpdated);
 	}
 
+
+	/**
+	 * For grabbing NVD cves from the oast month
+	 * @param nvdUrl
+	 * @return
+	 */
 	private HashMap<String, String> fetchCvesFromNvd(String nvdUrl) {
 		HashMap<String, String> nvdCves = new HashMap<>();
 		try {
