@@ -58,7 +58,7 @@ public class DatabaseHelper {
         return databaseHelper;
     }
 
-    private DatabaseHelper(HikariConfig config) {
+    protected DatabaseHelper(HikariConfig config) {
         try {
             logger.info("New NVIP.DatabaseHelper instantiated! It is configured to use " + databaseType + " database!");
             Class.forName("com.mysql.cj.jdbc.Driver");
@@ -77,7 +77,7 @@ public class DatabaseHelper {
         }
     }
 
-    private static HikariConfig createHikariConfigFromArgs(String url, String username, String password) {
+    protected static HikariConfig createHikariConfigFromArgs(String url, String username, String password) {
         HikariConfig hikariConfig = new HikariConfig();
         hikariConfig.setJdbcUrl(url);
         hikariConfig.setUsername(username);
@@ -85,7 +85,7 @@ public class DatabaseHelper {
         return hikariConfig;
     }
 
-    private static HikariConfig createHikariConfigFromEnvironment() {
+    protected static HikariConfig createHikariConfigFromEnvironment() {
 
         String url = System.getenv("HIKARI_URL");
         HikariConfig hikariConfig;

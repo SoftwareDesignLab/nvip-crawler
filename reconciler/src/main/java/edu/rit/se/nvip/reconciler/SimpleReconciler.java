@@ -27,7 +27,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -37,7 +36,7 @@ import java.util.Set;
  *
  */
 
-public class SimpleReconciler extends AbstractPairwiseChoosingReconciler {
+public class SimpleReconciler extends PairwiseChoosingReconciler {
 	private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
 
 	public SimpleReconciler() {

@@ -39,7 +39,7 @@ import edu.stanford.nlp.simple.Sentence;
  *
  */
 
-public class StanfordSimpleNLPReconciler extends AbstractPairwiseChoosingReconciler {
+public class StanfordSimpleNLPReconciler extends PairwiseChoosingReconciler {
 
 	public StanfordSimpleNLPReconciler() {
 		super();
