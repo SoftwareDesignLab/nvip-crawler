@@ -112,7 +112,6 @@ https://www.kyberturvallisuuskeskus.fi/en/ncsc-news?limit=20&newstype=%255B400%2
 https://www.securityfocus.com/
 https://securiteam.com/category/exploits/
 https://securiteam.com/advisories/
-https://www.zerodayinitiative.com/advisories/published/
 https://amperecomputing.com/products/product-security
 https://www.libreoffice.org/about-us/security/advisories/
 https://www.samba.org/samba/history/security.html
@@ -140,7 +139,6 @@ https://github.com/kiwitcms/Kiwi/security/advisories/
 https://cybir.com/2023/cve/
 
 https://security-advisory.acronis.com/advisories
-https://www.zerodayinitiative.com/advisories/published/
 https://www.amd.com/en/corporate/product-security
 https://airbus-seclab.github.io
 https://github.com/aliasrobotics/RVD/labels/vulnerability
@@ -179,7 +177,7 @@ https://censys.io/category/blog/
 https://www.kb.cert.org/vuls/bypublished/desc/
 https://cert.vde.com/en/advisories/
 https://advisories.checkpoint.com/advisories/
-"https://chromereleases.googleblog.com
+https://chromereleases.googleblog.com
 https://bugs.chromium.org/p/chromium/issues/list?q=Type%3DBug-Security&can=1"
 https://sec.cloudapps.cisco.com/security/center/resources/security_vulnerability_policy.html#sa
 https://sec.cloudapps.cisco.com/security/center/publicationListing.x
@@ -449,8 +447,6 @@ http://support.zte.com.cn/support/news/NewsMain.aspx
 https://zuso.ai/Advisory.html
 https://www.zyxel.com/global/en/support/security-advisories
 https://docs.zephyrproject.org/latest/security/vulnerabilities.html
-https://www.zerodayinitiative.com/advisories/published/
-https://www.zerodayinitiative.com/advisories/upcoming/
 https://www.incibe-cert.es/en/early-warning/ics-advisories
 https://www.incibe-cert.es/en/early-warning/security-advisories
 https://www.zigor.com/list-of-vulnerabilities/
