@@ -244,8 +244,7 @@ public class CveCharacterizer {
 							(countBadDescription + countNotChanged), countBadDescription, countNotChanged, Math.round(percent));
 				}
 			} catch (Exception e) {
-				logger.error("ERROR: Failure during characterization of CVE: {}", vulnerability.getCveId());
-				e.printStackTrace();
+				logger.error("ERROR: Failure during characterization of CVE: {}\n{}", vulnerability.getCveId(), e);
 			}
 
 			totCharacterized++;
