@@ -58,7 +58,8 @@ public class ParseCVEDescription extends AbstractCveParser implements ParserStra
             String version = getPlatformVersion(sCVEContent);
 
             // save vulnerability
-            CompositeVulnerability vuln = new CompositeVulnerability(0, sSourceURL, cveId, version, null, UtilHelper.longDateFormat.format(new Date()), sCVEContent, null);
+            String dateTimeNow = UtilHelper.longDateFormat.format(new Date());
+            CompositeVulnerability vuln = new CompositeVulnerability(0, sSourceURL, cveId, version, dateTimeNow, dateTimeNow, sCVEContent, null);
             vulnerabilities.add(vuln);
             return vulnerabilities;
         }
@@ -185,13 +186,13 @@ public class ParseCVEDescription extends AbstractCveParser implements ParserStra
             if (aBlockOfCveIdsInTheSentence)
                 for (Object o : cveIDsInSentence) {
                     if (sentenceContainsValuableInfoForCVE(sbDescription.toString(), cveIDsInSentence.length)) {
-                        CompositeVulnerability vuln = new CompositeVulnerability(0, sSourceURL, (String) o, version, null, dateTimeNow, sbDescription.toString(), null);
+                        CompositeVulnerability vuln = new CompositeVulnerability(0, sSourceURL, (String) o, version, dateTimeNow, dateTimeNow, sbDescription.toString(), null);
                         vulnMap.put(vuln.getCveId(), vuln);
                     }
                 }
             else {
                 if (sentenceContainsValuableInfoForCVE(sbDescription.toString(), 1)) {
-                    CompositeVulnerability vuln = new CompositeVulnerability(0, sSourceURL, cveIDOfCurrentSentence, version, null, dateTimeNow, sbDescription.toString(), null);
+                    CompositeVulnerability vuln = new CompositeVulnerability(0, sSourceURL, cveIDOfCurrentSentence, version, dateTimeNow, dateTimeNow, sbDescription.toString(), null);
                     vulnMap.put(vuln.getCveId(), vuln);
                 } else {
                     logger.debug("Ignoring this CVE! ID: " + cveIDOfCurrentSentence + ", Description: " + sbDescription);
