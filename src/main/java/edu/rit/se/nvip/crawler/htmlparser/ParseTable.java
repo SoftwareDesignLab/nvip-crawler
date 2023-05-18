@@ -14,6 +14,7 @@ import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.time.Duration;
+import java.time.LocalDate;
 import java.util.*;
 
 public class ParseTable extends AbstractCveParser implements ParserStrategy {
@@ -96,17 +97,21 @@ public class ParseTable extends AbstractCveParser implements ParserStrategy {
             description = newHtmlElements.text();
         }
         else description = rowText;
-        String date = "";
-        GenericDate genericDate = new GenericDate(rowText);
+        String createdDate = LocalDate.now().toString();
+        GenericDate genericDate = extractDate(rowText);
+        String lastModifiedDate = LocalDate.now().toString();
+        GenericDate genericLastMod = extractLastModifiedDate(rowText);
         if (genericDate.getRawDate() != null)
-            date = genericDate.getRawDate();
+            createdDate = genericDate.getRawDate();
+        if (genericLastMod.getRawDate() != null)
+            lastModifiedDate = genericLastMod.getRawDate();
         else
-            logger.warn("No date found for " + cveIDs);
+            lastModifiedDate = createdDate;
 
         for (String cve : cveList)
             rowVulns.add(
                     new CompositeVulnerability(
-                            0, sourceUrl, cve, null, date, date, description, sourceDomainName
+                            0, sourceUrl, cve, null, createdDate, lastModifiedDate, description, sourceDomainName
                     )
             );
         return rowVulns;
