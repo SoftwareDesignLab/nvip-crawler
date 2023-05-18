@@ -696,11 +696,11 @@ public class DatabaseHelper {
 			pstmt.setString(2, vuln.getDescription());
 			pstmt.setString(3, vuln.getPlatform());
 			pstmt.setString(4, vuln.getPatch());
-			pstmt.setString(5, vuln.getPublishDate().toString());
+			pstmt.setString(5, formatDate(vuln.getPublishDate()));
 
-			pstmt.setString(6, vuln.getLastModifiedDate().toString()); // during insert create date is last modified date
-			pstmt.setString(7, vuln.getLastModifiedDate().toString());
-			pstmt.setString(8, vuln.getFixDate().toString());
+			pstmt.setString(6, formatDate(vuln.getLastModifiedDate())); // during insert create date is last modified date
+			pstmt.setString(7, formatDate(vuln.getLastModifiedDate()));
+			pstmt.setString(8, formatDate(vuln.getFixDate()));
 			/**
 			 * Bug fix: indexes 9 and 10 were wrong
 			 */
@@ -730,9 +730,9 @@ public class DatabaseHelper {
 			pstmt.setString(1, vuln.getDescription());
 			pstmt.setString(2, vuln.getPlatform());
 			pstmt.setString(3, vuln.getPatch());
-			pstmt.setString(4, vuln.getPublishDate());
-			pstmt.setString(5, vuln.getLastModifiedDate());
-			pstmt.setString(6, vuln.getFixDate());
+			pstmt.setString(4, formatDate(vuln.getPublishDate()));
+			pstmt.setString(5, formatDate(vuln.getLastModifiedDate()));
+			pstmt.setString(6, formatDate(vuln.getFixDate()));
 			pstmt.setString(7, vuln.getCveId()); // WHERE clause in SQL statement
 
 			pstmt.executeUpdate();
@@ -1773,12 +1773,13 @@ public class DatabaseHelper {
 
 		// Tomorrows date
 		java.sql.Date endpoint = new java.sql.Date(runDateTime.getTime() + (86400000));
+		java.sql.Date startpoint = new java.sql.Date(runDateTime.getTime() - (21600000));
 		HashMap<String, String> data = new HashMap<>();
 
 		try (Connection connection = getConnection();
 				PreparedStatement pstmt = connection.prepareStatement(getCVEByDate);) {
 
-			pstmt.setDate(1, (java.sql.Date) runDateTime);
+			pstmt.setDate(1, startpoint);
 			pstmt.setDate(2, endpoint);
 			ResultSet rs = pstmt.executeQuery();
 
@@ -1835,84 +1836,82 @@ public class DatabaseHelper {
 		return result;
 	}
 
+
 	private final String selectNewCVEs = "SELECT v.vuln_id," +
-			"v.cve_id," +
-			"v.description," +
-			"v.platform," +
-			"v.published_date," +
-			"v.last_modified_date," +
-			"v.fixed_date," +
-			"v.exists_at_nvd," +
-			"v.exists_at_mitre," +
-			"vc.vdo_labels," +
-			"vc.vdo_label_confidences," +
-			"vc.vdo_noun_groups," +
-			"vsu.urls," +
-			"cs.base_severities," +
-			"cs.severity_confidences," +
-			"cs.impact_scores," +
-			"cs.impact_confidences," +
-			"vap.product_id," +
-			"vap.cpe," +
-			"vap.domain," +
-			"vap.version," +
-			"expl.publish_date," +
-			"expl.publisher_url," +
-			"vu.run_date_time " +
-			"FROM (SELECT vu.vuln_id, " +
-			"MAX(drh.run_id) AS run_id, " +
-			"MAX(drh.run_date_time) AS run_date_time " +
-			"FROM dailyrunhistory drh " +
-			"INNER JOIN vulnerabilityupdate vu ON vu.run_id = drh.run_id " +
-			"WHERE drh.run_date_time BETWEEN ? AND ? " +
-			"GROUP BY vu.vuln_id) vu " +
-			"INNER JOIN vulnerability v " +
-			"ON v.vuln_id = vu.vuln_id " +
-			"LEFT JOIN (SELECT vc.cve_id, " +
-			"group_concat(vl.vdo_label_name SEPARATOR ';') AS vdo_labels, " +
-			"group_concat(vc.vdo_confidence SEPARATOR ';') AS vdo_label_confidences, " +
-			"group_concat(ifnull(vn.vdo_noun_group_name, 'None') " +
-			"SEPARATOR " +
-			"';') AS vdo_noun_groups " +
-			"FROM vdocharacteristic vc " +
-			"INNER JOIN vdonoungroup vn ON vn.vdo_noun_group_id = vc.vdo_noun_group_id " +
-			"INNER JOIN vdolabel vl ON vl.vdo_label_id = vc.vdo_label_id " +
-			"GROUP BY vc.cve_id) vc " +
-			"ON vc.cve_id = v.cve_id " +
-			"LEFT JOIN (SELECT cve_id, " +
-			"group_concat(DISTINCT url SEPARATOR ';') AS urls " +
-			"FROM vulnsourceurl " +
-			"GROUP BY cve_id) vsu " +
-			"ON vsu.cve_id = v.cve_id " +
-			"LEFT JOIN (SELECT csc.cve_id, " +
-			"group_concat(cse.cvss_severity_class SEPARATOR ';') AS base_severities, " +
-			"group_concat(csc.severity_confidence SEPARATOR ';') AS severity_confidences, " +
-			"group_concat(csc.impact_score SEPARATOR ';')  AS impact_scores, " +
-			"group_concat(csc.impact_confidence SEPARATOR ';') AS impact_confidences " +
-			"FROM cvssscore csc " +
-			"INNER JOIN cvssseverity cse ON cse.cvss_severity_id = csc.cvss_severity_id " +
-			"GROUP BY csc.cve_id) cs " +
-			"ON cs.cve_id = v.cve_id " +
-			"LEFT JOIN (SELECT cve_id, " +
-			"group_concat(ar.product_id SEPARATOR ';') AS product_id, " +
-			"group_concat(cpe SEPARATOR ';')  AS cpe, " +
-			"group_concat(domain SEPARATOR ';')  AS domain, " +
-			"group_concat(version SEPARATOR ';') AS version " +
-			"FROM affectedrelease ar " +
-			"INNER JOIN product p ON p.product_id = ar.product_id " +
-			"GROUP BY cve_id) vap " +
-			"ON vap.cve_id = v.cve_id " +
-			"LEFT JOIN exploit as expl on expl.vuln_id = v.vuln_id " +
-			"WHERE v.vuln_id NOT IN (SELECT vuln_id FROM vulnerabilityaggregate) " +
-			"and v.status_id <> 2 " +
-			"and v.description is not null " +
-			"and v.description not like '%** RESERVED ** This candidate%' " +
-			"and v.description not like '%** REJECT ** DO NOT USE%' " +
-			"and length(v.description) >= 50 " +
-			"and vdo_labels is not null " +
-			"ORDER BY v.vuln_id desc;";
-
-
+			"   v.cve_id," +
+			"   v.description," +
+			"   v.platform," +
+			"   v.published_date," +
+			"   v.last_modified_date," +
+			"   v.fixed_date," +
+			"   v.exists_at_nvd," +
+			"   v.exists_at_mitre," +
+			"   vc.vdo_labels," +
+			"   vc.vdo_label_confidences," +
+			"   vc.vdo_noun_groups," +
+			"   vsu.urls," +
+			"   cs.base_severities," +
+			"   cs.severity_confidences," +
+			"   cs.impact_scores," +
+			"   cs.impact_confidences," +
+			"   vap.product_id," +
+			"   vap.cpe," +
+			"   vap.domain," +
+			"   vap.version," +
+			"   expl.publish_date," +
+			"   expl.publisher_url," +
+			"   vu.run_date_time" +
+			" FROM (SELECT vu.vuln_id," +
+			" MAX(drh.run_id)        AS \"run_id\"," +
+			" MAX(drh.run_date_time) AS \"run_date_time\"" +
+			"  FROM dailyrunhistory drh" +
+			"   INNER JOIN vulnerabilityupdate vu ON vu.run_id = drh.run_id" +
+			"  WHERE drh.run_date_time BETWEEN ? AND ?" +
+			"  GROUP BY vu.vuln_id) vu" +
+			" INNER JOIN vulnerability v" +
+			" ON v.vuln_id = vu.vuln_id" +
+			" LEFT JOIN (SELECT vc.cve_id," +
+			"   group_concat(vl.vdo_label_name SEPARATOR ';') AS vdo_labels," +
+			"   group_concat(vc.vdo_confidence SEPARATOR ';') AS vdo_label_confidences," +
+			"   group_concat(ifnull(vn.vdo_noun_group_name, 'None')" +
+			" SEPARATOR" +
+			" ';')                                      AS vdo_noun_groups" +
+			" FROM vdocharacteristic vc" +
+			" INNER JOIN vdonoungroup vn ON vn.vdo_noun_group_id = vc.vdo_noun_group_id" +
+			" INNER JOIN vdolabel vl ON vl.vdo_label_id = vc.vdo_label_id" +
+			" GROUP BY vc.cve_id) vc" +
+			"   ON vc.cve_id = v.cve_id" +
+			" LEFT JOIN (SELECT cve_id," +
+			"   group_concat(DISTINCT url SEPARATOR ';') AS urls" +
+			" FROM vulnsourceurl" +
+			" GROUP BY cve_id) vsu" +
+			"   ON vsu.cve_id = v.cve_id" +
+			" LEFT JOIN (SELECT csc.cve_id," +
+			"   group_concat(DISTINCT cse.cvss_severity_class SEPARATOR ';') AS base_severities," +
+			"   group_concat(DISTINCT csc.severity_confidence SEPARATOR ';') AS severity_confidences," +
+			"   group_concat(DISTINCT csc.impact_score SEPARATOR ';')        AS impact_scores," +
+			"   group_concat(DISTINCT csc.impact_confidence SEPARATOR ';')   AS impact_confidences" +
+			" FROM cvssscore csc" +
+			" INNER JOIN cvssseverity cse ON cse.cvss_severity_id = csc.cvss_severity_id" +
+			" GROUP BY csc.cve_id) cs" +
+			"   ON cs.cve_id = v.cve_id" +
+			" LEFT JOIN (SELECT cve_id," +
+			"   group_concat(DISTINCT ar.product_id SEPARATOR ';') AS product_id," +
+			"   group_concat(DISTINCT cpe SEPARATOR ';')           AS cpe," +
+			"   group_concat(DISTINCT domain SEPARATOR ';')        AS domain," +
+			"   group_concat(DISTINCT version SEPARATOR ';')       AS version" +
+			" FROM affectedrelease ar" +
+			" INNER JOIN product p ON p.product_id = ar.product_id" +
+			" GROUP BY cve_id) vap" +
+			"   ON vap.cve_id = v.cve_id" +
+			" LEFT JOIN exploit as expl on expl.vuln_id = v.vuln_id" +
+			" WHERE v.status_id <> 2" +
+			"  and v.description is not null" +
+			"  and v.description not like '%** RESERVED ** This candidate%'" +
+			"  and v.description not like '%** REJECT ** DO NOT USE%'" +
+			"  and length(v.description) >= 50" +
+			"  and vdo_labels is not null" +
+			" ORDER BY v.vuln_id desc;";
 
 	/**
 	 * Prepare CVEs for UI by grabbing all CVEs from the past week and
@@ -1959,7 +1958,7 @@ public class DatabaseHelper {
 						rs.getString(21),
 						rs.getDate(22),
 						rs.getString(23),
-						rs.getDate(24)
+						rs.getTimestamp(24)
 				);
 
 				if (inserted) {
@@ -2035,7 +2034,7 @@ public class DatabaseHelper {
 										   java.sql.Date fixDate, int existNvd, int existMitre, String vdoLabels, String vdoConfidences,
 										   String vdoNGroups, String urls, String baseSeverities, String severConfidences, String impScores,
 										   String impConfidences, String productId, String cpe, String domain, String version, java.sql.Date exploitDate,
-										   String exploitUrl, java.sql.Date runDatetime) {
+										   String exploitUrl, Timestamp runDatetime) {
 
 		try (Connection connection = getConnection();
 			 PreparedStatement pstmt = connection.prepareStatement(insertIntoAggregate);) {
@@ -2063,7 +2062,7 @@ public class DatabaseHelper {
 			pstmt.setString(21, version);
 			pstmt.setDate(22, exploitDate);
 			pstmt.setString(23, exploitUrl);
-			pstmt.setDate(24, runDatetime);
+			pstmt.setTimestamp(24, runDatetime);
 
 			pstmt.executeUpdate();
 
