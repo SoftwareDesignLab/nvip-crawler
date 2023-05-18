@@ -57,41 +57,41 @@ public class ParseList extends AbstractCveParser implements ParserStrategy {
             String date = null;
             String desc = null;
 
-            String list_txt = list.text();
+            String listText = list.text();
 
             if(list.childrenSize() == 2){
-                cve = getCVEID(list_txt);
+                cve = getCVEID(listText);
                 desc = list.child(1).text();
             }
             else{
-                Element cve_el = list.select(":containsOwn(CVE)").first();
-                cve = getCVEID(cve_el.text());
+                Element cveElement = list.select(":containsOwn(CVE)").first();
+                cve = getCVEID(cveElement.text());
 
                 // First check the next sibling element if its CVE related If so, its prolly the desc
-                Element desc_el = cve_el.nextElementSibling();
-                if(desc_el != null){
+                Element descElement = cveElement.nextElementSibling();
+                if(descElement != null){
                     Pattern cvePattern = Pattern.compile(regexAllCVERelatedContent);
-                    Matcher cveMatcher = cvePattern.matcher(desc_el.text());
+                    Matcher cveMatcher = cvePattern.matcher(descElement.text());
 
                     if (!cveMatcher.find()){
                         // Next element after the CVE ID is not the desc, see if 
                         // theres someting that defines detail/descrption/summery
-                        desc_el = list.select(":containsOwn(detail), :containsOwn(description)").first();
+                        descElement = list.select(":containsOwn(detail), :containsOwn(description)").first();
 
-                        if(desc_el == null){
+                        if(descElement == null){
                             // If theres no detail/description/summary, grab first <p> that has CVE related content
-                            desc_el = list.select("p:matchesOwn(" + regexAllCVERelatedContent + ")").first();
+                            descElement = list.select("p:matchesOwn(" + regexAllCVERelatedContent + ")").first();
                         }
                     }
                     // All else fails, grab the inner text of the <li>
-                    if (desc_el == null)
+                    if (descElement == null)
                         desc = list.ownText();
                     else
-                        desc = desc_el.text();
+                        desc = descElement.text();
                 }
             }
 
-            date = grabDate(list_txt);
+            date = grabDate(listText);
             if(date == ""){
                 logger.warn("No publish date for " + cve + ", using current date");
                 date = LocalDate.now().toString();
@@ -116,10 +116,10 @@ public class ParseList extends AbstractCveParser implements ParserStrategy {
         //      <dd>
         //      ...
         // </dl>
-        Elements dlists = doc.select("dl:contains(CVE)");
+        Elements dLists = doc.select("dl:contains(CVE)");
 
-        for(Element dlist : dlists){
-            Elements children = dlist.children();
+        for(Element dList : dLists){
+            Elements children = dList.children();
             CompositeVulnerability vuln = null;
 
             String cve = null;
@@ -149,28 +149,29 @@ public class ParseList extends AbstractCveParser implements ParserStrategy {
                 }
 
 
-                String dlist_txt = child.text();
+                String dListText = child.text();
 
                 // Check for CVE if not already grabbed
                 if(cve == null || cve == ""){
-                    cve = getCVEID(dlist_txt);
+                    cve = getCVEID(dListText);
                 }
 
                 //Check for date if not already grabbed
                 if(date == null || date == ""){
-                    date = grabDate(dlist_txt);
+                    date = grabDate(dListText);
                 }
 
                 // Grab description to append (desc might be in multiple <dd>)
-                Element desc_el = child.select(":matchesOwn(" + regexAllCVERelatedContent + ")").first();
+                Element descElement = child.select(":matchesOwn(" + regexAllCVERelatedContent + ")").first();
 
-                if(desc_el != null){
+                if(descElement != null){
                     // Make sure it isn't the CVE ID
                     Pattern cvePattern = Pattern.compile(regexCVEID);
-                    Matcher cveMatcher = cvePattern.matcher(desc_el.text());
-                    if (!cveMatcher.find())
-                        sb.append(desc_el.text());
+                    Matcher cveMatcher = cvePattern.matcher(descElement.text());
+                    if (!cveMatcher.find()) {
+                        sb.append(descElement.text());
                         sb.append(" ");
+                    }
                 }
             }
 
