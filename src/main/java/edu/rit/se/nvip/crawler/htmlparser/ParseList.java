@@ -29,19 +29,6 @@ public class ParseList extends AbstractCveParser implements ParserStrategy {
         this.sourceDomainName = sourceDomainName;
     }
 
-    private String grabDate(String sourceHtml){
-        String date = getCVEDate(sourceHtml);
-        if(date == ""){
-            Pattern dayMonthYearPattern = Pattern.compile("([1-9]|[12]\\d|3[01])\\s"
-                + "(Jan(uary)?|Feb(ruary)?|Mar(ch)?|Apr(il)?|May|Jun(e)?|Jul(y)?|Aug(ust)?|Sep(tember)?|Oct(ober)?|Nov(ember)?|Dec(ember)?)"
-                + "\\s([12]\\d{3})");
-            Matcher dateMatcher = dayMonthYearPattern.matcher(sourceHtml);
-            if(dateMatcher.find())
-                date = dateMatcher.group();
-        }
-        return date;
-    }
-
     @Override
     public List<CompositeVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
         List<CompositeVulnerability> vulnList = new ArrayList<>();
@@ -90,9 +77,9 @@ public class ParseList extends AbstractCveParser implements ParserStrategy {
                         desc = descElement.text();
                 }
             }
-
-            date = grabDate(listText);
-            if(date == ""){
+            GenericDate genericDate = new GenericDate(listText);
+            date = genericDate.getRawDate();
+            if(date == null || date.equals("")){
                 logger.warn("No publish date for " + cve + ", using current date");
                 date = LocalDate.now().toString();
             }
@@ -157,8 +144,12 @@ public class ParseList extends AbstractCveParser implements ParserStrategy {
                 }
 
                 //Check for date if not already grabbed
-                if(date == null || date == ""){
-                    date = grabDate(dListText);
+                if(date == null || date.equals("")){
+                    GenericDate genericDate = new GenericDate(dListText);
+                    date = genericDate.getRawDate();
+                    if (date == null || date.equals("")){
+                        date = LocalDate.now().toString();
+                    }
                 }
 
                 // Grab description to append (desc might be in multiple <dd>)
