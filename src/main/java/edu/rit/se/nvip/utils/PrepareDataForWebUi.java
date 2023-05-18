@@ -54,6 +54,9 @@ public class PrepareDataForWebUi {
 			Timestamp end = Timestamp.valueOf(today.plusHours(5));
 			Timestamp pastWeek = Timestamp.valueOf(today.minusHours(168));
 
+			System.out.println(start);
+			System.out.println(end);
+
 			DatabaseHelper databaseHelper = DatabaseHelper.getInstance();
 			int count = databaseHelper.prepareCVEsForUI(start, end, pastWeek);
 			logger.info("Prepared {} CVEs for Web UI", count);
