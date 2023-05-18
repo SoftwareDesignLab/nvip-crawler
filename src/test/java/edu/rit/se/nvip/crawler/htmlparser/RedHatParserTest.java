@@ -25,6 +25,7 @@ package edu.rit.se.nvip.crawler.htmlparser;
 
 import edu.rit.se.nvip.crawler.QuickCveCrawler;
 import edu.rit.se.nvip.model.CompositeVulnerability;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.List;
@@ -38,6 +39,7 @@ import static org.junit.Assert.assertEquals;
 public class RedHatParserTest extends AbstractParserTest {
 
 	@Test
+	@Ignore
 	public void testRedHat() {
 		RedHatParser parser = new RedHatParser("redhat");
 

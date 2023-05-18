@@ -10,6 +10,6 @@ CREATE TABLE `nvdmitrestatus` (
     `status_nvd` TINYTEXT NOT NULL,
     `status_mitre` TINYTEXT NOT NULL,
     PRIMARY KEY (`nvdmitrestatus_id`),
-	KEY `Nvdmitrestatus_Index_CveId` (`cve_id`),
+	KEY `nvdmitrestatus_id_index` (`nvdmitrestatus_id`),
 	CONSTRAINT `nvdmitrestatus_cve_id_fk` FOREIGN KEY (`cve_id`) REFERENCES `vulnerability` (`cve_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
