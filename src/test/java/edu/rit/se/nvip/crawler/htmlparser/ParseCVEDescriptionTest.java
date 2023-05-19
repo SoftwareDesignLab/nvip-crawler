@@ -28,7 +28,6 @@ public class ParseCVEDescriptionTest extends AbstractParserTest {
         assertTrue(list.size() > 9);
         CompositeVulnerability vuln = getVulnerability(list, "CVE-2023-1017");
         assertNotNull(vuln);
-        logger.info(vuln + "\n");
         String current_date = LocalDate.now().toString();
         assertEquals(current_date, vuln.getPublishDate());
         assertTrue(vuln.getDescription().contains("Crestron is aware of an issue with TPM’s 2.0 Module Library in which an out of bounds attack can be executed"));
@@ -63,7 +62,6 @@ public class ParseCVEDescriptionTest extends AbstractParserTest {
         assertTrue(list.size() > 5);
         CompositeVulnerability vuln = getVulnerability(list, "CVE-2023-1031");
         assertNotNull(vuln);
-        logger.info(vuln + "\n");
         String current_date = LocalDate.now().toString();
         assertEquals(current_date, vuln.getPublishDate());
         assertTrue(vuln.getDescription().contains("MonicaHQ version 4.0.0 allows an authenticated remote attacker to execute malicious code in the application."));
@@ -98,7 +96,6 @@ public class ParseCVEDescriptionTest extends AbstractParserTest {
         assertTrue(list.size() > 20);
         CompositeVulnerability vuln = getVulnerability(list, "CVE-2023-32978");
         assertNotNull(vuln);
-        logger.info(vuln + "\n");
         String current_date = LocalDate.now().toString();
         assertEquals(current_date, vuln.getPublishDate());
         assertTrue(vuln.getDescription().contains("LDAP Plugin 673.v034ec70ec2b_b_ and earlier does not require POST requests for a form validation method, resulting in a cross-site request forgery (CSRF) vulnerability"));
