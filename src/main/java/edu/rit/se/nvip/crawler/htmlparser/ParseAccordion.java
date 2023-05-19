@@ -11,6 +11,7 @@ import org.jsoup.select.Elements;
 import org.openqa.selenium.*;
 import org.openqa.selenium.interactions.Actions;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -69,11 +70,15 @@ public class ParseAccordion extends AbstractCveParser implements ParserStrategy 
         List<CompositeVulnerability> cves = new ArrayList<>();
         Set<String> thisAccCVES = getCVEs(accordionText);
         if (thisAccCVES.isEmpty()) return cves;
-        GenericDate date = new GenericDate(accordionText);
+        GenericDate date = extractDate(accordionText);
         String rawDate = date.getRawDate();
+        if (rawDate == null || rawDate.equals("")) rawDate = LocalDate.now().toString();
+        GenericDate genericLastMod = extractLastModifiedDate(accordionText);
+        String lastMod = genericLastMod.getRawDate();
+        if (lastMod == null || lastMod.equals("")) lastMod = rawDate;
         for (String cve : thisAccCVES) {
             CompositeVulnerability vuln = new CompositeVulnerability(
-                    0, sourceUrl, cve, null, rawDate, rawDate, accordionText, sourceDomainName
+                    0, sourceUrl, cve, null, rawDate, lastMod, accordionText, sourceDomainName
             );
             cves.add(vuln);
         }
