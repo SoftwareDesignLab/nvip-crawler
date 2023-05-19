@@ -92,7 +92,6 @@ public class ParseCVEDescription extends AbstractCveParser implements ParserStra
             String currentSentence = allSentences.get(indexSentence);
             Map<String, Integer> cveIDMapInSentence = getUniqueCVEIDs(currentSentence, true);
             Object[] cveIDsInSentence = cveIDMapInSentence.keySet().toArray();
-            logger.info(currentSentence);
             /*
               Case 3.1: There are no CVE IDs on this tag text skip it, because we are
               trying to find sentences with a CVE ID first.
