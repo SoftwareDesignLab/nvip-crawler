@@ -12,10 +12,19 @@ import org.jsoup.select.Elements;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.time.LocalDate;
 
 public class ParseCVEDescription extends AbstractCveParser implements ParserStrategy  {
 
     private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
+
+    /**
+     * Generic parser list strategy
+     * @param sourceDomainName - domain name of source
+     */
+    public ParseCVEDescription(String sourceDomainName) {
+        this.sourceDomainName = sourceDomainName;
+    }
 
     @Override
     public List<CompositeVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
@@ -58,7 +67,7 @@ public class ParseCVEDescription extends AbstractCveParser implements ParserStra
             String version = getPlatformVersion(sCVEContent);
 
             // save vulnerability
-            String dateTimeNow = UtilHelper.longDateFormat.format(new Date());
+            String dateTimeNow = LocalDate.now().toString();
             CompositeVulnerability vuln = new CompositeVulnerability(0, sSourceURL, cveId, version, dateTimeNow, dateTimeNow, sCVEContent, null);
             vulnerabilities.add(vuln);
             return vulnerabilities;
@@ -83,6 +92,7 @@ public class ParseCVEDescription extends AbstractCveParser implements ParserStra
             String currentSentence = allSentences.get(indexSentence);
             Map<String, Integer> cveIDMapInSentence = getUniqueCVEIDs(currentSentence, true);
             Object[] cveIDsInSentence = cveIDMapInSentence.keySet().toArray();
+            logger.info(currentSentence);
             /*
               Case 3.1: There are no CVE IDs on this tag text skip it, because we are
               trying to find sentences with a CVE ID first.
@@ -182,7 +192,7 @@ public class ParseCVEDescription extends AbstractCveParser implements ParserStra
             }
 
             // add vulnerability
-            String dateTimeNow = UtilHelper.longDateFormat.format(new Date());
+            String dateTimeNow = LocalDate.now().toString();
             if (aBlockOfCveIdsInTheSentence)
                 for (Object o : cveIDsInSentence) {
                     if (sentenceContainsValuableInfoForCVE(sbDescription.toString(), cveIDsInSentence.length)) {
