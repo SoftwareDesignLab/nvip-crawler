@@ -540,8 +540,17 @@ public class NVIPMain {
 		PyPAGithubScraper pyPaScraper = new PyPAGithubScraper();
 		HashMap<String, CompositeVulnerability> cvePyPAGitHub = pyPaScraper.scrapePyPAGithub();
 		logger.info("Merging {} PyPA CVEs with {} found GitHub CVEs\n", cvePyPAGitHub.size(), cveHashMapGithub.size());
-		cveHashMapGithub.putAll(cvePyPAGitHub);
 
+		// Add python PA CVEs to lists
+		for (String pythonVuln : cvePyPAGitHub.keySet()) {
+			if (cveHashMapNotScraped.containsKey(pythonVuln)) {
+				cveHashMapNotScraped.get(pythonVuln).add(cvePyPAGitHub.get(pythonVuln));
+			} else {
+				ArrayList<CompositeVulnerability> initList = new ArrayList<>();
+				initList.add(cveHashMapGithub.get(pythonVuln));
+				cveHashMapNotScraped.put(pythonVuln, initList);
+			}
+		}
 
 		/**
 		 * Scrape CVE summary pages (frequently updated CVE providers)
