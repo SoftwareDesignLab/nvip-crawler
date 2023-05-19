@@ -105,6 +105,10 @@ public class ParseAccordion extends AbstractCveParser implements ParserStrategy 
         // go through each accordion child and click on it
         for (Element accordion : accordions) {
             Elements accordionChildren = accordion.children();
+            while (accordionChildren.size() == 1) {
+                accordion = accordionChildren.first();
+                accordionChildren = accordion.children();
+            }
             for (Element child : accordionChildren) {
                 StringBuilder childText = new StringBuilder(child.text());
                 String diff = "";
