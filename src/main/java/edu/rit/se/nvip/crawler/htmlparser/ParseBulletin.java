@@ -3,7 +3,6 @@ package edu.rit.se.nvip.crawler.htmlparser;
 import edu.rit.se.nvip.model.CompositeVulnerability;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -103,8 +102,6 @@ public class ParseBulletin extends AbstractCveParser implements ParserStrategy {
             // add to list
             vulnList.add(vuln);
         }
-
-
 
         return vulnList;
     }
