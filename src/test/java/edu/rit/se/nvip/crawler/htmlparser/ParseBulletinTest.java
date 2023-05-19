@@ -40,7 +40,6 @@ public class ParseBulletinTest extends AbstractParserTest {
         String html = FileUtils.readFileToString(new File("src/test/resources/test-google-cloud-bulletin.html"), StandardCharsets.US_ASCII);
         ParseBulletin parser = new ParseBulletin("https://cloud.google.com/support/bulletins/");
         List<CompositeVulnerability> list = parser.parseWebPage("https://cloud.google.com/support/bulletins", html);
-
         assertTrue(list.size() > 90);
         CompositeVulnerability vuln1 = getVulnerability(list, "CVE-2022-3786");
         CompositeVulnerability vuln6 = getVulnerability(list, "CVE-2022-2588");
