@@ -614,22 +614,36 @@ public class NVIPMain {
 	public HashMap<String, CompositeVulnerability> mergeCVEsDerivedFromCNAsAndGit(HashMap<String, List<CompositeVulnerability>> cveHashMapNotScraped,
 																				  HashMap<String, ArrayList<CompositeVulnerability>> cveHashMapScrapedFromCNAs) {
 
+		//Merge the 2 hashmaps
 		logger.info("Merging {} scraped CVEs with {} Github", cveHashMapScrapedFromCNAs.size(), cveHashMapNotScraped.size());
-		final String reservedStr = "** RESERVED **";
-		HashMap<String, CompositeVulnerability> cveHashMapAll = new HashMap<>(); // merged CVEs
+		HashMap<String, List<CompositeVulnerability>> mergedMap = new HashMap<>(); // merged CVE Lists
 
-		// include all CVEs from CNAs
-		NlpUtil nlpUtil = new NlpUtil();
+		for (String cveId: cveHashMapNotScraped.keySet()) {
+			mergedMap.put(cveId, cveHashMapNotScraped.get(cveId));
+		}
+
+		for (String cveId: cveHashMapScrapedFromCNAs.keySet()) {
+			if (mergedMap.containsKey(cveId)) {
+				for (CompositeVulnerability cnaVuln: cveHashMapScrapedFromCNAs.get(cveId)) {
+					mergedMap.get(cveId).add(cnaVuln);
+				}
+			} else {
+				mergedMap.put(cveId, cveHashMapScrapedFromCNAs.get(cveId));
+			}
+		}
+
+
+		HashMap<String, CompositeVulnerability> cveHashMapAll = new HashMap<>(); // Compiled CVEs
+		NlpUtil nlpUtil = new NlpUtil(); // for filtering garbage descriptions
 
 		// Merge Sources and descriptions, publish dates and last modified dates are from first in list
-		for (String cveId: cveHashMapScrapedFromCNAs.keySet()) {
+		for (String cveId: mergedMap.keySet()) {
 			String fullDescription = "";
 			ArrayList<String> totalSourceURLs = new ArrayList<>();
-
 			// Combine raw descriptions into 1 description string
-			for (CompositeVulnerability rawVuln: cveHashMapScrapedFromCNAs.get(cveId)) {
+			for (CompositeVulnerability rawVuln: mergedMap.get(cveId)) {
 				// Did we find garbage or valid description?
-				if (nlpUtil.sentenceDetect(rawVuln.getDescription()) != null) {
+				if (!CveUtils.isCveReservedEtc(rawVuln.getDescription()) && nlpUtil.sentenceDetect(rawVuln.getDescription()) != null) {
 					fullDescription += rawVuln.getDescription() + "\n\n\n";
 					for (String sourceUrl : rawVuln.getSourceURL()) {
 						if (!totalSourceURLs.contains(sourceUrl)) {
@@ -640,10 +654,10 @@ public class NVIPMain {
 			}
 
 			CompositeVulnerability compiledVuln = new CompositeVulnerability(0, totalSourceURLs.get(0), cveId, null,
-					cveHashMapScrapedFromCNAs.get(cveId).get(0).getPublishDate(), cveHashMapScrapedFromCNAs.get(cveId).get(0).getLastModifiedDate(),
+					mergedMap.get(cveId).get(0).getPublishDate(), mergedMap.get(cveId).get(0).getLastModifiedDate(),
 					fullDescription, "");
 
-			// Combine remaining descriptions
+			// Combine remaining sources
 			for (int i=1; i< totalSourceURLs.size(); i++)  {
 				compiledVuln.addSourceURL(totalSourceURLs.get(i));
 			}
@@ -652,62 +666,8 @@ public class NVIPMain {
 		}
 
 
-
-		int cveCountReservedInGit = 0;
-		int cveCountFoundOnlyInGit = 0;
-		// iterate over CVEs not from crawlers
-		for (String cveId : cveHashMapNotScraped.keySet()) {
-			// If a CVE derived from non-CNAs does not exist among the CVEs derived from CNAs,
-			// then include the information as is.
-			List<CompositeVulnerability> vulnGit = cveHashMapNotScraped.get(cveId);
-			if (!cveHashMapAll.containsKey(cveId)) {
-				cveHashMapAll.put(cveId, vulnGit);
-				cveCountFoundOnlyInGit++;
-			} else {
-				/**
-				 * Git CVE already exists among CVEs derived from CNAs, then look at
-				 * descriptions!
-				 * */
-
-				CompositeVulnerability vulnCna = cveHashMapAll.get(cveId);
-				String newDescr;
-
-				if (CveUtils.isCveReservedEtc(vulnGit.getDescription())) {
-					/**
-					 * CVE is reserved/rejected etc in Mitre but nvip found a description for it.
-					 * TODO: We need to find a better way to merge the found descriptions
-					 * 	instead of just running each of them through NLP one-by-one
-					 * 	Is it possible for us to batch process the found descriptions into a single NLP?
-					 * */
-
-					newDescr = reservedStr + " - NVIP Description: " + vulnCna.getDescription();
-					cveCountReservedInGit++;
-
-
-				} else {
-					newDescr = vulnGit.getDescription(); // overwriting, assuming Git descriptions are worded better!
-				}
-				vulnCna.setDescription(newDescr);// update description
-
-				// merge sources from raw data
-				for (String sUrl : vulnGit.getSourceURL())
-					vulnCna.addSourceURL(sUrl);
-
-				for (CompositeVulnerability vuln: cveHashMapScrapedFromCNAs.get(vulnCna.getCveId())) {
-					for (String url: vuln.getSourceURL()) {
-						if (!vulnCna.getSourceURL().contains(url)) {
-							vulnCna.addSourceURL(url);
-						}
-					}
-				}
-
-				cveHashMapAll.put(cveId, vulnCna); // update existing CVE
-
-			}
-		}
-
-		logger.info("***Merged CVEs! Out of {} Git CVEs, CVEs that exist only in Git (Not found at any available CNAs): {}, CVEs that are reserved in Git (But found at CNAs): {}",
-				cveHashMapGithub.size(), cveCountFoundOnlyInGit, cveCountReservedInGit);
+		logger.info("***Merged {} non-scraped CVEs with {} scraped CVEs for a total of {} compiled CVEs",
+				cveHashMapNotScraped.size(), cveHashMapScrapedFromCNAs.size(), cveHashMapAll.size());
 		return cveHashMapAll;
 	}
 
