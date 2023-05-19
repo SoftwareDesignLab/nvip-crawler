@@ -195,13 +195,27 @@ public class ParseCVEDescription extends AbstractCveParser implements ParserStra
             if (aBlockOfCveIdsInTheSentence)
                 for (Object o : cveIDsInSentence) {
                     if (sentenceContainsValuableInfoForCVE(sbDescription.toString(), cveIDsInSentence.length)) {
-                        CompositeVulnerability vuln = new CompositeVulnerability(0, sSourceURL, (String) o, version, dateTimeNow, dateTimeNow, sbDescription.toString(), null);
+                        CompositeVulnerability vuln;
+                        if(!vulnMap.containsKey((String)o)){
+                            vuln = new CompositeVulnerability(0, sSourceURL, (String) o, version, dateTimeNow, dateTimeNow, sbDescription.toString(), null);
+                        }
+                        else{
+                            vuln = vulnMap.get((String)o);
+                            vuln.setDescription(vuln.getDescription() + sbDescription.toString());
+                        }
                         vulnMap.put(vuln.getCveId(), vuln);
                     }
                 }
             else {
                 if (sentenceContainsValuableInfoForCVE(sbDescription.toString(), 1)) {
-                    CompositeVulnerability vuln = new CompositeVulnerability(0, sSourceURL, cveIDOfCurrentSentence, version, dateTimeNow, dateTimeNow, sbDescription.toString(), null);
+                    CompositeVulnerability vuln;
+                    if(!vulnMap.containsKey(cveIDOfCurrentSentence)){
+                        vuln = new CompositeVulnerability(0, sSourceURL, cveIDOfCurrentSentence, version, dateTimeNow, dateTimeNow, sbDescription.toString(), null);
+                    }
+                    else{
+                        vuln = vulnMap.get(cveIDOfCurrentSentence);
+                        vuln.setDescription(vuln.getDescription() + sbDescription.toString());
+                    }
                     vulnMap.put(vuln.getCveId(), vuln);
                 } else {
                     logger.debug("Ignoring this CVE! ID: " + cveIDOfCurrentSentence + ", Description: " + sbDescription);
