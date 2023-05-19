@@ -571,7 +571,7 @@ public class NVIPMain {
 
 		HashMap<String, ArrayList<CompositeVulnerability>> cveHashMapScrapedFromCNAs = crawlerController.crawl(urls, whiteList, crawlerVars);
 
-		return mergeCVEsDerivedFromCNAsAndGit(cveHashMapGithub, list, cveHashMapScrapedFromCNAs);
+		return mergeCVEsDerivedFromCNAsAndGit(cveHashMapGithub, cveHashMapScrapedFromCNAs);
 	}
 
 	/**
@@ -588,17 +588,38 @@ public class NVIPMain {
 	 * @param cveHashMapScrapedFromCNAs
 	 * @return
 	 */
-	public HashMap<String, CompositeVulnerability> mergeCVEsDerivedFromCNAsAndGit(HashMap<String, CompositeVulnerability> cveHashMapGithub, List<CompositeVulnerability> list,
+	public HashMap<String, CompositeVulnerability> mergeCVEsDerivedFromCNAsAndGit(HashMap<String, CompositeVulnerability> cveHashMapGithub,
 																				  HashMap<String, ArrayList<CompositeVulnerability>> cveHashMapScrapedFromCNAs) {
-		logger.info("Merging {} scraped CVEs with {} Github", cveHashMapScrapedFromCNAs.size(), list.size() + cveHashMapGithub.size());
+
+		logger.info("Merging {} scraped CVEs with {} Github", cveHashMapScrapedFromCNAs.size(), cveHashMapGithub.size());
 		final String reservedStr = "** RESERVED **";
 		HashMap<String, CompositeVulnerability> cveHashMapAll = new HashMap<>(); // merged CVEs
 
-		// Just processes the first description found for each CVE
-		// TODO: Figure out how to merge ALL found descriptions into one.
-		//  Not sure if the current model helps with that (Maybe use GPT?)
+		// Merge Sources and descriptions, publish dates and last modified dates are from first in list
 		for (String cveId: cveHashMapScrapedFromCNAs.keySet()) {
-			cveHashMapAll.put(cveId, cveHashMapScrapedFromCNAs.get(cveId).get(0));
+			String fullDescription = "";
+			ArrayList<String> totalSourceURLs = new ArrayList<>();
+
+			// Combine raw descriptions into 1 description string
+			for (CompositeVulnerability rawVuln: cveHashMapScrapedFromCNAs.get(cveId)) {
+				fullDescription += rawVuln.getDescription() + "\n\n\n";
+				for (String sourceUrl : rawVuln.getSourceURL()) {
+					if (!totalSourceURLs.contains(sourceUrl)) {
+						totalSourceURLs.add(sourceUrl);
+					}
+				}
+			}
+
+			CompositeVulnerability compiledVuln = new CompositeVulnerability(0, totalSourceURLs.get(0), cveId, null,
+					cveHashMapScrapedFromCNAs.get(cveId).get(0).getPublishDate(), cveHashMapScrapedFromCNAs.get(cveId).get(0).getLastModifiedDate(),
+					fullDescription, "");
+
+			// Combine remaining descriptions
+			for (int i=1; i< totalSourceURLs.size(); i++)  {
+				compiledVuln.addSourceURL(totalSourceURLs.get(i));
+			}
+
+			cveHashMapAll.put(cveId, compiledVuln);
 		}
 
 		// include all CVEs from CNAs
