@@ -512,7 +512,7 @@ public class NVIPMain {
 	 * NVIP Source URLs in DB and seeds txt file
 	 *
 	 * TODO: Break this up into separate functions
-	 * 	github, quick, and main
+	 * 	github, pyPA, quick, and main
 	 *
 	 * @param urls
 	 * @return
@@ -675,6 +675,9 @@ public class NVIPMain {
 	 * Identify New CVE and
 	 * Process CVEs by comparing pulled CVEs to NVD and MITRE
 	 * Calculate Time Gaps afterwards, if any
+	 *
+	 * TODO: Use NVD's API instead, csv files aren't getting filled anymore
+	 *
 	 * @param cveHashMapAll
 	 * @return
 	 */
