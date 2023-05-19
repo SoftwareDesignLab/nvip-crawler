@@ -518,24 +518,30 @@ public class NVIPMain {
 	 * @return
 	 */
 	protected HashMap<String, CompositeVulnerability> crawlCVEs(List<String> urls) throws Exception {
+
 		/**
 		 * scrape CVEs from CVE Automation Working Group Git Pilot (CVEProject.git)
 		 */
-
 		HashMap<String, CompositeVulnerability> cveHashMapGithub = new HashMap<>();
+		HashMap<String, List<CompositeVulnerability>> cveHashMapNotScraped = new HashMap<>();
 
 		if ((Boolean) crawlerVars.get("enableGitHub")) {
 			logger.info("CVE Github pull enabled, scraping CVe GitHub now!");
 			GithubScraper githubScraper = new GithubScraper();
 			cveHashMapGithub = githubScraper.scrapeGithub();
+			for (String gitHubvuln : cveHashMapGithub.keySet()) {
+				ArrayList<CompositeVulnerability> initList = new ArrayList<>();
+				initList.add(cveHashMapGithub.get(gitHubvuln));
+				cveHashMapNotScraped.put(gitHubvuln, initList);
+			}
 		}
 
 		// scrape CVEs from PyPA advisory database GitHub Repo
 		PyPAGithubScraper pyPaScraper = new PyPAGithubScraper();
 		HashMap<String, CompositeVulnerability> cvePyPAGitHub = pyPaScraper.scrapePyPAGithub();
-
 		logger.info("Merging {} PyPA CVEs with {} found GitHub CVEs\n", cvePyPAGitHub.size(), cveHashMapGithub.size());
 		cveHashMapGithub.putAll(cvePyPAGitHub);
+
 
 		/**
 		 * Scrape CVE summary pages (frequently updated CVE providers)
