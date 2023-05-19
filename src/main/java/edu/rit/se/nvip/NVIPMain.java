@@ -581,6 +581,7 @@ public class NVIPMain {
 
 		ArrayList<String> whiteList = new ArrayList<>();
 
+		// Prepare Whitelist for crawler
 		File whiteListFile = new File((String) crawlerVars.get("whitelistFileDir"));
 		Scanner reader = new Scanner(whiteListFile);
 		while (reader.hasNextLine()) {
@@ -593,7 +594,7 @@ public class NVIPMain {
 
 		HashMap<String, ArrayList<CompositeVulnerability>> cveHashMapScrapedFromCNAs = crawlerController.crawl(urls, whiteList, crawlerVars);
 
-		return mergeCVEsDerivedFromCNAsAndGit(cveHashMapGithub, cveHashMapScrapedFromCNAs);
+		return mergeCVEsDerivedFromCNAsAndGit(cveHashMapNotScraped, cveHashMapScrapedFromCNAs);
 	}
 
 	/**
@@ -606,16 +607,19 @@ public class NVIPMain {
 	 * announcing a new security problem. When the candidate has been publicized,
 	 * the details for this candidate will be provided.
 	 *
-	 * @param cveHashMapGithub
+	 * @param cveHashMapNotScraped
 	 * @param cveHashMapScrapedFromCNAs
 	 * @return
 	 */
-	public HashMap<String, CompositeVulnerability> mergeCVEsDerivedFromCNAsAndGit(HashMap<String, CompositeVulnerability> cveHashMapGithub,
+	public HashMap<String, CompositeVulnerability> mergeCVEsDerivedFromCNAsAndGit(HashMap<String, List<CompositeVulnerability>> cveHashMapNotScraped,
 																				  HashMap<String, ArrayList<CompositeVulnerability>> cveHashMapScrapedFromCNAs) {
 
-		logger.info("Merging {} scraped CVEs with {} Github", cveHashMapScrapedFromCNAs.size(), cveHashMapGithub.size());
+		logger.info("Merging {} scraped CVEs with {} Github", cveHashMapScrapedFromCNAs.size(), cveHashMapNotScraped.size());
 		final String reservedStr = "** RESERVED **";
 		HashMap<String, CompositeVulnerability> cveHashMapAll = new HashMap<>(); // merged CVEs
+
+		// include all CVEs from CNAs
+		NlpUtil nlpUtil = new NlpUtil();
 
 		// Merge Sources and descriptions, publish dates and last modified dates are from first in list
 		for (String cveId: cveHashMapScrapedFromCNAs.keySet()) {
@@ -624,10 +628,13 @@ public class NVIPMain {
 
 			// Combine raw descriptions into 1 description string
 			for (CompositeVulnerability rawVuln: cveHashMapScrapedFromCNAs.get(cveId)) {
-				fullDescription += rawVuln.getDescription() + "\n\n\n";
-				for (String sourceUrl : rawVuln.getSourceURL()) {
-					if (!totalSourceURLs.contains(sourceUrl)) {
-						totalSourceURLs.add(sourceUrl);
+				// Did we find garbage or valid description?
+				if (nlpUtil.sentenceDetect(rawVuln.getDescription()) != null) {
+					fullDescription += rawVuln.getDescription() + "\n\n\n";
+					for (String sourceUrl : rawVuln.getSourceURL()) {
+						if (!totalSourceURLs.contains(sourceUrl)) {
+							totalSourceURLs.add(sourceUrl);
+						}
 					}
 				}
 			}
@@ -644,16 +651,15 @@ public class NVIPMain {
 			cveHashMapAll.put(cveId, compiledVuln);
 		}
 
-		// include all CVEs from CNAs
-		NlpUtil nlpUtil = new NlpUtil();
+
 
 		int cveCountReservedInGit = 0;
 		int cveCountFoundOnlyInGit = 0;
-		// iterate over CVEs from Git
-		for (String cveId : cveHashMapGithub.keySet()) {
-			// If a CVE derived from Git does not exist among the CVEs derived from CNAs,
-			// then include it as is.
-			CompositeVulnerability vulnGit = cveHashMapGithub.get(cveId);
+		// iterate over CVEs not from crawlers
+		for (String cveId : cveHashMapNotScraped.keySet()) {
+			// If a CVE derived from non-CNAs does not exist among the CVEs derived from CNAs,
+			// then include the information as is.
+			List<CompositeVulnerability> vulnGit = cveHashMapNotScraped.get(cveId);
 			if (!cveHashMapAll.containsKey(cveId)) {
 				cveHashMapAll.put(cveId, vulnGit);
 				cveCountFoundOnlyInGit++;
@@ -677,9 +683,7 @@ public class NVIPMain {
 					newDescr = reservedStr + " - NVIP Description: " + vulnCna.getDescription();
 					cveCountReservedInGit++;
 
-					// did we find garbage or valid description?
-					if (nlpUtil.sentenceDetect(vulnCna.getDescription()) != null)
-						vulnCna.setFoundNewDescriptionForReservedCve(true);
+
 				} else {
 					newDescr = vulnGit.getDescription(); // overwriting, assuming Git descriptions are worded better!
 				}
