@@ -39,6 +39,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeDriverService;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.remote.CapabilityType;
+import org.python.util.Generic;
 
 import java.io.*;
 import java.net.HttpURLConnection;
@@ -181,15 +182,18 @@ public abstract class AbstractCveParser {
 	protected GenericDate extractDate(String text) {
 		// search for "Published" "Created" "Modified" "Updated" keywords, grab dates around it
 		// check a subtext for a date based on these keywords
+		GenericDate possibleDate = null;
 		if (text.toLowerCase().contains("published")) {
 			// grab date around published
 			int[] bounds = getSubstringBounds(text, "published");
-			return new GenericDate(text.substring(bounds[0], bounds[1]));
+			possibleDate = new GenericDate(text.substring(bounds[0], bounds[1]));
 		} else if (text.toLowerCase().contains("created")) {
 			// grab date around created
 			int[] bounds = getSubstringBounds(text, "created");
-			return new GenericDate(text.substring(bounds[0], bounds[1]));
+			possibleDate = new GenericDate(text.substring(bounds[0], bounds[1]));
 		}
+		if (possibleDate != null && possibleDate.getRawDate() != null)
+			return possibleDate;
 		// otherwise try to find any sort of date in the text (this might give back rogue dates in descriptions, etc...)
 		return new GenericDate(text);
 	}
@@ -197,15 +201,18 @@ public abstract class AbstractCveParser {
 	protected GenericDate extractLastModifiedDate(String text) {
 		// search for "Published" "Created" "Modified" "Updated" keywords, grab dates around it
 		// check a subtext for a date based on these keywords
+		GenericDate possibleDate = null;
 		if (text.toLowerCase().contains("modified")) {
 			// grab date around modified
 			int[] bounds = getSubstringBounds(text, "modified");
-			return new GenericDate(text.substring(bounds[0], bounds[1]));
+			possibleDate = new GenericDate(text.substring(bounds[0], bounds[1]));
 		} else if (text.toLowerCase().contains("updated")) {
 			// grab date around updated
 			int[] bounds = getSubstringBounds(text, "updated");
-			return new GenericDate(text.substring(bounds[0], bounds[1]));
+			possibleDate = new GenericDate(text.substring(bounds[0], bounds[1]));
 		}
+		if (possibleDate != null && possibleDate.getRawDate() != null)
+			return possibleDate;
 		// otherwise try to find any sort of date in the text (this might give back rogue dates in descriptions, etc...)
 		return new GenericDate(text);
 	}
