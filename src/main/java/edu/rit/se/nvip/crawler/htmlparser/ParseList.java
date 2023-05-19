@@ -12,7 +12,6 @@ import org.jsoup.select.Elements;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.time.LocalDate;
@@ -40,8 +39,7 @@ public class ParseList extends AbstractCveParser implements ParserStrategy {
         Elements lists = doc.select("li:contains(CVE)");
 
         for (Element list : lists) {
-            String cve = null;
-            String date = null;
+            String cve;
             String desc = null;
 
             String listText = list.text();
@@ -52,6 +50,7 @@ public class ParseList extends AbstractCveParser implements ParserStrategy {
             }
             else{
                 Element cveElement = list.select(":containsOwn(CVE)").first();
+                if (cveElement == null) continue;
                 cve = getCVEID(cveElement.text());
 
                 // First check the next sibling element if its CVE related If so, its prolly the desc
@@ -77,17 +76,20 @@ public class ParseList extends AbstractCveParser implements ParserStrategy {
                         desc = descElement.text();
                 }
             }
-            GenericDate genericDate = new GenericDate(listText);
-            date = genericDate.getRawDate();
-            if(date == null || date.equals("")){
+            GenericDate genericDate = extractDate(listText);
+            String publishDate = genericDate.getRawDate();
+            if(publishDate == null || publishDate.equals("")){
                 logger.warn("No publish date for " + cve + ", using current date");
-                date = LocalDate.now().toString();
+                publishDate = LocalDate.now().toString();
+            }
+            GenericDate genericLastMod = extractLastModifiedDate(listText);
+            String lastModifiedDate = genericLastMod.getRawDate();
+            if(lastModifiedDate == null || lastModifiedDate.equals("")){
+                lastModifiedDate = publishDate;
             }
 
-            CompositeVulnerability vuln = new CompositeVulnerability(0, sSourceURL, cve, null, date, null, desc, sourceDomainName);
-            // logger.info(vuln.getCveId());
-            // logger.info(vuln.getDescription());
-            // logger.info(vuln.getPublishDate() + "\n");
+
+            CompositeVulnerability vuln = new CompositeVulnerability(0, sSourceURL, cve, null, publishDate, lastModifiedDate, desc, sourceDomainName);
             vulnList.add(vuln);
         }
 
@@ -107,31 +109,30 @@ public class ParseList extends AbstractCveParser implements ParserStrategy {
 
         for(Element dList : dLists){
             Elements children = dList.children();
-            CompositeVulnerability vuln = null;
+            CompositeVulnerability vuln;
 
             String cve = null;
             String date = null;
+            String lastModifiedDate = null;
 
             StringBuilder sb = new StringBuilder();
 
             for(Element child : children){
                 // Once you hit a <dt> apart from the first one, create new vuln with data from prev <dd>
-                if(child.tagName() == "dt" && cve != null){
+                if(child.tagName().equals("dt") && cve != null){
                     String desc = sb.toString();
-                    if(date == "" || date == null){
+                    if(date.equals("")){
                         logger.warn("No publish date for " + cve + ", using current date");
                         date = LocalDate.now().toString();
                     }
 
-                    vuln = new CompositeVulnerability(0, sSourceURL, cve, null, date, null, desc, sourceDomainName);
-                    // logger.info(vuln.getCveId());
-                    // logger.info(vuln.getDescription());
-                    // logger.info(vuln.getPublishDate() + "\n");
+                    vuln = new CompositeVulnerability(0, sSourceURL, cve, null, date, lastModifiedDate, desc, sourceDomainName);
                     vulnList.add(vuln);
 
                     // Reset vars for next listing
                     cve = null;
                     date = null;
+                    lastModifiedDate = null;
                     sb.delete(0, sb.length());
                 }
 
@@ -139,16 +140,21 @@ public class ParseList extends AbstractCveParser implements ParserStrategy {
                 String dListText = child.text();
 
                 // Check for CVE if not already grabbed
-                if(cve == null || cve == ""){
+                if(cve == null || cve.equals("")){
                     cve = getCVEID(dListText);
                 }
 
                 //Check for date if not already grabbed
                 if(date == null || date.equals("")){
-                    GenericDate genericDate = new GenericDate(dListText);
+                    GenericDate genericDate = extractDate(dListText);
                     date = genericDate.getRawDate();
                     if (date == null || date.equals("")){
                         date = LocalDate.now().toString();
+                    }
+                    GenericDate genericLastMod = extractLastModifiedDate(dListText);
+                    lastModifiedDate = genericLastMod.getRawDate();
+                    if(lastModifiedDate == null || lastModifiedDate.equals("")){
+                        lastModifiedDate = date;
                     }
                 }
 
