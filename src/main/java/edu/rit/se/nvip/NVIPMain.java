@@ -558,11 +558,18 @@ public class NVIPMain {
 		int countCVEsNotInMitreGithub = 0;
 		QuickCveCrawler crawler = new QuickCveCrawler();
 		List<CompositeVulnerability> list = crawler.getCVEsfromKnownSummaryPages();
-		for (CompositeVulnerability vuln : list)
-			if (!cveHashMapGithub.containsKey(vuln.getCveId())) {
-				countCVEsNotInMitreGithub++;
-				cveHashMapGithub.put(vuln.getCveId(), vuln);
+
+		// Add Quick CVEs to lists
+		for (CompositeVulnerability vuln : list) {
+			if (cveHashMapNotScraped.containsKey(vuln.getCveId())) {
+				cveHashMapNotScraped.get(vuln.getCveId()).add(vuln);
+			} else {
+				ArrayList<CompositeVulnerability> initList = new ArrayList<>();
+				initList.add(vuln);
+				cveHashMapNotScraped.put(vuln.getCveId(), initList);
 			}
+		}
+
 		logger.info("{} of {} CVEs found in the CNA summary pages did not exist in the Mitre GitHub repo.", countCVEsNotInMitreGithub, list.size());
 
 		/**
