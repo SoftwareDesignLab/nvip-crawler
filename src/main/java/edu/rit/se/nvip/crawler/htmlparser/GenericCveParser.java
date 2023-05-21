@@ -41,7 +41,7 @@ public class GenericCveParser extends AbstractCveParser  {
 	 * based on strategy selected. See: app.diagrams.net/#G1ZhVaJu0XKpyKtDhr2uqTQVVWg-X07XC1
 	 * By default ParseCVEDescription is used on entire page
 	 */
-	private ParserStrategy parserStrategy = new ParseCVEDescription();
+	private ParserStrategy parserStrategy = new ParseCVEDescription(sourceDomainName);
 	
 	public GenericCveParser(String domainName) {
 		sourceDomainName = domainName;
