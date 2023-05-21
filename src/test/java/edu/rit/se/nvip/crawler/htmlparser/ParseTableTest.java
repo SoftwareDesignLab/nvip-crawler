@@ -29,7 +29,7 @@ public class ParseTableTest extends AbstractParserTest {
         assertTrue(vulnerabilities.size() > 80);
         CompositeVulnerability vuln = getVulnerability(vulnerabilities, "CVE-2021-22035");
         assertNotNull(vuln);
-        assertTrue(vuln.getPublishDate().equals("12-10-2021") || vuln.getPublishDate().equals("11-10-2021");
+        assertTrue(vuln.getPublishDate().equals("12-10-2021") || vuln.getPublishDate().equals("11-10-2021"));
         assertTrue(vuln.getDescription().contains("VMware vRealize Log Insight"));
         assertFalse(vuln.getDescription().contains("VMware Aria Operations for"));
     }
