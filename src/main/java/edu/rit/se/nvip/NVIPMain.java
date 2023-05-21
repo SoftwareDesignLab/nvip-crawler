@@ -639,20 +639,26 @@ public class NVIPMain {
 			ArrayList<String> totalSourceURLs = new ArrayList<>();
 			// Combine raw descriptions into 1 description string
 			for (CompositeVulnerability rawVuln: mergedMap.get(cveId)) {
-				// Did we find garbage or valid description?
-				if (rawVuln != null && !CveUtils.isCveReservedEtc(rawVuln.getDescription()) && nlpUtil.sentenceDetect(rawVuln.getDescription()) != null) {
-					fullDescription += rawVuln.getDescription() + "\n\n\n";
-					for (String sourceUrl : rawVuln.getSourceURL()) {
-						if (!totalSourceURLs.contains(sourceUrl)) {
-							totalSourceURLs.add(sourceUrl);
+				if (rawVuln != null) {
+					// Did we find garbage or valid description?
+					if (!CveUtils.isCveReservedEtc(rawVuln.getDescription()) && nlpUtil.sentenceDetect(rawVuln.getDescription()) != null) {
+						fullDescription += rawVuln.getDescription() + "\n\n\n";
+						for (String sourceUrl : rawVuln.getSourceURL()) {
+							if (!totalSourceURLs.contains(sourceUrl)) {
+								totalSourceURLs.add(sourceUrl);
+							}
 						}
 					}
 				}
 			}
 
-			CompositeVulnerability compiledVuln = new CompositeVulnerability(0, totalSourceURLs.get(0), cveId, null,
-					mergedMap.get(cveId).get(0).getPublishDate(), mergedMap.get(cveId).get(0).getLastModifiedDate(),
-					fullDescription, "");
+			CompositeVulnerability compiledVuln = new CompositeVulnerability(0, totalSourceURLs.size() > 0 ? totalSourceURLs.get(0) : "",
+					cveId,
+					null,
+					mergedMap.get(cveId).get(0).getPublishDate(),
+					mergedMap.get(cveId).get(0).getLastModifiedDate(),
+					fullDescription.trim(),
+					"");
 
 			// Combine remaining sources
 			for (int i=1; i< totalSourceURLs.size(); i++)  {
