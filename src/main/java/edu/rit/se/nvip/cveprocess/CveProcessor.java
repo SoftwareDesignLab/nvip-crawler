@@ -173,7 +173,7 @@ public class CveProcessor {
 			try {
 				// If somehow a wrong CVE id is found, ignore it
 				if (!cveUtils.isCveIdCorrect(vuln.getCveId())) {
-					String note = "Wrong CVE ID! Check for typo? ";
+					String note = "Wrong CVE ID! Check for typo?";
 					vuln.setNvipNote(note);
 					logger.warn("WARNING: The CVE ID {} found at {} does not appear to be valid!", vuln.getCveId(), Arrays.deepToString(vuln.getSourceURL().toArray()));
 					continue;
