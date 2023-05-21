@@ -67,8 +67,15 @@ public class CveProcessor {
 
 	private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
 
+	/**
+	 * Old hashmap used for CVEs in NVD, remove this
+	 */
 	private Map<String, String> cvesInNvd = new HashMap<>();
-	private HashMap<String, NvdVulnerability> nvdCVEs = new HashMap<>();
+
+	/**
+	 * New hashmap for CVEs in NVD
+	 */
+	private HashMap<String, NvdVulnerability> nvdCVEs;
 	private Map<String, String> cvesInMitre = new HashMap<>();
 
 	CveReconciler cveUtils = new CveReconciler();
@@ -78,9 +85,10 @@ public class CveProcessor {
 	 * @param nvdCves
 	 * @param mitreCves
 	 */
-	public CveProcessor(HashMap<String, String> nvdCves, HashMap<String, String> mitreCves){
+	public CveProcessor(HashMap<String, String> nvdCves, HashMap<String, String> mitreCves, HashMap<String, NvdVulnerability> pulledNvdCves){
 		this.cvesInNvd = nvdCves;
 		this.cvesInMitre = mitreCves;
+		this.nvdCVEs = pulledNvdCves;
 	}
 
 	/**
