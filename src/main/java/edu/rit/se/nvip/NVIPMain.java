@@ -640,7 +640,7 @@ public class NVIPMain {
 			// Combine raw descriptions into 1 description string
 			for (CompositeVulnerability rawVuln: mergedMap.get(cveId)) {
 				// Did we find garbage or valid description?
-				if (!CveUtils.isCveReservedEtc(rawVuln.getDescription()) && nlpUtil.sentenceDetect(rawVuln.getDescription()) != null) {
+				if (rawVuln != null && !CveUtils.isCveReservedEtc(rawVuln.getDescription()) && nlpUtil.sentenceDetect(rawVuln.getDescription()) != null) {
 					fullDescription += rawVuln.getDescription() + "\n\n\n";
 					for (String sourceUrl : rawVuln.getSourceURL()) {
 						if (!totalSourceURLs.contains(sourceUrl)) {
