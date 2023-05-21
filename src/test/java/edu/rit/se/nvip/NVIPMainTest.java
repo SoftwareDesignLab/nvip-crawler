@@ -37,8 +37,20 @@ import org.junit.Test;
 import edu.rit.se.nvip.utils.MyProperties;
 import edu.rit.se.nvip.utils.PropertyLoader;
 import edu.rit.se.nvip.utils.UtilHelper;
+import org.junit.jupiter.api.BeforeEach;
 
 public class NVIPMainTest {
+
+	private NVIPMain main = new NVIPMain();
+
+	private final String CVEID1 = "CVE-2020-0227";
+	private final String CVEID2 = "CVE-2020-0228";
+
+
+	@BeforeEach
+	public void setup() {
+		main = new NVIPMain();
+	}
 
 	@Test
 	public void testEssentialData() {
@@ -101,36 +113,66 @@ public class NVIPMainTest {
 
 	}
 
-	/**
-	 * Test CVE Process Function
-	 */
 	@Test
-	@Ignore
-	public void testCVEProcess() {;
+	public void testMergeCrawlResults() {
 
-		String testDescription = "Test CVE Description, this should not be changed";
+		// Prepare test list for non scraped raw data
+		List<CompositeVulnerability> nonScrapedRawData = new ArrayList<>();
+		CompositeVulnerability rawVuln1 = new CompositeVulnerability(0, CVEID1);
+		rawVuln1.setDescription("Test Description for raw vuln 1");
+		nonScrapedRawData.add(rawVuln1);
 
-		HashMap<String, CompositeVulnerability> v = new HashMap<>();
-		v.put("CVE-2022-30080", new CompositeVulnerability(0, "sourcURL", "CVE-2022-30080", null,
-				"2022-05-02", "2022-05-02",
-				testDescription, "domain"));
+		// Prepare test list for scraped raw data
+		ArrayList<CompositeVulnerability> scrapedRawData = new ArrayList<>();
+		CompositeVulnerability rawVuln2 = new CompositeVulnerability(0, CVEID2);
+		rawVuln2.setDescription("Test Description for raw vuln 2");
+		scrapedRawData.add(rawVuln2);
 
-		v.put("CVE-2000-00000", new CompositeVulnerability(0, "sourcURL", "CVE-2000-00000", null,
-				"2022-05-02", "2022-05-02",
-				testDescription, "domain"));
+		// Fill hashmaps and test merge
+		HashMap<String, List<CompositeVulnerability>> cvesNotScraped = new HashMap<>();
+		HashMap<String, ArrayList<CompositeVulnerability>> cvesScrapedFromCNAs = new HashMap<>();
+		cvesNotScraped.put(CVEID1, nonScrapedRawData);
+		cvesScrapedFromCNAs.put(CVEID2, scrapedRawData);
 
-		NVIPMain main = new NVIPMain();
-		/*HashMap<String, List<Object>> maps = main.processCVEs(v);
+		HashMap<String, CompositeVulnerability> mergedData = main.mergeCVEsDerivedFromCNAsAndGit(cvesNotScraped, cvesScrapedFromCNAs);
 
-		System.out.println(maps);
+		assertEquals(2, mergedData.size());
+		assertEquals(CVEID1, mergedData.get(CVEID1).getCveId());
+		assertEquals(CVEID2, mergedData.get(CVEID2).getCveId());
+		assertEquals("Test Description for raw vuln 1", mergedData.get(CVEID1).getDescription());
+		assertEquals("Test Description for raw vuln 2", mergedData.get(CVEID2).getDescription());
+	}
 
-		CompositeVulnerability vuln1 = (CompositeVulnerability) maps.get("all").get(0);
-		CompositeVulnerability vuln2 = (CompositeVulnerability) maps.get("all").get(1);
+	@Test
+	public void testMergeCVEsMultipleSources() {
 
-		assertEquals(2, maps.get("all").size());
-		assertEquals(2, maps.get("nvd").size());
-		assertEquals(1, maps.get("mitre").size());
-		assertEquals(testDescription, vuln1.getDescription());
-		assertEquals(testDescription, vuln2.getDescription());*/
+		// Prepare test list for non scraped raw data
+		List<CompositeVulnerability> nonScrapedRawData = new ArrayList<>();
+		CompositeVulnerability rawVuln1 = new CompositeVulnerability(0, CVEID1);
+		rawVuln1.addSourceURL("test source 1");
+		rawVuln1.setDescription("Test Description for raw vuln 1");
+		nonScrapedRawData.add(rawVuln1);
+
+		// Prepare test list for scraped raw data
+		ArrayList<CompositeVulnerability> scrapedRawData = new ArrayList<>();
+		CompositeVulnerability rawVuln2 = new CompositeVulnerability(0, CVEID1);
+		rawVuln2.addSourceURL("test source 1");
+		rawVuln2.addSourceURL("test source 2");
+		rawVuln2.setDescription("Test Description for raw vuln 1");
+		scrapedRawData.add(rawVuln2);
+
+		// Fill hashmaps and test merge
+		HashMap<String, List<CompositeVulnerability>> cvesNotScraped = new HashMap<>();
+		HashMap<String, ArrayList<CompositeVulnerability>> cvesScrapedFromCNAs = new HashMap<>();
+		cvesNotScraped.put(CVEID1, nonScrapedRawData);
+		cvesScrapedFromCNAs.put(CVEID1, scrapedRawData);
+
+		HashMap<String, CompositeVulnerability> mergedData = main.mergeCVEsDerivedFromCNAsAndGit(cvesNotScraped, cvesScrapedFromCNAs);
+
+		assertEquals(1, mergedData.size());
+		assertEquals(CVEID1, mergedData.get(CVEID1).getCveId());
+		assertEquals("Test Description for raw vuln 1\n\n\nTest Description for raw vuln 1", mergedData.get(CVEID1).getDescription());
+		assertEquals(2, mergedData.get(CVEID1).getSourceURL().size());
+		assertEquals("test source 1", mergedData.get(CVEID1).getSourceURL().get(0));
 	}
 }
