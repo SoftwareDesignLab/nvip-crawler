@@ -6,7 +6,6 @@ on: [push]
 
 env:
   AWS_REGION: 'us-east-1'
-  ANGULAR_CLI_VERSION: '15.1.0'
 
 jobs:
   build-test-crawler:
@@ -21,6 +20,19 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Pull file from S3 bucket
+        run: |
+          cd nvip_data/productnameextraction
+          aws s3 cp s3://binaries-for-crawler/w2v_model_250.bin .
+
       - name: Prepare MySQL Test DB
         run: |
           sudo /etc/init.d/mysql start
@@ -36,13 +48,26 @@ jobs:
       - name: Publish Test Report
         if: success() || failure()
         uses: scacap/action-surefire-report@v1
-
+        
   deploy-crawler:
     runs-on: ubuntu-latest
     needs: build-test-crawler
     if: ${{ success() && github.ref == 'refs/heads/dev' }}
     steps:
       - uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Pull file from S3 bucket
+        run: |
+          cd nvip_data/productnameextraction
+          aws s3 cp s3://binaries-for-crawler/w2v_model_250.bin .  
+
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v2
         with:
