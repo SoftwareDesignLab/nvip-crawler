@@ -686,7 +686,7 @@ public class NVIPMain {
 		logger.info("Comparing CVES against NVD & MITRE..");
 		String cveDataPathNvd = dataVars.get("dataDir") + "/nvd-cve.csv";
 		String cveDataPathMitre = dataVars.get("dataDir") + "/mitre-cve.csv";
-		CveProcessor cveProcessor = new CveProcessor(cveDataPathNvd, cveDataPathMitre);
+		CveProcessor cveProcessor = new CveProcessor(cveDataPathNvd, cveDataPathMitre, "");
 		Map<String, Vulnerability> existingCves = databaseHelper.getExistingVulnerabilities();
 
 		HashMap<String, List<Object>> checkedCVEs = cveProcessor.checkAgainstNvdMitre(cveHashMapAll, existingCves);

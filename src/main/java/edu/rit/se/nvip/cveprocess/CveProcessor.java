@@ -23,8 +23,12 @@
  */
 package edu.rit.se.nvip.cveprocess;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -32,6 +36,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 import edu.rit.se.nvip.db.DatabaseHelper;
+import edu.rit.se.nvip.model.CVE;
+import edu.rit.se.nvip.model.NvdVulnerability;
 import edu.rit.se.nvip.model.Vulnerability;
 import org.apache.commons.collections4.SetUtils;
 import org.apache.commons.io.FileUtils;
@@ -42,6 +48,8 @@ import edu.rit.se.nvip.cvereconcile.CveReconciler;
 import edu.rit.se.nvip.model.CompositeVulnerability;
 import edu.rit.se.nvip.utils.CsvUtils;
 import org.jdom2.CDATA;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 /**
  *
@@ -63,14 +71,33 @@ public class CveProcessor {
 
 	CveReconciler cveUtils = new CveReconciler();
 
+	/**
+	 * for testing fetchNVDCVEs function
+	 * @param args
+	 */
+	public static void main(String[] args) {
+		CveProcessor process = new CveProcessor((HashMap<String, String>) null, null);
+		HashMap<String, NvdVulnerability> nvdCves = process.fetchNVDCVEs("https://services.nvd.nist.gov/rest/json/cves/2.0");
+		for (String cve: nvdCves.keySet()) {
+			System.out.println(nvdCves.get(cve));
+		}
+	}
+
+	/**
+	 * For tests
+	 * @param nvdCves
+	 * @param mitreCves
+	 */
 	public CveProcessor(HashMap<String, String> nvdCves, HashMap<String, String> mitreCves){
 		this.cvesInNvd = nvdCves;
 		this.cvesInMitre = mitreCves;
 	}
 
-	public CveProcessor(String nvdCvePath, String mitreCvePath) {
-		try {
+	public CveProcessor(String nvdCvePath, String mitreCvePath, String nvdApiPath) {
 
+		fetchNVDCVEs(nvdApiPath);
+
+		try {
 			CsvUtils csvLogger = new CsvUtils();
 			/**
 			 * NVD
@@ -114,6 +141,103 @@ public class CveProcessor {
 			System.exit(1); // This is a serious error, exit!
 		}
 		logger.info("Loaded cve data for NVD(" + cvesInNvd.size() + ") and MITRE(" + cvesInNvd.size() + ")");
+	}
+
+	/**
+	 * For grabbing CVEs from NVD via NVD's API
+	 * @param nvdApiPath
+	 * @return
+	 */
+	public HashMap<String, NvdVulnerability> fetchNVDCVEs(String nvdApiPath) {
+		HashMap<String, NvdVulnerability> NvdCves = new HashMap<>();
+		int resultsPerPage = 2000;
+		int startIndex = 0;
+		int requestNum = 0;
+
+
+
+		while (true) {
+
+			// 30 second wait for eevry 5 requests, according to NVD Doc: https://nvd.nist.gov/developers/start-here
+			if (requestNum >= 5) {
+				logger.info("Sleeping for 31 seconds before continuing");
+				try {
+					Thread.sleep(40000);
+					requestNum = 0;
+				} catch (InterruptedException e) {
+					logger.error("ERROR: Failed to wait 30seconds for pulling NVD CVEs\n{}", e);
+				}
+			}
+
+			try {
+				// Pull from NVD, keep track of startIndex for paginating response
+				String url = nvdApiPath + "?resultsPerPage=" + resultsPerPage + "&startIndex=" + startIndex;
+				URL apiUrl = new URL(url);
+				HttpURLConnection connection = (HttpURLConnection) apiUrl.openConnection();
+				connection.setRequestMethod("GET");
+
+				if (connection.getResponseCode() != 200) {
+					logger.error("Error retrieving CVEs: {}\n{}", connection.getResponseCode(), connection.getResponseMessage());
+					break;
+				}
+
+				logger.info("Connection Acquired!");
+
+				requestNum++;
+
+				// Parse response to JSON
+				StringBuilder response = new StringBuilder();
+				BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+				String line;
+				while ((line = reader.readLine()) != null) {
+					response.append(line);
+					response.append(System.lineSeparator()); // Add line separator if needed
+				}
+				reader.close();
+
+				JSONObject cveData = new JSONObject(response.toString());
+
+				JSONArray vulnerabilities = cveData.getJSONArray("vulnerabilities");
+				if (vulnerabilities.length() == 0) {
+					logger.info("No more CVEs in response, list is empty");
+					break;
+				}
+
+				logger.info("Parsing CVEs");
+				// for each vulnerability in response list, add cveId, publishedDate and status to the hashmap
+				for (int i = 0; i < vulnerabilities.length(); i++) {
+					JSONObject cve = vulnerabilities.getJSONObject(i);
+
+					String cveId = cve.getJSONObject("cve").getString("id");
+					String publishedDate = cve.getJSONObject("cve").getString("published");
+					String status = cve.getJSONObject("cve").getString("vulnStatus");
+
+					logger.info("CVE ID: {}", cveId);
+					logger.info("Published Date: {}", publishedDate);
+					logger.info("Status: {}", status);
+
+					NvdCves.put(cveId, new NvdVulnerability(cveId, publishedDate, status));
+				}
+
+				logger.info("Pulled {} more CVEs from NVD", vulnerabilities.length());
+				logger.info("{} Total CVEs", NvdCves.size());
+
+				// Check if there's more CVEs to pull, otherwise break and return the data
+				int totalResults = cveData.getInt("totalResults");
+				startIndex += cveData.getInt("resultsPerPage");
+
+				if (startIndex >= totalResults) {
+					break;
+				}
+
+				connection.disconnect();
+			} catch (IOException e) {
+				logger.error("ERROR: Failed to parse CVEs form NVD\n{}", e.toString());
+				break;
+			}
+		}
+
+		return NvdCves;
 	}
 
 	/**
