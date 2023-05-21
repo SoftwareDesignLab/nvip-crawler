@@ -285,6 +285,7 @@ public class CveProcessor {
 					} else {
 						logger.info("CVE: {} is not in NVD with status of ANALYZED", vuln.getCveId());
 						vuln.setNvdStatus(0);
+						newCVEDataNotInNvd.add(vuln);
 
 						// Update count for status'
 						nvdReceived = nvdCVEs.get(vuln.getCveId()).getStatus() == NvdVulnerability.nvdStatus.RECEIVED ? nvdReceived + 1 : nvdReceived;
@@ -335,10 +336,10 @@ public class CveProcessor {
 			}
 		}
 
-		newCVEMap.put("all", Arrays.asList(allCveData.toArray())); // all CVEs
-		newCVEMap.put("mitre", Arrays.asList(newCVEDataNotInMitre.toArray())); // CVEs not in Mitre
-		newCVEMap.put("nvd", Arrays.asList(newCVEDataNotInNvd.toArray())); // CVEs not in Nvd
-		newCVEMap.put("nvd-mitre", Arrays.asList(SetUtils.intersection(newCVEDataNotInMitre, newCVEDataNotInNvd).toArray())); // CVEs not in Nvd and Mitre
+		newCVEMap.put(ALL_CVE_KEY, Arrays.asList(allCveData.toArray())); // all CVEs
+		newCVEMap.put(MITRE_CVE_KEY, Arrays.asList(newCVEDataNotInMitre.toArray())); // CVEs not in Mitre
+		newCVEMap.put(NVD_CVE_KEY, Arrays.asList(newCVEDataNotInNvd.toArray())); // CVEs not in Nvd
+		newCVEMap.put(NVD_MITRE_CVE_KEY, Arrays.asList(SetUtils.intersection(newCVEDataNotInMitre, newCVEDataNotInNvd).toArray())); // CVEs not in Nvd and Mitre
 
 		logger.info("Out of {} total valid CVEs crawled: \n{} does not appear in NVD, \n{} does not appear in MITRE and \n{} are not in either!",
 				newCVEMap.get(ALL_CVE_KEY).size(),
@@ -360,6 +361,8 @@ public class CveProcessor {
 	 * hence this is when NVD adds the vulnerability
 	 *
 	 * Note this only checks time gaps between NVIP and NVD, MITRE time gaps are not calculated (yet)
+	 *
+	 * TODO: Add time gaps calculation for MITRE
 	 * @param hashMapNvipCve
 	 * @return
 	 */
@@ -370,11 +373,18 @@ public class CveProcessor {
 		for (Object cveInNvd: hashMapNvipCve.get(ALL_CVE_KEY)) {
 			CompositeVulnerability cve = (CompositeVulnerability) cveInNvd;
 
+			// Check if CVE is in NVD, and make sure the CVE is for the current year. Anything from previous
+			// years are assumed to be in NVD
 			if (!hashMapNvipCve.get(NVD_CVE_KEY).contains(cve) && checkAgeOfCVEByYear(cve.getCveId())) {
 				//logger.info("Checking if CVE: {} is in NVIP", cve.getCveId());
 				if (existingCves.containsKey(cve.getCveId())) {
 					//logger.info("CVE: {} is in NVIP, is it found in NVD?", cve.getCveId());
 					Vulnerability existingCveAttributes = existingCves.get(cve.getCveId());
+
+					// Was the CVE previously found? If so, was it not in NVD before, and is it in NVD now?
+					// Compare original created date with the current date
+					// We won't use the NVD published date for now, since published date can refer to date the CVe is received
+					// which would show a smaller difference.
 					if (existingCveAttributes.getNvdStatus() == 0 && cve.getNvdStatus() == 1) {
 						try {
 							logger.info("Calculating NVD Time Gap for {}", cve.getCveId());
