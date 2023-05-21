@@ -35,6 +35,7 @@ import java.util.stream.Collectors;
 import edu.rit.se.nvip.crawler.github.PyPAGithubScraper;
 
 import edu.rit.se.nvip.exploit.ExploitIdentifier;
+import edu.rit.se.nvip.model.*;
 import edu.rit.se.nvip.nvd.NvdCveController;
 import edu.rit.se.nvip.patchfinder.JGitCVEPatchDownloader;
 import edu.rit.se.nvip.patchfinder.PatchFinder;
@@ -51,11 +52,7 @@ import edu.rit.se.nvip.cvereconcile.AbstractCveReconciler;
 import edu.rit.se.nvip.cvereconcile.CveReconcilerFactory;
 import edu.rit.se.nvip.db.DatabaseHelper;
 import edu.rit.se.nvip.db.DbParallelProcessor;
-import edu.rit.se.nvip.model.CompositeVulnerability;
 import edu.rit.se.nvip.model.CompositeVulnerability.CveReconcileStatus;
-import edu.rit.se.nvip.model.DailyRun;
-import edu.rit.se.nvip.model.NvipSource;
-import edu.rit.se.nvip.model.Vulnerability;
 import edu.rit.se.nvip.productnameextractor.AffectedProductIdentifier;
 import edu.rit.se.nvip.utils.CveUtils;
 import edu.rit.se.nvip.utils.MyProperties;
@@ -686,7 +683,8 @@ public class NVIPMain {
 		logger.info("Comparing CVES against NVD & MITRE..");
 		String cveDataPathNvd = dataVars.get("dataDir") + "/nvd-cve.csv";
 		String cveDataPathMitre = dataVars.get("dataDir") + "/mitre-cve.csv";
-		CveProcessor cveProcessor = new CveProcessor(cveDataPathNvd, cveDataPathMitre, "");
+		HashMap<String, NvdVulnerability> nvdCves = new NvdCveController().fetchNVDCVEs("https://services.nvd.nist.gov/rest/json/cves/2.0");
+		CveProcessor cveProcessor = new CveProcessor(cveDataPathNvd, cveDataPathMitre, nvdCves);
 		Map<String, Vulnerability> existingCves = databaseHelper.getExistingVulnerabilities();
 
 		HashMap<String, List<Object>> checkedCVEs = cveProcessor.checkAgainstNvdMitre(cveHashMapAll, existingCves);
