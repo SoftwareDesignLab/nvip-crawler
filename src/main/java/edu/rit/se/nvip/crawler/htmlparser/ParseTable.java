@@ -76,11 +76,11 @@ public class ParseTable extends AbstractCveParser implements ParserStrategy {
             rowElement = driver.findElement(By.xpath(String.format(xPathContainsCVE, cveList.get(0))));
             // logger.info("Found row for " + cveIDs);
             // try and click element and every child of element
-            htmlBefore = driver.findElement(By.tagName("tbody")).getAttribute("innerHTML");
+            htmlBefore = driver.findElement(By.tagName("tbody")).getAttribute("innerHTML").replace("\n", "").replace("\t", "");
             actions.scrollToElement(rowElement).perform();
             actions.click(rowElement).perform();
-            String htmlAfter = driver.findElement(By.tagName("tbody")).getAttribute("innerHTML");
-            diff = StringUtils.difference(htmlBefore, htmlAfter);
+            String htmlAfter = driver.findElement(By.tagName("tbody")).getAttribute("innerHTML").replace("\n", "").replace("\t", "");
+            diff = StringUtils.difference(htmlBefore, htmlAfter).replace("\n", "").replace("\t", "");
         } catch (NoSuchElementException e) {
             // logger.info("Row not found for " + cveIDs);
         }
@@ -99,7 +99,7 @@ public class ParseTable extends AbstractCveParser implements ParserStrategy {
         else description = rowText;
         String createdDate = LocalDate.now().toString();
         GenericDate genericDate = extractDate(rowText);
-        String lastModifiedDate = LocalDate.now().toString();
+        String lastModifiedDate;
         GenericDate genericLastMod = extractLastModifiedDate(rowText);
         if (genericDate.getRawDate() != null)
             createdDate = genericDate.getRawDate();
