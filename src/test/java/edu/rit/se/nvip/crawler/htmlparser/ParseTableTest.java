@@ -27,10 +27,10 @@ public class ParseTableTest extends AbstractParserTest {
         List<CompositeVulnerability> vulnerabilities = parser.parseWebPage("https://www.vmware.com/security/advisories.html", null);
 
         assertTrue(vulnerabilities.size() > 80);
-        CompositeVulnerability vuln = getVulnerability(vulnerabilities, "CVE-2023-20869");
+        CompositeVulnerability vuln = getVulnerability(vulnerabilities, "CVE-2021-22035");
         assertNotNull(vuln);
-        assertEquals("2023-04-25", vuln.getPublishDate());
-        assertTrue(vuln.getDescription().contains("VMware Workstation and Fusion updates address multiple security vulnerabilities"));
+        assertEquals("11-10-2021", vuln.getPublishDate());
+        assertTrue(vuln.getDescription().contains("VMware vRealize Log Insight"));
         assertFalse(vuln.getDescription().contains("VMware Aria Operations for"));
     }
 
