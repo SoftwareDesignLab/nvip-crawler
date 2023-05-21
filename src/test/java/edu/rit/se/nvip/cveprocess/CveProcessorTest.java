@@ -256,4 +256,32 @@ public class CveProcessorTest {
         assertEquals(1, foundVulnerabilities.get(CVE_ID).getMitreStatus());
         assertEquals(24, foundVulnerabilities.get(CVE_ID).getTimeGapNvd());
     }
+
+    @Test
+    public void testBadCVEID() {
+        foundVulnerabilities.get(CVE_ID).setCveId("Bad-CVE-ID");
+        Map<String, Vulnerability> existingCves = new HashMap<>();
+        existingCves.put(CVE_ID, new Vulnerability(0, CVE_ID, "", 0, 1, "2023-04-25 00:00:00"));
+
+        cveProcessor.checkAgainstNvdMitre(foundVulnerabilities, existingCves);
+        assertEquals("Wrong CVE ID! Check for typo?", foundVulnerabilities.get(CVE_ID).getNvipNote());
+    }
+
+
+    @Test
+    public void testNotAnalyzedInNVD() {
+        testNvdVulns.clear();
+        testNvdVulns.put(CVE_ID, new NvdVulnerability(CVE_ID, "", "Awaiting Analysis"));
+        Map<String, Vulnerability> existingCves = new HashMap<>();
+        existingCves.put(CVE_ID, new Vulnerability(0, CVE_ID, "", 0, 1, "2023-04-25 00:00:00"));
+
+        HashMap<String, List<Object>> processedCves = cveProcessor.checkAgainstNvdMitre(foundVulnerabilities, existingCves);
+
+        assertEquals(1, processedCves.get(CveProcessor.NVD_CVE_KEY).size());
+        assertEquals(0, processedCves.get(CveProcessor.MITRE_CVE_KEY).size());
+        assertEquals(0, processedCves.get(CveProcessor.NVD_MITRE_CVE_KEY).size());
+        assertEquals(1, processedCves.get(CveProcessor.ALL_CVE_KEY).size());
+        assertEquals(0, foundVulnerabilities.get(CVE_ID).getNvdStatus());
+        assertEquals(1, foundVulnerabilities.get(CVE_ID).getMitreStatus());
+    }
 }
