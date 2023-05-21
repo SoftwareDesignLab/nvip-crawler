@@ -163,13 +163,16 @@ public abstract class AbstractCveParser {
 	}
 
 	/**
-	 * Extract date helper - get substring bounds
+	 * Helper function for extractDate and extractLastModifiedDate
+	 * Find keyword in text, return a bounds to search for a date in
+	 * text surrounding the location of the keyword
+	 * @param text - text to search for dates
+	 * @param keyword - keyword to search for in text
 	 * @return array of substring bounds
 	 */
 	protected int[] getSubstringBounds(String text, String keyword) {
 		// bounds to isolate date text for individual CVE ID's in bulletin
 		final int DATE_BOUNDS = 40;
-
 		int[] bounds = new int[2];
 		int keywordIndex = text.toLowerCase().indexOf(keyword);
 		if (keywordIndex == -1) return bounds;
@@ -178,7 +181,14 @@ public abstract class AbstractCveParser {
 		return bounds;
 	}
 
-	// search for date keywords, grab dates around it
+	/**
+	 * Search for relevant date keywords and attempt to
+	 * extract a date from the text around it
+	 * Fall through to grabbing any date in the text if no
+	 * keywords/dates around keywords are found
+	 * @param text - text to search for dates
+	 * @return GenericDate object referencing relevant date from text
+	 */
 	protected GenericDate extractDate(String text) {
 		// search for "Published" "Created" "Modified" "Updated" keywords, grab dates around it
 		// check a subtext for a date based on these keywords
@@ -198,6 +208,13 @@ public abstract class AbstractCveParser {
 		return new GenericDate(text);
 	}
 
+	/**
+	 * Search for last modified keywords in attempts to grab
+	 * last modified date around it
+	 * Fall through to grabbing any date in the text
+	 * @param text - text to search for date
+	 * @return GenericDate object referencing relevant date found in text
+	 */
 	protected GenericDate extractLastModifiedDate(String text) {
 		// search for "Published" "Created" "Modified" "Updated" keywords, grab dates around it
 		// check a subtext for a date based on these keywords
@@ -288,6 +305,12 @@ public abstract class AbstractCveParser {
 		return pdfText;
 	}
 
+	/**
+	 * Generates an xPath expression to reference a Selenium
+	 * WebElement using a given Jsoup Element as the starting point
+	 * @param element The Jsoup Element to generate the xPath for
+	 * @return The xPath expression as a String
+	 */
 	public static String jsoupToXpath(Element element) {
 		// Initialize the XPath with the root element
 		String xpath = "/";
