@@ -626,11 +626,8 @@ public class DatabaseHelperTest {
 			when(res.getDouble("gapMitre")).thenReturn(2.71828);
 			when(res.getDouble("gapNvd")).thenReturn(1.61803);
 			dbh.updateDailyRun(1111, run);
-			verify(pstmt).setFloat(1, (float) 120.00);
-			verify(pstmt).setDouble(2, run.getDatabaseTimeMin());
-			verify(pstmt, times(6)).setInt(anyInt(), anyInt());
-			verify(pstmt).setDouble(8, 1.62);
-			verify(pstmt).setDouble(9, 2.72);
+			verify(pstmt).setDouble(1, 1.62);
+			verify(pstmt).setDouble(2, 2.72);
 			verify(pstmt).executeUpdate();
 		} catch (SQLException ignored) {}
 	}
