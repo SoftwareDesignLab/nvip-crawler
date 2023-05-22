@@ -162,9 +162,9 @@ public class NvdCveController {
 					String publishedDate = cve.getJSONObject("cve").getString("published");
 					String status = cve.getJSONObject("cve").getString("vulnStatus");
 
-					logger.info("CVE ID: {}", cveId);
-					logger.info("Published Date: {}", publishedDate);
-					logger.info("Status: {}", status);
+//					logger.info("CVE ID: {}", cveId);
+//					logger.info("Published Date: {}", publishedDate);
+//					logger.info("Status: {}", status);
 
 					NvdCves.put(cveId, new NvdVulnerability(cveId, publishedDate, status));
 				}
