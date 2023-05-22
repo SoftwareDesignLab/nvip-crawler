@@ -188,10 +188,10 @@ public class CveProcessor {
 					// Check status of CVE in NVD, if RECEIVED, then it is in NVD.
 					// If any other status, then it is not in NVD.
 					if (nvdCVEs.get(vuln.getCveId()).getStatus() == NvdVulnerability.nvdStatus.ANALYZED) {
-						logger.info("CVE: {} is in NVD with status of ANALYZED", vuln.getCveId());
+//						logger.info("CVE: {} is in NVD with status of ANALYZED", vuln.getCveId());
 						vuln.setNvdStatus(1);
 					} else {
-						logger.info("CVE: {} is not in NVD with status of ANALYZED", vuln.getCveId());
+//						logger.info("CVE: {} is not in NVD with status of ANALYZED", vuln.getCveId());
 						vuln.setNvdStatus(0);
 						newCVEDataNotInNvd.add(vuln);
 
@@ -202,7 +202,7 @@ public class CveProcessor {
 						nvdOther = nvdCVEs.get(vuln.getCveId()).getStatus() == NvdVulnerability.nvdStatus.NOTINNVD ? nvdOther + 1 : nvdOther;
 					}
 				} else {
-					logger.info("CVE: {}, is NOT in NVD", vuln.getCveId());
+//					logger.info("CVE: {}, is NOT in NVD", vuln.getCveId());
 					vuln.setNvdSearchResult("NA");
 					vuln.setNvdStatus(0);
 					newCVEDataNotInNvd.add(vuln);
@@ -211,10 +211,10 @@ public class CveProcessor {
 				// Compare w/ MITRE
 				// TODO: will need to use a similar comparison via status like NVD
 				if (vuln.isFoundNewDescriptionForReservedCve()) {
-					logger.info("CVE: {} has new description for Reserved Cve", vuln.getCveId());
+//					logger.info("CVE: {} has new description for Reserved Cve", vuln.getCveId());
 					vuln.setMitreStatus(0);
 				} else if (cvesInMitre.containsKey(vuln.getCveId())){
-					logger.info("CVE: {} is in Mitre: Setting status to 1", vuln.getCveId());
+//					logger.info("CVE: {} is in Mitre: Setting status to 1", vuln.getCveId());
 					vuln.setMitreStatus(1);
 				} else if (existingCves.containsKey(vuln.getCveId()) && existingCves.get(vuln.getCveId()).getMitreStatus() == 0) {
 					long monthsBetween = ChronoUnit.MONTHS.between(LocalDateTime.now(),existingCves.get(vuln.getCveId()).getCreatedDateAsDate());

@@ -231,7 +231,7 @@ public class CveCharacterizer {
 				else {
 					CvssScore score = new CvssScore(vulnerability.getCveId(), severityId, 0.5, String.valueOf(cvssScore[0]), 0.5);
 					vulnerability.addCvssScore(score);
-					logger.info("CVSS Score predicted for {}", vulnerability.getCveId());
+//					logger.info("CVSS Score predicted for {}", vulnerability.getCveId());
 				}
 
 				// update list
