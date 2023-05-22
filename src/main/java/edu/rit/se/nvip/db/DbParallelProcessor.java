@@ -287,15 +287,15 @@ public class DbParallelProcessor {
 					if (nvdStatusChanged) {
 						databaseHelper.addToCveStatusChangeHistory(vuln, existingAttribs, "NVD", existingAttribs.getNvdStatus(),
 								vuln.getNvdStatus(), false, 0);
-						logger.info("ADDING to history --> Changed NVD status of CVE {} from {} to {}", vuln.getCveId(), existingAttribs.getNvdStatus(),
-								vuln.getNvdStatus());
+//						logger.info("ADDING to history --> Changed NVD status of CVE {} from {} to {}", vuln.getCveId(), existingAttribs.getNvdStatus(),
+//								vuln.getNvdStatus());
 					}
 
 					if (mitreStatusChanged) {
 						databaseHelper.addToCveStatusChangeHistory(vuln, existingAttribs, "MITRE", existingAttribs.getMitreStatus(),
 								vuln.getMitreStatus(), false, 0);
-						logger.info("ADDING to history --> Changed MITRE status of CVE {} from {} to {}", vuln.getCveId(), existingAttribs.getNvdStatus(),
-								vuln.getNvdStatus());
+//						logger.info("ADDING to history --> Changed MITRE status of CVE {} from {} to {}", vuln.getCveId(), existingAttribs.getNvdStatus(),
+//								vuln.getNvdStatus());
 					}
 
 				}

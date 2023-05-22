@@ -601,7 +601,7 @@ public class DatabaseHelper {
 					pstmt.setString(3, affectedRelease.getReleaseDate());
 					pstmt.setString(4, affectedRelease.getVersion());
 					count += pstmt.executeUpdate();
-					logger.info("Added {} as an affected release for {}", prodId, affectedRelease.getCveId());
+//					logger.info("Added {} as an affected release for {}", prodId, affectedRelease.getCveId());
 				} catch (Exception e) {
 					logger.error("Could not add affected release for Cve: {} Related Cpe: {}, Error: {}",
 							affectedRelease.getCveId(), affectedRelease.getCpe(), e.toString());
@@ -2047,7 +2047,7 @@ public class DatabaseHelper {
 
 			pstmt.executeUpdate();
 
-			logger.info("Inserted CVE: {} into aggregate table", cve_id);
+//			logger.info("Inserted CVE: {} into aggregate table", cve_id);
 			return true;
 
 		} catch (SQLException e) {

@@ -164,7 +164,7 @@ public class AffectedProductIdentifier extends Thread implements Runnable {
 						}
 						// if CPE identified, add it as affected release
 						for (String itemID : productIDs) {
-							logger.info("Found Affected Product for {}: {}", vulnerability.getCveId(), itemID);
+//							logger.info("Found Affected Product for {}: {}", vulnerability.getCveId(), itemID);
 							vulnerability.getAffectedReleases().add(new AffectedRelease(0, vulnerability.getCveId(), itemID, null, CpeLookUp.getVersionFromCPEid(itemID)));
 							numOfProductsMappedToCpe++;
 						}
