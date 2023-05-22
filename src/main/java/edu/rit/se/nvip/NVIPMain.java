@@ -120,9 +120,6 @@ public class NVIPMain {
 
 		dailyRunStats.calculateAddedUpdateCVEs(crawledVulnerabilityList);
 
-		//logger.info("Calculating Average Time Gaps...");
-		//dailyRunStats.calculateAvgTimeGaps(crawledVulnerabilityList);
-
 		databaseHelper.insertDailyRun(dailyRunStats);
 		logger.info("Run @ {}\nSummary:\nTotal CVEs found from this run: {}\nTotal CVEs not in NVD: {}" +
 						"\nTotal CVEs not in Mitre: {}\nTotal CVEs not in both: {}\nTotal CVEs Added: {}\nTotal CVEs Updated: {}\n",
