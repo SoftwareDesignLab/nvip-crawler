@@ -118,20 +118,20 @@ public class NVIPMain {
 
 		dailyRunStats.calculateAddedUpdateCVEs(crawledVulnerabilityList);
 
-		logger.info("Calculating Average Time Gaps...");
-		dailyRunStats.calculateAvgTimeGaps(crawledVulnerabilityList);
+		//logger.info("Calculating Average Time Gaps...");
+		//dailyRunStats.calculateAvgTimeGaps(crawledVulnerabilityList);
 
 		databaseHelper.insertDailyRun(dailyRunStats);
 		logger.info("Run @ {}\nSummary:\nTotal CVEs found from this run: {}\nTotal CVEs not in NVD: {}" +
-						"\nTotal CVEs not in Mitre: {}\nTotal CVEs not in both: {}\nTotal CVEs Added: {}\nTotal CVEs Updated: {}" +
-						"\nAvg NVD Time Gap: {}\n Avg MITRe Time Gap: {}\n", dailyRunStats.getRunDateTime(),
-				dailyRunStats.getTotalCveCount(), dailyRunStats.getNotInNvdCount(), dailyRunStats.getNotInMitreCount(),
-				dailyRunStats.getNotInBothCount(), dailyRunStats.getAddedCveCount(), dailyRunStats.getUpdatedCveCount(),
-				dailyRunStats.getAvgTimeGapNvd(), dailyRunStats.getAvgTimeGapMitre());
+						"\nTotal CVEs not in Mitre: {}\nTotal CVEs not in both: {}\nTotal CVEs Added: {}\nTotal CVEs Updated: {}\n",
+				dailyRunStats.getRunDateTime(), dailyRunStats.getTotalCveCount(), dailyRunStats.getNotInNvdCount(), dailyRunStats.getNotInMitreCount(),
+				dailyRunStats.getNotInBothCount(), dailyRunStats.getAddedCveCount(), dailyRunStats.getUpdatedCveCount());
 
 		// Prepare stats and Store found CVEs in DB
 		int runId = databaseHelper.getLatestRunId();
 		nvipMain.storeCVEs(crawledVulnerabilityList, runId);
+
+		databaseHelper.updateDailyRun(runId, dailyRunStats);
 
 		// log .csv files
 		logger.info("Creating output CSV files...");
