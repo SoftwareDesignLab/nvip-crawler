@@ -650,7 +650,6 @@ public class NVIPMain {
 			}
 
 			try {
-				// TODO: there's a NullPointerException being thrown when trying to add the dates
 				CompositeVulnerability compiledVuln = new CompositeVulnerability(0, totalSourceURLs.size() > 0 ? totalSourceURLs.get(0) : "",
 						cveId,
 						null,
