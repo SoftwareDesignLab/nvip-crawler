@@ -10,3 +10,4 @@ output/
 logs/
 /.github/
 /nvip_data/productnameextraction/w2v_model_250.bin
+/nvip_data/exploit-repo/exploitdb/
