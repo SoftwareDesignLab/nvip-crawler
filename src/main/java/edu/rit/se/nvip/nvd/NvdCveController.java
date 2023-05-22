@@ -71,6 +71,8 @@ public class NvdCveController {
 
 	/**
 	 * for testing NVD CVE pull
+	 * TODO: timeout exception when in middle of pulling NVD CVEs,
+	 *  need to do latest to oldest in case this happens, or maybe just increase the sleeptime
 	 * @param args
 	 */
 	public static void main(String[] args) {
@@ -108,9 +110,9 @@ public class NvdCveController {
 		while (true) {
 			// 30 second wait for eevry 5 requests, according to NVD Doc: https://nvd.nist.gov/developers/start-here
 			if (requestNum >= 5) {
-				logger.info("Sleeping for 31 seconds before continuing");
+				logger.info("Sleeping for 60 seconds before continuing");
 				try {
-					Thread.sleep(40000);
+					Thread.sleep(60000);
 					requestNum = 0;
 				} catch (InterruptedException e) {
 					logger.error("ERROR: Failed to wait 30seconds for pulling NVD CVEs\n{}", e);
