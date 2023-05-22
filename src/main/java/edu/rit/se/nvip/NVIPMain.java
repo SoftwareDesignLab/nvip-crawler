@@ -77,6 +77,8 @@ public class NVIPMain {
 	private static final Map<String, Object> crawlerVars = new HashMap<>();
 	private static final Map<String, Object> dataVars = new HashMap<>();
 
+	private static final Map<String, Object> nvdVars = new HashMap<>();
+
 	private static final Map<String, Object> characterizationVars = new HashMap<>();
 	private static final Map<String, Object> exploitVars = new HashMap<>();
 	private static final Map<String, Object> patchfinderVars = new HashMap<>();
@@ -171,6 +173,7 @@ public class NVIPMain {
 
 		this.prepareCrawlerVars();
 		this.prepareDataVars();
+		this.prepareNvdVars();
 		this.prepareCharacterizationVars();
 		this.prepareExploitFinderVars();
 		this.preparePatchFinderVars();
@@ -259,6 +262,27 @@ public class NVIPMain {
 				"WARNING: Reconciler Method not defined in NVIP_RECONCILER_METHOD, using APACHE_OPEN_NLP as default");
 	}
 
+	/**
+	 * Prepare Vars for NVD API Comparison from envvars
+	 * Sets defaults if envvars aren't found
+	 */
+	private void prepareNvdVars() {
+		String nvdApiUrl = System.getenv("NVD_API_URL");
+		String nvdApiRequestLimit = System.getenv("NVD_API_REQUEST_LIMIT");
+
+		addEnvvarString(NVIPMain.nvdVars,"nvdApiUrl", nvdApiUrl, "https://services.nvd.nist.gov/rest/json/cves/2.0?pubstartDate=<StartDate>&pubEndDate=<EndDate>",
+				"WARNING: NVD API URL not defined in NVD_API_URL, using https://services.nvd.nist.gov/rest/json/cves/2.0?pubstartDate=<StartDate>&pubEndDate=<EndDate>" +
+						" as default");
+		addEnvvarInt(NVIPMain.nvdVars, "nvdApiRequestLimit", nvdApiRequestLimit, 10,
+				"WARNING: NVD Request Limit not defined in NVD_API_REQUEST_LIMIT, setting 10 for default",
+				"NVD_API_REQUEST_LIMIT");
+	}
+
+
+	/**
+	 * Prepare Vars for Characterizer from envvars
+	 * Sets defaults if envvars aren't found
+	 */
 	private void prepareCharacterizationVars() {
 		String cveCharacterizationLimit = System.getenv("NVIP_CVE_CHARACTERIZATION_LIMIT");
 
@@ -680,8 +704,6 @@ public class NVIPMain {
 	 * Process CVEs by comparing pulled CVEs to NVD and MITRE
 	 * Calculate Time Gaps afterwards, if any
 	 *
-	 * TODO: Use NVD's API instead, csv files aren't getting filled anymore
-	 *
 	 * @param cveHashMapAll
 	 * @return
 	 */
@@ -690,8 +712,11 @@ public class NVIPMain {
 		logger.info("Comparing CVES against NVD & MITRE..");
 		String cveDataPathNvd = dataVars.get("dataDir") + "/nvd-cve.csv";
 		String cveDataPathMitre = dataVars.get("dataDir") + "/mitre-cve.csv";
+
+		// TODO: CSV files don't do anything anymore
+		//  they're just needed to initialize the processor, should deprecate once the API calls are finalized
 		HashMap<String, NvdVulnerability> nvdCves = new NvdCveController().fetchNVDCVEs(
-				"https://services.nvd.nist.gov/rest/json/cves/2.0?pubstartDate=<StartDate>&pubEndDate=<EndDate>", 10);
+				(String) nvdVars.get("nvdApiUrl"), (int) nvdVars.get("nvdApiRequestLimit"));
 		CveProcessor cveProcessor = new CveProcessor(cveDataPathNvd, cveDataPathMitre, nvdCves);
 		Map<String, Vulnerability> existingCves = databaseHelper.getExistingVulnerabilities();
 
@@ -766,6 +791,10 @@ public class NVIPMain {
 
 	/**
 	 * Use Characterizer Model to characterize CVEs and generate VDO/CVSS
+	 *
+	 * TODO: Get CAPECs working again
+	 *  Will need CWEs for them to be attached though
+	 *
 	 * @param crawledVulnerabilityList
 	 * @return
 	 */
@@ -822,8 +851,8 @@ public class NVIPMain {
 	 * (string) should be mapped to a CPE item first. After that, it will be added
 	 * to the database.
 	 *
-	 * // TODO We should be using more than 1 thread!!!!!!!!!!
-	 *
+	 * TODO We should be using more than 1 thread for product extraction!!!!!!!!!!
+	 *  or just not use threads :/
 	 * @param crawledVulnerabilityList
 	 */
 	private void spawnProcessToIdentifyAndStoreAffectedReleases(List<CompositeVulnerability> crawledVulnerabilityList) {

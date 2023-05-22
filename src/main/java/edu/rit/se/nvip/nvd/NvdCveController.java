@@ -73,8 +73,6 @@ public class NvdCveController {
 
 	/**
 	 * for testing NVD CVE pull
-	 * TODO: timeout exception when in middle of pulling NVD CVEs,
-	 *  need to do latest to oldest in case this happens, or maybe just increase the sleeptime
 	 * @param args
 	 */
 	public static void main(String[] args) {
