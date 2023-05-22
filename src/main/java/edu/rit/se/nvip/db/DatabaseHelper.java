@@ -103,8 +103,8 @@ public class DatabaseHelper {
 	private final String insertDailyRunSql = "INSERT INTO dailyrunhistory (run_date_time, crawl_time_min, total_cve_count, not_in_nvd_count, not_in_mitre_count,"
 			+ "not_in_both_count, new_cve_count, avg_time_gap_nvd, avg_time_gap_mitre, added_cve_count, updated_cve_count) VALUES (?,?,?,?,?,?,?,?,?,?,?);";
 	private final String updateDailyRunSql = "UPDATE dailyrunhistory SET avg_time_gap_nvd = ?, avg_time_gap_mitre = ? WHERE (run_id = ?);";
-	private final String selectAverageTimeGapNvd = "SELECT avg(v.time_gap_nvd) as gapNvd from vulnerability v where Date(v.created_date) >= DATE_SUB(CURDATE(), INTERVAL 1 WEEK)";
-	private final String selectAverageTimeGapMitre = "SELECT avg(v.time_gap_mitre) as gapMitre from vulnerability v where Date(v.created_date) >= DATE_SUB(CURDATE(), INTERVAL 1 WEEK)";
+	private final String selectAverageTimeGapNvd = "SELECT avg(v.time_gap_nvd) as gapNvd from vulnerability v where Date(v.created_date) >= DATE_SUB(CURDATE(), INTERVAL 1 MONTH)";
+	private final String selectAverageTimeGapMitre = "SELECT avg(v.time_gap_mitre) as gapMitre from vulnerability v where Date(v.created_date) >= DATE_SUB(CURDATE(), INTERVAL 1 MONTH)";
 
 	private final String insertVdoCharacteristicSql = "INSERT INTO vdocharacteristic (cve_id, vdo_label_id,vdo_confidence,vdo_noun_group_id) VALUES (?,?,?,?);";
 	private final String deleteVdoCharacteristicSql = "DELETE FROM vdocharacteristic WHERE cve_id=?;";
