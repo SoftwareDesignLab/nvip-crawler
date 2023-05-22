@@ -23,10 +23,7 @@
  */
 package edu.rit.se.nvip;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.*;
@@ -544,7 +541,7 @@ public class NVIPMain {
 				cveHashMapNotScraped.get(pythonVuln).add(cvePyPAGitHub.get(pythonVuln));
 			} else {
 				ArrayList<CompositeVulnerability> initList = new ArrayList<>();
-				initList.add(cveHashMapGithub.get(pythonVuln));
+				initList.add(cvePyPAGitHub.get(pythonVuln));
 				cveHashMapNotScraped.put(pythonVuln, initList);
 			}
 		}
@@ -652,21 +649,25 @@ public class NVIPMain {
 				}
 			}
 
-			// TODO: there's a NullPointerException being thrown when trying to add the dates
-			CompositeVulnerability compiledVuln = new CompositeVulnerability(0, totalSourceURLs.size() > 0 ? totalSourceURLs.get(0) : "",
-					cveId,
-					null,
-					mergedMap.get(cveId).get(0).getPublishDate(),
-					mergedMap.get(cveId).get(0).getLastModifiedDate(),
-					fullDescription.trim(),
-					"");
+			try {
+				// TODO: there's a NullPointerException being thrown when trying to add the dates
+				CompositeVulnerability compiledVuln = new CompositeVulnerability(0, totalSourceURLs.size() > 0 ? totalSourceURLs.get(0) : "",
+						cveId,
+						null,
+						mergedMap.get(cveId).get(0).getPublishDate() == null ? mergedMap.get(cveId).get(0).getCreateDate() : mergedMap.get(cveId).get(0).getPublishDate(),
+						mergedMap.get(cveId).get(0).getLastModifiedDate() == null ? mergedMap.get(cveId).get(0).getCreateDate() : mergedMap.get(cveId).get(0).getLastModifiedDate(),
+						fullDescription.trim(),
+						"");
 
-			// Combine remaining sources
-			for (int i=1; i< totalSourceURLs.size(); i++)  {
-				compiledVuln.addSourceURL(totalSourceURLs.get(i));
+				// Combine remaining sources
+				for (int i=1; i< totalSourceURLs.size(); i++)  {
+					compiledVuln.addSourceURL(totalSourceURLs.get(i));
+				}
+
+				cveHashMapAll.put(cveId, compiledVuln);
+			} catch (Exception e) {
+				logger.error("ERROR: Exception when trying to add vulnerability {}\n{}", mergedMap.get(cveId).get(0), e);
 			}
-
-			cveHashMapAll.put(cveId, compiledVuln);
 		}
 
 
