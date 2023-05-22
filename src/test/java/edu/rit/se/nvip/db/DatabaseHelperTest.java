@@ -29,6 +29,9 @@ import edu.rit.se.nvip.model.*;
 import edu.rit.se.nvip.model.CompositeVulnerability.CveReconcileStatus;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -141,20 +144,20 @@ public class DatabaseHelperTest {
 		return releases;
 	}
 
-	@org.junit.BeforeClass
+	@BeforeClass
 	public static void classSetUp() {
 		// forces a constructor, only want to do once
 		DatabaseHelper.getInstance();
 	}
 
-	@org.junit.Before
+	@Before
 	public void setUp() {
 		this.dbh = DatabaseHelper.getInstance();
 		ReflectionTestUtils.setField(this.dbh, "dataSource", this.hds);
 		this.setMocking();
 	}
 
-	@org.junit.AfterClass
+	@AfterClass
 	public static void tearDown() {
 		DatabaseHelper dbh = DatabaseHelper.getInstance();
 		ReflectionTestUtils.setField(dbh, "databaseHelper", null);
@@ -434,37 +437,6 @@ public class DatabaseHelperTest {
 		verifyNoMoreInteractions(pstmt);
 	}
 
-	/**
-	 * TODO: Outdated test
-	 */
-	@Test
-	public void updateVulnerabilityTest() {
-		String id = "cve_id0";
-		CompositeVulnerability vuln = new CompositeVulnerability(1337, "url", id, "platform", "pubdate", "moddate", "description", "domain");
-		vuln.setPatch("patch");
-		vuln.setFixDate("fix Date");
-		try {
-			assertEquals(1, dbh.updateVulnerability(vuln));
-			verify(pstmt, atLeast(7)).setString(anyInt(), anyString());
-//			DatabaseHelper spyDB = spy(dbh);
-//			vuln.setCveReconcileStatus(CveReconcileStatus.UPDATE);
-//
-//			assertEquals(1, spyDB.updateVulnerability(vuln));
-//
-//			verify(pstmt, atLeast(7)).setString(anyInt(), anyString());
-//			ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
-//			verify(pstmt, atLeastOnce()).setString(anyInt(), captor.capture());
-//
-//			assertTrue(captor.getAllValues().contains(id));
-//
-//			verify(spyDB).deleteVulnSource(id, conn);
-//			verify(spyDB).insertVulnSource(vuln.getVulnSourceList());
-//			verify(spyDB).deleteCvssScore(id);
-//			verify(spyDB).insertCvssScore(vuln.getCvssScoreInfo());
-//			verify(spyDB).insertVulnerabilityUpdate(1337, "description", "description", 1111);
-		} catch (SQLException ignore) {}
-	}
-
 	@Test
 	public void insertVulnerabilityUpdateTest() {
 		boolean success = dbh.insertVulnerabilityUpdate(1337, "description", "descriptionval", 1111);
@@ -494,20 +466,6 @@ public class DatabaseHelperTest {
 			verify(pstmt).executeUpdate();
 		} catch (SQLException ignored) {}
 	}
-
-//	@Test
-//	public void checkNvdMitreStatusForCrawledVulnerabilityListTest() {
-//		String existing_id = "cve_id0";
-//		List<CompositeVulnerability> crawled = new ArrayList<>();
-//		crawled.add(new CompositeVulnerability(1337, "url", existing_id, "platform", "pubdate", "2023-01-01 10:00:00", "description", "domain"));
-//		crawled.add(new CompositeVulnerability(1337, "url", "cve_id5", "platform", "pubdate", "2023-01-31 00:00:00", "description", "domain"));
-//		Map<String, Vulnerability> existing = new HashMap<>();
-//		existing.put(existing_id, new Vulnerability(1337, existing_id, "description", 1, 1, "2023-01-01 00:00:00"));
-//		int[] out = dbh.checkNvdMitreStatusForCrawledVulnerabilityList(conn, crawled, existing);
-//		assertEquals(1, out[0]);
-//		assertEquals(1, out[1]);
-//		assertEquals(0, out[2]);
-//	}
 
 	@Test
 	public void insertNvipSourceTest() {
@@ -588,9 +546,6 @@ public class DatabaseHelperTest {
 		} catch (SQLException ignored) {}
 	}
 
-	/**
-	 * TODO: Outdated test
-	 */
 	@Test
 	public void insertDailyRunTest() {
 		DailyRun run = new DailyRun("2023-01-01 00:00:00", 120, 10, 5, 3, 2);

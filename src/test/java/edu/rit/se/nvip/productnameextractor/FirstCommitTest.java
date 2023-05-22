@@ -25,6 +25,7 @@ package edu.rit.se.nvip.productnameextractor;
 
 import static org.junit.Assert.*;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -36,8 +37,8 @@ import org.junit.Test;
 
 public class FirstCommitTest {
 
-	/**
 	@Test
+	@Ignore
 	public void testGettingFirstCommit() {
 		FirstCommitWithCVE firstCommitLookUp = FirstCommitWithCVE.getInstance();
 		
@@ -54,6 +55,6 @@ public class FirstCommitTest {
 		assertEquals("Result2 is correct", true, result2.getTagName()==null);
 		assertEquals("Result3 is correct", true, result3==null);
 
-	}*/
+	}
 
 }
