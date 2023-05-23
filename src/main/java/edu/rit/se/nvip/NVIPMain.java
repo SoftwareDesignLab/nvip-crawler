@@ -146,7 +146,7 @@ public class NVIPMain {
 		// Exploit Collection
 		if ((boolean) exploitVars.get("exploitFinderEnabled")) {
 			logger.info("Identifying exploits for {} exploits...", crawledVulnerabilityList.size());
-			ExploitIdentifier exploitIdentifier = new ExploitIdentifier(crawledVulnerabilityList, databaseHelper);
+			ExploitIdentifier exploitIdentifier = new ExploitIdentifier(crawledVulnerabilityList, databaseHelper, (String) dataVars.get("dataDir"), "https://gitlab.com/exploit-database/exploitdb");
 			int count = exploitIdentifier.identifyAndSaveExploits(crawledVulnerabilityList);
 			logger.info("Extracted exploits for {} CVEs!", count);
 		}
