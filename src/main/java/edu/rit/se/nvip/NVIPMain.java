@@ -146,7 +146,8 @@ public class NVIPMain {
 		// Exploit Collection
 		if ((boolean) exploitVars.get("exploitFinderEnabled")) {
 			logger.info("Identifying exploits for {} exploits...", crawledVulnerabilityList.size());
-			ExploitIdentifier exploitIdentifier = new ExploitIdentifier(crawledVulnerabilityList, databaseHelper, (String) dataVars.get("dataDir"), "https://gitlab.com/exploit-database/exploitdb");
+			ExploitIdentifier exploitIdentifier = new ExploitIdentifier(crawledVulnerabilityList, databaseHelper, (String) dataVars.get("dataDir"),
+					(String) exploitVars.get("exploitDBURL"));
 			int count = exploitIdentifier.identifyAndSaveExploits(crawledVulnerabilityList);
 			logger.info("Extracted exploits for {} CVEs!", count);
 		}
@@ -280,9 +281,15 @@ public class NVIPMain {
 	 */
 	private void prepareExploitFinderVars() {
 		String exploitFinderEnabled = System.getenv("EXPLOIT_FINDER_ENABLED");
+		String exploitDBURL = System.getenv("EXPLOIT_DB_URL");
 
 		addEnvvarBool(NVIPMain.exploitVars, "exploitFinderEnabled", exploitFinderEnabled, true,
 				"WARNING: Exploit Finder Enabler not defined in EXPLOIT_FINDER_ENABLED, enabling by default");
+
+		addEnvvarString(NVIPMain.exploitVars, "exploitDBURL", exploitDBURL, "https://gitlab.com/exploit-database/exploitdb",
+				"WARNING: ExploitDB Git URL not defined in EXPLOIT_DB_URL, setting to https://gitlab.com/exploit-database/exploitdb " +
+						"by default");
+
 	}
 
 	/**
