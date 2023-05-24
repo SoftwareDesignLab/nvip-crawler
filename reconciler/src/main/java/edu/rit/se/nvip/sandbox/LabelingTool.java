@@ -1,6 +1,5 @@
 package edu.rit.se.nvip.sandbox;
 
-
 import edu.rit.se.nvip.model.RawVulnerability;
 
 import java.util.LinkedList;
@@ -31,6 +30,7 @@ public class LabelingTool {
             System.out.println();
             System.out.println("Is CVE Good Quality? (Enter Y or N): ");
             String quality = scan.next();
+            System.out.println();
             if (quality.equals("Y")) {
                 //Add cve to new table/json/csv
             }
