@@ -6,6 +6,7 @@ import edu.rit.se.nvip.model.RawVulnerability;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.List;
@@ -91,5 +92,21 @@ public class DatabaseSandbox extends DatabaseHelper {
         } catch (SQLException ex) {
             System.out.println(ex.toString());
         }
+    }
+
+    public ResultSet getRawDescriptions(String quantity) {
+        String query = "SELECT * FROM rawdescription";
+        if (!quantity.equals("ALL")) {
+            query += " LIMIT " + quantity;
+        }
+
+        try (Connection conn = getConnection(); PreparedStatement pStmt = conn.prepareStatement(query)) {
+            ResultSet res = pStmt.executeQuery();
+            return res;
+        } catch (SQLException e) {
+            System.out.println("SQL Exception: " + e.getMessage());
+        }
+
+        return null;
     }
 }
