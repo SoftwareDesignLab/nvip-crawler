@@ -4,11 +4,9 @@ import com.zaxxer.hikari.HikariConfig;
 import edu.rit.se.nvip.DatabaseHelper;
 import edu.rit.se.nvip.model.RawVulnerability;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -94,19 +92,31 @@ public class DatabaseSandbox extends DatabaseHelper {
         }
     }
 
-    public ResultSet getRawDescriptions(String quantity) {
+    public LinkedList<RawVulnerability> getRawDescriptions(String quantity) {
         String query = "SELECT * FROM rawdescription";
         if (!quantity.equals("ALL")) {
             query += " LIMIT " + quantity;
         }
 
+        LinkedList<RawVulnerability> rawVulnList = new LinkedList<>();
+
         try (Connection conn = getConnection(); PreparedStatement pStmt = conn.prepareStatement(query)) {
             ResultSet res = pStmt.executeQuery();
-            return res;
+            while (res.next()) {
+                int id = res.getInt("raw_description_id");
+                String cveId = res.getString("cve_id");
+                String description = res.getString("raw_description");
+                Timestamp created = res.getTimestamp("created_date");
+                Timestamp published = res.getTimestamp("published_date");
+                Timestamp modified = res.getTimestamp("last_modified_date");
+                String url = res.getString("source_url");
+                RawVulnerability rawVuln = new RawVulnerability(id, cveId, description, created, published, modified, url);
+                rawVulnList.add(rawVuln);
+            }
         } catch (SQLException e) {
             System.out.println("SQL Exception: " + e.getMessage());
         }
 
-        return null;
+        return rawVulnList;
     }
 }
