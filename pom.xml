@@ -143,19 +143,19 @@
 		<dependency>
 			<groupId>com.opencsv</groupId>
 			<artifactId>opencsv</artifactId>
-			<version>4.0</version>
+			<version>5.7.1</version>
 		</dependency>
 
 		<!-- edu.stanford.nlp -->
 		<dependency>
 			<groupId>edu.stanford.nlp</groupId>
 			<artifactId>stanford-corenlp</artifactId>
-			<version>4.4.0</version>
+			<version>4.5.2</version>
 		</dependency>
 		<dependency>
 			<groupId>edu.stanford.nlp</groupId>
 			<artifactId>stanford-corenlp</artifactId>
-			<version>4.4.0</version>
+			<version>4.5.2</version>
 			<classifier>models</classifier>
 		</dependency>
 		<dependency>
@@ -260,7 +260,7 @@
 		<dependency>
 			<groupId>mysql</groupId>
 			<artifactId>mysql-connector-java</artifactId>
-			<version>8.0.32</version>
+			<version>8.0.33</version>
 		</dependency>
 
 
@@ -285,16 +285,10 @@
 			<version>4.13.1</version>
 			<scope>test</scope>
 		</dependency>
-
-		<dependency>
-			<groupId>org.deeplearning4j</groupId>
-			<artifactId>deeplearning4j-ui</artifactId>
-			<version>1.0.0-beta7</version>
-		</dependency>
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter</artifactId>
-			<version>RELEASE</version>
+			<version>5.9.2</version>
 			<scope>test</scope>
 		</dependency>
 
@@ -333,7 +327,7 @@
 		<dependency>
 			<groupId>com.amazonaws</groupId>
 			<artifactId>aws-java-sdk-ses</artifactId>
-			<version>1.11.976</version>
+			<version>1.12.472</version>
 		</dependency>
 
 		<dependency>
