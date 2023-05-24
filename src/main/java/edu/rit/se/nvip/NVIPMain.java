@@ -148,8 +148,7 @@ public class NVIPMain {
 			logger.info("Identifying exploits for {} exploits...", crawledVulnerabilityList.size());
 			ExploitIdentifier exploitIdentifier = new ExploitIdentifier(crawledVulnerabilityList, databaseHelper, (String) dataVars.get("dataDir"),
 					(String) exploitVars.get("exploitDBURL"));
-			int count = exploitIdentifier.identifyAndSaveExploits(crawledVulnerabilityList);
-			logger.info("Extracted exploits for {} CVEs!", count);
+			exploitIdentifier.identifyAndStoreExploits();
 		}
 
 		//Patch Collection
