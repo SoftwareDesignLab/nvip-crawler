@@ -2,7 +2,7 @@ package edu.rit.se.nvip.sandbox;
 
 
 import edu.rit.se.nvip.model.RawVulnerability;
-=
+
 import java.util.LinkedList;
 import java.util.Scanner;
 
