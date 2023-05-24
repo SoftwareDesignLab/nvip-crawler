@@ -1470,35 +1470,6 @@ public class DatabaseHelper {
 	}
 
 	/**
-	 * Store exploits for CVE. Assumes that the CVE exists in the database
-	 * 
-	 * @param vulnerability
-	 * @param exploitList
-	 * @return
-	 */
-	public boolean saveExploits(List<Exploit> exploitList) {
-		try (Connection conn = getConnection(); ) {
-			// insert new exploits
-			for (Exploit exploit : exploitList) {
-				insertExploit(conn, exploit);
-			}
-
-		} catch (Exception e) {
-			logger.error("Error while recording {} exploits for CVE:{}, Error: {}", exploitList.size(),
-					vulnerability.getCveId(), e);
-			return false;
-		} finally {
-			try {
-				if (connection != null)
-					connection.close();
-			} catch (Exception e) {
-			}
-		}
-
-		return true;
-	}
-
-	/**
 	 * Grab exploits by CVE ID
 	 * @param cveId
 	 * @return
