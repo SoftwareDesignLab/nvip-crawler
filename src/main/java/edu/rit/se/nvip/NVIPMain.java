@@ -146,9 +146,10 @@ public class NVIPMain {
 		// Exploit Collection
 		if ((boolean) exploitVars.get("exploitFinderEnabled")) {
 			logger.info("Identifying exploits for {} exploits...", crawledVulnerabilityList.size());
-			ExploitIdentifier exploitIdentifier = new ExploitIdentifier(crawledVulnerabilityList, databaseHelper, (String) dataVars.get("dataDir"),
+			ExploitIdentifier exploitIdentifier = new ExploitIdentifier(databaseHelper, (String) dataVars.get("dataDir"),
 					(String) exploitVars.get("exploitDBURL"));
 			exploitIdentifier.identifyAndStoreExploits();
+			logger.info("Finished identifying Exploits");
 		}
 
 		//Patch Collection
