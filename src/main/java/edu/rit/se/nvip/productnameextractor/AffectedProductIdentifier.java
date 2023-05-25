@@ -194,6 +194,7 @@ public class AffectedProductIdentifier extends Thread implements Runnable {
 		logger.info("Extracted product(s) for {} out of {} CVEs so far! {} CVEs skipped, bc they are flagged as 'not-changed' by reconciliation process", counterOfProcessedCVEs, totalCVEtoProcess,
 				counterOfSkippedCVEs);
 
+		// TODO: This function should be called outside
 		insertAffectedProductsToDB(vulnList);
 
 		return numOfProductsMappedToCpe;
@@ -226,10 +227,6 @@ public class AffectedProductIdentifier extends Thread implements Runnable {
 
 		// now insert affected releases (referenced products are already in db)
 		databaseHelper.insertAffectedReleasesV2(listAllAffectedReleases);
-
-		//long elapsedTime = (System.currentTimeMillis() - start) / 1000;
-		//logger.info("Done! Identified affected products for {} CVEs! Elapsed time : {} seconds.", vulnList.size(), elapsedTime);
-		//logger.info("# of new CPE products identified: {}. # of products extracted from CVE descriptions and mapped to CPE items: {}", productCount, numOfProductsMappedToCpe);
 
 		// prepare CVE summary table for Web UI
 		// TODO: This should be in NVIPMAIN

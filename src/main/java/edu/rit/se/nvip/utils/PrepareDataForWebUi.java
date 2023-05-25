@@ -54,8 +54,13 @@ public class PrepareDataForWebUi {
 			Timestamp end = Timestamp.valueOf(today.plusHours(5));
 			Timestamp pastWeek = Timestamp.valueOf(today.minusHours(168));
 
-			System.out.println(start);
-			System.out.println(end);
+			//TODO: This needs an overhaul.
+			// 1.) Grab data from vulnerability table
+			// 2.) For each recent vulnerability grab the following:
+			// 		- Products
+			// 		- CVSS/VDO
+			// 		- Exploits/Patches
+			// 3.) Add new vulns, then clear out old ones over a week old. Update any recent ones that have changes
 
 			DatabaseHelper databaseHelper = DatabaseHelper.getInstance();
 			int count = databaseHelper.prepareCVEsForUI(start, end, pastWeek);
