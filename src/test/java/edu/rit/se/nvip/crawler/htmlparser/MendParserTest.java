@@ -55,7 +55,6 @@ public class MendParserTest extends AbstractParserTest{
     }
 
     @Test
-    @Ignore
     public void testMend2() {
 
         String html = QuickCveCrawler.getContentFromDynamicPage("https://www.mend.io/vulnerability-database/CVE-2013-6646", null);

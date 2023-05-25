@@ -54,33 +54,37 @@ public class DbParallelProcessorTest {
     @Test
     @Ignore
     public void executeInParallelTest() {
+
         try (MockedStatic<DatabaseHelper> mockStaticDB = Mockito.mockStatic(DatabaseHelper.class)) {
             mockStaticDB.when(DatabaseHelper::getInstanceForMultiThreading).thenReturn(dbh);
             when(dbh.getExistingVulnerabilities()).thenReturn(new HashMap<>());
             when(dbh.getConnectionStatus()).thenReturn("connstatus");
-            when(dbh.updateVulnerability(any())).thenReturn(1);
-            doNothing().when(dbh).updateNvdStatus(any(), any());
-            doNothing().when(dbh).updateMitreStatus(any(), any());
-            doNothing().when(dbh).updateNvdTimeGap(any(), any());
-            doNothing().when(dbh).updateMitreTimeGap(any(), any());
-            doNothing().when(dbh).deleteVulnSource(any());
-            doNothing().when(dbh).insertVulnSource(any());
-            doNothing().when(dbh).updateVdoLabels(any(), any());
-            doNothing().when(dbh).deleteCvssScore(any());
-            doNothing().when(dbh).insertCvssScore(any());
-            doNothing().when(dbh).insertVulnerabilityUpdate(any(), any(), any(), any());
+            //These are unnecessary stubs, but I'm leaving them here in case we need them later
+//            when(dbh.updateVulnerability(any())).thenReturn(1);
+//            doNothing().when(dbh).updateNvdStatus(anyInt(), anyString());
+//            doNothing().when(dbh).updateMitreStatus(anyInt(), anyString());
+//            doNothing().when(dbh).updateNvdTimeGap(anyInt(), anyString());
+//            doNothing().when(dbh).updateMitreTimeGap(anyInt(), anyString());
+//            doReturn(0).when(dbh).deleteVulnSource(anyString());
+//            doReturn(true).when(dbh).insertVulnSource(anyList());
+//            doNothing().when(dbh).updateVdoLabels(anyString(), anyList());
+//            doReturn(0).when(dbh).deleteCvssScore(anyString());
+//            doNothing().when(dbh).insertCvssScore(anyList());
+//            doReturn(true).when(dbh).insertVulnerabilityUpdate(anyInt(), anyString(), anyString(), anyInt());
 
             doNothing().when(dbh).insertVulnerability(any());
-            doNothing().when(dbh).insertVulnSource(any());
-            doNothing().when(dbh).insertVdoCharacteristic(any());
+            doReturn(true).when(dbh).insertVulnSource(anyList());
+            doReturn(true).when(dbh).insertVdoCharacteristic(anyList());
             doNothing().when(dbh).insertCvssScore(any());
 
             when(dbh.getVulnerabilityIdList(any())).thenReturn(new ArrayList<>());
-            doNothing().when(dbh).insertVulnerabilityUpdate(any(), any(), any(), any());
+
+//            doReturn(true).when(dbh).insertVulnerabilityUpdate(anyInt(), anyString(), anyString(), anyInt());
             List<CompositeVulnerability> vulns = new ArrayList<>();
             for (int i = 0; i < 5000; i++) {
                 vulns.add(new CompositeVulnerability(i, "source", "cve", "platform", "pubdate", "moddate", "description", "domain"));
             }
+            verify(dbh, times(1)).insertVulnerability(any(CompositeVulnerability.class));
             DbParallelProcessor dbpp = new DbParallelProcessor();
             dbpp.executeInParallel(vulns, 10101);
             Collection<Invocation> invocations = Mockito.mockingDetails(dbh).getInvocations();
@@ -90,11 +94,13 @@ public class DbParallelProcessorTest {
                 if (inv.toString().equals("dbh.shutdown();")) {
                     hasShutdown = true;
                 }
-                if (inv.toString().contains("dbh.recordVulnerabilityList(")) {
+                if (inv.toString().equals("dbh.insertVulnerability(any());")) {
                     hasInsert = true;
                 }
             }
+
             assertTrue(hasShutdown && hasInsert);
         } catch (Exception e) {e.printStackTrace(); fail();}
+
     }
 }
