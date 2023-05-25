@@ -52,7 +52,6 @@ public class DbParallelProcessorTest {
      *  please complete this
      */
     @Test
-    @Ignore
     public void executeInParallelTest() {
 
         try (MockedStatic<DatabaseHelper> mockStaticDB = Mockito.mockStatic(DatabaseHelper.class)) {
@@ -84,7 +83,7 @@ public class DbParallelProcessorTest {
             for (int i = 0; i < 5000; i++) {
                 vulns.add(new CompositeVulnerability(i, "source", "cve", "platform", "pubdate", "moddate", "description", "domain"));
             }
-            verify(dbh, times(1)).insertVulnerability(any(CompositeVulnerability.class));
+//            verify(dbh, times(1)).insertVulnerability(any(CompositeVulnerability.class));
             DbParallelProcessor dbpp = new DbParallelProcessor();
             dbpp.executeInParallel(vulns, 10101);
             Collection<Invocation> invocations = Mockito.mockingDetails(dbh).getInvocations();
@@ -94,10 +93,11 @@ public class DbParallelProcessorTest {
                 if (inv.toString().equals("dbh.shutdown();")) {
                     hasShutdown = true;
                 }
-                if (inv.toString().equals("dbh.insertVulnerability(any());")) {
+                if (inv.toString().contains("dbh.insertVulnerability(")) {
                     hasInsert = true;
                 }
             }
+
 
             assertTrue(hasShutdown && hasInsert);
         } catch (Exception e) {e.printStackTrace(); fail();}
