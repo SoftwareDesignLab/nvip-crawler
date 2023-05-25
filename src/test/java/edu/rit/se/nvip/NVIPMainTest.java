@@ -105,7 +105,6 @@ public class NVIPMainTest {
 	 * Test CVE Process Function
 	 */
 	@Test
-	@Ignore
 	public void testCVEProcess() {;
 
 		String testDescription = "Test CVE Description, this should not be changed";
@@ -120,7 +119,7 @@ public class NVIPMainTest {
 				testDescription, "domain"));
 
 		NVIPMain main = new NVIPMain();
-		/*HashMap<String, List<Object>> maps = main.processCVEs(v);
+		HashMap<String, List<Object>> maps = main.processCVEs(v);
 
 		System.out.println(maps);
 
@@ -131,6 +130,7 @@ public class NVIPMainTest {
 		assertEquals(2, maps.get("nvd").size());
 		assertEquals(1, maps.get("mitre").size());
 		assertEquals(testDescription, vuln1.getDescription());
-		assertEquals(testDescription, vuln2.getDescription());*/
+		assertEquals(testDescription, vuln2.getDescription());
+
 	}
 }

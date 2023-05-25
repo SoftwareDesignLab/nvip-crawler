@@ -71,10 +71,10 @@ public class JGitParser {
 			String fileName = remoteLoc.substring(remoteLoc.lastIndexOf('/') + 1);
 			this.projectName = fileName.substring(0, fileName.lastIndexOf('.'));
 			this.localRepo = new FileRepository(localDownloadLoc + File.separator + projectName + "/.git");
+
 		} catch (IOException e) {
 			logger.error(e.getMessage());
 		}
-
 		assert this.localRepo != null;
 		this.git = new Git(this.localRepo);
 		this.remoteLoc = remoteLoc;
@@ -229,6 +229,10 @@ public class JGitParser {
 
 		return extractJGithubComits(fixCommits);
 
+	}
+
+	private Git getGit() {
+		return git;
 	}
 
 	/**
