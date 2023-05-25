@@ -174,5 +174,6 @@ public class NVIPMainTest {
 		assertEquals("Test Description for raw vuln 1\n\n\nTest Description for raw vuln 1", mergedData.get(CVEID1).getDescription());
 		assertEquals(2, mergedData.get(CVEID1).getSourceURL().size());
 		assertEquals("test source 1", mergedData.get(CVEID1).getSourceURL().get(0));
+
 	}
 }
