@@ -89,41 +89,16 @@ public class DatabaseSandbox extends DatabaseHelper {
         }
     }
 
-    public LinkedList<RawVulnerability> getRawDescriptions(String quantity) {
-        return getRawDescriptions(quantity, "rawdescription");
-    }
-
-    public LinkedList<RawVulnerability> getRawDescriptions(String quantity, String tableName) {
-        String query = "SELECT * FROM " + tableName;
+    public LinkedHashMap<RawVulnerability, Integer> getFilterDataset(String quantity, boolean excludeLabeled) {
+        String query = "SELECT * FROM filterdataset";
+        if (excludeLabeled) {
+            query += " WHERE is_garbage < 0";
+        }
         if (!quantity.equals("ALL")) {
             query += " LIMIT " + quantity;
         }
 
-        LinkedList<RawVulnerability> rawVulnList = new LinkedList<>();
-
-        try (Connection conn = getConnection(); PreparedStatement pStmt = conn.prepareStatement(query)) {
-            ResultSet res = pStmt.executeQuery();
-            while (res.next()) {
-                int id = res.getInt("raw_description_id");
-                String cveId = res.getString("cve_id");
-                String description = res.getString("raw_description");
-                Timestamp created = res.getTimestamp("created_date");
-                Timestamp published = res.getTimestamp("published_date");
-                Timestamp modified = res.getTimestamp("last_modified_date");
-                String url = res.getString("source_url");
-                RawVulnerability rawVuln = new RawVulnerability(id, cveId, description, created, published, modified, url);
-                rawVulnList.add(rawVuln);
-            }
-        } catch (SQLException e) {
-            System.out.println("SQL Exception: " + e.getMessage());
-        }
-
-        return rawVulnList;
-    }
-
-    public Map<RawVulnerability, Integer> getRawVulnerabilitiesWithGarbageStatus(String tableName) {
-        String query = "select * from " + tableName;
-        Map<RawVulnerability, Integer> rawVulns = new HashMap<>();
+        LinkedHashMap<RawVulnerability, Integer> rawVulns = new LinkedHashMap<>();
         try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(query)) {
             ResultSet res = pstmt.executeQuery();
             while (res.next()) {
@@ -144,9 +119,13 @@ public class DatabaseSandbox extends DatabaseHelper {
         return rawVulns;
     }
 
-    public void clearAndInsertRawVulns(Map<RawVulnerability, Integer> rawVulns, String tableName) {
-        String del = "delete from " + tableName;
-        String ins = "insert into " + tableName + " (raw_description_id, cve_id, raw_description, created_date, published_date, last_modified_date, source_url, is_garbage) values (?, ?, ?, ?, ?, ?, ?, ?)";
+    public LinkedHashMap<RawVulnerability, Integer> getFilterDataset() {
+        return getFilterDataset("ALL", false);
+    }
+
+    public void clearAndInsertFilterDataset(Map<RawVulnerability, Integer> rawVulns) {
+        String del = "DELETE FROM filterdataset";
+        String ins = "INSERT INTO filterdataset (raw_description_id, cve_id, raw_description, created_date, published_date, last_modified_date, source_url, is_garbage) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = getConnection(); PreparedStatement delStmt = conn.prepareStatement(del); PreparedStatement insStmt = conn.prepareStatement(ins)) {
             delStmt.executeUpdate();
             for (RawVulnerability vuln : rawVulns.keySet()) {
