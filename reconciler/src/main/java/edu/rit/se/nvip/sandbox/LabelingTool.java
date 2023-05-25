@@ -1,8 +1,6 @@
 package edu.rit.se.nvip.sandbox;
 
-import edu.rit.se.nvip.DatabaseHelper;
 import edu.rit.se.nvip.model.RawVulnerability;
-
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -17,47 +15,66 @@ public class LabelingTool {
         System.out.println("LABELING TOOL FOR GENERIC PARSER DATA INPUT (Input from `filterdataset` table in DB)");
 
         Scanner scan = new Scanner(System.in);
-        System.out.println("How many descriptions would you like to assign? (Type ALL for all desc. in `rawdescriptions` or enter num)");
-        String quantity = scan.next();
-        System.out.println();
-
-        //Setup database helper
-        DatabaseHelper dbh = DatabaseHelper.getInstance();
 
         //Create empty rejected
         Set<RawVulnerability> rejected = new HashSet<>();
 
         //Create empty accepted list
-        LinkedList<RawVulnerability> accepted = new LinkedList<>();
+        Set<RawVulnerability> accepted = new HashSet<>();
 
         System.out.println("How many descriptions would you like to assign? (Type ALL for all desc. in `filterdataset` or enter num)");
         String quant = scan.next();
-        System.out.println();
         DatabaseSandbox dbs = DatabaseSandbox.getInstance(DB_URL, DB_USER, DB_PASS);
         LinkedHashMap<RawVulnerability, Integer> rawVulnMap = dbs.getFilterDataset(quant, true);
         //Iterate through result set
         for (RawVulnerability current : rawVulnMap.keySet()) {
+            clearConsole();
             //Print current result's info
-            System.out.println("rawdescription ID: " + current.getId());
-            System.out.println("rawdescription Description: " + current.getDescription());
-            System.out.println("CVE ID: " + current.getCveId());
-            System.out.println("CVE Dates: Created - " + current.getCreateDate() +
-                    ", Published - " + current.getPublishDate() +
-                    ", Modified - " + current.getLastModifiedDate());
-            System.out.println("Source URL: " + current.getSourceUrl());
-            System.out.println();
-            System.out.println("Is CVE Good Quality? (Enter Y or N): ");
-            String quality = scan.next();
-            System.out.println();
-
-            if (quality.equals("Y")) {
-                accepted.add(current);
-            } else {
-                rejected.add(current);
+            System.out.println(vulnString(current));
+            System.out.println("Is CVE Good Quality? Enter 'y' for yes, 'n' for no, 's' to skip, or 'q' to quit: ");
+            String input = "";
+            while (!input.equals("y") && !input.equals("n") && !input.equals("s") && !input.equals("q")) {
+                input = scan.next();
+            }
+            switch (input) {
+                case "y":
+                    accepted.add(current);
+                    break;
+                case "n":
+                    rejected.add(current);
+                    break;
+                case "s":
+                    break;
+                case "q":
+                    String saveInput = "";
+                    while (!saveInput.equals("y") && !saveInput.equals("n")) {
+                        clearConsole();
+                        System.out.println("Save progress? Enter y/n: ");
+                        saveInput = scan.next();
+                    }
+                    if (saveInput.equals("y")) {
+                        dbs.setNotGarbage(accepted);
+                        dbs.setGarbage(rejected);
+                        System.out.printf("Accepted %d and Rejected %d%n", accepted.size(), rejected.size());
+                        System.exit(0);
+                    }
+                    break;
             }
         }
         dbs.setNotGarbage(accepted);
-        dbh.markGarbage(rejected);
+        dbs.setGarbage(rejected);
+    }
+
+    private static String vulnString(RawVulnerability vuln) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(String.format("%d. %s from %s on %s\n", vuln.getId(), vuln.getCveId(), vuln.getSourceUrl(), vuln.getPublishDate()));
+        sb.append(String.format("Description:\n%s", vuln.getDescription()));
+        return sb.toString();
+    }
+
+    private static void clearConsole() {
+        System.out.print("\033[H\033[2J"); //clears and resets the cursor to top left
+        System.out.flush();
     }
 
     public static void main(String[] args) {

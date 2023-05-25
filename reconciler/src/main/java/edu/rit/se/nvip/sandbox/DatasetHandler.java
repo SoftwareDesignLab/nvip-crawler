@@ -33,7 +33,7 @@ public class DatasetHandler {
         if (jVulns == null) {
             return;
         }
-        Map<RawVulnerability, Integer> vulns = new HashMap<>();
+        LinkedHashMap<RawVulnerability, Integer> vulns = new LinkedHashMap<>();
         for (int i = 0; i < jVulns.size(); i++) {
             JsonObject jo = jVulns.getJsonObject(i);
             vulns.put(new RawVulnerability(
@@ -50,7 +50,7 @@ public class DatasetHandler {
     }
 
     public void dbToJson() {
-        Map<RawVulnerability, Integer> vulnMap = db.getFilterDataset();
+        LinkedHashMap<RawVulnerability, Integer> vulnMap = db.getFilterDataset();
         JsonArrayBuilder builder = Json.createArrayBuilder();
         for (RawVulnerability vuln : vulnMap.keySet()) {
             JsonObjectBuilder ob = Json.createObjectBuilder();
