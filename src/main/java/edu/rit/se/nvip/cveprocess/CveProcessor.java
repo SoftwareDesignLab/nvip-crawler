@@ -293,7 +293,7 @@ public class CveProcessor {
 						try {
 							logger.info("Calculating NVD Time Gap for {}", cve.getCveId());
 							LocalDateTime lastModifiedDateNVD = LocalDateTime.parse(nvdCVEs.get(cve.getCveId()).getLastModifiedDate(),
-									DateTimeFormatter.ofPattern("yyyy-MM-dd'T'hh:mm:ss.SSS"));
+									DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS"));
 							LocalDateTime existingCreatedDate = existingCveAttributes.getCreatedDateAsDate();
 							int timeGapNvd = (int) Duration.between(existingCreatedDate, lastModifiedDateNVD).toHours();
 
