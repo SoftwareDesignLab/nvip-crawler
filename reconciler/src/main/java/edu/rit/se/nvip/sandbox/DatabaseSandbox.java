@@ -93,7 +93,11 @@ public class DatabaseSandbox extends DatabaseHelper {
     }
 
     public LinkedList<RawVulnerability> getRawDescriptions(String quantity) {
-        String query = "SELECT * FROM rawdescription";
+        return getRawDescription(quantity, "rawdescription");
+    }
+
+    public LinkedList<RawVulnerability> getRawDescription(String quantity, String tableName) {
+        String query = "SELECT * FROM " + tableName;
         if (!quantity.equals("ALL")) {
             query += " LIMIT " + quantity;
         }
