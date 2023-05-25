@@ -1,5 +1,6 @@
 package edu.rit.se.nvip.crawler;
 
+import edu.rit.se.nvip.crawler.htmlparser.ParseList;
 import edu.rit.se.nvip.model.CompositeVulnerability;
 import edu.rit.se.nvip.utils.MyProperties;
 import edu.rit.se.nvip.utils.PropertyLoader;
