@@ -25,7 +25,7 @@ public class CveProcessorTest {
 
 
     @BeforeEach public void addFoundVulnerability(){
-        testNvdVulns.put(CVE_ID, new NvdVulnerability(CVE_ID, "", "Analyzed"));
+        testNvdVulns.put(CVE_ID, new NvdVulnerability(CVE_ID, "", "", "Analyzed"));
         cveProcessor = new CveProcessor(new HashMap<>(), new HashMap<>(), testNvdVulns);
         foundVulnerabilities.put(CVE_ID, new CompositeVulnerability(0, CVE_ID));
         foundVulnerabilities.get(CVE_ID).setCreateDate("2023-04-26 00:00:00");
@@ -140,7 +140,7 @@ public class CveProcessorTest {
         Map<String, Vulnerability> existingCves = new HashMap<>();
         existingCves.put(CVE_ID, new Vulnerability(0, CVE_ID, "", 0, 1, null));
 
-        testNvdVulns.replace(CVE_ID, new NvdVulnerability(CVE_ID, "", "notinnvd"));
+        testNvdVulns.replace(CVE_ID, new NvdVulnerability(CVE_ID, "", "", "notinnvd"));
 
         HashMap<String, List<Object>> processedCves = cveProcessor.checkAgainstNvdMitre(foundVulnerabilities, existingCves);
 
@@ -204,7 +204,8 @@ public class CveProcessorTest {
                 "2023-03-26 00:00:00"));
 
         HashMap<String, NvdVulnerability> testNvdVulns = new HashMap<>();
-        testNvdVulns.put(CVE_ID, new NvdVulnerability(CVE_ID, "", "Analyzed"));
+        testNvdVulns.put(CVE_ID, new NvdVulnerability(CVE_ID, "", "","Analyzed"));
+
 
         cveProcessor = new CveProcessor(new HashMap<>(), new HashMap<>(), testNvdVulns);
 
@@ -318,7 +319,7 @@ public class CveProcessorTest {
     @Test
     public void testNotAnalyzedInNVD() {
         testNvdVulns.clear();
-        testNvdVulns.put(CVE_ID, new NvdVulnerability(CVE_ID, "", "Awaiting Analysis"));
+        testNvdVulns.put(CVE_ID, new NvdVulnerability(CVE_ID, "", "","Awaiting Analysis"));
         Map<String, Vulnerability> existingCves = new HashMap<>();
         existingCves.put(CVE_ID, new Vulnerability(0, CVE_ID, "", 0, 1, "2023-04-25 00:00:00"));
 
