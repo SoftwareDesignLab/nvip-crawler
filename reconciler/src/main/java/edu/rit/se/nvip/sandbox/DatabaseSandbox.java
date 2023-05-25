@@ -5,10 +5,7 @@ import edu.rit.se.nvip.DatabaseHelper;
 import edu.rit.se.nvip.model.RawVulnerability;
 
 import java.sql.*;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class DatabaseSandbox extends DatabaseHelper {
 
@@ -93,10 +90,10 @@ public class DatabaseSandbox extends DatabaseHelper {
     }
 
     public LinkedList<RawVulnerability> getRawDescriptions(String quantity) {
-        return getRawDescription(quantity, "rawdescription");
+        return getRawDescriptions(quantity, "rawdescription");
     }
 
-    public LinkedList<RawVulnerability> getRawDescription(String quantity, String tableName) {
+    public LinkedList<RawVulnerability> getRawDescriptions(String quantity, String tableName) {
         String query = "SELECT * FROM " + tableName;
         if (!quantity.equals("ALL")) {
             query += " LIMIT " + quantity;
@@ -122,5 +119,50 @@ public class DatabaseSandbox extends DatabaseHelper {
         }
 
         return rawVulnList;
+    }
+
+    public Map<RawVulnerability, Integer> getRawVulnerabilitiesWithGarbageStatus(String tableName) {
+        String query = "select * from " + tableName;
+        Map<RawVulnerability, Integer> rawVulns = new HashMap<>();
+        try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(query)) {
+            ResultSet res = pstmt.executeQuery();
+            while (res.next()) {
+                int id = res.getInt("raw_description_id");
+                String cveId = res.getString("cve_id");
+                String description = res.getString("raw_description");
+                Timestamp created = res.getTimestamp("created_date");
+                Timestamp published = res.getTimestamp("published_date");
+                Timestamp modified = res.getTimestamp("last_modified_date");
+                String url = res.getString("source_url");
+                RawVulnerability rawVuln = new RawVulnerability(id, cveId, description, created, published, modified, url);
+                rawVulns.put(rawVuln, res.getInt("is_garbage"));
+            }
+
+        } catch (SQLException ex) {
+            System.out.println(ex.toString());
+        }
+        return rawVulns;
+    }
+
+    public void clearAndInsertRawVulns(Map<RawVulnerability, Integer> rawVulns, String tableName) {
+        String del = "delete from " + tableName;
+        String ins = "insert into " + tableName + " (raw_description_id, cve_id, raw_description, created_date, published_date, last_modified_date, source_url, is_garbage) values (?, ?, ?, ?, ?, ?, ?, ?)";
+        try (Connection conn = getConnection(); PreparedStatement delStmt = conn.prepareStatement(del); PreparedStatement insStmt = conn.prepareStatement(ins)) {
+            delStmt.executeUpdate();
+            for (RawVulnerability vuln : rawVulns.keySet()) {
+                insStmt.setInt(1, vuln.getId());
+                insStmt.setString(2, vuln.getCveId());
+                insStmt.setString(3, vuln.getDescription());
+                insStmt.setTimestamp(4, vuln.getCreateDate());
+                insStmt.setTimestamp(5, vuln.getPublishDate());
+                insStmt.setTimestamp(6, vuln.getLastModifiedDate());
+                insStmt.setString(7, vuln.getSourceUrl());
+                insStmt.setInt(8, rawVulns.get(vuln));
+                insStmt.addBatch();
+            }
+            insStmt.executeBatch();
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
     }
 }
