@@ -458,20 +458,6 @@ public class NVIPMain {
 	}
 
 	/**
-	 * Print found properties to verify they're correct
-	 * @param prop
-	 */
-	public void printProperties(MyProperties prop) {
-		StringBuilder sb = new StringBuilder();
-
-		for (Object key : prop.keySet()) {
-			sb.append(String.format("%-40s", key)).append("\t->\t").append(prop.getProperty(key.toString())).append("\n");
-		}
-
-		logger.info("\n*** Parameters from Config File *** \n{}", sb.toString());
-	}
-
-	/**
 	 * check required data dirs before run
 	 */
 	private void checkDataDirs() {
