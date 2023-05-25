@@ -30,6 +30,7 @@ import org.eclipse.jgit.api.Git;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
@@ -48,8 +49,11 @@ public class JGitParserTest {
     private CloneCommand cc;
 
     @org.junit.Before
-    public void setUp() {
-        ;
+    public void setUp() throws Exception {
+        when(cc.setURI(any())).thenReturn(cc);
+        when(cc.setDirectory(any())).thenReturn(cc);
+        when(cc.setProgressMonitor(any())).thenReturn(cc); // Add this line to handle setProgressMonitor()
+        when(cc.call()).thenReturn(null);
     }
 
 
@@ -105,6 +109,8 @@ public class JGitParserTest {
                     "\n" +
                     "Update dependency y18n to 3.2.2 [SECURITY]", commits.get(date).get(1));
         } catch (Exception e) {
+            //print exception
+            e.printStackTrace();
             fail();
         }
 

@@ -115,7 +115,7 @@ public class VendorAssessment {
 			logger.info("Adding CVEs for {} to {}", vendor, outputDataPath);
 
 			logger.info("Initializing exploit scraper...");
-			ExploitScraper exploitScraper = ExploitScraper.getInstance();
+			ExploitScraper exploitScraper = new ExploitScraper("", "");
 			logger.info("Done!");
 
 			logger.info("Filtering CVEs...");

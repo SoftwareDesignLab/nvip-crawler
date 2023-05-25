@@ -9,3 +9,6 @@ nvip.iml
 output/
 logs/
 /.github/
+Servers/
+nvip_data/
+
