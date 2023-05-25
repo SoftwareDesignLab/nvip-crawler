@@ -5,4 +5,4 @@ published_date DATETIME,
 last_modified_date DATETIME,
 created_Date DATETIME,
 source_url MEDIUMTEXT,
-is_garbage INT)
+is_garbage INT);
