@@ -11,7 +11,6 @@ import java.util.*;
 
 public class DatasetHandler {
     String jsonPath = "./src/main/java/edu/rit/se/nvip/sandbox/filter_dataset.json";
-    String tableName = "filterdataset";
     DatabaseSandbox db;
     public static void main(String[] args) {
         DatasetHandler dh = new DatasetHandler();
@@ -47,11 +46,11 @@ public class DatasetHandler {
                     jo.getString("source_url")
             ), jo.getInt("is_garbage"));
         }
-        db.clearAndInsertRawVulns(vulns, tableName);
+        db.clearAndInsertFilterDataset(vulns);
     }
 
     public void dbToJson() {
-        Map<RawVulnerability, Integer> vulnMap = db.getRawVulnerabilitiesWithGarbageStatus(tableName);
+        Map<RawVulnerability, Integer> vulnMap = db.getFilterDataset();
         JsonArrayBuilder builder = Json.createArrayBuilder();
         for (RawVulnerability vuln : vulnMap.keySet()) {
             JsonObjectBuilder ob = Json.createObjectBuilder();
