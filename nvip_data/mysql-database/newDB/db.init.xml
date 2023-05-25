@@ -364,6 +364,9 @@
 
     <changeSet author="vdocharacteristic" id="vdocharacteristic">
         <createTable tableName="vdocharacteristic">
+            <column name="vdo_characteristic_id" type="INT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
             <column name="cve_id" type="VARCHAR(20)">
                 <constraints nullable="false"/>
             </column>
