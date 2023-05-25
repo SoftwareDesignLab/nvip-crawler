@@ -12,10 +12,19 @@ import org.jsoup.select.Elements;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.time.LocalDate;
 
 public class ParseCVEDescription extends AbstractCveParser implements ParserStrategy  {
 
     private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
+
+    /**
+     * Generic parser list strategy
+     * @param sourceDomainName - domain name of source
+     */
+    public ParseCVEDescription(String sourceDomainName) {
+        this.sourceDomainName = sourceDomainName;
+    }
 
     @Override
     public List<CompositeVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
@@ -58,7 +67,8 @@ public class ParseCVEDescription extends AbstractCveParser implements ParserStra
             String version = getPlatformVersion(sCVEContent);
 
             // save vulnerability
-            CompositeVulnerability vuln = new CompositeVulnerability(0, sSourceURL, cveId, version, null, UtilHelper.longDateFormat.format(new Date()), sCVEContent, null);
+            String dateTimeNow = LocalDate.now().toString();
+            CompositeVulnerability vuln = new CompositeVulnerability(0, sSourceURL, cveId, version, dateTimeNow, dateTimeNow, sCVEContent, null);
             vulnerabilities.add(vuln);
             return vulnerabilities;
         }
@@ -181,17 +191,31 @@ public class ParseCVEDescription extends AbstractCveParser implements ParserStra
             }
 
             // add vulnerability
-            String dateTimeNow = UtilHelper.longDateFormat.format(new Date());
+            String dateTimeNow = LocalDate.now().toString();
             if (aBlockOfCveIdsInTheSentence)
                 for (Object o : cveIDsInSentence) {
                     if (sentenceContainsValuableInfoForCVE(sbDescription.toString(), cveIDsInSentence.length)) {
-                        CompositeVulnerability vuln = new CompositeVulnerability(0, sSourceURL, (String) o, version, null, dateTimeNow, sbDescription.toString(), null);
+                        CompositeVulnerability vuln;
+                        if(!vulnMap.containsKey((String)o)){
+                            vuln = new CompositeVulnerability(0, sSourceURL, (String) o, version, dateTimeNow, dateTimeNow, sbDescription.toString(), null);
+                        }
+                        else{
+                            vuln = vulnMap.get((String)o);
+                            vuln.setDescription(vuln.getDescription() + sbDescription.toString());
+                        }
                         vulnMap.put(vuln.getCveId(), vuln);
                     }
                 }
             else {
                 if (sentenceContainsValuableInfoForCVE(sbDescription.toString(), 1)) {
-                    CompositeVulnerability vuln = new CompositeVulnerability(0, sSourceURL, cveIDOfCurrentSentence, version, null, dateTimeNow, sbDescription.toString(), null);
+                    CompositeVulnerability vuln;
+                    if(!vulnMap.containsKey(cveIDOfCurrentSentence)){
+                        vuln = new CompositeVulnerability(0, sSourceURL, cveIDOfCurrentSentence, version, dateTimeNow, dateTimeNow, sbDescription.toString(), null);
+                    }
+                    else{
+                        vuln = vulnMap.get(cveIDOfCurrentSentence);
+                        vuln.setDescription(vuln.getDescription() + sbDescription.toString());
+                    }
                     vulnMap.put(vuln.getCveId(), vuln);
                 } else {
                     logger.debug("Ignoring this CVE! ID: " + cveIDOfCurrentSentence + ", Description: " + sbDescription);

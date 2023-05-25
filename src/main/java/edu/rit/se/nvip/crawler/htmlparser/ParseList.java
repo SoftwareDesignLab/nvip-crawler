@@ -12,58 +12,167 @@ import org.jsoup.select.Elements;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.time.LocalDate;
 
 public class ParseList extends AbstractCveParser implements ParserStrategy {
 
     private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
 
-    // Needs to be tested on a website with a list and CVE IDs
+    /**
+     * Generic parser list strategy
+     * @param sourceDomainName - domain name of source
+     */
+    public ParseList(String sourceDomainName) {
+        this.sourceDomainName = sourceDomainName;
+    }
+
     @Override
     public List<CompositeVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
         List<CompositeVulnerability> vulnList = new ArrayList<>();
 
         // Grab all of the li elements from the page
         Document doc = Jsoup.parse(sCVEContentHTML);
+
+        //Check <li>
         Elements lists = doc.select("li:contains(CVE)");
 
         for (Element list : lists) {
-            String list_text = list.text();
-
-            String cve = getCVEID(list_text);
-
-            String date = getCVEDate(list_text);
-
-            // Check if there is something that has details/description
-            Element desc_el = list.select(":contains(detail), :contains(description)").first();
+            String cve;
             String desc = null;
 
-            if(desc_el != null){
-                desc = desc_el.text();
+            String listText = list.text();
+
+            if(list.childrenSize() == 2){
+                cve = getCVEID(listText);
+                desc = list.child(1).text();
             }
             else{
-                // Check the first <p> if its CVE related
-                desc_el = list.select("p:matchesOwn(" + regexAllCVERelatedContent + ")").first();
+                Element cveElement = list.select(":containsOwn(CVE)").first();
+                if (cveElement == null) continue;
+                cve = getCVEID(cveElement.text());
 
-                if(desc_el != null){
-                    desc = desc_el.text();
-                }
-                else{
-                    // If there is no <p> that has CVE stuff, check the inner text of the <li>
-                    String test = list.ownText();
+                // First check the next sibling element if its CVE related If so, its prolly the desc
+                Element descElement = cveElement.nextElementSibling();
+                if(descElement != null){
                     Pattern cvePattern = Pattern.compile(regexAllCVERelatedContent);
-                    Matcher cveMatcher = cvePattern.matcher(test);
-                    if (cveMatcher.find())
-                        desc = cveMatcher.group();
+                    Matcher cveMatcher = cvePattern.matcher(descElement.text());
+
+                    if (!cveMatcher.find()){
+                        // Next element after the CVE ID is not the desc, see if 
+                        // theres someting that defines detail/descrption/summery
+                        descElement = list.select(":containsOwn(detail), :containsOwn(description)").first();
+
+                        if(descElement == null){
+                            // If theres no detail/description/summary, grab first <p> that has CVE related content
+                            descElement = list.select("p:matchesOwn(" + regexAllCVERelatedContent + ")").first();
+                        }
+                    }
+                    // All else fails, grab the inner text of the <li>
+                    if (descElement == null)
+                        desc = list.ownText();
+                    else
+                        desc = descElement.text();
+                }
+            }
+            GenericDate genericDate = extractDate(listText);
+            String publishDate = genericDate.getRawDate();
+            if(publishDate == null || publishDate.equals("")){
+                logger.warn("No publish date for " + cve + ", using current date");
+                publishDate = LocalDate.now().toString();
+            }
+            GenericDate genericLastMod = extractLastModifiedDate(listText);
+            String lastModifiedDate = genericLastMod.getRawDate();
+            if(lastModifiedDate == null || lastModifiedDate.equals("")){
+                lastModifiedDate = publishDate;
+            }
+
+
+            CompositeVulnerability vuln = new CompositeVulnerability(0, sSourceURL, cve, null, publishDate, lastModifiedDate, desc, sourceDomainName);
+            vulnList.add(vuln);
+        }
+
+        // Grab all <dl> elements
+        // From what I can see it follows the format of
+        // <dl>
+        //      <dt>
+        //      <dd>
+        //      <dd>
+        //      ...
+        //      <dt>
+        //      <dd>
+        //      <dd>
+        //      ...
+        // </dl>
+        Elements dLists = doc.select("dl:contains(CVE)");
+
+        for(Element dList : dLists){
+            Elements children = dList.children();
+            CompositeVulnerability vuln;
+
+            String cve = null;
+            String date = null;
+            String lastModifiedDate = null;
+
+            StringBuilder sb = new StringBuilder();
+
+            for(Element child : children){
+                // Once you hit a <dt> apart from the first one, create new vuln with data from prev <dd>
+                if(child.tagName().equals("dt") && cve != null){
+                    String desc = sb.toString();
+                    if(date.equals("")){
+                        logger.warn("No publish date for " + cve + ", using current date");
+                        date = LocalDate.now().toString();
+                    }
+
+                    vuln = new CompositeVulnerability(0, sSourceURL, cve, null, date, lastModifiedDate, desc, sourceDomainName);
+                    vulnList.add(vuln);
+
+                    // Reset vars for next listing
+                    cve = null;
+                    date = null;
+                    lastModifiedDate = null;
+                    sb.delete(0, sb.length());
+                }
+
+
+                String dListText = child.text();
+
+                // Check for CVE if not already grabbed
+                if(cve == null || cve.equals("")){
+                    cve = getCVEID(dListText);
+                }
+
+                //Check for date if not already grabbed
+                if(date == null || date.equals("")){
+                    GenericDate genericDate = extractDate(dListText);
+                    date = genericDate.getRawDate();
+                    if (date == null || date.equals("")){
+                        date = LocalDate.now().toString();
+                    }
+                    GenericDate genericLastMod = extractLastModifiedDate(dListText);
+                    lastModifiedDate = genericLastMod.getRawDate();
+                    if(lastModifiedDate == null || lastModifiedDate.equals("")){
+                        lastModifiedDate = date;
+                    }
+                }
+
+                // Grab description to append (desc might be in multiple <dd>)
+                Element descElement = child.select(":matchesOwn(" + regexAllCVERelatedContent + ")").first();
+
+                if(descElement != null){
+                    // Make sure it isn't the CVE ID
+                    Pattern cvePattern = Pattern.compile(regexCVEID);
+                    Matcher cveMatcher = cvePattern.matcher(descElement.text());
+                    if (!cveMatcher.find()) {
+                        sb.append(descElement.text());
+                        sb.append(" ");
+                    }
                 }
             }
 
-            CompositeVulnerability vuln = new CompositeVulnerability(0, sSourceURL, cve, null, date, null, desc, sourceDomainName);
-            logger.info(vuln);
         }
-
         return vulnList;
     }
 }

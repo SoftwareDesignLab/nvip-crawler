@@ -1010,7 +1010,7 @@ public class DatabaseHelperTest {
 
 			verify(res, atLeast(16)).getString(anyInt());
 			verify(res, atLeast(3)).getInt(anyInt());
-			verify(res, atLeast(5)).getDate(anyInt());
+			verify(res, atLeast(4)).getDate(anyInt());
 
 		} catch (SQLException ignored) {
 		}

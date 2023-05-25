@@ -1,1 +1,3 @@
-https://www.arista.com/en/support/advisories-notices/
+https://psirt.canon/advisory-information/
+https://git.sheetjs.com/sheetjs/sheetjs/src/branch/master/CHANGELOG.md
+https://github.com/jellyfin/jellyfin/commit/82ad2633fdfb1c37a158057c7935f83e1129eda7
