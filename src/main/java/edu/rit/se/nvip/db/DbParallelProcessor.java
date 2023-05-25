@@ -86,6 +86,7 @@ public class DbParallelProcessor {
 			i++;
 		}
 
+
 		// shut down pool
 		try {
 			pool.shutdown();
