@@ -2,23 +2,26 @@ package edu.rit.se.nvip.sandbox;
 
 import edu.rit.se.nvip.model.RawVulnerability;
 
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Scanner;
 
 public class LabelingTool {
+    private static final String DB_URL = "jdbc:mysql://localhost:3306/nviptest?useSSL=false&allowPublicKeyRetrieval=true";
+    private static final String DB_USER = "root";
+    private static final String DB_PASS = "root";
     public void runLabelingTool() {
-        System.out.println("LABELING TOOL FOR GENERIC PARSER DATA INPUT (Input from `rawdescriptions` table in DB)");
+        System.out.println("LABELING TOOL FOR GENERIC PARSER DATA INPUT (Input from `filterdataset` table in DB)");
 
         Scanner scan = new Scanner(System.in);
 
-        System.out.println("How many descriptions would you like to assign? (Type ALL for all desc. in `rawdescriptions` or enter num)");
+        System.out.println("How many descriptions would you like to assign? (Type ALL for all desc. in `filterdataset` or enter num)");
         String quant = scan.next();
         System.out.println();
-        DatabaseSandbox dbs = DatabaseSandbox.getInstance();
-        LinkedList<RawVulnerability> rawVulnList = dbs.getRawDescriptions(quant);
+        DatabaseSandbox dbs = DatabaseSandbox.getInstance(DB_URL, DB_USER, DB_PASS);
+        LinkedHashMap<RawVulnerability, Integer> rawVulnMap = dbs.getFilterDataset(quant, true);
         //Iterate through result set
-        while (rawVulnList.size() != 0) {
-            RawVulnerability current = rawVulnList.pop();
+        for (RawVulnerability current : rawVulnMap.keySet()) {
             //Print current result's info
             System.out.println("rawdescription ID: " + current.getId());
             System.out.println("rawdescription Description: " + current.getDescription());
