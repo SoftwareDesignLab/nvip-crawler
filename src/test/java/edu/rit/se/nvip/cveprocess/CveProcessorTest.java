@@ -25,7 +25,7 @@ public class CveProcessorTest {
 
 
     @BeforeEach public void addFoundVulnerability(){
-        testNvdVulns.put(CVE_ID, new NvdVulnerability(CVE_ID, "", "", "Analyzed"));
+        testNvdVulns.put(CVE_ID, new NvdVulnerability(CVE_ID, "", "2023-04-27T00:00:00.000", "Analyzed"));
         cveProcessor = new CveProcessor(new HashMap<>(), new HashMap<>(), testNvdVulns);
         foundVulnerabilities.put(CVE_ID, new CompositeVulnerability(0, CVE_ID));
         foundVulnerabilities.get(CVE_ID).setCreateDate("2023-04-26 00:00:00");
@@ -239,7 +239,7 @@ public class CveProcessorTest {
     @Test
     public void testNewPositiveTimeGap() {
         Map<String, Vulnerability> existingCves = new HashMap<>();
-        existingCves.put(CVE_ID, new Vulnerability(0, CVE_ID, "", 0, 1, "2023-04-25 00:00:00"));
+        existingCves.put(CVE_ID, new Vulnerability(0, CVE_ID, "", 0, 1, "2023-04-26 00:00:00"));
 
         HashMap<String, String> nvdCve = new HashMap<>();
         nvdCve.put(CVE_ID, "");
@@ -325,11 +325,11 @@ public class CveProcessorTest {
 
         HashMap<String, List<Object>> processedCves = cveProcessor.checkAgainstNvdMitre(foundVulnerabilities, existingCves);
 
-        assertEquals(1, processedCves.get(CveProcessor.NVD_CVE_KEY).size());
+        assertEquals(0, processedCves.get(CveProcessor.NVD_CVE_KEY).size());
         assertEquals(0, processedCves.get(CveProcessor.MITRE_CVE_KEY).size());
         assertEquals(0, processedCves.get(CveProcessor.NVD_MITRE_CVE_KEY).size());
         assertEquals(1, processedCves.get(CveProcessor.ALL_CVE_KEY).size());
-        assertEquals(0, foundVulnerabilities.get(CVE_ID).getNvdStatus());
+        assertEquals(1, foundVulnerabilities.get(CVE_ID).getNvdStatus());
         assertEquals(1, foundVulnerabilities.get(CVE_ID).getMitreStatus());
     }
 
@@ -339,4 +339,5 @@ public class CveProcessorTest {
         assertFalse(cveProcessor.checkAgeOfCVEByYear("CVEID"));
         assertFalse(cveProcessor.checkAgeOfCVEByYear("CVE-2022-0001"));
     }
+
 }
