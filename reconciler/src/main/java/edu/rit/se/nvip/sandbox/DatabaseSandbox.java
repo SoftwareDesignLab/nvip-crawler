@@ -165,4 +165,17 @@ public class DatabaseSandbox extends DatabaseHelper {
             ex.printStackTrace();
         }
     }
+
+    public void setNotGarbage(LinkedList<RawVulnerability> rawVulns) {
+        String query = "UPDATE rawdescription SET is_garbage = ? WHERE raw_description_id = ?";
+        try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(query)){
+            for (RawVulnerability current: rawVulns) {
+                pstmt.setInt(1, 0);
+                pstmt.setInt(2, current.getId());
+                pstmt.addBatch();
+            }
+        } catch (SQLException e) {
+            System.out.println("Error setting not garbage: " + e.getMessage());
+        }
+    }
 }
