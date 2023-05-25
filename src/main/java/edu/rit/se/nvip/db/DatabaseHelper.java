@@ -139,6 +139,7 @@ public class DatabaseHelper {
 	private final String selectVdoLabelSql = "SELECT * FROM vdolabel;";
 	private final String selectVdoNounGroupSql = "SELECT * FROM vdonoungroup;";
 
+	private final String getExploitsByCVEId =  "SELECT exploit_id FROM exploit WHERE cve_id = ?";
 	private final String insertExploitSql = "INSERT INTO exploit (vuln_id, cve_id, publisher_id, publish_date, publisher_url, description, exploit_code, nvip_record_date) VALUES (?,?,?,?,?,?,?,?);";
 	private final String deleteExploitSql = "DELETE FROM exploit WHERE vuln_id=?;";
 
@@ -1347,7 +1348,7 @@ public class DatabaseHelper {
 	 * @return
 	 */
 	public List<Integer> getVulnerabilityIdList(String cveId) {
-		List<Integer> vulnIdList = new ArrayList<Integer>();
+		List<Integer> vulnIdList = new ArrayList<>();
 		ResultSet rs;
 
 		try (Connection connection = getConnection();
@@ -1450,49 +1451,28 @@ public class DatabaseHelper {
 	}
 
 	/**
-	 * Store exploits for CVE. Assumes that the CVE exists in the database
-	 * 
-	 * @param vulnerability
-	 * @param exploitList
+	 * Grab exploits by CVE ID
+	 * @param cveId
 	 * @return
 	 */
-	public boolean saveExploits(CompositeVulnerability vulnerability, List<Exploit> exploitList,
-			Map<String, Vulnerability> existingVulnMap) {
+	public ArrayList<Integer> getExploitIds(String cveId) {
 
-		Connection connection = null;
-		try {
-			connection = getConnection();
+		ArrayList<Integer> exploitIds = new ArrayList<>();
+		try (Connection connection = getConnection();
+			 PreparedStatement stmt = connection.prepareStatement(getExploitsByCVEId);) {
 
-			if (!existingVulnMap.containsKey(vulnerability.getCveId())) {
-				logger.warn("Vulnerability does not exist in the database, you can not add exploits for it! Vulnerability: {}",
-						vulnerability);
-				return false;
+			stmt.setString(1, cveId);
+			ResultSet rs = stmt.executeQuery();
+
+			while (rs.next()) {
+				exploitIds.add(rs.getInt("exploit_id"));
 			}
 
-			Vulnerability existingAttribs = existingVulnMap.get(vulnerability.getCveId());
-
-			// remove existing exploits for CVE
-			deleteExploits(connection, existingAttribs.getVulnID());
-
-			// insert new exploits
-			for (Exploit exploit : exploitList) {
-				exploit.setVulnId(existingAttribs.getVulnID()); // set vulnerability ID from DB
-				insertExploit(connection, exploit);
-			}
-
-		} catch (Exception e) {
-			logger.error("Error while recording {} exploits for CVE:{}, Error: {}", exploitList.size(),
-					vulnerability.getCveId(), e);
-			return false;
-		} finally {
-			try {
-				if (connection != null)
-					connection.close();
-			} catch (Exception e) {
-			}
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
 		}
 
-		return true;
+		return exploitIds;
 	}
 
 	/**
@@ -1501,11 +1481,9 @@ public class DatabaseHelper {
 	 * @param exploit
 	 * @return
 	 */
-	public boolean insertExploit(Connection connection, Exploit exploit) throws SQLException {
-		PreparedStatement pstmt = null;
-		try {
-			pstmt = connection.prepareStatement(insertExploitSql);
-
+	public boolean insertExploit(Exploit exploit) {
+		try (Connection conn = getConnection();
+			 PreparedStatement pstmt = conn.prepareStatement(insertExploitSql)) {
 			/**
 			 * "INSERT INTO Exploit (vuln_id, cve_id, publisher_id, publish_date,
 			 * publisher_url, description, exploit_code, nvip_record_date) VALUES
@@ -1523,12 +1501,8 @@ public class DatabaseHelper {
 
 			pstmt.executeUpdate();
 		} catch (SQLException e) {
-			logger.error("Error while saving exploit! " + e.getMessage() + "\n" + pstmt.toString() + "\tExploit: "
-					+ exploit.toString());
+			logger.error("ERROR: Failed to save exploit with Vuln Id: {}\n{}", exploit.getVulnId(), e.toString());
 			return false;
-		} finally {
-			if (pstmt != null)
-				pstmt.close();
 		}
 		return true;
 	}
