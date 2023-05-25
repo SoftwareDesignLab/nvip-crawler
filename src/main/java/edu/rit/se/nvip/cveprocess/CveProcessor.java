@@ -185,11 +185,11 @@ public class CveProcessor {
 				if (nvdCVEs.containsKey(vuln.getCveId())){
 					// Check status of CVE in NVD, if RECEIVED, then it is in NVD.
 					// If any other status, then it is not in NVD.
-					if (nvdCVEs.get(vuln.getCveId()).getStatus() == NvdVulnerability.nvdStatus.ANALYZED) {
-						vuln.setNvdStatus(1);
-					} else {
+					if (nvdCVEs.get(vuln.getCveId()).getStatus() == NvdVulnerability.nvdStatus.NOTINNVD) {
 						vuln.setNvdStatus(0);
 						newCVEDataNotInNvd.add(vuln);
+					} else {
+						vuln.setNvdStatus(1);
 
 						// Update count for status'
 						nvdReceived = nvdCVEs.get(vuln.getCveId()).getStatus() == NvdVulnerability.nvdStatus.RECEIVED ? nvdReceived + 1 : nvdReceived;
@@ -245,13 +245,13 @@ public class CveProcessor {
 		newCVEMap.put(NVD_CVE_KEY, Arrays.asList(newCVEDataNotInNvd.toArray())); // CVEs not in Nvd
 		newCVEMap.put(NVD_MITRE_CVE_KEY, Arrays.asList(SetUtils.intersection(newCVEDataNotInMitre, newCVEDataNotInNvd).toArray())); // CVEs not in Nvd and Mitre
 
-		logger.info("Out of {} total valid CVEs crawled: \n{} does not appear in NVD, \n{} does not appear in MITRE and \n{} are not in either!",
+		logger.info("Out of {} total valid CVEs crawled: \n{} does not appear in NVD or are rejected, \n{} does not appear in MITRE and \n{} are not in either!",
 				newCVEMap.get(ALL_CVE_KEY).size(),
 				newCVEMap.get(NVD_CVE_KEY).size(),
 				newCVEMap.get(MITRE_CVE_KEY).size(),
 				newCVEMap.get(NVD_MITRE_CVE_KEY).size());
 
-		logger.info("Amongst the CVEs no in NVD: \n{} are RECEIVED\n{} are UNDERGOING ANALYSIS\n{} are AWAITING ANALYSIS" +
+		logger.info("Amongst the CVEs in NVD: \n{} are RECEIVED\n{} are UNDERGOING ANALYSIS\n{} are AWAITING ANALYSIS" +
 				"\n{} are either a different status or not in NVD", nvdReceived, nvdUndergoingAnalysis, nvdAwaitingAnalysis, nvdOther);
 
 		return newCVEMap;

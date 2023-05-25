@@ -80,7 +80,8 @@ public class NvdCveController {
 		HashMap<String, NvdVulnerability> nvdCves = nvd.fetchNVDCVEs(
 				"https://services.nvd.nist.gov/rest/json/cves/2.0?pubstartDate=<StartDate>&pubEndDate=<EndDate>", 10);
 		for (String cve: nvdCves.keySet()) {
-			//System.out.println(nvdCves.get(cve));
+			if (nvdCves.get(cve).getStatus() == NvdVulnerability.nvdStatus.RECEIVED)
+				System.out.println(nvdCves.get(cve));
 		}
 	}
 

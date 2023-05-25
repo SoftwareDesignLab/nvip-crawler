@@ -569,6 +569,7 @@ public class NVIPMain {
 
 		/**
 		 * Scrape CVE summary pages (frequently updated CVE providers)
+		 * TODO: Might be best to get rid of this
 		 */
 		int countCVEsNotInMitreGithub = 0;
 		QuickCveCrawler crawler = new QuickCveCrawler();
