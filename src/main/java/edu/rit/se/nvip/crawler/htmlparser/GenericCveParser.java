@@ -22,7 +22,6 @@
  * SOFTWARE.
  */
 package edu.rit.se.nvip.crawler.htmlparser;
-import java.awt.*;
 import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -90,8 +89,6 @@ public class GenericCveParser extends AbstractCveParser  {
 	public List<CompositeVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
 		if (parserStrategy == null)
 			parserStrategy = chooseParserStrategy(sCVEContentHTML);
-		logger.info("stratrlkssd CHOSEN");
-
 		logger.info("Generic Parsing " + sSourceURL + " with " + parserStrategy.getClass().getSimpleName());
 		List<CompositeVulnerability> genericList = parserStrategy.parseWebPage(sSourceURL, sCVEContentHTML);
 		if (!(parserStrategy instanceof ParseCVEDescription) && genericList.size() == 0) {
@@ -102,7 +99,5 @@ public class GenericCveParser extends AbstractCveParser  {
 		if (driver != null) driver.quit();
 		return genericList;
 	}
-
-
 
 }
