@@ -5,11 +5,9 @@ FROM python:3.9-slim
 WORKDIR /app
 
 # Copy the Python script to the working directory
-COPY /src/nvd_extract_all.py /app
+COPY /src /app
 
-RUN pip install requests
-RUN pip install mysql-connector-python
-
+RUN pip install -r /app/requirements.txt
 
 # Set the command to run when the container starts
 CMD ["python", "nvd_extract_all.py"]

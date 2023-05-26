@@ -1,7 +1,7 @@
 import requests
 import json
 import mysql.connector
-
+import os
 
 url = 'https://services.nvd.nist.gov/rest/json/cves/2.0'
 params = {'resultsPerPage': 2000}
@@ -11,10 +11,10 @@ insertedCount = 0
 
 # Connect to the MySQL database
 mydb = mysql.connector.connect(
-    host="host.docker.internal",
-    user="root",
-    password="root",
-    database="nvip_test"
+    host=os.environ.get("DBHOST"),
+    user=os.environ.get("DBUSER"),
+    password=os.environ.get("DBPASSWORD"),
+    database=os.environ.get("DBNAME")
 )
 
 mycursor = mydb.cursor()
