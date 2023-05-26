@@ -23,8 +23,12 @@
  */
 package edu.rit.se.nvip.cveprocess;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -32,7 +36,10 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 import edu.rit.se.nvip.db.DatabaseHelper;
+import edu.rit.se.nvip.model.CVE;
+import edu.rit.se.nvip.model.NvdVulnerability;
 import edu.rit.se.nvip.model.Vulnerability;
+import it.unimi.dsi.fastutil.Hash;
 import org.apache.commons.collections4.SetUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
@@ -42,6 +49,8 @@ import edu.rit.se.nvip.cvereconcile.CveReconciler;
 import edu.rit.se.nvip.model.CompositeVulnerability;
 import edu.rit.se.nvip.utils.CsvUtils;
 import org.jdom2.CDATA;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 /**
  *
@@ -58,19 +67,41 @@ public class CveProcessor {
 
 	private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
 
+	/**
+	 * Old hashmap used for CVEs in NVD, remove this
+	 */
 	private Map<String, String> cvesInNvd = new HashMap<>();
+
+	/**
+	 * New hashmap for CVEs in NVD
+	 */
+	private HashMap<String, NvdVulnerability> nvdCVEs;
 	private Map<String, String> cvesInMitre = new HashMap<>();
 
 	CveReconciler cveUtils = new CveReconciler();
 
-	public CveProcessor(HashMap<String, String> nvdCves, HashMap<String, String> mitreCves){
+	/**
+	 * For tests
+	 * @param nvdCves
+	 * @param mitreCves
+	 */
+	public CveProcessor(HashMap<String, String> nvdCves, HashMap<String, String> mitreCves, HashMap<String, NvdVulnerability> pulledNvdCves){
 		this.cvesInNvd = nvdCves;
 		this.cvesInMitre = mitreCves;
+		this.nvdCVEs = pulledNvdCves;
 	}
 
-	public CveProcessor(String nvdCvePath, String mitreCvePath) {
-		try {
+	/**
+	 * Constructor for processor class
+	 * @param nvdCvePath --> File path to NVD CVE .csv file (not used anymore)
+	 * @param mitreCvePath --> File path to MITRE CVE .csv file
+	 * @param nvdCves --> Hashmap of CVEs in NVD (provided byb NVD Controller class)
+	 */
+	public CveProcessor(String nvdCvePath, String mitreCvePath, HashMap<String, NvdVulnerability> nvdCves) {
 
+		this.nvdCVEs = nvdCves;
+
+		try {
 			CsvUtils csvLogger = new CsvUtils();
 			/**
 			 * NVD
@@ -132,11 +163,17 @@ public class CveProcessor {
 		Set<Object> newCVEDataNotInMitre = new HashSet<>();
 		Set<Object> newCVEDataNotInNvd = new HashSet<>();
 
+		// For tracking total CVEs for each status
+		int nvdReceived = 0;
+		int nvdUndergoingAnalysis = 0;
+		int nvdAwaitingAnalysis = 0;
+		int nvdOther = 0;
+
 		for (CompositeVulnerability vuln : hashMapNvipCve.values()) {
 			try {
 				// If somehow a wrong CVE id is found, ignore it
 				if (!cveUtils.isCveIdCorrect(vuln.getCveId())) {
-					String note = "Wrong CVE ID! Check for typo? ";
+					String note = "Wrong CVE ID! Check for typo?";
 					vuln.setNvipNote(note);
 					logger.warn("WARNING: The CVE ID {} found at {} does not appear to be valid!", vuln.getCveId(), Arrays.deepToString(vuln.getSourceURL().toArray()));
 					continue;
@@ -144,43 +181,41 @@ public class CveProcessor {
 
 				allCveData.add(vuln);
 
-				if (vuln.isFoundNewDescriptionForReservedCve()) {
-					logger.info("CVE: {} has new description for Reserved Cve", vuln.getCveId());
-					vuln.setMitreStatus(1);
-					vuln.setNvdStatus(1);
-					continue;
-				}
-
-
-				if (cvesInNvd.containsKey(vuln.getCveId())){
-					logger.info("CVE: {} is in NVD: Setting status to 1", vuln.getCveId());
-					vuln.setNvdStatus(1);
-				} else if (existingCves.containsKey(vuln.getCveId()) && existingCves.get(vuln.getCveId()).getNvdStatus() == 0) {
-					long monthsBetween = ChronoUnit.MONTHS.between(LocalDateTime.now(), existingCves.get(vuln.getCveId()).getCreatedDateAsDate());
-					if (checkAgeOfCVEByYear(vuln.getCveId()) &&  monthsBetween <= 1 && monthsBetween >= 0) {
-						logger.info("CVE: {}, is in NVIP and NOT in NVD", vuln.getCveId());
-						vuln.setNvdSearchResult("NA");
+				// Compare w/ NVD
+				if (nvdCVEs.containsKey(vuln.getCveId())){
+					// Check status of CVE in NVD, if RECEIVED, then it is in NVD.
+					// If any other status, then it is not in NVD.
+					if (nvdCVEs.get(vuln.getCveId()).getStatus() == NvdVulnerability.nvdStatus.NOTINNVD) {
 						vuln.setNvdStatus(0);
 						newCVEDataNotInNvd.add(vuln);
 					} else {
-						logger.info("CVE: {} is from over a month ago, will assume it's in NVD: Setting status to 1", vuln.getCveId());
 						vuln.setNvdStatus(1);
+
+						// Update count for status'
+						nvdReceived = nvdCVEs.get(vuln.getCveId()).getStatus() == NvdVulnerability.nvdStatus.RECEIVED ? nvdReceived + 1 : nvdReceived;
+						nvdUndergoingAnalysis = nvdCVEs.get(vuln.getCveId()).getStatus() == NvdVulnerability.nvdStatus.UNDERGOINGANALYSIS ? nvdUndergoingAnalysis + 1 : nvdUndergoingAnalysis;
+						nvdAwaitingAnalysis = nvdCVEs.get(vuln.getCveId()).getStatus() == NvdVulnerability.nvdStatus.AWAITINGANALYSIS ? nvdAwaitingAnalysis + 1 : nvdAwaitingAnalysis;
+						nvdOther = nvdCVEs.get(vuln.getCveId()).getStatus() == NvdVulnerability.nvdStatus.NOTINNVD ? nvdOther + 1 : nvdOther;
 					}
-				} else if (!existingCves.containsKey(vuln.getCveId())) {
-					logger.info("CVE: {} is NOT in NVIP and NOT in NVD: Keeping status as 0", vuln.getCveId());
+				} else if (existingCves.containsKey(vuln.getCveId()) && existingCves.get(vuln.getCveId()).getNvdStatus() == 1) {
+					vuln.setNvdStatus(1);
+				} else {
+					logger.info("CVE: {}, is NOT in NVD", vuln.getCveId());
 					vuln.setNvdSearchResult("NA");
 					vuln.setNvdStatus(0);
 					newCVEDataNotInNvd.add(vuln);
-				} else {
-					logger.info("CVE: {} is already in NVIP and is in NVD: Keeping status as 1", vuln.getCveId());
-					vuln.setNvdStatus(1);
 				}
 
-				if (cvesInMitre.containsKey(vuln.getCveId())){
-					logger.info("CVE: {} is in Mitre: Setting status to 1", vuln.getCveId());
+				// Compare w/ MITRE
+				// TODO: will need to use a similar comparison via status like NVD
+				if (vuln.isFoundNewDescriptionForReservedCve()) {
+					vuln.setMitreStatus(0);
+				} else if (cvesInMitre.containsKey(vuln.getCveId())) {
 					vuln.setMitreStatus(1);
 				} else if (existingCves.containsKey(vuln.getCveId()) && existingCves.get(vuln.getCveId()).getMitreStatus() == 0) {
 					long monthsBetween = ChronoUnit.MONTHS.between(LocalDateTime.now(),existingCves.get(vuln.getCveId()).getCreatedDateAsDate());
+
+					// Check if the CVE is within the past month, if it's older, then assume it's in MITRE
 					if (checkAgeOfCVEByYear(vuln.getCveId()) && monthsBetween <= 1 && monthsBetween >= 0) {
 						logger.info("CVE: {}, is NOT in Mitre", vuln.getCveId());
 						vuln.setMitreSearchResult("NA");
@@ -205,16 +240,19 @@ public class CveProcessor {
 			}
 		}
 
-		newCVEMap.put("all", Arrays.asList(allCveData.toArray())); // all CVEs
-		newCVEMap.put("mitre", Arrays.asList(newCVEDataNotInMitre.toArray())); // CVEs not in Mitre
-		newCVEMap.put("nvd", Arrays.asList(newCVEDataNotInNvd.toArray())); // CVEs not in Nvd
-		newCVEMap.put("nvd-mitre", Arrays.asList(SetUtils.intersection(newCVEDataNotInMitre, newCVEDataNotInNvd).toArray())); // CVEs not in Nvd and Mitre
+		newCVEMap.put(ALL_CVE_KEY, Arrays.asList(allCveData.toArray())); // all CVEs
+		newCVEMap.put(MITRE_CVE_KEY, Arrays.asList(newCVEDataNotInMitre.toArray())); // CVEs not in Mitre
+		newCVEMap.put(NVD_CVE_KEY, Arrays.asList(newCVEDataNotInNvd.toArray())); // CVEs not in Nvd
+		newCVEMap.put(NVD_MITRE_CVE_KEY, Arrays.asList(SetUtils.intersection(newCVEDataNotInMitre, newCVEDataNotInNvd).toArray())); // CVEs not in Nvd and Mitre
 
-		logger.info("Out of {} total valid CVEs crawled: \n{} does not appear in NVD, \n{} does not appear in MITRE and \n{} are not in either!",
+		logger.info("Out of {} total valid CVEs crawled: \n{} does not appear in NVD or are rejected, \n{} does not appear in MITRE and \n{} are not in either!",
 				newCVEMap.get(ALL_CVE_KEY).size(),
 				newCVEMap.get(NVD_CVE_KEY).size(),
 				newCVEMap.get(MITRE_CVE_KEY).size(),
 				newCVEMap.get(NVD_MITRE_CVE_KEY).size());
+
+		logger.info("Amongst the CVEs in NVD: \n{} are RECEIVED\n{} are UNDERGOING ANALYSIS\n{} are AWAITING ANALYSIS" +
+				"\n{} are either a different status or not in NVD", nvdReceived, nvdUndergoingAnalysis, nvdAwaitingAnalysis, nvdOther);
 
 		return newCVEMap;
 	}
@@ -227,6 +265,8 @@ public class CveProcessor {
 	 * hence this is when NVD adds the vulnerability
 	 *
 	 * Note this only checks time gaps between NVIP and NVD, MITRE time gaps are not calculated (yet)
+	 *
+	 * TODO: Add time gaps calculation for MITRE
 	 * @param hashMapNvipCve
 	 * @return
 	 */
@@ -237,17 +277,25 @@ public class CveProcessor {
 		for (Object cveInNvd: hashMapNvipCve.get(ALL_CVE_KEY)) {
 			CompositeVulnerability cve = (CompositeVulnerability) cveInNvd;
 
+			// Check if CVE is in NVD, and make sure the CVE is for the current year. Anything from previous
+			// years are assumed to be in NVD
 			if (!hashMapNvipCve.get(NVD_CVE_KEY).contains(cve) && checkAgeOfCVEByYear(cve.getCveId())) {
 				//logger.info("Checking if CVE: {} is in NVIP", cve.getCveId());
 				if (existingCves.containsKey(cve.getCveId())) {
 					//logger.info("CVE: {} is in NVIP, is it found in NVD?", cve.getCveId());
 					Vulnerability existingCveAttributes = existingCves.get(cve.getCveId());
+
+					// Was the CVE previously found? If so, was it not in NVD before, and is it in NVD now?
+					// Compare original created date with the current date
+					// We won't use the NVD published date for now, since published date can refer to date the CVe is received
+					// which would show a smaller difference.
 					if (existingCveAttributes.getNvdStatus() == 0 && cve.getNvdStatus() == 1) {
 						try {
 							logger.info("Calculating NVD Time Gap for {}", cve.getCveId());
-							LocalDateTime createdDate = existingCveAttributes.getCreatedDateAsDate();
-							LocalDateTime currentCreateDate = cve.getCreatedDateAsDate();
-							int timeGapNvd = (int) Duration.between(createdDate, currentCreateDate).toHours();
+							LocalDateTime lastModifiedDateNVD = LocalDateTime.parse(nvdCVEs.get(cve.getCveId()).getLastModifiedDate(),
+									DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS"));
+							LocalDateTime existingCreatedDate = existingCveAttributes.getCreatedDateAsDate();
+							int timeGapNvd = (int) Duration.between(existingCreatedDate, lastModifiedDateNVD).toHours();
 
 							if (timeGapNvd < 0) {
 								cve.setTimeGapNvd(0);
@@ -298,7 +346,6 @@ public class CveProcessor {
 		boolean calculateGap = (cveYear == currentYear);
 
 		if (!calculateGap) {
-			logger.info("CVE: {} is too old, skipping this cve!", cveId);
 			return false;
 		}
 

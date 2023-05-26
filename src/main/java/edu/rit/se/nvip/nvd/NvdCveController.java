@@ -35,6 +35,8 @@ import java.util.List;
 import java.util.Map;
 
 import com.google.gson.JsonArray;
+import edu.rit.se.nvip.cveprocess.CveProcessor;
+import edu.rit.se.nvip.model.NvdVulnerability;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -43,6 +45,8 @@ import com.google.gson.JsonParser;
 
 import edu.rit.se.nvip.utils.CsvUtils;
 import edu.rit.se.nvip.utils.UrlUtils;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import javax.json.Json;
 
@@ -65,14 +69,21 @@ public class NvdCveController {
 	private String startDate;
 	private String endDate;
 
+	private DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'hh:mm:ss");
+
+	/**
+	 * for testing NVD CVE pull
+	 * @param args
+	 */
 	public static void main(String[] args) {
 		NvdCveController nvd = new NvdCveController();
-		JsonArray list = nvd.pullCVEs();
-		List<String[]> cves = new NvdCveParser().parseCVEs(list);
-		CsvUtils csv = new CsvUtils();
-		csv.writeListToCSV(cves, "test.csv", true);
+		HashMap<String, NvdVulnerability> nvdCves = nvd.fetchNVDCVEs(
+				"https://services.nvd.nist.gov/rest/json/cves/2.0?pubstartDate=<StartDate>&pubEndDate=<EndDate>", 10);
+		for (String cve: nvdCves.keySet()) {
+			if (nvdCves.get(cve).getStatus() == NvdVulnerability.nvdStatus.RECEIVED)
+				System.out.println(nvdCves.get(cve));
+		}
 	}
-
 
 	/**
 	 * Constructor for NvdCveController
@@ -80,16 +91,114 @@ public class NvdCveController {
 	 */
 	public NvdCveController() {
 		LocalDateTime today = LocalDateTime.now();
-		LocalDateTime lastMonth = LocalDateTime.now().minusDays(30);
-		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'hh:mm:ss");
+		LocalDateTime lastMonth = LocalDateTime.now().minusDays(119);
 
 		this.startDate = lastMonth.format(formatter);
 		this.endDate = today.format(formatter);
 	}
 
 	/**
+	 * For grabbing CVEs from NVD via NVD's API
+	 * @param nvdApiPath
+	 * @return
+	 */
+	public HashMap<String, NvdVulnerability> fetchNVDCVEs(String nvdApiPath, int requestLimit) {
+		HashMap<String, NvdVulnerability> NvdCves = new HashMap<>();
+		int resultsPerPage = 2000;
+		int startIndex = 0;
+		int requestNum = 0;
+
+		String currentRequestString = nvdApiPath.replaceAll("<StartDate>", this.startDate).replaceAll("<EndDate>", this.endDate);
+
+		while (requestNum < requestLimit) {
+			// 30 second wait for every 5 requests, according to NVD Doc: https://nvd.nist.gov/developers/start-here
+			if (requestNum % 5 == 0 && requestNum > 0) {
+				logger.info("Sleeping for 60 seconds before continuing");
+				try {
+					Thread.sleep(60000);
+				} catch (InterruptedException e) {
+					logger.error("ERROR: Failed to wait 30seconds for pulling NVD CVEs\n{}", e);
+				}
+			}
+
+			try {
+				// Pull from NVD, keep track of startIndex for paginating response
+				String url = currentRequestString + "&resultsPerPage=" + resultsPerPage + "&startIndex=" + startIndex;
+				URL apiUrl = new URL(url);
+				HttpURLConnection connection = (HttpURLConnection) apiUrl.openConnection();
+				connection.setRequestMethod("GET");
+
+				if (connection.getResponseCode() != 200) {
+					logger.error("Error retrieving CVEs with URL {}\nResponse Code: {}\n{}", url, connection.getResponseCode(), connection.getResponseMessage());
+					break;
+				}
+
+				logger.info("Connection Acquired for URL {}", url);
+
+				requestNum++;
+
+				// Parse response to JSON
+				StringBuilder response = new StringBuilder();
+				BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+				String line;
+				while ((line = reader.readLine()) != null) {
+					response.append(line);
+					response.append(System.lineSeparator()); // Add line separator if needed
+				}
+				reader.close();
+
+				JSONObject cveData = new JSONObject(response.toString());
+
+				JSONArray vulnerabilities = cveData.getJSONArray("vulnerabilities");
+				if (vulnerabilities.length() == 0) {
+					logger.info("No more CVEs in response, list is empty");
+					break;
+				}
+
+				// for each vulnerability in response list, add cveId, publishedDate and status to the hashmap
+				for (int i = 0; i < vulnerabilities.length(); i++) {
+					JSONObject cve = vulnerabilities.getJSONObject(i);
+
+					String cveId = cve.getJSONObject("cve").getString("id");
+					String publishedDate = cve.getJSONObject("cve").getString("published");
+					String lastModifiedDate = cve.getJSONObject("cve").getString("lastModified");
+					String status = cve.getJSONObject("cve").getString("vulnStatus");
+
+//					logger.info("CVE ID: {}", cveId);
+//					logger.info("Published Date: {}", publishedDate);
+//					logger.info("Status: {}", status);
+
+					NvdCves.put(cveId, new NvdVulnerability(cveId, publishedDate, lastModifiedDate, status));
+				}
+
+				logger.info("{} Total CVEs", NvdCves.size());
+
+				// Check if there's more CVEs to pull, otherwise break and return the data
+				int totalResults = cveData.getInt("totalResults");
+				startIndex += cveData.getInt("resultsPerPage");
+
+				// If we've reached the total results for the response, move the start and end dates back by 119 days
+				// We must adhere to the 120 day range limit in NVD's API for specifying date ranges
+				if (startIndex >= totalResults) {
+					startIndex = 0;
+					this.endDate = this.startDate;
+					this.startDate = LocalDateTime.parse(this.endDate).minusDays(119).format(formatter);
+					currentRequestString = nvdApiPath.replaceAll("<StartDate>", this.startDate).replaceAll("<EndDate>", this.endDate);
+				}
+
+				connection.disconnect();
+			} catch (IOException e) {
+				logger.error("ERROR: Failed to parse CVEs form NVD\n{}", e.toString());
+				break;
+			}
+		}
+
+		return NvdCves;
+	}
+
+	/**
 	 * Main method of NVD_CVE_Reader
-	 * 
+	 *
 	 * @param filepath
 	 */
 	public int pullNvdCve(String filepath) {
@@ -151,7 +260,7 @@ public class NvdCveController {
 
 	/**
 	 * Process Nvd reference URLs
-	 * 
+	 *
 	 * @param nvdRefUrlHash
 	 * @param filepath
 	 */
