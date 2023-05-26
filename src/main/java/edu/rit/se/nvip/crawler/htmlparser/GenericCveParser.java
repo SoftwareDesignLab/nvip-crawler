@@ -26,6 +26,9 @@ import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import edu.rit.se.nvip.model.CompositeVulnerability;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.select.Elements;
 
 /**
  * 
@@ -41,7 +44,7 @@ public class GenericCveParser extends AbstractCveParser  {
 	 * based on strategy selected. See: app.diagrams.net/#G1ZhVaJu0XKpyKtDhr2uqTQVVWg-X07XC1
 	 * By default ParseCVEDescription is used on entire page
 	 */
-	private ParserStrategy parserStrategy = new ParseCVEDescription(sourceDomainName);
+	private ParserStrategy parserStrategy = null;
 	
 	public GenericCveParser(String domainName) {
 		sourceDomainName = domainName;
@@ -52,6 +55,30 @@ public class GenericCveParser extends AbstractCveParser  {
 		this.parserStrategy = parserStrategy;
 	}
 
+	protected ParserStrategy chooseParserStrategy(String sCVEContentHTML) {
+		// pull HTML
+		Document doc = Jsoup.parse(sCVEContentHTML);
+		// check for strategy conditions
+		// --- check for table
+		Elements cveTables = doc.select("table:contains(CVE), thead:contains(CVE), tbody:contains(CVE)");
+		if (cveTables.size() > 0 && cveTables.size() < 5) // lots of tables means this is most likely a bulletin
+			return new ParseTable(sourceDomainName);
+		// --- check for list
+		Elements cveLists = doc.select("li:contains(CVE), ul:contains(CVE), ol:contains(CVE), dl:contains(CVE)");
+		if (cveLists.size() > 0)
+			return new ParseList(sourceDomainName);
+		// --- check for accordion
+		Elements cveAccordions = doc.select("accordion, bolt-accordion, acc, div[class*=accordion], div[id*=accordion]");
+		if (cveAccordions.size() > 0)
+			return new ParseAccordion(sourceDomainName);
+		// --- check for bulletin
+		Elements cveBulletins = doc.select("div:contains(Bulletin), div:contains(CVE), span:contains(CVE), p:contains(CVE)");
+		if (cveBulletins.size() > 0)
+			return new ParseBulletin(sourceDomainName);
+		// fall through and use description strategy
+		return new ParseCVEDescription(sourceDomainName);
+	}
+
 	/**
 	 * generic parsing of web page a selected parser strategy
 	 * 
@@ -60,10 +87,17 @@ public class GenericCveParser extends AbstractCveParser  {
 	 */
 	@Override
 	public List<CompositeVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
+		if (parserStrategy == null)
+			parserStrategy = chooseParserStrategy(sCVEContentHTML);
 		logger.info("Generic Parsing " + sSourceURL + " with " + parserStrategy.getClass().getSimpleName());
-		return parserStrategy.parseWebPage(sSourceURL, sCVEContentHTML);
+		List<CompositeVulnerability> genericList = parserStrategy.parseWebPage(sSourceURL, sCVEContentHTML);
+		if (!(parserStrategy instanceof ParseCVEDescription) && genericList.size() == 0) {
+			logger.info("No CVEs found with strategy " + parserStrategy.getClass().getSimpleName() +
+					" for " + sSourceURL + ". Fall through to description strategy.");
+			return parserStrategy.parseWebPage(sSourceURL, sCVEContentHTML);
+		}
+		if (driver != null) driver.quit();
+		return genericList;
 	}
-
-
 
 }
