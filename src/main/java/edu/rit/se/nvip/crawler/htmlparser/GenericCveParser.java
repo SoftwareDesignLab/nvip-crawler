@@ -94,6 +94,7 @@ public class GenericCveParser extends AbstractCveParser  {
 		if (!(parserStrategy instanceof ParseCVEDescription) && genericList.size() == 0) {
 			logger.info("No CVEs found with strategy " + parserStrategy.getClass().getSimpleName() +
 					" for " + sSourceURL + ". Fall through to description strategy.");
+			parserStrategy = new ParseCVEDescription(sSourceURL);
 			return parserStrategy.parseWebPage(sSourceURL, sCVEContentHTML);
 		}
 		if (driver != null) driver.quit();
