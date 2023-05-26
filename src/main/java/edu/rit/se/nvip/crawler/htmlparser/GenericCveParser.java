@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 package edu.rit.se.nvip.crawler.htmlparser;
+import java.util.ArrayList;
 import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -90,12 +91,12 @@ public class GenericCveParser extends AbstractCveParser  {
 		if (parserStrategy == null)
 			parserStrategy = chooseParserStrategy(sCVEContentHTML);
 		logger.info("Generic Parsing " + sSourceURL + " with " + parserStrategy.getClass().getSimpleName());
-		List<CompositeVulnerability> genericList = parserStrategy.parseWebPage(sSourceURL, sCVEContentHTML);
-		if (!(parserStrategy instanceof ParseCVEDescription) && genericList.size() == 0) {
-			logger.info("No CVEs found with strategy " + parserStrategy.getClass().getSimpleName() +
-					" for " + sSourceURL + ". Fall through to description strategy.");
-			parserStrategy = new ParseCVEDescription(sSourceURL);
-			return parserStrategy.parseWebPage(sSourceURL, sCVEContentHTML);
+		// parse with structure-designated strategy
+		List<CompositeVulnerability> genericList = new ArrayList<>(parserStrategy.parseWebPage(sSourceURL, sCVEContentHTML));
+		if (!(parserStrategy instanceof ParseCVEDescription)) {
+			// throw in whatever ParseCVEDescription can find too
+			logger.info("Generic Parsing " + sSourceURL + " with ParseCVEDescription");
+			genericList.addAll(new ParseCVEDescription(sSourceURL).parseWebPage(sSourceURL, sCVEContentHTML));
 		}
 		if (driver != null) driver.quit();
 		return genericList;
