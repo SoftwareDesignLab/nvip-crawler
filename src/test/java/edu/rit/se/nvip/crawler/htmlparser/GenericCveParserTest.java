@@ -72,6 +72,18 @@ public class GenericCveParserTest extends AbstractParserTest {
 		assertNotNull(vuln);
 		boolean fine = vuln.getDescription().contains("Oracle");
 		assertTrue(fine);
-	}	
+	}
+
+	@Test
+	public void testChooseParserStrategy() {
+		String tableHtml = safeReadHtml("src/test/resources/test-choose-table.html");
+		assertTrue(parser.chooseParserStrategy(tableHtml) instanceof ParseTable);
+		String listHtml = safeReadHtml("src/test/resources/test-generic_list_parser-naver.html");
+		assertTrue(parser.chooseParserStrategy(listHtml) instanceof ParseList);
+		String bulletinHtml = safeReadHtml("src/test/resources/test-android-bulletin.html");
+		assertTrue(parser.chooseParserStrategy(bulletinHtml) instanceof ParseBulletin);
+		String accordionHtml = safeReadHtml("src/test/resources/test-choose-accordion.html");
+		assertTrue(parser.chooseParserStrategy(accordionHtml) instanceof ParseAccordion);
+	}
 
 }
