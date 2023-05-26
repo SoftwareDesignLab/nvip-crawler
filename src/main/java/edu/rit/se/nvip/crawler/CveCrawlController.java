@@ -98,6 +98,7 @@ public class CveCrawlController {
     public HashMap<String, ArrayList<CompositeVulnerability>> crawl(List<String> urls, List<String> whiteList,
                                                                     Map<String, Object> crawlerVars) throws Exception {
 
+        // Prepare Crawler W/ Configuration
         CrawlConfig config1 = new CrawlConfig();
         config1.setCrawlStorageFolder((String) crawlerVars.get("outputDir"));
         config1.setPolitenessDelay((Integer) crawlerVars.get("crawlerPoliteness"));
@@ -112,6 +113,7 @@ public class CveCrawlController {
         RobotstxtServer robotstxtServer = new RobotstxtServer(robotstxtConfig, pageFetcher1, new SleepycatWebURLFactory());
         CrawlController controller1 = new CrawlController(config1, normalizer1, pageFetcher1, robotstxtServer, frontierConfiguration);
 
+        // Fill in seed URLs
         for (String url: urls) {
             try {
                 logger.info("ADDING {} to SEEDS", url);
@@ -121,6 +123,7 @@ public class CveCrawlController {
             }
         }
 
+        // Crawler reporting
         String outputFile = "";
         if ((Boolean) crawlerVars.get("enableReport")) {
             DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss");
@@ -129,8 +132,9 @@ public class CveCrawlController {
         }
 
         logger.info("CURRENT CRAWL DEPTH ----> " + config1.getMaxDepthOfCrawling());
-        logger.info("Whitelist: " + whiteList.toArray().toString());
 
+
+        // Setup thread factory and start crawler
         String finalOutputFile = outputFile;
         CrawlController.WebCrawlerFactory<CveCrawler> factory1 = () -> new CveCrawler(whiteList, finalOutputFile);
 

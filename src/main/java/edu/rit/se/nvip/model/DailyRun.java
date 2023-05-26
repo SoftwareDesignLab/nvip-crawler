@@ -96,7 +96,11 @@ public class DailyRun {
 		this.updatedCveCount = updatedCveCount;
 	}
 
-
+	/**
+	 * Old function for calculating average time gaps per run
+	 * TODO: Deprecate this and use DBHelper instead for now
+	 * @param crawledVulnerabilityList
+	 */
 	public void calculateAvgTimeGaps(List<CompositeVulnerability> crawledVulnerabilityList) {
 		// Add up all time gaps, then get the mean average
 		int totalTimeGapNvd = 0;

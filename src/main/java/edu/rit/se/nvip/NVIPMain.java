@@ -23,10 +23,7 @@
  */
 package edu.rit.se.nvip;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.*;
@@ -35,6 +32,7 @@ import java.util.stream.Collectors;
 import edu.rit.se.nvip.crawler.github.PyPAGithubScraper;
 
 import edu.rit.se.nvip.exploit.ExploitIdentifier;
+import edu.rit.se.nvip.model.*;
 import edu.rit.se.nvip.nvd.NvdCveController;
 import edu.rit.se.nvip.patchfinder.JGitCVEPatchDownloader;
 import edu.rit.se.nvip.patchfinder.PatchFinder;
@@ -51,11 +49,7 @@ import edu.rit.se.nvip.cvereconcile.AbstractCveReconciler;
 import edu.rit.se.nvip.cvereconcile.CveReconcilerFactory;
 import edu.rit.se.nvip.db.DatabaseHelper;
 import edu.rit.se.nvip.db.DbParallelProcessor;
-import edu.rit.se.nvip.model.CompositeVulnerability;
 import edu.rit.se.nvip.model.CompositeVulnerability.CveReconcileStatus;
-import edu.rit.se.nvip.model.DailyRun;
-import edu.rit.se.nvip.model.NvipSource;
-import edu.rit.se.nvip.model.Vulnerability;
 import edu.rit.se.nvip.productnameextractor.AffectedProductIdentifier;
 import edu.rit.se.nvip.utils.CveUtils;
 import edu.rit.se.nvip.utils.MyProperties;
@@ -82,6 +76,8 @@ public class NVIPMain {
 	private static MyProperties properties = null;
 	private static final Map<String, Object> crawlerVars = new HashMap<>();
 	private static final Map<String, Object> dataVars = new HashMap<>();
+
+	private static final Map<String, Object> nvdVars = new HashMap<>();
 
 	private static final Map<String, Object> characterizationVars = new HashMap<>();
 	private static final Map<String, Object> exploitVars = new HashMap<>();
@@ -124,20 +120,17 @@ public class NVIPMain {
 
 		dailyRunStats.calculateAddedUpdateCVEs(crawledVulnerabilityList);
 
-		logger.info("Calculating Average Time Gaps...");
-		dailyRunStats.calculateAvgTimeGaps(crawledVulnerabilityList);
-
 		databaseHelper.insertDailyRun(dailyRunStats);
 		logger.info("Run @ {}\nSummary:\nTotal CVEs found from this run: {}\nTotal CVEs not in NVD: {}" +
-						"\nTotal CVEs not in Mitre: {}\nTotal CVEs not in both: {}\nTotal CVEs Added: {}\nTotal CVEs Updated: {}" +
-						"\nAvg NVD Time Gap: {}\n Avg MITRe Time Gap: {}\n", dailyRunStats.getRunDateTime(),
-				dailyRunStats.getTotalCveCount(), dailyRunStats.getNotInNvdCount(), dailyRunStats.getNotInMitreCount(),
-				dailyRunStats.getNotInBothCount(), dailyRunStats.getAddedCveCount(), dailyRunStats.getUpdatedCveCount(),
-				dailyRunStats.getAvgTimeGapNvd(), dailyRunStats.getAvgTimeGapMitre());
+						"\nTotal CVEs not in Mitre: {}\nTotal CVEs not in both: {}\nTotal CVEs Added: {}\nTotal CVEs Updated: {}\n",
+				dailyRunStats.getRunDateTime(), dailyRunStats.getTotalCveCount(), dailyRunStats.getNotInNvdCount(), dailyRunStats.getNotInMitreCount(),
+				dailyRunStats.getNotInBothCount(), dailyRunStats.getAddedCveCount(), dailyRunStats.getUpdatedCveCount());
 
 		// Prepare stats and Store found CVEs in DB
 		int runId = databaseHelper.getLatestRunId();
 		nvipMain.storeCVEs(crawledVulnerabilityList, runId);
+
+		databaseHelper.updateDailyRun(runId, dailyRunStats);
 
 		// log .csv files
 		logger.info("Creating output CSV files...");
@@ -178,6 +171,7 @@ public class NVIPMain {
 
 		this.prepareCrawlerVars();
 		this.prepareDataVars();
+		this.prepareNvdVars();
 		this.prepareCharacterizationVars();
 		this.prepareExploitFinderVars();
 		this.preparePatchFinderVars();
@@ -266,6 +260,27 @@ public class NVIPMain {
 				"WARNING: Reconciler Method not defined in NVIP_RECONCILER_METHOD, using APACHE_OPEN_NLP as default");
 	}
 
+	/**
+	 * Prepare Vars for NVD API Comparison from envvars
+	 * Sets defaults if envvars aren't found
+	 */
+	private void prepareNvdVars() {
+		String nvdApiUrl = System.getenv("NVD_API_URL");
+		String nvdApiRequestLimit = System.getenv("NVD_API_REQUEST_LIMIT");
+
+		addEnvvarString(NVIPMain.nvdVars,"nvdApiUrl", nvdApiUrl, "https://services.nvd.nist.gov/rest/json/cves/2.0?pubstartDate=<StartDate>&pubEndDate=<EndDate>",
+				"WARNING: NVD API URL not defined in NVD_API_URL, using https://services.nvd.nist.gov/rest/json/cves/2.0?pubstartDate=<StartDate>&pubEndDate=<EndDate>" +
+						" as default");
+		addEnvvarInt(NVIPMain.nvdVars, "nvdApiRequestLimit", nvdApiRequestLimit, 10,
+				"WARNING: NVD Request Limit not defined in NVD_API_REQUEST_LIMIT, setting 10 for default",
+				"NVD_API_REQUEST_LIMIT");
+	}
+
+
+	/**
+	 * Prepare Vars for Characterizer from envvars
+	 * Sets defaults if envvars aren't found
+	 */
 	private void prepareCharacterizationVars() {
 		String cveCharacterizationLimit = System.getenv("NVIP_CVE_CHARACTERIZATION_LIMIT");
 
@@ -450,20 +465,6 @@ public class NVIPMain {
 	}
 
 	/**
-	 * Print found properties to verify they're correct
-	 * @param prop
-	 */
-	public void printProperties(MyProperties prop) {
-		StringBuilder sb = new StringBuilder();
-
-		for (Object key : prop.keySet()) {
-			sb.append(String.format("%-40s", key)).append("\t->\t").append(prop.getProperty(key.toString())).append("\n");
-		}
-
-		logger.info("\n*** Parameters from Config File *** \n{}", sb.toString());
-	}
-
-	/**
 	 * check required data dirs before run
 	 */
 	private void checkDataDirs() {
@@ -519,42 +520,65 @@ public class NVIPMain {
 	 * NVIP Source URLs in DB and seeds txt file
 	 *
 	 * TODO: Break this up into separate functions
-	 * 	github, quick, and main
+	 * 	github, pyPA, quick, and main
 	 *
 	 * @param urls
 	 * @return
 	 */
 	protected HashMap<String, CompositeVulnerability> crawlCVEs(List<String> urls) throws Exception {
+
 		/**
 		 * scrape CVEs from CVE Automation Working Group Git Pilot (CVEProject.git)
 		 */
-
 		HashMap<String, CompositeVulnerability> cveHashMapGithub = new HashMap<>();
+		HashMap<String, List<CompositeVulnerability>> cveHashMapNotScraped = new HashMap<>();
 
 		if ((Boolean) crawlerVars.get("enableGitHub")) {
 			logger.info("CVE Github pull enabled, scraping CVe GitHub now!");
 			GithubScraper githubScraper = new GithubScraper();
 			cveHashMapGithub = githubScraper.scrapeGithub();
+			for (String gitHubvuln : cveHashMapGithub.keySet()) {
+				ArrayList<CompositeVulnerability> initList = new ArrayList<>();
+				initList.add(cveHashMapGithub.get(gitHubvuln));
+				cveHashMapNotScraped.put(gitHubvuln, initList);
+			}
 		}
 
 		// scrape CVEs from PyPA advisory database GitHub Repo
 		PyPAGithubScraper pyPaScraper = new PyPAGithubScraper();
 		HashMap<String, CompositeVulnerability> cvePyPAGitHub = pyPaScraper.scrapePyPAGithub();
-
 		logger.info("Merging {} PyPA CVEs with {} found GitHub CVEs\n", cvePyPAGitHub.size(), cveHashMapGithub.size());
-		cveHashMapGithub.putAll(cvePyPAGitHub);
+
+		// Add python PA CVEs to lists
+		for (String pythonVuln : cvePyPAGitHub.keySet()) {
+			if (cveHashMapNotScraped.containsKey(pythonVuln)) {
+				cveHashMapNotScraped.get(pythonVuln).add(cvePyPAGitHub.get(pythonVuln));
+			} else {
+				ArrayList<CompositeVulnerability> initList = new ArrayList<>();
+				initList.add(cvePyPAGitHub.get(pythonVuln));
+				cveHashMapNotScraped.put(pythonVuln, initList);
+			}
+		}
 
 		/**
 		 * Scrape CVE summary pages (frequently updated CVE providers)
+		 * TODO: Might be best to get rid of this
 		 */
 		int countCVEsNotInMitreGithub = 0;
 		QuickCveCrawler crawler = new QuickCveCrawler();
 		List<CompositeVulnerability> list = crawler.getCVEsfromKnownSummaryPages();
-		for (CompositeVulnerability vuln : list)
-			if (!cveHashMapGithub.containsKey(vuln.getCveId())) {
-				countCVEsNotInMitreGithub++;
-				cveHashMapGithub.put(vuln.getCveId(), vuln);
+
+		// Add Quick CVEs to lists
+		for (CompositeVulnerability vuln : list) {
+			if (cveHashMapNotScraped.containsKey(vuln.getCveId())) {
+				cveHashMapNotScraped.get(vuln.getCveId()).add(vuln);
+			} else {
+				ArrayList<CompositeVulnerability> initList = new ArrayList<>();
+				initList.add(vuln);
+				cveHashMapNotScraped.put(vuln.getCveId(), initList);
 			}
+		}
+
 		logger.info("{} of {} CVEs found in the CNA summary pages did not exist in the Mitre GitHub repo.", countCVEsNotInMitreGithub, list.size());
 
 		/**
@@ -566,6 +590,7 @@ public class NVIPMain {
 
 		ArrayList<String> whiteList = new ArrayList<>();
 
+		// Prepare Whitelist for crawler
 		File whiteListFile = new File((String) crawlerVars.get("whitelistFileDir"));
 		Scanner reader = new Scanner(whiteListFile);
 		while (reader.hasNextLine()) {
@@ -578,7 +603,7 @@ public class NVIPMain {
 
 		HashMap<String, ArrayList<CompositeVulnerability>> cveHashMapScrapedFromCNAs = crawlerController.crawl(urls, whiteList, crawlerVars);
 
-		return mergeCVEsDerivedFromCNAsAndGit(cveHashMapGithub, list, cveHashMapScrapedFromCNAs);
+		return mergeCVEsDerivedFromCNAsAndGit(cveHashMapNotScraped, cveHashMapScrapedFromCNAs);
 	}
 
 	/**
@@ -591,83 +616,77 @@ public class NVIPMain {
 	 * announcing a new security problem. When the candidate has been publicized,
 	 * the details for this candidate will be provided.
 	 *
-	 * @param cveHashMapGithub
+	 * @param cveHashMapNotScraped
 	 * @param cveHashMapScrapedFromCNAs
 	 * @return
 	 */
-	public HashMap<String, CompositeVulnerability> mergeCVEsDerivedFromCNAsAndGit(HashMap<String, CompositeVulnerability> cveHashMapGithub, List<CompositeVulnerability> list,
+	public HashMap<String, CompositeVulnerability> mergeCVEsDerivedFromCNAsAndGit(HashMap<String, List<CompositeVulnerability>> cveHashMapNotScraped,
 																				  HashMap<String, ArrayList<CompositeVulnerability>> cveHashMapScrapedFromCNAs) {
-		logger.info("Merging {} scraped CVEs with {} Github", cveHashMapScrapedFromCNAs.size(), list.size() + cveHashMapGithub.size());
-		final String reservedStr = "** RESERVED **";
-		HashMap<String, CompositeVulnerability> cveHashMapAll = new HashMap<>(); // merged CVEs
 
-		// Just processes the first description found for each CVE
-		// TODO: Figure out how to merge ALL found descriptions into one.
-		//  Not sure if the current model helps with that (Maybe use GPT?)
-		for (String cveId: cveHashMapScrapedFromCNAs.keySet()) {
-			cveHashMapAll.put(cveId, cveHashMapScrapedFromCNAs.get(cveId).get(0));
+		//Merge the 2 hashmaps
+		logger.info("Merging {} scraped CVEs with {} Github", cveHashMapScrapedFromCNAs.size(), cveHashMapNotScraped.size());
+		HashMap<String, List<CompositeVulnerability>> mergedMap = new HashMap<>(); // merged CVE Lists
+
+		for (String cveId: cveHashMapNotScraped.keySet()) {
+			mergedMap.put(cveId, cveHashMapNotScraped.get(cveId));
 		}
 
-		// include all CVEs from CNAs
-		NlpUtil nlpUtil = new NlpUtil();
-
-		int cveCountReservedInGit = 0;
-		int cveCountFoundOnlyInGit = 0;
-		// iterate over CVEs from Git
-		for (String cveId : cveHashMapGithub.keySet()) {
-			// If a CVE derived from Git does not exist among the CVEs derived from CNAs,
-			// then include it as is.
-			CompositeVulnerability vulnGit = cveHashMapGithub.get(cveId);
-			if (!cveHashMapAll.containsKey(cveId)) {
-				cveHashMapAll.put(cveId, vulnGit);
-				cveCountFoundOnlyInGit++;
+		for (String cveId: cveHashMapScrapedFromCNAs.keySet()) {
+			if (mergedMap.containsKey(cveId)) {
+				for (CompositeVulnerability cnaVuln: cveHashMapScrapedFromCNAs.get(cveId)) {
+					mergedMap.get(cveId).add(cnaVuln);
+				}
 			} else {
-				/**
-				 * Git CVE already exists among CVEs derived from CNAs, then look at
-				 * descriptions!
-				 * */
-
-				CompositeVulnerability vulnCna = cveHashMapAll.get(cveId);
-				String newDescr;
-
-				if (CveUtils.isCveReservedEtc(vulnGit.getDescription())) {
-					/**
-					 * CVE is reserved/rejected etc in Mitre but nvip found a description for it.
-					 * TODO: We need to find a better way to merge the found descriptions
-					 * 	instead of just running each of them through NLP one-by-one
-					 * 	Is it possible for us to batch process the found descriptions into a single NLP?
-					 * */
-
-					newDescr = reservedStr + " - NVIP Description: " + vulnCna.getDescription();
-					cveCountReservedInGit++;
-
-					// did we find garbage or valid description?
-					if (nlpUtil.sentenceDetect(vulnCna.getDescription()) != null)
-						vulnCna.setFoundNewDescriptionForReservedCve(true);
-				} else {
-					newDescr = vulnGit.getDescription(); // overwriting, assuming Git descriptions are worded better!
-				}
-				vulnCna.setDescription(newDescr);// update description
-
-				// merge sources from raw data
-				for (String sUrl : vulnGit.getSourceURL())
-					vulnCna.addSourceURL(sUrl);
-
-				for (CompositeVulnerability vuln: cveHashMapScrapedFromCNAs.get(vulnCna.getCveId())) {
-					for (String url: vuln.getSourceURL()) {
-						if (!vulnCna.getSourceURL().contains(url)) {
-							vulnCna.addSourceURL(url);
-						}
-					}
-				}
-
-				cveHashMapAll.put(cveId, vulnCna); // update existing CVE
-
+				mergedMap.put(cveId, cveHashMapScrapedFromCNAs.get(cveId));
 			}
 		}
 
-		logger.info("***Merged CVEs! Out of {} Git CVEs, CVEs that exist only in Git (Not found at any available CNAs): {}, CVEs that are reserved in Git (But found at CNAs): {}",
-				cveHashMapGithub.size(), cveCountFoundOnlyInGit, cveCountReservedInGit);
+
+		HashMap<String, CompositeVulnerability> cveHashMapAll = new HashMap<>(); // Compiled CVEs
+		NlpUtil nlpUtil = new NlpUtil(); // for filtering garbage descriptions
+
+		// Merge Sources and descriptions, publish dates and last modified dates are from first in list
+		for (String cveId: mergedMap.keySet()) {
+			String fullDescription = "";
+			ArrayList<String> totalSourceURLs = new ArrayList<>();
+			// Combine raw descriptions into 1 description string
+			for (CompositeVulnerability rawVuln: mergedMap.get(cveId)) {
+				if (rawVuln != null) {
+					// Did we find garbage or valid description?
+					if (!CveUtils.isCveReservedEtc(rawVuln.getDescription()) && nlpUtil.sentenceDetect(rawVuln.getDescription()) != null) {
+						fullDescription += rawVuln.getDescription() + "\n\n\n";
+						for (String sourceUrl : rawVuln.getSourceURL()) {
+							if (!totalSourceURLs.contains(sourceUrl)) {
+								totalSourceURLs.add(sourceUrl);
+							}
+						}
+					}
+				}
+			}
+
+			try {
+				CompositeVulnerability compiledVuln = new CompositeVulnerability(0, totalSourceURLs.size() > 0 ? totalSourceURLs.get(0) : "",
+						cveId,
+						null,
+						mergedMap.get(cveId).get(0).getPublishDate() == null ? mergedMap.get(cveId).get(0).getCreateDate() : mergedMap.get(cveId).get(0).getPublishDate(),
+						mergedMap.get(cveId).get(0).getLastModifiedDate() == null ? mergedMap.get(cveId).get(0).getCreateDate() : mergedMap.get(cveId).get(0).getLastModifiedDate(),
+						fullDescription.trim(),
+						"");
+
+				// Combine remaining sources
+				for (int i=1; i< totalSourceURLs.size(); i++)  {
+					compiledVuln.addSourceURL(totalSourceURLs.get(i));
+				}
+
+				cveHashMapAll.put(cveId, compiledVuln);
+			} catch (Exception e) {
+				logger.error("ERROR: Exception when trying to add vulnerability {}\n{}", mergedMap.get(cveId).get(0), e);
+			}
+		}
+
+
+		logger.info("***Merged {} non-scraped CVEs with {} scraped CVEs for a total of {} compiled CVEs",
+				cveHashMapNotScraped.size(), cveHashMapScrapedFromCNAs.size(), cveHashMapAll.size());
 		return cveHashMapAll;
 	}
 
@@ -675,6 +694,7 @@ public class NVIPMain {
 	 * Identify New CVE and
 	 * Process CVEs by comparing pulled CVEs to NVD and MITRE
 	 * Calculate Time Gaps afterwards, if any
+	 *
 	 * @param cveHashMapAll
 	 * @return
 	 */
@@ -683,7 +703,12 @@ public class NVIPMain {
 		logger.info("Comparing CVES against NVD & MITRE..");
 		String cveDataPathNvd = dataVars.get("dataDir") + "/nvd-cve.csv";
 		String cveDataPathMitre = dataVars.get("dataDir") + "/mitre-cve.csv";
-		CveProcessor cveProcessor = new CveProcessor(cveDataPathNvd, cveDataPathMitre);
+
+		// TODO: CSV files don't do anything anymore
+		//  they're just needed to initialize the processor, should deprecate once the API calls are finalized
+		HashMap<String, NvdVulnerability> nvdCves = new NvdCveController().fetchNVDCVEs(
+				(String) nvdVars.get("nvdApiUrl"), (int) nvdVars.get("nvdApiRequestLimit"));
+		CveProcessor cveProcessor = new CveProcessor(cveDataPathNvd, cveDataPathMitre, nvdCves);
 		Map<String, Vulnerability> existingCves = databaseHelper.getExistingVulnerabilities();
 
 		HashMap<String, List<Object>> checkedCVEs = cveProcessor.checkAgainstNvdMitre(cveHashMapAll, existingCves);
@@ -757,6 +782,10 @@ public class NVIPMain {
 
 	/**
 	 * Use Characterizer Model to characterize CVEs and generate VDO/CVSS
+	 *
+	 * TODO: Get CAPECs working again
+	 *  Will need CWEs for them to be attached though
+	 *
 	 * @param crawledVulnerabilityList
 	 * @return
 	 */
@@ -813,8 +842,8 @@ public class NVIPMain {
 	 * (string) should be mapped to a CPE item first. After that, it will be added
 	 * to the database.
 	 *
-	 * // TODO We should be using more than 1 thread!!!!!!!!!!
-	 *
+	 * TODO We should be using more than 1 thread for product extraction!!!!!!!!!!
+	 *  or just not use threads :/
 	 * @param crawledVulnerabilityList
 	 */
 	private void spawnProcessToIdentifyAndStoreAffectedReleases(List<CompositeVulnerability> crawledVulnerabilityList) {
