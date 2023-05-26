@@ -10,3 +10,6 @@ output/
 logs/
 /.github/
 nvip_data/pypa-repo/
+Servers/
+nvip_data/
+
