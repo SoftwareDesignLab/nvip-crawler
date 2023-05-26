@@ -23,23 +23,40 @@
  */
 package edu.rit.se.nvip.crawler.htmlparser;
 
-import io.github.bonigarcia.wdm.WebDriverManager;
 import edu.rit.se.nvip.model.RawVulnerability;
+import edu.rit.se.nvip.utils.UtilHelper;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
+import io.github.bonigarcia.wdm.WebDriverManager;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.chrome.ChromeDriverService;
+import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeDriverService;
 import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.remote.CapabilityType;
+import org.python.util.Generic;
 
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.DateFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -146,6 +163,78 @@ public abstract class AbstractCveParser {
 	}
 
 	/**
+	 * Helper function for extractDate and extractLastModifiedDate
+	 * Find keyword in text, return a bounds to search for a date in
+	 * text surrounding the location of the keyword
+	 * @param text - text to search for dates
+	 * @param keyword - keyword to search for in text
+	 * @return array of substring bounds
+	 */
+	protected int[] getSubstringBounds(String text, String keyword) {
+		// bounds to isolate date text for individual CVE ID's in bulletin
+		final int DATE_BOUNDS = 40;
+		int[] bounds = new int[2];
+		int keywordIndex = text.toLowerCase().indexOf(keyword);
+		if (keywordIndex == -1) return bounds;
+		bounds[0] = keywordIndex;
+		bounds[1] = Math.min(keywordIndex + DATE_BOUNDS, text.length());
+		return bounds;
+	}
+
+	/**
+	 * Search for relevant date keywords and attempt to
+	 * extract a date from the text around it
+	 * Fall through to grabbing any date in the text if no
+	 * keywords/dates around keywords are found
+	 * @param text - text to search for dates
+	 * @return GenericDate object referencing relevant date from text
+	 */
+	protected GenericDate extractDate(String text) {
+		// search for "Published" "Created" "Modified" "Updated" keywords, grab dates around it
+		// check a subtext for a date based on these keywords
+		GenericDate possibleDate = null;
+		if (text.toLowerCase().contains("published")) {
+			// grab date around published
+			int[] bounds = getSubstringBounds(text, "published");
+			possibleDate = new GenericDate(text.substring(bounds[0], bounds[1]));
+		} else if (text.toLowerCase().contains("created")) {
+			// grab date around created
+			int[] bounds = getSubstringBounds(text, "created");
+			possibleDate = new GenericDate(text.substring(bounds[0], bounds[1]));
+		}
+		if (possibleDate != null && possibleDate.getRawDate() != null)
+			return possibleDate;
+		// otherwise try to find any sort of date in the text (this might give back rogue dates in descriptions, etc...)
+		return new GenericDate(text);
+	}
+
+	/**
+	 * Search for last modified keywords in attempts to grab
+	 * last modified date around it
+	 * Fall through to grabbing any date in the text
+	 * @param text - text to search for date
+	 * @return GenericDate object referencing relevant date found in text
+	 */
+	protected GenericDate extractLastModifiedDate(String text) {
+		// search for "Published" "Created" "Modified" "Updated" keywords, grab dates around it
+		// check a subtext for a date based on these keywords
+		GenericDate possibleDate = null;
+		if (text.toLowerCase().contains("modified")) {
+			// grab date around modified
+			int[] bounds = getSubstringBounds(text, "modified");
+			possibleDate = new GenericDate(text.substring(bounds[0], bounds[1]));
+		} else if (text.toLowerCase().contains("updated")) {
+			// grab date around updated
+			int[] bounds = getSubstringBounds(text, "updated");
+			possibleDate = new GenericDate(text.substring(bounds[0], bounds[1]));
+		}
+		if (possibleDate != null && possibleDate.getRawDate() != null)
+			return possibleDate;
+		// otherwise try to find any sort of date in the text (this might give back rogue dates in descriptions, etc...)
+		return new GenericDate(text);
+	}
+
+	/**
 	 * Extract platform version from txt
 	 *
 	 * @param description
@@ -214,6 +303,65 @@ public abstract class AbstractCveParser {
 			ie.printStackTrace();
 		}
 		return pdfText;
+	}
+
+	/**
+	 * Generates an xPath expression to reference a Selenium
+	 * WebElement using a given Jsoup Element as the starting point
+	 * @param element The Jsoup Element to generate the xPath for
+	 * @return The xPath expression as a String
+	 */
+	public static String jsoupToXpath(Element element) {
+		// Initialize the XPath with the root element
+		String xpath = "/";
+		// Initialize a list to store the XPath components
+		List<String> components = new ArrayList<>();
+
+		// Determine the child element to start the traversal from
+		Element child = element.tagName().isEmpty() ? element.parent() : element;
+
+		// Traverse up the DOM tree until the root element is reached
+		while (child.parent() != null){
+			// Get the parent element
+			Element parent = child.parent();
+			// Get the siblings of the child element
+			Elements siblings = parent.children();
+			// Initialize a variable to store the XPath component for the child element
+			String componentToAdd = null;
+
+			// If the child element is the only one of its kind among its siblings, use its tag name as the component
+			if (siblings.size() == 1) {
+				componentToAdd = child.tagName();
+			} else {
+				// If there are multiple siblings with the same tag name, use an index to differentiate between them
+				int x = 1;
+				for(Element sibling: siblings){
+					if (child.tagName().equals(sibling.tagName())){
+						if (child == sibling){
+							break;
+						} else {
+							x++;
+						}
+					}
+				}
+				componentToAdd = String.format("%s[%d]", child.tagName(), x);
+			}
+			// Add the XPath component for the child element to the list of components
+			components.add(componentToAdd);
+			// Move up the DOM tree to the parent element
+			child = parent;
+		}
+
+		// Reverse the list of components to get the XPath in the correct order
+		List<String> reversedComponents = new ArrayList<>();
+		for (int i = components.size()-1; i > 0; i--){
+			reversedComponents.add(components.get(i));
+		}
+		// Join the reversed components into a single XPath string
+		xpath = xpath + String.join("/", reversedComponents);
+
+		// Return the final XPath
+		return xpath;
 	}
 
 }

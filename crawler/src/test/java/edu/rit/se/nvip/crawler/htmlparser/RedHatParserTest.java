@@ -51,7 +51,7 @@ public class RedHatParserTest extends AbstractParserTest {
 		assertTrue(sample.getDescription().contains("A flaw was found in HAProxy's headers processing that causes HAProxy to drop important headers fields such as Connection, Content-length, Transfer-Encoding,"));
 		assertEquals("2023-02-14 16:20:00", sample.getPublishDate());
 
-		assertEquals("2023-05-06 04:59:03", sample.getLastModifiedDate());
+		assertEquals("2023-05-20 05:48:51", sample.getLastModifiedDate());
 
 	}
 }
