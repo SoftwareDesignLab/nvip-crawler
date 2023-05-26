@@ -92,7 +92,7 @@ public class GenericCveParser extends AbstractCveParser  {
 			parserStrategy = chooseParserStrategy(sCVEContentHTML);
 		logger.info("Generic Parsing " + sSourceURL + " with " + parserStrategy.getClass().getSimpleName());
 		// parse with structure-designated strategy
-		List<CompositeVulnerability> genericList = new ArrayList<>(parserStrategy.parseWebPage(sSourceURL, sCVEContentHTML));
+		List<CompositeVulnerability> genericList = parserStrategy.parseWebPage(sSourceURL, sCVEContentHTML);
 		if (!(parserStrategy instanceof ParseCVEDescription)) {
 			// throw in whatever ParseCVEDescription can find too
 			logger.info("Generic Parsing " + sSourceURL + " with ParseCVEDescription");
