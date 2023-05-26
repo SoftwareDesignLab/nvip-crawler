@@ -49,7 +49,7 @@ public class HuntrParserTest extends AbstractParserTest {
         assertTrue(vuln.getDescription().contains("division by zero in fuction"));
         assertFalse(vuln.getDescription().contains("was it not verification as a vulnerability?"));
         assertEquals("2023-02-19 00:00:00", vuln.getPublishDate());
-        assertEquals("2023-05-03 00:00:00", vuln.getLastModifiedDate());
+        assertEquals("2023-05-20 00:00:00", vuln.getLastModifiedDate());
     }
 
     @Test

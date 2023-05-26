@@ -432,6 +432,8 @@ https://portal.nutanix.com/page/
 https://www.lexmark.com/en_us/
 
 
+
+
 https://cybersecurityworks.com/zerodays-vulnerability-list/
 https://www.dragos.com/advisories/
 https://labs.cyberark.com/cyberark-labs-security-advisories/
@@ -685,3 +687,6 @@ https://zoom.us/trust/
 https://github.com/zowe/
 https://trust.zscaler.com/security-advisorieshttp://support.zte.com.cn/support/
 https://zuso.ai/Advisory.htmlhttps://www.zyxel.com/global/
+https://security.full.services/
+https://www.ibm.com/support/pages/node/
+https://www.ibm.com/support/pages/bulletin/
