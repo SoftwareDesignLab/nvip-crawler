@@ -236,6 +236,9 @@ A list of the environment variables is provided below:
 * **EXPLOIT_FINDER_ENABLED**: Boolean parameter for enabling the exploit finder
   - Default value: true
 
+* **EXPLOIT_DB_URL**: URL used for cloning and scraping the ExploitDB Git repo
+  - Default value: https://gitlab.com/exploit-database/exploitdb
+
 ### Patch Finder
 
 * **PATCHFINDER_ENABLED**: Boolean parameter for enabling the patch finder
