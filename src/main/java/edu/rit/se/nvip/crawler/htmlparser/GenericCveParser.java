@@ -56,13 +56,13 @@ public class GenericCveParser extends AbstractCveParser  {
 		this.parserStrategy = parserStrategy;
 	}
 
-	private ParserStrategy chooseParserStrategy(String sCVEContentHTML) {
+	protected ParserStrategy chooseParserStrategy(String sCVEContentHTML) {
 		// pull HTML
 		Document doc = Jsoup.parse(sCVEContentHTML);
 		// check for strategy conditions
 		// --- check for table
 		Elements cveTables = doc.select("table:contains(CVE), thead:contains(CVE), tbody:contains(CVE)");
-		if (cveTables.size() > 0)
+		if (cveTables.size() > 0 && cveTables.size() < 5) // lots of tables means this is most likely a bulletin
 			return new ParseTable(sourceDomainName);
 		// --- check for list
 		Elements cveLists = doc.select("li:contains(CVE), ul:contains(CVE), ol:contains(CVE), dl:contains(CVE)");
@@ -73,7 +73,7 @@ public class GenericCveParser extends AbstractCveParser  {
 		if (cveAccordions.size() > 0)
 			return new ParseAccordion(sourceDomainName);
 		// --- check for bulletin
-		Elements cveBulletins = doc.select("div:contains(CVE), span:contains(CVE), p:contains(CVE)");
+		Elements cveBulletins = doc.select("div:contains(Bulletin), div:contains(CVE), span:contains(CVE), p:contains(CVE)");
 		if (cveBulletins.size() > 0)
 			return new ParseBulletin(sourceDomainName);
 		// fall through and use description strategy
