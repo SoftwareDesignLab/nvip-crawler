@@ -117,6 +117,7 @@ public class CveCrawler extends WebCrawler {
 
 		if (!shouldVisit(page, page.getWebURL())) {
 			logger.info("Skipping URL: {}", pageURL);
+			updateCrawlerReport("Skipping URL: " + pageURL);
 		} else if (page.getParseData() instanceof HtmlParseData) {
 //			logger.info("Parsing {}", pageURL);
 			HtmlParseData htmlParseData = (HtmlParseData) page.getParseData();
