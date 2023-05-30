@@ -2021,7 +2021,7 @@ public class DatabaseHelper {
 
 			pstmt.executeUpdate();
 
-//			logger.info("Inserted CVE: {} into aggregate table", cve_id);
+			logger.info("Inserted CVE: {} into aggregate table", cve_id);
 			return true;
 
 		} catch (SQLException e) {
