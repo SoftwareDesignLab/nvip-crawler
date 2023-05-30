@@ -218,6 +218,19 @@ A list of the environment variables is provided below:
 * **NVIP_NUM_OF_CRAWLER**: Max # of crawler threads
   - Default value: 10
 
+### NVD Comparison
+
+* **NVD_API_URL**: URL for NVD API endpoint for grabbing CVEs from NVD
+  - Default value: https://services.nvd.nist.gov/rest/json/cves/2.0?pubstartDate=<StartDate>&pubEndDate=<EndDate>
+  - Where <StartDate> is the start date of the request and <EndDate> is the end date for the request
+  - Start and enddate values are determined on runtime, end date being the current date and start date is 120 days before
+  - Example: https://services.nvd.nist.gov/rest/json/cves/2.0/?pubStartDate=2021-08-04T00:00:00.000&pubEndDate=2021-10-22T00:00:00.000
+  
+
+* **NVD_API_REQUEST_LIMIT**: Max # of requests NVIP should make to NVD to collect CVEs for performance comparison 
+  - Default value: 10
+  - Each requests grabs 2000 CVEs from NVD
+  
 ### Characterizer
 
 * **NVIP_CVE_CHARACTERIZATION_TRAINING_DATA_DIR**: Directory path for folder that contains Characterizer traning data

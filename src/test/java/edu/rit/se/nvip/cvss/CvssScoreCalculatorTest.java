@@ -25,6 +25,7 @@ package edu.rit.se.nvip.cvss;
 
 import static org.junit.Assert.assertEquals;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import edu.rit.se.nvip.automatedcvss.CvssScoreCalculator;
@@ -33,6 +34,7 @@ public class CvssScoreCalculatorTest {
 
 	//TODO: Non-existent test?
 	@Test
+	@Ignore
 	public void cvssCalculatorTest() {
 	}
 
