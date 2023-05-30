@@ -1,3 +1,4 @@
+https://groups.google.com/g/libarchive-announce
 https://github.com/CISecurity/OVALRepo/tree/master/repository/definitions/vulnerability
 https://github.com/DrizzlingSun/Tenda/tree/main/AC18
 https://github.com/GSMcNamara/CVE/blob/main/disclosures/index.md
@@ -19,13 +20,16 @@ https://github.com/eclipse-jdt#reporting-issues
 https://github.com/eclipse-pde#reporting-issues
 https://github.com/eclipse-platform#reporting-issues
 https://github.com/eclipse/jetty.project/security/advisories
+https://github.com/Enalean/tuleap/security/advisories/
 https://github.com/eset/vulnerability-disclosures
 https://github.com/golang/go/issues?q=cve
 https://github.com/kubernetes/kubernetes/issues?utf8=✓&q=is%3Aissue+label%3Aarea%2Fsecurity+in%3Atitle+CVE
+https://github.com/nextcloud/security-advisories/security/advisories/
 https://github.com/ochronasec/ochrona_python_vulnerabilities/tree/main/vulns
 https://github.com/openbmc/openbmc/issues?utf8=✓&q=Security+Advisory
 https://github.com/palantir/security-bulletins
 https://github.com/spf13/viper/security/advisories
+https://github.com/tgstation/tgstation-server/security/advisories/
 https://github.com/zowe/community/security/advisories
 https://docs.docker.com/desktop/release-notes
 https://docs.docker.com/engine/release-notes
@@ -33,6 +37,7 @@ https://docs.docker.com/security
 https://hackerone.com/cloudflare/hacktivity?type=team
 https://hackerone.com/hacktivity?querystring=&filter=type:hacker-published&order_direction=DESC&order_field=latest_disclosable_activity_at&followed_only=false&collaboration_only=false
 https://hackerone.com/ibm/hacktivity
+https://libreswan.org/security/
 https://nlnetlabs.nl/projects/nsd/security-advisories
 https://nlnetlabs.nl/projects/rpki/security-advisories
 https://nlnetlabs.nl/projects/unbound/security-advisories
@@ -67,6 +72,7 @@ https://jvn.jp
 https://jvn.jp/report/index.html
 https://patchstack.com/category/security-advisories
 https://patchstack.com/database
+https://phabricator.wikimedia.org
 https://sec.cloudapps.cisco.com/security/center/publicationListing.x
 https://sec.cloudapps.cisco.com/security/center/resources/security_vulnerability_policy.html#sa
 https://security.gallagher.com/Security-Advisories
@@ -252,6 +258,7 @@ https://new.siemens.com/global/en/products/services/cert.html#SecurityPublicatio
 https://nifi.apache.org/security.html
 https://nns.ee/blog
 https://nodejs.org/en/blog/vulnerability
+https://nostarttls.secvuln.info
 https://ntware.atlassian.net/wiki/spaces/SA/pages/11609899191/NT-ware+Security+Advisories+Products+and+Services
 https://obdev.at/cve/published-vulnerabilities.html
 https://octagon.net/blog
@@ -271,6 +278,7 @@ https://pointernull.com/security
 https://portal.microfocus.com/s/customportalsearch?language=en_US
 https://portal.nutanix.com/page/documents/security-advisories/list
 https://portswigger.net/daily-swig/vulnerabilities
+https://projects.ow2.org/view/lemonldap-ng
 https://psirt.bosch.com/security-advisories
 https://psirt.canon/advisory-information
 https://psirt.global.sonicwall.com/vuln-list
@@ -338,6 +346,7 @@ https://trust.mi.com/misrc/bulletins?tab=advisory
 https://trust.okta.com/security-advisories
 https://trust.zscaler.com/security-advisories
 https://trustedcomputinggroup.org/about/security
+https://tuleap.net/plugins/tracker/?tracker=140
 https://typo3.org/help/security-advisories
 https://ubuntu.com/security/notices
 https://unify.com/en/support/security-advisories
@@ -451,6 +460,7 @@ https://www.nvidia.com/en-us/security
 https://www.offensity.com/en/blog
 https://www.omicronenergy.com/en/support/product-security
 https://www.opencloudos.org/?page_id=573
+https://www.opencve.io/cve?vendor=open-xchange
 https://www.opendesign.com/security-advisories
 https://www.openeuler.org/en/security/security-bulletins
 https://www.opennms.com/en/blog/category/blog
@@ -473,6 +483,7 @@ https://www.qt.io/blog/tag/security
 https://www.qualcomm.com/company/product-security/bulletins
 https://www.rapid7.com/db
 https://www.red-gate.com/privacy-and-security/vulnerabilities
+https://www.redpacketsecurity.com/
 https://www.redteam-pentesting.de/en/advisories/-advisories-publicised-vulnerability-analyses
 https://www.replicated.com/security/advisories
 https://www.ricoh.com/products/security/vulnerabilities
@@ -497,7 +508,7 @@ https://www.strongswan.org/blog
 https://www.sudo.ws/security/advisories
 https://www.supermicro.com/en/support/security_center#!advisories
 https://www.suse.com/support/update
-https://www.swascan.com/blog
+https://www.swascan.com/blog/
 https://www.swift.org/support/security.html#security-updates
 https://www.synaptics.com/company/blog
 https://www.synology.com/en-global/security/advisory
