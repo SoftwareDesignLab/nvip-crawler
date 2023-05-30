@@ -191,7 +191,6 @@ public class NVIPMain {
 		if (!databaseHelper.testDbConnection()) {
 			String configFile = "src/main/resources/db-" + properties.getDatabaseType() + ".properties";
 			logger.error("Error in database connection! Please check if the database configured in {} is up and running!", configFile);
-			System.exit(1);
 		}
 
 	}
