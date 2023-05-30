@@ -37,6 +37,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.api.errors.NoHeadException;
 import org.eclipse.jgit.internal.storage.file.FileRepository;
 import org.eclipse.jgit.internal.storage.file.WindowCache;
 import org.eclipse.jgit.lib.ProgressMonitor;
@@ -87,7 +88,9 @@ public class JGitParser {
 	public void cloneRepository() {
 		try {
 			logger.info("Cloning Repo to " + localDownloadLoc + File.separator + projectName + "...");
-			this.git = Git.cloneRepository().setURI(remoteLoc).setDirectory(new File(localDownloadLoc + File.separator + projectName)).setProgressMonitor(new ProgressMonitor() {
+			this.git = Git.cloneRepository().setURI(remoteLoc).
+					setDirectory(new File(localDownloadLoc + File.separator + projectName)).
+					setProgressMonitor(new ProgressMonitor() {
 				@Override
 				public void start(int totalTasks) {
 					logger.info("Starting clone...");
@@ -119,6 +122,7 @@ public class JGitParser {
 			logger.error("ERROR: Failed to clone repo @ {}", remoteLoc);
 			e.printStackTrace();
 		}
+
 	}
 
 	/**
@@ -144,27 +148,40 @@ public class JGitParser {
 
 	/**
 	 * Collects all commits from a repo and returns them in a list
-	 * 
+	 *
 	 * @return
 	 */
 	private List<RevCommit> getAllCommitList() {
-		List<RevCommit> revCommits = new ArrayList<>();
+		logger.info("Retrieving Commits...");
+		this.git = new Git(this.localRepo);
+		logger.info("Having repository: " + git.getRepository());
+
 		try {
-			for (RevCommit rev : git.log().call()) {
-				revCommits.add(rev);
+			List<RevCommit> revCommits = new ArrayList<>();
+			Iterable<RevCommit> commits = git.log().all().call();
+			if (commits.iterator().hasNext()) {
+				for (RevCommit rev : commits) {
+					revCommits.add(rev);
+				}
 			}
 			return revCommits;
+		} catch (NoHeadException e) {
+			logger.error("No commits found in the repository.");
 		} catch (GitAPIException e) {
-			e.getMessage();
-			logger.info(e.toString());
+			logger.error("Error retrieving commits: " + e.getMessage());
+			e.printStackTrace();
+		} catch (IOException e) {
+			throw new RuntimeException(e);
 		}
 		return null;
 	}
 
+
+
 	/**
 	 * Parse commits to prepare for extraction of patches for a repo Uses preset
 	 * Regex to find commits related to CVEs or bugs for patches
-	 * 
+	 *
 	 * @throws IOException
 	 * @throws GitAPIException
 	 * @return
