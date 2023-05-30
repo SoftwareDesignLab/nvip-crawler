@@ -152,26 +152,16 @@ public class JGitParser {
 	 * @return
 	 */
 	private List<RevCommit> getAllCommitList() {
-		logger.info("Retrieving Commits...");
+		List<RevCommit> revCommits = new ArrayList<>();
 		this.git = new Git(this.localRepo);
-		logger.info("Having repository: " + git.getRepository());
-
 		try {
-			List<RevCommit> revCommits = new ArrayList<>();
-			Iterable<RevCommit> commits = git.log().all().call();
-			if (commits.iterator().hasNext()) {
-				for (RevCommit rev : commits) {
-					revCommits.add(rev);
-				}
+			for (RevCommit rev : git.log().call()) {
+				revCommits.add(rev);
 			}
 			return revCommits;
-		} catch (NoHeadException e) {
-			logger.error("No commits found in the repository.");
 		} catch (GitAPIException e) {
-			logger.error("Error retrieving commits: " + e.getMessage());
-			e.printStackTrace();
-		} catch (IOException e) {
-			throw new RuntimeException(e);
+			e.getMessage();
+			logger.info(e.toString());
 		}
 		return null;
 	}
