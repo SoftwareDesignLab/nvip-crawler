@@ -561,7 +561,7 @@ public class DatabaseHelper {
 			while (rs.next()) {
 
 				try {
-					nvdVulnerabilities.add(new NvdVulnerability(rs.getString("cve_id"), rs.getTimestamp("published_date").toLocalDateTime(), rs.getString("status")));
+					nvdVulnerabilities.add(new NvdVulnerability(rs.getString("cve_id"), rs.getTimestamp("published_date").toLocalDateTime().toString(), rs.getString("status")));
 				} catch (Exception ignore) {}
 
 			}

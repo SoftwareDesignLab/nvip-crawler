@@ -35,7 +35,6 @@ import java.util.List;
 import java.util.Map;
 
 import com.google.gson.JsonArray;
-import edu.rit.se.nvip.cveprocess.CveProcessor;
 import edu.rit.se.nvip.model.NvdVulnerability;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
@@ -44,7 +43,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 import edu.rit.se.nvip.utils.CsvUtils;
-import edu.rit.se.nvip.utils.UrlUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -251,55 +249,11 @@ public class NvdCveController {
 		logger.info("Wrote a total of *** {} *** entries to CSV file: {}", totCount, filepath);
 
 		// process&store references
-		processCVEReferences(nvdRefUrlHash, filepath);
+//		processCVEReferences(nvdRefUrlHash, filepath);
 
 		logCPEInfo(filepath, nvdCveCpeHashMap);
 
 		return totCount;
-	}
-
-	/**
-	 * Process Nvd reference URLs
-	 *
-	 * @param nvdRefUrlHash
-	 * @param filepath
-	 */
-	private void processCVEReferences(Map<String, Integer> nvdRefUrlHash, String filepath) {
-		UrlUtils urlUtils = new UrlUtils();
-		int count = 0;
-		Map<String, Integer> nvdBaseRefUrlHash = new HashMap<>();
-		List<String> listFullRefUrls = new ArrayList<>();
-		try {
-			for (String sUrl : nvdRefUrlHash.keySet()) {
-				String sBaseUrl = urlUtils.getBaseUrl(sUrl);
-				if (sBaseUrl != null) {
-					listFullRefUrls.add(sUrl);
-					nvdBaseRefUrlHash.put(sBaseUrl, 0);
-				}
-
-				count++;
-				if (count % 10000 == 0)
-					logger.info("Processed {} URLs...", count);
-
-			}
-
-			List<String> listBaseRefUrls = new ArrayList<>();
-			listBaseRefUrls.addAll(nvdBaseRefUrlHash.keySet());
-
-			filepath = filepath.replace(".csv", "");
-			filepath = filepath.substring(0, filepath.lastIndexOf("/")) + "/url-sources/";
-			String sFullReferencePath = filepath + "nvd-cve-full-references.csv";
-			String sBaseReferencePath = filepath + "nvd-cve-base-references.csv";
-			FileUtils.writeLines(new File(sFullReferencePath), listFullRefUrls, false);
-			FileUtils.writeLines(new File(sBaseReferencePath), listBaseRefUrls, false);
-
-			int totInvalid = nvdRefUrlHash.keySet().size() - listFullRefUrls.size();
-			logger.info("\nScraped {} total NVD full-reference URLs.\nThe # of invalid full-references: {}\nThe # of recorded full-references: {}" +
-							"\nTotal # of unique base URLs: {}\nReference URLs are stored at: {} and {}",
-					count, totInvalid, listFullRefUrls.size(), nvdBaseRefUrlHash.keySet().size(), sFullReferencePath, sBaseReferencePath);
-		} catch (IOException e) {
-			logger.error("Error while processing NVD references!\n{}", e.getMessage());
-		}
 	}
 
 	/**
