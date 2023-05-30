@@ -29,6 +29,7 @@ import java.text.NumberFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import edu.rit.se.nvip.crawler.QuickCveCrawler;
 import edu.rit.se.nvip.crawler.github.PyPAGithubScraper;
 
 import edu.rit.se.nvip.exploit.ExploitIdentifier;
@@ -579,9 +580,9 @@ public class NVIPMain {
 		}
 
 		logger.info("{} of {} CVEs found in the CNA summary pages did not exist in the Mitre GitHub repo.", countCVEsNotInMitreGithub, list.size());
-		 */
 
-		List<CompositeVulnerability> list = new ArrayList<>(0);
+		// TODO: Is this correct? Was "List<CompositeVulnerability> list = new ArrayList<>(0);", but threw an error
+		list = new ArrayList<>(0);
 
 		/**
 		 * Crawl CVE from CNAs
