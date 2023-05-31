@@ -36,10 +36,10 @@ public class SWIDLookUp {
     /**
      * Adds a SWID entry to the SWID dictionary.
      *
-     * @param entry The SWID entry to add.
+     * @param productName The product name.
      */
-    public void addSWIDEntry(SWIDEntry entry) {
-        String productName = entry.getProductName();
+    public void addSWIDEntry(String productName, String swid) {
+        SWIDEntry entry = new SWIDEntry(productName, swid);
 
         if (swidDictionary.containsKey(productName)) {
             swidDictionary.get(productName).add(entry);
@@ -59,6 +59,16 @@ public class SWIDLookUp {
     public List<SWIDEntry> getSWIDEntries(String productName) {
         List<SWIDEntry> entries = swidDictionary.get(productName);
         return (entries != null) ? entries : new ArrayList<>();
+    }
+
+    //get swid tag from SWID dictionary
+    public String getSWID(String productName) {
+        List<SWIDEntry> entries = swidDictionary.get(productName);
+        if (entries != null) {
+            return entries.get(0).getSWID();
+        } else {
+            return "";
+        }
     }
 
     /**

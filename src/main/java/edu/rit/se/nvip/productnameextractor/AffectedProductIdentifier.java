@@ -83,7 +83,7 @@ public class AffectedProductIdentifier extends Thread implements Runnable {
 			logger.error("Severe Error! Could not initialize the models for product name/version extraction! Skipping affected release identification step! {}", e1.toString());
 			return -1;
 		}
-
+		SWIDLookUp swidLookUp = SWIDLookUp.getInstance();
 		CpeLookUp cpeLookUp = CpeLookUp.getInstance();
 		int numOfProductsMappedToCpe = 0;
 		int numOfProductsNotMappedToCPE = 0;
@@ -165,7 +165,8 @@ public class AffectedProductIdentifier extends Thread implements Runnable {
 						// if CPE identified, add it as affected release
 						for (String itemID : productIDs) {
 //							logger.info("Found Affected Product for {}: {}", vulnerability.getCveId(), itemID);
-							vulnerability.getAffectedReleases().add(new AffectedRelease(0, vulnerability.getCveId(), itemID, null, CpeLookUp.getVersionFromCPEid(itemID)));
+							String swid = swidLookUp.getSWID(itemID);
+							vulnerability.getAffectedReleases().add(new AffectedRelease(0, vulnerability.getCveId(), itemID, swid, CpeLookUp.getVersionFromCPEid(itemID)));
 							numOfProductsMappedToCpe++;
 						}
 					}
