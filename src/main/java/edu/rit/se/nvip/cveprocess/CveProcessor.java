@@ -75,6 +75,11 @@ public class CveProcessor {
 	private HashMap<String, NvdVulnerability> nvdCVEs;
 	private Map<String, String> cvesInMitre = new HashMap<>();
 
+	/**
+	 * New hashmap for CVEs in Mitre
+	 */
+	private HashMap<String, MitreVulnerability> mitreCves;
+
 	CveReconciler cveUtils = new CveReconciler();
 
 	/**
@@ -95,9 +100,10 @@ public class CveProcessor {
 	 * @param mitreCvePath --> File path to MITRE CVE .csv file
 	 * @param nvdCves --> Hashmap of CVEs in NVD (provided byb NVD Controller class)
 	 */
-	public CveProcessor(String nvdCvePath, String mitreCvePath, HashMap<String, NvdVulnerability> nvdCves, HashMap<String, MitreVulnerability> pulledMitreCves) {
+	public CveProcessor(String nvdCvePath, String mitreCvePath, HashMap<String, NvdVulnerability> nvdCves, HashMap<String, MitreVulnerability> mitreCves) {
 
 		this.nvdCVEs = nvdCves;
+		this.mitreCves = mitreCves;
 
 		try {
 			CsvUtils csvLogger = new CsvUtils();
@@ -204,33 +210,25 @@ public class CveProcessor {
 					newCVEDataNotInNvd.add(vuln);
 				}
 
-				// Compare w/ MITRE
-				// TODO: will need to use a similar comparison via status like NVD
-				if (vuln.isFoundNewDescriptionForReservedCve()) {
-					vuln.setMitreStatus(0);
-				} else if (cvesInMitre.containsKey(vuln.getCveId())) {
-					vuln.setMitreStatus(1);
-				} else if (existingCves.containsKey(vuln.getCveId()) && existingCves.get(vuln.getCveId()).getMitreStatus() == 0) {
-					long monthsBetween = ChronoUnit.MONTHS.between(LocalDateTime.now(),existingCves.get(vuln.getCveId()).getCreatedDateAsDate());
 
-					// Check if the CVE is within the past month, if it's older, then assume it's in MITRE
-					if (checkAgeOfCVEByYear(vuln.getCveId()) && monthsBetween <= 1 && monthsBetween >= 0) {
-						logger.info("CVE: {}, is NOT in Mitre", vuln.getCveId());
-						vuln.setMitreSearchResult("NA");
+				// Compare w/ MITRE
+				if (mitreCves.containsKey(vuln.getCveId())){
+					// Check status of CVE in MITRE, if PUBLIC or PUBLISHED, then it is in MITRE.
+					// If any other status, then it is not in MITRE.
+					if (mitreCves.get(vuln.getCveId()).getStatus() == MitreVulnerability.mitreStatus.NOTINMITRE ||
+							mitreCves.get(vuln.getCveId()).getStatus() == MitreVulnerability.mitreStatus.RESERVED) {
 						vuln.setMitreStatus(0);
 						newCVEDataNotInMitre.add(vuln);
 					} else {
-						logger.info("CVE: {} is from over a month ago, will assume it's in MITRE: Setting status to 1", vuln.getCveId());
 						vuln.setMitreStatus(1);
 					}
-				} else if (!existingCves.containsKey(vuln.getCveId())) {
-					logger.info("CVE: {} is not in NVIP and not in MITRE: Keeping status as 0", vuln.getCveId());
+				} else if (existingCves.containsKey(vuln.getCveId()) && existingCves.get(vuln.getCveId()).getMitreStatus() == 1) {
+					vuln.setMitreStatus(1);
+				} else {
+					logger.info("CVE: {}, is NOT in MITRE", vuln.getCveId());
 					vuln.setMitreSearchResult("NA");
 					vuln.setMitreStatus(0);
 					newCVEDataNotInMitre.add(vuln);
-				} else {
-					logger.info("CVE: {} is already in DB and is in MITRE: Keeping status as 1", vuln.getCveId());
-					vuln.setMitreStatus(1);
 				}
 
 			} catch (Exception e) {

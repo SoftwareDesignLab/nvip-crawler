@@ -57,18 +57,25 @@ public class MitreCveController {
 	private String mitreGithubUrl;
 	private String localPath;
 
-	private int yearsBack;
 
 	public static void main(String[] args) {
 		MitreCveController main = new MitreCveController("https://github.com/CVEProject/cvelist", "nvip_data/mitre-cve", 5);
 		HashMap<String, MitreVulnerability> results = main.getMitreCVEsFromGitRepo();
 		logger.info("{} cves found from MITRE", results.size());
+
+		int numReserved = 0;
+
+		for (MitreVulnerability mitreVuln: results.values()) {
+			logger.info(mitreVuln.getStatus());
+			numReserved = mitreVuln.getStatus() == MitreVulnerability.mitreStatus.RESERVED ? numReserved + 1: numReserved;
+		}
+
+		logger.info("Found {} reserved CVEs from MITRE", numReserved);
 	}
 
-	public MitreCveController(String mitreGithubUrl, String localPath, int yearsBack) {
+	public MitreCveController(String mitreGithubUrl, String localPath) {
 		this.mitreGithubUrl = mitreGithubUrl;
 		this.localPath = localPath;
-		this.yearsBack = yearsBack;
 	}
 
 	/**
