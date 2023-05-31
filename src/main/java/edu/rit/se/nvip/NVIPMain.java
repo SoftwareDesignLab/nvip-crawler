@@ -43,7 +43,6 @@ import org.apache.logging.log4j.Logger;
 import edu.rit.se.nvip.characterizer.CveCharacterizer;
 import edu.rit.se.nvip.crawler.CveCrawlController;
 import edu.rit.se.nvip.crawler.QuickCveCrawler;
-import edu.rit.se.nvip.crawler.github.GithubScraper;
 import edu.rit.se.nvip.cveprocess.CveLogDiff;
 import edu.rit.se.nvip.cveprocess.CveProcessor;
 import edu.rit.se.nvip.cvereconcile.AbstractCveReconciler;
@@ -78,7 +77,7 @@ public class NVIPMain {
 	private static final Map<String, Object> crawlerVars = new HashMap<>();
 	private static final Map<String, Object> dataVars = new HashMap<>();
 
-	private static final Map<String, Object> nvdVars = new HashMap<>();
+	private static final Map<String, Object> compareVars = new HashMap<>();
 
 	private static final Map<String, Object> characterizationVars = new HashMap<>();
 	private static final Map<String, Object> exploitVars = new HashMap<>();
@@ -172,7 +171,7 @@ public class NVIPMain {
 
 		this.prepareCrawlerVars();
 		this.prepareDataVars();
-		this.prepareNvdVars();
+		this.prepareCompareVars();
 		this.prepareCharacterizationVars();
 		this.prepareExploitFinderVars();
 		this.preparePatchFinderVars();
@@ -264,16 +263,19 @@ public class NVIPMain {
 	 * Prepare Vars for NVD API Comparison from envvars
 	 * Sets defaults if envvars aren't found
 	 */
-	private void prepareNvdVars() {
+	private void prepareCompareVars() {
 		String nvdApiUrl = System.getenv("NVD_API_URL");
 		String nvdApiRequestLimit = System.getenv("NVD_API_REQUEST_LIMIT");
+		String mitGithubUrl = System.getenv("MITRE_GITHUB_URL");
 
-		addEnvvarString(NVIPMain.nvdVars,"nvdApiUrl", nvdApiUrl, "https://services.nvd.nist.gov/rest/json/cves/2.0?pubstartDate=<StartDate>&pubEndDate=<EndDate>",
+		addEnvvarString(NVIPMain.compareVars,"nvdApiUrl", nvdApiUrl, "https://services.nvd.nist.gov/rest/json/cves/2.0?pubstartDate=<StartDate>&pubEndDate=<EndDate>",
 				"WARNING: NVD API URL not defined in NVD_API_URL, using https://services.nvd.nist.gov/rest/json/cves/2.0?pubstartDate=<StartDate>&pubEndDate=<EndDate>" +
 						" as default");
-		addEnvvarInt(NVIPMain.nvdVars, "nvdApiRequestLimit", nvdApiRequestLimit, 10,
+		addEnvvarInt(NVIPMain.compareVars, "nvdApiRequestLimit", nvdApiRequestLimit, 10,
 				"WARNING: NVD Request Limit not defined in NVD_API_REQUEST_LIMIT, setting 10 for default",
 				"NVD_API_REQUEST_LIMIT");
+		addEnvvarString(NVIPMain.compareVars, "mitreGithubUrl", mitGithubUrl, "https://github.com/CVEProject/cvelist",
+				"WARNING: CVE MITRE Github URL not defined in MITRE_GITHUB_URL, setting https://github.com/CVEProject/cvelist for default");
 	}
 
 
@@ -535,8 +537,6 @@ public class NVIPMain {
 
 		if ((Boolean) crawlerVars.get("enableGitHub")) {
 			logger.info("CVE Github pull enabled, scraping CVe GitHub now!");
-			GithubScraper githubScraper = new GithubScraper();
-			cveHashMapGithub = githubScraper.scrapeGithub();
 			for (String gitHubvuln : cveHashMapGithub.keySet()) {
 				ArrayList<CompositeVulnerability> initList = new ArrayList<>();
 				initList.add(cveHashMapGithub.get(gitHubvuln));
@@ -707,8 +707,11 @@ public class NVIPMain {
 		// TODO: CSV files don't do anything anymore
 		//  they're just needed to initialize the processor, should deprecate once the API calls are finalized
 		HashMap<String, NvdVulnerability> nvdCves = new NvdCveController().fetchNVDCVEs(
-				(String) nvdVars.get("nvdApiUrl"), (int) nvdVars.get("nvdApiRequestLimit"));
-		HashMap<String, MitreVulnerability> mitreCves = new MitreCveController();
+				(String) compareVars.get("nvdApiUrl"), (int) compareVars.get("nvdApiRequestLimit"));
+
+		HashMap<String, MitreVulnerability> mitreCves = new MitreCveController((String) compareVars.get("mitreGithubUrl"),
+				((String) dataVars.get("dataDir")) + "/" + "mitre-cve", 5).getMitreCVEsFromGitRepo();
+
 		CveProcessor cveProcessor = new CveProcessor(cveDataPathNvd, cveDataPathMitre, nvdCves);
 		Map<String, Vulnerability> existingCves = databaseHelper.getExistingVulnerabilities();
 

@@ -31,6 +31,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import edu.rit.se.nvip.model.MitreVulnerability;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -40,7 +41,7 @@ import com.google.gson.JsonParser;
 
 import edu.rit.se.nvip.model.CompositeVulnerability;
 import edu.rit.se.nvip.utils.CsvUtils;
-import edu.rit.se.nvip.utils.GitController;
+import edu.rit.se.nvip.crawler.github.GitController;
 import edu.rit.se.nvip.utils.UtilHelper;
 
 /**
@@ -53,25 +54,29 @@ import edu.rit.se.nvip.utils.UtilHelper;
 public class MitreCveController {
 	private final Logger logger = LogManager.getLogger(MitreCveController.class);
 
-	public MitreCveController() {
-		Map<Integer, Integer> recentCveYearsMap = new HashMap<>();
-		int currentYear = Calendar.getInstance().get(Calendar.YEAR);
-		int lookYearsBack = 5;
-		for (int year = currentYear; year > currentYear - lookYearsBack; year--)
-			recentCveYearsMap.put(year, year);
+	private String mitreGithubUrl;
+	private String localPath;
+
+	private int yearsBack;
+
+	public MitreCveController(String mitreGithubUrl, String localPath, int yearsBack) {
+		this.mitreGithubUrl = mitreGithubUrl;
+		this.localPath = localPath;
+		this.yearsBack = yearsBack;
 	}
 
 	/**
-	 * get Mitre CVEs. Checks if a local git repo exists for Mitre CVEs. If not
+	 * Get Mitre CVEs. Checks if a local git repo exists for Mitre CVEs. If not
 	 * clones the remote Git repo. If a local repo exists then it pulls the latest
 	 * updates if any. Then it recursively loads all json files in the local repo,
 	 * parses them and creates a CSV file at the output path.
 	 */
-	public HashMap<String, CompositeVulnerability> getMitreCVEsFromGitRepo(String localPath, String remotePath, String outputCSVpath) {
+	public HashMap<String, MitreVulnerability> getMitreCVEsFromGitRepo() {
 
-		GitController gitController = new GitController(localPath, remotePath);
+		GitController gitController = new GitController(localPath, mitreGithubUrl);
 		logger.info("Checking local Git CVE repo...");
 
+		// Check if repo is already cloned, if so then just pull the repo for latest changes
 		File f = new File(localPath);
 		boolean pullDir = false;
 		try {
@@ -83,15 +88,15 @@ public class MitreCveController {
 
 		if (pullDir) {
 			if (gitController.pullRepo())
-				logger.info("Pulled git repo at: {} to: {}, now parsing each CVE...", remotePath, localPath);
+				logger.info("Pulled git repo at: {} to: {}, now parsing each CVE...", mitreGithubUrl, localPath);
 			else {
-				logger.error("Could not pull git repo at: {} to: {}", remotePath, localPath);
+				logger.error("Could not pull git repo at: {} to: {}", mitreGithubUrl, localPath);
 			}
 		} else {
 			if (gitController.cloneRepo())
-				logger.info("Cloned git repo at: {} to: {}, now parsing each CVE...", remotePath, localPath);
+				logger.info("Cloned git repo at: {} to: {}, now parsing each CVE...", mitreGithubUrl, localPath);
 			else {
-				logger.error("Could not clone git repo at: {} to: {}", remotePath, localPath);
+				logger.error("Could not clone git repo at: {} to: {}", mitreGithubUrl, localPath);
 			}
 		}
 
@@ -107,18 +112,14 @@ public class MitreCveController {
 		List<String[]> cveData = mitreCVEParser.parseCVEJSONFiles(list);
 		logger.info("Parsed {} JSON files at {}", list.size(), localPath);
 
-		// log CVEs
-		int count = new CsvUtils().writeListToCSV(cveData, outputCSVpath, false);
-		logger.info("Wrote *** {} **** MITRE CVE items to {}", count, outputCSVpath);
-
 		// add all CVEs to a map
-		HashMap<String, CompositeVulnerability> gitHubCveMap = new HashMap<>();
+		HashMap<String, MitreVulnerability> gitHubCveMap = new HashMap<>();
 		for (String[] cve : cveData) {
 			String cveId = cve[0];
-			String sourceUrl = remotePath;
-			String date = UtilHelper.longDateFormat.format(new Date());
-			String description = cve[1];
-			CompositeVulnerability vuln = new CompositeVulnerability(0, sourceUrl, cveId, "N/A", date, date, description, null);
+			String status = cve[1];
+			String publishedDate = cve[2];
+			String lastModifiedDate = cve[3];
+			MitreVulnerability vuln = new MitreVulnerability(cveId, publishedDate, lastModifiedDate, status);
 			gitHubCveMap.put(cveId, vuln);
 		}
 
@@ -156,7 +157,7 @@ public class MitreCveController {
 			}
 		}
 
-		//logger.info("Parsed " + jsonList.size() + " CVEs in " + folder);
+		logger.info("Parsed " + jsonList.size() + " CVEs in " + folder);
 		return jsonList;
 	}
 

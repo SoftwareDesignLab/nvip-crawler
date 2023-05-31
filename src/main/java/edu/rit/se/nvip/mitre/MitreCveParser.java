@@ -35,6 +35,7 @@ import com.google.gson.JsonObject;
 /**
  * 
  * Mitre CVE parser
+ * Used for grabbing CVEs that are stored in CVE.mitre
  * 
  * @author axoeec
  *
@@ -42,12 +43,8 @@ import com.google.gson.JsonObject;
 public class MitreCveParser {
 	private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
 
-	public MitreCveParser() {
-		super();
-	}
-
 	/**
-	 * parse JSON items
+	 * parse JSON items from CVE MITRE repo
 	 * 
 	 * @param list
 	 * @return
@@ -64,22 +61,21 @@ public class MitreCveParser {
 	}
 
 	/**
-	 * parse one MITRE CVE JSON
+	 * parse one MITRE CVE JSON from CVE MITRE repo
 	 * 
 	 * @param json
 	 * @return
 	 */
 	private String[] getCVEID(JsonObject json) {
-		String[] items = new String[2];
+		String[] items = new String[4];
 
 		try {
-			items[0] = json.getAsJsonObject("CVE_data_meta").get("ID").toString().replace("\"", "");
-
-			JsonArray descriptions = json.getAsJsonObject("description").getAsJsonArray("description_data");
-			items[1] = ((JsonObject) descriptions.get(0)).get("value").toString();
+			items[0] = json.getAsJsonObject("cveMetadata").get("cveId").toString().replace("\"", "");
+			items[1] = json.getAsJsonObject("cveMetadata").get("state").toString();
+			items[2] = json.getAsJsonObject("cveMetadata").get("datePublished").toString();
+			items[3] = json.getAsJsonObject("cveMetadata").get("dateUpdated").toString();
 		} catch (Exception e) {
 			logger.error("Error parsing json: {}. {}", json, e.toString());
-			return null;
 		}
 
 		return items;
