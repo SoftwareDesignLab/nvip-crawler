@@ -114,10 +114,9 @@ public class DatabaseHelper {
 
 	private final String selectCvssSeveritySql = "SELECT * FROM cvssseverity;";
 
-	private final String insertProductSql = "INSERT INTO product (CPE, domain) VALUES (?, ?);";
+	private final String insertProductSql = "INSERT INTO product (CPE, swid, domain) VALUES (?, ?, ?);";
 	private final String getProductCountFromCpeSql = "SELECT count(*) from product where cpe = ?";
 	private final String getIdFromCpe = "SELECT * FROM product where cpe = ?;";
-
 	private final String getPatchSourceByIdSql = "SELECT source_url_id from patchsourceurl WHERE source_url = ?;";
 	private final String insertPatchSourceURLSql = "INSERT INTO patchsourceurl (vuln_id, source_url) VALUES (?, ?);";
 	private final String insertPatchCommitSql = "INSERT INTO patchcommit (source_id, commit_url, commit_date, commit_message) VALUES (?, ?, ?, ?);";
@@ -129,6 +128,9 @@ public class DatabaseHelper {
 	private final String getCPEById = "SELECT cpe FROM product WHERE product_id = ?;";
 	private final String selectCpesByCve = "SELECT v.vuln_id, v.cve_id, p.cpe FROM vulnerability v LEFT JOIN affectedrelease ar ON ar.cve_id = v.cve_id LEFT JOIN product p ON p.product_id = ar.product_id WHERE p.cpe IS NOT NULL AND v.cve_id = ?;";
 	private final String selectCpesAndCve = "SELECT v.vuln_id, v.cve_id, p.cpe FROM vulnerability v LEFT JOIN affectedrelease ar ON ar.cve_id = v.cve_id LEFT JOIN product p ON p.product_id = ar.product_id WHERE p.cpe IS NOT NULL;";
+	private final String getSWIDsById = "SELECT swid FROM product WHERE product_id = ?;";
+	private final String selectSwidsByCve = "SELECT v.vuln_id, v.cve_id, p.swid FROM vulnerability v LEFT JOIN affectedrelease ar ON ar.cve_id = v.cve_id LEFT JOIN product p ON p.product_id = ar.product_id WHERE p.swid IS NOT NULL AND v.cve_id = ?;";
+	private final String selectSwidsAndCve = "SELECT v.vuln_id, v.cve_id, p.swid FROM vulnerability v LEFT JOIN affectedrelease ar ON ar.cve_id = v.cve_id LEFT JOIN product p ON p.product_id = ar.product_id WHERE p.swid IS NOT NULL;";
 
 	private final String insertAffectedReleaseSql = "INSERT INTO affectedrelease (cve_id, product_id, release_date, version) VALUES (?, ?, ?, ?);";
 
@@ -369,7 +371,8 @@ public class DatabaseHelper {
 					continue; // product already exists, skip!
 				}
 				pstmt.setString(1, product.getCpe());
-				pstmt.setString(2, product.getDomain());
+				pstmt.setString(2, product.getSwid());
+				pstmt.setString(3, product.getDomain());
 				pstmt.executeUpdate();
 				count++;
 			}
@@ -559,6 +562,91 @@ public class DatabaseHelper {
 		}
 
 		return cpes;
+	}
+
+	/**
+	 * Get SWID tag from id
+	 *
+	 * @param id
+	 * @return
+	 */
+	public String getSwidsbyId(int id) {
+		Connection conn = null;
+		String swid = "";
+		try {
+			conn = getConnection();
+			PreparedStatement pstmt = conn.prepareStatement(getSWIDsById);
+			pstmt.setInt(1, id);
+			ResultSet res = pstmt.executeQuery();
+			while (res.next()) {
+				swid = res.getString("swid");
+			}
+		} catch (Exception e) {
+		}
+
+		try {
+			conn.close();
+		} catch (SQLException e) {
+		}
+		return swid;
+	}
+
+	/**
+	 * Select SWID by CVE
+	 *
+	 * @param cve
+	 * @return
+	 */
+	public String getSwidsbyCVE(String cve) {
+		Connection conn = null;
+		String swid = "";
+		try {
+			conn = getConnection();
+			PreparedStatement pstmt = conn.prepareStatement(selectSwidsByCve);
+			pstmt.setString(1, cve);
+			ResultSet res = pstmt.executeQuery();
+			while (res.next()) {
+				swid = res.getString("swid");
+			}
+		} catch (Exception e) {
+		}
+
+		try {
+			conn.close();
+		} catch (SQLException e) {
+		}
+		return swid;
+	}
+
+	/**
+	 * Select SWIDS and CVEs
+	 *
+	 * @return
+	 */
+
+	public Map<String, ArrayList<String>> getSwidsAndCVE() {
+		Connection conn = null;
+		Map<String, ArrayList<String>> swids = new HashMap<>();
+		try {
+			conn = getConnection();
+			PreparedStatement pstmt = conn.prepareStatement(selectSwidsAndCve);
+			ResultSet res = pstmt.executeQuery();
+			while (res.next()) {
+				ArrayList<String> data = new ArrayList<>();
+				data.add(res.getString("vuln_id"));
+				data.add(res.getString("cve_id"));
+				swids.put(res.getString("swid"), data);
+			}
+
+		} catch (Exception e) {
+		}
+
+		try {
+			conn.close();
+		} catch (SQLException e) {
+		}
+
+		return swids;
 	}
 
 	/**
@@ -1811,11 +1899,12 @@ public class DatabaseHelper {
 			"   cs.impact_confidences," +
 			"   vap.product_id," +
 			"   vap.cpe," +
+			"   vap.swid," +
 			"   vap.domain," +
 			"   vap.version," +
 			"   expl.publish_date," +
 			"   expl.publisher_url," +
-			"   vu.run_date_time" +
+			"   vu.run_date_time," +
 			" FROM (SELECT vu.vuln_id," +
 			" MAX(drh.run_id)        AS \"run_id\"," +
 			" MAX(drh.run_date_time) AS \"run_date_time\"" +
@@ -1853,6 +1942,7 @@ public class DatabaseHelper {
 			" LEFT JOIN (SELECT cve_id," +
 			"   group_concat(DISTINCT ar.product_id SEPARATOR ';') AS product_id," +
 			"   group_concat(DISTINCT cpe SEPARATOR ';')           AS cpe," +
+			"   group_concat(DISTINCT swid SEPARATOR ';')        AS swid," +
 			"   group_concat(DISTINCT domain SEPARATOR ';')        AS domain," +
 			"   group_concat(DISTINCT version SEPARATOR ';')       AS version" +
 			" FROM affectedrelease ar" +
@@ -1860,6 +1950,7 @@ public class DatabaseHelper {
 			" GROUP BY cve_id) vap" +
 			"   ON vap.cve_id = v.cve_id" +
 			" LEFT JOIN exploit as expl on expl.vuln_id = v.vuln_id" +
+			" LEFT JOIN swid on swid.vuln_id = v.vuln_id" +
 			" WHERE v.status_id <> 2" +
 			"  and v.description is not null" +
 			"  and v.description not like '%** RESERVED ** This candidate%'" +
@@ -1911,9 +2002,10 @@ public class DatabaseHelper {
 						rs.getString(19),
 						rs.getString(20),
 						rs.getString(21),
-						rs.getDate(22),
-						rs.getString(23),
-						rs.getTimestamp(24)
+						rs.getString(22),
+						rs.getDate(23),
+						rs.getString(24),
+						rs.getTimestamp(25)
 				);
 
 				if (inserted) {
@@ -1950,12 +2042,13 @@ public class DatabaseHelper {
 			"impact_confidences," +
 			"product_id," +
 			"cpe," +
+			"swid," +
 			"domain," +
 			"version," +
 			"exploit_publish_date," +
 			"exploit_url," +
 			"run_date_time" +
-			") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);";
+			") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);";
 
 	/**
 	 * Helper function for inserting a single CVE into the vulnerabilityaggregate table
@@ -1978,6 +2071,7 @@ public class DatabaseHelper {
 	 * @param impConfidences
 	 * @param productId
 	 * @param cpe
+	 * @param swid
 	 * @param domain
 	 * @param version
 	 * @param exploitDate
@@ -1988,7 +2082,7 @@ public class DatabaseHelper {
 	public boolean insertCVEIntoAggregate(int vuln_id, String cve_id, String desc, String platform, java.sql.Date pubDate, java.sql.Date modDate,
 										   java.sql.Date fixDate, int existNvd, int existMitre, String vdoLabels, String vdoConfidences,
 										   String vdoNGroups, String urls, String baseSeverities, String severConfidences, String impScores,
-										   String impConfidences, String productId, String cpe, String domain, String version, java.sql.Date exploitDate,
+										   String impConfidences, String productId, String cpe, String swid, String domain, String version, java.sql.Date exploitDate,
 										   String exploitUrl, Timestamp runDatetime) {
 
 		try (Connection connection = getConnection();
@@ -2013,11 +2107,12 @@ public class DatabaseHelper {
 			pstmt.setString(17, impConfidences);
 			pstmt.setString(18, productId);
 			pstmt.setString(19, cpe);
-			pstmt.setString(20, domain);
-			pstmt.setString(21, version);
-			pstmt.setDate(22, exploitDate);
-			pstmt.setString(23, exploitUrl);
-			pstmt.setTimestamp(24, runDatetime);
+			pstmt.setString(20, swid);
+			pstmt.setString(21, domain);
+			pstmt.setString(22, version);
+			pstmt.setDate(23, exploitDate);
+			pstmt.setString(24, exploitUrl);
+			pstmt.setTimestamp(25, runDatetime);
 
 			pstmt.executeUpdate();
 

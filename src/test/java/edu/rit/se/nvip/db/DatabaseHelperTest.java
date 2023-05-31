@@ -140,7 +140,7 @@ public class DatabaseHelperTest {
 	private List<AffectedRelease> buildDummyReleases(int count) {
 		List<AffectedRelease> releases = new ArrayList<>();
 		for (int i = 0; i < count; i++) {
-			releases.add(new AffectedRelease(1337, "cve"+i, "cpe"+i, "date"+i, "version"+i));
+			releases.add(new AffectedRelease(1337, "cve"+i, "cpe"+i, "swid"+i, "date"+i, "version"+i));
 		}
 		return releases;
 	}
@@ -235,8 +235,9 @@ public class DatabaseHelperTest {
 		List<Product> testProducts = new ArrayList<>();
 		String domain = "domain";
 		String cpe = "cpe";
+		String swid = "swid";
 		for (int i=0; i < 5; i++) {
-			testProducts.add(new Product(domain+i, cpe+i));
+			testProducts.add(new Product(domain+i, cpe+i, swid+i));
 		}
 		try {
 			setResNextCount(0);

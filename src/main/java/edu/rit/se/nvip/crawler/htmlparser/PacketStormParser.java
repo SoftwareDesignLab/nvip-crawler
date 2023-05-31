@@ -289,7 +289,7 @@ public class PacketStormParser extends AbstractCveParser  {
 			String version = null;
 			if (matcher.find())
 				version = matcher.group();
-			AffectedRelease a = new AffectedRelease(p.getCpe(), publishDate, version);
+			AffectedRelease a = new AffectedRelease(p.getCpe(), p.getSwid(), publishDate, version);
 			affectedReleases.add(a);
 		}
 

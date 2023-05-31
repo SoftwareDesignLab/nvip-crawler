@@ -166,7 +166,7 @@ public class AffectedProductIdentifier extends Thread implements Runnable {
 						for (String itemID : productIDs) {
 //							logger.info("Found Affected Product for {}: {}", vulnerability.getCveId(), itemID);
 							String swid = swidLookUp.getSWID(itemID);
-							vulnerability.getAffectedReleases().add(new AffectedRelease(0, vulnerability.getCveId(), itemID, swid, CpeLookUp.getVersionFromCPEid(itemID)));
+							vulnerability.getAffectedReleases().add(new AffectedRelease(0, vulnerability.getCveId(), itemID, swid, "", CpeLookUp.getVersionFromCPEid(itemID)));
 							numOfProductsMappedToCpe++;
 						}
 					}

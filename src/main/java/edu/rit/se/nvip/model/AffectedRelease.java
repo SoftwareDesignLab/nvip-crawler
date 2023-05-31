@@ -33,21 +33,24 @@ public class AffectedRelease {
 	private final int id;
 	private String cveId;
 	private final String cpe;
+	private final String swid;
 	private String releaseDate;
 	private String version;
 
-	public AffectedRelease(int id, String cveId, String cpe, String releaseDate, String version) {
+	public AffectedRelease(int id, String cveId, String cpe, String swid, String releaseDate, String version) {
 		this.id = id;
 		this.cveId = cveId;
 		this.cpe = cpe;
+		this.swid = swid;
 		this.releaseDate = releaseDate;
 		this.version = version;
 	}
 
-	public AffectedRelease(String cpe, String releaseDate, String version) {
+	public AffectedRelease(String cpe, String swid, String releaseDate, String version) {
 		this.id = 0;
 		this.cveId = null;
 		this.cpe = cpe;
+		this.swid = swid;
 		this.releaseDate = releaseDate;
 		this.version = version;
 	}
@@ -56,6 +59,7 @@ public class AffectedRelease {
 		this.id = a.id;
 		this.cveId = a.cveId;
 		this.cpe = a.cpe;
+		this.swid = a.swid;
 		this.releaseDate = a.releaseDate;
 		this.version = a.version;
 	}
@@ -71,6 +75,8 @@ public class AffectedRelease {
 	public String getCpe() {
 		return cpe;
 	}
+
+	public String getSwid() { return swid; }
 
 	public String getReleaseDate() {
 		return releaseDate;
@@ -97,13 +103,13 @@ public class AffectedRelease {
 		if (!(obj instanceof AffectedRelease))
 			return false;
 		AffectedRelease other = (AffectedRelease) obj;
-		return other.cveId.equals(this.cveId) && other.cpe.equals(this.cpe);
+		return this.cpe.equals(other.cpe) && this.swid.equals(other.swid) && this.version.equals(other.version);
 
 	}
 
 	@Override
 	public String toString() {
-		return "AffectedRelease [cveId=" + cveId + ", cpe=" + cpe + ", releaseDate=" + releaseDate + ", version=" + version + "]";
+		return "AffectedRelease [cveId=" + cveId + ", cpe=" + cpe + ", swid=" + swid + ", releaseDate=" + releaseDate + ", version=" + version + "]";
 	}
 
 }

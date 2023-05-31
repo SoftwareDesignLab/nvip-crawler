@@ -209,7 +209,7 @@ public class KbCertCveParser extends AbstractCveParser  {
 				}
 			}
 
-			releases.add(new AffectedRelease(prod.getCpe(), releaseDate, version));
+			releases.add(new AffectedRelease(prod.getCpe(), prod.getSwid(), releaseDate, version));
 		}
 
 		return releases;
