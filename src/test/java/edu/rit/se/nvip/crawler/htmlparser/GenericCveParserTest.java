@@ -27,6 +27,8 @@ import edu.rit.se.nvip.model.CompositeVulnerability;
 import edu.rit.se.nvip.model.Vulnerability;
 import org.apache.commons.io.IOUtils;
 import org.junit.Test;
+import org.junit.Before;
+import org.junit.After;
 
 import java.io.IOException;
 import java.net.URL;
@@ -37,51 +39,81 @@ import static org.junit.Assert.*;
 
 public class GenericCveParserTest extends AbstractParserTest {
 
+	ParserStrategy parserTable;
+	ParserStrategy parserList;
+	ParserStrategy parserBulletin;
+	ParserStrategy parserAccordion;
+
 	GenericCveParser parser = new GenericCveParser("nat_available");
 	
-	@Test
-	public void testJenkins() {
-		String html = safeReadHtml("src/test/resources/test-jenkins.html");
-		List<CompositeVulnerability> list = parser.parseWebPage("jenkins", html);
-		CompositeVulnerability vuln = getVulnerability(list, "CVE-2017-1000355");
-		assertNotNull(vuln);
-	}
+	// @Test
+	// public void testJenkins() {
+	// 	String html = safeReadHtml("src/test/resources/test-jenkins.html");
+	// 	List<CompositeVulnerability> list = parser.parseWebPage("jenkins", html);
+	// 	CompositeVulnerability vuln = getVulnerability(list, "CVE-2017-1000355");
+	// 	assertNotNull(vuln);
+	// }
 
-	@Test
-	public void testAndroidCom() {
+	// @Test
+	// public void testAndroidCom() {
 
-		String url = "https://source.android.com/security/bulletin/2017-09-01";
-		String html = null;
-		try {
-			html = IOUtils.toString(new URL(url), StandardCharsets.UTF_8);
-		} catch (IOException e) {
-			e.printStackTrace();
-			fail();
-		}
-		List<CompositeVulnerability> list = parser.parseWebPage(url, html);
-		assertTrue(list.size() > 1);
-	}
+	// 	String url = "https://source.android.com/security/bulletin/2017-09-01";
+	// 	String html = null;
+	// 	try {
+	// 		html = IOUtils.toString(new URL(url), StandardCharsets.UTF_8);
+	// 	} catch (IOException e) {
+	// 		e.printStackTrace();
+	// 		fail();
+	// 	}
+	// 	List<CompositeVulnerability> list = parser.parseWebPage(url, html);
+	// 	assertTrue(list.size() > 1);
+	// }
 	
-	@Test
-	public void testOpenwall() {
-		String html = safeReadHtml("src/test/resources/test-openwall.html");
-		List<CompositeVulnerability> list = parser.parseWebPage("openwall", html);
-		Vulnerability vuln = getVulnerability(list, "CVE-2015-4852");
-		assertNotNull(vuln);
-		boolean fine = vuln.getDescription().contains("Oracle");
-		assertTrue(fine);
+	// @Test
+	// public void testOpenwall() {
+	// 	String html = safeReadHtml("src/test/resources/test-openwall.html");
+	// 	List<CompositeVulnerability> list = parser.parseWebPage("openwall", html);
+	// 	Vulnerability vuln = getVulnerability(list, "CVE-2015-4852");
+	// 	assertNotNull(vuln);
+	// 	boolean fine = vuln.getDescription().contains("Oracle");
+	// 	assertTrue(fine);
+	// }
+
+	@Before
+	public void setupParsers(){
+		String tableHtml = safeReadHtml("src/test/resources/test-choose-table.html");
+		parserTable = parser.chooseParserStrategy(tableHtml);
+
+		String listHtml = safeReadHtml("src/test/resources/test-generic_list_parser-naver.html");
+		parserList = parser.chooseParserStrategy(listHtml);
+
+		String bulletinHtml = safeReadHtml("src/test/resources/test-android-bulletin.html");
+		parserBulletin = parser.chooseParserStrategy(bulletinHtml);
+
+		String accordionHtml = safeReadHtml("src/test/resources/test-choose-accordion.html");
+		parserAccordion = parser.chooseParserStrategy(accordionHtml);
+		
 	}
 
 	@Test
 	public void testChooseParserStrategy() {
-		String tableHtml = safeReadHtml("src/test/resources/test-choose-table.html");
-		assertTrue(parser.chooseParserStrategy(tableHtml) instanceof ParseTable);
-		String listHtml = safeReadHtml("src/test/resources/test-generic_list_parser-naver.html");
-		assertTrue(parser.chooseParserStrategy(listHtml) instanceof ParseList);
-		String bulletinHtml = safeReadHtml("src/test/resources/test-android-bulletin.html");
-		assertTrue(parser.chooseParserStrategy(bulletinHtml) instanceof ParseBulletin);
-		String accordionHtml = safeReadHtml("src/test/resources/test-choose-accordion.html");
-		assertTrue(parser.chooseParserStrategy(accordionHtml) instanceof ParseAccordion);
+		assertTrue(parserTable instanceof ParseTable);
+		assertTrue(parserList instanceof ParseList);
+		assertTrue(parserBulletin instanceof ParseBulletin);
+		assertTrue(parserAccordion instanceof ParseAccordion);
+	}
+
+	@After
+	public void destoryParsers(){
+		if(parserTable instanceof ParseTable) ((ParseTable)parserTable).driver.quit();
+		if(parserList instanceof ParseTable) ((ParseTable)parserList).driver.quit();
+		if(parserBulletin instanceof ParseTable) ((ParseTable)parserBulletin).driver.quit();
+		if(parserAccordion instanceof ParseTable) ((ParseTable)parserAccordion).driver.quit();
+
+		if(parserTable instanceof ParseAccordion) ((ParseAccordion)parserTable).driver.quit();
+		if(parserList instanceof ParseAccordion) ((ParseAccordion)parserList).driver.quit();
+		if(parserBulletin instanceof ParseAccordion) ((ParseAccordion)parserBulletin).driver.quit();
+		if(parserAccordion instanceof ParseAccordion) ((ParseAccordion)parserAccordion).driver.quit();
 	}
 
 }

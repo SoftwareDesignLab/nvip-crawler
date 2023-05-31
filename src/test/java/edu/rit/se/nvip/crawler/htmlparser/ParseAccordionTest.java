@@ -14,6 +14,7 @@ public class ParseAccordionTest extends AbstractParserTest{
     public void testParseAccordionNi() {
         ParseAccordion parser = new ParseAccordion("https://www.ni.com/en-us/support/documentation/supplemental/11/available-critical-and-security-updates-for-ni-software.html");
         List<CompositeVulnerability> vulnerabilities = parser.parseWebPage("https://www.ni.com/en-us/support/documentation/supplemental/11/available-critical-and-security-updates-for-ni-software.html", null);
+        parser.driver.quit();
 
         assertTrue(vulnerabilities.size() > 0);
         CompositeVulnerability vuln = getVulnerability(vulnerabilities, "CVE-2022-42718");
@@ -27,6 +28,7 @@ public class ParseAccordionTest extends AbstractParserTest{
     public void testParseAccordionOpenVPN() {
         ParseAccordion parser = new ParseAccordion("https://openvpn.net/security-advisories/");
         List<CompositeVulnerability> vulnerabilities = parser.parseWebPage("https://openvpn.net/security-advisories/", null);
+        parser.driver.quit();
 
         assertTrue(vulnerabilities.size() > 0);
         CompositeVulnerability vuln = getVulnerability(vulnerabilities, "CVE-2022-3602");
@@ -40,6 +42,7 @@ public class ParseAccordionTest extends AbstractParserTest{
     public void testParseAccordionPega() {
         ParseAccordion parser = new ParseAccordion("https://www.pega.com/trust/security-bulletins");
         List<CompositeVulnerability> vulnerabilities = parser.parseWebPage("https://www.pega.com/trust/security-bulletins", null);
+        parser.driver.quit();
 
         assertTrue(vulnerabilities.size() > 0);
         CompositeVulnerability vuln = getVulnerability(vulnerabilities, "CVE-2022-23531");
@@ -53,6 +56,7 @@ public class ParseAccordionTest extends AbstractParserTest{
     public void testParseAccordionAsus() {
         ParseAccordion parser = new ParseAccordion("https://www.asus.com/content/asus-product-security-advisory/");
         List<CompositeVulnerability> vulnerabilities = parser.parseWebPage("https://www.asus.com/content/asus-product-security-advisory/", null);
+        parser.driver.quit();
 
         assertTrue(vulnerabilities.size() > 0);
         CompositeVulnerability vuln = getVulnerability(vulnerabilities, "CVE-2020-24588");
