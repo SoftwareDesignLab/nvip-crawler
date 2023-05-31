@@ -26,6 +26,7 @@ package db;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
+import java.net.URI;
 import java.sql.*;
 import java.util.Collection;
 import java.util.HashMap;
@@ -62,7 +63,8 @@ public class DatabaseHelper {
 	private final String insertAffectedReleaseSql = "INSERT INTO affectedproduct (cve_id, release_date, version) VALUES (?, ?, ?);";
 
 	private static DatabaseHelper databaseHelper = null;
-	private static Map<String, Vulnerability> existingVulnMap = new HashMap<String, Vulnerability>();
+	private static Map<String, Vulnerability> existingVulnMap = new HashMap<>();
+	private static Map<String, CompositeVulnerability> existingCompositeVulnMap = new HashMap<>();
 
 	/**
 	 * Thread safe singleton implementation
@@ -292,6 +294,70 @@ public class DatabaseHelper {
 		logger.info("Done. Deleted existing affected releases in database!");
 	}
 
+	public Map<String, CompositeVulnerability> getExistingCompositeVulnerabilities() {
+
+		if (existingCompositeVulnMap.size() == 0) {
+		synchronized (DatabaseHelper.class) {
+			if (existingCompositeVulnMap.size() == 0) {
+				int vulnId;
+				String cveId, description, published_date, last_modified_date, srcUrl, platform, srcDomain = "";
+				int existAtNvd, existAtMitre;
+				existingCompositeVulnMap = new HashMap<>();
+				try (Connection connection = getConnection();) {
+
+					String selectSql = """
+								SELECT vulnerability.vuln_id, vulnerability.cve_id, description.description, vulnerability.published_date, vulnerability.last_modified_date
+								FROM nvip.vulnerability
+								JOIN nvip.description ON vulnerability.description_id = description.description_id
+								""";
+					PreparedStatement pstmt = connection.prepareStatement(selectSql);
+					ResultSet rs = pstmt.executeQuery();
+
+					while (rs.next()) {
+						vulnId = rs.getInt("vuln_id");
+						cveId = rs.getString("cve_id");
+						description = rs.getString("description");
+						published_date = rs.getString("published_date");
+						last_modified_date = rs.getString("last_modified_date");
+
+						// TODO: Fix these
+						existAtNvd = 0; /* rs.getInt("exists_at_nvd"); */
+						existAtMitre = 0; /* rs.getInt("exists_at_mitre"); */
+						platform = "";
+						srcUrl = ""; /* rs.getString("source_url"); */
+
+						try { srcDomain = new URI(srcUrl).getHost(); }
+						catch (Exception e) { logger.error("Error thrown while parsing URL", e); }
+						CompositeVulnerability existingVulnInfo = new CompositeVulnerability(
+								vulnId,
+								srcUrl,
+								cveId,
+								platform,
+								published_date,
+								last_modified_date,
+								description,
+								srcDomain,
+								existAtNvd,
+								existAtMitre
+						);
+						existingCompositeVulnMap.put(cveId, existingVulnInfo);
+					}
+					logger.info("NVIP has loaded {} existing CVE items from DB!", existingCompositeVulnMap.size());
+				} catch (Exception e) {
+					logger.error("Error while getting existing vulnerabilities from DB\nException: {}", e.getMessage());
+					logger.error(
+							"This is a serious error! NVIP will not be able to decide whether to insert or update! Exiting...");
+					System.exit(1);
+				}
+			}
+		}
+	} else {
+		logger.warn("NVIP has loaded {} existing CVE items from memory!", existingCompositeVulnMap.size());
+	}
+
+		return existingCompositeVulnMap;
+}
+
 	/**
 	 * Get existing vulnerabilities hash map. This method was added to improve
 	 * DatabaseHelper, NOT to query each CVEID during a CVE update! Existing
@@ -312,10 +378,9 @@ public class DatabaseHelper {
 					try (Connection connection = getConnection();) {
 
 						String selectSql = """
-								SELECT vulnerability.vuln_id, vulnerability.cve_id, description.description, vulnerability.created_date, nvdmitrestatus.status_nvd, nvdmitrestatus.status_mitre
-								FROM vulnerability
-								JOIN description ON vulnerability.description_id = description.description_id
-								JOIN nvdmitrestatus ON vulnerability.cve_id = nvdmitrestatus.cve_id;
+								SELECT vulnerability.vuln_id, vulnerability.cve_id, description.description, vulnerability.created_date
+								FROM nvip.vulnerability
+								JOIN nvip.description ON vulnerability.description_id = description.description_id
 								""";
 						PreparedStatement pstmt = connection.prepareStatement(selectSql);
 						ResultSet rs = pstmt.executeQuery();
@@ -325,8 +390,8 @@ public class DatabaseHelper {
 							cveId = rs.getString("cve_id");
 							description = rs.getString("description");
 							createdDate = rs.getString("created_date");
-							existAtNvd = rs.getInt("exists_at_nvd");
-							existAtMitre = rs.getInt("exists_at_mitre");
+							existAtNvd = 0; /* rs.getInt("exists_at_nvd"); */
+							existAtMitre = 0; /* rs.getInt("exists_at_mitre"); */
 							Vulnerability existingVulnInfo = new Vulnerability(vulnId, cveId, description, existAtNvd, existAtMitre,
 									createdDate);
 							existingVulnMap.put(cveId, existingVulnInfo);
