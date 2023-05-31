@@ -262,13 +262,13 @@ public class CveProcessor {
 	 *
 	 * Note this only checks time gaps between NVIP and NVD, MITRE time gaps are not calculated (yet)
 	 *
-	 * TODO: Add time gaps calculation for MITRE
 	 * @param hashMapNvipCve
 	 * @return
 	 */
 	public HashMap<String, List<Object>> checkTimeGaps(Map<String, List<Object>> hashMapNvipCve, Map<String, Vulnerability> existingCves) {
 
 		logger.info("Calculating NVD Time Gaps for {} CVEs", hashMapNvipCve.get(ALL_CVE_KEY).size() - hashMapNvipCve.get(NVD_CVE_KEY).size());
+		logger.info("Calculating NVD Time Gaps for {} CVEs", hashMapNvipCve.get(ALL_CVE_KEY).size() - hashMapNvipCve.get(MITRE_CVE_KEY).size());
 
 		for (Object cveInNvd: hashMapNvipCve.get(ALL_CVE_KEY)) {
 			CompositeVulnerability cve = (CompositeVulnerability) cveInNvd;
@@ -282,16 +282,16 @@ public class CveProcessor {
 					Vulnerability existingCveAttributes = existingCves.get(cve.getCveId());
 
 					// Was the CVE previously found? If so, was it not in NVD before, and is it in NVD now?
-					// Compare original created date with the current date
-					// We won't use the NVD published date for now, since published date can refer to date the CVe is received
-					// which would show a smaller difference.
+					// Compare original created date with the NVD published date
+					// We'll use the NVD published date for now, since published date can refer to date the CVE is received
+					// which would show an accurate difference.
 					if (existingCveAttributes.getNvdStatus() == 0 && cve.getNvdStatus() == 1) {
 						try {
 							logger.info("Calculating NVD Time Gap for {}", cve.getCveId());
-							LocalDateTime lastModifiedDateNVD = LocalDateTime.parse(nvdCVEs.get(cve.getCveId()).getLastModifiedDate(),
+							LocalDateTime publishedDateNVD = LocalDateTime.parse(nvdCVEs.get(cve.getCveId()).getPublishDate(),
 									DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS"));
 							LocalDateTime existingCreatedDate = existingCveAttributes.getCreatedDateAsDate();
-							int timeGapNvd = (int) Duration.between(existingCreatedDate, lastModifiedDateNVD).toHours();
+							int timeGapNvd = (int) Duration.between(existingCreatedDate, publishedDateNVD).toHours();
 
 							if (timeGapNvd < 0) {
 								cve.setTimeGapNvd(0);
@@ -313,6 +313,44 @@ public class CveProcessor {
 					}
 				}
 			}
+
+			// Check if CVE is in MITRE, and make sure the CVE is for the current year. Anything from previous
+			// years are assumed to be in MITRE
+			if (!hashMapNvipCve.get(MITRE_CVE_KEY).contains(cve) && checkAgeOfCVEByYear(cve.getCveId())) {
+				if (existingCves.containsKey(cve.getCveId())) {
+					Vulnerability existingCveAttributes = existingCves.get(cve.getCveId());
+
+					// Was the CVE previously found? If so, was it not in MITRE before, and is it in MITRE now?
+					// Compare original created date with the MITRE published date
+					if (existingCveAttributes.getNvdStatus() == 0 && cve.getNvdStatus() == 1) {
+						try {
+							logger.info("Calculating MITRE Time Gap for {}", cve.getCveId());
+							LocalDateTime publishedDateMITRE = LocalDateTime.parse(nvdCVEs.get(cve.getCveId()).getPublishDate(),
+									DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS"));
+							LocalDateTime existingCreatedDate = existingCveAttributes.getCreatedDateAsDate();
+							int timeGapMitre = (int) Duration.between(existingCreatedDate, publishedDateMITRE).toHours();
+
+							if (timeGapMitre < 0) {
+								cve.setTimeGapMitre(0);
+								logger.info("Calculated Negative Time Gap: {} for CVE: {}, will setting time gap as 0", timeGapMitre, cve.getCveId());
+							} else if (existingCveAttributes.getTimeGapNvd() > 0) {
+								cve.setTimeGapMitre(existingCveAttributes.getTimeGapNvd());
+								logger.info("CVE: {} Already has a MITRE time gap of {}", cve.getCveId(), existingCveAttributes.getTimeGapNvd());
+							} else {
+								cve.setTimeGapMitre(timeGapMitre);
+								logger.info("Calculated Time Gap: {} for CVE: {}", timeGapMitre, cve.getCveId());
+							}
+
+						} catch (Exception e) {
+							logger.error("ERROR: Failed to calculate Time Gap for CVE: {}\n{}", cve.getCveId(), e);
+							e.printStackTrace();
+						}
+					} else {
+						logger.info("CVE: {} is in NVIP but not found in MITRE yet", cve.getCveId());
+					}
+				}
+			}
+
 
 		}
 
