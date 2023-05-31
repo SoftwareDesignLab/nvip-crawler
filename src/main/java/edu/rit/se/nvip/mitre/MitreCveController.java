@@ -59,7 +59,7 @@ public class MitreCveController {
 
 
 	public static void main(String[] args) {
-		MitreCveController main = new MitreCveController("https://github.com/CVEProject/cvelist", "nvip_data/mitre-cve", 5);
+		MitreCveController main = new MitreCveController("https://github.com/CVEProject/cvelist", "nvip_data/mitre-cve");
 		HashMap<String, MitreVulnerability> results = main.getMitreCVEsFromGitRepo();
 		logger.info("{} cves found from MITRE", results.size());
 
