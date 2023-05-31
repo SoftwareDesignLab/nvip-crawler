@@ -32,6 +32,7 @@ import java.util.stream.Collectors;
 import edu.rit.se.nvip.crawler.github.PyPAGithubScraper;
 
 import edu.rit.se.nvip.exploit.ExploitIdentifier;
+import edu.rit.se.nvip.mitre.MitreCveController;
 import edu.rit.se.nvip.model.*;
 import edu.rit.se.nvip.nvd.NvdCveController;
 import edu.rit.se.nvip.patchfinder.JGitCVEPatchDownloader;
@@ -707,6 +708,7 @@ public class NVIPMain {
 		//  they're just needed to initialize the processor, should deprecate once the API calls are finalized
 		HashMap<String, NvdVulnerability> nvdCves = new NvdCveController().fetchNVDCVEs(
 				(String) nvdVars.get("nvdApiUrl"), (int) nvdVars.get("nvdApiRequestLimit"));
+		HashMap<String, MitreVulnerability> mitreCves = new MitreCveController();
 		CveProcessor cveProcessor = new CveProcessor(cveDataPathNvd, cveDataPathMitre, nvdCves);
 		Map<String, Vulnerability> existingCves = databaseHelper.getExistingVulnerabilities();
 
