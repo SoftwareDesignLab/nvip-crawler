@@ -36,9 +36,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 import edu.rit.se.nvip.db.DatabaseHelper;
-import edu.rit.se.nvip.model.CVE;
-import edu.rit.se.nvip.model.NvdVulnerability;
-import edu.rit.se.nvip.model.Vulnerability;
+import edu.rit.se.nvip.model.*;
 import it.unimi.dsi.fastutil.Hash;
 import org.apache.commons.collections4.SetUtils;
 import org.apache.commons.io.FileUtils;
@@ -46,7 +44,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import edu.rit.se.nvip.cvereconcile.CveReconciler;
-import edu.rit.se.nvip.model.CompositeVulnerability;
 import edu.rit.se.nvip.utils.CsvUtils;
 import org.jdom2.CDATA;
 import org.json.JSONArray;
@@ -85,7 +82,8 @@ public class CveProcessor {
 	 * @param nvdCves
 	 * @param mitreCves
 	 */
-	public CveProcessor(HashMap<String, String> nvdCves, HashMap<String, String> mitreCves, HashMap<String, NvdVulnerability> pulledNvdCves){
+	public CveProcessor(HashMap<String, String> nvdCves, HashMap<String, String> mitreCves,
+						HashMap<String, NvdVulnerability> pulledNvdCves){
 		this.cvesInNvd = nvdCves;
 		this.cvesInMitre = mitreCves;
 		this.nvdCVEs = pulledNvdCves;
@@ -97,7 +95,7 @@ public class CveProcessor {
 	 * @param mitreCvePath --> File path to MITRE CVE .csv file
 	 * @param nvdCves --> Hashmap of CVEs in NVD (provided byb NVD Controller class)
 	 */
-	public CveProcessor(String nvdCvePath, String mitreCvePath, HashMap<String, NvdVulnerability> nvdCves) {
+	public CveProcessor(String nvdCvePath, String mitreCvePath, HashMap<String, NvdVulnerability> nvdCves, HashMap<String, MitreVulnerability> pulledMitreCves) {
 
 		this.nvdCVEs = nvdCves;
 

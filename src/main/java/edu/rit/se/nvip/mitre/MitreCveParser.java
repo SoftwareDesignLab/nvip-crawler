@@ -70,10 +70,18 @@ public class MitreCveParser {
 		String[] items = new String[4];
 
 		try {
-			items[0] = json.getAsJsonObject("cveMetadata").get("cveId").toString().replace("\"", "");
-			items[1] = json.getAsJsonObject("cveMetadata").get("state").toString();
-			items[2] = json.getAsJsonObject("cveMetadata").get("datePublished").toString();
-			items[3] = json.getAsJsonObject("cveMetadata").get("dateUpdated").toString();
+			if (json.getAsJsonArray("cveMetaData") != null) {
+				items[0] = json.getAsJsonObject("cveMetadata").get("cveId").toString().replace("\"", "");
+				items[1] = json.getAsJsonObject("cveMetadata").get("state").toString();
+				items[2] = json.getAsJsonObject("cveMetadata").get("datePublished").toString();
+				items[3] = json.getAsJsonObject("cveMetadata").get("dateUpdated").toString();
+			} else {
+				items[0] = json.getAsJsonObject("CVE_data_meta").get("ID").toString().replace("\"", "");
+				items[1] = json.getAsJsonObject("CVE_data_meta").get("STATE").toString();
+				items[2] = "";
+				items[3] = "";
+			}
+
 		} catch (Exception e) {
 			logger.error("Error parsing json: {}. {}", json, e.toString());
 		}

@@ -52,12 +52,18 @@ import edu.rit.se.nvip.utils.UtilHelper;
  *
  */
 public class MitreCveController {
-	private final Logger logger = LogManager.getLogger(MitreCveController.class);
+	private static final Logger logger = LogManager.getLogger(MitreCveController.class);
 
 	private String mitreGithubUrl;
 	private String localPath;
 
 	private int yearsBack;
+
+	public static void main(String[] args) {
+		MitreCveController main = new MitreCveController("https://github.com/CVEProject/cvelist", "nvip_data/mitre-cve", 5);
+		HashMap<String, MitreVulnerability> results = main.getMitreCVEsFromGitRepo();
+		logger.info("{} cves found from MITRE", results.size());
+	}
 
 	public MitreCveController(String mitreGithubUrl, String localPath, int yearsBack) {
 		this.mitreGithubUrl = mitreGithubUrl;
@@ -113,17 +119,17 @@ public class MitreCveController {
 		logger.info("Parsed {} JSON files at {}", list.size(), localPath);
 
 		// add all CVEs to a map
-		HashMap<String, MitreVulnerability> gitHubCveMap = new HashMap<>();
+		HashMap<String, MitreVulnerability> mitreCveMap = new HashMap<>();
 		for (String[] cve : cveData) {
 			String cveId = cve[0];
 			String status = cve[1];
 			String publishedDate = cve[2];
 			String lastModifiedDate = cve[3];
 			MitreVulnerability vuln = new MitreVulnerability(cveId, publishedDate, lastModifiedDate, status);
-			gitHubCveMap.put(cveId, vuln);
+			mitreCveMap.put(cveId, vuln);
 		}
 
-		return gitHubCveMap;
+		return mitreCveMap;
 
 	}
 

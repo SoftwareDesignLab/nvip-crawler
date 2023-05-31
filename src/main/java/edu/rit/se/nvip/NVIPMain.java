@@ -710,9 +710,9 @@ public class NVIPMain {
 				(String) compareVars.get("nvdApiUrl"), (int) compareVars.get("nvdApiRequestLimit"));
 
 		HashMap<String, MitreVulnerability> mitreCves = new MitreCveController((String) compareVars.get("mitreGithubUrl"),
-				((String) dataVars.get("dataDir")) + "/" + "mitre-cve", 5).getMitreCVEsFromGitRepo();
+				dataVars.get("dataDir") + "/" + "mitre-cve", 5).getMitreCVEsFromGitRepo();
 
-		CveProcessor cveProcessor = new CveProcessor(cveDataPathNvd, cveDataPathMitre, nvdCves);
+		CveProcessor cveProcessor = new CveProcessor(cveDataPathNvd, cveDataPathMitre, nvdCves, mitreCves);
 		Map<String, Vulnerability> existingCves = databaseHelper.getExistingVulnerabilities();
 
 		HashMap<String, List<Object>> checkedCVEs = cveProcessor.checkAgainstNvdMitre(cveHashMapAll, existingCves);
