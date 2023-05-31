@@ -114,7 +114,7 @@ public class CpeLookUp {
 
 			String filename = properties.getDataDir() + "/" + properties.getNameExtractorDir() + "/" + properties.getCPEserialized();
 
-			logger.info("Loading product list from serialized CPE dictionary");
+			logger.info("Loading product list from serialized CPE dictionary at {}", filename);
 
 			FileInputStream fis;
 
