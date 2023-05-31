@@ -89,10 +89,12 @@ public class DatabaseSandbox extends DatabaseHelper {
         }
     }
 
-    public LinkedHashMap<RawVulnerability, Integer> getFilterDataset(String quantity, boolean excludeLabeled) {
+    public LinkedHashMap<RawVulnerability, Integer> getFilterDataset(String quantity, boolean excludeLabeled, boolean exclusivelyLabled) {
         String query = "SELECT * FROM filterdataset";
         if (excludeLabeled) {
             query += " WHERE is_garbage < 0";
+        } else if (exclusivelyLabled) {
+            query += " WHERE is_garbage > -1";
         }
         if (!quantity.equals("ALL")) {
             query += " LIMIT " + quantity;
@@ -120,7 +122,11 @@ public class DatabaseSandbox extends DatabaseHelper {
     }
 
     public LinkedHashMap<RawVulnerability, Integer> getFilterDataset() {
-        return getFilterDataset("ALL", false);
+        return getFilterDataset("ALL", false, false);
+    }
+
+    public LinkedHashMap<RawVulnerability, Integer> getOnlyFilteredDataset() {
+        return getFilterDataset("ALL", false, true);
     }
 
     public void clearAndInsertFilterDataset(Map<RawVulnerability, Integer> rawVulns) {
