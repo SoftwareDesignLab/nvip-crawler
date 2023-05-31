@@ -8,16 +8,17 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public class ProductNameExtractorController {
-    private static final Logger logger = LogManager.getLogger();
+    private static final Logger logger = LogManager.getLogger(ProductNameExtractorController.class);
     private static final DatabaseHelper databaseHelper = DatabaseHelper.getInstance();
 
     public static void main(String[] args) {
         logger.info("Pulling existing CVEs from the database...");
+
         // Fetch vulnerability data from the DB
-        final Map<String, Vulnerability> vulnMap = databaseHelper.getExistingVulnerabilities();
+        final Map<String, CompositeVulnerability> vulnMap = databaseHelper.getExistingCompositeVulnerabilities();
 
         // Extract vuln list and cast Vulnerability to CompositeVulnerability for the AffectedProductIdentifier
-        final List<CompositeVulnerability> vulnerabilities = vulnMap.values().stream().map(e -> (CompositeVulnerability) e).collect(Collectors.toList());
+        final List<CompositeVulnerability> vulnerabilities = vulnMap.values().stream().toList();
 
         // Run the AffectedProductIdentifier with the fetched vuln list
         // This method will find Common Platform Enumerations (CPEs) and store them in the DB
