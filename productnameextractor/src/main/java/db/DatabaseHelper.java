@@ -305,11 +305,8 @@ public class DatabaseHelper {
 				existingCompositeVulnMap = new HashMap<>();
 				try (Connection connection = getConnection();) {
 
-					String selectSql = """
-								SELECT vulnerability.vuln_id, vulnerability.cve_id, description.description, vulnerability.published_date, vulnerability.last_modified_date
-								FROM nvip.vulnerability
-								JOIN nvip.description ON vulnerability.description_id = description.description_id
-								""";
+					String selectSql = "SELECT vulnerability.vuln_id, vulnerability.cve_id, description.description, vulnerability.published_date, vulnerability.last_modified_date" +
+								"FROM nvip.vulnerability JOIN nvip.description ON vulnerability.description_id = description.description_id ";
 					PreparedStatement pstmt = connection.prepareStatement(selectSql);
 					ResultSet rs = pstmt.executeQuery();
 
@@ -377,11 +374,8 @@ public class DatabaseHelper {
 					existingVulnMap = new HashMap<>();
 					try (Connection connection = getConnection();) {
 
-						String selectSql = """
-								SELECT vulnerability.vuln_id, vulnerability.cve_id, description.description, vulnerability.created_date
-								FROM nvip.vulnerability
-								JOIN nvip.description ON vulnerability.description_id = description.description_id
-								""";
+						String selectSql = "SELECT vulnerability.vuln_id, vulnerability.cve_id, description.description, vulnerability.created_date" +
+								"FROM nvip.vulnerability JOIN nvip.description ON vulnerability.description_id = description.description_id";
 						PreparedStatement pstmt = connection.prepareStatement(selectSql);
 						ResultSet rs = pstmt.executeQuery();
 
