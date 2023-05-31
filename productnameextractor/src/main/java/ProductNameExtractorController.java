@@ -18,7 +18,7 @@ public class ProductNameExtractorController {
         final Map<String, CompositeVulnerability> vulnMap = databaseHelper.getExistingCompositeVulnerabilities();
 
         // Extract vuln list and cast Vulnerability to CompositeVulnerability for the AffectedProductIdentifier
-        final List<CompositeVulnerability> vulnerabilities = vulnMap.values().stream().toList();
+        final List<CompositeVulnerability> vulnerabilities = (List<CompositeVulnerability>) vulnMap.values();
 
         // Run the AffectedProductIdentifier with the fetched vuln list
         // This method will find Common Platform Enumerations (CPEs) and store them in the DB
