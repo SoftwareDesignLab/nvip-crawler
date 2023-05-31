@@ -54,7 +54,6 @@ public class DatabaseHelper {
 	private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
 	String databaseType = "mysql";
 
-	// TODO: Fix insertProductSql.domain? "INSERT INTO affectedproduct (CPE, domain) VALUES (?, ?);";
 	private final String insertProductSql = "INSERT INTO affectedproduct (CPE) VALUES (?);";
 	private final String getProductCountFromCpeSql = "SELECT count(*) from affectedproduct where cpe = ?";
 	private final String getIdFromCpe = "SELECT * FROM affectedproduct where cpe = ?;";
@@ -62,7 +61,7 @@ public class DatabaseHelper {
 	private final String insertAffectedReleaseSql = "INSERT INTO affectedproduct (cve_id, release_date, version) VALUES (?, ?, ?);";
 
 	private static DatabaseHelper databaseHelper = null;
-	private static Map<String, Vulnerability> existingVulnMap = new HashMap<String, Vulnerability>();
+	private static Map<String, CompositeVulnerability> existingCompositeVulnMap = new HashMap<>();
 
 	/**
 	 * Thread safe singleton implementation
@@ -202,8 +201,6 @@ public class DatabaseHelper {
 					continue; // product already exists, skip!
 				}
 				pstmt.setString(1, product.getCpe());
-				// TODO: Fix insertProductSql
-//				pstmt.setString(2, product.getDomain());
 				pstmt.executeUpdate();
 				count++;
 			}
@@ -292,61 +289,48 @@ public class DatabaseHelper {
 		logger.info("Done. Deleted existing affected releases in database!");
 	}
 
-	/**
-	 * Get existing vulnerabilities hash map. This method was added to improve
-	 * DatabaseHelper, NOT to query each CVEID during a CVE update! Existing
-	 * vulnerabilities are read only once, and this hash map is queried during
-	 * individual update operations!
-	 * 
-	 * @return
-	 */
-	public Map<String, Vulnerability> getExistingVulnerabilities() {
+	public Map<String, CompositeVulnerability> getExistingCompositeVulnerabilities() {
 
-		if (existingVulnMap.size() == 0) {
-			synchronized (DatabaseHelper.class) {
-				if (existingVulnMap.size() == 0) {
-					int vulnId;
-					String cveId, description, createdDate;
-					int existAtNvd, existAtMitre;
-					existingVulnMap = new HashMap<>();
-					try (Connection connection = getConnection();) {
+		if (existingCompositeVulnMap.size() == 0) {
+		synchronized (DatabaseHelper.class) {
+			if (existingCompositeVulnMap.size() == 0) {
+				int vulnId;
+				String cveId, description, published_date, last_modified_date, srcUrl, platform, srcDomain = "";
+				int existAtNvd, existAtMitre;
+				existingCompositeVulnMap = new HashMap<>();
+				try (Connection connection = getConnection();) {
 
-						String selectSql = """
-								SELECT vulnerability.vuln_id, vulnerability.cve_id, description.description, vulnerability.created_date, nvdmitrestatus.status_nvd, nvdmitrestatus.status_mitre
-								FROM vulnerability
-								JOIN description ON vulnerability.description_id = description.description_id
-								JOIN nvdmitrestatus ON vulnerability.cve_id = nvdmitrestatus.cve_id;
-								""";
-						PreparedStatement pstmt = connection.prepareStatement(selectSql);
-						ResultSet rs = pstmt.executeQuery();
+					String selectSql = "SELECT vulnerability.vuln_id, vulnerability.cve_id, description.description FROM nvip.vulnerability JOIN nvip.description ON vulnerability.description_id = description.description_id";
+					PreparedStatement pstmt = connection.prepareStatement(selectSql);
+					ResultSet rs = pstmt.executeQuery();
 
-						while (rs.next()) {
-							vulnId = rs.getInt("vuln_id");
-							cveId = rs.getString("cve_id");
-							description = rs.getString("description");
-							createdDate = rs.getString("created_date");
-							existAtNvd = rs.getInt("exists_at_nvd");
-							existAtMitre = rs.getInt("exists_at_mitre");
-							Vulnerability existingVulnInfo = new Vulnerability(vulnId, cveId, description, existAtNvd, existAtMitre,
-									createdDate);
-							existingVulnMap.put(cveId, existingVulnInfo);
-						}
-						logger.info("NVIP has loaded {} existing CVE items from DB!", existingVulnMap.size());
-					} catch (Exception e) {
-						logger.error("Error while getting existing vulnerabilities from DB\nException: {}", e.getMessage());
-						logger.error(
-								"This is a serious error! NVIP will not be able to decide whether to insert or update! Exiting...");
-						System.exit(1);
+					while (rs.next()) {
+						vulnId = rs.getInt("vuln_id");
+						cveId = rs.getString("cve_id");
+						description = rs.getString("description");
+
+						CompositeVulnerability existingVulnInfo = new CompositeVulnerability(
+								vulnId,
+								cveId,
+								description
+						);
+						existingCompositeVulnMap.put(cveId, existingVulnInfo);
 					}
+					logger.info("NVIP has loaded {} existing CVE items from DB!", existingCompositeVulnMap.size());
+				} catch (Exception e) {
+					logger.error("Error while getting existing vulnerabilities from DB\nException: {}", e.getMessage());
+					logger.error(
+							"This is a serious error! NVIP will not be able to decide whether to insert or update! Exiting...");
+					System.exit(1);
 				}
 			}
-		} else {
-			logger.warn("NVIP has loaded {} existing CVE items from memory!", existingVulnMap.size());
 		}
-
-		return existingVulnMap;
+	} else {
+		logger.warn("NVIP has loaded {} existing CVE items from memory!", existingCompositeVulnMap.size());
 	}
 
+		return existingCompositeVulnMap;
+	}
 
 	/**
 	 * shut down connection pool. U
