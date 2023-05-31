@@ -10,7 +10,7 @@ import java.util.Set;
 public class LabelingTool {
     private static final String DB_URL = "jdbc:mysql://localhost:3306/nviptest?useSSL=false&allowPublicKeyRetrieval=true";
     private static final String DB_USER = "root";
-    private static final String DB_PASS = "root";
+    private static final String DB_PASS = "password";
     public void runLabelingTool() {
         System.out.println("LABELING TOOL FOR GENERIC PARSER DATA INPUT (Input from `filterdataset` table in DB)");
 
@@ -25,7 +25,7 @@ public class LabelingTool {
         System.out.println("How many descriptions would you like to assign? (Type ALL for all desc. in `filterdataset` or enter num)");
         String quant = scan.next();
         DatabaseSandbox dbs = DatabaseSandbox.getInstance(DB_URL, DB_USER, DB_PASS);
-        LinkedHashMap<RawVulnerability, Integer> rawVulnMap = dbs.getFilterDataset(quant, true);
+        LinkedHashMap<RawVulnerability, Integer> rawVulnMap = dbs.getFilterDataset(quant, true, false);
         //Iterate through result set
         for (RawVulnerability current : rawVulnMap.keySet()) {
             clearConsole();

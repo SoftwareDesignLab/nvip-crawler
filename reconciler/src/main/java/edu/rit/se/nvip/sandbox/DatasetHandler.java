@@ -10,21 +10,25 @@ import java.sql.Timestamp;
 import java.util.*;
 
 public class DatasetHandler {
-    String jsonPath = "./src/main/java/edu/rit/se/nvip/sandbox/filter_dataset.json";
+    String jsonPathRaw = "./src/main/java/edu/rit/se/nvip/sandbox/filter_dataset.json";
+
+    String jsonPathLabeled = "./src/main/java/edu/rit/se/nvip/sandbox/filter_dataset_labeled.json";
+
     DatabaseSandbox db;
     public static void main(String[] args) {
         DatasetHandler dh = new DatasetHandler();
-        dh.jsonToDb();
+//        dh.jsonToDb();
+        dh.dbToJson();
     }
 
     public DatasetHandler() {
         db = DatabaseSandbox.getInstance("jdbc:mysql://localhost:3306/nviptest?useSSL=false&allowPublicKeyRetrieval=true",
                 "root",
-                "root");
+                "password");
     }
     public void jsonToDb() {
         JsonArray jVulns = null;
-        try (FileReader reader = new FileReader(jsonPath)) {
+        try (FileReader reader = new FileReader(jsonPathRaw)) {
             JsonReader jReader = Json.createReader(reader);
             jVulns = jReader.readArray();
         } catch (IOException e) {
@@ -50,7 +54,7 @@ public class DatasetHandler {
     }
 
     public void dbToJson() {
-        LinkedHashMap<RawVulnerability, Integer> vulnMap = db.getFilterDataset();
+        LinkedHashMap<RawVulnerability, Integer> vulnMap = db.getOnlyFilteredDataset();
         JsonArrayBuilder builder = Json.createArrayBuilder();
         for (RawVulnerability vuln : vulnMap.keySet()) {
             JsonObjectBuilder ob = Json.createObjectBuilder();
@@ -66,7 +70,7 @@ public class DatasetHandler {
         }
         JsonArray ja = builder.build();
 
-        try (FileWriter writer = new FileWriter(jsonPath)) {
+        try (FileWriter writer = new FileWriter(jsonPathLabeled)) {
             writer.write(ja.toString());
         } catch (IOException e) {
             e.printStackTrace();
