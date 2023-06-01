@@ -79,7 +79,6 @@ public class CpeLookUp {
 
 	static Logger logger = LogManager.getLogger(UtilHelper.class);
 
-	SWIDLookUp swidLookUp = SWIDLookUp.getInstance();
 
 	/**
 	 * Thread safe singleton implementation
@@ -315,7 +314,6 @@ public class CpeLookUp {
 		if (product.getVersions().size() == 0) {
 			String cpeID = "cpe:2.3:a:" + selectedGroups.get(0).getCpeGroup().getGroupID() + ":*:*:*:*:*:*:*:*";
 			cpeIDs.add(cpeID);
-			//need a swid
 			addProductToDatabase(new Product(selectedGroups.get(0).getCpeGroup().getCommonTitle(), cpeID, product.getSwid()));
 			return cpeIDs;
 		}
@@ -336,7 +334,6 @@ public class CpeLookUp {
 					if (cpeEntry != null) {
 						mathcesCounter++;
 						cpeIDs.add(cpeEntry.getCpeID());
-						//String domain, String cpe, String swid, int prodId
 						addProductToDatabase(new Product(cpeEntry.getTitle(), cpeEntry.getCpeID(), product.getSwid()));
 					}
 				}

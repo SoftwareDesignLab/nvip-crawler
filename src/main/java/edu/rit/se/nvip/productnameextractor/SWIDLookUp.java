@@ -41,12 +41,25 @@ public class SWIDLookUp {
     public void addSWIDEntry(String productName, String swid) {
         SWIDEntry entry = new SWIDEntry(productName, swid);
 
-        if (swidDictionary.containsKey(productName)) {
-            swidDictionary.get(productName).add(entry);
-        } else {
-            List<SWIDEntry> entryList = new ArrayList<>();
+        List<SWIDEntry> entryList = swidDictionary.get(productName);
+        //if there is already an entry for the product name, do not add it again
+        if (entryList == null) {
+            entryList = new ArrayList<>();
             entryList.add(entry);
             swidDictionary.put(productName, entryList);
+        } else {
+            //if there is already an entry for the product name, check if the SWID is already in the list
+            boolean swidExists = false;
+            for (SWIDEntry e : entryList) {
+                if (e.getSWID().equals(swid)) {
+                    swidExists = true;
+                    break;
+                }
+            }
+            //if the SWID is not in the list, add it
+            if (!swidExists) {
+                entryList.add(entry);
+            }
         }
     }
 
@@ -57,8 +70,7 @@ public class SWIDLookUp {
      * @return A list of SWID entries matching the product name.
      */
     public List<SWIDEntry> getSWIDEntries(String productName) {
-        List<SWIDEntry> entries = swidDictionary.get(productName);
-        return (entries != null) ? entries : new ArrayList<>();
+        return swidDictionary.get(productName);
     }
 
     //get swid tag from SWID dictionary
