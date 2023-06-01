@@ -23,21 +23,14 @@
  */
 package edu.rit.se.nvip.cveprocess;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 
-import edu.rit.se.nvip.db.DatabaseHelper;
 import edu.rit.se.nvip.model.*;
-import it.unimi.dsi.fastutil.Hash;
 import org.apache.commons.collections4.SetUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
@@ -45,9 +38,6 @@ import org.apache.logging.log4j.Logger;
 
 import edu.rit.se.nvip.cvereconcile.CveReconciler;
 import edu.rit.se.nvip.utils.CsvUtils;
-import org.jdom2.CDATA;
-import org.json.JSONArray;
-import org.json.JSONObject;
 
 /**
  *
@@ -84,14 +74,17 @@ public class CveProcessor {
 
 	/**
 	 * For tests
+	 *
 	 * @param nvdCves
 	 * @param mitreCves
+	 * @param pulledMitreCves
 	 */
 	public CveProcessor(HashMap<String, String> nvdCves, HashMap<String, String> mitreCves,
-						HashMap<String, NvdVulnerability> pulledNvdCves){
+						HashMap<String, NvdVulnerability> pulledNvdCves, HashMap<String, MitreVulnerability> pulledMitreCves){
 		this.cvesInNvd = nvdCves;
 		this.cvesInMitre = mitreCves;
 		this.nvdCVEs = pulledNvdCves;
+		this.mitreCves = pulledMitreCves;
 	}
 
 	/**
