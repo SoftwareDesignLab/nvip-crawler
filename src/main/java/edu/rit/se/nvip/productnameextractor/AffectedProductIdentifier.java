@@ -67,6 +67,26 @@ public class AffectedProductIdentifier extends Thread implements Runnable {
 
 	}
 
+	/**
+	 * insert SWID tags identified by the loader into the database
+	 *
+	 */
+	/**
+	private int insertNewSwidItemsIntoDatabase() {
+		SWIDLookUp swidLookUp = SWIDLookUp.getInstance();
+		try {
+			Collection<Product> products = swidLookUp.getProductsToBeAddedToDatabase().values();
+			DatabaseHelper db = DatabaseHelper.getInstance();
+			return db.insertSwidProducts(products);
+		} catch (Exception e) {
+			logger.error("Error while adding " + swidLookUp.getProductsToBeAddedToDatabase().size() + " new products!");
+			return -1;
+		}
+
+	}
+	 **/
+
+
 	// run process
 	public void run() {
 		identifyAffectedReleases();
