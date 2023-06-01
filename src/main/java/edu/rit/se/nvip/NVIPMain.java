@@ -29,6 +29,7 @@ import java.text.NumberFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import edu.rit.se.nvip.crawler.CveCrawler;
 import edu.rit.se.nvip.crawler.github.PyPAGithubScraper;
 
 import edu.rit.se.nvip.exploit.ExploitIdentifier;
@@ -601,7 +602,7 @@ public class NVIPMain {
 		}
 
 		HashMap<String, ArrayList<CompositeVulnerability>> cveHashMapScrapedFromCNAs = crawlerController.crawl(urls, whiteList, crawlerVars);
-
+		CveCrawler.driver.quit();
 		return mergeCVEsDerivedFromCNAsAndGit(cveHashMapNotScraped, cveHashMapScrapedFromCNAs);
 	}
 

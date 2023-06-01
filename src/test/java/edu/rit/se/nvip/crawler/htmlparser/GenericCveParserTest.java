@@ -103,10 +103,4 @@ public class GenericCveParserTest extends AbstractParserTest {
 		assertTrue(parserBulletin instanceof ParseBulletin);
 		assertTrue(parserAccordion instanceof ParseAccordion);
 	}
-
-	@After
-	public void destoryParsers(){
-		CveCrawler.driver.quit();
-	}
-
 }
