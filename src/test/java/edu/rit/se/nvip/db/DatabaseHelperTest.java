@@ -251,7 +251,7 @@ public class DatabaseHelperTest {
 			int count2 = dbh.insertCpeProducts(testProducts);
 			assertEquals(4, count2);
 			verify(pstmt, times(2)).setString(1, cpe+4);
-			verify(pstmt).setString(2, domain+4);
+			verify(pstmt).setString(3, domain+4);
 		} catch (SQLException ignored) {}
 	}
 
