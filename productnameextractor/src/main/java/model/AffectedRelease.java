@@ -35,6 +35,7 @@ public class AffectedRelease {
 	private final String cpe;
 	private String releaseDate;
 	private String version;
+	private String vendor;
 
 	public AffectedRelease(int id, String cveId, String cpe, String releaseDate, String version) {
 		this.id = id;
@@ -42,6 +43,11 @@ public class AffectedRelease {
 		this.cpe = cpe;
 		this.releaseDate = releaseDate;
 		this.version = version;
+	}
+
+	public AffectedRelease(int id, String cveId, String cpe, String releaseDate, String version, String vendor) {
+		this(id, cveId, cpe, releaseDate, version);
+		this.vendor = vendor;
 	}
 
 	public AffectedRelease(String cpe, String releaseDate, String version) {
@@ -58,6 +64,7 @@ public class AffectedRelease {
 		this.cpe = a.cpe;
 		this.releaseDate = a.releaseDate;
 		this.version = a.version;
+		this.vendor = a.vendor;
 	}
 
 	public int getId() {
@@ -82,6 +89,13 @@ public class AffectedRelease {
 
 	public void setVersion(String version) {
 		this.version = version;
+	}
+	public String getVendor() {
+		return vendor;
+	}
+
+	public void setVendor(String vendor) {
+		this.vendor = vendor;
 	}
 
 	public void setCveId(String cveId) {

@@ -25,6 +25,7 @@
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -37,7 +38,7 @@ import opennlp.tools.tokenize.WhitespaceTokenizer;
  * @author axoeec
  *
  */
-public class AffectedProductIdentifier extends Thread implements Runnable {
+public class AffectedProductIdentifier {
 	private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
 
 	private final List<CompositeVulnerability> vulnList;
@@ -61,11 +62,6 @@ public class AffectedProductIdentifier extends Thread implements Runnable {
 			return -1;
 		}
 
-	}
-
-	// run process
-	public void run() {
-		identifyAffectedReleases();
 	}
 
 	public int identifyAffectedReleases() {
@@ -167,7 +163,7 @@ public class AffectedProductIdentifier extends Thread implements Runnable {
 						// if CPE identified, add it as affected release
 						for (String itemID : productIDs) {
 //							logger.info("Found Affected Product for {}: {}", vulnerability.getCveId(), itemID);
-							vulnerability.getAffectedReleases().add(new AffectedRelease(0, vulnerability.getCveId(), itemID, null, CpeLookUp.getVersionFromCPEid(itemID)));
+							vulnerability.getAffectedReleases().add(new AffectedRelease(0, vulnerability.getCveId(), itemID, vulnerability.getPublishDate(), CpeLookUp.getVersionFromCPEid(itemID), CpeLookUp.getVendorFromCPEid(itemID)));
 							numOfProductsMappedToCpe++;
 						}
 					}
@@ -187,14 +183,19 @@ public class AffectedProductIdentifier extends Thread implements Runnable {
 			totalCVEtime = totalCVEtime + (System.currentTimeMillis() - startCVETime);
 
 			if (counterOfProcessedCVEs % 100 == 0) {
-				double percent = (counterOfProcessedCVEs + counterOfBadDescriptionCVEs + counterOfSkippedCVEs) * totalCVEtoProcess * 100;
+				double percent = Math.floor(((double) (counterOfProcessedCVEs + counterOfBadDescriptionCVEs + counterOfSkippedCVEs) / totalCVEtoProcess * 100) * 100) / 100;
 				logger.info("Extracted product(s) for {} out of {} CVEs so far! {} CVEs skipped (not-changed or bad description), {}% done.", counterOfProcessedCVEs, totalCVEtoProcess,
 						(counterOfBadDescriptionCVEs + counterOfSkippedCVEs), percent);
 			}
 		}
 
+
 		logger.info("Extracted product(s) for {} out of {} CVEs so far! {} CVEs skipped, bc they are flagged as 'not-changed' by reconciliation process", counterOfProcessedCVEs, totalCVEtoProcess,
 				counterOfSkippedCVEs);
+
+		AtomicInteger count = new AtomicInteger();
+		vulnList.stream().map(v -> v.getAffectedReleases().size()).forEach(count::addAndGet);
+		logger.info("Found {} affected releases from {} CVEs", count, totalCVEtoProcess);
 
 		// TODO: This function should be called outside
 		insertAffectedProductsToDB(vulnList);
