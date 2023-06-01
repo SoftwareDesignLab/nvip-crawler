@@ -32,6 +32,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -58,7 +60,7 @@ public class DatabaseHelper {
 	private final String getProductCountFromCpeSql = "SELECT count(*) from affectedproduct where cpe = ?";
 	private final String getIdFromCpe = "SELECT * FROM affectedproduct where cpe = ?;";
 
-	private final String insertAffectedReleaseSql = "INSERT INTO affectedproduct (cve_id, release_date, version) VALUES (?, ?, ?);";
+	private final String insertAffectedReleaseSql = "INSERT INTO affectedproduct (cve_id, cpe, product_name, release_date, version, vendor) VALUES (?, ?, ?, ?, ?, ?);";
 
 	private static DatabaseHelper databaseHelper = null;
 	private static Map<String, CompositeVulnerability> existingCompositeVulnMap = new HashMap<>();
@@ -235,15 +237,29 @@ public class DatabaseHelper {
 	 */
 	public void insertAffectedReleasesV2(List<AffectedRelease> affectedReleases) {
 		logger.info("Inserting {} affected releases...", affectedReleases.size());
+		// CPE 2.3 Regex
+		// Regex101: https://regex101.com/r/9uaTQb/1
+		final Pattern cpePattern = Pattern.compile("cpe:2\\.3:[aho\\*\\-]:([^:]*):([^:]*):([^:]*):.*");
+
 		int count = 0;
 		try (Connection conn = getConnection();
 				Statement stmt = conn.createStatement();
 				PreparedStatement pstmt = conn.prepareStatement(insertAffectedReleaseSql);) {
 			for (AffectedRelease affectedRelease : affectedReleases) {
 				try {
+					// Validate and extract CPE data
+					final String cpe = affectedRelease.getCpe();
+					final Matcher m = cpePattern.matcher(cpe);
+					String productName = "UNKNOWN";
+					if(!m.find()) logger.warn("CPE in invalid format {}", cpe);
+					else productName = m.group(2);
+
 					pstmt.setString(1, affectedRelease.getCveId());
-					pstmt.setString(2, affectedRelease.getReleaseDate());
-					pstmt.setString(3, affectedRelease.getVersion());
+					pstmt.setString(2, cpe);
+					pstmt.setString(3, productName);
+					pstmt.setString(4, affectedRelease.getReleaseDate());
+					pstmt.setString(5, affectedRelease.getVersion());
+					pstmt.setString(5, affectedRelease.getVendor());
 					count += pstmt.executeUpdate();
 //					logger.info("Added {} as an affected release for {}", prodId, affectedRelease.getCveId());
 				} catch (Exception e) {
@@ -293,7 +309,8 @@ public class DatabaseHelper {
 					ResultSet rs = pstmt.executeQuery();
 
 					int vulnCount = 0;
-					while (rs.next() && vulnCount < maxVulnerabilities) {
+					// Iterate over result set until there are no results left or vulnCount >= maxVulnerabilities
+					while (rs.next() && (maxVulnerabilities == 0 || vulnCount < maxVulnerabilities)) {
 						vulnId = rs.getInt("vuln_id");
 						cveId = rs.getString("cve_id");
 						description = rs.getString("description");

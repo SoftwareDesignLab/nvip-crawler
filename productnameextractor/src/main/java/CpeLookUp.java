@@ -27,6 +27,7 @@ import java.net.HttpURLConnection;
 import java.net.SocketException;
 import java.net.URL;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -55,9 +56,12 @@ import opennlp.tools.tokenize.WhitespaceTokenizer;
 public class CpeLookUp {
 	private static final String USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36";
 	private static final String BASE_NVD_URL = "https://services.nvd.nist.gov/rest/json/cpes/2.0";
-	private static final int MAX_PAGES = 1;
+	private static final int MAX_PAGES = 10;
 	private static final int RESULTS_PER_PAGE = 10000; // Cannot query more than 10000 per page
 	private final static ObjectMapper OM = new ObjectMapper();
+
+	// Regex101: https://regex101.com/r/9uaTQb/1
+	private static final Pattern CPE_REGEX = Pattern.compile("cpe:2\\.3:[aho\\*\\-]:([^:]*):([^:]*):([^:]*):.*");
 
 	/**
 	 * A hash map of <CPE, Domain>
@@ -143,9 +147,8 @@ public class CpeLookUp {
 						// Extract cpe id
 						final String cpeId = String.valueOf(product.get("cpeNameId"));
 
-						// CPE 2.3 Regex
-						// Regex101: https://regex101.com/r/9uaTQb/1
-						final Matcher m = Pattern.compile("cpe:2\\.3:[aho\\*\\-]:([^:]*):([^:]*):([^:]*):.*").matcher(fullCpeName);
+						// Match against CPE regex
+						final Matcher m = CPE_REGEX.matcher(fullCpeName);
 
 						// Ensure CPE is formed correctly
 						if(!m.find() || m.group(1) == null || m.group(2) == null || m.group(3) == null) {
@@ -552,6 +555,18 @@ public class CpeLookUp {
 		return version;
 	}
 
+	public static String getVendorFromCPEid(String cpeID) {
+
+		String vendor = null;
+
+		// Match against CPE regex
+		final Matcher m = CPE_REGEX.matcher(cpeID);
+		if(m.find()) vendor = m.group(2);
+		else logger.warn("Could not match CPE String {}", cpeID);
+
+		return vendor;
+	}
+
 	// Class that has CPE groups with matching score and can be sorted
 	static class CPEgroupFromMap implements Comparable<CPEgroupFromMap> {
 		private final float score;
@@ -670,6 +685,16 @@ public class CpeLookUp {
 	
 	public Map<String, CpeGroup> getCpeMap(){
 		return cpeMapFile;
+	}
+
+	public int getCpeKeyCount() {
+		return cpeMapFile.size();
+	}
+
+	public int getCpeValueCount() {
+		final AtomicInteger count = new AtomicInteger(0);
+		cpeMapFile.values().forEach(g -> count.getAndAdd(g.getVersions().size()));
+		return count.intValue();
 	}
 
 }
