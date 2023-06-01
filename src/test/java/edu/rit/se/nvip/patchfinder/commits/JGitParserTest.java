@@ -90,7 +90,6 @@ public class JGitParserTest {
     }
 
     @Test
-    @Ignore
     public void testParseCommits() {
 
         String testCveId = "CVE-2006-2032";

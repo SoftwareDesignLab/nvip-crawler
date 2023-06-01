@@ -37,6 +37,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.api.errors.NoHeadException;
 import org.eclipse.jgit.internal.storage.file.FileRepository;
 import org.eclipse.jgit.internal.storage.file.WindowCache;
 import org.eclipse.jgit.lib.ProgressMonitor;
@@ -87,47 +88,41 @@ public class JGitParser {
 	public void cloneRepository() {
 		try {
 			logger.info("Cloning Repo to " + localDownloadLoc + File.separator + projectName + "...");
-			git = Git.cloneRepository().setURI(remoteLoc)
-					.setDirectory(new File(localDownloadLoc + File.separator + projectName))
-					.setProgressMonitor(new ProgressMonitor() {
+			this.git = Git.cloneRepository().setURI(remoteLoc).
+					setDirectory(new File(localDownloadLoc + File.separator + projectName)).
+					setProgressMonitor(new ProgressMonitor() {
+				@Override
+				public void start(int totalTasks) {
+					logger.info("Starting clone...");
+				}
 
-						private int total_completed;
+				@Override
+				public void beginTask(String title, int totalWork) {
+					logger.info("Cloning " + projectName + "...");
+				}
 
-						@Override
-						public void start(int totalTasks) {
-							total_completed = 0;
-							logger.info("------- Starting work on " + totalTasks + " tasks");
-						}
+				@Override
+				public void update(int completed) {
+					logger.info("Cloning " + projectName + "...");
+				}
 
-						@Override
-						public void beginTask(String title, int totalWork) {
-							total_completed = 0;
-							logger.info("------- Start " + title + ": " + totalWork);
-						}
+				@Override
+				public void endTask() {
+					logger.info("Cloning " + projectName + "...");
+				}
 
-						@Override
-						public void update(int completed) {
-							total_completed += completed;
-							if (total_completed % 100000 == 0)
-								logger.info("------- " + total_completed);
-						}
-
-						@Override
-						public void endTask() {
-							logger.info("------- Done");
-						}
-
-						@Override
-						public boolean isCancelled() {
-							return false;
-						}
-					}).call();
+				@Override
+				public boolean isCancelled() {
+					return false;
+				}
+			}).call();
 
 			logger.info("Repo " + projectName + " successfully cloned!");
 		} catch (Exception e) {
 			logger.error("ERROR: Failed to clone repo @ {}", remoteLoc);
 			e.printStackTrace();
 		}
+
 	}
 
 	/**
@@ -153,11 +148,12 @@ public class JGitParser {
 
 	/**
 	 * Collects all commits from a repo and returns them in a list
-	 * 
+	 *
 	 * @return
 	 */
 	private List<RevCommit> getAllCommitList() {
 		List<RevCommit> revCommits = new ArrayList<>();
+		this.git = new Git(this.localRepo);
 		try {
 			for (RevCommit rev : git.log().call()) {
 				revCommits.add(rev);
@@ -170,10 +166,12 @@ public class JGitParser {
 		return null;
 	}
 
+
+
 	/**
 	 * Parse commits to prepare for extraction of patches for a repo Uses preset
 	 * Regex to find commits related to CVEs or bugs for patches
-	 * 
+	 *
 	 * @throws IOException
 	 * @throws GitAPIException
 	 * @return
