@@ -10,6 +10,7 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.openqa.selenium.*;
 import org.openqa.selenium.interactions.Actions;
+import org.openqa.selenium.remote.RemoteWebDriver;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -20,16 +21,8 @@ public class ParseAccordion extends AbstractCveParser implements ParserStrategy 
 
     private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
 
-    /**
-     * We need to be able to click accordion dropdowns
-     * in case there is hidden data
-     * init a headless browser to be able to click around
-     * instead of just parsing a static html page
-     */
-    WebDriver driver = startDynamicWebDriver();
-
     // init actions to be able to click around
-    Actions actions = new Actions(driver);
+    Actions actions;
 
     String sourceUrl = "";
 
@@ -39,6 +32,9 @@ public class ParseAccordion extends AbstractCveParser implements ParserStrategy 
      */
     public ParseAccordion(String sourceDomainName) {
         this.sourceDomainName = sourceDomainName;
+        if (driver == null || ((RemoteWebDriver)driver).getSessionId() == null)
+            driver = startDynamicWebDriver();
+        actions = new Actions(driver);
     }
 
     public void clickAcceptCookies() {
@@ -149,6 +145,7 @@ public class ParseAccordion extends AbstractCveParser implements ParserStrategy 
                 }
             }
         }
+        driver.quit();
         return vulnList;
     }
 }

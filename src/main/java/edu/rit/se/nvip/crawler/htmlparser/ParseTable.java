@@ -10,6 +10,7 @@ import org.jsoup.nodes.Element;
 import org.openqa.selenium.*;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.interactions.Actions;
+import org.openqa.selenium.remote.RemoteWebDriver;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
@@ -21,17 +22,10 @@ public class ParseTable extends AbstractCveParser implements ParserStrategy {
 
     private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
 
-    /**
-     * We need special clicking and updating functionality for tables
-     * init a headless browser to be able to click around
-     * instead of just parsing a static html page
-     */
-    WebDriver driver = startDynamicWebDriver();
-
-    WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(5));
+    WebDriverWait wait;
 
     // init actions to be able to click around
-    Actions actions = new Actions(driver);
+    Actions actions;
 
     String sourceUrl = "";
 
@@ -39,6 +33,9 @@ public class ParseTable extends AbstractCveParser implements ParserStrategy {
 
     public ParseTable(String sourceDomainName) {
         this.sourceDomainName = sourceDomainName;
+        if (driver == null || ((RemoteWebDriver)driver).getSessionId() == null) driver = startDynamicWebDriver();
+        wait = new WebDriverWait(driver, Duration.ofSeconds(5));
+        actions = new Actions(driver);
     }
 
     public void clickAcceptCookies() {
@@ -213,7 +210,7 @@ public class ParseTable extends AbstractCveParser implements ParserStrategy {
             vulnList.addAll(parseTableSource(next));
             next = getNextPage(next);
         }
-
+        driver.quit();
         return vulnList;
     }
 }

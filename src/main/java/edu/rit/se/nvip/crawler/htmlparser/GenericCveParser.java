@@ -87,6 +87,8 @@ public class GenericCveParser extends AbstractCveParser  {
 	 */
 	@Override
 	public List<CompositeVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
+		driver = startDynamicWebDriver();
+		while(driver == null) {} // wait for driver to be initialized
 		if (parserStrategy == null)
 			parserStrategy = chooseParserStrategy(sCVEContentHTML);
 		logger.info("Generic Parsing " + sSourceURL + " with " + parserStrategy.getClass().getSimpleName());
@@ -96,7 +98,7 @@ public class GenericCveParser extends AbstractCveParser  {
 					" for " + sSourceURL + ". Fall through to description strategy.");
 			return parserStrategy.parseWebPage(sSourceURL, sCVEContentHTML);
 		}
-		if (driver != null) driver.quit();
+		driver.quit();
 		return genericList;
 	}
 

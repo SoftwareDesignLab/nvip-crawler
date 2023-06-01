@@ -111,6 +111,7 @@ public abstract class AbstractCveParser {
 		driver.get(url);
 		if (url.contains("mend.io"))
 			return (String) ((JavascriptExecutor) driver).executeScript("return document.getElementsByTagName('html')[0].innerHTML");
+		driver.quit();
 		return driver.getPageSource();
 	}
 
