@@ -17,6 +17,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import static edu.rit.se.nvip.crawler.CveCrawler.driver;
+
 public class ParseAccordion extends AbstractCveParser implements ParserStrategy {
 
     private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
@@ -32,8 +34,6 @@ public class ParseAccordion extends AbstractCveParser implements ParserStrategy 
      */
     public ParseAccordion(String sourceDomainName) {
         this.sourceDomainName = sourceDomainName;
-        if (driver == null || ((RemoteWebDriver)driver).getSessionId() == null)
-            driver = startDynamicWebDriver();
         actions = new Actions(driver);
     }
 
@@ -145,7 +145,6 @@ public class ParseAccordion extends AbstractCveParser implements ParserStrategy 
                 }
             }
         }
-        driver.quit();
         return vulnList;
     }
 }

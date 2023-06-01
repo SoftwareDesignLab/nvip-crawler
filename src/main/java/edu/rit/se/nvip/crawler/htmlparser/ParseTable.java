@@ -18,6 +18,8 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.util.*;
 
+import static edu.rit.se.nvip.crawler.CveCrawler.driver;
+
 public class ParseTable extends AbstractCveParser implements ParserStrategy {
 
     private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
@@ -33,7 +35,6 @@ public class ParseTable extends AbstractCveParser implements ParserStrategy {
 
     public ParseTable(String sourceDomainName) {
         this.sourceDomainName = sourceDomainName;
-        if (driver == null || ((RemoteWebDriver)driver).getSessionId() == null) driver = startDynamicWebDriver();
         wait = new WebDriverWait(driver, Duration.ofSeconds(5));
         actions = new Actions(driver);
     }
@@ -210,7 +211,6 @@ public class ParseTable extends AbstractCveParser implements ParserStrategy {
             vulnList.addAll(parseTableSource(next));
             next = getNextPage(next);
         }
-        driver.quit();
         return vulnList;
     }
 }

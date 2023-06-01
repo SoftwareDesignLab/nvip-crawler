@@ -23,6 +23,7 @@
  */
 package edu.rit.se.nvip.crawler.htmlparser;
 
+import edu.rit.se.nvip.crawler.CveCrawler;
 import edu.rit.se.nvip.model.CompositeVulnerability;
 import edu.rit.se.nvip.utils.UtilHelper;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -60,6 +61,8 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static edu.rit.se.nvip.crawler.CveCrawler.driver;
+
 /**
  *
  * @author axoeec
@@ -81,22 +84,11 @@ public abstract class AbstractCveParser {
 
 	protected String sourceDomainName = null;
 
-	protected static volatile WebDriver driver = null;
+
 
 	public abstract List<CompositeVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML);
 
-	public static WebDriver startDynamicWebDriver() {
-		System.setProperty("webdriver.chrome.silentOutput", "true");
-		ChromeOptions options = new ChromeOptions();
-		options.addArguments("--headless=new","--user-agent=Mozilla/5.0");
-		options.addArguments("--remote-allow-origins=*");
-		options.addArguments("--enable-javascript");
-		options.addArguments("--no-sandbox");
-		options.addArguments("--disable-dev-shm-usage");
-		WebDriverManager.chromedriver().setup();
-		ChromeDriverService chromeDriverService = new ChromeDriverService.Builder().build();
-		return new ChromeDriver(chromeDriverService, options);
-	}
+
 
 	/**
 	 * Get Dynamic HTML with Selenium
@@ -108,7 +100,7 @@ public abstract class AbstractCveParser {
 
 		// null in unit tests for now
 		if (driver == null)
-			driver = startDynamicWebDriver();
+			driver = CveCrawler.startDynamicWebDriver();
 		while(driver == null) {} // wait for driver to be initialized
 		driver.get(url);
 		if (url.contains("mend.io"))

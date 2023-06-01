@@ -1,5 +1,6 @@
 package edu.rit.se.nvip.crawler.htmlparser;
 
+import edu.rit.se.nvip.crawler.CveCrawler;
 import edu.rit.se.nvip.model.CompositeVulnerability;
 import org.junit.Test;
 import java.util.List;
@@ -12,7 +13,7 @@ public class ParseTableTest extends AbstractParserTest {
     public void testParseTableQNAP() {
         ParseTable parser = new ParseTable("https://www.qnap.com/en/security-advisories?ref=security_advisory_details");
         List<CompositeVulnerability> vulnerabilities = parser.parseWebPage("https://www.qnap.com/en/security-advisories?ref=security_advisory_details", null);
-        parser.driver.quit();
+        CveCrawler.driver.quit();
 
         assertTrue(vulnerabilities.size() > 190);
         CompositeVulnerability vuln = getVulnerability(vulnerabilities, "CVE-2023-22809");
@@ -26,7 +27,7 @@ public class ParseTableTest extends AbstractParserTest {
     public void testParseTableVMWare() {
         ParseTable parser = new ParseTable("https://www.vmware.com/security/advisories.html");
         List<CompositeVulnerability> vulnerabilities = parser.parseWebPage("https://www.vmware.com/security/advisories.html", null);
-        parser.driver.quit();
+        CveCrawler.driver.quit();
 
         assertTrue(vulnerabilities.size() > 80);
         CompositeVulnerability vuln = getVulnerability(vulnerabilities, "CVE-2021-22035");
@@ -40,7 +41,7 @@ public class ParseTableTest extends AbstractParserTest {
     public void testParseTableNvidia() {
         ParseTable parser = new ParseTable("https://www.nvidia.com/en-us/security/");
         List<CompositeVulnerability> vulnerabilities = parser.parseWebPage("https://www.nvidia.com/en-us/security/", null);
-        parser.driver.quit();
+        CveCrawler.driver.quit();
 
         assertTrue(vulnerabilities.size() > 400);
         CompositeVulnerability vuln = getVulnerability(vulnerabilities, "CVE-2017-5715");

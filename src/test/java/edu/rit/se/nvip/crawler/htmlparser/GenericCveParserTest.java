@@ -23,6 +23,7 @@
  */
 package edu.rit.se.nvip.crawler.htmlparser;
 
+import edu.rit.se.nvip.crawler.CveCrawler;
 import edu.rit.se.nvip.model.CompositeVulnerability;
 import edu.rit.se.nvip.model.Vulnerability;
 import org.apache.commons.io.IOUtils;
@@ -105,15 +106,7 @@ public class GenericCveParserTest extends AbstractParserTest {
 
 	@After
 	public void destoryParsers(){
-		if(parserTable instanceof ParseTable) ((ParseTable)parserTable).driver.quit();
-		if(parserList instanceof ParseTable) ((ParseTable)parserList).driver.quit();
-		if(parserBulletin instanceof ParseTable) ((ParseTable)parserBulletin).driver.quit();
-		if(parserAccordion instanceof ParseTable) ((ParseTable)parserAccordion).driver.quit();
-
-		if(parserTable instanceof ParseAccordion) ((ParseAccordion)parserTable).driver.quit();
-		if(parserList instanceof ParseAccordion) ((ParseAccordion)parserList).driver.quit();
-		if(parserBulletin instanceof ParseAccordion) ((ParseAccordion)parserBulletin).driver.quit();
-		if(parserAccordion instanceof ParseAccordion) ((ParseAccordion)parserAccordion).driver.quit();
+		CveCrawler.driver.quit();
 	}
 
 }
