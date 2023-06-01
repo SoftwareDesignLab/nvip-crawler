@@ -7,6 +7,7 @@ nvip.iml
 /target/
 
 /crawler/target/
+/productnameextractor/target/
 /sleepycat-5.0.84.jar
 /nvip_data/productnameextraction/w2v_model_250.bin
 /nvip_data/mysql-database/newDB/mysql-connector-j-8.0.33.jar
@@ -16,7 +17,6 @@ nvip.iml
 output/
 logs/
 /.github/
-/nvip_data/productnameextraction/w2v_model_250.bin
 /nvip_data/exploit-repo/exploitdb/
 Servers/
 nvip_data/
