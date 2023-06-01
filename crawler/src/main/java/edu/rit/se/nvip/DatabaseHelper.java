@@ -544,31 +544,4 @@ public class DatabaseHelper {
 		return rawCves;
 	}
 
-	private String getAllNvdCVEs = "SELECT cve_id, published_date, status FROM nvddata order by cve_id desc";
-
-	/**
-	 * for Getting NVD CVEs in nvddata
-	 * @return
-	 */
-	public ArrayList<NvdVulnerability> getAllNvdCVEs() {
-
-		ArrayList<NvdVulnerability> nvdVulnerabilities = new ArrayList<>();
-
-		try (Connection connection = getConnection();
-			 PreparedStatement pstmt = connection.prepareStatement(getAllNvdCVEs)) {
-			ResultSet rs = pstmt.executeQuery();
-
-			while (rs.next()) {
-
-				try {
-					nvdVulnerabilities.add(new NvdVulnerability(rs.getString("cve_id"), rs.getTimestamp("published_date").toLocalDateTime().toString(), rs.getString("status")));
-				} catch (Exception ignore) {}
-
-			}
-		} catch (Exception e) {
-			logger.error("ERROR: Failed to grab NVD CVEs from nvddata table\n{}", e.toString());
-		}
-
-		return nvdVulnerabilities;
-	}
 }
