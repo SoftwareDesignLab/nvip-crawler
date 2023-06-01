@@ -51,7 +51,7 @@ public class CrawlerMain {
         CrawlerMain crawlerMain = new CrawlerMain();
         if ((Boolean) dataVars.get("refreshNvdList")) {
             logger.info("Refreshing NVD CVE List");
-            new NvdCveController().updateNvdDataTable((String) dataVars.get("nvdUrl"));
+//            new NvdCveController().updateNvdDataTable((String) dataVars.get("nvdUrl"));
         }
 
         HashMap<String, RawVulnerability> pyCves = crawlerMain.getCvesFromPythonGitHub();
