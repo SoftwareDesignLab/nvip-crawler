@@ -88,9 +88,11 @@ public abstract class AbstractCveParser {
 	public static WebDriver startDynamicWebDriver() {
 		System.setProperty("webdriver.chrome.silentOutput", "true");
 		ChromeOptions options = new ChromeOptions();
-		options.addArguments("--headless","--user-agent=Mozilla/5.0");
+		options.addArguments("--headless=new","--user-agent=Mozilla/5.0");
 		options.addArguments("--remote-allow-origins=*");
 		options.addArguments("--enable-javascript");
+		options.addArguments("--no-sandbox");
+		options.addArguments("--disable-dev-shm-usage");
 		WebDriverManager.chromedriver().setup();
 		ChromeDriverService chromeDriverService = new ChromeDriverService.Builder().build();
 		return new ChromeDriver(chromeDriverService, options);
