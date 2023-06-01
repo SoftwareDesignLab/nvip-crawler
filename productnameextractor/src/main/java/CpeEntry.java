@@ -43,6 +43,11 @@ public class CpeEntry implements Serializable{
 		this.platform = platform;
 	}
 
+	// For ProductNameExtractor
+	public CpeEntry(String title, String version, String cpeID) {
+		this(title, version, "", cpeID, "");
+	}
+
 	public String getTitle() {
 		return title;
 	}

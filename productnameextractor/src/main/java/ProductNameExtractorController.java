@@ -3,6 +3,7 @@ import db.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -15,10 +16,10 @@ public class ProductNameExtractorController {
         logger.info("Pulling existing CVEs from the database...");
 
         // Fetch vulnerability data from the DB
-        final Map<String, CompositeVulnerability> vulnMap = databaseHelper.getExistingCompositeVulnerabilities();
+        final Map<String, CompositeVulnerability> vulnMap = databaseHelper.getExistingCompositeVulnerabilities(300);
 
         // Extract vuln list and cast Vulnerability to CompositeVulnerability for the AffectedProductIdentifier
-        final List<CompositeVulnerability> vulnerabilities = (List<CompositeVulnerability>) vulnMap.values();
+        final List<CompositeVulnerability> vulnerabilities = new ArrayList<>(vulnMap.values());
 
         // Run the AffectedProductIdentifier with the fetched vuln list
         // This method will find Common Platform Enumerations (CPEs) and store them in the DB

@@ -22,25 +22,20 @@
  * SOFTWARE.
  */
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.io.*;
+import java.net.HttpURLConnection;
+import java.net.SocketException;
+import java.net.URL;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import model.*;
 
+import javax.net.ssl.SSLException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.w3c.dom.Node;
@@ -58,6 +53,11 @@ import opennlp.tools.tokenize.WhitespaceTokenizer;
  */
 
 public class CpeLookUp {
+	private static final String USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36";
+	private static final String BASE_NVD_URL = "https://services.nvd.nist.gov/rest/json/cpes/2.0";
+	private static final int MAX_PAGES = 1;
+	private static final int RESULTS_PER_PAGE = 10000; // Cannot query more than 10000 per page
+	private final static ObjectMapper OM = new ObjectMapper();
 
 	/**
 	 * A hash map of <CPE, Domain>
@@ -91,7 +91,7 @@ public class CpeLookUp {
 
 	private CpeLookUp() {
 		productsToBeAddedToDatabase = new HashMap<>();
-		loadProductFile();
+		loadProductDict();
 	}
 
 	public Map<String, Product> getProductsToBeAddedToDatabase() {
@@ -107,26 +107,145 @@ public class CpeLookUp {
 	 *
 	 * @return assigns list of product
 	 */
-	public void loadProductFile() {
+	@SuppressWarnings({"unchecked", "rawtypes"})
+	public void loadProductDict() {
+		// Init cpeMapFile
+		cpeMapFile = new HashMap<>();
+
+		// Collect CPE data from NVD API
 		try {
-			MyProperties properties = new MyProperties();
-			properties = new PropertyLoader().loadConfigFile(properties);
+			int index = 0;
 
-			String filename = properties.getDataDir() + "/" + properties.getNameExtractorDir() + "/" + properties.getCPEserialized();
+			// Get raw data
+			LinkedHashMap<String, ?> rawData = getNvdCpeData(index);
 
-			logger.info("Loading product list from serialized CPE dictionary at {}", filename);
+			// Extract results data
+			int remainingResults = (int) rawData.get("totalResults");
+			final int totalPages = (int) Math.ceil((double) remainingResults / RESULTS_PER_PAGE);
+			while(remainingResults > 0) {
+				try {
+					// Skip first query, as it was already done in order to get the totalResults number
+					if(index > 0) {
+						// Query next page
+						rawData = getNvdCpeData(index);
+					}
 
-			FileInputStream fis;
+					// Extract product data
+					final List<LinkedHashMap> rawProductData = (List<LinkedHashMap>) rawData.get("products");
 
-			fis = new FileInputStream(filename);
-			ObjectInputStream ois = new ObjectInputStream(fis);
-			cpeMapFile = (HashMap<String, CpeGroup>) ois.readObject();
-			ois.close();
+					rawProductData.forEach(p -> {
+						// Extract product map
+						final LinkedHashMap<String, LinkedHashMap> product = (LinkedHashMap<String, LinkedHashMap>) p.get("cpe");
+
+						// Extract cpe name
+						final String fullCpeName = String.valueOf(product.get("cpeName"));
+
+						// Extract cpe id
+						final String cpeId = String.valueOf(product.get("cpeNameId"));
+
+						// CPE 2.3 Regex
+						// Regex101: https://regex101.com/r/9uaTQb/1
+						final Matcher m = Pattern.compile("cpe:2\\.3:[aho\\*\\-]:([^:]*):([^:]*):([^:]*):.*").matcher(fullCpeName);
+
+						// Ensure CPE is formed correctly
+						if(!m.find() || m.group(1) == null || m.group(2) == null || m.group(3) == null) {
+							logger.warn("CPE '{}' skipped due to bad form", fullCpeName);
+							return;
+						}
+
+						// Store matcher values
+						final String vendorName = m.group(1);
+						final String productName = m.group(2);
+						final String version = m.group(3);
+
+						// Build key
+						final String key = String.join(":", vendorName, productName);
+
+						// Add data to cpeMapFile
+						CpeGroup value;
+						// If key is not found, create new group and entry
+						if(!cpeMapFile.containsKey(key)) {
+							// Create group
+							value = new CpeGroup(vendorName, productName);
+
+							// Create & add entry to group
+							value.addVersion(new CpeEntry(productName, version, cpeId));
+
+							// Add group to cpeMapFile
+							cpeMapFile.put(key, value);
+						}
+						// Update existing entries with versions
+						else {
+							// Get existing group from cpeMapFile
+							final CpeGroup existingValue = cpeMapFile.get(key);
+
+							// Get existing versions from group
+							final Set<String> existingVersions = existingValue.getVersions().keySet();
+
+							// If version does not already exist, add new entry
+							if(!existingVersions.contains(version)) {
+								// Create & add entry to group
+								existingValue.addVersion(new CpeEntry(productName, version, cpeId));
+							}
+						}
+					});
+
+					// Reduce remaining results by number parsed
+					remainingResults -= RESULTS_PER_PAGE;
+
+					// Increment index
+					index += RESULTS_PER_PAGE;
+
+					final int page = index / RESULTS_PER_PAGE;
+					logger.info("Successfully loaded CPE dictionary page {}/{}", page, totalPages);
+					if(page >= MAX_PAGES) {
+						logger.warn("MAX_PAGES reached, the remaining {} pages will not be queried", totalPages - MAX_PAGES);
+						break;
+					}
+				} catch (Exception e) {
+					logger.error("Error loading CPE dictionary @ page {}/{}: {}", index / RESULTS_PER_PAGE, totalPages, e.toString());
+				}
+			}
+
 			logger.info("Loading product list is done!");
 		} catch (Exception e) {
-			logger.error("Error loading CPE dictionary {}", e.toString());
-
+			logger.error("Error loading CPE dictionary: {}", e.toString());
 		}
+	}
+
+	@SuppressWarnings("unchecked")
+	private LinkedHashMap<String, ?> getNvdCpeData(int startIndex) throws IOException {
+		// Pagination parameter addition
+		final String url = BASE_NVD_URL + String.format("?resultsPerPage=%s&startIndex=%s", RESULTS_PER_PAGE, startIndex);
+		logger.info("Fetching product list from CPE dictionary at {}", url);
+
+		// Query URL
+		return OM.readValue(getContentFromUrl(url), LinkedHashMap.class);
+	}
+
+	private static String getContentFromUrl(String url) {
+		StringBuilder response = new StringBuilder();
+		BufferedReader bufferedReader;
+
+		try {
+			URL urlObject = new URL(url);
+			HttpURLConnection httpURLConnection = (HttpURLConnection) urlObject.openConnection();
+			httpURLConnection.setRequestMethod("GET");
+			httpURLConnection.setRequestProperty("User-Agent", USER_AGENT);
+//			httpURLConnection.setRequestProperty("Accept-Encoding", "identity");
+
+			bufferedReader = new BufferedReader(new InputStreamReader(httpURLConnection.getInputStream()));
+			String inputLine;
+			while ((inputLine = bufferedReader.readLine()) != null) {
+				response.append(inputLine + "\n");
+			}
+			bufferedReader.close();
+
+		} catch (Exception e) {
+			logger.error(e.toString());
+		}
+
+		return response.toString();
 	}
 
 	/**
