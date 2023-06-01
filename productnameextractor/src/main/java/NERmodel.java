@@ -83,16 +83,13 @@ public class NERmodel {
 		super();
 
 		try {
-			MyProperties propertiesNvip = new MyProperties();
-			propertiesNvip = new PropertyLoader().loadConfigFile(propertiesNvip);
-
 			// Get models paths
-			String modelsDir = propertiesNvip.getDataDir() + "/" + propertiesNvip.getNameExtractorDir() + "/";
-			String c2vModelConfigPath = modelsDir + propertiesNvip.getChar2VecModelConfigPath();
-			String c2vModelWeightsPath = modelsDir + propertiesNvip.getChar2VecModelWeightsPath();
-			String w2vModelPath = modelsDir + propertiesNvip.getWord2VecModelPath();
-			String nerModelPath = modelsDir + propertiesNvip.getNerModelPath();
-			String nerNormalizerPath = modelsDir + propertiesNvip.getNerModelNormalizerPath();
+			String modelsDir = System.getenv("DATA_DIR") + "/" + System.getenv("NAME_EXTRACTOR_DIR") + "/";
+			String c2vModelConfigPath = modelsDir + System.getenv("CHAR_2_VEC_CONFIG");
+			String c2vModelWeightsPath = modelsDir + System.getenv("CHAR_2_VEC_WEIGHTS");
+			String w2vModelPath = modelsDir + System.getenv("WORD_2_VEC");
+			String nerModelPath = modelsDir + System.getenv("NER_MODEL");
+			String nerNormalizerPath = modelsDir + System.getenv("NER_MODEL_NORMALIZER");
 
 			long startTime = System.currentTimeMillis();
 			// Load NER model

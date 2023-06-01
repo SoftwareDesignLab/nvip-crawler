@@ -81,33 +81,25 @@ public class DatabaseHelper {
 	 */
 	private DatabaseHelper() {
 		try {
-			MyProperties propertiesNvip = new MyProperties();
-			propertiesNvip = new PropertyLoader().loadConfigFile(propertiesNvip);
-			databaseType = propertiesNvip.getDatabaseType();
+			databaseType = System.getenv("DB_TYPE");
 			logger.info("New NVIP.DatabaseHelper instantiated! It is configured to use " + databaseType + " database!");
 			if (databaseType.equalsIgnoreCase("mysql"))
 				Class.forName("com.mysql.cj.jdbc.Driver");
 
 		} catch (ClassNotFoundException e2) {
-			logger.error("Error while loading database type from the nvip.properties! " + e2.toString());
+			logger.error("Error while loading database type from environment variables! " + e2.toString());
 		}
-
-		String configFile = "db-" + databaseType + ".properties";
 
 		if(config == null){
 			logger.info("Attempting to create HIKARI from ENVVARs");
 			config = createHikariConfigFromEnvironment();
 		}
 
-		if(config == null){
-			config = createHikariConfigFromProperties(configFile);
-		}
-
 		try {
-
+			if(config == null) throw new IllegalArgumentException();
 			dataSource = new HikariDataSource(config); // init data source
 		} catch (PoolInitializationException e2) {
-			logger.error("Error initializing data source! Check the value of the database user/password in the config file '{}'! Current values are: {}", configFile, config.getDataSourceProperties());
+			logger.error("Error initializing data source! Check the value of the database user/password in the environment variables! Current values are: {}", config != null ? config.getDataSourceProperties() : null);
 			System.exit(1);
 
 		}
@@ -249,11 +241,9 @@ public class DatabaseHelper {
 				PreparedStatement pstmt = conn.prepareStatement(insertAffectedReleaseSql);) {
 			for (AffectedRelease affectedRelease : affectedReleases) {
 				try {
-					int prodId = getProdIdFromCpe(affectedRelease.getCpe());
 					pstmt.setString(1, affectedRelease.getCveId());
-					pstmt.setInt(2, prodId);
-					pstmt.setString(3, affectedRelease.getReleaseDate());
-					pstmt.setString(4, affectedRelease.getVersion());
+					pstmt.setString(2, affectedRelease.getReleaseDate());
+					pstmt.setString(3, affectedRelease.getVersion());
 					count += pstmt.executeUpdate();
 //					logger.info("Added {} as an affected release for {}", prodId, affectedRelease.getCveId());
 				} catch (Exception e) {
@@ -289,14 +279,12 @@ public class DatabaseHelper {
 		logger.info("Done. Deleted existing affected releases in database!");
 	}
 
-	public Map<String, CompositeVulnerability> getExistingCompositeVulnerabilities() {
-
+	public Map<String, CompositeVulnerability> getExistingCompositeVulnerabilities(int maxVulnerabilities) {
 		if (existingCompositeVulnMap.size() == 0) {
 		synchronized (DatabaseHelper.class) {
 			if (existingCompositeVulnMap.size() == 0) {
 				int vulnId;
-				String cveId, description, published_date, last_modified_date, srcUrl, platform, srcDomain = "";
-				int existAtNvd, existAtMitre;
+				String cveId, description;
 				existingCompositeVulnMap = new HashMap<>();
 				try (Connection connection = getConnection();) {
 
@@ -304,7 +292,8 @@ public class DatabaseHelper {
 					PreparedStatement pstmt = connection.prepareStatement(selectSql);
 					ResultSet rs = pstmt.executeQuery();
 
-					while (rs.next()) {
+					int vulnCount = 0;
+					while (rs.next() && vulnCount < maxVulnerabilities) {
 						vulnId = rs.getInt("vuln_id");
 						cveId = rs.getString("cve_id");
 						description = rs.getString("description");
@@ -312,9 +301,11 @@ public class DatabaseHelper {
 						CompositeVulnerability existingVulnInfo = new CompositeVulnerability(
 								vulnId,
 								cveId,
-								description
+								description,
+								CompositeVulnerability.CveReconcileStatus.UPDATE
 						);
 						existingCompositeVulnMap.put(cveId, existingVulnInfo);
+						vulnCount++;
 					}
 					logger.info("NVIP has loaded {} existing CVE items from DB!", existingCompositeVulnMap.size());
 				} catch (Exception e) {

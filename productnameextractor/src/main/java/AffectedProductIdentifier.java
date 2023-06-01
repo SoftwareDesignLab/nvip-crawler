@@ -96,6 +96,13 @@ public class AffectedProductIdentifier extends Thread implements Runnable {
 
 		logger.info("Starting product name extraction process... # CVEs to be processed: {}", totalCVEtoProcess);
 
+		// Default value of 1000, attempts to get the limit value from env vars and override this value
+		int cveLimit = 1000;
+		try { cveLimit = Integer.parseInt(System.getenv("CVE_LIMIT")); }
+		catch (NullPointerException | NumberFormatException e) {
+			logger.warn("Could not fetch CVE_LIMIT from env vars, defaulting to 1000");
+		}
+
 		for (CompositeVulnerability vulnerability : vulnList) {
 
 			String description = vulnerability.getDescription();
@@ -114,8 +121,7 @@ public class AffectedProductIdentifier extends Thread implements Runnable {
 
 			counterOfProcessedCVEs++;
 
-			//TODO: Add this limit to props
-			if (counterOfProcessedCVEs > 1000)
+			if (counterOfProcessedCVEs > cveLimit)
 				break;
 
 			long startCVETime = System.currentTimeMillis();
@@ -155,7 +161,7 @@ public class AffectedProductIdentifier extends Thread implements Runnable {
 
 						if (productIDs == null || productIDs.isEmpty()) {
 							numOfProductsNotMappedToCPE++;
-							logger.warn("The product name ({}) poundredicted by AI/ML model could not be f in the CPE dictionary!\tCVE-ID: {}", productItem.toString(), vulnerability.getCveId());
+							logger.warn("The product name ({}) predicted by AI/ML model could not be found in the CPE dictionary!\tCVE-ID: {}", productItem.toString(), vulnerability.getCveId());
 							continue;
 						}
 						// if CPE identified, add it as affected release
