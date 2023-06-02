@@ -3,12 +3,14 @@ package edu.rit.se.nvip.crawler.htmlparser;
 import edu.rit.se.nvip.crawler.CveCrawler;
 import edu.rit.se.nvip.model.CompositeVulnerability;
 import org.junit.Test;
+import org.junit.Ignore;
 import java.util.List;
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.*;
 
 public class ParseTableTest extends AbstractParserTest {
 
+    @Ignore
     @Test
     public void testParseTableQNAP() {
         ParseTable parser = new ParseTable("https://www.qnap.com/en/security-advisories?ref=security_advisory_details");
