@@ -28,6 +28,7 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -35,6 +36,7 @@ import java.util.regex.Pattern;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.checkerframework.checker.units.qual.A;
 import org.eclipse.jgit.api.LsRemoteCommand;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -50,16 +52,22 @@ import edu.rit.se.nvip.db.DatabaseHelper;
 public class PatchFinder {
 
 	private static final Logger logger = LogManager.getLogger(PatchFinder.class.getName());
+	private static DatabaseHelper db;
+
+	// TODO: add to envvars?
+	private static final String[] ADDRESS_BASES = { "https://github.com/", "https://gitlab.com/" };
 	private static final String GOOGLE_SEARCH_URL = "https://www.google.com/search?q=";
 
-	private static DatabaseHelper db;
-	private static final String[] ADDRESS_BASES = { "https://github.com/" };
-	private static String keyword1 = "";
-	private static String keyword2 = "";
+	private Map<String, ArrayList<String>> cveCpeUrls;
+
+	// TODO: all old vars, get rid of these
 	private static Entry<String, ArrayList<String>> currentCPE;
 	private static boolean advanceSearchCheck;
 	private static String previousURL;
 	private static int advanceSearchCount;
+
+	private static String keyword1 = "";
+	private static String keyword2 = "";
 
 	/**
 	 * Main method just for calling to find all patch URLs
@@ -105,16 +113,20 @@ public class PatchFinder {
 	 */
 	public void parseMassURLs(Map<String, ArrayList<String>> cpes) throws IOException, InterruptedException {
 
-		advanceSearchCount = 0;
-		int i = 0;
-		for (Entry<String, ArrayList<String>> cpe : cpes.entrySet()) {
-			currentCPE = cpe;
-			parseURL();
-			i++;
-			if (i % 100 == 0) {
-				logger.info(i + " CPEs Parsed!");
+		Map<String, ArrayList<String>> cveCpeUrls = new HashMap<>();
+
+		// for each CPE, make a set of URLs for potential patch locations, then map them to their CVE
+		for (String cveId: cpes.keySet()) {
+
+			ArrayList<String> urls = new ArrayList<>();
+			for (String cpe: cpes.get(cveId)) {
+				urls.add(parseURL(cpe));
 			}
+
+			cveCpeUrls.put(cveId, urls);
 		}
+
+		this.cveCpeUrls = cveCpeUrls;
 	}
 
 
@@ -161,49 +173,37 @@ public class PatchFinder {
 	 * @throws IOException
 	 * @throws InterruptedException
 	 */
-	private void parseURL() throws IOException, InterruptedException {
-
-		advanceSearchCheck = true;
-		String[] wordArr = currentCPE.getKey().split(":");
-		ArrayList<String> newAddresses = null;
+	private ArrayList<String> parseURL(String cpe) throws IOException, InterruptedException {
+		String[] wordArr = cpe.split(":");
+		ArrayList<String> newAddresses = new ArrayList<>();
+		String vendor = "";
+		String product = "";
 
 		// Parse keywords from CPE to create links for github, bitbucket and gitlab
-		// Also checks if the keywords are the same as the previous, indicating the link
+		// Also checks if the vendor and/or product are the same as the previous, indicating the link
 		// is already used
-		if (!wordArr[3].equals("*") && !keyword1.equals(wordArr[3])) {
-
-			keyword1 = wordArr[3];
-			HashSet<String> addresses = initializeAddresses();
-
+		if (!wordArr[3].equals("*") && !vendor.equals(wordArr[3])) {
+			HashSet<String> addresses = initializeAddresses(vendor);
 			for (String address : addresses) {
-
 				if (!wordArr[4].equals("*")) {
-
-					keyword2 = wordArr[4];
-					address += keyword2;
-
-					newAddresses = testConnection(address);
-
-				} else {
-					newAddresses = testConnection(address);
+					product = wordArr[4];
+					address += product;
 				}
-
+				
+				newAddresses = testConnection(address);
 				if (checkAddressList(newAddresses)) {
 					break;
 				}
 
 			}
 
-		} else if (!wordArr[4].equals("*") && !keyword2.equals(wordArr[4])) {
+		} else if (!wordArr[4].equals("*") && !product.equals(wordArr[4])) {
 
-			keyword2 = wordArr[4];
+			product = wordArr[4];
 
 			for (String base : ADDRESS_BASES) {
-
-				String address = base + keyword2;
-
+				String address = base + product;
 				newAddresses = testConnection(address);
-
 				if (checkAddressList(newAddresses)) {
 					break;
 				}
@@ -211,12 +211,17 @@ public class PatchFinder {
 			}
 		}
 
+		return newAddresses;
+		
 	}
 
 	/**
 	 * Repeated method used to check if a list of collected addresses is empty or
 	 * not If so, perform an advanced search for correct repo URLs. If not, insert
 	 * the following
+	 *
+	 * TODO: Don't store the addresses in the DB until we actually confirm the repo exists,
+	 *  conduct the advanced search if needed, then store the successful ones in the DB
 	 * 
 	 * @param addresses
 	 * @throws InterruptedException
@@ -240,13 +245,13 @@ public class PatchFinder {
 	}
 
 	/**
-	 * Inistializes the address set with additional addresses based on cpe keywords
+	 * Initialize the address set with additional addresses based on cpe keywords
 	 */
-	private HashSet<String> initializeAddresses() {
+	private HashSet<String> initializeAddresses(String keyword) {
 		HashSet<String> addresses = new HashSet<>();
 
 		for (String base : ADDRESS_BASES) {
-			addresses.add(base + keyword1 + "/");
+			addresses.add(base + keyword + "/");
 		}
 
 		return addresses;
@@ -260,9 +265,8 @@ public class PatchFinder {
 	 * @param address
 	 * @return
 	 * @throws IOException
-	 * @throws InterruptedException
 	 */
-	private ArrayList<String> testConnection(String address) throws IOException, InterruptedException {
+	private ArrayList<String> testConnection(String address) throws IOException {
 
 		logger.info("Testing Connection for address: " + address);
 		ArrayList<String> urlList = new ArrayList<>();
