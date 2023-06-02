@@ -24,7 +24,6 @@
 
 import java.io.*;
 import java.net.HttpURLConnection;
-import java.net.SocketException;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -32,7 +31,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import javax.net.ssl.SSLException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
@@ -56,7 +54,7 @@ import opennlp.tools.tokenize.WhitespaceTokenizer;
 public class CpeLookUp {
 	private static final String USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36";
 	private static final String BASE_NVD_URL = "https://services.nvd.nist.gov/rest/json/cpes/2.0";
-	private static final int MAX_PAGES = 10;
+	private static final int MAX_PAGES = 20;
 	private static final int RESULTS_PER_PAGE = 10000; // Cannot query more than 10000 per page
 	private final static ObjectMapper OM = new ObjectMapper();
 
@@ -83,19 +81,31 @@ public class CpeLookUp {
 
 	/**
 	 * Thread safe singleton implementation
-	 * 
+	 *
 	 * @return
 	 */
 	public static synchronized CpeLookUp getInstance() {
 		if (cpeLookUp == null)
-			cpeLookUp = new CpeLookUp();
+			cpeLookUp = new CpeLookUp(0);
 
 		return cpeLookUp;
 	}
 
-	private CpeLookUp() {
+	/**
+	 * Thread safe singleton implementation
+	 * @param maxPages
+	 * @return
+	 */
+	public static synchronized CpeLookUp getInstance(int maxPages) {
+		if (cpeLookUp == null)
+			cpeLookUp = new CpeLookUp(maxPages);
+
+		return cpeLookUp;
+	}
+
+	private CpeLookUp(int maxPages) {
 		productsToBeAddedToDatabase = new HashMap<>();
-		loadProductDict();
+		loadProductDict(maxPages);
 	}
 
 	public Map<String, Product> getProductsToBeAddedToDatabase() {
@@ -112,7 +122,7 @@ public class CpeLookUp {
 	 * @return assigns list of product
 	 */
 	@SuppressWarnings({"unchecked", "rawtypes"})
-	public void loadProductDict() {
+	public void loadProductDict(int maxPages) {
 		// Init cpeMapFile
 		cpeMapFile = new HashMap<>();
 
@@ -136,6 +146,9 @@ public class CpeLookUp {
 
 					// Extract product data
 					final List<LinkedHashMap> rawProductData = (List<LinkedHashMap>) rawData.get("products");
+
+					logger.debug("rawData keys size: {}", rawData.size());
+					logger.debug("rawData keys: {}", rawData.keySet());
 
 					rawProductData.forEach(p -> {
 						// Extract product map
@@ -198,13 +211,18 @@ public class CpeLookUp {
 
 					// Increment index
 					index += RESULTS_PER_PAGE;
+					// Sleep 2 sec between queries (adjust until we do not get 403 errors)
+					Thread.sleep(2000);
 
 					final int page = index / RESULTS_PER_PAGE;
 					logger.info("Successfully loaded CPE dictionary page {}/{}", page, totalPages);
-					if(page >= MAX_PAGES) {
-						logger.warn("MAX_PAGES reached, the remaining {} pages will not be queried", totalPages - MAX_PAGES);
+					if(page >= maxPages) {
+						logger.warn("MAX_PAGES reached, the remaining {} pages will not be queried", totalPages - maxPages);
 						break;
 					}
+				} catch (InterruptedIOException e) { // This block is important, it catches rate limiting errors explicitly
+					Thread.sleep(10000);
+					throw e;
 				} catch (Exception e) {
 					logger.error("Error loading CPE dictionary @ page {}/{}: {}", index / RESULTS_PER_PAGE, totalPages, e.toString());
 				}
@@ -222,11 +240,19 @@ public class CpeLookUp {
 		final String url = BASE_NVD_URL + String.format("?resultsPerPage=%s&startIndex=%s", RESULTS_PER_PAGE, startIndex);
 		logger.info("Fetching product list from CPE dictionary at {}", url);
 
-		// Query URL
-		return OM.readValue(getContentFromUrl(url), LinkedHashMap.class);
+		// Query URL for contents (THIS WILL THROW AN IOException WHEN IT HITS A 403 RESPONSE)
+		final String contents = getContentFromUrl(url);
+
+		// Parse contents
+		try {
+			return OM.readValue(contents, LinkedHashMap.class);
+		} catch (IOException e) {
+			logger.error("Error parsing URL '{}' contents: {}", url, e.toString());
+			return new LinkedHashMap<>();
+		}
 	}
 
-	private static String getContentFromUrl(String url) {
+	private static String getContentFromUrl(String url) throws InterruptedIOException {
 		StringBuilder response = new StringBuilder();
 		BufferedReader bufferedReader;
 
@@ -237,6 +263,11 @@ public class CpeLookUp {
 			httpURLConnection.setRequestProperty("User-Agent", USER_AGENT);
 //			httpURLConnection.setRequestProperty("Accept-Encoding", "identity");
 
+			// Rate limit protection
+			if(httpURLConnection.getResponseCode() == 403) {
+				throw new InterruptedIOException(String.format("URL '%s' responded with 403 - Forbidden. It is likely that rate limiting has been triggered.", url));
+			}
+
 			bufferedReader = new BufferedReader(new InputStreamReader(httpURLConnection.getInputStream()));
 			String inputLine;
 			while ((inputLine = bufferedReader.readLine()) != null) {
@@ -244,7 +275,9 @@ public class CpeLookUp {
 			}
 			bufferedReader.close();
 
-		} catch (Exception e) {
+		} catch(InterruptedIOException e) {
+			throw e; // Rethrow
+		} catch (IOException e) {
 			logger.error(e.toString());
 		}
 
@@ -420,7 +453,7 @@ public class CpeLookUp {
 	 * @param selectedGroups                product
 	 *
 	 * @return list of CPEgroupFromMap objects
-	 */
+	 */ // TODO: Versions
 	private ArrayList<String> getCPEidsFromGroups(ArrayList<CPEgroupFromMap> selectedGroups, ProductItem product) {
 
 		ArrayList<String> cpeIDs = new ArrayList<>();
@@ -561,7 +594,7 @@ public class CpeLookUp {
 
 		// Match against CPE regex
 		final Matcher m = CPE_REGEX.matcher(cpeID);
-		if(m.find()) vendor = m.group(2);
+		if(m.find()) vendor = m.group(1);
 		else logger.warn("Could not match CPE String {}", cpeID);
 
 		return vendor;
