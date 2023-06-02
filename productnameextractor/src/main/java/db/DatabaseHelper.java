@@ -56,7 +56,7 @@ public class DatabaseHelper {
 	private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
 	String databaseType = "mysql";
 
-	private final String insertProductSql = "INSERT INTO affectedproduct (CPE) VALUES (?);";
+	private final String insertProductSql = "INSERT INTO affectedproduct (cve_id, cpe) VALUES (?);";
 	private final String getProductCountFromCpeSql = "SELECT count(*) from affectedproduct where cpe = ?";
 	private final String getIdFromCpe = "SELECT * FROM affectedproduct where cpe = ?;";
 
@@ -259,7 +259,7 @@ public class DatabaseHelper {
 					pstmt.setString(3, productName);
 					pstmt.setString(4, affectedRelease.getReleaseDate());
 					pstmt.setString(5, affectedRelease.getVersion());
-					pstmt.setString(5, affectedRelease.getVendor());
+					pstmt.setString(6, affectedRelease.getVendor());
 					count += pstmt.executeUpdate();
 //					logger.info("Added {} as an affected release for {}", prodId, affectedRelease.getCveId());
 				} catch (Exception e) {
