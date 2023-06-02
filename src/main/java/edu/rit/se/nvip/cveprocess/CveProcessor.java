@@ -23,34 +23,23 @@
  */
 package edu.rit.se.nvip.cveprocess;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.time.Duration;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
-import java.util.*;
-
-import edu.rit.se.nvip.db.DatabaseHelper;
-import edu.rit.se.nvip.model.CVE;
+import edu.rit.se.nvip.cvereconcile.CveReconciler;
+import edu.rit.se.nvip.model.CompositeVulnerability;
 import edu.rit.se.nvip.model.NvdVulnerability;
 import edu.rit.se.nvip.model.Vulnerability;
-import it.unimi.dsi.fastutil.Hash;
+import edu.rit.se.nvip.utils.CsvUtils;
 import org.apache.commons.collections4.SetUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import edu.rit.se.nvip.cvereconcile.CveReconciler;
-import edu.rit.se.nvip.model.CompositeVulnerability;
-import edu.rit.se.nvip.utils.CsvUtils;
-import org.jdom2.CDATA;
-import org.json.JSONArray;
-import org.json.JSONObject;
+import java.io.File;
+import java.io.IOException;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
 
 /**
  *
@@ -93,58 +82,10 @@ public class CveProcessor {
 
 	/**
 	 * Constructor for processor class
-	 * @param nvdCvePath --> File path to NVD CVE .csv file (not used anymore)
-	 * @param mitreCvePath --> File path to MITRE CVE .csv file
 	 * @param nvdCves --> Hashmap of CVEs in NVD (provided byb NVD Controller class)
 	 */
-	public CveProcessor(String nvdCvePath, String mitreCvePath, HashMap<String, NvdVulnerability> nvdCves) {
-
+	public CveProcessor(HashMap<String, NvdVulnerability> nvdCves) {
 		this.nvdCVEs = nvdCves;
-
-		try {
-			CsvUtils csvLogger = new CsvUtils();
-			/**
-			 * NVD
-			 */
-			List<String> arrNVD = FileUtils.readLines(new File(nvdCvePath), "UTF-8");
-			if (arrNVD.isEmpty())
-				throw new IOException("Failed to read NVD CSV file: " + nvdCvePath + "  ... Calculations of 'not in NVD' are going to be off");
-			else
-				logger.info("Successfully read in NVD CSV file for calculations of 'not in NVD'");
-			for (String cve : arrNVD) {
-				String[] pieces = cve.split(csvLogger.getSeparatorCharAsRegex());
-				String id = pieces[0];
-				if (pieces.length > 2) {
-					cvesInNvd.put(id, pieces[2]);
-				} else {
-					cvesInNvd.put(id, null);
-				}
-			}
-
-			/**
-			 * MITRE
-			 */
-			arrNVD = FileUtils.readLines(new File(mitreCvePath), "UTF-8");
-			if (arrNVD.isEmpty())
-				throw new IOException("Failed to read MITRE CSV file" + mitreCvePath + "... Calculations of 'not in MITRE' are going to be off");
-			else
-				logger.info("Successfully read in MITRE CSV file for calculations of 'not in MITRE'");
-			for (String cve : arrNVD) {
-				String[] pieces = cve.split(csvLogger.getSeparatorCharAsRegex());
-				String id = pieces[0];
-				if (pieces.length > 2) {
-					cvesInMitre.put(id, pieces[2]);
-				} else {
-					cvesInMitre.put(id, null);
-				}
-			}
-
-		} catch (IOException e) {
-			logger.error("ERROR: Failed to load NVD/MITRE CVEs!\n{}\nPlease check file paths for nvd CVE and mitre CVE .csv files, " +
-					"or disable it in the NVIP_REFRESH_NVD_LIST envvar", e.getMessage());
-			System.exit(1); // This is a serious error, exit!
-		}
-		logger.info("Loaded cve data for NVD(" + cvesInNvd.size() + ") and MITRE(" + cvesInNvd.size() + ")");
 	}
 
 	/**
