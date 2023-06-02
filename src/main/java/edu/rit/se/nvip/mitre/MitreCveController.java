@@ -24,6 +24,10 @@
 package edu.rit.se.nvip.mitre;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -137,7 +141,6 @@ public class MitreCveController {
 		}
 
 		return mitreCveMap;
-
 	}
 
 	/**
@@ -172,6 +175,25 @@ public class MitreCveController {
 
 		logger.info("Parsed " + jsonList.size() + " CVEs in " + folder);
 		return jsonList;
+	}
+
+	/**
+	 * For Deleting the CVE MITRE Reo after it's no longer needed
+	 */
+	public void deleteMitreRepo() {
+		logger.info("Deleting MITRE Repo. This may take some time.....");
+		// Delete repo afterwards
+		try {
+			Path repoDir = Paths.get(localPath);
+			Files.walk(repoDir)
+					.sorted(java.util.Comparator.reverseOrder())
+					.map(Path::toFile)
+					.forEach(File::delete);
+
+		} catch (IOException e) {
+			logger.error("Error deleting MITRE repo @ {}\n{}", localPath, e.getMessage());
+		}
+		logger.info("MITRE Repo successfully deleted");
 	}
 
 }

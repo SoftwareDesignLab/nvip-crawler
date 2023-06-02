@@ -33,6 +33,7 @@ import edu.rit.se.nvip.crawler.github.PyPAGithubScraper;
 
 import edu.rit.se.nvip.exploit.ExploitIdentifier;
 import edu.rit.se.nvip.mitre.MitreCveController;
+import edu.rit.se.nvip.mitre.MitreCveParser;
 import edu.rit.se.nvip.model.*;
 import edu.rit.se.nvip.nvd.NvdCveController;
 import edu.rit.se.nvip.patchfinder.JGitCVEPatchDownloader;
@@ -701,16 +702,16 @@ public class NVIPMain {
 	public HashMap<String, List<Object>> processCVEs(HashMap<String, CompositeVulnerability> cveHashMapAll) {
 		// process
 		logger.info("Comparing CVES against NVD & MITRE..");
-		String cveDataPathMitre = dataVars.get("dataDir") + "/mitre-cve.csv";
-
-		// TODO: CSV files don't do anything anymore
-		//  they're just needed to initialize the processor, should deprecate once the API calls are finalized
 		HashMap<String, NvdVulnerability> nvdCves = new NvdCveController().fetchNVDCVEs(
 				(String) compareVars.get("nvdApiUrl"), (int) compareVars.get("nvdApiRequestLimit"));
-		CveProcessor cveProcessor = new CveProcessor(cveDataPathMitre, nvdCves);
 
+		MitreCveController mitreController = new MitreCveController((String) compareVars.get("mitreGithubUrl"),
+				dataVars.get("dataDir") + "/mitre-cve");
+		
+		HashMap<String, MitreVulnerability> mitreCves = mitreController.getMitreCVEsFromGitRepo();
+		mitreController.deleteMitreRepo();
+		CveProcessor cveProcessor = new CveProcessor(nvdCves, mitreCves);
 		Map<String, Vulnerability> existingCves = databaseHelper.getExistingVulnerabilities();
-
 		HashMap<String, List<Object>> checkedCVEs = cveProcessor.checkAgainstNvdMitre(cveHashMapAll, existingCves);
 
 		return cveProcessor.checkTimeGaps(checkedCVEs, existingCves);
