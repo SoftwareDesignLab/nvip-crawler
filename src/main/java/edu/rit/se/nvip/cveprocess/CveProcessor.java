@@ -151,10 +151,9 @@ public class CveProcessor {
 
 				allCveData.add(vuln);
 
-				// Compare w/ NVD
-				if (nvdCVEs.containsKey(vuln.getCveId())){
-					// Check status of CVE in NVD, if RECEIVED, then it is in NVD.
-					// If any other status, then it is not in NVD.
+				// Compare w/ NVD, is the CVE in NVD?
+				if (nvdCVEs.containsKey(vuln.getCveId())) {
+					// Check status of CVE in NVD, if RESERVED or REJECTED, it is considered not in NVD
 					if (nvdCVEs.get(vuln.getCveId()).getStatus() == NvdVulnerability.nvdStatus.NOTINNVD) {
 						vuln.setNvdStatus(0);
 						newCVEDataNotInNvd.add(vuln);
@@ -167,9 +166,17 @@ public class CveProcessor {
 						nvdAwaitingAnalysis = nvdCVEs.get(vuln.getCveId()).getStatus() == NvdVulnerability.nvdStatus.AWAITINGANALYSIS ? nvdAwaitingAnalysis + 1 : nvdAwaitingAnalysis;
 						nvdOther = nvdCVEs.get(vuln.getCveId()).getStatus() == NvdVulnerability.nvdStatus.NOTINNVD ? nvdOther + 1 : nvdOther;
 					}
-				} else if (existingCves.containsKey(vuln.getCveId()) && existingCves.get(vuln.getCveId()).getNvdStatus() == 1) {
+				}
+				// Do we already know the CVE is in NVD?
+				else if (existingCves.containsKey(vuln.getCveId()) && existingCves.get(vuln.getCveId()).getNvdStatus() == 1) {
 					vuln.setNvdStatus(1);
-				} else {
+				}
+				// Is this an ancient CVE?
+				else if (!checkAgeOfCVEByYear(vuln.getCveId())) {
+					vuln.setNvdStatus(1);
+				}
+				// Assume it's not in NVD if none of the above
+				else {
 					logger.info("CVE: {}, is NOT in NVD", vuln.getCveId());
 					vuln.setNvdSearchResult("NA");
 					vuln.setNvdStatus(0);
@@ -313,12 +320,7 @@ public class CveProcessor {
 
 		int cveYear = Integer.parseInt(cveParts[1]);
 		int currentYear = Calendar.getInstance().get(Calendar.YEAR);
-		boolean calculateGap = (cveYear == currentYear);
 
-		if (!calculateGap) {
-			return false;
-		}
-
-		return true;
+		return (cveYear == currentYear);
 	}
 }
