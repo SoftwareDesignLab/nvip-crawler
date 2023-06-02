@@ -169,7 +169,7 @@ public class CveProcessor {
 				}
 
 
-				// Compare w/ MITRE
+				// Compare w/ MITRE, is the CVE in MITRE?
 				if (mitreCves.containsKey(vuln.getCveId())){
 					// Check status of CVE in MITRE, if PUBLIC or PUBLISHED, then it is in MITRE.
 					// If any other status, then it is not in MITRE.
@@ -180,9 +180,17 @@ public class CveProcessor {
 					} else {
 						vuln.setMitreStatus(1);
 					}
-				} else if (existingCves.containsKey(vuln.getCveId()) && existingCves.get(vuln.getCveId()).getMitreStatus() == 1) {
+				}
+				// Do we already know the CVE is in MITRE?
+				else if (existingCves.containsKey(vuln.getCveId()) && existingCves.get(vuln.getCveId()).getMitreStatus() == 1) {
 					vuln.setMitreStatus(1);
-				} else {
+				}
+				// Is this an ancient CVE?
+				else if (!checkAgeOfCVEByYear(vuln.getCveId())) {
+					vuln.setNvdStatus(1);
+				}
+				// If none of the above, assume it's not in MITRE
+				else {
 					logger.info("CVE: {}, is NOT in MITRE", vuln.getCveId());
 					vuln.setMitreSearchResult("NA");
 					vuln.setMitreStatus(0);

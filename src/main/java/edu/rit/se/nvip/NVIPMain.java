@@ -707,7 +707,7 @@ public class NVIPMain {
 
 		MitreCveController mitreController = new MitreCveController((String) compareVars.get("mitreGithubUrl"),
 				dataVars.get("dataDir") + "/mitre-cve");
-		
+
 		HashMap<String, MitreVulnerability> mitreCves = mitreController.getMitreCVEsFromGitRepo();
 		mitreController.deleteMitreRepo();
 		CveProcessor cveProcessor = new CveProcessor(nvdCves, mitreCves);
