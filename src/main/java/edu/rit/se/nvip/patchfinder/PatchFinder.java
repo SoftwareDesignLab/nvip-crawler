@@ -46,9 +46,6 @@ import edu.rit.se.nvip.db.DatabaseHelper;
 
 /**
  * Start patch finder for a given repository list (as .csv)
- * 
- * @author 15854
- *
  */
 public class PatchFinder {
 
@@ -67,7 +64,7 @@ public class PatchFinder {
 	/**
 	 * Main method just for calling to find all patch URLs
 	 *
-	 * TODO: Rename this ethod and have it called by NVIPMain
+	 * TODO: Rename this method and have it called by NVIPMain
 	 *
 	 * @param args
 	 * @throws IOException

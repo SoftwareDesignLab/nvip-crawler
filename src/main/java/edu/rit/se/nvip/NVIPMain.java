@@ -145,13 +145,23 @@ public class NVIPMain {
 			logger.info("Finished identifying Exploits");
 		}
 
-		//Patch Collection
+		//Product Extraction
 		nvipMain.spawnProcessToIdentifyAndStoreAffectedReleases(crawledVulnerabilityList);
 
+		// Patch Collection
 		if (Boolean.parseBoolean(System.getenv("PATCHFINDER_ENABLED"))) {
 			// Parse for patches and store them in the database
 			PatchFinder patchFinder = new PatchFinder();
 			Map<String, ArrayList<String>> cpes = databaseHelper.getCPEsAndCVE();
+
+			// TODO: Patchfinder rework
+			//  1.) Get CVEs and their CPEs
+			//  2.) For each CVE, try to make a repo URL form the product name, vendor, version of each CPE
+			//  and check for successful connection
+			//  3.) If the repo is public, clone it an scrape the commits for a possible patch commit
+			//  4.) Grab the most recent patch commit and store it's details in the DB
+			//  5.) delete the repo and continue to the next CVE
+
 			patchFinder.parseMassURLs(cpes);
 			JGitCVEPatchDownloader jGitCVEPatchDownloader = new JGitCVEPatchDownloader();
 			// repos will be cloned to patch-repos directory, multi-threaded 6 threads.

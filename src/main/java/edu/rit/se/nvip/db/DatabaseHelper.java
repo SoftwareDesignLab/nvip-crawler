@@ -128,7 +128,7 @@ public class DatabaseHelper {
 
 	private final String getCPEById = "SELECT cpe FROM product WHERE product_id = ?;";
 	private final String selectCpesByCve = "SELECT v.vuln_id, v.cve_id, p.cpe FROM vulnerability v LEFT JOIN affectedrelease ar ON ar.cve_id = v.cve_id LEFT JOIN product p ON p.product_id = ar.product_id WHERE p.cpe IS NOT NULL AND v.cve_id = ?;";
-	private final String selectCpesAndCve = "SELECT v.vuln_id, v.cve_id, p.cpe FROM vulnerability v LEFT JOIN affectedrelease ar ON ar.cve_id = v.cve_id LEFT JOIN product p ON p.product_id = ar.product_id WHERE p.cpe IS NOT NULL;";
+	private final String selectCpesAndCve = "SELECT v.cve_id, p.cpe FROM vulnerability v LEFT JOIN affectedrelease ar ON ar.cve_id = v.cve_id LEFT JOIN product p ON p.product_id = ar.product_id WHERE p.cpe IS NOT NULL;";
 
 	private final String insertAffectedReleaseSql = "INSERT INTO affectedrelease (cve_id, product_id, release_date, version) VALUES (?, ?, ?, ?);";
 
@@ -537,25 +537,28 @@ public class DatabaseHelper {
 	 * @return
 	 */
 	public Map<String, ArrayList<String>> getCPEsAndCVE() {
-		Connection conn = null;
 		Map<String, ArrayList<String>> cpes = new HashMap<>();
-		try {
-			conn = getConnection();
-			PreparedStatement pstmt = conn.prepareStatement(selectCpesAndCve);
+		try (Connection conn = getConnection();
+				PreparedStatement pstmt = conn.prepareStatement(selectCpesAndCve);) {
+
 			ResultSet res = pstmt.executeQuery();
+
 			while (res.next()) {
-				ArrayList<String> data = new ArrayList<>();
-				data.add(res.getString("vuln_id"));
-				data.add(res.getString("cve_id"));
-				cpes.put(res.getString("cpe"), data);
+
+				String cveId = res.getString("cve_id");
+				String cpe = res.getString("cpe");
+
+				if (cpes.containsKey(cveId)) {
+					cpes.get(cveId).add(cpe);
+				} else {
+					ArrayList<String> data = new ArrayList<>();
+					data.add(cpe);
+					cpes.put(cveId, data);
+				}
 			}
 
 		} catch (Exception e) {
-		}
-
-		try {
-			conn.close();
-		} catch (SQLException e) {
+			logger.error("ERROR: Failed to grab CVEs and CPEs from DB:\n{}", e);
 		}
 
 		return cpes;
