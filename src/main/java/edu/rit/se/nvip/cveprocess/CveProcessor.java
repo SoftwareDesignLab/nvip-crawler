@@ -23,6 +23,18 @@
  */
 package edu.rit.se.nvip.cveprocess;
 
+
+import edu.rit.se.nvip.cvereconcile.CveReconciler;
+import edu.rit.se.nvip.model.CompositeVulnerability;
+import edu.rit.se.nvip.model.MitreVulnerability;
+import edu.rit.se.nvip.model.NvdVulnerability;
+import edu.rit.se.nvip.model.Vulnerability;
+import edu.rit.se.nvip.utils.CsvUtils;
+import org.apache.commons.collections4.SetUtils;
+import org.apache.commons.io.FileUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.io.File;
 import java.io.IOException;
 import java.time.Duration;
@@ -30,14 +42,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
-import edu.rit.se.nvip.model.*;
-import org.apache.commons.collections4.SetUtils;
-import org.apache.commons.io.FileUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import edu.rit.se.nvip.cvereconcile.CveReconciler;
-import edu.rit.se.nvip.utils.CsvUtils;
 
 /**
  *
@@ -89,11 +93,11 @@ public class CveProcessor {
 
 	/**
 	 * Constructor for processor class
-	 * @param nvdCvePath --> File path to NVD CVE .csv file (not used anymore)
 	 * @param mitreCvePath --> File path to MITRE CVE .csv file
 	 * @param nvdCves --> Hashmap of CVEs in NVD (provided byb NVD Controller class)
 	 */
-	public CveProcessor(String nvdCvePath, String mitreCvePath, HashMap<String, NvdVulnerability> nvdCves, HashMap<String, MitreVulnerability> mitreCves) {
+
+	public CveProcessor(String mitreCvePath, HashMap<String, NvdVulnerability> nvdCves) {
 
 		this.nvdCVEs = nvdCves;
 		this.mitreCves = mitreCves;
@@ -101,32 +105,14 @@ public class CveProcessor {
 		try {
 			CsvUtils csvLogger = new CsvUtils();
 			/**
-			 * NVD
-			 */
-			List<String> arrNVD = FileUtils.readLines(new File(nvdCvePath), "UTF-8");
-			if (arrNVD.isEmpty())
-				throw new IOException("Failed to read NVD CSV file: " + nvdCvePath + "  ... Calculations of 'not in NVD' are going to be off");
-			else
-				logger.info("Successfully read in NVD CSV file for calculations of 'not in NVD'");
-			for (String cve : arrNVD) {
-				String[] pieces = cve.split(csvLogger.getSeparatorCharAsRegex());
-				String id = pieces[0];
-				if (pieces.length > 2) {
-					cvesInNvd.put(id, pieces[2]);
-				} else {
-					cvesInNvd.put(id, null);
-				}
-			}
-
-			/**
 			 * MITRE
 			 */
-			arrNVD = FileUtils.readLines(new File(mitreCvePath), "UTF-8");
-			if (arrNVD.isEmpty())
+			List<String> arrMITRE = FileUtils.readLines(new File(mitreCvePath), "UTF-8");
+			if (arrMITRE.isEmpty())
 				throw new IOException("Failed to read MITRE CSV file" + mitreCvePath + "... Calculations of 'not in MITRE' are going to be off");
 			else
 				logger.info("Successfully read in MITRE CSV file for calculations of 'not in MITRE'");
-			for (String cve : arrNVD) {
+			for (String cve : arrMITRE) {
 				String[] pieces = cve.split(csvLogger.getSeparatorCharAsRegex());
 				String id = pieces[0];
 				if (pieces.length > 2) {
@@ -178,10 +164,9 @@ public class CveProcessor {
 
 				allCveData.add(vuln);
 
-				// Compare w/ NVD
-				if (nvdCVEs.containsKey(vuln.getCveId())){
-					// Check status of CVE in NVD, if RECEIVED, then it is in NVD.
-					// If any other status, then it is not in NVD.
+				// Compare w/ NVD, is the CVE in NVD?
+				if (nvdCVEs.containsKey(vuln.getCveId())) {
+					// Check status of CVE in NVD, if RESERVED or REJECTED, it is considered not in NVD
 					if (nvdCVEs.get(vuln.getCveId()).getStatus() == NvdVulnerability.nvdStatus.NOTINNVD) {
 						vuln.setNvdStatus(0);
 						newCVEDataNotInNvd.add(vuln);
@@ -194,9 +179,17 @@ public class CveProcessor {
 						nvdAwaitingAnalysis = nvdCVEs.get(vuln.getCveId()).getStatus() == NvdVulnerability.nvdStatus.AWAITINGANALYSIS ? nvdAwaitingAnalysis + 1 : nvdAwaitingAnalysis;
 						nvdOther = nvdCVEs.get(vuln.getCveId()).getStatus() == NvdVulnerability.nvdStatus.NOTINNVD ? nvdOther + 1 : nvdOther;
 					}
-				} else if (existingCves.containsKey(vuln.getCveId()) && existingCves.get(vuln.getCveId()).getNvdStatus() == 1) {
+				}
+				// Do we already know the CVE is in NVD?
+				else if (existingCves.containsKey(vuln.getCveId()) && existingCves.get(vuln.getCveId()).getNvdStatus() == 1) {
 					vuln.setNvdStatus(1);
-				} else {
+				}
+				// Is this an ancient CVE?
+				else if (!checkAgeOfCVEByYear(vuln.getCveId())) {
+					vuln.setNvdStatus(1);
+				}
+				// Assume it's not in NVD if none of the above
+				else {
 					logger.info("CVE: {}, is NOT in NVD", vuln.getCveId());
 					vuln.setNvdSearchResult("NA");
 					vuln.setNvdStatus(0);
@@ -370,12 +363,7 @@ public class CveProcessor {
 
 		int cveYear = Integer.parseInt(cveParts[1]);
 		int currentYear = Calendar.getInstance().get(Calendar.YEAR);
-		boolean calculateGap = (cveYear == currentYear);
 
-		if (!calculateGap) {
-			return false;
-		}
-
-		return true;
+		return (cveYear == currentYear);
 	}
 }

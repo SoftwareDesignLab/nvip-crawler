@@ -28,6 +28,8 @@ import edu.rit.se.nvip.model.CompositeVulnerability;
 import edu.rit.se.nvip.model.Product;
 import edu.rit.se.nvip.productnameextractor.CpeLookUp;
 import edu.rit.se.nvip.utils.UtilHelper;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -47,6 +49,8 @@ import java.util.regex.Pattern;
  * Ex: <a href="https://www.tenable.com/security/research/tra-2023-5">Source</a>
  */
 public class TenableSecurityParser extends AbstractCveParser  {
+
+	private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
 	
 	public TenableSecurityParser(String domainName) {
 		sourceDomainName = domainName;
@@ -57,6 +61,10 @@ public class TenableSecurityParser extends AbstractCveParser  {
 		List<CompositeVulnerability> vulns = new ArrayList<>();
 		List<Product> products = new ArrayList<>();
 		boolean foundProducts = false;
+
+		// If its the main research page, skip it since it has no descriptions
+		if(sSourceURL.equals("https://www.tenable.com/security/research"))
+			return vulns;
 
 		Document doc = Jsoup.parse(sCVEContentHTML);
 

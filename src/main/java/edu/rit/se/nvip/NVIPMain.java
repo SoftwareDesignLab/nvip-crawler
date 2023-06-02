@@ -701,18 +701,14 @@ public class NVIPMain {
 	public HashMap<String, List<Object>> processCVEs(HashMap<String, CompositeVulnerability> cveHashMapAll) {
 		// process
 		logger.info("Comparing CVES against NVD & MITRE..");
-		String cveDataPathNvd = dataVars.get("dataDir") + "/nvd-cve.csv";
 		String cveDataPathMitre = dataVars.get("dataDir") + "/mitre-cve.csv";
 
 		// TODO: CSV files don't do anything anymore
 		//  they're just needed to initialize the processor, should deprecate once the API calls are finalized
 		HashMap<String, NvdVulnerability> nvdCves = new NvdCveController().fetchNVDCVEs(
 				(String) compareVars.get("nvdApiUrl"), (int) compareVars.get("nvdApiRequestLimit"));
+		CveProcessor cveProcessor = new CveProcessor(cveDataPathMitre, nvdCves);
 
-		HashMap<String, MitreVulnerability> mitreCves = new MitreCveController((String) compareVars.get("mitreGithubUrl"),
-				dataVars.get("dataDir") + "/" + "mitre-cve").getMitreCVEsFromGitRepo();
-
-		CveProcessor cveProcessor = new CveProcessor(cveDataPathNvd, cveDataPathMitre, nvdCves, mitreCves);
 		Map<String, Vulnerability> existingCves = databaseHelper.getExistingVulnerabilities();
 
 		HashMap<String, List<Object>> checkedCVEs = cveProcessor.checkAgainstNvdMitre(cveHashMapAll, existingCves);
