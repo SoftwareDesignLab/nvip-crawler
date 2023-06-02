@@ -1,5 +1,7 @@
 package edu.rit.se.nvip.productnameextractor;
 
+import edu.rit.se.nvip.model.Product;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -13,7 +15,11 @@ public class SWIDLookUp {
     private static SWIDLookUp instance;
     private Map<String, List<SWIDEntry>> swidDictionary;
 
+    private final Map<String, Product> productsToBeAddedToDatabase;
+
+
     private SWIDLookUp() {
+        productsToBeAddedToDatabase = new HashMap<>();
         swidDictionary = new HashMap<>();
     }
 
@@ -33,34 +39,61 @@ public class SWIDLookUp {
         return instance;
     }
 
-    /**
-     * Adds a SWID entry to the SWID dictionary.
-     *
-     * @param productName The product name.
-     */
-    public void addSWIDEntry(String productName, String swid) {
-        SWIDEntry entry = new SWIDEntry(productName, swid);
+    public Map<String, Product> getProductsToBeAddedToDatabase() {
+        return productsToBeAddedToDatabase;
+    }
 
-        List<SWIDEntry> entryList = swidDictionary.get(productName);
-        //if there is already an entry for the product name, do not add it again
-        if (entryList == null) {
-            entryList = new ArrayList<>();
-            entryList.add(entry);
-            swidDictionary.put(productName, entryList);
+    /**
+     * Add swid entry to the database if it is not already there, add to the corresponding product
+     */
+    public void addProductToDatabase(Product p) {
+        productsToBeAddedToDatabase.put(p.getSwid(), p);
+    }
+
+    /**
+     * Generate a SWID tag for a productitem and add it to the SWID dictionary.
+     *
+     * @param  p The product item to add.
+     */
+    public void addSWIDEntry(ProductItem p) {
+        //if the product name is not in the dictionary, add it
+        if (!swidDictionary.containsKey(p.getName())) {
+            List<SWIDEntry> entries = new ArrayList<>();
+            entries.add(new SWIDEntry(p.getName(), generateSWID(p.getName(), p)));
+            swidDictionary.put(p.getName(), entries);
+            p.setSwid(generateSWID(p.getName(), p));
         } else {
-            //if there is already an entry for the product name, check if the SWID is already in the list
+            //if the product name is in the dictionary, check if the swid tag is already there
+            List<SWIDEntry> entries = swidDictionary.get(p.getName());
             boolean swidExists = false;
-            for (SWIDEntry e : entryList) {
-                if (e.getSWID().equals(swid)) {
+            for (SWIDEntry entry : entries) {
+                if (entry.getSWID().equals(p.getSwid())) {
                     swidExists = true;
                     break;
                 }
             }
-            //if the SWID is not in the list, add it
+            //if the swid tag is not there, add it
             if (!swidExists) {
-                entryList.add(entry);
+                p.setSwid(generateSWID(p.getName(), p));
+                entries.add(new SWIDEntry(p.getName(), p.getSwid()));
             }
         }
+        //add the product to the database, version needs to be a string for the product
+        Product product = new Product(p.getName(), p.getSwid(), p.getVersions().get(0));
+        addProductToDatabase(product);
+    }
+
+
+
+    /**
+     * If a swid tag does not exist for a product name, generate one
+     * @param productName
+     * @return
+     */
+    public String generateSWID(String productName, ProductItem p) {
+        SWIDgenerator swidgenerator = new SWIDgenerator();
+        String swid = swidgenerator.generateSWID(p);
+        return swid;
     }
 
     /**

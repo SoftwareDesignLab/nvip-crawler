@@ -65,6 +65,10 @@ public class Product {
 		return swid;
 	}
 
+	public String getSwidTag() {
+		return swid.substring(swid.lastIndexOf('.')+1);
+	}
+
 	public int getProdId() {
 		return prodId;
 	}

@@ -131,7 +131,7 @@ public class DatabaseHelper {
 	private final String getSWIDsById = "SELECT swid FROM product WHERE product_id = ?;";
 	private final String selectSwidsByCve = "SELECT v.vuln_id, v.cve_id, p.swid FROM vulnerability v LEFT JOIN affectedrelease ar ON ar.cve_id = v.cve_id LEFT JOIN product p ON p.product_id = ar.product_id WHERE p.swid IS NOT NULL AND v.cve_id = ?;";
 	private final String selectSwidsAndCve = "SELECT v.vuln_id, v.cve_id, p.swid FROM vulnerability v LEFT JOIN affectedrelease ar ON ar.cve_id = v.cve_id LEFT JOIN product p ON p.product_id = ar.product_id WHERE p.swid IS NOT NULL;";
-
+	private final String insertSwidSql = "INSERT INTO product (swid) where product_id = ? values (?);";
 	private final String insertAffectedReleaseSql = "INSERT INTO affectedrelease (cve_id, product_id, release_date, version) VALUES (?, ?, ?, ?);";
 
 	private final String insertVulnerabilityUpdateSql = "INSERT INTO vulnerabilityupdate (vuln_id, column_name, column_value, run_id) VALUES (?,?,?,?);";
@@ -385,6 +385,30 @@ public class DatabaseHelper {
 			return -1;
 		}
 	}
+
+	/**
+	 * Insert the SWID tag for the corresponding product
+	 */
+	public int insertSwidTags(Collection<Product> products) {
+		try (Connection conn = getConnection();
+				PreparedStatement pstmt = conn.prepareStatement(insertSwidSql);) {
+			int count = 0;
+			int total = products.size();
+			for (Product product : products) {
+				pstmt.setString(1, product.getSwid());
+				pstmt.setString(2, product.getSwidTag());
+				pstmt.executeUpdate();
+				count++;
+			}
+
+			logger.info("\rInserted: " + count + " of " + total + " products to DB!");
+			return count;
+		} catch (SQLException e) {
+			logger.error(e.getMessage());
+			return -1;
+		}
+	}
+
 
 	/**
 	 * Grabs CPE from a specified product ID within the product table

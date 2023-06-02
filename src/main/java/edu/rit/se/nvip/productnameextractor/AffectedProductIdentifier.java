@@ -68,23 +68,21 @@ public class AffectedProductIdentifier extends Thread implements Runnable {
 	}
 
 	/**
-	 * insert SWID tags identified by the loader into the database
-	 *
+	 * insert SWID tags to the corresponding products in the database
+	 * TODO: Should be in DB Helper
 	 */
-	/**
-	private int insertNewSwidItemsIntoDatabase() {
+	private int insertSwidTagsIntoDatabase() {
 		SWIDLookUp swidLookUp = SWIDLookUp.getInstance();
+		//get the swid that corresponds to the product, get both the SWID and the product
 		try {
 			Collection<Product> products = swidLookUp.getProductsToBeAddedToDatabase().values();
 			DatabaseHelper db = DatabaseHelper.getInstance();
-			return db.insertSwidProducts(products);
+			return db.insertSwidTags(products);
 		} catch (Exception e) {
 			logger.error("Error while adding " + swidLookUp.getProductsToBeAddedToDatabase().size() + " new products!");
 			return -1;
 		}
-
 	}
-	 **/
 
 
 	// run process
@@ -171,6 +169,11 @@ public class AffectedProductIdentifier extends Thread implements Runnable {
 					// map identified products/version to CPE
 					for (ProductItem productItem : productList) {
 
+						//addSWIDEntry
+						swidLookUp.addSWIDEntry(productItem);
+
+						String swid	= productItem.getSwid();
+
 						long startCPETime = System.currentTimeMillis();
 						List<String> productIDs = cpeLookUp.getCPEids(productItem);
 						long cpeTime = System.currentTimeMillis() - startCPETime;
@@ -185,7 +188,6 @@ public class AffectedProductIdentifier extends Thread implements Runnable {
 						// if CPE identified, add it as affected release
 						for (String itemID : productIDs) {
 //							logger.info("Found Affected Product for {}: {}", vulnerability.getCveId(), itemID);
-							String swid = swidLookUp.getSWID(itemID);
 							vulnerability.getAffectedReleases().add(new AffectedRelease(0, vulnerability.getCveId(), itemID, swid, "", CpeLookUp.getVersionFromCPEid(itemID)));
 							numOfProductsMappedToCpe++;
 						}
@@ -233,6 +235,7 @@ public class AffectedProductIdentifier extends Thread implements Runnable {
 
 		logger.info("Inserting found products to DB!");
 		insertNewCpeItemsIntoDatabase();
+		insertSwidTagsIntoDatabase();
 
 		// get all identified affected releases
 		List<AffectedRelease> listAllAffectedReleases = new ArrayList<>();
