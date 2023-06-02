@@ -88,9 +88,10 @@ public class ParseList extends AbstractCveParser implements ParserStrategy {
                 lastModifiedDate = publishDate;
             }
 
-
-            CompositeVulnerability vuln = new CompositeVulnerability(0, sSourceURL, cve, null, publishDate, lastModifiedDate, desc, sourceDomainName);
-            vulnList.add(vuln);
+            if (!cve.equals("") && desc != null) {
+                CompositeVulnerability vuln = new CompositeVulnerability(0, sSourceURL, cve, null, publishDate, lastModifiedDate, desc, sourceDomainName);
+                vulnList.add(vuln);
+            }
         }
 
         // Grab all <dl> elements
