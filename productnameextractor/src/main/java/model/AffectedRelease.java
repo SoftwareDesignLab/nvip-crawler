@@ -36,6 +36,7 @@ public class AffectedRelease {
 	private String releaseDate;
 	private String version;
 	private String vendor;
+	private String pURL;
 
 	public AffectedRelease(int id, String cveId, String cpe, String releaseDate, String version) {
 		this.id = id;
@@ -94,6 +95,15 @@ public class AffectedRelease {
 		return vendor;
 	}
 
+	public String getPURL(String productName){
+		if(productName.equals("UNKNOWN")){
+			pURL = "NULL";
+		}else {
+			generatePURL(productName);
+		}
+		return pURL;
+	}
+
 	public void setVendor(String vendor) {
 		this.vendor = vendor;
 	}
@@ -104,6 +114,16 @@ public class AffectedRelease {
 
 	public void setReleaseDate(String releaseDate) {
 		this.releaseDate = releaseDate;
+	}
+
+	private void generatePURL(String productName){
+		String result = "pkg:";
+		StringBuilder purlBuilder = new StringBuilder(result);
+		purlBuilder.append(vendor).append("/").append(productName);
+		if(!version.equals("*")){
+			purlBuilder.append("@").append(version);
+		}
+		pURL = purlBuilder.toString();
 	}
 
 	@Override
