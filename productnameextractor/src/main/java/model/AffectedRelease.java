@@ -95,6 +95,7 @@ public class AffectedRelease {
 		return vendor;
 	}
 
+	//Returns pURL. If productName is unknown, sets value to NULL.
 	public String getPURL(String productName){
 		if(productName.equals("UNKNOWN")){
 			pURL = "NULL";
@@ -116,6 +117,13 @@ public class AffectedRelease {
 		this.releaseDate = releaseDate;
 	}
 
+	/**
+	* Generates PURL using vendor, product name and version
+	* Format: scheme:type/namespace/name@version?qualifiers#subpath
+	* Where scheme is "pkg", vendor is the type, product name is the name and version is the version
+	*
+	* @param productName
+	*/
 	private void generatePURL(String productName){
 		String result = "pkg:";
 		StringBuilder purlBuilder = new StringBuilder(result);
