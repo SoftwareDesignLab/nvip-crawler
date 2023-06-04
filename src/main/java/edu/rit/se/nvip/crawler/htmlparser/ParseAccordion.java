@@ -114,7 +114,7 @@ public class ParseAccordion extends AbstractCveParser implements ParserStrategy 
                     String newHtml = driver.getPageSource();
                     diff = StringUtils.difference(originalHtml, newHtml);
                 } catch (NoSuchElementException | ElementNotInteractableException e) {
-                    logger.info("Could not click on accordion child");
+                    // logger.info("Could not click on accordion child");
                 }
                 if (!diff.equals(""))
                     childText.append(diff, 0, 200);
