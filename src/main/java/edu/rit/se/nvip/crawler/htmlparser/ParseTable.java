@@ -10,7 +10,6 @@ import org.jsoup.nodes.Element;
 import org.openqa.selenium.*;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.interactions.Actions;
-import org.openqa.selenium.remote.RemoteWebDriver;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
@@ -84,7 +83,7 @@ public class ParseTable extends AbstractCveParser implements ParserStrategy {
         // click on row and see if we can grab any more html
         String diff = "";
         String htmlBefore = "";
-        WebElement rowElement = null;
+        WebElement rowElement;
         try {
             String xPathContainsCVE = "//tr[td//text()[contains(.,'%s')]]";
             rowElement = driver.findElement(By.xpath(String.format(xPathContainsCVE, cveList.get(0))));
