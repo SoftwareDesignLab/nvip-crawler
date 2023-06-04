@@ -10,6 +10,7 @@ import org.jsoup.nodes.Element;
 import org.openqa.selenium.*;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.interactions.Actions;
+import org.openqa.selenium.interactions.MoveTargetOutOfBoundsException;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
@@ -94,12 +95,12 @@ public class ParseTable extends AbstractCveParser implements ParserStrategy {
                 new WebDriverWait(driver, Duration.ofSeconds(5)).until(ExpectedConditions.elementToBeClickable(rowElement));
                 actions.scrollToElement(rowElement).perform();
                 actions.click(rowElement).perform();
-            } catch (StaleElementReferenceException e) {
+            } catch (StaleElementReferenceException | MoveTargetOutOfBoundsException e) {
                 if (!retryClick(rowElement)) logger.info("Unable to click row for " + cveIDs);
             }
             String htmlAfter = driver.findElement(By.tagName("tbody")).getAttribute("innerHTML").replace("\n", "").replace("\t", "");
             diff = StringUtils.difference(htmlBefore, htmlAfter).replace("\n", "").replace("\t", "");
-        } catch (NoSuchElementException e) {
+        } catch (NoSuchElementException | StaleElementReferenceException e) {
             // logger.info("Row not found for " + cveIDs);
         }
         String description = "";
@@ -168,7 +169,7 @@ public class ParseTable extends AbstractCveParser implements ParserStrategy {
             logger.info("Next button clicked for Table at " + sourceUrl);
             nextPage = StringUtils.difference(sourceHtml, driver.getPageSource());
         } catch (NoSuchElementException | TimeoutException e) {
-            logger.info("No Next button found for Table at " + sourceUrl);
+            // logger.info("No Next button found for Table at " + sourceUrl);
         } catch (ElementNotInteractableException ei) {
             logger.warn("Next Button found raises ElementNotInteractableException...");
         } catch (StaleElementReferenceException s) {
