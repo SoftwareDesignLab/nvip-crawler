@@ -3,6 +3,8 @@ package edu.rit.se.nvip.crawler.htmlparser;
 import edu.rit.se.nvip.crawler.CveCrawler;
 import edu.rit.se.nvip.model.CompositeVulnerability;
 import org.junit.Test;
+import org.junit.BeforeClass;
+import org.junit.AfterClass;
 import org.junit.Ignore;
 import java.util.List;
 import static junit.framework.TestCase.assertTrue;
@@ -48,5 +50,15 @@ public class ParseTableTest extends AbstractParserTest {
         assertEquals("16 Oct 2018", vuln.getPublishDate());
         assertTrue(vuln.getDescription().contains("NVIDIA SHIELD TV – October 2018"));
         assertFalse(vuln.getDescription().contains("NVIDIA Shield TV Security Updates for CPU Speculative Side Channel Vulnerabilities"));
+    }
+
+    @BeforeClass
+    public static void setupWebDriver(){
+        if(CveCrawler.driver.toString().contains("(null)")) CveCrawler.driver = CveCrawler.startDynamicWebDriver();
+    }
+
+    @AfterClass
+    public static void destroyWebDriver(){
+        if(CveCrawler.driver != null) CveCrawler.driver.quit();
     }
 }
