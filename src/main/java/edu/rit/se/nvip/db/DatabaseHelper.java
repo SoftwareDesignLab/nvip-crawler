@@ -102,10 +102,9 @@ public class DatabaseHelper {
 
 	private final String insertDailyRunSql = "INSERT INTO dailyrunhistory (run_date_time, crawl_time_min, total_cve_count, not_in_nvd_count, not_in_mitre_count,"
 			+ "not_in_both_count, new_cve_count, avg_time_gap_nvd, avg_time_gap_mitre, added_cve_count, updated_cve_count) VALUES (?,?,?,?,?,?,?,?,?,?,?);";
-	private final String updateDailyRunSql = "UPDATE dailyrunhistory SET crawl_time_min = ?, db_time_min = ?, total_cve_count = ?, not_in_nvd_count = ?, "
-			+ "not_in_mitre_count = ?, not_in_both_count = ?, new_cve_count = ?, avg_time_gap_nvd = ?, avg_time_gap_mitre = ? WHERE (run_id = ?);";
-	private final String selectAverageTimeGapNvd = "SELECT avg(v.time_gap_nvd) as gapNvd from vulnerability v where Date(v.created_date) >= CURDATE()";
-	private final String selectAverageTimeGapMitre = "SELECT avg(v.time_gap_mitre) as gapMitre from vulnerability v where Date(v.created_date) >= CURDATE()";
+	private final String updateDailyRunSql = "UPDATE dailyrunhistory SET avg_time_gap_nvd = ?, avg_time_gap_mitre = ? WHERE (run_id = ?);";
+	private final String selectAverageTimeGapNvd = "SELECT avg(v.time_gap_nvd) as gapNvd from vulnerability v where Date(v.created_date) >= DATE_SUB(CURDATE(), INTERVAL 1 DAY)";
+	private final String selectAverageTimeGapMitre = "SELECT avg(v.time_gap_mitre) as gapMitre from vulnerability v where Date(v.created_date) >= DATE_SUB(CURDATE(), INTERVAL 1 DAY)";
 
 	private final String insertVdoCharacteristicSql = "INSERT INTO vdocharacteristic (cve_id, vdo_label_id,vdo_confidence,vdo_noun_group_id) VALUES (?,?,?,?);";
 	private final String deleteVdoCharacteristicSql = "DELETE FROM vdocharacteristic WHERE cve_id=?;";
@@ -603,7 +602,7 @@ public class DatabaseHelper {
 					pstmt.setString(3, affectedRelease.getReleaseDate());
 					pstmt.setString(4, affectedRelease.getVersion());
 					count += pstmt.executeUpdate();
-					logger.info("Added {} as an affected release for {}", prodId, affectedRelease.getCveId());
+//					logger.info("Added {} as an affected release for {}", prodId, affectedRelease.getCveId());
 				} catch (Exception e) {
 					logger.error("Could not add affected release for Cve: {} Related Cpe: {}, Error: {}",
 							affectedRelease.getCveId(), affectedRelease.getCpe(), e.toString());
@@ -1116,22 +1115,22 @@ public class DatabaseHelper {
 	}
 
 	/**
-	 * update DailyRun
-	 * 
+	 * For calculating CVE Time Gaps after new CVEs are inserted
+	 * Calculates mean time gaps within the past week, then adds them to the existing daily run entry that was
+	 * just inserted
 	 * @param runId
 	 * @param dailyRun
 	 * @return
 	 */
-	public int updateDailyRun(int runId, DailyRun dailyRun) {
-		Connection conn = null;
+	public void updateDailyRun(int runId, DailyRun dailyRun) {
 		PreparedStatement pstmt = null;
 		DecimalFormat df = new DecimalFormat("#.00");
-		try {
-			conn = getConnection();
+		try (Connection conn = getConnection();
+			 Statement stmt = conn.createStatement()){
+
 			/**
 			 * calculate avg nvd and mitre times
 			 */
-			Statement stmt = conn.createStatement();
 			ResultSet rs = stmt.executeQuery(this.selectAverageTimeGapMitre);
 			if (rs.next())
 				dailyRun.setAvgTimeGapMitre(Double.parseDouble(formatter.format(rs.getDouble("gapMitre"))));
@@ -1142,22 +1141,12 @@ public class DatabaseHelper {
 
 			pstmt = conn.prepareStatement(updateDailyRunSql);
 
-			float crawlTime = Float.parseFloat(df.format(dailyRun.getCrawlTimeMin()));
-			pstmt.setFloat(1, crawlTime);
-			double dbTime = Double.parseDouble(df.format(dailyRun.getDatabaseTimeMin()));
-
-			pstmt.setDouble(2, dbTime);
-			pstmt.setInt(3, dailyRun.getTotalCveCount());
-			pstmt.setInt(4, dailyRun.getNotInNvdCount());
-			pstmt.setInt(5, dailyRun.getNotInMitreCount());
-			pstmt.setInt(6, dailyRun.getNotInBothCount());
-			pstmt.setInt(7, dailyRun.getNewCveCount());
 			double avgNvdTime = Double.parseDouble(df.format(dailyRun.getAvgTimeGapNvd()));
-			pstmt.setDouble(8, avgNvdTime);
+			pstmt.setDouble(1, avgNvdTime);
 
 			double avgMitreTime = Double.parseDouble(df.format(dailyRun.getAvgTimeGapMitre()));
-			pstmt.setDouble(9, avgMitreTime);
-			pstmt.setInt(10, runId);
+			pstmt.setDouble(2, avgMitreTime);
+			pstmt.setInt(3, runId);
 			pstmt.executeUpdate();
 
 			logger.info("AVG NVD TIME: {}", avgNvdTime);
@@ -1169,15 +1158,7 @@ public class DatabaseHelper {
 			} catch (Exception e2) {
 				logger.error("Error in updateDailyRun()! " + e.getMessage() + "\n" + e2.getMessage());
 			}
-		} finally {
-			try {
-				if (conn != null)
-					conn.close();
-			} catch (SQLException e) {
-
-			}
 		}
-		return runId;
 	}
 
 	/**
