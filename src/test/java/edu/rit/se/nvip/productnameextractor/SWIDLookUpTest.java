@@ -1,7 +1,9 @@
 package edu.rit.se.nvip.productnameextractor;
 
+import main.java.SWIDLookUp;
 import org.junit.Before;
 import org.junit.Test;
+import main.java.ProductItem;
 
 import java.util.List;
 

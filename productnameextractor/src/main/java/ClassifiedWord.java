@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-
+package main.java;
 /**
  * ClassifiedWord class for results of words classification in the CVE description into "Software Name", "Software Version", and "Others"
  * 0 - SN

@@ -2,17 +2,17 @@
  * Copyright 2023 Rochester Institute of Technology (RIT). Developed with
  * government support under contract 70RSAT19CB0000020 awarded by the United
  * States Department of Homeland Security.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -67,24 +67,6 @@ public class AffectedProductIdentifier extends Thread implements Runnable {
 
 	}
 
-	/**
-	 * insert SWID tags to the corresponding products in the database
-	 * TODO: Should be in DB Helper
-	 */
-	private int insertSwidTagsIntoDatabase() {
-		SWIDLookUp swidLookUp = SWIDLookUp.getInstance();
-		//get the swid that corresponds to the product, get both the SWID and the product
-		try {
-			Collection<Product> products = swidLookUp.getProductsToBeAddedToDatabase().values();
-			DatabaseHelper db = DatabaseHelper.getInstance();
-			return db.insertSwidTags(products);
-		} catch (Exception e) {
-			logger.error("Error while adding " + swidLookUp.getProductsToBeAddedToDatabase().size() + " new products!");
-			return -1;
-		}
-	}
-
-
 	// run process
 	public void run() {
 		identifyAffectedReleases();
@@ -101,7 +83,7 @@ public class AffectedProductIdentifier extends Thread implements Runnable {
 			logger.error("Severe Error! Could not initialize the models for product name/version extraction! Skipping affected release identification step! {}", e1.toString());
 			return -1;
 		}
-		SWIDLookUp swidLookUp = SWIDLookUp.getInstance();
+
 		CpeLookUp cpeLookUp = CpeLookUp.getInstance();
 		int numOfProductsMappedToCpe = 0;
 		int numOfProductsNotMappedToCPE = 0;
@@ -169,11 +151,6 @@ public class AffectedProductIdentifier extends Thread implements Runnable {
 					// map identified products/version to CPE
 					for (ProductItem productItem : productList) {
 
-						//addSWIDEntry
-						swidLookUp.addSWIDEntry(productItem);
-
-						String swid	= productItem.getSwid();
-
 						long startCPETime = System.currentTimeMillis();
 						List<String> productIDs = cpeLookUp.getCPEids(productItem);
 						long cpeTime = System.currentTimeMillis() - startCPETime;
@@ -188,7 +165,7 @@ public class AffectedProductIdentifier extends Thread implements Runnable {
 						// if CPE identified, add it as affected release
 						for (String itemID : productIDs) {
 //							logger.info("Found Affected Product for {}: {}", vulnerability.getCveId(), itemID);
-							vulnerability.getAffectedReleases().add(new AffectedRelease(0, vulnerability.getCveId(), itemID, swid, "", CpeLookUp.getVersionFromCPEid(itemID)));
+							vulnerability.getAffectedReleases().add(new AffectedRelease(0, vulnerability.getCveId(), itemID, null, CpeLookUp.getVersionFromCPEid(itemID)));
 							numOfProductsMappedToCpe++;
 						}
 					}
@@ -235,7 +212,6 @@ public class AffectedProductIdentifier extends Thread implements Runnable {
 
 		logger.info("Inserting found products to DB!");
 		insertNewCpeItemsIntoDatabase();
-		insertSwidTagsIntoDatabase();
 
 		// get all identified affected releases
 		List<AffectedRelease> listAllAffectedReleases = new ArrayList<>();

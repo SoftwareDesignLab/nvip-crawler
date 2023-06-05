@@ -21,7 +21,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package utils;
+package main.java.utils;
+
 
 import java.io.*;
 import org.apache.logging.log4j.LogManager;

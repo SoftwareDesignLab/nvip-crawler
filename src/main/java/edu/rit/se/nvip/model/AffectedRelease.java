@@ -2,17 +2,17 @@
  * Copyright 2023 Rochester Institute of Technology (RIT). Developed with
  * government support under contract 70RSAT19CB0000020 awarded by the United
  * States Department of Homeland Security.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -24,7 +24,7 @@
 package edu.rit.se.nvip.model;
 
 /**
- * 
+ *
  * @author axoeec
  *
  */
@@ -33,24 +33,21 @@ public class AffectedRelease {
 	private final int id;
 	private String cveId;
 	private final String cpe;
-	private final String swid;
 	private String releaseDate;
 	private String version;
 
-	public AffectedRelease(int id, String cveId, String cpe, String swid, String releaseDate, String version) {
+	public AffectedRelease(int id, String cveId, String cpe, String releaseDate, String version) {
 		this.id = id;
 		this.cveId = cveId;
 		this.cpe = cpe;
-		this.swid = swid;
 		this.releaseDate = releaseDate;
 		this.version = version;
 	}
 
-	public AffectedRelease(String cpe, String swid, String releaseDate, String version) {
+	public AffectedRelease(String cpe, String releaseDate, String version) {
 		this.id = 0;
 		this.cveId = null;
 		this.cpe = cpe;
-		this.swid = swid;
 		this.releaseDate = releaseDate;
 		this.version = version;
 	}
@@ -59,7 +56,6 @@ public class AffectedRelease {
 		this.id = a.id;
 		this.cveId = a.cveId;
 		this.cpe = a.cpe;
-		this.swid = a.swid;
 		this.releaseDate = a.releaseDate;
 		this.version = a.version;
 	}
@@ -75,8 +71,6 @@ public class AffectedRelease {
 	public String getCpe() {
 		return cpe;
 	}
-
-	public String getSwid() { return swid; }
 
 	public String getReleaseDate() {
 		return releaseDate;
@@ -103,13 +97,13 @@ public class AffectedRelease {
 		if (!(obj instanceof AffectedRelease))
 			return false;
 		AffectedRelease other = (AffectedRelease) obj;
-		return this.cpe.equals(other.cpe) && this.swid.equals(other.swid) && this.version.equals(other.version);
+		return other.cveId.equals(this.cveId) && other.cpe.equals(this.cpe);
 
 	}
 
 	@Override
 	public String toString() {
-		return "AffectedRelease [cveId=" + cveId + ", cpe=" + cpe + ", swid=" + swid + ", releaseDate=" + releaseDate + ", version=" + version + "]";
+		return "AffectedRelease [cveId=" + cveId + ", cpe=" + cpe + ", releaseDate=" + releaseDate + ", version=" + version + "]";
 	}
 
 }
