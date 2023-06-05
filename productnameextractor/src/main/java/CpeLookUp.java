@@ -477,21 +477,21 @@ public class CpeLookUp {
 			for (int j = 0; j < product.getVersions().size(); j++) {
 				String[] versionWords = WhitespaceTokenizer.INSTANCE.tokenize(product.getVersions().get(j).toLowerCase());
 
-				int mathcesCounter = 0;
+				int matchesCounter = 0;
 
 				// try to find version using a hashmap key
 				for (String versionWord : versionWords) {
 					CpeEntry cpeEntry = groupVersions.get(versionWord);
 
 					if (cpeEntry != null) {
-						mathcesCounter++;
+						matchesCounter++;
 						cpeIDs.add(cpeEntry.getCpeID());
 						addProductToDatabase(new Product(cpeEntry.getTitle(), cpeEntry.getCpeID()));
 					}
 				}
 
 				// look in the titles if did not find versions in the previous step
-				if (mathcesCounter == 0) {
+				if (matchesCounter == 0) {
 					for (Map.Entry<String, CpeEntry> entry : groupVersions.entrySet()) {
 						String entryTitle = entry.getValue().getTitle().toLowerCase();
 
