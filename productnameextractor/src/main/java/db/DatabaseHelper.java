@@ -21,7 +21,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-
 package main.java.db;
 
 import java.io.FileInputStream;
@@ -33,6 +32,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -55,16 +56,11 @@ public class DatabaseHelper {
 	private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
 	String databaseType = "mysql";
 
-	private final String insertProductSql = "INSERT INTO product (CPE, swid, domain) VALUES (?, ?, ?);";
+	private final String insertProductSql = "INSERT INTO affectedproduct (cve_id, cpe) VALUES (?);";
 	private final String getProductCountFromCpeSql = "SELECT count(*) from affectedproduct where cpe = ?";
 	private final String getIdFromCpe = "SELECT * FROM affectedproduct where cpe = ?;";
 
-	private final String getSWIDsById = "SELECT swid FROM product WHERE product_id = ?;";
-	private final String selectSwidsByCve = "SELECT v.vuln_id, v.cve_id, p.swid FROM vulnerability v LEFT JOIN affectedrelease ar ON ar.cve_id = v.cve_id LEFT JOIN product p ON p.product_id = ar.product_id WHERE p.swid IS NOT NULL AND v.cve_id = ?;";
-	private final String selectSwidsAndCve = "SELECT v.vuln_id, v.cve_id, p.swid FROM vulnerability v LEFT JOIN affectedrelease ar ON ar.cve_id = v.cve_id LEFT JOIN product p ON p.product_id = ar.product_id WHERE p.swid IS NOT NULL;";
-	private final String insertSwidSql = "INSERT INTO product (swid) where product_id = ? values (?);";
-
-	private final String insertAffectedReleaseSql = "INSERT INTO affectedproduct (cve_id, release_date, version) VALUES (?, ?, ?);";
+	private final String insertAffectedReleaseSql = "INSERT INTO affectedproduct (cve_id, cpe, product_name, release_date, version, vendor, purl, swid_tag) VALUES (?, ?, ?, ?, ?, ?, ?);";
 
 	private static DatabaseHelper databaseHelper = null;
 	private static Map<String, CompositeVulnerability> existingCompositeVulnMap = new HashMap<>();
@@ -87,33 +83,25 @@ public class DatabaseHelper {
 	 */
 	private DatabaseHelper() {
 		try {
-			MyProperties propertiesNvip = new MyProperties();
-			propertiesNvip = new PropertyLoader().loadConfigFile(propertiesNvip);
-			databaseType = propertiesNvip.getDatabaseType();
+			databaseType = System.getenv("DB_TYPE");
 			logger.info("New NVIP.DatabaseHelper instantiated! It is configured to use " + databaseType + " database!");
 			if (databaseType.equalsIgnoreCase("mysql"))
 				Class.forName("com.mysql.cj.jdbc.Driver");
 
 		} catch (ClassNotFoundException e2) {
-			logger.error("Error while loading database type from the nvip.properties! " + e2.toString());
+			logger.error("Error while loading database type from environment variables! " + e2.toString());
 		}
-
-		String configFile = "db-" + databaseType + ".properties";
 
 		if(config == null){
 			logger.info("Attempting to create HIKARI from ENVVARs");
 			config = createHikariConfigFromEnvironment();
 		}
 
-		if(config == null){
-			config = createHikariConfigFromProperties(configFile);
-		}
-
 		try {
-
+			if(config == null) throw new IllegalArgumentException();
 			dataSource = new HikariDataSource(config); // init data source
 		} catch (PoolInitializationException e2) {
-			logger.error("Error initializing data source! Check the value of the database user/password in the config file '{}'! Current values are: {}", configFile, config.getDataSourceProperties());
+			logger.error("Error initializing data source! Check the value of the database user/password in the environment variables! Current values are: {}", config != null ? config.getDataSourceProperties() : null);
 			System.exit(1);
 
 		}
@@ -220,58 +208,6 @@ public class DatabaseHelper {
 		}
 	}
 
-
-	/**
-	 * Insert the SWID tag for the corresponding product
-	 */
-	public int insertSwidTags(Collection<Product> products) {
-		try (Connection conn = getConnection();
-			 PreparedStatement pstmt = conn.prepareStatement(insertSwidSql);) {
-			int count = 0;
-			int total = products.size();
-			for (Product product : products) {
-				pstmt.setString(1, product.getSwid());
-				pstmt.setString(2, product.getSwidTag());
-				pstmt.executeUpdate();
-				count++;
-			}
-
-			logger.info("\rInserted: " + count + " of " + total + " products to DB!");
-			return count;
-		} catch (SQLException e) {
-			logger.error(e.getMessage());
-			return -1;
-		}
-	}
-
-
-	/**
-	 * Get SWID tag from id
-	 *
-	 * @param id
-	 * @return
-	 */
-	public String getSwidsbyId(int id) {
-		Connection conn = null;
-		String swid = "";
-		try {
-			conn = getConnection();
-			PreparedStatement pstmt = conn.prepareStatement(getSWIDsById);
-			pstmt.setInt(1, id);
-			ResultSet res = pstmt.executeQuery();
-			while (res.next()) {
-				swid = res.getString("swid");
-			}
-		} catch (Exception e) {
-		}
-
-		try {
-			conn.close();
-		} catch (SQLException e) {
-		}
-		return swid;
-	}
-
 	/**
 	 * gets a product ID from database based on CPE
 	 *
@@ -301,17 +237,32 @@ public class DatabaseHelper {
 	 */
 	public void insertAffectedReleasesV2(List<AffectedRelease> affectedReleases) {
 		logger.info("Inserting {} affected releases...", affectedReleases.size());
+		// CPE 2.3 Regex
+		// Regex101: https://regex101.com/r/9uaTQb/1
+		final Pattern cpePattern = Pattern.compile("cpe:2\\.3:[aho\\*\\-]:([^:]*):([^:]*):([^:]*):.*");
+
 		int count = 0;
 		try (Connection conn = getConnection();
 				Statement stmt = conn.createStatement();
 				PreparedStatement pstmt = conn.prepareStatement(insertAffectedReleaseSql);) {
 			for (AffectedRelease affectedRelease : affectedReleases) {
 				try {
-					int prodId = getProdIdFromCpe(affectedRelease.getCpe());
+					// Validate and extract CPE data
+					final String cpe = affectedRelease.getCpe();
+					final Matcher m = cpePattern.matcher(cpe);
+					String productName = "UNKNOWN";
+					if(!m.find()) logger.warn("CPE in invalid format {}", cpe);
+					else productName = m.group(2);
+
 					pstmt.setString(1, affectedRelease.getCveId());
-					pstmt.setInt(2, prodId);
-					pstmt.setString(3, affectedRelease.getReleaseDate());
-					pstmt.setString(4, affectedRelease.getVersion());
+					pstmt.setString(2, cpe);
+					pstmt.setString(3, productName);
+					pstmt.setString(4, affectedRelease.getReleaseDate());
+					pstmt.setString(5, affectedRelease.getVersion());
+					pstmt.setString(6, affectedRelease.getVendor());
+					pstmt.setString(7, affectedRelease.getPURL(productName));
+					pstmt.setString(8, affectedRelease.getSWID(productName));
+
 					count += pstmt.executeUpdate();
 //					logger.info("Added {} as an affected release for {}", prodId, affectedRelease.getCveId());
 				} catch (Exception e) {
@@ -347,14 +298,12 @@ public class DatabaseHelper {
 		logger.info("Done. Deleted existing affected releases in database!");
 	}
 
-	public Map<String, CompositeVulnerability> getExistingCompositeVulnerabilities() {
-
+	public Map<String, CompositeVulnerability> getExistingCompositeVulnerabilities(int maxVulnerabilities) {
 		if (existingCompositeVulnMap.size() == 0) {
 		synchronized (DatabaseHelper.class) {
 			if (existingCompositeVulnMap.size() == 0) {
 				int vulnId;
-				String cveId, description, published_date, last_modified_date, srcUrl, platform, srcDomain = "";
-				int existAtNvd, existAtMitre;
+				String cveId, description;
 				existingCompositeVulnMap = new HashMap<>();
 				try (Connection connection = getConnection();) {
 
@@ -362,7 +311,9 @@ public class DatabaseHelper {
 					PreparedStatement pstmt = connection.prepareStatement(selectSql);
 					ResultSet rs = pstmt.executeQuery();
 
-					while (rs.next()) {
+					int vulnCount = 0;
+					// Iterate over result set until there are no results left or vulnCount >= maxVulnerabilities
+					while (rs.next() && (maxVulnerabilities == 0 || vulnCount < maxVulnerabilities)) {
 						vulnId = rs.getInt("vuln_id");
 						cveId = rs.getString("cve_id");
 						description = rs.getString("description");
@@ -370,9 +321,11 @@ public class DatabaseHelper {
 						CompositeVulnerability existingVulnInfo = new CompositeVulnerability(
 								vulnId,
 								cveId,
-								description
+								description,
+								CompositeVulnerability.CveReconcileStatus.UPDATE
 						);
 						existingCompositeVulnMap.put(cveId, existingVulnInfo);
+						vulnCount++;
 					}
 					logger.info("NVIP has loaded {} existing CVE items from DB!", existingCompositeVulnMap.size());
 				} catch (Exception e) {

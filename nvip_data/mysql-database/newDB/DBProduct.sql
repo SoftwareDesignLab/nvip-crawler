@@ -11,6 +11,7 @@ CREATE TABLE `affectedproduct` (
   `product_name` TINYTEXT NOT NULL,
   `version` TINYTEXT DEFAULT NULL,
   `vendor` TINYTEXT DEFAULT NULL,
+  `purl` TINYTEXT DEFAULT NULL,
   PRIMARY KEY (`affected_product_id`),
   KEY `affected_product_id_index` (`affected_product_id`),
   CONSTRAINT `affectedproduct_cve_id_fk` FOREIGN KEY (`cve_id`) REFERENCES `vulnerability` (`cve_id`)

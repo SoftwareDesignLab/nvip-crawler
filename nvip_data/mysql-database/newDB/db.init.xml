@@ -166,6 +166,12 @@
             <column name="vendor" type="TINYTEXT">
                 <constraints nullable="true"/>
             </column>
+            <column name="purl" type="TINYTEXT">
+                <constraints nullable="true"/>
+            </column>
+            <column name="swid_tag" type="TINYTEXT">
+                <constraints nullable="true"/>
+            </column>
         </createTable>
 
         <createIndex
