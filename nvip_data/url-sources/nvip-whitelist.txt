@@ -476,3 +476,14 @@ https://zammad.com
 https://zigrin.com
 https://zoom.us
 https://zuso.ai
+http://groovy-lang.org/
+https://arstechnica.com/
+https://confluence.atlassian.com/
+https://groovy-lang.org/security.html
+https://oss-security.openwall.org/
+https://security.paloaltonetworks.com/
+https://www.auscert.org.au/
+https://www.hitachi.co.jp/
+https://www.jenkins.io/
+https://www.saddns.net/
+https://www.zdnet.com/
