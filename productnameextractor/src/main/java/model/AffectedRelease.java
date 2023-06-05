@@ -106,6 +106,16 @@ public class AffectedRelease {
 		return pURL;
 	}
 
+	//Returns swid. If productName is unknown, sets value to NULL.
+	public String getSWID(String productName){
+		if(productName.equals("UNKNOWN")){
+			swid = "NULL";
+		}else {
+			generateSWID(productName);
+		}
+		return swid;
+	}
+
 	public void setVendor(String vendor) {
 		this.vendor = vendor;
 	}
@@ -137,7 +147,7 @@ public class AffectedRelease {
 
 	/**
 	 * Generate SWID using product name
-	 * Scheme: swid:productname:version
+	 * Scheme: swid:productname@version
 	 * @param productName
 	 */
 	public void generateSWID(String productName){

@@ -21,6 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+
 package main.java;
 
 import java.util.ArrayList;
@@ -36,7 +37,6 @@ public class ProductItem{
 
 	private String name;
 	private ArrayList<String> versions = new ArrayList<>();
-	private String swid; //new field for SWID tag
 
 	/**
 	 * Class constructor
@@ -86,22 +86,6 @@ public class ProductItem{
 		this.name = name;
 	}
 
-	/**
-	 * Returns SWID tag
-	 * @return String swid
-	 */
-	public String getSwid() {
-		return swid;
-	}
-
-	/**
-	 * Sets SWID tag
-	 * @param swid swid
-	 */
-	public void setSwid(String swid) {
-		this.swid = swid;
-	}
-
 	@Override
 	public String toString() {
 
@@ -111,9 +95,6 @@ public class ProductItem{
 			for (String version : versions) {
 				toPrint.append(" ").append(version);
 			}
-		}
-		if (swid != null) {
-			toPrint.append(". SWID: ").append(swid);
 		}
 
 		return toPrint.toString();
