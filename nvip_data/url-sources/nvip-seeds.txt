@@ -183,7 +183,9 @@ https://devolutions.net/security/advisories
 https://dhis2.org/security/vulnerabilities
 https://discuss.hashicorp.com/c/security/52
 https://discuss.rubyonrails.org/tag/security
-https://doc.powerdns.com/authoritative/security-advisories/, https://doc.powerdns.com/recursor/security-advisories/, https://dnsdist.org/security-advisories
+https://doc.powerdns.com/authoritative/security-advisories/
+https://doc.powerdns.com/recursor/security-advisories/
+https://dnsdist.org/security-advisories
 https://docs.couchdb.org/en/stable/cve
 https://docs.newrelic.com/docs/security/security-privacy/information-security/security-bulletins
 https://docs.senhasegura.io/security-center-advisories
