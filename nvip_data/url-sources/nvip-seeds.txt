@@ -90,7 +90,6 @@ https://web.mit.edu/kerberos/historical.html
 https://www.atlassian.com/trust/security/advisories
 https://www.atlassian.com/trust/security/advisory-publishing-policy
 https://www.cisa.gov/known-exploited-vulnerabilities-catalog
-https://www.cisa.gov/uscert/ics/alerts
 https://www.esri.com/arcgis-blog/?s=#&tag=cve
 https://www.esri.com/arcgis-blog/?s=#&tag=cve&tag=security
 https://www.freebsd.org
@@ -436,7 +435,6 @@ https://www.johnsoncontrols.com/buildings/specialty-pages/product-security/secur
 https://www.kb.cert.org/vuls/bypublished/desc
 https://www.knime.com/security/advisories
 https://www.krakend.io/tags/security
-https://www.krcert.or.kr/krcert/secNoticeList.do
 https://www.kyoceradocumentsolutions.com/en/our-business/security
 https://www.lexmark.com/en_us/solutions/security/lexmark-security-advisories.html
 https://www.libreoffice.org/about-us/security/advisories
