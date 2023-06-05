@@ -113,13 +113,15 @@ http://oxnan.com
 http://support.zte.com.cn/support/news/NewsMain.aspx
 http://svn.apache.org/viewvc/tomcat/site/trunk/docs/?pathrev=1907857
 http://www.slackware.com/security
-http://www.squid-cache.org/Advisories/, https://github.com/squid-cache/squid/security/advisories
+http://www.squid-cache.org/Advisories/
+https://github.com/squid-cache/squid/security/advisories
 http://www.vapidlabs.com/list.php
 https://advisories.mageia.org/index.html
 https://advisories.octopus.com
 https://advisory.dualvs.com
 https://airbus-seclab.github.io
-https://akka.io/security/, https://groups.google.com/g/akka-security
+https://akka.io/security/
+https://groups.google.com/g/akka-security
 https://amperecomputing.com/products/product-security.html
 https://ant.apache.org/security.html
 https://appcheck-ng.com/category/security-alerts
