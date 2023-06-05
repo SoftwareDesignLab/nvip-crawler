@@ -21,6 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+package main.java;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -28,8 +29,9 @@ import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import model.*;
-import db.*;
+import main.java.model.*;
+import main.java.utils.*;
+import main.java.db.*;
 
 import opennlp.tools.tokenize.WhitespaceTokenizer;
 
@@ -63,6 +65,19 @@ public class AffectedProductIdentifier extends Thread implements Runnable {
 
 	}
 
+	private int insertSwidTagsIntoDatabase() {
+		SWIDLookUp swidLookUp = SWIDLookUp.getInstance();
+		//get the swid that corresponds to the product, get both the SWID and the product
+		try {
+			Collection<Product> products = swidLookUp.getProductsToBeAddedToDatabase().values();
+			DatabaseHelper db = DatabaseHelper.getInstance();
+			return db.insertSwidTags(products);
+		} catch (Exception e) {
+			logger.error("Error while adding " + swidLookUp.getProductsToBeAddedToDatabase().size() + " new products!");
+			return -1;
+		}
+	}
+
 	// run process
 	public void run() {
 		identifyAffectedReleases();
@@ -79,7 +94,7 @@ public class AffectedProductIdentifier extends Thread implements Runnable {
 			logger.error("Severe Error! Could not initialize the models for product name/version extraction! Skipping affected release identification step! {}", e1.toString());
 			return -1;
 		}
-
+		SWIDLookUp swidLookUp = SWIDLookUp.getInstance();
 		CpeLookUp cpeLookUp = CpeLookUp.getInstance();
 		int numOfProductsMappedToCpe = 0;
 		int numOfProductsNotMappedToCPE = 0;
@@ -146,7 +161,9 @@ public class AffectedProductIdentifier extends Thread implements Runnable {
 
 					// map identified products/version to CPE
 					for (ProductItem productItem : productList) {
+						swidLookUp.addSWIDEntry(productItem);
 
+						String swid	= productItem.getSwid();
 						long startCPETime = System.currentTimeMillis();
 						List<String> productIDs = cpeLookUp.getCPEids(productItem);
 						long cpeTime = System.currentTimeMillis() - startCPETime;
@@ -161,7 +178,7 @@ public class AffectedProductIdentifier extends Thread implements Runnable {
 						// if CPE identified, add it as affected release
 						for (String itemID : productIDs) {
 //							logger.info("Found Affected Product for {}: {}", vulnerability.getCveId(), itemID);
-							vulnerability.getAffectedReleases().add(new AffectedRelease(0, vulnerability.getCveId(), itemID, null, CpeLookUp.getVersionFromCPEid(itemID)));
+							vulnerability.getAffectedReleases().add(new AffectedRelease(0, vulnerability.getCveId(), itemID, swid, "", CpeLookUp.getVersionFromCPEid(itemID)));
 							numOfProductsMappedToCpe++;
 						}
 					}
@@ -208,6 +225,7 @@ public class AffectedProductIdentifier extends Thread implements Runnable {
 
 		logger.info("Inserting found products to DB!");
 		insertNewCpeItemsIntoDatabase();
+		insertSwidTagsIntoDatabase();
 
 		// get all identified affected releases
 		List<AffectedRelease> listAllAffectedReleases = new ArrayList<>();

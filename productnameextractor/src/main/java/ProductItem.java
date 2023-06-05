@@ -2,17 +2,17 @@
  * Copyright 2023 Rochester Institute of Technology (RIT). Developed with
  * government support under contract 70RSAT19CB0000020 awarded by the United
  * States Department of Homeland Security.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -21,21 +21,23 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+package main.java;
 
 import java.util.ArrayList;
 
 /**
  * ProductItem class for affected product name and its versions
- * 
+ *
  * @author Igor Khokhlov
  *
  */
 
 public class ProductItem{
-	
+
 	private String name;
 	private ArrayList<String> versions = new ArrayList<>();
-	
+	private String swid; //new field for SWID tag
+
 	/**
 	 * Class constructor
 	 */
@@ -43,7 +45,7 @@ public class ProductItem{
 		super();
 		this.name = name;
 	}
-	
+
 	/**
 	 * Returns list of versions
 	 * @return ArrayList<String> of versions
@@ -59,7 +61,7 @@ public class ProductItem{
 	public void setVersions(ArrayList<String> versions) {
 		this.versions = versions;
 	}
-	
+
 	/**
 	 * Adds version to the list
 	 * @param version version
@@ -75,7 +77,7 @@ public class ProductItem{
 	public String getName() {
 		return name;
 	}
-	
+
 	/**
 	 * Sets product name
 	 * @param name name
@@ -83,10 +85,26 @@ public class ProductItem{
 	public void setName(String name) {
 		this.name = name;
 	}
-	
+
+	/**
+	 * Returns SWID tag
+	 * @return String swid
+	 */
+	public String getSwid() {
+		return swid;
+	}
+
+	/**
+	 * Sets SWID tag
+	 * @param swid swid
+	 */
+	public void setSwid(String swid) {
+		this.swid = swid;
+	}
+
 	@Override
 	public String toString() {
-	
+
 		StringBuilder toPrint = new StringBuilder("SN: " + this.name);
 		if (versions.size()>0) {
 			toPrint.append(". SV: ");
@@ -94,10 +112,13 @@ public class ProductItem{
 				toPrint.append(" ").append(version);
 			}
 		}
-			
+		if (swid != null) {
+			toPrint.append(". SWID: ").append(swid);
+		}
+
 		return toPrint.toString();
 	}
-	
-	
+
+
 
 }

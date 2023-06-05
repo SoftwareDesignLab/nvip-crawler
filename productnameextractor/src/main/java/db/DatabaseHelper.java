@@ -21,7 +21,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package db;
+
+package main.java.db;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -40,8 +41,8 @@ import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import com.zaxxer.hikari.pool.HikariPool.PoolInitializationException;
 
-import model.*;
-import utils.*;
+import main.java.model.*;
+import main.java.utils.*;
 
 /**
  * 
@@ -54,9 +55,14 @@ public class DatabaseHelper {
 	private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
 	String databaseType = "mysql";
 
-	private final String insertProductSql = "INSERT INTO affectedproduct (CPE) VALUES (?);";
+	private final String insertProductSql = "INSERT INTO product (CPE, swid, domain) VALUES (?, ?, ?);";
 	private final String getProductCountFromCpeSql = "SELECT count(*) from affectedproduct where cpe = ?";
 	private final String getIdFromCpe = "SELECT * FROM affectedproduct where cpe = ?;";
+
+	private final String getSWIDsById = "SELECT swid FROM product WHERE product_id = ?;";
+	private final String selectSwidsByCve = "SELECT v.vuln_id, v.cve_id, p.swid FROM vulnerability v LEFT JOIN affectedrelease ar ON ar.cve_id = v.cve_id LEFT JOIN product p ON p.product_id = ar.product_id WHERE p.swid IS NOT NULL AND v.cve_id = ?;";
+	private final String selectSwidsAndCve = "SELECT v.vuln_id, v.cve_id, p.swid FROM vulnerability v LEFT JOIN affectedrelease ar ON ar.cve_id = v.cve_id LEFT JOIN product p ON p.product_id = ar.product_id WHERE p.swid IS NOT NULL;";
+	private final String insertSwidSql = "INSERT INTO product (swid) where product_id = ? values (?);";
 
 	private final String insertAffectedReleaseSql = "INSERT INTO affectedproduct (cve_id, release_date, version) VALUES (?, ?, ?);";
 
@@ -212,6 +218,58 @@ public class DatabaseHelper {
 			logger.error(e.getMessage());
 			return -1;
 		}
+	}
+
+
+	/**
+	 * Insert the SWID tag for the corresponding product
+	 */
+	public int insertSwidTags(Collection<Product> products) {
+		try (Connection conn = getConnection();
+			 PreparedStatement pstmt = conn.prepareStatement(insertSwidSql);) {
+			int count = 0;
+			int total = products.size();
+			for (Product product : products) {
+				pstmt.setString(1, product.getSwid());
+				pstmt.setString(2, product.getSwidTag());
+				pstmt.executeUpdate();
+				count++;
+			}
+
+			logger.info("\rInserted: " + count + " of " + total + " products to DB!");
+			return count;
+		} catch (SQLException e) {
+			logger.error(e.getMessage());
+			return -1;
+		}
+	}
+
+
+	/**
+	 * Get SWID tag from id
+	 *
+	 * @param id
+	 * @return
+	 */
+	public String getSwidsbyId(int id) {
+		Connection conn = null;
+		String swid = "";
+		try {
+			conn = getConnection();
+			PreparedStatement pstmt = conn.prepareStatement(getSWIDsById);
+			pstmt.setInt(1, id);
+			ResultSet res = pstmt.executeQuery();
+			while (res.next()) {
+				swid = res.getString("swid");
+			}
+		} catch (Exception e) {
+		}
+
+		try {
+			conn.close();
+		} catch (SQLException e) {
+		}
+		return swid;
 	}
 
 	/**

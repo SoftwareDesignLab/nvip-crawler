@@ -1,9 +1,11 @@
 package edu.rit.se.nvip.productnameextractor;
 
+import main.java.SWIDgenerator;
 import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.List;
+import main.java.ProductItem;
 
 import static org.junit.Assert.assertEquals;
 
