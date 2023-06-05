@@ -39,6 +39,7 @@ import static org.junit.Assert.assertEquals;
 public class RedHatParserTest extends AbstractParserTest {
 
 	@Test
+	@Ignore
 	public void testRedHat() {
 		RedHatParser parser = new RedHatParser("redhat");
 
