@@ -28,6 +28,7 @@ import edu.rit.se.nvip.model.CompositeVulnerability;
 import org.junit.Test;
 import org.junit.BeforeClass;
 import org.junit.AfterClass;
+import org.junit.Ignore
 
 import java.util.List;
 
