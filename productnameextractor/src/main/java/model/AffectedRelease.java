@@ -33,24 +33,29 @@ public class AffectedRelease {
 	private final int id;
 	private String cveId;
 	private final String cpe;
-	private final String swid;
 	private String releaseDate;
 	private String version;
+	private String vendor;
+	private String pURL;
+	private String swid;
 
-	public AffectedRelease(int id, String cveId, String cpe, String swid, String releaseDate, String version) {
+	public AffectedRelease(int id, String cveId, String cpe, String releaseDate, String version) {
 		this.id = id;
 		this.cveId = cveId;
 		this.cpe = cpe;
-		this.swid = swid;
 		this.releaseDate = releaseDate;
 		this.version = version;
 	}
 
-	public AffectedRelease(String cpe, String swid, String releaseDate, String version) {
+	public AffectedRelease(int id, String cveId, String cpe, String releaseDate, String version, String vendor) {
+		this(id, cveId, cpe, releaseDate, version);
+		this.vendor = vendor;
+	}
+
+	public AffectedRelease(String cpe, String releaseDate, String version) {
 		this.id = 0;
 		this.cveId = null;
 		this.cpe = cpe;
-		this.swid = swid;
 		this.releaseDate = releaseDate;
 		this.version = version;
 	}
@@ -59,9 +64,9 @@ public class AffectedRelease {
 		this.id = a.id;
 		this.cveId = a.cveId;
 		this.cpe = a.cpe;
-		this.swid = a.swid;
 		this.releaseDate = a.releaseDate;
 		this.version = a.version;
+		this.vendor = a.vendor;
 	}
 
 	public int getId() {
@@ -76,8 +81,6 @@ public class AffectedRelease {
 		return cpe;
 	}
 
-	public String getSwid() { return swid; }
-
 	public String getReleaseDate() {
 		return releaseDate;
 	}
@@ -89,6 +92,23 @@ public class AffectedRelease {
 	public void setVersion(String version) {
 		this.version = version;
 	}
+	public String getVendor() {
+		return vendor;
+	}
+
+	//Returns pURL. If productName is unknown, sets value to NULL.
+	public String getPURL(String productName){
+		if(productName.equals("UNKNOWN")){
+			pURL = "NULL";
+		}else {
+			generatePURL(productName);
+		}
+		return pURL;
+	}
+
+	public void setVendor(String vendor) {
+		this.vendor = vendor;
+	}
 
 	public void setCveId(String cveId) {
 		this.cveId = cveId;
@@ -98,18 +118,49 @@ public class AffectedRelease {
 		this.releaseDate = releaseDate;
 	}
 
+	/**
+	* Generates PURL using vendor, product name and version
+	* Format: scheme:type/namespace/name@version?qualifiers#subpath
+	* Where scheme is "pkg", vendor is the type, product name is the name and version is the version
+	*
+	* @param productName
+	*/
+	private void generatePURL(String productName){
+		String result = "pkg:";
+		StringBuilder purlBuilder = new StringBuilder(result);
+		purlBuilder.append(vendor).append("/").append(productName);
+		if(!version.equals("*")){
+			purlBuilder.append("@").append(version);
+		}
+		pURL = purlBuilder.toString();
+	}
+
+	/**
+	 * Generate SWID using product name
+	 * Scheme: swid:productname:version
+	 * @param productName
+	 */
+	public void generateSWID(String productName){
+		StringBuilder swidBuilder = new StringBuilder();
+		swidBuilder.append("swid:").append(productName).append(":").append(version);
+		if(!version.equals("*")){
+			swidBuilder.append("@").append(version);
+		}
+		swid = swidBuilder.toString();
+	}
+
 	@Override
 	public boolean equals(Object obj) {
 		if (!(obj instanceof AffectedRelease))
 			return false;
 		AffectedRelease other = (AffectedRelease) obj;
-		return this.cpe.equals(other.cpe) && this.swid.equals(other.swid) && this.version.equals(other.version);
+		return other.cveId.equals(this.cveId) && other.cpe.equals(this.cpe);
 
 	}
 
 	@Override
 	public String toString() {
-		return "AffectedRelease [cveId=" + cveId + ", cpe=" + cpe + ", swid=" + swid + ", releaseDate=" + releaseDate + ", version=" + version + "]";
+		return "AffectedRelease [cveId=" + cveId + ", cpe=" + cpe + ", releaseDate=" + releaseDate + ", version=" + version + "]";
 	}
 
 }

@@ -62,21 +62,6 @@ public class SWIDLookUp {
             entries.add(new SWIDEntry(p.getName(), generateSWID(p.getName(), p)));
             swidDictionary.put(p.getName(), entries);
             p.setSwid(generateSWID(p.getName(), p));
-        } else {
-            //if the product name is in the dictionary, check if the swid tag is already there
-            List<SWIDEntry> entries = swidDictionary.get(p.getName());
-            boolean swidExists = false;
-            for (SWIDEntry entry : entries) {
-                if (entry.getSWID().equals(p.getSwid())) {
-                    swidExists = true;
-                    break;
-                }
-            }
-            //if the swid tag is not there, add it
-            if (!swidExists) {
-                p.setSwid(generateSWID(p.getName(), p));
-                entries.add(new SWIDEntry(p.getName(), p.getSwid()));
-            }
         }
         //add the product to the database, version needs to be a string for the product
         Product product = new Product(p.getName(), p.getSwid(), p.getVersions().get(0));

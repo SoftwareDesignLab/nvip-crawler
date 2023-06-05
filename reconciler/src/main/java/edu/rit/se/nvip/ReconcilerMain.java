@@ -74,6 +74,9 @@ public class ReconcilerMain {
     }
 
     private List<String> getListFromString(String commaSeparatedList) {
+        // Default to empty list on null value for commaSeparatedList
+        if(commaSeparatedList == null) return new ArrayList<>();
+
         return Arrays.asList(commaSeparatedList.split(","));
     }
 }
