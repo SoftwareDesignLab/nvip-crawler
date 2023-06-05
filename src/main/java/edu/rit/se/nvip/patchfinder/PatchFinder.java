@@ -36,7 +36,6 @@ import java.util.regex.Pattern;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.checkerframework.checker.units.qual.A;
 import org.eclipse.jgit.api.LsRemoteCommand;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -55,19 +54,12 @@ public class PatchFinder {
 	private static DatabaseHelper db;
 
 	// TODO: add to envvars?
-	private static final String[] ADDRESS_BASES = { "https://github.com/", "https://gitlab.com/" };
-	private static final String GOOGLE_SEARCH_URL = "https://www.google.com/search?q=";
+	private static final String[] ADDRESS_BASES = { "https://www.github.com/", "https://www.gitlab.com/" };
 
 	private Map<String, ArrayList<String>> cveCpeUrls;
 
 	// TODO: all old vars, get rid of these
-	private static Entry<String, ArrayList<String>> currentCPE;
-	private static boolean advanceSearchCheck;
-	private static String previousURL;
 	private static int advanceSearchCount;
-
-	private static String keyword1 = "";
-	private static String keyword2 = "";
 
 	/**
 	 * Main method just for calling to find all patch URLs
@@ -86,20 +78,9 @@ public class PatchFinder {
 
 		db = DatabaseHelper.getInstance();
 		Map<String, ArrayList<String>> cpes = db.getCPEsAndCVE();
-
-		if (args.length >= 1) {
-
-			if (args[0].equals("productId")) {
-				main.parseURLByProductId(Integer.parseInt(args[1]));
-			} else if (args[0].equals("searchByGoogle")) {
-				main.googleSearchAdditionalSources();
-			} else {
-				main.parseURLByCVE(args[1]);
-			}
-		} else {
-			main.parseMassURLs(cpes);
-		}
-
+		logger.info("Pulled {} cpes from the DB", cpes.size());
+		main.parseMassURLs(cpes);
+		logger.info("Found {} URLs", main.cveCpeUrls.size());
 		logger.info("PatchFinder Finished!");
 
 	}
@@ -117,53 +98,15 @@ public class PatchFinder {
 
 		// for each CPE, make a set of URLs for potential patch locations, then map them to their CVE
 		for (String cveId: cpes.keySet()) {
-
 			ArrayList<String> urls = new ArrayList<>();
 			for (String cpe: cpes.get(cveId)) {
-				urls.add(parseURL(cpe));
+				urls.addAll(parseURL(cpe));
 			}
-
+			logger.info("Found {} potential patch sources for CVE: {}", urls.size(), cveId);
 			cveCpeUrls.put(cveId, urls);
 		}
 
 		this.cveCpeUrls = cveCpeUrls;
-	}
-
-
-	/**
-	 * Gets a URL via a specified CVE and parses and tests
-	 * 
-	 * @throws IOException
-	 * @throws InterruptedException
-	 */
-	public void parseURLByCVE(String cve_id) throws IOException, InterruptedException {
-
-		advanceSearchCount = 0;
-		db = DatabaseHelper.getInstance();
-		Map<String, ArrayList<String>> cpe = db.getCPEsByCVE(cve_id);
-
-		for (Entry<String, ArrayList<String>> entry : cpe.entrySet()) {
-			currentCPE = entry;
-			parseURL();
-		}
-
-	}
-
-	/**
-	 * Gets a URL via a specified product Id and parses and tests
-	 * 
-	 * @param product_id
-	 * @throws InterruptedException
-	 * @throws IOException
-	 */
-	public void parseURLByProductId(int product_id) throws IOException, InterruptedException {
-		advanceSearchCount = 0;
-		db = DatabaseHelper.getInstance();
-		Map<String, ArrayList<String>> cpe = db.getCPEById(product_id);
-		for (Entry<String, ArrayList<String>> entry : cpe.entrySet()) {
-			currentCPE = entry;
-			parseURL();
-		}
 	}
 
 	/**
@@ -176,72 +119,36 @@ public class PatchFinder {
 	private ArrayList<String> parseURL(String cpe) throws IOException, InterruptedException {
 		String[] wordArr = cpe.split(":");
 		ArrayList<String> newAddresses = new ArrayList<>();
-		String vendor = "";
-		String product = "";
 
 		// Parse keywords from CPE to create links for github, bitbucket and gitlab
-		// Also checks if the vendor and/or product are the same as the previous, indicating the link
-		// is already used
-		if (!wordArr[3].equals("*") && !vendor.equals(wordArr[3])) {
-			HashSet<String> addresses = initializeAddresses(vendor);
+		// Also checks if the created URL is already used
+		if (!wordArr[3].equals("*")) {
+			HashSet<String> addresses = initializeAddresses(wordArr[3]);
 			for (String address : addresses) {
 				if (!wordArr[4].equals("*")) {
-					product = wordArr[4];
-					address += product;
-				}
-				
-				newAddresses = testConnection(address);
-				if (checkAddressList(newAddresses)) {
-					break;
+					address += wordArr[4];
 				}
 
+				// Check the http connections for each URL,
+				// If any successful, add them to the list to be stored
+				newAddresses = testConnection(address);
 			}
 
-		} else if (!wordArr[4].equals("*") && !product.equals(wordArr[4])) {
-
-			product = wordArr[4];
-
+		} else if (!wordArr[4].equals("*")) {
 			for (String base : ADDRESS_BASES) {
-				String address = base + product;
+				String address = base + wordArr[4];;
 				newAddresses = testConnection(address);
-				if (checkAddressList(newAddresses)) {
-					break;
-				}
-
 			}
+		}
+
+		// If no successful URLs, try an advanced search with
+		// GitHub's search feature to double check
+		if (newAddresses.isEmpty()) {
+			newAddresses = advanceParseSearch(wordArr[3], wordArr[4]);
 		}
 
 		return newAddresses;
 		
-	}
-
-	/**
-	 * Repeated method used to check if a list of collected addresses is empty or
-	 * not If so, perform an advanced search for correct repo URLs. If not, insert
-	 * the following
-	 *
-	 * TODO: Don't store the addresses in the DB until we actually confirm the repo exists,
-	 *  conduct the advanced search if needed, then store the successful ones in the DB
-	 * 
-	 * @param addresses
-	 * @throws InterruptedException
-	 */
-	private boolean checkAddressList(ArrayList<String> addresses) throws InterruptedException {
-		// Place all successful links in DB
-		if (!addresses.isEmpty()) {
-			insertPatchURLs(addresses);
-			return true;
-		} else {
-			addresses = advanceParseSearch();
-			if (!addresses.isEmpty()) {
-				insertPatchURLs(addresses);
-				return true;
-			} else {
-				logger.info("No Repo Found");
-			}
-		}
-
-		return false;
 	}
 
 	/**
@@ -273,11 +180,19 @@ public class PatchFinder {
 
 		URL url = new URL(address);
 		HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
-		int response = urlConnection.getResponseCode();
+		int response;
+
+		try {
+			response = urlConnection.getResponseCode();
+		} catch (Exception e) {
+			logger.error("ERROR: Failed to connect to {}\n{}", address, e);
+			response = -1;
+		}
+
 
 		// Check if the url leads to an actual GitHub repo
 		// If so, push the source link into the DB
-		if (response == HttpURLConnection.HTTP_OK) {
+		if (response >= 200 && response < 300) {
 			urlConnection.connect();
 
 			// Get correct URL in case of redirection
@@ -296,7 +211,7 @@ public class PatchFinder {
 				logger.info("Successful Git Remote Connection at: " + newURL);
 				urlList.add(newURL);
 			} catch (Exception e) {
-				// If unsuccessful on git remote check, perform a advaced search, assuming the
+				// If unsuccessful on git remote check, perform an advanced search, assuming the
 				// link instead leads to a github company home page
 				logger.error(e.getMessage());
 				return searchForRepos(newURL);
@@ -318,22 +233,17 @@ public class PatchFinder {
 	private ArrayList<String> searchForRepos(String newURL) {
 		logger.info("Grabbing repos from github user page...");
 
-		ArrayList<String> urls = new ArrayList<String>();
+		ArrayList<String> urls = new ArrayList<>();
 
-		// Obtain all linls from the current company github page
+		// Obtain all links from the current company github page
 		try {
 			Document doc = Jsoup.connect(newURL).timeout(0).get();
-
 			Elements links = doc.select("a[href]");
-
 			// Loop through all links to find the repo page link (repo tab)
 			for (Element link : links) {
 				if (link.attr("href").contains("repositories")) {
-
 					newURL = ADDRESS_BASES[0] + link.attr("href").substring(1);
-
 					Document reposPage = Jsoup.connect(newURL).timeout(0).get();
-
 					Elements repoLinks = reposPage.select("li.Box-row a.d-inline-block[href]");
 
 					// Loop through all repo links in the repo tab page and test for git clone
@@ -370,11 +280,10 @@ public class PatchFinder {
 
 		for (Element repoLink : repoLinks) {
 			logger.info("Found possible repo at:" + repoLink.attr("abs:href"));
-
 			repoURL = repoLink.attr("abs:href");
 			String innerText = repoLink.text();
 
-			if (verifyGitRemote(repoURL, innerText)) {
+			if (verifyGitRemote(repoURL, innerText, "", "")) {
 				urls.add(repoURL);
 			}
 		}
@@ -389,29 +298,25 @@ public class PatchFinder {
 	 * @return
 	 * @throws InterruptedException
 	 */
-	private ArrayList<String> advanceParseSearch() throws InterruptedException {
+	private ArrayList<String> advanceParseSearch(String vendor, String product) throws InterruptedException {
 
 		String searchParams = ADDRESS_BASES[0] + "search?q=";
 		ArrayList<String> urls = new ArrayList<>();
 
-		if (advanceSearchCheck) {
-
 			logger.info("Conducting Advanced Search...");
 
-			if (!keyword1.equals("*")) {
-				searchParams += keyword1;
+			if (!vendor.equals("*")) {
+				searchParams += vendor;
 			}
 
-			if (!keyword2.equals("*")) {
-				searchParams += "+" + keyword2;
+			if (!product.equals("*")) {
+				searchParams += "+" + product;
 			}
 
 			// Perform search on github using query strings in the url
 			// Loop through the results and return a list of all verified repo links that
 			// match with the product
-
 			try {
-
 				// Sleep for a minute before performing another advance search if
 				// 10 have already been conducted to avoid HTTP 429 error
 				if (advanceSearchCount >= 10) {
@@ -422,28 +327,22 @@ public class PatchFinder {
 
 				advanceSearchCount++;
 				Document searchPage = Jsoup.connect(searchParams + "&type=repositories").get();
-
 				Elements searchResults = searchPage.select("li.repo-list-item a[href]");
 
 				for (Element searchResult : searchResults) {
-
 					if (!searchResult.attr("href").isEmpty()) {
-
 						String newURL = searchResult.attr("abs:href");
 						String innerText = searchResult.text();
-
-						if (verifyGitRemote(newURL, innerText)) {
+						if (verifyGitRemote(newURL, innerText, vendor, product)) {
 							urls.add(newURL);
 						}
 					}
-
 				}
 
-				advanceSearchCheck = false;
 			} catch (IOException e) {
 				logger.error(e.toString());
 			}
-		}
+
 		return urls;
 	}
 
@@ -452,114 +351,28 @@ public class PatchFinder {
 	 * checks if the keywords are included as well before performing connection
 	 * @return
 	 */
-	private boolean verifyGitRemote(String repoURL, String innerText) {
+	private boolean verifyGitRemote(String repoURL, String innerText, String vendor, String product) {
 
 		// Verify if the repo is correlated to the product by checking if the keywords
 		// lie in the inner text of the html link via regex
-		if (Pattern.compile(Pattern.quote(keyword1), Pattern.CASE_INSENSITIVE).matcher(innerText).find()
-				|| Pattern.compile(Pattern.quote(keyword2), Pattern.CASE_INSENSITIVE).matcher(innerText)
+		if (Pattern.compile(Pattern.quote(vendor), Pattern.CASE_INSENSITIVE).matcher(innerText).find()
+				|| Pattern.compile(Pattern.quote(product), Pattern.CASE_INSENSITIVE).matcher(innerText)
 						.find()) {
 
-			if (!repoURL.equals(previousURL)) {
+			LsRemoteCommand lsCmd = new LsRemoteCommand(null);
 
-				previousURL = repoURL;
+			lsCmd.setRemote(repoURL + ".git");
 
-				LsRemoteCommand lsCmd = new LsRemoteCommand(null);
-
-				lsCmd.setRemote(repoURL + ".git");
-
-				try {
-					lsCmd.call();
-					logger.info("Successful Git Remote Connection at: " + repoURL);
-					return true;
-				} catch (Exception e) {
-					logger.error(e.getMessage());
-				}
+			try {
+				lsCmd.call();
+				logger.info("Successful Git Remote Connection at: " + repoURL);
+				return true;
+			} catch (Exception e) {
+				logger.error(e.getMessage());
 			}
 		}
 		return false;
 	}
 
-	/**
-	 * Inserts a successfully connected Patch URL to the DB
-	 */
-	private void insertPatchURLs(ArrayList<String> addresses) {
-		for (String address : addresses) {
-
-			try {
-				logger.info("Inserting Patch Source for URL: " + address);
-
-				int urlId = db.getPatchSourceId(address);
-
-				if (urlId == -1) {
-					db.insertPatchSourceURL(Integer.parseInt(currentCPE.getValue().get(0)), address);
-				}
-
-			} catch (Exception e) {
-				logger.error(e.getMessage());
-			}
-
-		}
-	}
-
-
-	/**
-	 * Grab vulnerability data and parse through the descriptions,
-	 * in which a Google search will be performed to make sure a repo for the CVE doesn't exist
-	 */
-	private void googleSearchAdditionalSources() {
-		try {
-			logger.info("Checking all vulnerabilities for additional patches");
-			int gSearchCount = 0;
-			for (Entry<String, String> cve : db.getAllCveIdAndDescriptions().entrySet()) {
-				String[] words = cve.getValue().split(" ");
-				StringBuilder searchParams = new StringBuilder();
-				logger.info("Parsing through description words for cve " + cve.getKey());
-
-				outerLoop: {
-
-					// Collect all words from the description and find the product names mentioned
-					// When found, combine those words to create a search parameter for the Google Search API
-					// And check if there are any github related results
-					for (String word : words) {
-						if (word.length() > 1 && word.charAt(0) > 64 && word.charAt(0) < 91) {
-							searchParams.append(word).append(" ");
-						} else if (searchParams.length() > 0) {
-
-							//As per Google's search API limit (100 requests per 100 seconds)
-							if (gSearchCount >= 100) {
-								logger.info("Performing Sleep before continuing: 1 minute");
-								Thread.sleep(100000);
-								gSearchCount = 0;
-							}
-
-							Document doc = Jsoup.connect(GOOGLE_SEARCH_URL + searchParams + " github").get();
-							Elements searchResults = doc.select("a");
-							gSearchCount++;
-
-							for (Element link : searchResults) {
-								try {
-									Document githubDoc = Jsoup.connect(link.attr("href")).get();
-
-									if (githubDoc.location().contains("github")) {
-										logger.info("Found repo link for CVE " + cve.getKey() + " with link " + githubDoc.location());
-										int vulnID = db.getVulnIdByCveId(cve.getKey());
-										if (vulnID > -1) {
-											db.insertPatchSourceURL(db.getVulnIdByCveId(cve.getKey()), githubDoc.location());
-										}
-										break outerLoop;
-									}
-								} catch (Exception e) {
-									logger.error("Incorrect URL " + e);
-								}
-							}
-						}
-					}
-				}
-			}
-		} catch (Exception e) {
-			logger.error(e);
-		}
-	}
 
 }
