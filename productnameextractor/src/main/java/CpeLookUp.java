@@ -68,7 +68,6 @@ public class CpeLookUp {
 	private final Map<String, Product> productsToBeAddedToDatabase;
 	private final static Logger logger = LogManager.getLogger(UtilHelper.class);
 
-
 	/**
 	 * Class that has CPE groups with matching score and can be sorted
 	 */
@@ -117,13 +116,18 @@ public class CpeLookUp {
 		}
 	}
 
+	protected void loadProductDict(Map<String, CpeGroup> productDict) {
+		this.cpeMapFile = productDict;
+		logger.info("Successfully loaded CPE dictionary with {} entries", productDict.size());
+	}
+
 	/**
 	 * loads serialized CPE list of products from dictionary file in nvip data
 	 *
 	 * @return assigns list of product
 	 */
 	@SuppressWarnings({"unchecked", "rawtypes"})
-	public void loadProductDict(int maxPages, int maxAttemptsPerPage) {
+	public Map<String, CpeGroup> loadProductDict(int maxPages, int maxAttemptsPerPage) {
 		// Init cpeMapFile
 		cpeMapFile = new HashMap<>();
 
@@ -234,6 +238,8 @@ public class CpeLookUp {
 		} catch (Exception e) {
 			logger.error("Error loading CPE dictionary: {}", e.toString());
 		}
+
+		return cpeMapFile;
 	}
 
 	@SuppressWarnings("unchecked")
