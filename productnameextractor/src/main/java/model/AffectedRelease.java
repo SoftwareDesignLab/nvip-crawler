@@ -66,6 +66,7 @@ public class AffectedRelease {
 		this.releaseDate = a.releaseDate;
 		this.version = a.version;
 		this.vendor = a.vendor;
+		this.pURL = a.pURL;
 	}
 
 	public int getId() {
@@ -98,7 +99,7 @@ public class AffectedRelease {
 	//Returns pURL. If productName is unknown, sets value to NULL.
 	public String getPURL(String productName){
 		if(productName.equals("UNKNOWN")){
-			pURL = "NULL";
+			pURL = null;
 		}else {
 			generatePURL(productName);
 		}
@@ -128,7 +129,7 @@ public class AffectedRelease {
 		String result = "pkg:";
 		StringBuilder purlBuilder = new StringBuilder(result);
 		purlBuilder.append(vendor).append("/").append(productName);
-		if(!version.equals("*")){
+		if(!version.equals("*") && !version.equals("")){
 			purlBuilder.append("@").append(version);
 		}
 		pURL = purlBuilder.toString();
