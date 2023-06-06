@@ -33,7 +33,7 @@ import java.util.regex.Pattern;
  *
  */
 public class Product {
-	private final String regexVersionInfo = "(?:(\\d+\\.(?:\\d+\\.)*\\d+))";
+	private static final String regexVersionInfo = "(\\d+\\.(?:\\d+\\.)*\\d+)";
 	private final String domain;
 	private final String cpe;
 	private final int prodId;
