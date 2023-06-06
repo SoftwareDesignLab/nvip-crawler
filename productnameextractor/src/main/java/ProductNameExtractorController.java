@@ -1,12 +1,15 @@
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import model.*;
 import db.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class ProductNameExtractorController {
@@ -18,6 +21,7 @@ public class ProductNameExtractorController {
         int cveLimit = 300;
         int maxPages = 5;
         int maxAttemptsPerPage = 2;
+        final String productDictPath = "src/test/resources/product_dict.json";
         try {
             cveLimit = Integer.parseInt(System.getenv("CVE_LIMIT"));
             logger.info("Setting CVE_LIMIT to {}", cveLimit);
@@ -47,8 +51,26 @@ public class ProductNameExtractorController {
         // Init AffectedProductIdentifier
         final AffectedProductIdentifier affectedProductIdentifier = new AffectedProductIdentifier(vulnerabilities);
 
+        // Init ObjectMapper
+        final ObjectMapper OM = new ObjectMapper();
+
         // Fetch the CPE dict from NVD's CPE API
-        affectedProductIdentifier.loadCPEDict(maxPages, maxAttemptsPerPage);
+        Map<String, CpeGroup> productDict;
+
+        try {
+            productDict = OM.readValue(Paths.get(productDictPath).toFile(), Map.class);
+            affectedProductIdentifier.loadCPEDict(productDict);
+        } catch (Exception e) {
+            logger.error("Failed to load product dict at filepath '{}', querying NVD...: {}", productDictPath, e.toString());
+            productDict = affectedProductIdentifier.loadCPEDict(maxPages, maxAttemptsPerPage);
+
+            // Write CPE dict to file
+            try {
+                OM.writeValue(new File(productDictPath), productDict);
+            } catch (IOException ioe) {
+                logger.error("Error writing product dict to filepath '{}': {}", productDictPath, ioe.toString());
+            }
+        }
 
         // Run the AffectedProductIdentifier with the fetched vuln list
         final Map<String, Product> productMap = affectedProductIdentifier.identifyAffectedReleases(cveLimit);

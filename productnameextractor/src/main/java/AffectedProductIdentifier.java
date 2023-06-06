@@ -239,7 +239,11 @@ public class AffectedProductIdentifier {
 		return this.cpeLookUp.getProductsToBeAddedToDatabase();
 	}
 
-	public void loadCPEDict(int maxPages, int maxAttemptsPerPage) {
-		this.cpeLookUp.loadProductDict(maxPages, maxAttemptsPerPage);
+	public Map<String, CpeGroup> loadCPEDict(int maxPages, int maxAttemptsPerPage) {
+		return this.cpeLookUp.loadProductDict(maxPages, maxAttemptsPerPage);
+	}
+
+	public void loadCPEDict(Map<String, CpeGroup> productDict) {
+		this.cpeLookUp.loadProductDict(productDict);
 	}
 }

@@ -37,17 +37,17 @@ import static org.junit.Assert.assertTrue;
 
 public class CpeLookUpTest {
 
+	private static final CpeLookUp cpeLookUp = new CpeLookUp();
+	static { cpeLookUp.loadProductDict(); }
+
 	@Test
 	public void legitimateProduct() {
-
-		CpeLookUp cpeLookUp = CpeLookUp.getInstance();
-
 		ProductItem product = new ProductItem("phpMyAdmin");
 		product.addVersion("4.8.4");
 
 		String expectedResult = "cpe:2.3:a:phpmyadmin:phpmyadmin:4.8.4:*:*:*:*:*:*:*";
 
-		List<String> idList = cpeLookUp.getCPEids(product);
+		List<String> idList = cpeLookUp.getCPEIds(product);
 
 		boolean correctResult = false;
 		boolean notEmpty = false;
@@ -63,15 +63,12 @@ public class CpeLookUpTest {
 
 	@Test
 	public void legitimateComplexProduct() {
-
-		CpeLookUp cpeLookUp = CpeLookUp.getInstance();
-
 		ProductItem product = new ProductItem("phpMyAdmin.");
 		product.addVersion("before  4.8.4");
 
 		String expectedResult = "cpe:2.3:a:phpmyadmin:phpmyadmin:4.8.4:*:*:*:*:*:*:*";
 
-		List<String> idList = cpeLookUp.getCPEids(product);
+		List<String> idList = cpeLookUp.getCPEIds(product);
 
 		boolean correctResult = false;
 		boolean notEmpty = false;
@@ -87,9 +84,6 @@ public class CpeLookUpTest {
 
 	@Test
 	public void legitimateComplexProduct2() {
-
-		CpeLookUp cpeLookUp = CpeLookUp.getInstance();
-
 		ProductItem product = new ProductItem("phpMyAdmin:.");
 		product.addVersion("https://www.openwall.com/lists/oss-security/2012/05/10/6");
 		product.addVersion("before");
@@ -97,7 +91,7 @@ public class CpeLookUpTest {
 
 		String expectedResult = "cpe:2.3:a:phpmyadmin:phpmyadmin:4.8.4:*:*:*:*:*:*:*";
 
-		List<String> idList = cpeLookUp.getCPEids(product);
+		List<String> idList = cpeLookUp.getCPEIds(product);
 
 		boolean correctResult = false;
 		boolean notEmpty = false;
@@ -113,15 +107,12 @@ public class CpeLookUpTest {
 
 	@Test
 	public void legitimateComplexProduct3() {
-
-		CpeLookUp cpeLookUp = CpeLookUp.getInstance();
-
 		ProductItem product = new ProductItem("the Linux.");
 		product.addVersion("https://www.openwall.com/lists/oss-security/2012/05/10/6");
 
 		String expectedResult = "cpe:2.3:a:sun:linux:*:*:*:*:*:*:*:*";
 
-		List<String> idList = cpeLookUp.getCPEids(product);
+		List<String> idList = cpeLookUp.getCPEIds(product);
 
 		boolean correctResult = false;
 		boolean notEmpty = false;
@@ -137,9 +128,6 @@ public class CpeLookUpTest {
 
 	@Test
 	public void legitimateComplexProductMultipleVersions() {
-
-		CpeLookUp cpeLookUp = CpeLookUp.getInstance();
-
 		ProductItem product = new ProductItem("phpMyAdmin.");
 		product.addVersion("4.8.0.1");
 		product.addVersion("4.8.4");
@@ -149,7 +137,7 @@ public class CpeLookUpTest {
 		String expectedResult2 = "cpe:2.3:a:phpmyadmin:phpmyadmin:4.8.4:*:*:*:*:*:*:*";
 		String expectedResult3 = "cpe:2.3:a:phpmyadmin:phpmyadmin:4.7.9:*:*:*:*:*:*:*";
 
-		List<String> idList = cpeLookUp.getCPEids(product);
+		List<String> idList = cpeLookUp.getCPEIds(product);
 
 		boolean correctResult1 = false;
 		boolean correctResult2 = false;
@@ -171,14 +159,11 @@ public class CpeLookUpTest {
 
 	@Test
 	public void legitimateComplexProductNoVersion() {
-
-		CpeLookUp cpeLookUp = CpeLookUp.getInstance();
-
 		ProductItem product = new ProductItem("Microsoft Internet Explorer. ");
 
 		String expectedResult = "cpe:2.3:a:microsoft:internet_explorer:*:*:*:*:*:*:*:*";
 
-		List<String> idList = cpeLookUp.getCPEids(product);
+		List<String> idList = cpeLookUp.getCPEIds(product);
 
 		boolean correctResult = false;
 		boolean notEmpty = false;
@@ -194,14 +179,11 @@ public class CpeLookUpTest {
 
 	@Test
 	public void checkSNVerification() {
-
-		CpeLookUp cpeLookUp = CpeLookUp.getInstance();
-
 		String sn1 = "Explorer.";
 		String sn2 = "Linux";
 
-		List<String> sn1List = cpeLookUp.getCPEtitles(sn1);
-		List<String> sn2List = cpeLookUp.getCPEtitles(sn2);
+		List<String> sn1List = cpeLookUp.getCPETitles(sn1);
+		List<String> sn2List = cpeLookUp.getCPETitles(sn2);
 
 		boolean sn1NotEmpty = (sn1List != null && sn1List.size() > 0);
 		boolean sn2NotEmpty = (sn2List != null && sn2List.size() > 0);
