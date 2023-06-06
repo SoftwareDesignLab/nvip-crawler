@@ -23,356 +23,252 @@
  */
 package edu.rit.se.nvip.patchfinder;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
+import java.sql.SQLException;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.regex.Pattern;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.eclipse.jgit.api.LsRemoteCommand;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
+import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.util.FileUtils;
 
 import edu.rit.se.nvip.db.DatabaseHelper;
-
+import edu.rit.se.nvip.patchfinder.commits.JGitParser;
 
 /**
- * Start patch finder for a given repository list (as .csv)
+ * Main class for collecting CVE Patches within repos that were
+ * previously collected from the PatchFinder class
+ *
+ * TODO: Refactor to see if we need this, there should only be 1 parse method
  */
-public class PatchFinder {
+public final class JGitCVEPatchDownloader {
 
-	private static final Logger logger = LogManager.getLogger(PatchFinder.class.getName());
-	private static DatabaseHelper db;
+	private static final Logger logger = LogManager.getLogger(JGitCVEPatchDownloader.class.getName());
+	private static JGitParser previousRepo = null;
+	private static final DatabaseHelper db = DatabaseHelper.getInstance();
 
-	// TODO: add to envvars?
-	private static final String[] ADDRESS_BASES = { "https://www.github.com/", "https://www.gitlab.com/" };
+	public static void main(String[] args) throws IOException {
+		logger.info("Started Patches Application");
 
-	private Map<String, ArrayList<String>> cveCpeUrls;
+		JGitCVEPatchDownloader main = new JGitCVEPatchDownloader();
+		main.parse(args);
 
-	// TODO: all old vars, get rid of these
-	private static int advanceSearchCount;
+		logger.info("Patches Application Finished!");
+	}
 
 	/**
-	 * Main method just for calling to find all patch URLs
-	 *
-	 * TODO: Rename this method and have it called by NVIPMain
-	 *
-	 * @param args
-	 * @throws IOException
-	 * @throws InterruptedException
+	 * Main parse method that pulls parameters from nvip props
+	 * to determine clone location and limit
 	 */
-	public static void main(String[] args) throws IOException, InterruptedException {
+	public void parse(String[] args) throws IOException {
 
-		logger.info("PatchFinder Started!");
+		File checkFile = new File(args[0]);
 
-		PatchFinder main = new PatchFinder();
-
-		db = DatabaseHelper.getInstance();
-		Map<String, ArrayList<String>> cpes = db.getCPEsAndCVE();
-		logger.info("Pulled {} cpes from the DB", cpes.size());
-		main.parseMassURLs(cpes);
-		logger.info("Found {} URLs", main.cveCpeUrls.size());
-		logger.info("PatchFinder Finished!");
+		if (checkFile.exists()) {
+			logger.info("Reading in csv file: " + checkFile.getName());
+			parse(checkFile, args[1]);
+		} else if (args[3].equals("true")) {
+			parseMulitThread(args[1], Integer.parseInt(args[2]));
+		} else {
+			parse(args[1], Integer.parseInt(args[2]));
+		}
 
 	}
 
 
 	/**
-	 * Parse URLs from all CPEs given within the map
-	 * @param cpes
-	 * @throws IOException
-	 * @throws InterruptedException
-	 */
-	public void parseMassURLs(Map<String, ArrayList<String>> cpes) throws IOException, InterruptedException {
-
-		Map<String, ArrayList<String>> cveCpeUrls = new HashMap<>();
-
-		// for each CPE, make a set of URLs for potential patch locations, then map them to their CVE
-		for (String cveId: cpes.keySet()) {
-			ArrayList<String> urls = new ArrayList<>();
-			for (String cpe: cpes.get(cveId)) {
-				urls.addAll(parseURL(cpe));
-			}
-			logger.info("Found {} potential patch sources for CVE: {}", urls.size(), cveId);
-			cveCpeUrls.put(cveId, urls);
-		}
-
-		this.cveCpeUrls = cveCpeUrls;
-	}
-
-	/**
-	 * Parses URL with github.com base and cpe keywords tests connection and inserts
-	 * into DB if so.
-	 *
-	 * @throws IOException
-	 * @throws InterruptedException
-	 */
-	private ArrayList<String> parseURL(String cpe) throws IOException, InterruptedException {
-		String[] wordArr = cpe.split(":");
-		ArrayList<String> newAddresses = new ArrayList<>();
-
-		// Parse keywords from CPE to create links for github, bitbucket and gitlab
-		// Also checks if the created URL is already used
-		if (!wordArr[3].equals("*")) {
-			HashSet<String> addresses = initializeAddresses(wordArr[3]);
-			for (String address : addresses) {
-				if (!wordArr[4].equals("*")) {
-					address += wordArr[4];
-				}
-
-				// Check the http connections for each URL,
-				// If any successful, add them to the list to be stored
-				newAddresses = testConnection(address);
-			}
-
-		} else if (!wordArr[4].equals("*")) {
-			for (String base : ADDRESS_BASES) {
-				String address = base + wordArr[4];;
-				newAddresses = testConnection(address);
-			}
-		}
-
-		// If no successful URLs, try an advanced search with
-		// GitHub's search feature to double check
-		if (newAddresses.isEmpty()) {
-			newAddresses = advanceParseSearch(wordArr[3], wordArr[4]);
-		}
-
-		return newAddresses;
-		
-	}
-
-	/**
-	 * Initialize the address set with additional addresses based on cpe keywords
-	 */
-	private HashSet<String> initializeAddresses(String keyword) {
-		HashSet<String> addresses = new HashSet<>();
-
-		for (String base : ADDRESS_BASES) {
-			addresses.add(base + keyword + "/");
-		}
-
-		return addresses;
-	}
-
-	/**
-	 * Tests connection of a crafted URL, If successful, insert in DB else, search
-	 * for correct repo via github company page (Assuming the link directs to it for
-	 * now)
+	 * TODO: Update this so that it can pull CVE IDs from vulnerability table for
+	 *  the 3rd parameter Parses out patch data from a preset list of repos within a
+	 *  csv file
 	 * 
-	 * @param address
-	 * @return
+	 * @param repoFile
+	 * @param clonePath
 	 * @throws IOException
 	 */
-	private ArrayList<String> testConnection(String address) throws IOException {
+	public void parse(File repoFile, String clonePath) throws IOException {
+		File dir = new File(clonePath);
+		FileUtils.delete(dir, 1);
 
-		logger.info("Testing Connection for address: " + address);
-		ArrayList<String> urlList = new ArrayList<>();
+		List<String> repos = processInputFile(repoFile);
+		repos = new ArrayList<>(new HashSet<>(repos));
+		for (int i = 0; i < repos.size(); i++) {
+			pullCommitData(repos.get(i), clonePath, "");
+		}
+	}
 
-		URL url = new URL(address);
-		HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
-		int response;
+	/**
+	 * Extract Method called multiple times for parsing an individual URL
+	 *
+	 * @param clonePath
+	 * @throws SQLException
+	 * @throws IOException
+	 * @throws GitAPIException
+	 */
+	public void parse(String clonePath, int limit) throws IOException {
 
 		try {
-			response = urlConnection.getResponseCode();
+			for (Entry<String, Integer> source : db.getVulnIdPatchSource(limit).entrySet()) {
+				pullCommitData(source.getKey(), clonePath, db.getCveId(source.getValue() + ""));
+			}
+
 		} catch (Exception e) {
-			logger.error("ERROR: Failed to connect to {}\n{}", address, e);
-			response = -1;
-		}
-
-
-		// Check if the url leads to an actual GitHub repo
-		// If so, push the source link into the DB
-		if (response >= 200 && response < 300) {
-			urlConnection.connect();
-
-			// Get correct URL in case of redirection
-			InputStream is = urlConnection.getInputStream();
-			String newURL = urlConnection.getURL().toString();
-
-			urlConnection.disconnect();
-			is.close();
-
-			LsRemoteCommand lsCmd = new LsRemoteCommand(null);
-
-			lsCmd.setRemote(newURL + ".git");
-
-			try {
-				lsCmd.call();
-				logger.info("Successful Git Remote Connection at: " + newURL);
-				urlList.add(newURL);
-			} catch (Exception e) {
-				// If unsuccessful on git remote check, perform an advanced search, assuming the
-				// link instead leads to a github company home page
-				logger.error(e.getMessage());
-				return searchForRepos(newURL);
-			}
-
-		}
-		return urlList;
-	}
-
-	/**
-	 * Searches for all links within a companies github page to find the correct
-	 * repo the cpe is correlated to. Uses keywords from cpe to validate and checks
-	 * for git remote connection with found links
-	 * 
-	 * Uses jSoup framework
-	 *
-	 * @param newURL
-	 */
-	private ArrayList<String> searchForRepos(String newURL) {
-		logger.info("Grabbing repos from github user page...");
-
-		ArrayList<String> urls = new ArrayList<>();
-
-		// Obtain all links from the current company github page
-		try {
-			Document doc = Jsoup.connect(newURL).timeout(0).get();
-			Elements links = doc.select("a[href]");
-			// Loop through all links to find the repo page link (repo tab)
-			for (Element link : links) {
-				if (link.attr("href").contains("repositories")) {
-					newURL = ADDRESS_BASES[0] + link.attr("href").substring(1);
-					Document reposPage = Jsoup.connect(newURL).timeout(0).get();
-					Elements repoLinks = reposPage.select("li.Box-row a.d-inline-block[href]");
-
-					// Loop through all repo links in the repo tab page and test for git clone
-					// verification. Return the list of all successful links afterwards
-					urls = testLinks(repoLinks);
-
-					// Check if the list is empty, if so it could be because the wrong html element
-					// was pulled for repoLinks. In this case, try again with a different element
-					// assuming the link redirects to a github profile page instead of a company
-					// page
-					if (urls.isEmpty()) {
-						repoLinks = reposPage.select("div.d-inline-block a[href]");
-						urls = testLinks(repoLinks);
-					}
-				}
-			}
-		} catch (IOException e) {
 			logger.error(e.getMessage());
 		}
-
-		return urls;
-
 	}
 
 	/**
-	 * Method to loop through given repo links and verify git connection, returns
-	 * list of all successful links
+	 * Git commit parser that implements multiple threads to increase performance
+	 * @param clonePath
+	 * @throws IOException
+	 */
+	public void parseMulitThread(Map<String, ArrayList<String>> possiblePatchSources, String clonePath, int breaker) throws IOException {
+		logger.info("Applying multi threading...");
+		File dir = new File(clonePath);
+		FileUtils.delete(dir, 1);
+
+		int maxThreads = Integer.parseInt(System.getenv("PATCHFINDER_MAX_THREADS"));
+
+		logger.info(maxThreads + " available processors found");
+
+		ExecutorService es = Executors.newCachedThreadPool();
+		ArrayList<HashMap<String, ArrayList<String>>> sourceBatches = new ArrayList<>();
+
+		for (int i=0; i < maxThreads; i++) {
+			sourceBatches.add(new HashMap<>());
+		}
+
+		int numSourcesAdded = 1;
+		int thread = 0;
+		for (String source : possiblePatchSources.keySet()) {
+			sourceBatches.get(thread).put(source, possiblePatchSources.get(source));
+			numSourcesAdded++;
+			if (numSourcesAdded % breaker == 0 && thread < maxThreads - 1) {
+				thread++;
+			}
+		}
+
+		for (int k = 0; k < maxThreads; k++) {
+			es.submit(new Thread(new JGitThread(sourceBatches.get(k), clonePath, this), "Thread - " + k));
+		}
+		es.shutdown();
+
+	}
+
+
+	/**
+	 * Extract Method used for pulling commit data from a repo vi a source link and
+	 * parsing commits for any commits related to CVEs
 	 * 
-	 * @return
+	 * @param sourceURL
+	 * @param clonePath
+	 * @throws IOException
+	 * @throws GitAPIException
 	 */
-	private ArrayList<String> testLinks(Elements repoLinks) {
-		ArrayList<String> urls = new ArrayList<>();
-		String repoURL;
+	private void pullCommitData(String sourceURL, String clonePath, String cveId) {
 
-		for (Element repoLink : repoLinks) {
-			logger.info("Found possible repo at:" + repoLink.attr("abs:href"));
-			repoURL = repoLink.attr("abs:href");
-			String innerText = repoLink.text();
+		JGitParser parser = new JGitParser(sourceURL + ".git", clonePath);
 
-			if (verifyGitRemote(repoURL, innerText, "", "")) {
-				urls.add(repoURL);
+		parser.cloneRepository();
+
+		Map<java.util.Date, ArrayList<String>> commits = parser.parseCommits(cveId);
+
+		if (commits.isEmpty()) {
+			deletePatchSource(sourceURL);
+		} else {
+			for (java.util.Date commit : commits.keySet()) {
+				insertPatchCommitData(sourceURL, commits.get(commit).get(0), commit, commits.get(commit).get(1));
 			}
 		}
 
-		return urls;
+		// Delete previously cloned local repo after storing
+		// patch/commit data (to ensure the .pack file is closed in the .git directory)
+		if (previousRepo != null) {
+			previousRepo.deleteRepository();
+		}
+		previousRepo = parser;
+
 	}
 
 	/**
-	 * Performs an advanced search for the repo link(s) for a CPE using the Github
-	 * search feature
+	 * Updates patch field by adding provided commit message and date that was
+	 * pulled when parsing commits
+	 * 
+	 * @param commitDate
+	 * @param commitMessage
+	 */
+	public void insertPatchCommitData(String sourceURL, String commitId, java.util.Date commitDate,
+			String commitMessage) {
+
+		logger.info("Inserting commit data to patchcommit table...");
+		if (commitMessage.length() > 300) {
+			commitMessage = commitMessage.substring(0, 299);
+		}
+
+		commitId = commitId.split(" ")[1];
+
+		try {
+			int id = db.getPatchSourceId(sourceURL);
+			db.insertPatchCommit(id, sourceURL, commitId, commitDate, commitMessage);
+			logger.info("Inserted commit from source ID: " + id);
+
+		} catch (Exception e) {
+			logger.error((e.getMessage()));
+		}
+	}
+
+	/**
+	 * Method used to delete Patch entries that lead to no commit data related to
+	 * CVEs or patches
+	 * 
+	 * @param sourceURL
+	 */
+	public void deletePatchSource(String sourceURL) {
+		logger.info("Deleting patch from database...");
+
+		try {
+
+			int id = db.getPatchSourceId(sourceURL);
+
+			if (id != -1) {
+				// Delete Patch Entry
+				db.deleteCommits(id);
+
+				// Delete Patch URL Entry
+				db.deletePatchURL(id);
+			}
+
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+		}
+	}
+
+
+	/**
 	 *
+	 * @param file
 	 * @return
-	 * @throws InterruptedException
+	 * @throws FileNotFoundException
+	 * @throws IOException
 	 */
-	private ArrayList<String> advanceParseSearch(String vendor, String product) throws InterruptedException {
+	private List<String> processInputFile(File file) throws FileNotFoundException, IOException {
+		ArrayList<String> repos = new ArrayList<>();
 
-		String searchParams = ADDRESS_BASES[0] + "search?q=";
-		ArrayList<String> urls = new ArrayList<>();
+		BufferedReader br = new BufferedReader(new FileReader(file));
+		String line;
+		br.readLine(); // ignoring id in csv
+		while ((line = br.readLine()) != null) {
+			String[] entries = line.split(",");
 
-			logger.info("Conducting Advanced Search...");
-
-			if (!vendor.equals("*")) {
-				searchParams += vendor;
-			}
-
-			if (!product.equals("*")) {
-				searchParams += "+" + product;
-			}
-
-			// Perform search on github using query strings in the url
-			// Loop through the results and return a list of all verified repo links that
-			// match with the product
-			try {
-				// Sleep for a minute before performing another advance search if
-				// 10 have already been conducted to avoid HTTP 429 error
-				if (advanceSearchCount >= 10) {
-					logger.info("Performing Sleep before continuing: 1 minute");
-					Thread.sleep(60000);
-					advanceSearchCount = 0;
-				}
-
-				advanceSearchCount++;
-				Document searchPage = Jsoup.connect(searchParams + "&type=repositories").get();
-				Elements searchResults = searchPage.select("li.repo-list-item a[href]");
-
-				for (Element searchResult : searchResults) {
-					if (!searchResult.attr("href").isEmpty()) {
-						String newURL = searchResult.attr("abs:href");
-						String innerText = searchResult.text();
-						if (verifyGitRemote(newURL, innerText, vendor, product)) {
-							urls.add(newURL);
-						}
-					}
-				}
-
-			} catch (IOException e) {
-				logger.error(e.toString());
-			}
-
-		return urls;
-	}
-
-	/**
-	 * Method used for verifying Git remote connection to created url via keywords,
-	 * checks if the keywords are included as well before performing connection
-	 * @return
-	 */
-	private boolean verifyGitRemote(String repoURL, String innerText, String vendor, String product) {
-
-		// Verify if the repo is correlated to the product by checking if the keywords
-		// lie in the inner text of the html link via regex
-		if (Pattern.compile(Pattern.quote(vendor), Pattern.CASE_INSENSITIVE).matcher(innerText).find()
-				|| Pattern.compile(Pattern.quote(product), Pattern.CASE_INSENSITIVE).matcher(innerText)
-						.find()) {
-
-			LsRemoteCommand lsCmd = new LsRemoteCommand(null);
-
-			lsCmd.setRemote(repoURL + ".git");
-
-			try {
-				lsCmd.call();
-				logger.info("Successful Git Remote Connection at: " + repoURL);
-				return true;
-			} catch (Exception e) {
-				logger.error(e.getMessage());
-			}
+			String repo = entries[0].trim();
+			repos.add(repo.replace("https://api.", "https://").replace(".com/repos/", ".com/"));
 		}
-		return false;
+		return repos;
 	}
-
-
 }
