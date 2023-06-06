@@ -21,70 +21,50 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package model;
+import model.AffectedRelease;
 
+import org.junit.Test;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 /**
+ * Class to test PURL Implementation
  *
- * @author axoeec
+ * @author Paul Vickers
  *
  */
-public class Product {
-	private static final String regexVersionInfo = "(\\d+\\.(?:\\d+\\.)*\\d+)";
-	private final String domain;
-	private final String cpe;
-	private final int prodId;
+public class PURLTest {
 
-	public Product(String domain, String cpe, int prodId) {
-		this.domain = domain;
-		this.cpe = cpe;
-		this.prodId = prodId;
-	}
+    //cveId, cpe, releaseDate are all empty string because they are not used for PURL Generation
+    @Test
+    public void purlGenerationWOVersionTest(){
+        String productName = "android";
+        AffectedRelease product = new AffectedRelease(1, "", "", "", "", "google");
 
-	public Product(String domain, String cpe) {
-		this.prodId = 0;
-		this.domain = domain;
-		this.cpe = cpe;
-	}
+        String expected = "pkg:google/android";
 
-	public String getDomain() {
-		return domain;
-	}
+        assertEquals(expected,product.getPURL(productName));
+    }
 
-	public String getCpe() {
-		return cpe;
-	}
+    @Test
+    public void purlGenerationVersionTest(){
+        String productName = "security";
+        AffectedRelease product = new AffectedRelease(1, "", "", "", "1.6.2", "gentoo");
 
-	public int getProdId() {
-		return prodId;
-	}
+        String expected = "pkg:gentoo/security@1.6.2";
 
-	public String getVersion() {
-		Pattern pattern = Pattern.compile(regexVersionInfo);
-		Matcher matcher = pattern.matcher(this.domain);
-		if (matcher.find())
-			return matcher.group();
-		return "";
-	}
+        assertEquals(expected,product.getPURL(productName));
+    }
 
-	@Override
-	public String toString() {
-		return this.domain;
-	}
+    @Test
+    public void purlGenerationProductUNKNOWN(){
+        String productName = "UNKNOWN";
+        AffectedRelease product = new AffectedRelease(1, "", "", "", "1.6.2", "gentoo");
 
-	@Override
-	public int hashCode() {
-		return this.cpe.hashCode();
-	}
+        assertNull(product.getPURL(productName));
+    }
 
-	@Override
-	public boolean equals(Object obj) {
-		if (obj instanceof Product) {
-			return this.cpe.equals(((Product) obj).cpe);
-		}
-		return false;
-	}
+
+
 }

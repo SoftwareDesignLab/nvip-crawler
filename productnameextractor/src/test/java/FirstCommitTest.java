@@ -2,17 +2,17 @@
  * Copyright 2023 Rochester Institute of Technology (RIT). Developed with
  * government support under contract 70RSAT19CB0000020 awarded by the United
  * States Department of Homeland Security.
- *
+ * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- *
+ * 
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- *
+ * 
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -21,70 +21,39 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package model;
 
+import static org.junit.Assert.*;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import org.junit.Ignore;
+import org.junit.Test;
 
 /**
- *
- * @author axoeec
+ * Unit tests for the FirstCommitWithCVE class
+ * 
+ * @author Igor Khokhlov
  *
  */
-public class Product {
-	private static final String regexVersionInfo = "(\\d+\\.(?:\\d+\\.)*\\d+)";
-	private final String domain;
-	private final String cpe;
-	private final int prodId;
 
-	public Product(String domain, String cpe, int prodId) {
-		this.domain = domain;
-		this.cpe = cpe;
-		this.prodId = prodId;
+public class FirstCommitTest {
+
+	@Test
+	@Ignore
+	public void testGettingFirstCommit() {
+		FirstCommitWithCVE firstCommitLookUp = FirstCommitWithCVE.getInstance();
+		
+		String legitCpeItem = "cpe:2.3:a:openmodelica:omcompiler:1.9.2:*:*:*:*:*:*:*";
+		String legitCpeItemWOversion = "cpe:2.3:a:openmodelica:omcompiler:*:*:*:*:*:*:*:*";
+		String notOpenSourceItem = "cpe:2.3:a:fabrikar:fabrik:3.0.4:*:*:*:*:joomla\\!:*:*";
+		
+		FirstCommitSearchResult result1 = firstCommitLookUp.getFirstCommit(legitCpeItem);
+		FirstCommitSearchResult result2 = firstCommitLookUp.getFirstCommit(legitCpeItemWOversion);
+		FirstCommitSearchResult result3 = firstCommitLookUp.getFirstCommit(notOpenSourceItem);
+		
+		String anticipatedResult1 = "v1.9.2";
+		assertEquals("Result1 is correct", true, result1.getTagName().equals(anticipatedResult1));
+		assertEquals("Result2 is correct", true, result2.getTagName()==null);
+		assertEquals("Result3 is correct", true, result3==null);
+
 	}
 
-	public Product(String domain, String cpe) {
-		this.prodId = 0;
-		this.domain = domain;
-		this.cpe = cpe;
-	}
-
-	public String getDomain() {
-		return domain;
-	}
-
-	public String getCpe() {
-		return cpe;
-	}
-
-	public int getProdId() {
-		return prodId;
-	}
-
-	public String getVersion() {
-		Pattern pattern = Pattern.compile(regexVersionInfo);
-		Matcher matcher = pattern.matcher(this.domain);
-		if (matcher.find())
-			return matcher.group();
-		return "";
-	}
-
-	@Override
-	public String toString() {
-		return this.domain;
-	}
-
-	@Override
-	public int hashCode() {
-		return this.cpe.hashCode();
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (obj instanceof Product) {
-			return this.cpe.equals(((Product) obj).cpe);
-		}
-		return false;
-	}
 }
