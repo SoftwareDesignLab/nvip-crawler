@@ -29,47 +29,62 @@ import java.util.HashMap;
 import java.util.Map;
 
 import edu.rit.se.nvip.db.DatabaseHelper;
-import edu.rit.se.nvip.patchfinder.commits.JGitParser;
+import edu.rit.se.nvip.patchfinder.commits.PatchCommitScraper;
+import edu.rit.se.nvip.utils.GitController;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class JGitThread implements Runnable {
-	private final HashMap<Integer, String> sources;
+/**
+ * Runnable thread class for multithreaded patch finder
+ */
+public class PatchFinderThread implements Runnable {
+	private final HashMap<String, ArrayList<String>> cvePatchEntry;
 	private final String clonePath;
-	private static final Logger logger = LogManager.getLogger(JGitCVEPatchDownloader.class.getName());
-	private JGitParser previous;
+	private static final Logger logger = LogManager.getLogger(PatchFinder.class.getName());
+	private PatchCommitScraper previous;
 	private static final DatabaseHelper db = DatabaseHelper.getInstance();
-	private final JGitCVEPatchDownloader patchDownloader;
+	private final PatchFinder patchDownloader;
 
-	public JGitThread(HashMap<Integer, String> sources, String cP, JGitCVEPatchDownloader patchDownloader) {
-		this.sources = sources;
-		this.clonePath = cP;
+	/**
+	 * Thread object used for multithreaded patchfinding
+	 * @param sources
+	 * @param clonePath
+	 * @param patchDownloader
+	 */
+	public PatchFinderThread(HashMap<String, ArrayList<String>> sources, String clonePath, PatchFinder patchDownloader) {
+		this.cvePatchEntry = sources;
+		this.clonePath = clonePath;
 		this.patchDownloader = patchDownloader;
 	}
 
+	/**
+	 * Used for cloning, crawling, and deleting product repos to find patch commits
+	 */
 	@Override
 	public void run() {
-		for (Map.Entry<Integer, String> source : sources.entrySet()) {
-			try {
-				JGitParser repo = new JGitParser(source.getValue() + ".git", this.clonePath);
-				repo.cloneRepository();
-				Map<Date, ArrayList<String>> commits = repo.parseCommits(db.getCveId(source.getKey()+""));
-				if (commits.isEmpty()) {
-					patchDownloader.deletePatchSource(source.getValue());
-				} else {
-					for (java.util.Date commit : commits.keySet()) {
-						patchDownloader.insertPatchCommitData(source.getValue(), commits.get(commit).get(0), commit, commits.get(commit).get(1));
+		for (String cve : cvePatchEntry.keySet()) {
+			for (String patchSource: cvePatchEntry.get(cve)) {
+				try {
+					GitController gitController = new GitController(clonePath, patchSource+".git");
+					gitController.cloneRepo();
+					Map<Date, ArrayList<String>> commits = repo.parseCommits(cve);
+					if (commits.isEmpty()) {
+						patchDownloader.deletePatchSource(source.getValue());
+					} else {
+						for (java.util.Date commit : commits.keySet()) {
+							patchDownloader.insertPatchCommitData(source.getValue(), commits.get(commit).get(0), commit, commits.get(commit).get(1));
+						}
 					}
+
+					if (previous != null) {
+						previous.deleteRepository();
+					}
+
+					previous = repo;
+
+				} catch (Exception e) {
+					logger.error(e.toString());
 				}
-
-				if (previous != null) {
-					previous.deleteRepository();
-				}
-
-				previous = repo;
-
-			} catch (Exception e) {
-				logger.error(e.toString());
 			}
 		}
 	}

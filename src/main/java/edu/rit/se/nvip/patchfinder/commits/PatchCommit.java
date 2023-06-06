@@ -26,26 +26,19 @@ package edu.rit.se.nvip.patchfinder.commits;
 import org.eclipse.jgit.revwalk.RevCommit;
 
 /**
- *
- * @author Fawaz Alhenaki <faa5019@rit.edu>
- *
- * TODO: We'll probably want to get rid of the JGit stuff at some point
+ * Model class for patchcommits found by patchfinder
  */
-public class JGithubCommit {
+public class PatchCommit {
+	private final String commitURL;
+	private final String cveId;
 
-	private final String sha;
-	private final RevCommit commit;
-
-	public JGithubCommit(String sha, RevCommit commit) {
-		this.sha = sha;
-		this.commit = commit;
+	public PatchCommit(String commitURL, String cveId) {
+		this.cveId = cveId;
+		this.commitURL = commitURL;
 	}
 
-	public RevCommit getCommit() {
-		return commit;
+	public String getCommitUrl() {
+		return this.commitURL;
 	}
 
-	public String getSha() {
-		return sha;
-	}
 }

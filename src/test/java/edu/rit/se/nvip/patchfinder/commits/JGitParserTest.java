@@ -23,14 +23,12 @@
  */
 package edu.rit.se.nvip.patchfinder.commits;
 
-import edu.rit.se.nvip.patchfinder.JGitCVEPatchDownloader;
 import org.eclipse.jgit.util.FileUtils;
 import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.Git;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
@@ -60,7 +58,7 @@ public class JGitParserTest {
     @Test
     public void JGitParserConstructorTest() {
         try {
-            JGitParser jgp = new JGitParser("url/proj.ext", "nul");
+            PatchCommitScraper jgp = new PatchCommitScraper("url/proj.ext", "nul");
         } catch (Exception e) {
             fail();
         }
@@ -71,7 +69,7 @@ public class JGitParserTest {
         try (MockedStatic<Git> git = Mockito.mockStatic(Git.class)) {
             // don't actually want to do any cloning during testing
             git.when(Git::cloneRepository).thenReturn(cc);
-            JGitParser jgp = new JGitParser("url/proj.ext", "nul");
+            PatchCommitScraper jgp = new PatchCommitScraper("url/proj.ext", "nul");
             jgp.cloneRepository();
         } catch (Exception e) {
             fail();
@@ -80,7 +78,7 @@ public class JGitParserTest {
 
     @Test
     public void deleteRepositoryTest() {
-        JGitParser jgp = new JGitParser("url/proj.ext", "nul");
+        PatchCommitScraper jgp = new PatchCommitScraper("url/proj.ext", "nul");
         // don't want to actually delete anything
         try (MockedStatic<FileUtils> filemock = Mockito.mockStatic(FileUtils.class)) {
             // just make sure a delete gets called
@@ -97,7 +95,7 @@ public class JGitParserTest {
         String testSourceURl = "https://github.com/plotly/dash-core-components.git";
         try (MockedStatic<Git> git = Mockito.mockStatic(Git.class)) {
             git.when(Git::cloneRepository).thenReturn(cc);
-            JGitParser jGit = new JGitParser(testSourceURl, "src/test/resources/test-jgitparser");
+            PatchCommitScraper jGit = new PatchCommitScraper(testSourceURl, "src/test/resources/test-jgitparser");
             jGit.cloneRepository();
             Map<Date, ArrayList<String>> commits = jGit.parseCommits(testCveId);
             assertEquals(2, commits.size());

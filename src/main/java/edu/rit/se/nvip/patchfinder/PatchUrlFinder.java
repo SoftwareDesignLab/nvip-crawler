@@ -23,17 +23,7 @@
  */
 package edu.rit.se.nvip.patchfinder;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.regex.Pattern;
-
+import edu.rit.se.nvip.db.DatabaseHelper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eclipse.jgit.api.LsRemoteCommand;
@@ -42,15 +32,23 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import edu.rit.se.nvip.db.DatabaseHelper;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.regex.Pattern;
 
 
 /**
  * Start patch finder for a given repository list (as .csv)
  */
-public class PatchFinder {
+public class PatchUrlFinder {
 
-	private static final Logger logger = LogManager.getLogger(PatchFinder.class.getName());
+	private static final Logger logger = LogManager.getLogger(PatchUrlFinder.class.getName());
 	private static DatabaseHelper db;
 
 	// TODO: add to envvars?
@@ -64,8 +62,6 @@ public class PatchFinder {
 	/**
 	 * Main method just for calling to find all patch URLs
 	 *
-	 * TODO: Rename this method and have it called by NVIPMain
-	 *
 	 * @param args
 	 * @throws IOException
 	 * @throws InterruptedException
@@ -74,7 +70,7 @@ public class PatchFinder {
 
 		logger.info("PatchFinder Started!");
 
-		PatchFinder main = new PatchFinder();
+		PatchUrlFinder main = new PatchUrlFinder();
 
 		db = DatabaseHelper.getInstance();
 		Map<String, ArrayList<String>> cpes = db.getCPEsAndCVE();

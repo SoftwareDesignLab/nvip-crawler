@@ -37,7 +37,7 @@ public class JGithubCommitTest {
     @Test
     public void JGithubCommitTestAll() {
         String sha = "sha";
-        JGithubCommit jgc = new JGithubCommit(sha, rc);
+        PatchCommit jgc = new PatchCommit(sha, rc);
         assertEquals(rc, jgc.getCommit());
         assertEquals(sha, jgc.getSha());
     }

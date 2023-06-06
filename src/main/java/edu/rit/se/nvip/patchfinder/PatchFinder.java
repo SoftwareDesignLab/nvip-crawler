@@ -28,19 +28,18 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.*;
-import java.util.Map.Entry;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import edu.rit.se.nvip.patchfinder.commits.PatchCommit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.util.FileUtils;
 
 import edu.rit.se.nvip.db.DatabaseHelper;
-import edu.rit.se.nvip.patchfinder.commits.JGitParser;
+import edu.rit.se.nvip.patchfinder.commits.PatchCommitScraper;
 
 /**
  * Main class for collecting CVE Patches within repos that were
@@ -48,79 +47,19 @@ import edu.rit.se.nvip.patchfinder.commits.JGitParser;
  *
  * TODO: Refactor to see if we need this, there should only be 1 parse method
  */
-public final class JGitCVEPatchDownloader {
+public final class PatchFinder {
 
-	private static final Logger logger = LogManager.getLogger(JGitCVEPatchDownloader.class.getName());
-	private static JGitParser previousRepo = null;
+	private static final Logger logger = LogManager.getLogger(PatchFinder.class.getName());
+	private static PatchCommitScraper previousRepo = null;
 	private static final DatabaseHelper db = DatabaseHelper.getInstance();
 
 	public static void main(String[] args) throws IOException {
 		logger.info("Started Patches Application");
 
-		JGitCVEPatchDownloader main = new JGitCVEPatchDownloader();
-		main.parse(args);
+		PatchFinder main = new PatchFinder();
+		//main.parse(args);
 
 		logger.info("Patches Application Finished!");
-	}
-
-	/**
-	 * Main parse method that pulls parameters from nvip props
-	 * to determine clone location and limit
-	 */
-	public void parse(String[] args) throws IOException {
-
-		File checkFile = new File(args[0]);
-
-		if (checkFile.exists()) {
-			logger.info("Reading in csv file: " + checkFile.getName());
-			parse(checkFile, args[1]);
-		} else if (args[3].equals("true")) {
-			parseMulitThread(args[1], Integer.parseInt(args[2]));
-		} else {
-			parse(args[1], Integer.parseInt(args[2]));
-		}
-
-	}
-
-
-	/**
-	 * TODO: Update this so that it can pull CVE IDs from vulnerability table for
-	 *  the 3rd parameter Parses out patch data from a preset list of repos within a
-	 *  csv file
-	 * 
-	 * @param repoFile
-	 * @param clonePath
-	 * @throws IOException
-	 */
-	public void parse(File repoFile, String clonePath) throws IOException {
-		File dir = new File(clonePath);
-		FileUtils.delete(dir, 1);
-
-		List<String> repos = processInputFile(repoFile);
-		repos = new ArrayList<>(new HashSet<>(repos));
-		for (int i = 0; i < repos.size(); i++) {
-			pullCommitData(repos.get(i), clonePath, "");
-		}
-	}
-
-	/**
-	 * Extract Method called multiple times for parsing an individual URL
-	 *
-	 * @param clonePath
-	 * @throws SQLException
-	 * @throws IOException
-	 * @throws GitAPIException
-	 */
-	public void parse(String clonePath, int limit) throws IOException {
-
-		try {
-			for (Entry<String, Integer> source : db.getVulnIdPatchSource(limit).entrySet()) {
-				pullCommitData(source.getKey(), clonePath, db.getCveId(source.getValue() + ""));
-			}
-
-		} catch (Exception e) {
-			logger.error(e.getMessage());
-		}
 	}
 
 	/**
@@ -128,7 +67,7 @@ public final class JGitCVEPatchDownloader {
 	 * @param clonePath
 	 * @throws IOException
 	 */
-	public void parseMulitThread(Map<String, ArrayList<String>> possiblePatchSources, String clonePath, int breaker) throws IOException {
+	public ArrayList<PatchCommit> findPatchesMultiThreaded(Map<String, ArrayList<String>> possiblePatchSources, String clonePath, int breaker) throws IOException {
 		logger.info("Applying multi threading...");
 		File dir = new File(clonePath);
 		FileUtils.delete(dir, 1);
@@ -155,10 +94,10 @@ public final class JGitCVEPatchDownloader {
 		}
 
 		for (int k = 0; k < maxThreads; k++) {
-			es.submit(new Thread(new JGitThread(sourceBatches.get(k), clonePath, this), "Thread - " + k));
+			es.submit(new Thread(new PatchFinderThread(sourceBatches.get(k), clonePath, this), "Thread - " + k));
 		}
 		es.shutdown();
-
+		return null;
 	}
 
 
@@ -173,7 +112,7 @@ public final class JGitCVEPatchDownloader {
 	 */
 	private void pullCommitData(String sourceURL, String clonePath, String cveId) {
 
-		JGitParser parser = new JGitParser(sourceURL + ".git", clonePath);
+		PatchCommitScraper parser = new PatchCommitScraper(sourceURL + ".git", clonePath);
 
 		parser.cloneRepository();
 
