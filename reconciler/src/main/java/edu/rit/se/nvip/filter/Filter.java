@@ -18,7 +18,7 @@ public abstract class Filter {
     /**
      * Runs each RawVulnerability through the filter, removing the rejects from the list and returning the rejects as their own list
      * @param rawVulns A list of RawVulnerabilities in need of description verification
-     * @return List of rejected RawVulnerabilities
+     * @return Set of rejected RawVulnerabilities
      */
     public Set<RawVulnerability> filterAll(Set<RawVulnerability> rawVulns) {
         Set<RawVulnerability> removed = new HashSet<>();
