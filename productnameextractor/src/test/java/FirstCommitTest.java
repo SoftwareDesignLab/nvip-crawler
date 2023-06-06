@@ -50,9 +50,9 @@ public class FirstCommitTest {
 		FirstCommitSearchResult result3 = firstCommitLookUp.getFirstCommit(notOpenSourceItem);
 		
 		String anticipatedResult1 = "v1.9.2";
-		assertEquals("Result1 is correct", true, result1.getTagName().equals(anticipatedResult1));
-		assertEquals("Result2 is correct", true, result2.getTagName()==null);
-		assertEquals("Result3 is correct", true, result3==null);
+		assertTrue("Result1 is correct", result1.getTagName().equals(anticipatedResult1));
+		assertTrue("Result2 is correct", result2.getTagName() == null);
+		assertTrue("Result3 is correct", result3 == null);
 
 	}
 
