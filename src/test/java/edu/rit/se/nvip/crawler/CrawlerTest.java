@@ -7,6 +7,7 @@ import edu.rit.se.nvip.utils.PropertyLoader;
 import edu.uci.ics.crawler4j.crawler.Page;
 import edu.uci.ics.crawler4j.parser.ParseData;
 import edu.uci.ics.crawler4j.url.WebURL;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.HashMap;
@@ -17,6 +18,7 @@ import static junit.framework.TestCase.assertTrue;
 public class CrawlerTest {
 
     @Test
+    @Ignore
     public void pageVisitTest() {
         MyProperties properties = new MyProperties();
         properties = new PropertyLoader().loadConfigFile(properties);

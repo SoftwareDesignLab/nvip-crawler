@@ -23,16 +23,27 @@
  */
 package edu.rit.se.nvip.utils;
 
+import edu.rit.se.nvip.NVIPMain;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 
 public class CveUtils {
+	private static final Logger logger = LogManager.getLogger(CveUtils.class);
 	final static String RESERVED_CVE = "** RESERVED ** This candidate has been reserved";
 	final static String REJECTED_CVE = "** REJECT **  DO NOT USE THIS CANDIDATE NUMBER";
 
 	public static boolean isCveReservedEtc(String vulnDescr) {
-		return vulnDescr.contains(RESERVED_CVE) || vulnDescr.contains(REJECTED_CVE) || vulnDescr.startsWith("** DISPUTED **");
+
+		boolean isReserved = false;
+
+		try {
+			isReserved = vulnDescr.contains(RESERVED_CVE) || vulnDescr.contains(REJECTED_CVE) || vulnDescr.startsWith("** DISPUTED **");
+		} catch (Exception e) {
+			logger.error("ERROR: Failed to check if CVE with description: {} is reserved\n{}", vulnDescr, e);
+		}
+
+		return isReserved;
 	}
 
 }
