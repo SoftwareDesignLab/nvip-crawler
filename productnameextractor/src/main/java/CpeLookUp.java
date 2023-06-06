@@ -21,7 +21,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package main.java;
 
 import java.io.*;
 import java.net.HttpURLConnection;
@@ -41,8 +40,8 @@ import org.apache.logging.log4j.Logger;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import main.java.model.Product;
-import main.java.utils.*;
+import model.Product;
+import utils.*;
 import opennlp.tools.tokenize.WhitespaceTokenizer;
 
 /**

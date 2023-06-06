@@ -1,8 +1,6 @@
-package main.java;
-
-import main.java.model.*;
-import main.java.utils.*;
-import main.java.db.*;
+import model.*;
+import utils.*;
+import db.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
