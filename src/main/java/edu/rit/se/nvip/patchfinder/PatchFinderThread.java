@@ -45,7 +45,7 @@ public class PatchFinderThread implements Runnable {
 	private final String clonePath;
 	private static final Logger logger = LogManager.getLogger(PatchFinder.class.getName());
 	private PatchCommitScraper previous;
-	private final PatchFinder patchDownloader;
+	private final PatchFinder patchFinder;
 	private final ArrayList<PatchCommit> foundPatchCommits = new ArrayList<>();
 
 	/**
@@ -54,10 +54,10 @@ public class PatchFinderThread implements Runnable {
 	 * @param clonePath
 	 * @param patchDownloader
 	 */
-	public PatchFinderThread(HashMap<String, ArrayList<String>> sources, String clonePath, PatchFinder patchDownloader) {
+	public PatchFinderThread(HashMap<String, ArrayList<String>> sources, String clonePath, PatchFinder patchFinder) {
 		this.cvePatchEntry = sources;
 		this.clonePath = clonePath;
-		this.patchDownloader = patchDownloader;
+		this.patchFinder = patchFinder;
 	}
 
 	/**

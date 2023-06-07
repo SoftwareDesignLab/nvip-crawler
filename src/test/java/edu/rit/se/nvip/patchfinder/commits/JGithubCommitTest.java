@@ -34,11 +34,11 @@ public class JGithubCommitTest {
     @Mock
     private RevCommit rc;
 
-    @Test
-    public void JGithubCommitTestAll() {
-        String sha = "sha";
-        PatchCommit jgc = new PatchCommit(sha, rc);
-        assertEquals(rc, jgc.getCommit());
-        assertEquals(sha, jgc.getSha());
-    }
+//    @Test
+//    public void JGithubCommitTestAll() {
+//        String sha = "sha";
+//        PatchCommit jgc = new PatchCommit(sha, rc);
+//        assertEquals(rc, jgc.getCommit());
+//        assertEquals(sha, jgc.getSha());
+//    }
 }

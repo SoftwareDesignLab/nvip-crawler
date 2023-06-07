@@ -24,6 +24,7 @@
 package edu.rit.se.nvip.patchfinder.commits;
 
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.joda.time.DateTime;
 
 /**
  * Model class for patchcommits found by patchfinder
@@ -32,9 +33,17 @@ public class PatchCommit {
 	private final String commitURL;
 	private final String cveId;
 
+	private DateTime commitDate;
+
 	public PatchCommit(String commitURL, String cveId) {
 		this.cveId = cveId;
 		this.commitURL = commitURL;
+	}
+
+	public PatchCommit(String commitURL, String cveId, DateTime commitDate) {
+		this.cveId = cveId;
+		this.commitURL = commitURL;
+		this.commitDate = commitDate;
 	}
 
 	public String getCommitUrl() {

@@ -56,8 +56,7 @@ public class PatchCommitScraper {
 	private static final String REGEX_CVE = "(CVE[-]*[0-9]*[-]*[0-9]*)";
 	private static final Pattern PATTERN_VULN = Pattern.compile(REGEX_VULN);
 	private static final Pattern PATTERN_CVES = Pattern.compile(REGEX_CVE);
-	private Git git;
-	private final List<PatchCommit> fixCommits;
+	private final List<PatchCommit> fixCommits = new ArrayList<>();
 
 	private final String localDownloadLoc;
 
@@ -113,10 +112,12 @@ public class PatchCommitScraper {
 	 * @throws GitAPIException
 	 * @return
 	 */
-	public Map<Date, ArrayList<String>> parseCommits(String cveId) {
+	public Map<String, PatchCommit> parseCommits(String cveId) {
 		logger.info("Grabbing Commits List for repo @ {}...", this.localDownloadLoc);
 		List<RevCommit> allCommits = this.getAllCommitList();
 
+		// Iterate through each commit to check if any include a CVE ID or a vulnerability key
+		// word in its name or description
 		for (RevCommit repoCommit : allCommits) {
 			String message = repoCommit.getFullMessage();
 			Matcher matcherCve = PATTERN_CVES.matcher(message);
@@ -127,24 +128,11 @@ public class PatchCommitScraper {
 
 			// Search for 'CVE' commits
 			if (matcherCve.find()) {
-
-				boolean cveCheck = true;
-
-				if (matcherCve.group(0).contains("CVE-")) {
-					if (matcherCve.group(0).contains(cveId)) {
-						logger.info("Found CVE Commit " + matcherCve.group(0));
-						foundCves.add(matcherCve.group(0));
-					} else {
-						cveCheck = false;
-					}
-				}
-
-				if (cveCheck) {
+				if (matcherCve.group(0).contains("CVE-") && matcherCve.group(0).contains(cveId)) {
 					logger.info("Found CVE Commit " + matcherCve.group(0));
 					foundCves.add(matcherCve.group(0));
 				}
 			}
-
 			// Search for 'Vulnerability' commits
 			else if (matcherVuln.find()) {
 				logger.info("Found Vuln Commit " + matcherVuln.group(0));
@@ -152,17 +140,24 @@ public class PatchCommitScraper {
 			}
 
 			if (!foundCves.isEmpty() || !foundVulns.isEmpty()) {
-				PatchCommit githubCommit = new PatchCommit(repoCommit.getName(), repoCommit);
+				PatchCommit githubCommit = new PatchCommit(repoCommit.getName() , cveId, repoCommit.getAuthorIdent().getWhen());
 				this.fixCommits.add(githubCommit);
 			}
 		}
 
+		// Iterate through each patch commit and store info in the hashmap
+		// w/ CVE ID as key
+		Map<String, PatchCommit> commits = new HashMap<>();
+
+		for (PatchCommit fixCommit : fixCommits) {
+			commits.put(cveId, fixCommit);
+		}
+
+		logger.info("Commits from repo " + projectName + " parsed successfully!");
+		return commits;
+
 		return extractJGithubComits(fixCommits);
 
-	}
-
-	private Git getGit() {
-		return git;
 	}
 
 	/**
@@ -175,20 +170,7 @@ public class PatchCommitScraper {
 	 */
 	private Map<Date, ArrayList<String>> extractJGithubComits(List<PatchCommit> fixCommits) {
 
-		Map<Date, ArrayList<String>> commits = new HashMap<>();
 
-		for (PatchCommit fixCommit : fixCommits) {
-
-			ArrayList<String> commitData = new ArrayList<>();
-
-			commitData.add(fixCommit.getCommit().getId().toString());
-			commitData.add(fixCommit.getCommit().getFullMessage());
-
-			commits.put(fixCommit.getCommit().getAuthorIdent().getWhen(), commitData);
-		}
-
-		logger.info("Commits from repo " + projectName + " parsed successfully!");
-		return commits;
 
 	}
 }
