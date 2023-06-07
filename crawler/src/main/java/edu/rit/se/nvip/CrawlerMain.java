@@ -22,6 +22,7 @@ public class CrawlerMain {
     private static DatabaseHelper databaseHelper = null;
     private static final Map<String, Object> crawlerVars = new HashMap<>();
     private static final Map<String, Object> dataVars = new HashMap<>();
+    private static Map<String, String> sourceTypes = null;
 
     public CrawlerMain() {
         this.prepareCrawlerVars();
@@ -74,10 +75,57 @@ public class CrawlerMain {
             }
         }
 
+        updateSourceTypes(crawledCVEs);
+
         logger.info("Done! Preparing to insert all raw data found in this run!");
 
         crawlerMain.insertRawCVEs(crawledCVEs);
         logger.info("Done!");
+    }
+
+    private static void createSourceTypeMap(){
+        if(sourceTypes != null){
+            logger.warn("Source type map already created");
+            return;
+        }
+
+        sourceTypes = new HashMap<>();
+        try {
+            File sources = new File((String) crawlerVars.get("sourceTypeFileDir"));
+            BufferedReader sourceReader = new BufferedReader(new FileReader(sources));
+
+            String source = "";
+            while (source != null) {
+                String[] tokens = source.split(" ");
+                if(tokens.length < 2)
+                    logger.warn("Source {} is not formatted correctly", source);
+                else
+                    sourceTypes.put(tokens[0], tokens[1]);
+                source = sourceReader.readLine();
+            }
+
+            logger.info("Loaded {} total sources/types", sourceTypes.size());
+
+        } catch (IOException e) {
+            logger.error("Error while starting NVIP: {}", e.toString());
+        }
+    }
+
+    private static void updateSourceTypes(HashMap<String, ArrayList<RawVulnerability>> crawledCves){
+        createSourceTypeMap();
+
+        for (String cveId: crawledCves.keySet()) {
+            for (RawVulnerability vuln: crawledCves.get(cveId)) {
+                for (String source : sourceTypes.keySet()){
+                    if(vuln.getSourceURL().contains(source)){
+                        vuln.setSourceType(sourceTypes.get(source));
+                        break;
+                    }
+                }
+                if(vuln.getSourceType() == null)
+                    vuln.setSourceType("other");
+            }
+        }
     }
 
     /**
@@ -113,6 +161,7 @@ public class CrawlerMain {
         String outputDir = System.getenv("NVIP_OUTPUT_DIR");
         String seedFileDir = System.getenv("NVIP_SEED_URLS");
         String whitelistFileDir = System.getenv("NVIP_WHITELIST_URLS");
+        String sourceTypeFileDir = System.getenv("NVIP_SOURCE_TYPES");
         String enableGitHub = System.getenv("NVIP_ENABLE_GITHUB");
         String crawlerPoliteness = System.getenv("NVIP_CRAWLER_POLITENESS");
         String maxPages = System.getenv("NVIP_CRAWLER_MAX_PAGES");
@@ -128,6 +177,9 @@ public class CrawlerMain {
 
         addEnvvarString(CrawlerMain.crawlerVars,"whitelistFileDir", whitelistFileDir, "nvip_data/url-sources/nvip-whitelist.txt",
                 "WARNING: Crawler whitelist file path not defined in NVIP_WHITELIST_URLS, using default path: nvip_data/url-sources/nvip-whitelist.txt");
+
+        addEnvvarString(CrawlerMain.crawlerVars,"sourceTypeFileDir", sourceTypeFileDir, "nvip_data/url-sources/nvip-source-types.txt",
+                "WARNING: Crawler whitelist file path not defined in NVIP_SOURCE_TYPES, using default path: nvip_data/url-sources/nvip-source-types.txt");
 
         addEnvvarBool(CrawlerMain.crawlerVars,"enableGitHub", enableGitHub, false,
                 "WARNING: CVE GitHub Enabler not defined in NVIP_ENABLE_GITHUB, allowing CVE GitHub pull on default");
@@ -276,21 +328,21 @@ public class CrawlerMain {
         try {
             File seeds = new File((String) crawlerVars.get("seedFileDir"));
             BufferedReader seedReader = new BufferedReader(new FileReader(seeds));
-            List<String> seedURLs = new ArrayList<>();
+            // List<String> seedURLs = new ArrayList<>();
             logger.info("Loading the following urls: ");
 
             String url = "";
             while (url != null) {
-                seedURLs.add(url);
+                urls.add(url);
                 url = seedReader.readLine();
             }
 
-            logger.info("Loaded {} seed URLS from {}", seedURLs.size(), seeds.getAbsolutePath());
+            // logger.info("Loaded {} seed URLS from {}", seedURLs.size(), seeds.getAbsolutePath());
 
-            for (String seedURL : seedURLs) {
-                if (!urls.contains(seedURL))
-                    urls.add(seedURL);
-            }
+            // for (String seedURL : seedURLs) {
+            //     if (!urls.contains(seedURL))
+            //         urls.add(seedURL);
+            // }
 
             logger.info("Loaded {} total seed URLs", urls.size());
 
