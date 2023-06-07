@@ -383,9 +383,9 @@ public class CpeLookUp {
 
 		// if we don't have versions, generate cpe id without version
 		if (product.getVersions().size() == 0) {
-			String cpeID = "cpe:2.3:a:" + selectedGroups.get(0).getCpeGroup().getGroupID() + ":*:*:*:*:*:*:*:*";
-			cpeIDs.add(cpeID);
-			productsToAdd.add(new Product(selectedGroups.get(0).getCpeGroup().getCommonTitle(), cpeID));
+			String cpeName = "cpe:2.3:a:" + selectedGroups.get(0).getCpeGroup().getGroupID() + ":*:*:*:*:*:*:*:*";
+			cpeIDs.add(cpeName);
+			productsToAdd.add(new Product(selectedGroups.get(0).getCpeGroup().getCommonTitle(), cpeName));
 		} else {
 			for (CPEGroupFromMap selectedGroup : selectedGroups) {
 
@@ -410,8 +410,9 @@ public class CpeLookUp {
 
 					if (cpeEntry != null) {
 						matchesCounter++;
-						cpeIDs.add(cpeEntry.getCpeID());
-						productsToAdd.add(new Product(cpeEntry.getTitle(), cpeEntry.getCpeID()));
+						String cpeName = "cpe:2.3:a:" + selectedGroups.get(0).getCpeGroup().getGroupID() + ":" + versionWord + ":*:*:*:*:*:*:*";
+						cpeIDs.add(cpeName);
+						productsToAdd.add(new Product(selectedGroups.get(0).getCpeGroup().getCommonTitle(), cpeName));
 					}
 				}
 
@@ -422,8 +423,9 @@ public class CpeLookUp {
 
 						for (String versionWord : versionWords) {
 							if (entryTitle.contains(versionWord)) {
-								cpeIDs.add(entry.getValue().getCpeID());
-								productsToAdd.add(new Product(entry.getValue().getTitle(), entry.getValue().getCpeID()));
+								String cpeName = "cpe:2.3:a:" + selectedGroups.get(0).getCpeGroup().getGroupID() + ":" + versionWord + ":*:*:*:*:*:*:*";
+								cpeIDs.add(cpeName);
+								productsToAdd.add(new Product(selectedGroups.get(0).getCpeGroup().getCommonTitle(), cpeName));
 								break;
 							}
 						}

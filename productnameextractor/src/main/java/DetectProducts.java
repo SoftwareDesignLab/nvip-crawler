@@ -474,13 +474,13 @@ public class DetectProducts {
 				}
 				prevWordSN = true;
 			} else if (word.getAssignedClass() == 1) {
-				prevWordSN = false;
 				// adds version to the product item
 				if (products.size() > 0) {
 					ProductItem product = products.get(products.size() - 1);
 					product.addVersion(word.getWord());
 					products.set(products.size() - 1, product);
 				}
+				prevWordSN = false;
 			} else {
 				prevWordSN = false;
 			}

@@ -115,7 +115,6 @@ public class AffectedProductIdentifier {
 
 				// map identified products/version to CPE
 				for (ProductItem productItem : productList) {
-
 					long startCPETime = System.currentTimeMillis();
 					List<String> productIDs = cpeLookUp.getCPEIds(productItem);
 					long cpeTime = System.currentTimeMillis() - startCPETime;
