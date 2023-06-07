@@ -126,6 +126,10 @@ public class CrawlerMain {
                 catch(MalformedURLException e){
                     logger.warn("Bad sourceURL {}: {}", vuln.getSourceURL(), e.toString());
                 }
+
+                if(vuln.getSourceType() == null){
+                    vuln.setSourceType("other");
+                }
             }
         }
     }
