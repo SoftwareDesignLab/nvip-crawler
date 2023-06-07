@@ -36,18 +36,21 @@ public class Product {
 	private final String regexVersionInfo = "(?:(\\d+\\.(?:\\d+\\.)*\\d+))";
 	private final String domain;
 	private final String cpe;
+	private final String swid;
 	private final int prodId;
 
-	public Product(String domain, String cpe, int prodId) {
+	public Product(String domain, String cpe, String swid, int prodId) {
 		this.domain = domain;
 		this.cpe = cpe;
+		this.swid = swid;
 		this.prodId = prodId;
 	}
 
-	public Product(String domain, String cpe) {
+	public Product(String domain, String cpe, String swid) {
 		this.prodId = 0;
 		this.domain = domain;
 		this.cpe = cpe;
+		this.swid = swid;
 	}
 
 	public String getDomain() {
@@ -56,6 +59,14 @@ public class Product {
 
 	public String getCpe() {
 		return cpe;
+	}
+
+	public String getSwid() {
+		return swid;
+	}
+
+	public String getSwidTag() {
+		return swid.substring(swid.lastIndexOf('.')+1);
 	}
 
 	public int getProdId() {

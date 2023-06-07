@@ -27,4 +27,12 @@
         </addColumn>
     </changeSet>
 
+    <changeSet author="richard" id="modify_swid_tag_column">
+        <addColumn tableName="affectedproduct">
+            <column name="swid_tag" type="TINYTEXT">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>

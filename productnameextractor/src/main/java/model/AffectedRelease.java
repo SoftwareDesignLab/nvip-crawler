@@ -37,6 +37,7 @@ public class AffectedRelease {
 	private String version;
 	private String vendor;
 	private String pURL;
+	private String swid;
 
 	public AffectedRelease(int id, String cveId, String cpe, String releaseDate, String version) {
 		this.id = id;
@@ -106,6 +107,16 @@ public class AffectedRelease {
 		return pURL;
 	}
 
+	//Returns swid. If productName is unknown, sets value to NULL.
+	public String getSWID(String productName){
+		if(productName.equals("UNKNOWN")){
+			swid = null;
+		}else {
+			generateSWID(productName);
+		}
+		return swid;
+	}
+
 	public void setVendor(String vendor) {
 		this.vendor = vendor;
 	}
@@ -134,6 +145,38 @@ public class AffectedRelease {
 		}
 		pURL = purlBuilder.toString();
 	}
+
+	/**
+	 * Generate SWID using product name
+	 * Scheme: swid:productname@version
+	 * @param productName
+	 */
+	public void generateSWID(String productName){
+		//match the scheme
+		String result = "<SoftwareIdentity xmlns=\"http://standards.iso.org/iso/19770/-2/2015/schema.xsd\" ";
+		StringBuilder swidBuilder = new StringBuilder(result);
+		//match the name
+		swidBuilder.append("name=\"").append(productName).append("\" ");
+		//match the tagId, remove space from productName, don't add . if version is ""
+		if(!version.equals("*") && !version.equals("")){
+			swidBuilder.append("tagId=\"").append(vendor).append(".").append(productName.replaceAll("\\s+","")).append(".").append(version).append("\" ");
+			swidBuilder.append("version=\"").append(version).append("\">");
+		}else{
+			swidBuilder.append("tagId=\"").append(vendor).append(".").append(productName.replaceAll("\\s+","")).append(version).append("\" ");
+			swidBuilder.append("version=\"\">");
+		}
+		//match the entity
+		swidBuilder.append("<Entity name=\"").append(vendor).append("\" regid=\"").append(vendor).append("\" role=\"tagCreator softwareCreator\"/>");
+		//match the meta
+		swidBuilder.append("<Meta product=\"").append(productName).append("\" colloquialVersion=\"").append(version).append("\"/>");
+		//match the payload
+		swidBuilder.append("<Payload>");
+		swidBuilder.append("<File name=\"").append(productName.replaceAll("\\s+","")).append(".exe\" size=\"532712\" SHA256:hash=\"a314fc2dc663ae7a6b6bc6787594057396e6b3f569cd50fd5ddb4d1bbafd2b6a\"/>");
+		swidBuilder.append("</Payload>");
+		swidBuilder.append("</SoftwareIdentity>");
+		swid = swidBuilder.toString();
+	}
+
 
 	@Override
 	public boolean equals(Object obj) {

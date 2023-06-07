@@ -38,7 +38,7 @@ import static org.junit.Assert.assertTrue;
 public class CpeLookUpTest {
 
 	private static final CpeLookUp cpeLookUp = new CpeLookUp();
-	static { cpeLookUp.loadProductDict(100, 100); }
+
 
 	@Test
 	public void legitimateProduct() {

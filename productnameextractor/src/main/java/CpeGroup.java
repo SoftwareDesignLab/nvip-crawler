@@ -22,7 +22,6 @@
  * SOFTWARE.
  */
 
-
 import java.io.Serializable;
 import java.util.HashMap;
 import opennlp.tools.tokenize.WhitespaceTokenizer;
