@@ -160,13 +160,17 @@ public class NVIPMain {
 			PatchFinder patchfinder = new PatchFinder();
 			ArrayList<PatchCommit> patchCommits = patchfinder.findPatchesMultiThreaded(possiblePatchURLs, "patch-repos", 10);
 
+			for (PatchCommit patchCommit: patchCommits) {
+				databaseHelper.insertPatchCommit(patchCommit);
+			}
+
 			// TODO: Patchfinder rework
 			//  1.) Get CVEs and their CPEs (DONE)
 			//  2.) For each CVE, try to make a repo URL from the product name, vendor, version of each CPE
 			//  and check for successful connection (DONE)
-			//  3.) If the repo is public, clone it an scrape the commits for a possible patch commit
-			//  4.) Grab the most recent patch commit and store it's details in the DB
-			//  5.) delete the repo and continue to the next CVE
+			//  3.) If the repo is public, clone it an scrape the commits for a possible patch commit (DONE)
+			//  4.) delete the repo and continue to the next CVE (DONE)
+			//  5.) Grab the most recent patch commit and store it's details in the DB
 
 
 

@@ -99,7 +99,7 @@ public final class PatchFinder {
 		}
 
 		es.shutdown();
-		return null;
+		return this.patchCommits;
 	}
 
 
