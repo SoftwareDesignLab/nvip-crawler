@@ -15,6 +15,8 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
+import java.net.URL;
+import java.net.MalformedURLException;
 
 public class CrawlerMain {
 
@@ -84,12 +86,8 @@ public class CrawlerMain {
     }
 
     private static void createSourceTypeMap(){
-        if(sourceTypes != null){
-            logger.warn("Source type map already created");
-            return;
-        }
-
-        sourceTypes = new HashMap<>();
+        if (sourceTypes == null)
+            sourceTypes = new HashMap<>();
         try {
             File sources = new File((String) crawlerVars.get("sourceTypeFileDir"));
             BufferedReader sourceReader = new BufferedReader(new FileReader(sources));
@@ -116,14 +114,18 @@ public class CrawlerMain {
 
         for (String cveId: crawledCves.keySet()) {
             for (RawVulnerability vuln: crawledCves.get(cveId)) {
-                for (String source : sourceTypes.keySet()){
-                    if(vuln.getSourceURL().contains(source)){
-                        vuln.setSourceType(sourceTypes.get(source));
-                        break;
-                    }
-                }
-                if(vuln.getSourceType() == null)
+                if(vuln.getSourceURL() == null || vuln.getSourceURL().equals("")){
                     vuln.setSourceType("other");
+                    continue;
+                }
+
+                try{
+                    URL sourceURL = new URL(vuln.getSourceURL());
+                    vuln.setSourceType(sourceTypes.get(sourceURL.getHost()));
+                }
+                catch(MalformedURLException e){
+                    logger.warn("Bad sourceURL {}: {}", vuln.getSourceURL(), e.toString());
+                }
             }
         }
     }

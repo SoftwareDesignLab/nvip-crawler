@@ -1,1 +1,1 @@
-https://www.arista.com/en/support/advisories-notices/ security_advisory
+https://www.arista.com/ security_advisory
