@@ -22,8 +22,6 @@
  * SOFTWARE.
  */
 
-package main.java;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -36,8 +34,8 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import main.java.model.*;
-import main.java.db.*;
+import model.*;
+import db.*;
 
 import opennlp.tools.tokenize.WhitespaceTokenizer;
 

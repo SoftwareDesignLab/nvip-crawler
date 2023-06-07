@@ -121,7 +121,7 @@ public class TenableSecurityParser extends AbstractCveParser  {
 			Matcher versionMatcher = versionPattern.matcher(p.getDomain());
 			String version = (versionMatcher.find()) ? versionMatcher.group() : null;
 			for (CompositeVulnerability vuln : vulns) {
-				AffectedRelease a = new AffectedRelease(p.getCpe(), p.getSwid(), releaseDateString, version);
+				AffectedRelease a = new AffectedRelease(p.getCpe(), releaseDateString, version);
 				a.setCveId(vuln.getCveId());
 				vuln.addAffectedRelease(a);
 			}

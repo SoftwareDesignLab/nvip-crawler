@@ -22,7 +22,6 @@
  * SOFTWARE.
  */
 
-package main.java;
 /**
  * This class is for results of searching of the first commit
  * 

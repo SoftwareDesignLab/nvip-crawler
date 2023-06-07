@@ -132,7 +132,7 @@ public class TenableCveParser extends AbstractCveParser  {
 			if (matcher.find())
 				version = matcher.group();
 			for (String c : uniqueCves) {
-				AffectedRelease a = new AffectedRelease(p.getCpe(), p.getSwid(), publishDate, version);
+				AffectedRelease a = new AffectedRelease(p.getCpe(), publishDate, version);
 				a.setCveId(c);
 				affectedReleases.add(a);
 			}

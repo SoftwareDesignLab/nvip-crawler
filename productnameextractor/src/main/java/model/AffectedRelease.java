@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package main.java.model;
+package model;
 
 /**
  * 
@@ -109,7 +109,7 @@ public class AffectedRelease {
 	//Returns swid. If productName is unknown, sets value to NULL.
 	public String getSWID(String productName){
 		if(productName.equals("UNKNOWN")){
-			swid = "NULL";
+			swid = null;
 		}else {
 			generateSWID(productName);
 		}
@@ -151,13 +151,31 @@ public class AffectedRelease {
 	 * @param productName
 	 */
 	public void generateSWID(String productName){
-		StringBuilder swidBuilder = new StringBuilder();
-		swidBuilder.append("swid:").append(productName).append(":").append(version);
-		if(!version.equals("*")){
-			swidBuilder.append("@").append(version);
+		//match the scheme
+		String result = "<SoftwareIdentity xmlns=\"http://standards.iso.org/iso/19770/-2/2015/schema.xsd\" ";
+		StringBuilder swidBuilder = new StringBuilder(result);
+		//match the name
+		swidBuilder.append("name=\"").append(productName).append("\" ");
+		//match the tagId, remove space from productName, don't add . if version is ""
+		if(!version.equals("*") && !version.equals("")){
+			swidBuilder.append("tagId=\"").append(vendor).append(".").append(productName.replaceAll("\\s+","")).append(".").append(version).append("\" ");
+			swidBuilder.append("version=\"").append(version).append("\">");
+		}else{
+			swidBuilder.append("tagId=\"").append(vendor).append(".").append(productName.replaceAll("\\s+","")).append(version).append("\" ");
+			swidBuilder.append("version=\"\">");
 		}
+		//match the entity
+		swidBuilder.append("<Entity name=\"").append(vendor).append("\" regid=\"").append(vendor).append("\" role=\"tagCreator softwareCreator\"/>");
+		//match the meta
+		swidBuilder.append("<Meta product=\"").append(productName).append("\" colloquialVersion=\"").append(version).append("\"/>");
+		//match the payload
+		swidBuilder.append("<Payload>");
+		swidBuilder.append("<File name=\"").append(productName.replaceAll("\\s+","")).append(".exe\" size=\"532712\" SHA256:hash=\"a314fc2dc663ae7a6b6bc6787594057396e6b3f569cd50fd5ddb4d1bbafd2b6a\"/>");
+		swidBuilder.append("</Payload>");
+		swidBuilder.append("</SoftwareIdentity>");
 		swid = swidBuilder.toString();
 	}
+
 
 	@Override
 	public boolean equals(Object obj) {

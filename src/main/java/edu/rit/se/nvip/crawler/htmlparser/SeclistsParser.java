@@ -98,7 +98,7 @@ public class SeclistsParser extends AbstractCveParser  {
 				Product p = loader.productFromDomain(s);
 
 				if (p != null) {
-					affectedReleases.add(new AffectedRelease(p.getCpe(), p.getSwid(), publishDate, p.getVersion()));
+					affectedReleases.add(new AffectedRelease(p.getCpe(), publishDate, p.getVersion()));
 				}
 			}
 		} catch (Exception e) {

@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package main.java.db;
+package db;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -42,8 +42,8 @@ import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import com.zaxxer.hikari.pool.HikariPool.PoolInitializationException;
 
-import main.java.model.*;
-import main.java.utils.*;
+import model.*;
+import utils.*;
 
 /**
  * 

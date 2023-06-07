@@ -21,7 +21,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package main.java;
 import java.io.FileNotFoundException;
 
 import org.apache.logging.log4j.LogManager;
