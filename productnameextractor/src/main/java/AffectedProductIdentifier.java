@@ -22,9 +22,8 @@
  * SOFTWARE.
  */
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -35,7 +34,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import model.*;
-import db.*;
 
 import opennlp.tools.tokenize.WhitespaceTokenizer;
 
@@ -47,28 +45,11 @@ public class AffectedProductIdentifier {
 	private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
 
 	private final List<CompositeVulnerability> vulnList;
+	private final CpeLookUp cpeLookUp;
 
-	public AffectedProductIdentifier(List<CompositeVulnerability> vulnList, int maxPages) {
+	public AffectedProductIdentifier(List<CompositeVulnerability> vulnList) {
 		this.vulnList = vulnList;
-		CpeLookUp.getInstance(maxPages);
-	}
-
-
-	/**
-	 * insert CPE products identified by the loader into the database
-	 * TODO: Should be in DB Helper
-	 */
-	private int insertNewCpeItemsIntoDatabase() {
-		CpeLookUp cpeLookUp = CpeLookUp.getInstance();
-		try {
-			Collection<Product> products = cpeLookUp.getProductsToBeAddedToDatabase().values();
-			DatabaseHelper db = DatabaseHelper.getInstance();
-			return db.insertCpeProducts(products);
-		} catch (Exception e) {
-			logger.error("Error while adding " + cpeLookUp.getProductsToBeAddedToDatabase().size() + " new products!");
-			return -1;
-		}
-
+		this.cpeLookUp = new CpeLookUp();
 	}
 
 	private void processVulnerability(
@@ -81,9 +62,9 @@ public class AffectedProductIdentifier {
 			AtomicInteger counterOfProcessedCPEs,
 			AtomicInteger numOfProductsNotMappedToCPE,
 			AtomicInteger numOfProductsMappedToCpe,
-			AtomicLong totalNERtime,
-			AtomicLong totalCPEtime,
-			AtomicLong totalCVEtime,
+			AtomicLong totalNERTime,
+			AtomicLong totalCPETime,
+			AtomicLong totalCVETime,
 			int totalCVEtoProcess
 	) {
 		String description = vulnerability.getDescription();
@@ -114,9 +95,13 @@ public class AffectedProductIdentifier {
 				descriptionWords = subStringArray;
 			}
 
+			// Get list of existing releases and ensure it is not null (should be empty list instead)
+			final List<AffectedRelease> existingReleases = vulnerability.getAffectedReleases();
+			assert existingReleases != null;
+
 			// if no products found by crawlers, use AI/ML model to extract product/version
 			// from text
-			if (vulnerability.getAffectedReleases() == null || vulnerability.getAffectedReleases().isEmpty()) {
+			if (existingReleases.isEmpty()) {
 
 				// Time measurement
 				long startNERTime = System.currentTimeMillis();
@@ -126,15 +111,15 @@ public class AffectedProductIdentifier {
 
 				long nerTime = System.currentTimeMillis() - startNERTime;
 				counterOfProcessedNERs.getAndIncrement();
-				totalNERtime.addAndGet(nerTime);
+				totalNERTime.addAndGet(nerTime);
 
 				// map identified products/version to CPE
 				for (ProductItem productItem : productList) {
 
 					long startCPETime = System.currentTimeMillis();
-					List<String> productIDs = cpeLookUp.getCPEids(productItem);
+					List<String> productIDs = cpeLookUp.getCPEIds(productItem);
 					long cpeTime = System.currentTimeMillis() - startCPETime;
-					totalCPEtime.addAndGet(cpeTime);
+					totalCPETime.addAndGet(cpeTime);
 					counterOfProcessedCPEs.getAndIncrement();
 
 					if (productIDs == null || productIDs.isEmpty()) {
@@ -145,7 +130,7 @@ public class AffectedProductIdentifier {
 					// if CPE identified, add it as affected release
 					for (String itemID : productIDs) {
 //							logger.info("Found Affected Product for {}: {}", vulnerability.getCveId(), itemID);
-						vulnerability.getAffectedReleases().add(new AffectedRelease(0, vulnerability.getCveId(), itemID, vulnerability.getPublishDate(), CpeLookUp.getVersionFromCPEid(itemID), CpeLookUp.getVendorFromCPEid(itemID)));
+						existingReleases.add(new AffectedRelease(0, vulnerability.getCveId(), itemID, vulnerability.getPublishDate(), CpeLookUp.getVersionFromCPEid(itemID), CpeLookUp.getVendorFromCPEid(itemID)));
 						numOfProductsMappedToCpe.getAndIncrement();
 					}
 				}
@@ -156,13 +141,11 @@ public class AffectedProductIdentifier {
 			}
 
 		} catch (Exception e) {
-			// TODO: This error gets hit for every CVE
-
 			logger.error("Error {} while extracting affected releases! Processed: {} out of {} CVEs; CVE: {}", e, counterOfProcessedCVEs.toString(), Integer.toString(totalCVEtoProcess),
 					vulnerability.toString());
 		}
 
-		totalCVEtime.addAndGet(System.currentTimeMillis() - startCVETime);
+		totalCVETime.addAndGet(System.currentTimeMillis() - startCVETime);
 
 		// TODO: Move to executor instead of in runnable
 		if (counterOfProcessedCVEs.get() % 100 == 0) {
@@ -172,20 +155,20 @@ public class AffectedProductIdentifier {
 		}
 	}
 
-	public int identifyAffectedReleases(int cveLimit) {
+	// TODO: Docstring
+	public Map<String, Product> identifyAffectedReleases(int cveLimit) {
 		logger.info("Starting to identify affected products for " + vulnList.size() + " CVEs.");
 		long start = System.currentTimeMillis();
 
 
 		DetectProducts productNameDetector;
 		try {
-			productNameDetector = DetectProducts.getInstance();
+			productNameDetector = new DetectProducts(this.cpeLookUp);
 		} catch (Exception e1) {
 			logger.error("Severe Error! Could not initialize the models for product name/version extraction! Skipping affected release identification step! {}", e1.toString());
-			return -1;
+			return null;
 		}
 
-		CpeLookUp cpeLookUp = CpeLookUp.getInstance();
 		AtomicInteger numOfProductsMappedToCpe = new AtomicInteger();
 		AtomicInteger numOfProductsNotMappedToCPE = new AtomicInteger();
 		AtomicInteger counterOfProcessedNERs = new AtomicInteger();
@@ -193,9 +176,9 @@ public class AffectedProductIdentifier {
 		AtomicInteger counterOfProcessedCVEs = new AtomicInteger();
 		AtomicInteger counterOfSkippedCVEs = new AtomicInteger();
 		AtomicInteger counterOfBadDescriptionCVEs = new AtomicInteger();
-		AtomicLong totalNERtime = new AtomicLong();
-		AtomicLong totalCPEtime = new AtomicLong();
-		AtomicLong totalCVEtime = new AtomicLong();
+		AtomicLong totalNERTime = new AtomicLong();
+		AtomicLong totalCPETime = new AtomicLong();
+		AtomicLong totalCVETime = new AtomicLong();
 
 		// Set # to process based on cveLimit. If cveLimit is 0, assume no limit.
 		if(cveLimit == 0) cveLimit = Integer.MAX_VALUE;
@@ -224,9 +207,9 @@ public class AffectedProductIdentifier {
 					counterOfProcessedCPEs,
 					numOfProductsNotMappedToCPE,
 					numOfProductsMappedToCpe,
-					totalNERtime,
-					totalCPEtime,
-					totalCVEtime,
+					totalNERTime,
+					totalCPETime,
+					totalCVETime,
 					totalCVEtoProcess
 			));
 		}
@@ -251,49 +234,16 @@ public class AffectedProductIdentifier {
 
 		AtomicInteger count = new AtomicInteger();
 		vulnList.stream().map(v -> v.getAffectedReleases().size()).forEach(count::addAndGet);
-		logger.info("Found {} affected releases from {} CVEs", count, totalCVEtoProcess);
+		logger.info("Found {} affected releases from {} CVEs in {} seconds", count, totalCVEtoProcess, Math.floor(((double) (System.currentTimeMillis() - start) / 1000) * 100) / 100);
 
-		// TODO: This function should be called outside
-		insertAffectedProductsToDB(vulnList);
-
-		return numOfProductsMappedToCpe.get();
-
+		return this.cpeLookUp.getProductsToBeAddedToDatabase();
 	}
 
-	/**
-	 * Store affected products in DB
-	 * TODO: This should be in DB Helper
-	 * @param vulnList
-	 */
-	public void insertAffectedProductsToDB(List<CompositeVulnerability> vulnList) {
-		// refresh db conn, it might be timed out if the process takes so much time!
-		DatabaseHelper databaseHelper = DatabaseHelper.getInstance();
-
-		logger.info("Inserting found products to DB!");
-		insertNewCpeItemsIntoDatabase();
-
-		// get all identified affected releases
-		List<AffectedRelease> listAllAffectedReleases = new ArrayList<>();
-		for (CompositeVulnerability vulnerability : vulnList) {
-			if (vulnerability.getCveReconcileStatus() == CompositeVulnerability.CveReconcileStatus.DO_NOT_CHANGE)
-				continue; // skip the ones that are not changed!
-			listAllAffectedReleases.addAll(vulnerability.getAffectedReleases());
-		}
-
-		logger.info("Inserting Affected Releases to DB!");
-		// delete existing affected release info in db ( for CVEs in the list)
-		databaseHelper.deleteAffectedReleases(listAllAffectedReleases);
-
-		// now insert affected releases (referenced products are already in db)
-		databaseHelper.insertAffectedReleasesV2(listAllAffectedReleases);
-
-//		// prepare CVE summary table for Web UI
-//		// TODO: This should be in NVIPMAIN
-//		logger.info("Preparing CVE summary table for Web UI...");
-//		PrepareDataForWebUi cveDataForWebUi = new PrepareDataForWebUi();
-//		cveDataForWebUi.prepareDataforWebUi();
-
-		databaseHelper.shutdown();
+	public Map<String, CpeGroup> loadCPEDict(int maxPages, int maxAttemptsPerPage) {
+		return this.cpeLookUp.loadProductDict(maxPages, maxAttemptsPerPage);
 	}
 
+	public void loadCPEDict(Map<String, CpeGroup> productDict) {
+		this.cpeLookUp.loadProductDict(productDict);
+	}
 }

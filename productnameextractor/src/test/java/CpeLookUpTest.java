@@ -37,11 +37,11 @@ import static org.junit.Assert.assertTrue;
 
 public class CpeLookUpTest {
 
+	private static final CpeLookUp cpeLookUp = new CpeLookUp();
+
+
 	@Test
 	public void legitimateProduct() {
-
-		CpeLookUp cpeLookUp = new CpeLookUp();
-
 		ProductItem product = new ProductItem("phpMyAdmin");
 		product.addVersion("4.8.4");
 
@@ -63,9 +63,6 @@ public class CpeLookUpTest {
 
 	@Test
 	public void legitimateComplexProduct() {
-
-		CpeLookUp cpeLookUp = new CpeLookUp();
-
 		ProductItem product = new ProductItem("phpMyAdmin.");
 		product.addVersion("before  4.8.4");
 
@@ -87,9 +84,6 @@ public class CpeLookUpTest {
 
 	@Test
 	public void legitimateComplexProduct2() {
-
-		CpeLookUp cpeLookUp = new CpeLookUp();
-
 		ProductItem product = new ProductItem("phpMyAdmin:.");
 		product.addVersion("https://www.openwall.com/lists/oss-security/2012/05/10/6");
 		product.addVersion("before");
@@ -113,9 +107,6 @@ public class CpeLookUpTest {
 
 	@Test
 	public void legitimateComplexProduct3() {
-
-		CpeLookUp cpeLookUp = new CpeLookUp();
-
 		ProductItem product = new ProductItem("the Linux.");
 		product.addVersion("https://www.openwall.com/lists/oss-security/2012/05/10/6");
 
@@ -137,9 +128,6 @@ public class CpeLookUpTest {
 
 	@Test
 	public void legitimateComplexProductMultipleVersions() {
-
-		CpeLookUp cpeLookUp = new CpeLookUp();
-
 		ProductItem product = new ProductItem("phpMyAdmin.");
 		product.addVersion("4.8.0.1");
 		product.addVersion("4.8.4");
@@ -171,9 +159,6 @@ public class CpeLookUpTest {
 
 	@Test
 	public void legitimateComplexProductNoVersion() {
-
-		CpeLookUp cpeLookUp = new CpeLookUp();
-
 		ProductItem product = new ProductItem("Microsoft Internet Explorer. ");
 
 		String expectedResult = "cpe:2.3:a:microsoft:internet_explorer:*:*:*:*:*:*:*:*";
@@ -194,9 +179,6 @@ public class CpeLookUpTest {
 
 	@Test
 	public void checkSNVerification() {
-
-		CpeLookUp cpeLookUp = new CpeLookUp();
-
 		String sn1 = "Explorer.";
 		String sn2 = "Linux";
 

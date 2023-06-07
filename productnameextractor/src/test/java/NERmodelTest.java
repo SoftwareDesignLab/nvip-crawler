@@ -22,12 +22,13 @@
  * SOFTWARE.
  */
 
-import static org.junit.Assert.assertEquals;
-
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import org.junit.Test;
+
+import static org.junit.Assert.*;
 
 /**
  * Unit tests for the NERmodel and DetectProduct classes
@@ -37,15 +38,20 @@ import org.junit.Test;
  */
 
 public class NERmodelTest {
-	
+	// ENV VARS
+	final String DATA_DIR = System.getenv("DATA_DIR");
+	final String NAME_EXTRACTOR_DIR = System.getenv("NAME_EXTRACTOR_DIR");
+	final String CHAR_2_VEC_CONFIG = System.getenv("CHAR_2_VEC_CONFIG");
+	final String CHAR_2_VEC_WEIGHTS = System.getenv("CHAR_2_VEC_WEIGHTS");
+	final String WORD_2_VEC = System.getenv("WORD_2_VEC");
 	@Test
 	public void char2vectorModelTest() {
 		
 		String word = "MicroSoft";
 
-		String modelsDir = System.getenv("DATA_DIR") + "/" + System.getenv("NAME_EXTRACTOR_DIR") + "/";
-		String c2vModelConfigPath = modelsDir + System.getenv("CHAR_2_VEC_CONFIG");
-		String c2vModelWeightsPath = modelsDir + System.getenv("CHAR_2_VEC_WEIGHTS");
+		String modelsDir = DATA_DIR + "/" + NAME_EXTRACTOR_DIR + "/";
+		String c2vModelConfigPath = modelsDir + CHAR_2_VEC_CONFIG;
+		String c2vModelWeightsPath = modelsDir + CHAR_2_VEC_WEIGHTS;
 
 		Char2vec c2vModel = new Char2vec(c2vModelConfigPath, c2vModelWeightsPath);
 		int charVecLength = c2vModel.getOutVectorLength();
@@ -63,8 +69,8 @@ public class NERmodelTest {
 			if (notNull) {
 				correctLength = (charVector.length == charVecLength);
 			}
-		
-		assertEquals(true, (correctLength && notNull));
+
+		assertTrue((correctLength && notNull));
 	
 	}
 	
@@ -72,8 +78,8 @@ public class NERmodelTest {
 	public void word2vectorModelTest() {
 		String word = "MicroSoft";
 
-		String modelsDir = System.getenv("DATA_DIR") + "/" + System.getenv("NAME_EXTRACTOR_DIR") + "/";
-		String w2vModelPath = modelsDir + System.getenv("WORD_2_VEC");
+		String modelsDir = DATA_DIR + "/" + NAME_EXTRACTOR_DIR + "/";
+		String w2vModelPath = modelsDir + WORD_2_VEC;
 		Word2Vector w2vModel = new Word2Vector(w2vModelPath);
 		int wordVecLength = w2vModel.getOutVectorLength();
 				
@@ -82,14 +88,11 @@ public class NERmodelTest {
 		long endTime = System.currentTimeMillis();
 		System.out.println("Timing for embedding word '" + word +"' on the word level: " + Long.toString(endTime-startTime) + "ms.");
 		
-		boolean correctLength = false;
-		boolean notNull = (wordVector != null);
-			
-			if (notNull) {
-				correctLength = (wordVector.length == wordVecLength);
-			}
+		assertNotNull("Test failed: wordVector was null", wordVector);
 		
-		assertEquals(true, (correctLength && notNull));
+		boolean correctLength = (wordVector.length == wordVecLength);
+		
+		assertTrue("Test failed: correctLength was false", correctLength);
 	}
 	
 	@Test
@@ -120,21 +123,32 @@ public class NERmodelTest {
 			hasSN = result.get(3)[1].equals(NERmodel.SN);
 			hasSV = result.get(4)[1].equals(NERmodel.SV);
 		}
-		
-		assertEquals("Result is not empty ",true,(notNull && lengthNotZero));
-		assertEquals("Result contains \"OTHER\" class",true,hasOther);
-		assertEquals("Result contains \"SOFTWARE NAME\" class",true,hasSN);
-		assertEquals("Result contains \"SOFTWARE VERSION\" class",true,hasSV);
+
+		assertTrue("Result is not empty ", (notNull && lengthNotZero));
+		assertTrue("Result contains \"OTHER\" class", hasOther);
+		assertTrue("Result contains \"SOFTWARE NAME\" class", hasSN);
+		assertTrue("Result contains \"SOFTWARE VERSION\" class", hasSV);
 	}
 	
 	@Test
-	public void augmentedNERtest() throws IOException {
-		CpeLookUp cpeLookUp = new CpeLookUp();
+	public void augmentedNERtest() {
+		
 		String description = "The \"origin\" parameter passed to some of the endpoints like '/trigger' was vulnerable to XSS exploit. This issue affects Apache Airflow versions <1.10.15 in 1.x series and affects 2.0.0 and 2.0.1 and 2.x series. This is the same as CVE-2020-13944 & CVE-2020-17515 but the implemented fix did not fix the issue completely. Update to Airflow 1.10.15 or 2.0.2. Please also update your Python version to the latest available PATCH releases of the installed MINOR versions, example update to Python 3.6.13 if you are on Python 3.6. (Those contain the fix for CVE-2021-23336 https://nvd.nist.gov/vuln/detail/CVE-2021-23336).";
 
 		String anticipatedResult = "SN: phpMyAdmin. SV:  before 4.8.4";
-
-		DetectProducts nameDetector = new DetectProducts(cpeLookUp);
+		
+		DetectProducts nameDetector = null;
+		try {
+			final CpeLookUp cpeLookUp = new CpeLookUp();
+//			final HashMap<String, CpeGroup> products = new HashMap<>();
+//			final CpeGroup group = new CpeGroup("phpmyadmin", "phpmyadmin");
+//			group.addVersion(new CpeEntry("phpmyadmin", "2.11.1.1", "cpe:2.3:a:phpmyadmin:phpmyadmin:2.11.1.1:*:*:*:*:*:*:*"));
+//			products.put("cpe:2.3:a:phpmyadmin:phpmyadmin:2.11.1.1:*:*:*:*:*:*:*", group);
+			cpeLookUp.loadProductDict(null); // TODO: FIX
+			nameDetector = new DetectProducts(cpeLookUp);
+		} catch (IOException e) {
+			fail("Name detector initialization failed");
+		}
 
 		long startTime = System.currentTimeMillis();
 		ArrayList<ClassifiedWord> result = nameDetector.classifyWordsInDescription(description);
@@ -173,12 +187,12 @@ public class NERmodelTest {
 		if (!correctProduct) {
 			System.out.println("ERROR! Anticipated: " + anticipatedResult + " | Got: " + products.get(0).toString());
 		}
-				
-		assertEquals("Result is not empty ",true,(notNull && lengthNotZero));
-		assertEquals("Result contains \"OTHER\" class",true,hasOther);
-		assertEquals("Result contains \"SOFTWARE NAME\" class",true,hasSN);
-		assertEquals("Result contains \"SOFTWARE VERSION\" class",true,hasSV);
-		assertEquals("Result is not empty ",true,(productNotNull && productLengthNotZero));
-		assertEquals("Result is correct",true,correctProduct);
+
+		assertTrue("Result is not empty ", (notNull && lengthNotZero));
+		assertTrue("Result contains \"OTHER\" class", hasOther);
+		assertTrue("Result contains \"SOFTWARE NAME\" class", hasSN);
+		assertTrue("Result contains \"SOFTWARE VERSION\" class", hasSV);
+		assertTrue("Result is not empty ", (productNotNull && productLengthNotZero));
+		assertTrue("Result is correct", correctProduct);
 	}
 }
