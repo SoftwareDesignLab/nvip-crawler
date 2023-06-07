@@ -1,7 +1,0 @@
-INDEX VERSION 1.4+C:\Users\richa\OneDrive\Desktop\nvip\nvip-crawler\.metadata\.plugins\org.eclipse.wst.jsdt.core\indexes
-2676123878.index
-4278506418.index
-2867929302.index
-152239942.index
-2314126408.index
-714114533.index
