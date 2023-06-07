@@ -54,6 +54,9 @@
             <column name="is_garbage" type="INT" defaultValue="0">
                 <constraints nullable="false" />
             </column>
+            <column name="source_type" type="VARCHAR(20)" defaultValue="other">
+                <constraints nullable="false" />
+            </column>
         </createTable>
 
         <createIndex
