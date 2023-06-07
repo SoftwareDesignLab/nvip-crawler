@@ -155,9 +155,9 @@ public class NVIPMain {
 			PatchUrlFinder patchURLFinder = new PatchUrlFinder();
 			Map<String, ArrayList<String>> cpes = databaseHelper.getCPEsAndCVE();
 			Map<String, ArrayList<String>> possiblePatchURLs = patchURLFinder.parseMassURLs(cpes);
-			PatchFinder patchfinder = new PatchFinder();
 
 			// repos will be cloned to patch-repos directory, multi-threaded 6 threads.
+			PatchFinder patchfinder = new PatchFinder();
 			ArrayList<PatchCommit> patchCommits = patchfinder.findPatchesMultiThreaded(possiblePatchURLs, "patch-repos", 10);
 
 			// TODO: Patchfinder rework

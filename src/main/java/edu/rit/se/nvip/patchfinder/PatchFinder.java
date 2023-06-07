@@ -44,6 +44,8 @@ public final class PatchFinder {
 
 	private static final Logger logger = LogManager.getLogger(PatchFinder.class.getName());
 
+	private final ArrayList<PatchCommit> patchCommits = new ArrayList<>();
+
 	public static void main(String[] args) throws IOException {
 		logger.info("Started Patches Application");
 
@@ -51,6 +53,15 @@ public final class PatchFinder {
 		//main.parse(args);
 
 		logger.info("Patches Application Finished!");
+	}
+
+	/**
+	 * Getter for patch commits list
+	 * Used byb threads to add more entries
+	 * @return
+	 */
+	public ArrayList<PatchCommit> getPatchCommits() {
+		return this.patchCommits;
 	}
 
 	/**
@@ -66,8 +77,6 @@ public final class PatchFinder {
 		int maxThreads = Integer.parseInt(System.getenv("PATCHFINDER_MAX_THREADS"));
 
 		logger.info(maxThreads + " available processors found");
-
-
 		ArrayList<HashMap<String, ArrayList<String>>> sourceBatches = new ArrayList<>();
 
 		// Initialize patchfinder threads

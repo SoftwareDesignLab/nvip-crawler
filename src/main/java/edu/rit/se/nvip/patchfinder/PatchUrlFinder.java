@@ -56,8 +56,6 @@ public class PatchUrlFinder {
 	// TODO: add to envvars?
 	private static final String[] ADDRESS_BASES = { "https://www.github.com/", "https://www.gitlab.com/" };
 
-	private Map<String, ArrayList<String>> cveCpeUrls;
-
 	// TODO: all old vars, get rid of these
 	private static int advanceSearchCount;
 
@@ -78,7 +76,7 @@ public class PatchUrlFinder {
 		Map<String, ArrayList<String>> cpes = db.getCPEsAndCVE();
 		logger.info("Pulled {} cpes from the DB", cpes.size());
 		main.parseMassURLs(cpes);
-		logger.info("Found {} URLs", main.cveCpeUrls.size());
+		//logger.info("Found {} URLs", main.cveCpeUrls.size());
 		logger.info("PatchFinder Finished!");
 
 	}
@@ -104,9 +102,7 @@ public class PatchUrlFinder {
 			cveCpeUrls.put(cveId, urls);
 		}
 
-		this.cveCpeUrls = cveCpeUrls;
-
-		return this.cveCpeUrls;
+		return cveCpeUrls;
 	}
 
 	/**

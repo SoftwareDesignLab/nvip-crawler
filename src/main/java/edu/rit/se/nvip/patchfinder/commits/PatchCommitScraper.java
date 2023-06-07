@@ -25,6 +25,10 @@ package edu.rit.se.nvip.patchfinder.commits;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -41,7 +45,9 @@ import org.eclipse.jgit.internal.storage.file.FileRepository;
 import org.eclipse.jgit.internal.storage.file.WindowCache;
 import org.eclipse.jgit.lib.ProgressMonitor;
 import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.patch.Patch;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.storage.file.WindowCacheConfig;
 import org.eclipse.jgit.util.FileUtils;
 
@@ -51,126 +57,67 @@ import org.eclipse.jgit.util.FileUtils;
 public class PatchCommitScraper {
 
 	private static final Logger logger = LogManager.getLogger(PatchCommitScraper.class.getName());
-
-	private static final String REGEX_VULN = "vulnerability|Vulnerability|vuln|Vuln|VULN[ #]*([0-9]+)";
-	private static final String REGEX_CVE = "(CVE[-]*[0-9]*[-]*[0-9]*)";
-	private static final Pattern PATTERN_VULN = Pattern.compile(REGEX_VULN);
-	private static final Pattern PATTERN_CVES = Pattern.compile(REGEX_CVE);
-	private final List<PatchCommit> fixCommits = new ArrayList<>();
-
+	private static final String[] patchRegex = new String[] {"vulnerability|Vulnerability|vuln|Vuln|VULN[ #]*([0-9]+)", "(CVE[-]*[0-9]*[-]*[0-9]*)"};
 	private final String localDownloadLoc;
+	private final String repoSource;
 
-	public PatchCommitScraper(String localDownloadLoc) {
+	public PatchCommitScraper(String localDownloadLoc, String repoSource) {
 		this.localDownloadLoc = localDownloadLoc;
-	}
-
-	/**
-	 * Deletes repository from storage (used after patch data is pulled)
-	 */
-	public void deleteRepository() {
-		logger.info("Deleting Repo...");
-		try {
-			WindowCacheConfig config = new WindowCacheConfig();
-			config.setPackedGitMMAP(true);
-			WindowCache.reconfigure(config);
-
-			File dir = new File(localDownloadLoc + File.separator + projectName);
-			this.git.close();
-
-			FileUtils.delete(dir, 1);
-
-			logger.info("Repo " + projectName + " deleted successfully!");
-		} catch (IOException e) {
-			logger.info(e.getMessage());
-		}
-	}
-
-	/**
-	 * Collects all commits from a repo and returns them in a list
-	 * 
-	 * @return
-	 */
-	private List<RevCommit> getAllCommitList() {
-		List<RevCommit> revCommits = new ArrayList<>();
-		try {
-			for (RevCommit rev : git.log().call()) {
-				revCommits.add(rev);
-			}
-		} catch (GitAPIException e) {
-			e.getMessage();
-			logger.error("ERRRO: Failed to get list of commits for repo @ {}\n{}", this.localDownloadLoc,
-					e.toString());
-		}
-		return revCommits;
+		this.repoSource = repoSource;
 	}
 
 	/**
 	 * Parse commits to prepare for extraction of patches for a repo. Uses preset
 	 * Regex to find commits related to CVEs or bugs for patches
-	 * 
+	 *
 	 * @throws IOException
 	 * @throws GitAPIException
 	 * @return
 	 */
-	public Map<String, PatchCommit> parseCommits(String cveId) {
-		logger.info("Grabbing Commits List for repo @ {}...", this.localDownloadLoc);
-		List<RevCommit> allCommits = this.getAllCommitList();
+	public List<PatchCommit> parseCommits(String cveId) {
+		String repoLocation = this.localDownloadLoc + File.separator + this.repoSource;
+		List<PatchCommit> patchCommits = new ArrayList<>();
 
-		// Iterate through each commit to check if any include a CVE ID or a vulnerability key
-		// word in its name or description
-		for (RevCommit repoCommit : allCommits) {
-			String message = repoCommit.getFullMessage();
-			Matcher matcherCve = PATTERN_CVES.matcher(message);
-			List<String> foundCves = new ArrayList<>();
+		logger.info("Grabbing Commits List for repo @ {}...", repoLocation);
+		try {
+			// Read configuration from environment variables
+			// and scan up the file system tree
+			FileRepositoryBuilder repositoryBuilder = new FileRepositoryBuilder();
+			Repository repository = repositoryBuilder.setGitDir(new File(repoLocation))
+					.readEnvironment()
+					.findGitDir()
+					.build();
 
-			List<String> foundVulns = new ArrayList<>();
-			Matcher matcherVuln = PATTERN_VULN.matcher(message);
+			// Iterate through each commit and check if there's a commit message that contains a CVE ID
+			// or the 'vulnerability' keyword
+			try (Git git = new Git(repository)) {
+				Iterable<RevCommit> commits = git.log().all().call();
+				for (RevCommit commit : commits) {
+					// Check if the commit message matches any of the regex provided
+					for (String regex: patchRegex) {
+						Pattern pattern = Pattern.compile(regex);
+						Matcher matcher = pattern.matcher(commit.getFullMessage());
+						// If found, add the patch commit to the returned list
+						if (matcher.find()) {
+							String commitUrl = repository.getConfig().getString("remote", "origin", "url");
+							LocalDateTime commitDateTime = LocalDateTime.ofInstant(
+									Instant.ofEpochSecond(commit.getCommitTime()),
+									ZoneId.systemDefault()
+							);
+							logger.info("Found patch commit @ {} for CVE {}", commitUrl, cveId);
+							PatchCommit patchCommit = new PatchCommit(commitUrl, cveId, commitDateTime);
+							patchCommits.add(patchCommit);
+						}
+					}
 
-			// Search for 'CVE' commits
-			if (matcherCve.find()) {
-				if (matcherCve.group(0).contains("CVE-") && matcherCve.group(0).contains(cveId)) {
-					logger.info("Found CVE Commit " + matcherCve.group(0));
-					foundCves.add(matcherCve.group(0));
 				}
 			}
-			// Search for 'Vulnerability' commits
-			else if (matcherVuln.find()) {
-				logger.info("Found Vuln Commit " + matcherVuln.group(0));
-				foundVulns.add(matcherVuln.group(0));
-			}
-
-			if (!foundCves.isEmpty() || !foundVulns.isEmpty()) {
-				PatchCommit githubCommit = new PatchCommit(repoCommit.getName() , cveId, repoCommit.getAuthorIdent().getWhen());
-				this.fixCommits.add(githubCommit);
-			}
+		} catch (IOException | GitAPIException e) {
+			logger.error("ERROR: Failed to scrape repo @ {} for patch commits for CVE {}\n{}", repoSource, cveId, e);
+			e.printStackTrace();
 		}
 
-		// Iterate through each patch commit and store info in the hashmap
-		// w/ CVE ID as key
-		Map<String, PatchCommit> commits = new HashMap<>();
-
-		for (PatchCommit fixCommit : fixCommits) {
-			commits.put(cveId, fixCommit);
-		}
-
-		logger.info("Commits from repo " + projectName + " parsed successfully!");
-		return commits;
-
-		return extractJGithubComits(fixCommits);
-
+		return patchCommits;
 	}
 
-	/**
-	 * Generate a TreeParser from a Tree that's obtained from a given commit to
-	 * allow for no inspection duplicates
-	 *
-	 * @return
-	 * @return
-	 * @param fixCommits
-	 */
-	private Map<Date, ArrayList<String>> extractJGithubComits(List<PatchCommit> fixCommits) {
-
-
-
-	}
 }

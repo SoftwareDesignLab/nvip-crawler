@@ -23,10 +23,7 @@
  */
 package edu.rit.se.nvip.patchfinder;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import edu.rit.se.nvip.db.DatabaseHelper;
 import edu.rit.se.nvip.patchfinder.commits.PatchCommit;
@@ -44,15 +41,12 @@ public class PatchFinderThread implements Runnable {
 	private final HashMap<String, ArrayList<String>> cvePatchEntry;
 	private final String clonePath;
 	private static final Logger logger = LogManager.getLogger(PatchFinder.class.getName());
-	private PatchCommitScraper previous;
 	private final PatchFinder patchFinder;
-	private final ArrayList<PatchCommit> foundPatchCommits = new ArrayList<>();
 
 	/**
 	 * Thread object used for multithreaded patchfinding
 	 * @param sources
 	 * @param clonePath
-	 * @param patchDownloader
 	 */
 	public PatchFinderThread(HashMap<String, ArrayList<String>> sources, String clonePath, PatchFinder patchFinder) {
 		this.cvePatchEntry = sources;
@@ -66,35 +60,30 @@ public class PatchFinderThread implements Runnable {
 	@Override
 	public void run() {
 
+		ArrayList<PatchCommit> foundPatchCommits = new ArrayList<>();
 		// For each CVE, iterate through the list of possible patch sources and
 		// Clone/Scrape the repo for patch commits (if any)
 		for (String cve : cvePatchEntry.keySet()) {
 			for (String patchSource: cvePatchEntry.get(cve)) {
 				try {
+					// Clone git repo
 					GitController gitController = new GitController(clonePath, patchSource+".git");
 					gitController.cloneRepo();
-					PatchCommitScraper commitScraper = new PatchCommitScraper(clonePath);
-					Map<Date, ArrayList<String>> commits = commitScraper.parseCommits(cve);
-					this.foundPatchCommits.addAll(commits);
 
-					if (commits.isEmpty()) {
-						patchDownloader.deletePatchSource(source.getValue());
-					} else {
-						for (java.util.Date commit : commits.keySet()) {
-							patchDownloader.insertPatchCommitData(source.getValue(), commits.get(commit).get(0), commit, commits.get(commit).get(1));
-						}
-					}
+					// Find patch commits
+					PatchCommitScraper commitScraper = new PatchCommitScraper(clonePath, patchSource);
+					List<PatchCommit> patchCommits = commitScraper.parseCommits(cve);
+					foundPatchCommits.addAll(patchCommits);
 
-					if (previous != null) {
-						previous.deleteRepository();
-					}
-
-					previous = repo;
-
+					// Delete repo when done
+					gitController.deleteRepo();
 				} catch (Exception e) {
 					logger.error(e.toString());
 				}
 			}
 		}
+
+		// Add found commits to total list after finished
+		this.patchFinder.getPatchCommits().addAll(foundPatchCommits);
 	}
 }
