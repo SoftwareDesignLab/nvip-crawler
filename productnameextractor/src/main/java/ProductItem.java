@@ -22,6 +22,8 @@
  * SOFTWARE.
  */
 
+package main.java;
+
 import java.util.ArrayList;
 
 /**

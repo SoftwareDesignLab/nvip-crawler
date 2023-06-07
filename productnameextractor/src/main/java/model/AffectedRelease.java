@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package model;
+package main.java.model;
 
 /**
  * 
@@ -67,7 +67,6 @@ public class AffectedRelease {
 		this.releaseDate = a.releaseDate;
 		this.version = a.version;
 		this.vendor = a.vendor;
-		this.pURL = a.pURL;
 	}
 
 	public int getId() {
@@ -100,7 +99,7 @@ public class AffectedRelease {
 	//Returns pURL. If productName is unknown, sets value to NULL.
 	public String getPURL(String productName){
 		if(productName.equals("UNKNOWN")){
-			pURL = null;
+			pURL = "NULL";
 		}else {
 			generatePURL(productName);
 		}
@@ -110,7 +109,7 @@ public class AffectedRelease {
 	//Returns swid. If productName is unknown, sets value to NULL.
 	public String getSWID(String productName){
 		if(productName.equals("UNKNOWN")){
-			swid = null;
+			swid = "NULL";
 		}else {
 			generateSWID(productName);
 		}
@@ -140,7 +139,7 @@ public class AffectedRelease {
 		String result = "pkg:";
 		StringBuilder purlBuilder = new StringBuilder(result);
 		purlBuilder.append(vendor).append("/").append(productName);
-		if(!version.equals("*") && !version.equals("")){
+		if(!version.equals("*")){
 			purlBuilder.append("@").append(version);
 		}
 		pURL = purlBuilder.toString();
@@ -148,46 +147,15 @@ public class AffectedRelease {
 
 	/**
 	 * Generate SWID using product name
-	 * Scheme: <SoftwareIdentity xmlns="http://standards.iso.org/iso/19770/-2/2015/schema.xsd"
-	 * name="ACME Roadrunner Detector 2013 Coyote Edition SP1"
-	 * tagId="com.acme.rrd2013-ce-sp1-v4-1-5-0" version="4.1.5">
-	 * <Entity name="The ACME Corporation" regid="acme.com"
-	 * role="tagCreator softwareCreator"/>
-	 * <Link rel="license" href="www.gnu.org/licenses/gpl.txt"/>
-	 * <Meta product="Roadrunner Detector" colloquialVersion="2013"
-	 * edition="coyote" revision="sp1"/>
-	 * <Payload>
-	 * <File name="rrdetector.exe" size="532712"
-	 * SHA256:hash="a314fc2dc663ae7a6b6bc6787594057396e6b3f569cd50fd5d
-	 * db4d1bbafd2b6a"/>
-	 * </Payload>
-	 * </SoftwareIdentity>
-	 * If version is "", then put ""
+	 * Scheme: swid:productname@version
 	 * @param productName
 	 */
 	public void generateSWID(String productName){
-		//match the scheme
-		String result = "<SoftwareIdentity xmlns=\"http://standards.iso.org/iso/19770/-2/2015/schema.xsd\" ";
-		StringBuilder swidBuilder = new StringBuilder(result);
-		//match the name
-		swidBuilder.append("name=\"").append(productName).append("\" ");
-		//match the tagId, remove space from productName, don't add . if version is ""
-		if(!version.equals("*") && !version.equals("")){
-			swidBuilder.append("tagId=\"").append(vendor).append(".").append(productName.replaceAll("\\s+","")).append(".").append(version).append("\" ");
-			swidBuilder.append("version=\"").append(version).append("\">");
-		}else{
-			swidBuilder.append("tagId=\"").append(vendor).append(".").append(productName.replaceAll("\\s+","")).append(version).append("\" ");
-			swidBuilder.append("version=\"\">");
+		StringBuilder swidBuilder = new StringBuilder();
+		swidBuilder.append("swid:").append(productName).append(":").append(version);
+		if(!version.equals("*")){
+			swidBuilder.append("@").append(version);
 		}
-		//match the entity
-		swidBuilder.append("<Entity name=\"").append(vendor).append("\" regid=\"").append(vendor).append("\" role=\"tagCreator softwareCreator\"/>");
-		//match the meta
-		swidBuilder.append("<Meta product=\"").append(productName).append("\" colloquialVersion=\"").append(version).append("\"/>");
-		//match the payload
-		swidBuilder.append("<Payload>");
-		swidBuilder.append("<File name=\"").append(productName.replaceAll("\\s+","")).append(".exe\" size=\"532712\" SHA256:hash=\"a314fc2dc663ae7a6b6bc6787594057396e6b3f569cd50fd5ddb4d1bbafd2b6a\"/>");
-		swidBuilder.append("</Payload>");
-		swidBuilder.append("</SoftwareIdentity>");
 		swid = swidBuilder.toString();
 	}
 

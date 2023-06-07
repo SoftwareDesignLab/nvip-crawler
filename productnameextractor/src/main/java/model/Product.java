@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package model;
+package main.java.model;
 
 
 import java.util.regex.Matcher;
@@ -33,7 +33,7 @@ import java.util.regex.Pattern;
  *
  */
 public class Product {
-	private static final String regexVersionInfo = "(\\d+\\.(?:\\d+\\.)*\\d+)";
+	private final String regexVersionInfo = "(?:(\\d+\\.(?:\\d+\\.)*\\d+))";
 	private final String domain;
 	private final String cpe;
 	private final int prodId;

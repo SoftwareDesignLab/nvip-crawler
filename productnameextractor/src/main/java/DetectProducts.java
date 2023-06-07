@@ -21,8 +21,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+package main.java;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -31,7 +31,7 @@ import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import utils.*;
+import main.java.utils.*;
 import opennlp.tools.postag.POSModel;
 import opennlp.tools.postag.POSTaggerME;
 import opennlp.tools.sentdetect.SentenceDetector;
@@ -52,23 +52,45 @@ public class DetectProducts {
 	public static final String NNP = "NNP";
 	public static final String IN = "IN";
 
-	private final NERmodel nerModel;
+	NERmodel nerModel = null;
 
-	private final CpeLookUp cpeDict;
+	CpeLookUp cpeDict = null;
 
-	private final POSTaggerME tagger;
-	private final POSModel model;
-	private final SentenceModel sentenceModel;
-	private final SentenceDetector sentenceDetector;
-	private final String modelPath = "nlp/en-pos-perceptron.bin";
-	private final String sentenceModelPath = "nlp/en-sent.bin";
+	POSTaggerME tagger = null;
+	POSModel model = null;
+	SentenceModel sentenceModel = null;
+	SentenceDetector sentenceDetector = null;
+	String modelPath = "nlp/en-pos-perceptron.bin";
+	String sentenceModelPath = "nlp/en-sent.bin";
 
 	static private final Logger logger = LogManager.getLogger(UtilHelper.class);
+
+	/** singleton instance of class */
+	private static DetectProducts detectProducts = null;
+
+	/**
+	 * Thread safe singleton implementation
+	 *
+	 */
+	public static synchronized DetectProducts getInstance() {
+		if (detectProducts == null)
+			detectProducts = new DetectProducts();
+
+		return detectProducts;
+	}
 
 	/**
 	 * Class constructor
 	 */
-	public DetectProducts(CpeLookUp cpeLookUp) throws IOException {
+	private DetectProducts() {
+		initialize();
+	}
+
+	/**
+	 * Initializer
+	 */
+	private void initialize() {
+
 		try {
 			// Load NER model
 			logger.info("Loading NER model...");
@@ -76,7 +98,7 @@ public class DetectProducts {
 
 			// Load CPE dictionary
 			logger.info("Loading CPE dictionary...");
-			cpeDict = cpeLookUp;
+			cpeDict = CpeLookUp.getInstance();
 
 			// Load Apache OpenNLP sentence model
 			logger.info("Loading NLP sentence model...");
@@ -91,11 +113,9 @@ public class DetectProducts {
 			sentenceModel = new SentenceModel(modelIn);
 			sentenceDetector = new SentenceDetectorME(sentenceModel);
 			modelIn.close();
-			logger.info("Product detector initialization done!");
-		} catch (IOException e) {
-			// Log and rethrow error to stop program execution
-			logger.error("Error while initializing product detector, model path {}, sentence model path {}, exception detail {}", modelPath, sentenceModelPath, e.toString());
-			throw e;
+			logger.info("Product name extractor initialization done!");
+		} catch (Exception e) {
+			logger.error("Error while initializing product extractor, model path {}, sentence model path {}, exception detail {}", modelPath, sentenceModelPath, e.toString());
 		}
 	}
 
@@ -209,7 +229,7 @@ public class DetectProducts {
 		// Get list of potential matches from CPE
 		List<String> cpeList = null;
 		try {
-			cpeList = cpeDict.getCPETitles(words[index]);
+			cpeList = cpeDict.getCPEtitles(words[index]);
 		} catch (Exception e) {
 			logger.error(e);
 		}

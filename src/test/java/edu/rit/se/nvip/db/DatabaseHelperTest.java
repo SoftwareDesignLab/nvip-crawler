@@ -140,7 +140,7 @@ public class DatabaseHelperTest {
 	private List<AffectedRelease> buildDummyReleases(int count) {
 		List<AffectedRelease> releases = new ArrayList<>();
 		for (int i = 0; i < count; i++) {
-			releases.add(new AffectedRelease(1337, "cve"+i, "cpe"+i, "date"+i, "version"+i));
+			releases.add(new AffectedRelease(1337, "cve"+i, "cpe"+i, "swid"+i, "date"+i, "version"+i));
 		}
 		return releases;
 	}

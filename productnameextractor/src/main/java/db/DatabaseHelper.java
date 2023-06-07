@@ -21,13 +21,17 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package db;
+package main.java.db;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.sql.*;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -38,8 +42,8 @@ import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import com.zaxxer.hikari.pool.HikariPool.PoolInitializationException;
 
-import model.*;
-import utils.*;
+import main.java.model.*;
+import main.java.utils.*;
 
 /**
  * 
@@ -52,7 +56,7 @@ public class DatabaseHelper {
 	private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
 	String databaseType = "mysql";
 
-	private final String insertProductSql = "INSERT INTO affectedproduct (cve_id, cpe) VALUES (?, ?);";
+	private final String insertProductSql = "INSERT INTO affectedproduct (cve_id, cpe) VALUES (?);";
 	private final String getProductCountFromCpeSql = "SELECT count(*) from affectedproduct where cpe = ?";
 	private final String getIdFromCpe = "SELECT * FROM affectedproduct where cpe = ?;";
 
@@ -127,6 +131,41 @@ public class DatabaseHelper {
 		return hikariConfig;
 	}
 
+	private HikariConfig createHikariConfigFromProperties(String configFile) {
+		HikariConfig config;
+		try {
+			Properties props = new Properties();
+			try {
+				// get config file from the root path
+				try (InputStream inputStream = new FileInputStream(configFile)) {
+					props.load(inputStream);
+					logger.info("DatabaseHelper initialized using config file {} at {}", configFile,
+							System.getProperty("user.dir"));
+				}
+			} catch (FileNotFoundException e) {
+				String currDir = System.getProperty("user.dir");
+				logger.warn("Could not locate db config file in the root path \"{}\", getting it from resources! Warning: {}",
+						currDir, e.getMessage());
+				ClassLoader loader = Thread.currentThread().getContextClassLoader();
+
+				try (InputStream inputStream = loader.getResourceAsStream(configFile)) {
+					props.load(inputStream);
+				}
+
+			}
+
+			config = new HikariConfig(props);
+			config.setMaximumPoolSize(50);
+		} catch (Exception e1) {
+			logger.warn(
+					"Could not load db.properties(" + configFile + ") from src/main/resources! Looking at the root path now!");
+			config = new HikariConfig("db-" + databaseType + ".properties"); // in the production system get it from the
+			// root dir
+		}
+
+		return config;
+	}
+
 	/**
 	 * Retrieves the connection from the DataSource (HikariCP)
 	 * 
@@ -140,26 +179,22 @@ public class DatabaseHelper {
 	/**
 	 * used to insert a list of CPE products into the database
 	 *
-	 * @param productMap List of product objects
+	 * @param products List of product objects
 	 * @return Number of inserted products, <0 if error.
 	 */
-	public int insertCpeProducts(Map<String, Product> productMap) {
+	public int insertCpeProducts(Collection<Product> products) {
 		try (Connection conn = getConnection();
 				PreparedStatement pstmt = conn.prepareStatement(insertProductSql);
 				PreparedStatement getCount = conn.prepareStatement(getProductCountFromCpeSql);) {
 			int count = 0;
-			int total = productMap.size();
-			for (Map.Entry<String, Product> productEntry : productMap.entrySet()) {
-				final String id = productEntry.getKey();
-				final Product product = productEntry.getValue();
-
+			int total = products.size();
+			for (Product product : products) {
 				getCount.setString(1, product.getCpe());
 				ResultSet res = getCount.executeQuery();
 				if (res.next() && res.getInt(1) != 0) {
 					continue; // product already exists, skip!
 				}
-				pstmt.setString(1, id);
-				pstmt.setString(2, product.getCpe());
+				pstmt.setString(1, product.getCpe());
 				pstmt.executeUpdate();
 				count++;
 			}
@@ -168,57 +203,9 @@ public class DatabaseHelper {
 					"\rInserted: " + count + " of " + total + " products to DB! Skipped: " + (total - count) + " existing ones!");
 			return count;
 		} catch (SQLException e) {
-			logger.error("Error inserting CPEs: {}", e.getMessage());
+			logger.error(e.getMessage());
 			return -1;
 		}
-	}
-
-	/**
-	 * Store affected products in DB
-	 * TODO: This should be in DB Helper
-	 * @param vulnList
-	 */
-	public void insertAffectedProductsToDB(List<CompositeVulnerability> vulnList, Map<String, Product> productMap) {
-		logger.info("Inserting found products to DB!");
-		final int count = insertNewCpeItemsIntoDatabase(productMap);
-		logger.info("Successfully inserted {} found products to DB", count);
-
-		// get all identified affected releases
-		List<AffectedRelease> listAllAffectedReleases = new ArrayList<>();
-		for (CompositeVulnerability vulnerability : vulnList) {
-			if (vulnerability.getCveReconcileStatus() == CompositeVulnerability.CveReconcileStatus.DO_NOT_CHANGE)
-				continue; // skip the ones that are not changed!
-			listAllAffectedReleases.addAll(vulnerability.getAffectedReleases());
-		}
-
-		logger.info("Inserting Affected Releases to DB!");
-		// delete existing affected release info in db ( for CVEs in the list)
-		databaseHelper.deleteAffectedReleases(listAllAffectedReleases);
-
-		// now insert affected releases (referenced products are already in db)
-		databaseHelper.insertAffectedReleasesV2(listAllAffectedReleases);
-
-//		// prepare CVE summary table for Web UI
-//		// TODO: This should be in NVIPMAIN
-//		logger.info("Preparing CVE summary table for Web UI...");
-//		PrepareDataForWebUi cveDataForWebUi = new PrepareDataForWebUi();
-//		cveDataForWebUi.prepareDataforWebUi();
-
-		databaseHelper.shutdown();
-	}
-
-	/**
-	 * insert CPE products identified by the loader into the database
-	 * TODO: Should be in DB Helper
-	 */
-	private int insertNewCpeItemsIntoDatabase(Map<String, Product> productMap) {
-		try {
-			return insertCpeProducts(productMap);
-		} catch (Exception e) {
-			logger.error("Error while adding " + productMap.size() + " new products!");
-			return -1;
-		}
-
 	}
 
 	/**
