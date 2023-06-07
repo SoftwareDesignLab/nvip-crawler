@@ -54,7 +54,8 @@ public class CpeLookUp {
 
 	// Regex101: https://regex101.com/r/9uaTQb/1
 	private static final Pattern CPE_PATTERN = Pattern.compile("cpe:2\\.3:[aho\\*\\-]:([^:]*):([^:]*):([^:]*):.*");
-//	private static final String versionRegex = "(\\d+\\.(?:\\d+\\.)*\\d+)";
+	// Regex101: https://regex101.com/r/cy9Hp3/1
+	private static final Pattern VERSION_PATTERN = Pattern.compile("^((?:[0-9]\\.?)*)$");
 
 	/**
 	 * A hash map of <CPE, Domain>
@@ -388,42 +389,45 @@ public class CpeLookUp {
 		} else {
 			for (CPEGroupFromMap selectedGroup : selectedGroups) {
 
+				// Get versions from group
 				HashMap<String, CpeEntry> groupVersions = selectedGroup.getCpeGroup().getVersions();
 
-				for (int j = 0; j < product.getVersions().size(); j++) {
-//					String[] versionWords = WhitespaceTokenizer.INSTANCE.tokenize(product.getVersions().get(j).toLowerCase());
-					String[] versionWords = product.getVersions() // Get product versions
-							.stream().map(String::toLowerCase) // Map each element toLowerCase
-							.toArray(String[]::new); // Return elements in a String[]
+				// Get raw version words array
+				String[] versionWords = product.getVersions() // Get product versions
+						.stream().map(String::toLowerCase) // Map each element toLowerCase
+						.toArray(String[]::new); // Return elements in a String[]
 
-					int matchesCounter = 0;
+				// Process non-specific versions
+				// [ "1.2.2", "through", "1.3", "1.5", "before", "1.8.9" ]
+				// [ "1.2.2", "1.2.3", ... "1.3", 1.5, "1.8.0", ... "1.8.9" ]
+				versionWords = processVersions(versionWords);
 
-					// try to find version using a hashmap key
-					for (String versionWord : versionWords) {
-						CpeEntry cpeEntry = groupVersions.get(versionWord);
+				int matchesCounter = 0;
 
-						if (cpeEntry != null) {
-							matchesCounter++;
-							cpeIDs.add(cpeEntry.getCpeID());
-							productsToAdd.add(new Product(cpeEntry.getTitle(), cpeEntry.getCpeID()));
-						}
+				// try to find version using a hashmap key
+				for (String versionWord : versionWords) {
+					CpeEntry cpeEntry = groupVersions.get(versionWord);
+
+					if (cpeEntry != null) {
+						matchesCounter++;
+						cpeIDs.add(cpeEntry.getCpeID());
+						productsToAdd.add(new Product(cpeEntry.getTitle(), cpeEntry.getCpeID()));
 					}
+				}
 
-					// look in the titles if did not find versions in the previous step
-					if (matchesCounter == 0) {
-						for (Map.Entry<String, CpeEntry> entry : groupVersions.entrySet()) {
-							String entryTitle = entry.getValue().getTitle().toLowerCase();
+				// look in the titles if did not find versions in the previous step
+				if (matchesCounter == 0) {
+					for (Map.Entry<String, CpeEntry> entry : groupVersions.entrySet()) {
+						String entryTitle = entry.getValue().getTitle().toLowerCase();
 
-							for (String versionWord : versionWords) {
-								if (entryTitle.contains(versionWord)) {
-									cpeIDs.add(entry.getValue().getCpeID());
-									productsToAdd.add(new Product(entry.getValue().getTitle(), entry.getValue().getCpeID()));
-									break;
-								}
+						for (String versionWord : versionWords) {
+							if (entryTitle.contains(versionWord)) {
+								cpeIDs.add(entry.getValue().getCpeID());
+								productsToAdd.add(new Product(entry.getValue().getTitle(), entry.getValue().getCpeID()));
+								break;
 							}
 						}
 					}
-
 				}
 			}
 
@@ -503,5 +507,82 @@ public class CpeLookUp {
 		else logger.warn("Could not match CPE String {}", cpeID);
 
 		return vendor;
+	}
+
+	// TODO: Integrate ProductVersion class
+	private String[] processVersions(String[] versions) {
+		// Init output
+		final ArrayList<String> processedVersions = new ArrayList<>();
+
+		// Iterate over versions
+		String lastVersion = null;
+		for (int i = 0; i < versions.length; i++) {
+			String version = versions[i];
+			// If version is version, add it
+			if (isVersion(version)) processedVersions.add(version);
+			else {
+				// Ensure next element exists
+				if (i + 1 >= versions.length) {
+					logger.warn("Non-version '{}' is the last version to process and has no succeeding element to reference", version);
+					continue;
+				}
+
+				// Get next element
+				final String nextVersion = versions[i+1];
+
+				// Split version on "."
+				final String[] versionParts = nextVersion.split("\\.");
+
+				// Get base version (1.2.3 -> 1.2)
+				final String baseVersion = String.join(".", Arrays.copyOfRange(versionParts, 0, versionParts.length - 1));
+
+				// Get version endpoint
+				final int versionEndpoint = Integer.parseInt(versionParts[versionParts.length - 1]);
+
+				// Ensure next element is a valid version
+				if(!isVersion(nextVersion)) logger.warn("Warning: 'before' keyword followed by an invalid version '{}'", nextVersion);
+
+				if (version.contains("before")) { // If "before"
+					// Add elements within range to processedVersions
+					for (int j = versionEndpoint; j >= 0; j--) {
+						processedVersions.add(baseVersion + "." + j);
+					}
+				} else if (version.contains("after")) { // If "after"
+					// Add elements within range to processedVersions
+					for (int j = versionEndpoint; j < 10; j--) {
+						processedVersions.add(baseVersion + "." + j);
+					}
+				} else if (version.contains("through")) { // If "through"
+					// Ensure previous element is a valid version
+					if(!isVersion(lastVersion)) logger.warn("Warning: 'before' keyword followed by an invalid version '{}'", nextVersion);
+
+					// Split version on "."
+					final String[] lastVersionParts = nextVersion.split("\\.");
+
+					// Get base version (1.2.3 -> 1.2)
+					final String lastBaseVersion = String.join(".", Arrays.copyOfRange(lastVersionParts, 0, lastVersionParts.length - 1));
+
+					// Get version endpoint
+					final int lastVersionEndpoint = Integer.parseInt(lastVersionParts[lastVersionParts.length - 1]);
+
+					// Add elements within range to processedVersions
+					for (int j = versionEndpoint; j < 10; j--) {
+						processedVersions.add(baseVersion + "." + j);
+					}
+				} else {
+
+				}
+			}
+
+			// Store last version value
+			lastVersion = version;
+		}
+
+		return processedVersions.toArray(new String[0]);
+	}
+
+	private boolean isVersion(String version) {
+		if(version.contains(",")) logger.warn("VERSION '{}' CONTAINED UNEXPECTED CHARACTER ','", version);
+		return VERSION_PATTERN.matcher(version).matches();
 	}
 }
