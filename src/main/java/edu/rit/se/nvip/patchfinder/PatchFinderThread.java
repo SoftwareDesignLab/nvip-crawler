@@ -29,6 +29,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import edu.rit.se.nvip.db.DatabaseHelper;
+import edu.rit.se.nvip.patchfinder.commits.PatchCommit;
 import edu.rit.se.nvip.patchfinder.commits.PatchCommitScraper;
 import edu.rit.se.nvip.utils.GitController;
 import org.apache.logging.log4j.LogManager;
@@ -36,14 +37,16 @@ import org.apache.logging.log4j.Logger;
 
 /**
  * Runnable thread class for multithreaded patch finder
+ *
+ * Used for finding patches from sources defined in a provided list
  */
 public class PatchFinderThread implements Runnable {
 	private final HashMap<String, ArrayList<String>> cvePatchEntry;
 	private final String clonePath;
 	private static final Logger logger = LogManager.getLogger(PatchFinder.class.getName());
 	private PatchCommitScraper previous;
-	private static final DatabaseHelper db = DatabaseHelper.getInstance();
 	private final PatchFinder patchDownloader;
+	private final ArrayList<PatchCommit> foundPatchCommits = new ArrayList<>();
 
 	/**
 	 * Thread object used for multithreaded patchfinding
@@ -62,12 +65,18 @@ public class PatchFinderThread implements Runnable {
 	 */
 	@Override
 	public void run() {
+
+		// For each CVE, iterate through the list of possible patch sources and
+		// Clone/Scrape the repo for patch commits (if any)
 		for (String cve : cvePatchEntry.keySet()) {
 			for (String patchSource: cvePatchEntry.get(cve)) {
 				try {
 					GitController gitController = new GitController(clonePath, patchSource+".git");
 					gitController.cloneRepo();
-					Map<Date, ArrayList<String>> commits = repo.parseCommits(cve);
+					PatchCommitScraper commitScraper = new PatchCommitScraper(clonePath);
+					Map<Date, ArrayList<String>> commits = commitScraper.parseCommits(cve);
+					this.foundPatchCommits.addAll(commits);
+
 					if (commits.isEmpty()) {
 						patchDownloader.deletePatchSource(source.getValue());
 					} else {

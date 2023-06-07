@@ -152,11 +152,14 @@ public class NVIPMain {
 		// Patch Collection
 		if (Boolean.parseBoolean(System.getenv("PATCHFINDER_ENABLED"))) {
 			// Parse for patches and store them in the database
-			PatchUrlFinder patchFinder = new PatchUrlFinder();
+			PatchUrlFinder patchURLFinder = new PatchUrlFinder();
 			Map<String, ArrayList<String>> cpes = databaseHelper.getCPEsAndCVE();
-			Map<String, ArrayList<String>> possiblePatchURLs = patchFinder.parseMassURLs(cpes);
-			ArrayList<PatchCommit> patchCommits = patchFinder.findPatches();
-			PatchFinder jGitCVEPatchDownloader = new PatchFinder();
+			Map<String, ArrayList<String>> possiblePatchURLs = patchURLFinder.parseMassURLs(cpes);
+			PatchFinder patchfinder = new PatchFinder();
+
+			// repos will be cloned to patch-repos directory, multi-threaded 6 threads.
+			ArrayList<PatchCommit> patchCommits = patchfinder.findPatchesMultiThreaded(possiblePatchURLs, "patch-repos", 10);
+
 			// TODO: Patchfinder rework
 			//  1.) Get CVEs and their CPEs (DONE)
 			//  2.) For each CVE, try to make a repo URL from the product name, vendor, version of each CPE
@@ -167,8 +170,6 @@ public class NVIPMain {
 
 
 
-			// repos will be cloned to patch-repos directory, multi-threaded 6 threads.
-			jGitCVEPatchDownloader.findPatchesMultiThreaded(possiblePatchURLs, "patch-repos", 10);
 		}
 
 		logger.info("Done!");

@@ -43,7 +43,7 @@ import edu.rit.se.nvip.patchfinder.commits.PatchCommitScraper;
 
 /**
  * Main class for collecting CVE Patches within repos that were
- * previously collected from the PatchFinder class
+ * previously collected from the PatchURLFinder class
  *
  * TODO: Refactor to see if we need this, there should only be 1 parse method
  */
@@ -76,33 +76,35 @@ public final class PatchFinder {
 
 		logger.info(maxThreads + " available processors found");
 
-		ExecutorService es = Executors.newCachedThreadPool();
+
 		ArrayList<HashMap<String, ArrayList<String>>> sourceBatches = new ArrayList<>();
 
+		// Initialize patchfinder threads
 		for (int i=0; i < maxThreads; i++) {
 			sourceBatches.add(new HashMap<>());
 		}
 
+		ExecutorService es = Executors.newFixedThreadPool(breaker);
+		// Divide cves equally amongst all threads, some threads may
+		// have more sources based on their CVEs provided
 		int numSourcesAdded = 1;
 		int thread = 0;
 		for (String source : possiblePatchSources.keySet()) {
 			sourceBatches.get(thread).put(source, possiblePatchSources.get(source));
 			numSourcesAdded++;
 			if (numSourcesAdded % breaker == 0 && thread < maxThreads - 1) {
+				es.execute(new PatchFinderThread(sourceBatches.get(thread), clonePath, this));
 				thread++;
 			}
 		}
-
-		for (int k = 0; k < maxThreads; k++) {
-			es.submit(new Thread(new PatchFinderThread(sourceBatches.get(k), clonePath, this), "Thread - " + k));
-		}
+		
 		es.shutdown();
 		return null;
 	}
 
 
 	/**
-	 * Extract Method used for pulling commit data from a repo vi a source link and
+	 * Extract Method used for pulling commit data from a repo via source link and
 	 * parsing commits for any commits related to CVEs
 	 * 
 	 * @param sourceURL
@@ -170,11 +172,8 @@ public final class PatchFinder {
 	 */
 	public void deletePatchSource(String sourceURL) {
 		logger.info("Deleting patch from database...");
-
 		try {
-
 			int id = db.getPatchSourceId(sourceURL);
-
 			if (id != -1) {
 				// Delete Patch Entry
 				db.deleteCommits(id);
