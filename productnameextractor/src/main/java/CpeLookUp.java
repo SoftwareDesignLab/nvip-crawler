@@ -32,6 +32,7 @@ import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import model.ProductVersion;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -512,25 +513,25 @@ public class CpeLookUp {
 	}
 
 	// TODO: Integrate ProductVersion class
-	private String[] processVersions(String[] versions) {
+	private String[] processVersions(String[] versionWords) {
 		// Init output
 		final ArrayList<String> processedVersions = new ArrayList<>();
 
 		// Iterate over versions
 		String lastVersion = null;
-		for (int i = 0; i < versions.length; i++) {
-			String version = versions[i];
+		for (int i = 0; i < versionWords.length; i++) {
+			String version = versionWords[i];
 			// If version is version, add it
 			if (isVersion(version)) processedVersions.add(version);
 			else {
 				// Ensure next element exists
-				if (i + 1 >= versions.length) {
+				if (i + 1 >= versionWords.length) {
 					logger.warn("Non-version '{}' is the last version to process and has no succeeding element to reference", version);
 					continue;
 				}
 
 				// Get next element
-				final String nextVersion = versions[i+1];
+				final String nextVersion = versionWords[i+1];
 
 				// Split version on "."
 				final String[] versionParts = nextVersion.split("\\.");
@@ -545,16 +546,15 @@ public class CpeLookUp {
 				if(!isVersion(nextVersion)) logger.warn("Warning: 'before' keyword followed by an invalid version '{}'", nextVersion);
 
 				if (version.contains("before")) { // If "before"
-					// Add elements within range to processedVersions
-					for (int j = versionEndpoint; j >= 0; j--) {
-						processedVersions.add(baseVersion + "." + j);
-					}
+
 				} else if (version.contains("after")) { // If "after"
-					// Add elements within range to processedVersions
-					for (int j = versionEndpoint; j < 10; j--) {
-						processedVersions.add(baseVersion + "." + j);
-					}
+
 				} else if (version.contains("through")) { // If "through"
+					// TODO: VERSIONS
+//					ProductVersionManager m = new ProductVersionManager();
+//					m.addRange(new ProductVersion(nextVersion), new ProductVersion(lastVersion));
+
+
 					// Ensure previous element is a valid version
 					if(!isVersion(lastVersion)) logger.warn("Warning: 'before' keyword followed by an invalid version '{}'", nextVersion);
 
