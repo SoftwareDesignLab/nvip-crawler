@@ -25,6 +25,7 @@
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 
 import org.junit.Test;
 
@@ -38,6 +39,17 @@ import static org.junit.Assert.*;
  */
 
 public class NERmodelTest {
+	// Init cpeLookUp
+	private static final CpeLookUp cpeLookUp = new CpeLookUp();
+	static {
+		try {
+			final Map<String, CpeGroup> productDict = ProductNameExtractorController.readProductDict("src/test/resources/data/product_dict.json");
+			cpeLookUp.loadProductDict(productDict);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
 	// ENV VARS
 	final String DATA_DIR = System.getenv("DATA_DIR");
 	final String NAME_EXTRACTOR_DIR = System.getenv("NAME_EXTRACTOR_DIR");
@@ -139,12 +151,10 @@ public class NERmodelTest {
 		
 		DetectProducts nameDetector = null;
 		try {
-			final CpeLookUp cpeLookUp = new CpeLookUp();
 //			final HashMap<String, CpeGroup> products = new HashMap<>();
 //			final CpeGroup group = new CpeGroup("phpmyadmin", "phpmyadmin");
 //			group.addVersion(new CpeEntry("phpmyadmin", "2.11.1.1", "cpe:2.3:a:phpmyadmin:phpmyadmin:2.11.1.1:*:*:*:*:*:*:*"));
 //			products.put("cpe:2.3:a:phpmyadmin:phpmyadmin:2.11.1.1:*:*:*:*:*:*:*", group);
-			cpeLookUp.loadProductDict(null); // TODO: FIX
 			nameDetector = new DetectProducts(cpeLookUp);
 		} catch (IOException e) {
 			fail("Name detector initialization failed");

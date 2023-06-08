@@ -26,8 +26,10 @@
 import model.CompositeVulnerability;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -43,7 +45,7 @@ public class AffectedProductIdentifierTest {
 	 * Test product name extraction for a simple CVE
 	 */
 	@Test
-	public void affectedProductIdentifierTest() {
+	public void affectedProductIdentifierTest() { // TODO: FIX TEST
 		String description = "A relative path traversal vulnerability has been reported to affect QNAP NAS running QTS and QuTS hero. If exploited, this vulnerability allows attackers to modify files that impact system integrity. QNAP have already fixed this vulnerability in the following versions: QTS 4.5.2.1630 Build 20210406 and later QTS 4.3.6.1663 Build 20210504 and later QTS 4.3.3.1624 Build 20210416 and later QuTS hero h4.5.2.1638 Build 20210414 and later QNAP NAS running QTS 4.5.3 are not affected";
 		List<CompositeVulnerability> vulnList = new ArrayList<>();
 		CompositeVulnerability v = new CompositeVulnerability(0, null, "CVE-2021-28798", "", null, null, description, null);
@@ -51,6 +53,15 @@ public class AffectedProductIdentifierTest {
 		vulnList.add(v);
 
 		AffectedProductIdentifier affectedProductIdentifier = new AffectedProductIdentifier(vulnList);
+		// Init cpeLookUp
+		try {
+			final Map<String, CpeGroup> productDict = ProductNameExtractorController.readProductDict("src/test/resources/data/product_dict.json");
+			affectedProductIdentifier.loadCPEDict(productDict);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+
+		// Identify releases
 		affectedProductIdentifier.identifyAffectedReleases(100);
 
 		System.out.println(v.getAffectedReleases());
