@@ -105,8 +105,8 @@ public final class PatchFinder {
 		// have more sources based on their CVEs provided
 		int numSourcesAdded = 1;
 		int thread = 0;
-		for (String source : possiblePatchSources.keySet()) {
-			sourceBatches.get(thread).put(source, possiblePatchSources.get(source));
+		for (String cveId : possiblePatchSources.keySet()) {
+			sourceBatches.get(thread).put(cveId, possiblePatchSources.get(cveId));
 			numSourcesAdded++;
 			if (numSourcesAdded % limitCvePerThread == 0 && thread < maxThreads - 1) {
 				es.execute(new PatchFinderThread(sourceBatches.get(thread), clonePath, this));

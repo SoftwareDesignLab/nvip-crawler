@@ -68,7 +68,7 @@ public class PatchFinderThread implements Runnable {
 				try {
 					// Clone git repo
 					GitController gitController = new GitController(clonePath, patchSource+".git");
-					gitController.cloneRepo();
+					gitController.cloneRepo(cve);
 
 					// Find patch commits
 					PatchCommitScraper commitScraper = new PatchCommitScraper(clonePath, patchSource);

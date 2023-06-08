@@ -77,12 +77,12 @@ public class GitController {
 	 * 
 	 * @return
 	 */
-	public boolean cloneRepo() {
+	public boolean cloneRepo(String subLocation) {
 		Git git = null;
 		File localFileDir;
 		try {
 			logger.info("{} repository does not exist! Cloning repo now, this will take some time, please wait!...", localPath);
-			localFileDir = new File(localPath);
+			localFileDir = new File(localPath + File.separator + subLocation);
 			CloneCommand cloneCommand = Git.cloneRepository();
 			cloneCommand.setURI(remotePath);
 			cloneCommand.setDirectory(localFileDir);
@@ -96,7 +96,7 @@ public class GitController {
 			config.setString("remote", "origin", "url", remotePath);
 			config.save();
 		} catch (Exception e) {
-			logger.error("Error while cloning repo at: " + remotePath + ", " + e.toString());
+			logger.error("Error while cloning repo at: {}\n{}", remotePath, e);
 			return false;
 		} finally {
 			git.close();
