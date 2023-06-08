@@ -28,7 +28,6 @@ import java.net.URL;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -37,7 +36,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import model.Product;
-import utils.*;
 import opennlp.tools.tokenize.WhitespaceTokenizer;
 
 /**
@@ -55,8 +53,6 @@ public class CpeLookUp {
 
 	// Regex101: https://regex101.com/r/9uaTQb/1
 	private static final Pattern CPE_PATTERN = Pattern.compile("cpe:2\\.3:[aho\\*\\-]:([^:]*):([^:]*):([^:]*):.*");
-	// Regex101: https://regex101.com/r/cy9Hp3/1
-	private static final Pattern VERSION_PATTERN = Pattern.compile("^((?:[0-9]\\.?)*)$");
 
 	/**
 	 * A hash map of <CPE, Domain>
@@ -68,7 +64,8 @@ public class CpeLookUp {
 	 * map.values();
 	 */
 	private final Map<String, Product> productsToBeAddedToDatabase;
-	private final static Logger logger = LogManager.getLogger(UtilHelper.class);
+	private final static Logger logger = LogManager.getLogger(CpeLookUp.class);
+	private final static VersionManager versionManager = new VersionManager();
 
 	/**
 	 * Class that has CPE groups with matching score and can be sorted
@@ -391,31 +388,45 @@ public class CpeLookUp {
 			for (CPEGroupFromMap selectedGroup : selectedGroups) {
 
 				// Get versions from group
-				HashMap<String, CpeEntry> groupVersions = selectedGroup.getCpeGroup().getVersions();
+				final CpeGroup group = selectedGroup.getCpeGroup();
+				final HashMap<String, CpeEntry> groupVersions = group.getVersions();
 
 				// Get raw version words array
 				String[] versionWords = product.getVersions() // Get product versions
 						.stream().map(String::toLowerCase) // Map each element toLowerCase
 						.toArray(String[]::new); // Return elements in a String[]
 
-				// Process non-specific versions
+				// Process non-specific versions into enumerated ranges
 				// [ "1.2.2", "through", "1.3", "1.5", "before", "1.8.9" ]
 				// [ "1.2.2", "1.2.3", ... "1.3", 1.5, "1.8.0", ... "1.8.9" ]
-				versionWords = processVersions(versionWords);
+				versionManager.processVersions(versionWords);
 
+				// Init counter for matching CpeGroups
 				int matchesCounter = 0;
 
-				// try to find version using a hashmap key
-				for (String versionWord : versionWords) {
-					CpeEntry cpeEntry = groupVersions.get(versionWord);
+				// Iterate over groupVersions map to check for affected CpeEntries
+				for (Map.Entry<String, CpeEntry> gv : groupVersions.entrySet()) {
+					final String versionKey = gv.getKey();
+					final CpeEntry entryValue = gv.getValue();
 
-					if (cpeEntry != null) {
+					if(versionManager.isAffected(new ProductVersion(versionKey))) {
 						matchesCounter++;
-						String cpeName = "cpe:2.3:a:" + selectedGroups.get(0).getCpeGroup().getGroupID() + ":" + versionWord + ":*:*:*:*:*:*:*";
-						cpeIDs.add(cpeName);
-						productsToAdd.add(new Product(selectedGroups.get(0).getCpeGroup().getCommonTitle(), cpeName));
+						cpeIDs.add(entryValue.getCpeID());
+						productsToAdd.add(new Product(group.getCommonTitle(), entryValue.getCpeID()));
 					}
 				}
+
+//				// try to find version using a hashmap key
+//				for (String versionWord : versionWords) {
+//					CpeEntry cpeEntry = groupVersions.get(versionWord);
+//
+//					if (cpeEntry != null) {
+//						matchesCounter++;
+//						String cpeName = "cpe:2.3:a:" + selectedGroups.get(0).getCpeGroup().getGroupID() + ":" + versionWord + ":*:*:*:*:*:*:*";
+//						cpeIDs.add(cpeName);
+//						productsToAdd.add(new Product(selectedGroups.get(0).getCpeGroup().getCommonTitle(), cpeName));
+//					}
+//				}
 
 				// look in the titles if did not find versions in the previous step
 				if (matchesCounter == 0) {
@@ -510,81 +521,5 @@ public class CpeLookUp {
 		else logger.warn("Could not match CPE String {}", cpeID);
 
 		return vendor;
-	}
-
-	// TODO: Integrate ProductVersion class
-	private String[] processVersions(String[] versionWords) {
-		// Init output
-		final ArrayList<String> processedVersions = new ArrayList<>();
-
-		// Iterate over versions
-		String lastVersion = null;
-		for (int i = 0; i < versionWords.length; i++) {
-			String version = versionWords[i];
-			// If version is version, add it
-			if (isVersion(version)) processedVersions.add(version);
-			else {
-				// Ensure next element exists
-				if (i + 1 >= versionWords.length) {
-					logger.warn("Non-version '{}' is the last version to process and has no succeeding element to reference", version);
-					continue;
-				}
-
-				// Get next element
-				final String nextVersion = versionWords[i+1];
-
-				// Split version on "."
-				final String[] versionParts = nextVersion.split("\\.");
-
-				// Get base version (1.2.3 -> 1.2)
-				final String baseVersion = String.join(".", Arrays.copyOfRange(versionParts, 0, versionParts.length - 1));
-
-				// Get version endpoint
-				final int versionEndpoint = Integer.parseInt(versionParts[versionParts.length - 1]);
-
-				// Ensure next element is a valid version
-				if(!isVersion(nextVersion)) logger.warn("Warning: 'before' keyword followed by an invalid version '{}'", nextVersion);
-
-				if (version.contains("before")) { // If "before"
-
-				} else if (version.contains("after")) { // If "after"
-
-				} else if (version.contains("through")) { // If "through"
-					// TODO: VERSIONS
-//					ProductVersionManager m = new ProductVersionManager();
-//					m.addRange(new ProductVersion(nextVersion), new ProductVersion(lastVersion));
-
-
-					// Ensure previous element is a valid version
-					if(!isVersion(lastVersion)) logger.warn("Warning: 'before' keyword followed by an invalid version '{}'", nextVersion);
-
-					// Split version on "."
-					final String[] lastVersionParts = nextVersion.split("\\.");
-
-					// Get base version (1.2.3 -> 1.2)
-					final String lastBaseVersion = String.join(".", Arrays.copyOfRange(lastVersionParts, 0, lastVersionParts.length - 1));
-
-					// Get version endpoint
-					final int lastVersionEndpoint = Integer.parseInt(lastVersionParts[lastVersionParts.length - 1]);
-
-					// Add elements within range to processedVersions
-					for (int j = versionEndpoint; j < 10; j--) {
-						processedVersions.add(baseVersion + "." + j);
-					}
-				} else {
-
-				}
-			}
-
-			// Store last version value
-			lastVersion = version;
-		}
-
-		return processedVersions.toArray(new String[0]);
-	}
-
-	private boolean isVersion(String version) {
-		if(version.contains(",")) logger.warn("VERSION '{}' CONTAINED UNEXPECTED CHARACTER ','", version);
-		return VERSION_PATTERN.matcher(version).matches();
 	}
 }
