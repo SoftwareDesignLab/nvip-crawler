@@ -56,7 +56,7 @@ public class DatabaseHelper {
 	private final String getProductCountFromCpeSql = "SELECT count(*) from affectedproduct where cpe = ?";
 	private final String getIdFromCpe = "SELECT * FROM affectedproduct where cpe = ?;";
 
-	private final String insertAffectedReleaseSql = "INSERT INTO affectedproduct (cve_id, cpe, product_name, release_date, version, vendor, purl, swid_tag) VALUES (?, ?, ?, ?, ?, ?, ?);";
+	private final String insertAffectedReleaseSql = "INSERT INTO affectedproduct (cve_id, cpe, product_name, release_date, version, vendor, purl, swid_tag) VALUES (?, ?, ?, ?, ?, ?, ?, ?);";
 
 	private static DatabaseHelper databaseHelper = null;
 	private static Map<String, CompositeVulnerability> existingCompositeVulnMap = new HashMap<>();
@@ -209,7 +209,6 @@ public class DatabaseHelper {
 
 	/**
 	 * insert CPE products identified by the loader into the database
-	 * TODO: Should be in DB Helper
 	 */
 	private int insertNewCpeItemsIntoDatabase(Map<String, Product> productMap) {
 		try {
@@ -274,7 +273,9 @@ public class DatabaseHelper {
 					pstmt.setString(5, affectedRelease.getVersion());
 					pstmt.setString(6, affectedRelease.getVendor());
 					pstmt.setString(7, affectedRelease.getPURL(productName));
-					pstmt.setString(8, affectedRelease.getSWID(productName));
+					String swid = affectedRelease.getSWID(productName);
+					System.out.println("Adding swid... " + swid);
+					pstmt.setString(8, swid);
 
 					count += pstmt.executeUpdate();
 //					logger.info("Added {} as an affected release for {}", prodId, affectedRelease.getCveId());

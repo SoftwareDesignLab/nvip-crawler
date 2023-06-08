@@ -169,7 +169,7 @@
             <column name="purl" type="TINYTEXT">
                 <constraints nullable="true"/>
             </column>
-            <column name="swid_tag" type="TINYTEXT">
+            <column name="swid_tag" type="VARCHAR(1000)">
                 <constraints nullable="true"/>
             </column>
         </createTable>

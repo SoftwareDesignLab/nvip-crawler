@@ -29,7 +29,7 @@
 
     <changeSet author="richard" id="modify_swid_tag_column">
         <addColumn tableName="affectedproduct">
-            <column name="swid_tag" type="TINYTEXT">
+            <column name="swid_tag" type="VARCHAR(1000)">
                 <constraints nullable="true"/>
             </column>
         </addColumn>
