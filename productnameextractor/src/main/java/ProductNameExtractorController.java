@@ -54,24 +54,55 @@ public class ProductNameExtractorController {
         // Init ObjectMapper
         final ObjectMapper OM = new ObjectMapper();
 
-        // Fetch the CPE dict from NVD's CPE API
+        // Init CPE dict data storage
+        LinkedHashMap<String, LinkedHashMap> rawProductDict;
         Map<String, CpeGroup> productDict;
 
-//        try {
-//            productDict = OM.readValue(Paths.get(productDictPath).toFile(), Map.class);
-//            affectedProductIdentifier.loadCPEDict(productDict);
-//        } catch (Exception e) {
-//            logger.error("Failed to load product dict at filepath '{}', querying NVD...: {}", productDictPath, e.toString());
-//        productDict = affectedProductIdentifier.loadCPEDict(maxPages, maxAttemptsPerPage);
-//
-//            // Write CPE dict to file
-//            try {
-//                OM.writeValue(new File(productDictPath), productDict);
-//            } catch (IOException ioe) {
-//                logger.error("Error writing product dict to filepath '{}': {}", productDictPath, ioe.toString());
-//            }
-//        }
-        productDict = affectedProductIdentifier.loadCPEDict(maxPages, maxAttemptsPerPage);
+        try {
+            // Read in data
+            rawProductDict = OM.readValue(Paths.get(productDictPath).toFile(), LinkedHashMap.class);
+
+            // Init CPE dict
+            productDict = new LinkedHashMap<>();
+
+            // Process into CpeGroups/GpeEntries
+            for (Map.Entry<String, LinkedHashMap> entry : rawProductDict.entrySet()) {
+                final String key = entry.getKey();
+                LinkedHashMap value = entry.getValue();
+
+                final String vendor = (String) value.get("vendor");
+                final String product = (String) value.get("product");
+                final String commonTitle = (String) value.get("commonTitle");
+                final LinkedHashMap<String, LinkedHashMap> rawVersions = (LinkedHashMap<String, LinkedHashMap>) value.get("versions");
+                final HashMap<String, CpeEntry> versions = new HashMap<>();
+                for (Map.Entry<String, LinkedHashMap> versionEntry : rawVersions.entrySet()) {
+                    final LinkedHashMap versionValue = versionEntry.getValue();
+                    final String title = (String) versionValue.get("title");
+                    final String version = (String) versionValue.get("version");
+                    final String update = (String) versionValue.get("update");
+                    final String cpeID = (String) versionValue.get("cpeID");
+                    final String platform = (String) versionValue.get("platform");
+                    versions.put(version, new CpeEntry(title, version, update, cpeID, platform));
+                }
+
+
+                productDict.put(key, new CpeGroup(vendor, product, commonTitle, versions));
+            }
+
+
+            // Load CPE dict
+            affectedProductIdentifier.loadCPEDict(productDict);
+        } catch (Exception e) {
+            logger.error("Failed to load product dict at filepath '{}', querying NVD...: {}", productDictPath, e.toString());
+            productDict = affectedProductIdentifier.loadCPEDict(maxPages, maxAttemptsPerPage);
+
+            // Write CPE dict to file
+            try {
+                OM.writeValue(new File(productDictPath), productDict);
+            } catch (IOException ioe) {
+                logger.error("Error writing product dict to filepath '{}': {}", productDictPath, ioe.toString());
+            }
+        }
 
         // Run the AffectedProductIdentifier with the fetched vuln list
         final Map<String, Product> productMap = affectedProductIdentifier.identifyAffectedReleases(cveLimit);

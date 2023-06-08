@@ -273,9 +273,7 @@ public class DatabaseHelper {
 					pstmt.setString(5, affectedRelease.getVersion());
 					pstmt.setString(6, affectedRelease.getVendor());
 					pstmt.setString(7, affectedRelease.getPURL(productName));
-					String swid = affectedRelease.getSWID(productName);
-					System.out.println("Adding swid... " + swid);
-					pstmt.setString(8, swid);
+					pstmt.setString(8, affectedRelease.getSWID(productName));
 
 					count += pstmt.executeUpdate();
 //					logger.info("Added {} as an affected release for {}", prodId, affectedRelease.getCveId());
