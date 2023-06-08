@@ -409,10 +409,15 @@ public class CpeLookUp {
 					final String versionKey = gv.getKey();
 					final CpeEntry entryValue = gv.getValue();
 
-					if(versionManager.isAffected(new ProductVersion(versionKey))) {
-						matchesCounter++;
-						cpeIDs.add(entryValue.getCpeID());
-						productsToAdd.add(new Product(group.getCommonTitle(), entryValue.getCpeID()));
+					try {
+						final ProductVersion version = new ProductVersion(versionKey);
+						if(versionManager.isAffected(version)) {
+							matchesCounter++;
+							cpeIDs.add(entryValue.getCpeID());
+							productsToAdd.add(new Product(group.getCommonTitle(), entryValue.getCpeID()));
+						}
+					} catch (NumberFormatException e) {
+						logger.error("Error parsing version string '{}': {}", versionKey, e.toString());
 					}
 				}
 
