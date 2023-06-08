@@ -23,6 +23,7 @@
  */
 package edu.rit.se.nvip.patchfinder;
 
+import edu.rit.se.nvip.db.DatabaseHelper;
 import edu.rit.se.nvip.patchfinder.commits.PatchCommit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -46,11 +47,27 @@ public final class PatchFinder {
 
 	private final ArrayList<PatchCommit> patchCommits = new ArrayList<>();
 
-	public static void main(String[] args) throws IOException {
+	public static void main(String[] args) throws IOException, InterruptedException {
 		logger.info("Started Patches Application");
+		DatabaseHelper databaseHelper = DatabaseHelper.getInstance();
 
-		PatchFinder main = new PatchFinder();
-		//main.parse(args);
+		// Parse for patches and store them in the database
+		PatchUrlFinder patchURLFinder = new PatchUrlFinder();
+		Map<String, ArrayList<String>> cpes = databaseHelper.getCPEsAndCVE();
+		Map<String, ArrayList<String>> possiblePatchURLs = patchURLFinder.parseMassURLs(cpes);
+
+		// repos will be cloned to patch-repos directory, multi-threaded 6 threads.
+		PatchFinder patchfinder = new PatchFinder();
+		ArrayList<PatchCommit> patchCommits = patchfinder.findPatchesMultiThreaded(possiblePatchURLs,
+				"patch-repos", 2,10);
+
+		for (PatchCommit patchCommit: patchCommits) {
+			int vulnId = databaseHelper.getVulnIdByCveId(patchCommit.getCveId());
+			databaseHelper.insertPatchSourceURL(vulnId, patchCommit.getCommitUrl());
+			databaseHelper.insertPatchCommit(vulnId, patchCommit.getCommitUrl(), patchCommit.getCommitId(),
+					patchCommit.getCommitDate(), patchCommit.getCommitMessage());
+		}
+
 
 		logger.info("Patches Application Finished!");
 	}
@@ -74,8 +91,6 @@ public final class PatchFinder {
 		logger.info("Applying multi threading...");
 		File dir = new File(clonePath);
 		FileUtils.delete(dir, 1);
-
-		maxThreads = Integer.parseInt(System.getenv("PATCHFINDER_MAX_THREADS"));
 
 		logger.info(maxThreads + " available processors found");
 		ArrayList<HashMap<String, ArrayList<String>>> sourceBatches = new ArrayList<>();
