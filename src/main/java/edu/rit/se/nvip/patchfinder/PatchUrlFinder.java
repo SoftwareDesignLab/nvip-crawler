@@ -73,6 +73,7 @@ public class PatchUrlFinder {
 		for (String cveId: cpes.keySet()) {
 			// break out of loop if limit is reached
 			if (cveCpeUrls.size() > cveLimit) {
+				logger.info("CVE limit of {} reached for patchfinder", cveLimit);
 				break;
 			}
 
