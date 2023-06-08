@@ -872,7 +872,7 @@ public class DatabaseHelperTest {
 
 	@Test
 	public void insertPatchCommitTest() {
-		Date date = new Date();
+		LocalDateTime date = LocalDateTime.of(2000, 12, 12, 12, 12);
 		dbh.insertPatchCommit(2222, "url", "commitid", date, "commitmsg");
 		try {
 			verify(pstmt).setInt(1, 2222);
