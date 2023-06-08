@@ -158,7 +158,9 @@ public class NVIPMain {
 
 			// repos will be cloned to patch-repos directory, multi-threaded 6 threads.
 			PatchFinder patchfinder = new PatchFinder();
-			ArrayList<PatchCommit> patchCommits = patchfinder.findPatchesMultiThreaded(possiblePatchURLs, "patch-repos", 10);
+			ArrayList<PatchCommit> patchCommits = patchfinder.findPatchesMultiThreaded(possiblePatchURLs,
+					(String) patchfinderVars.get("patchFinderClonePath"), (int) patchfinderVars.get("patchCveLimit"),
+					(int) patchfinderVars.get("patchFinderMaxThreads"));
 
 			for (PatchCommit patchCommit: patchCommits) {
 				int vulnId = databaseHelper.getVulnIdByCveId(patchCommit.getCveId());
@@ -322,17 +324,21 @@ public class NVIPMain {
 	 */
 	private void preparePatchFinderVars() {
 		String enablePatchFinder = System.getenv("PATCHFINDER_ENABLED");
-		String patchSourceLimit = System.getenv("PATCHFINDER_SOURCE_LIMIT");
-		String patchfinderMaxThreads = System.getenv("PATCHFINDER_MAX_THREADS");
+		String patchFinderClonePath = System.getenv("PATCHFINDER_CLONE_PATH");
+		String patchCveLimit = System.getenv("PATCHFINDER_CVE_LIMIT");
+		String patchFinderMaxThreads = System.getenv("PATCHFINDER_MAX_THREADS");
 
 		addEnvvarBool(NVIPMain.patchfinderVars,"enablePatchFinder", enablePatchFinder, true,
 				"WARNING: PatchFinder Enabling not defined in PATCHFINDER_ENABLED, allowing patchfinder by default");
 
-		addEnvvarInt(NVIPMain.patchfinderVars,"patchSourceLimit", patchSourceLimit, 10,
-				"WARNING: PatchFinder Source Limit not defined in PATCHFINDER_SOURCE_LIMIT, using 10 as default value",
-				"PATCHFINDER_SOURCE_LIMIT");
+		addEnvvarString(NVIPMain.patchfinderVars, "patchFinderClonePath", patchFinderClonePath, "patch-repos",
+				"WARNING: PatchFinder Clone Path not defined in PATCHFINDER_CLONE_PATH, using 'patch-repos' by default");
 
-		addEnvvarInt(NVIPMain.patchfinderVars,"patchfinderMaxThreads", patchfinderMaxThreads, 10,
+		addEnvvarInt(NVIPMain.patchfinderVars,"patchCveLimit", patchCveLimit, 2,
+				"WARNING: PatchFinder CVE Limit not defined in PATCHFINDER_CVE_LIMIT, using 2 as default value",
+				"PATCHFINDER_CVE_LIMIT");
+
+		addEnvvarInt(NVIPMain.patchfinderVars,"patchFinderMaxThreads", patchFinderMaxThreads, 10,
 				"WARNING: Maximum PatchFinder Threads not defined in PATCHFINDER_MAX_THREADS, using 10 as default value",
 				"PATCHFINDER_MAX_THREADS");
 	}

@@ -69,12 +69,13 @@ public final class PatchFinder {
 	 * @param clonePath
 	 * @throws IOException
 	 */
-	public ArrayList<PatchCommit> findPatchesMultiThreaded(Map<String, ArrayList<String>> possiblePatchSources, String clonePath, int breaker) throws IOException {
+	public ArrayList<PatchCommit> findPatchesMultiThreaded(Map<String, ArrayList<String>> possiblePatchSources, String clonePath,
+														   int maxThreads, int limitCvePerThread) throws IOException {
 		logger.info("Applying multi threading...");
 		File dir = new File(clonePath);
 		FileUtils.delete(dir, 1);
 
-		int maxThreads = Integer.parseInt(System.getenv("PATCHFINDER_MAX_THREADS"));
+		maxThreads = Integer.parseInt(System.getenv("PATCHFINDER_MAX_THREADS"));
 
 		logger.info(maxThreads + " available processors found");
 		ArrayList<HashMap<String, ArrayList<String>>> sourceBatches = new ArrayList<>();
@@ -84,7 +85,7 @@ public final class PatchFinder {
 			sourceBatches.add(new HashMap<>());
 		}
 
-		ExecutorService es = Executors.newFixedThreadPool(breaker);
+		ExecutorService es = Executors.newFixedThreadPool(limitCvePerThread);
 		// Divide cves equally amongst all threads, some threads may
 		// have more sources based on their CVEs provided
 		int numSourcesAdded = 1;
@@ -92,7 +93,7 @@ public final class PatchFinder {
 		for (String source : possiblePatchSources.keySet()) {
 			sourceBatches.get(thread).put(source, possiblePatchSources.get(source));
 			numSourcesAdded++;
-			if (numSourcesAdded % breaker == 0 && thread < maxThreads - 1) {
+			if (numSourcesAdded % limitCvePerThread == 0 && thread < maxThreads - 1) {
 				es.execute(new PatchFinderThread(sourceBatches.get(thread), clonePath, this));
 				thread++;
 			}
