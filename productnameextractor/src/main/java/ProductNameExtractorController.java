@@ -57,20 +57,21 @@ public class ProductNameExtractorController {
         // Fetch the CPE dict from NVD's CPE API
         Map<String, CpeGroup> productDict;
 
-        try {
-            productDict = OM.readValue(Paths.get(productDictPath).toFile(), Map.class);
-            affectedProductIdentifier.loadCPEDict(productDict);
-        } catch (Exception e) {
-            logger.error("Failed to load product dict at filepath '{}', querying NVD...: {}", productDictPath, e.toString());
-            productDict = affectedProductIdentifier.loadCPEDict(maxPages, maxAttemptsPerPage);
-
-            // Write CPE dict to file
-            try {
-                OM.writeValue(new File(productDictPath), productDict);
-            } catch (IOException ioe) {
-                logger.error("Error writing product dict to filepath '{}': {}", productDictPath, ioe.toString());
-            }
-        }
+//        try {
+//            productDict = OM.readValue(Paths.get(productDictPath).toFile(), Map.class);
+//            affectedProductIdentifier.loadCPEDict(productDict);
+//        } catch (Exception e) {
+//            logger.error("Failed to load product dict at filepath '{}', querying NVD...: {}", productDictPath, e.toString());
+//        productDict = affectedProductIdentifier.loadCPEDict(maxPages, maxAttemptsPerPage);
+//
+//            // Write CPE dict to file
+//            try {
+//                OM.writeValue(new File(productDictPath), productDict);
+//            } catch (IOException ioe) {
+//                logger.error("Error writing product dict to filepath '{}': {}", productDictPath, ioe.toString());
+//            }
+//        }
+        productDict = affectedProductIdentifier.loadCPEDict(maxPages, maxAttemptsPerPage);
 
         // Run the AffectedProductIdentifier with the fetched vuln list
         final Map<String, Product> productMap = affectedProductIdentifier.identifyAffectedReleases(cveLimit);
