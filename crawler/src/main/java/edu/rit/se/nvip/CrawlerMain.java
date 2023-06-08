@@ -1,5 +1,6 @@
 package edu.rit.se.nvip;
 
+import edu.rit.se.nvip.crawler.CveCrawler;
 import edu.rit.se.nvip.crawler.CveCrawlController;
 import edu.rit.se.nvip.crawler.github.GithubScraper;
 import edu.rit.se.nvip.crawler.github.PyPAGithubScraper;
@@ -61,6 +62,8 @@ public class CrawlerMain {
         HashMap<String, ArrayList<RawVulnerability>> crawledCVEs = crawlerMain.crawlCVEs();
         long crawlEndTime = System.currentTimeMillis();
         logger.info("Crawler Finished\nTime: {}", crawlEndTime - crawlStartTime);
+
+        CveCrawler.driver.quit();
 
         // Merge CVEs found in python GitHub with CVEs that were crawled
         logger.info("Merging Python CVEs with Crawled CVEs");

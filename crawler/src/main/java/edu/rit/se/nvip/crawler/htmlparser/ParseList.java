@@ -38,6 +38,7 @@ public class ParseList extends AbstractCveParser implements ParserStrategy {
         //Check <li>
         Elements lists = doc.select("li:contains(CVE)");
 
+        boolean datesNotFound = false;
         for (Element list : lists) {
             String cve;
             String desc = null;
@@ -52,6 +53,7 @@ public class ParseList extends AbstractCveParser implements ParserStrategy {
                 Element cveElement = list.select(":containsOwn(CVE)").first();
                 if (cveElement == null) continue;
                 cve = getCVEID(cveElement.text());
+                if (cve.equals("")) continue;
 
                 // First check the next sibling element if its CVE related If so, its prolly the desc
                 Element descElement = cveElement.nextElementSibling();
@@ -79,7 +81,8 @@ public class ParseList extends AbstractCveParser implements ParserStrategy {
             GenericDate genericDate = extractDate(listText);
             String publishDate = genericDate.getRawDate();
             if(publishDate == null || publishDate.equals("")){
-                logger.warn("No publish date for " + cve + ", using current date");
+                // logger.warn("No publish date for " + cve + ", using current date");
+                datesNotFound = true;
                 publishDate = LocalDate.now().toString();
             }
             GenericDate genericLastMod = extractLastModifiedDate(listText);
@@ -89,10 +92,9 @@ public class ParseList extends AbstractCveParser implements ParserStrategy {
             }
 
 
-            if (!cve.equals("") && desc != null) {
-                RawVulnerability vuln = new RawVulnerability(sSourceURL, cve, publishDate, lastModifiedDate, desc);
-                vulnList.add(vuln);
-            }
+            if (cve.equals("") || desc == null || desc.equals("")) continue;
+            RawVulnerability vuln = new RawVulnerability(sSourceURL, cve, publishDate, lastModifiedDate, desc);
+            vulnList.add(vuln);
         }
 
         // Grab all <dl> elements
@@ -124,12 +126,15 @@ public class ParseList extends AbstractCveParser implements ParserStrategy {
                 if(child.tagName().equals("dt") && cve != null){
                     String desc = sb.toString();
                     if(date.equals("")){
-                        logger.warn("No publish date for " + cve + ", using current date");
+                        // logger.warn("No publish date for " + cve + ", using current date");
+                        datesNotFound = true;
                         date = LocalDate.now().toString();
                     }
 
-                    vuln = new RawVulnerability(sSourceURL, cve, date, lastModifiedDate, desc);
-                    vulnList.add(vuln);
+                    if (!cve.equals("") && !desc.equals("")) {
+                        vuln = new RawVulnerability(sSourceURL, cve, date, lastModifiedDate, desc);
+                        vulnList.add(vuln);
+                    }
 
                     // Reset vars for next listing
                     cve = null;
@@ -174,6 +179,9 @@ public class ParseList extends AbstractCveParser implements ParserStrategy {
                 }
             }
 
+        }
+        if (datesNotFound) {
+            logger.warn("Some dates not found for CVEs from " + sSourceURL + ", using current date...");
         }
         return vulnList;
     }

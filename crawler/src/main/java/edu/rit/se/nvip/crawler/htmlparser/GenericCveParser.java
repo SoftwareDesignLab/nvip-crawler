@@ -96,7 +96,6 @@ public class GenericCveParser extends AbstractCveParser  {
 			logger.info("Generic Parsing " + sSourceURL + " with ParseCVEDescription");
 			genericList.addAll(new ParseCVEDescription(sSourceURL).parseWebPage(sSourceURL, sCVEContentHTML));
 		}
-		if (driver != null) driver.quit();
 		return genericList;
 	}
 

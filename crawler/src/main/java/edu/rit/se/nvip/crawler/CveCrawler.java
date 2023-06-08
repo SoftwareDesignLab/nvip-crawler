@@ -33,6 +33,10 @@ import edu.rit.se.nvip.model.RawVulnerability;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.WebDriver;
+import io.github.bonigarcia.wdm.WebDriverManager;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeDriverService;
+import org.openqa.selenium.chrome.ChromeOptions;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -50,17 +54,31 @@ import java.util.regex.Pattern;
 public class CveCrawler extends WebCrawler {
 
 	private final Logger nvip_logger = LogManager.getLogger(getClass().getSimpleName());
-	private WebDriver driver;
 	private final static Pattern FILTERS = Pattern.compile(".*(\\.(css|js|gif|jpg" + "|png|mp3|mp4|zip|gz))$");
 	private final List<String> myCrawlDomains;
 	private String outputDir;
 	private final HashMap<String, ArrayList<RawVulnerability>> foundCVEs = new HashMap<>();
 	private final CveParserFactory parserFactory = new CveParserFactory();
 
+	public static WebDriver driver = startDynamicWebDriver();
+
 
 	public CveCrawler(List<String> myCrawlDomains, String outputDir) {
 		this.myCrawlDomains = myCrawlDomains;
 		this.outputDir = outputDir;
+	}
+
+	public static WebDriver startDynamicWebDriver() {
+		System.setProperty("webdriver.chrome.silentOutput", "true");
+		ChromeOptions options = new ChromeOptions();
+		options.addArguments("--headless=new","--user-agent=Mozilla/5.0");
+		options.addArguments("--remote-allow-origins=*");
+		options.addArguments("--enable-javascript");
+		options.addArguments("--no-sandbox");
+		options.addArguments("--disable-dev-shm-usage");
+		WebDriverManager.chromedriver().setup();
+		ChromeDriverService chromeDriverService = new ChromeDriverService.Builder().build();
+		return new ChromeDriver(chromeDriverService, options);
 	}
 
 	/**
