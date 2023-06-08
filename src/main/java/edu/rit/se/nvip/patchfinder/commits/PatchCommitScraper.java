@@ -105,7 +105,7 @@ public class PatchCommitScraper {
 									ZoneId.systemDefault()
 							);
 							logger.info("Found patch commit @ {} for CVE {}", commitUrl, cveId);
-							PatchCommit patchCommit = new PatchCommit(commitUrl, cveId, commitDateTime);
+							PatchCommit patchCommit = new PatchCommit(commitUrl, cveId, commitDateTime, commit.getFullMessage());
 							patchCommits.add(patchCommit);
 						}
 					}

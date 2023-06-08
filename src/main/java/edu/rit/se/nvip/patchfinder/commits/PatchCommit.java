@@ -34,12 +34,23 @@ import java.time.LocalDateTime;
 public class PatchCommit {
 	private final String commitURL;
 	private final String cveId;
+	private final String commitId;
 	private LocalDateTime commitDate;
+	private final String commitMessage;
 
-	public PatchCommit(String commitURL, String cveId, LocalDateTime commitDate) {
+	/**
+	 * Model class for patch commit objects
+	 * @param commitURL
+	 * @param cveId
+	 * @param commitDate
+	 * @param commitMessage
+	 */
+	public PatchCommit(String commitURL, String cveId, String commitId, LocalDateTime commitDate, String commitMessage) {
 		this.cveId = cveId;
 		this.commitURL = commitURL;
+		this.commitId = commitId;
 		this.commitDate = commitDate;
+		this.commitMessage = commitMessage;
 	}
 
 	public String getCommitUrl() {
@@ -49,4 +60,8 @@ public class PatchCommit {
 	public String getCveId() { return this.cveId; }
 
 	public LocalDateTime getCommitDate() {return this.commitDate; }
+
+	public String getCommitMessage() { return this.commitMessage; }
+
+	public String getCommitId() { return this.commitId; }
 }

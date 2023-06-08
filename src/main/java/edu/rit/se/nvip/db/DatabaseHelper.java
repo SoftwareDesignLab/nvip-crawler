@@ -28,6 +28,7 @@ import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.sql.*;
 import java.text.*;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -457,7 +458,8 @@ public class DatabaseHelper {
 			conn.close();
 			return true;
 		} catch (Exception e) {
-			logger.error(e.getMessage());
+			logger.error("ERROR: Failed to insert patch source with sourceURL {} for vuln id {}\n{}", sourceURL,
+					vuln_id, e.getMessage());
 			return false;
 		}
 	}
@@ -1646,19 +1648,18 @@ public class DatabaseHelper {
 	 * @param commitDate
 	 * @param commitMessage
 	 */
-	public void insertPatchCommit(int sourceId, String sourceURL, String commitId, Date commitDate,
-			String commitMessage) {
+	public void insertPatchCommit(int sourceId, String sourceURL, String commitId, LocalDateTime commitDate, String commitMessage) {
 
 		try (Connection connection = getConnection();
 				PreparedStatement pstmt = connection.prepareStatement(insertPatchCommitSql);) {
 
 			pstmt.setInt(1, sourceId);
 			pstmt.setString(2, sourceURL + "/commit/" + commitId);
-			pstmt.setDate(3, new java.sql.Date(commitDate.getTime()));
+			pstmt.setDate(3, java.sql.Date.valueOf(commitDate.toString()));
 			pstmt.setString(4, commitMessage);
 			pstmt.executeUpdate();
 		} catch (Exception e) {
-			logger.error(e.toString());
+			logger.error("ERROR: failed to insert patch commit from source {}\n{}", sourceURL, e);
 		}
 	}
 
