@@ -15,13 +15,49 @@ import java.util.stream.Collectors;
 public class ProductNameExtractorController {
     private static final Logger logger = LogManager.getLogger(ProductNameExtractorController.class);
     private static final DatabaseHelper databaseHelper = DatabaseHelper.getInstance();
+    private static final ObjectMapper OM = new ObjectMapper();
+
+    public static Map<String, CpeGroup> readProductDict(String productDictPath) throws IOException {
+        // Read in data
+        final LinkedHashMap<String, LinkedHashMap> rawProductDict = OM.readValue(Paths.get(productDictPath).toFile(), LinkedHashMap.class);
+
+        // Init CPE dict
+        final LinkedHashMap<String, CpeGroup> productDict = new LinkedHashMap<>();
+
+        // Process into CpeGroups/GpeEntries
+        for (Map.Entry<String, LinkedHashMap> entry : rawProductDict.entrySet()) {
+            final String key = entry.getKey();
+            LinkedHashMap value = entry.getValue();
+
+            final String vendor = (String) value.get("vendor");
+            final String product = (String) value.get("product");
+            final String commonTitle = (String) value.get("commonTitle");
+            final LinkedHashMap<String, LinkedHashMap> rawVersions = (LinkedHashMap<String, LinkedHashMap>) value.get("versions");
+            final HashMap<String, CpeEntry> versions = new HashMap<>();
+            for (Map.Entry<String, LinkedHashMap> versionEntry : rawVersions.entrySet()) {
+                final LinkedHashMap versionValue = versionEntry.getValue();
+                final String title = (String) versionValue.get("title");
+                final String version = (String) versionValue.get("version");
+                final String update = (String) versionValue.get("update");
+                final String cpeID = (String) versionValue.get("cpeID");
+                final String platform = (String) versionValue.get("platform");
+                versions.put(version, new CpeEntry(title, version, update, cpeID, platform));
+            }
+
+            // Create and insert CpeGroup into productDict
+            productDict.put(key, new CpeGroup(vendor, product, commonTitle, versions));
+        }
+
+        // Return filled productDict
+        return productDict;
+    }
 
     public static void main(String[] args) {
         // Fetch ENV_VARS
         int cveLimit = 300;
         int maxPages = 5;
         int maxAttemptsPerPage = 2;
-        final String productDictPath = "src/main/resources/product_dict.json";
+        final String productDictPath = "src/main/resources/data/product_dict.json";
         try {
             cveLimit = Integer.parseInt(System.getenv("CVE_LIMIT"));
             logger.info("Setting CVE_LIMIT to {}", cveLimit);
@@ -51,44 +87,12 @@ public class ProductNameExtractorController {
         // Init AffectedProductIdentifier
         final AffectedProductIdentifier affectedProductIdentifier = new AffectedProductIdentifier(vulnerabilities);
 
-        // Init ObjectMapper
-        final ObjectMapper OM = new ObjectMapper();
-
         // Init CPE dict data storage
-        LinkedHashMap<String, LinkedHashMap> rawProductDict;
         Map<String, CpeGroup> productDict;
 
         try {
-            // Read in data
-            rawProductDict = OM.readValue(Paths.get(productDictPath).toFile(), LinkedHashMap.class);
-
-            // Init CPE dict
-            productDict = new LinkedHashMap<>();
-
-            // Process into CpeGroups/GpeEntries
-            for (Map.Entry<String, LinkedHashMap> entry : rawProductDict.entrySet()) {
-                final String key = entry.getKey();
-                LinkedHashMap value = entry.getValue();
-
-                final String vendor = (String) value.get("vendor");
-                final String product = (String) value.get("product");
-                final String commonTitle = (String) value.get("commonTitle");
-                final LinkedHashMap<String, LinkedHashMap> rawVersions = (LinkedHashMap<String, LinkedHashMap>) value.get("versions");
-                final HashMap<String, CpeEntry> versions = new HashMap<>();
-                for (Map.Entry<String, LinkedHashMap> versionEntry : rawVersions.entrySet()) {
-                    final LinkedHashMap versionValue = versionEntry.getValue();
-                    final String title = (String) versionValue.get("title");
-                    final String version = (String) versionValue.get("version");
-                    final String update = (String) versionValue.get("update");
-                    final String cpeID = (String) versionValue.get("cpeID");
-                    final String platform = (String) versionValue.get("platform");
-                    versions.put(version, new CpeEntry(title, version, update, cpeID, platform));
-                }
-
-
-                productDict.put(key, new CpeGroup(vendor, product, commonTitle, versions));
-            }
-
+            // Read in product dict
+            productDict = readProductDict(productDictPath);
 
             // Load CPE dict
             affectedProductIdentifier.loadCPEDict(productDict);
