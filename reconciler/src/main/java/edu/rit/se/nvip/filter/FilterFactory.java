@@ -27,7 +27,7 @@ public class FilterFactory {
 
     public static final String SIMPLE = "SIMPLE";
 
-    public static final String CVE_MATCH_DESCRIPTION = "CVE_MATCH_DESCRIPTION";
+    public static final String CVE_MATCHES_DESCRIPTION = "CVE_MATCHES_DESCRIPTION";
 
     public static final String BLANK_DESCRIPTION = "BLANK_DESCRIPTION";
 
@@ -35,8 +35,8 @@ public class FilterFactory {
         switch (type) {
             case SIMPLE:
                 return new SimpleFilter();
-            case CVE_MATCH_DESCRIPTION:
-                return new CveIdIsDescriptionFilter();
+            case CVE_MATCHES_DESCRIPTION:
+                return new CveMatchesDescriptionFilter();
             case BLANK_DESCRIPTION:
                 return new BlankDescriptionFilter();
             default:

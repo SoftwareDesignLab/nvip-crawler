@@ -44,7 +44,7 @@ class FilterFactoryTest {
     @Test
     void createCveIdIsDescriptionFilter() {
         Filter filter = FilterFactory.createFilter("CVE_MATCHES_DESCRIPTION");
-        assertTrue(filter instanceof CveIdIsDescriptionFilter);
+        assertTrue(filter instanceof CveMatchesDescriptionFilter);
     }
 
     @Test
