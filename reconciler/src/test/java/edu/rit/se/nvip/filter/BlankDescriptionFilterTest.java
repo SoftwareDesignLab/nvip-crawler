@@ -44,10 +44,23 @@ class BlankDescriptionFilterTest {
     }
 
     @Test
-    void failsFilter() {
+    void failsFilterBlankDescription() {
         RawVulnerability rawVuln = new RawVulnerability(1,
                 "CVE-2023-0608",
                 "",
+                null,
+                null,
+                null,
+                null);
+        Filter filter = new BlankDescriptionFilter();
+        assertFalse(filter.passesFilter(rawVuln));
+    }
+
+    @Test
+    void failsFilterWhitespaceDescription() {
+        RawVulnerability rawVuln = new RawVulnerability(1,
+                "CVE-2023-0608",
+                " ",
                 null,
                 null,
                 null,

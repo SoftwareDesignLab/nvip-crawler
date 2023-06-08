@@ -55,4 +55,17 @@ class CveMatchesDescriptionFilterTest {
         Filter filter = new CveMatchesDescriptionFilter();
         assertFalse(filter.passesFilter(rawVuln));
     }
+
+    @Test
+    void failsFilterWhitespace() {
+        RawVulnerability rawVuln = new RawVulnerability(1,
+                "CVE-2023-0608",
+                "\nCVE-2023-0608    ",
+                null,
+                null,
+                null,
+                null);
+        Filter filter = new CveMatchesDescriptionFilter();
+        assertFalse(filter.passesFilter(rawVuln));
+    }
 }

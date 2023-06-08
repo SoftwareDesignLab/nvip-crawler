@@ -10,6 +10,8 @@ import edu.rit.se.nvip.model.RawVulnerability;
 public class BlankDescriptionFilter extends Filter{
     @Override
     public boolean passesFilter(RawVulnerability rawVuln) {
-        return rawVuln.getDescription().equals("") ? false:true;
+        String description = rawVuln.getDescription();
+        description = description.trim();
+        return !description.equals("");
     }
 }
