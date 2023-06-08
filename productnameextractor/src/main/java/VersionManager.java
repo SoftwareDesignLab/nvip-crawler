@@ -35,24 +35,29 @@ public class VersionManager {
             // Extract data from params
             final String[] versionData = versionRangeString.split(" ");
 
-            // Assign data to class appropriately
-            switch (versionData.length) {
-                case 1: // "1.2.3"
-                    this.type = RangeType.EXACT;
-                    this.version1 = new ProductVersion(versionData[0]);
-                    this.version2 = null;
-                    break;
-                case 2: // "before 1.2.3", "after 1.2.3"
-                    this.type = RangeType.fromString(versionData[0]);
-                    this.version1 = new ProductVersion(versionData[1]);
-                    this.version2 = null;
-                    break;
-                case 3: // "1.2.3 through 3.4.5"
-                    this.type = RangeType.fromString(versionData[1]);
-                    this.version1 = new ProductVersion(versionData[0]);
-                    this.version2 = new ProductVersion(versionData[2]);
-                default:
-                    throw new IllegalArgumentException("Could not initilize VersionRange with the given arguments.");
+            try {
+                // Assign data to class appropriately
+                switch (versionData.length) {
+                    case 1: // "1.2.3"
+                        this.type = RangeType.EXACT;
+                        this.version1 = new ProductVersion(versionData[0]);
+                        this.version2 = null;
+                        break;
+                    case 2: // "before 1.2.3", "after 1.2.3"
+                        this.type = RangeType.fromString(versionData[0]);
+                        this.version1 = new ProductVersion(versionData[1]);
+                        this.version2 = null;
+                        break;
+                    case 3: // "1.2.3 through 3.4.5"
+                        this.type = RangeType.fromString(versionData[1]);
+                        this.version1 = new ProductVersion(versionData[0]);
+                        this.version2 = new ProductVersion(versionData[2]);
+                    default:
+                        throw new IllegalArgumentException("Could not initialize VersionRange with the given arguments.");
+                }
+            } catch (Exception e) {
+                logger.error("Failed to create VersionRange: {}", e.toString());
+                throw e;
             }
         }
         public VersionRange(ProductVersion version1, ProductVersion version2, RangeType type) {
@@ -82,7 +87,9 @@ public class VersionManager {
     }
 
     public void addRangeFromString(String rangeString) throws IllegalArgumentException {
-        this.versionRanges.add(new VersionRange(rangeString));
+        if (!rangeString.contains("-")) {
+            this.versionRanges.add(new VersionRange(rangeString));
+        } else logger.warn("Range string '{}' was ignored, as it does not contain a valid version range.", rangeString);
     }
 
     public boolean isAffected(ProductVersion version) {
@@ -113,7 +120,7 @@ public class VersionManager {
         // Iterate over versions
         String lastVersion = null;
         for (int i = 0; i < versionWords.length; i++) {
-            String version = versionWords[i];
+            String version = versionWords[i].trim().replace(",", "");
             // If version is version, add it
             if (isVersion(version)) addRangeFromString(version);
             else {
@@ -124,12 +131,16 @@ public class VersionManager {
                 }
 
                 // Get next element
-                final String nextVersion = versionWords[i+1];
+                final String nextVersion = versionWords[i+1].trim().replace(",", "");
 
                 // Build version range string
                 final StringBuilder versionRangeString = new StringBuilder();
-                if(lastVersion != null) versionRangeString.append(lastVersion).append(" ");
-                versionRangeString.append(lastVersion).append(" ");
+
+                // Only use lastVersion when version == "through"
+                if(lastVersion != null && version.contains("through"))
+                    versionRangeString.append(lastVersion).append(" ");
+
+                versionRangeString.append(version).append(" ");
                 versionRangeString.append(nextVersion);
 
                 try {
