@@ -138,50 +138,11 @@ public class DatabaseHelper {
 	}
 
 	/**
-	 * used to insert a list of CPE products into the database
-	 *
-	 * @param productMap List of product objects
-	 * @return Number of inserted products, <0 if error.
-	 */
-	public int insertCpeProducts(Map<String, Product> productMap) {
-		try (Connection conn = getConnection();
-				PreparedStatement pstmt = conn.prepareStatement(insertProductSql);
-				PreparedStatement getCount = conn.prepareStatement(getProductCountFromCpeSql);) {
-			int count = 0;
-			int total = productMap.size();
-			for (Map.Entry<String, Product> productEntry : productMap.entrySet()) {
-				final String id = productEntry.getKey();
-				final Product product = productEntry.getValue();
-
-				getCount.setString(1, product.getCpe());
-				ResultSet res = getCount.executeQuery();
-				if (res.next() && res.getInt(1) != 0) {
-					continue; // product already exists, skip!
-				}
-				pstmt.setString(1, id);
-				pstmt.setString(2, product.getCpe());
-				pstmt.executeUpdate();
-				count++;
-			}
-
-			logger.info(
-					"\rInserted: " + count + " of " + total + " products to DB! Skipped: " + (total - count) + " existing ones!");
-			return count;
-		} catch (SQLException e) {
-			logger.error("Error inserting CPEs: {}", e.getMessage());
-			return -1;
-		}
-	}
-
-	/**
 	 * Store affected products in DB
 	 * TODO: This should be in DB Helper
 	 * @param vulnList
 	 */
 	public void insertAffectedProductsToDB(List<CompositeVulnerability> vulnList, Map<String, Product> productMap) {
-		logger.info("Inserting found products to DB!");
-		final int count = insertNewCpeItemsIntoDatabase(productMap);
-		logger.info("Successfully inserted {} found products to DB", count);
 
 		// get all identified affected releases
 		List<AffectedRelease> listAllAffectedReleases = new ArrayList<>();
@@ -191,7 +152,7 @@ public class DatabaseHelper {
 			listAllAffectedReleases.addAll(vulnerability.getAffectedReleases());
 		}
 
-		logger.info("Inserting Affected Releases to DB!");
+		logger.info("Inserting Affected Products to DB!");
 		// delete existing affected release info in db ( for CVEs in the list)
 		databaseHelper.deleteAffectedReleases(listAllAffectedReleases);
 
@@ -205,19 +166,6 @@ public class DatabaseHelper {
 //		cveDataForWebUi.prepareDataforWebUi();
 
 		databaseHelper.shutdown();
-	}
-
-	/**
-	 * insert CPE products identified by the loader into the database
-	 */
-	private int insertNewCpeItemsIntoDatabase(Map<String, Product> productMap) {
-		try {
-			return insertCpeProducts(productMap);
-		} catch (Exception e) {
-			logger.error("Error while adding " + productMap.size() + " new products!");
-			return -1;
-		}
-
 	}
 
 	/**

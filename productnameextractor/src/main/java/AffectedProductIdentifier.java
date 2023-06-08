@@ -149,7 +149,7 @@ public class AffectedProductIdentifier {
 		// TODO: Move to executor instead of in runnable
 		if (counterOfProcessedCVEs.get() % 100 == 0) {
 			double percent = Math.floor(((double) (counterOfProcessedCVEs.get() + counterOfBadDescriptionCVEs.get() + counterOfSkippedCVEs.get()) / totalCVEtoProcess * 100) * 100) / 100;
-			logger.info("Extracted product(s) for {} out of {} CVEs so far! {} CVEs skipped (not-changed or bad description), {}% done.", counterOfProcessedCVEs, totalCVEtoProcess,
+			logger.info("Extracted {} product(s) for {} out of {} CVEs so far! {} CVEs skipped (not-changed or bad description), {}% done.", numOfProductsMappedToCpe, counterOfProcessedCVEs, totalCVEtoProcess,
 					(counterOfBadDescriptionCVEs.get() + counterOfSkippedCVEs.get()), percent);
 		}
 	}
@@ -228,8 +228,7 @@ public class AffectedProductIdentifier {
 			logger.error("Product extraction failed: {}", e.toString());
 		}
 
-		logger.info("Extracted product(s) for {} out of {} CVEs so far! {} CVEs skipped, bc they are flagged as 'not-changed' by reconciliation process", counterOfProcessedCVEs, totalCVEtoProcess,
-				counterOfSkippedCVEs);
+		logger.info("Extracted product(s) for {} out of {} CVEs so far! {} CVEs skipped", counterOfProcessedCVEs, totalCVEtoProcess, counterOfSkippedCVEs);
 
 		AtomicInteger count = new AtomicInteger();
 		vulnList.stream().map(v -> v.getAffectedReleases().size()).forEach(count::addAndGet);
