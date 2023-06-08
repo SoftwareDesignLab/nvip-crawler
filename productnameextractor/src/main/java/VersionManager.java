@@ -73,11 +73,11 @@ public class VersionManager {
         public boolean withinRange(ProductVersion testVersion) {
             switch (this.type) {
                 case BEFORE:
-                    return version1.compareTo(testVersion) <= 0;
-                case THROUGH:
-                    return version1.compareTo(testVersion) >= 0 && version2.compareTo(testVersion) <= 0;
-                case AFTER:
                     return version1.compareTo(testVersion) >= 0;
+                case THROUGH:
+                    return version1.compareTo(testVersion) <= 0 && version2.compareTo(testVersion) >= 0;
+                case AFTER:
+                    return version1.compareTo(testVersion) <= 0;
                 case EXACT:
                     return version1.equals(testVersion);
                 default:
