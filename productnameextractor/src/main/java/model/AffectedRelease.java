@@ -166,7 +166,7 @@ public class AffectedRelease {
 			swidBuilder.append("version=\"\">");
 		}
 		//match the entity
-		swidBuilder.append("<Entity name=\"").append(vendor).append("\" regid=\"").append(vendor).append("\" role=\"tagCreator softwareCreator\"/>");
+		swidBuilder.append("<Entity name=\"").append(vendor).append("\" regid=\"").append("com.").append(vendor).append("\">");
 		//match the meta
 		swidBuilder.append("<Meta product=\"").append(productName).append("\" colloquialVersion=\"").append(version).append("\"/>");
 		//match the payload

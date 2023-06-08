@@ -10,6 +10,7 @@ import org.jsoup.nodes.Element;
 import org.openqa.selenium.*;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.interactions.Actions;
+import org.openqa.selenium.interactions.MoveTargetOutOfBoundsException;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
@@ -17,21 +18,16 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.util.*;
 
+import static edu.rit.se.nvip.crawler.CveCrawler.driver;
+
 public class ParseTable extends AbstractCveParser implements ParserStrategy {
 
     private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
 
-    /**
-     * We need special clicking and updating functionality for tables
-     * init a headless browser to be able to click around
-     * instead of just parsing a static html page
-     */
-    WebDriver driver = startDynamicWebDriver();
-
-    WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(5));
+    WebDriverWait wait;
 
     // init actions to be able to click around
-    Actions actions = new Actions(driver);
+    Actions actions;
 
     String sourceUrl = "";
 
@@ -39,6 +35,8 @@ public class ParseTable extends AbstractCveParser implements ParserStrategy {
 
     public ParseTable(String sourceDomainName) {
         this.sourceDomainName = sourceDomainName;
+        wait = new WebDriverWait(driver, Duration.ofSeconds(5));
+        actions = new Actions(driver);
     }
 
     public void clickAcceptCookies() {
@@ -86,7 +84,7 @@ public class ParseTable extends AbstractCveParser implements ParserStrategy {
         // click on row and see if we can grab any more html
         String diff = "";
         String htmlBefore = "";
-        WebElement rowElement = null;
+        WebElement rowElement;
         try {
             String xPathContainsCVE = "//tr[td//text()[contains(.,'%s')]]";
             rowElement = driver.findElement(By.xpath(String.format(xPathContainsCVE, cveList.get(0))));
@@ -97,12 +95,12 @@ public class ParseTable extends AbstractCveParser implements ParserStrategy {
                 new WebDriverWait(driver, Duration.ofSeconds(5)).until(ExpectedConditions.elementToBeClickable(rowElement));
                 actions.scrollToElement(rowElement).perform();
                 actions.click(rowElement).perform();
-            } catch (StaleElementReferenceException e) {
+            } catch (StaleElementReferenceException | MoveTargetOutOfBoundsException e) {
                 if (!retryClick(rowElement)) logger.info("Unable to click row for " + cveIDs);
             }
             String htmlAfter = driver.findElement(By.tagName("tbody")).getAttribute("innerHTML").replace("\n", "").replace("\t", "");
             diff = StringUtils.difference(htmlBefore, htmlAfter).replace("\n", "").replace("\t", "");
-        } catch (NoSuchElementException e) {
+        } catch (StaleElementReferenceException | MoveTargetOutOfBoundsException e) {
             // logger.info("Row not found for " + cveIDs);
         }
         String description = "";
@@ -171,7 +169,7 @@ public class ParseTable extends AbstractCveParser implements ParserStrategy {
             logger.info("Next button clicked for Table at " + sourceUrl);
             nextPage = StringUtils.difference(sourceHtml, driver.getPageSource());
         } catch (NoSuchElementException | TimeoutException e) {
-            logger.info("No Next button found for Table at " + sourceUrl);
+            // logger.info("No Next button found for Table at " + sourceUrl);
         } catch (ElementNotInteractableException ei) {
             logger.warn("Next Button found raises ElementNotInteractableException...");
         } catch (StaleElementReferenceException s) {

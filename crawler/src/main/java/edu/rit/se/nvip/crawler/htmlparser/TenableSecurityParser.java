@@ -55,6 +55,10 @@ public class TenableSecurityParser extends AbstractCveParser {
 		List<Product> products = new ArrayList<>();
 		boolean foundProducts = false;
 
+		// If its the main research page, skip it since it has no descriptions
+		if(sSourceURL.equals("https://www.tenable.com/security/research"))
+			return vulns;
+
 		Document doc = Jsoup.parse(sCVEContentHTML);
 
 		Pattern pattern = Pattern.compile(regexCVEID);
