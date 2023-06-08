@@ -24,9 +24,11 @@
 
 import org.junit.Test;
 
+import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * Unit tests for the CpeLookUp class
@@ -36,8 +38,16 @@ import static org.junit.Assert.assertTrue;
  */
 
 public class CpeLookUpTest {
-
+	// Init cpeLookUp
 	private static final CpeLookUp cpeLookUp = new CpeLookUp();
+	static {
+		try {
+			final Map<String, CpeGroup> productDict = ProductNameExtractorController.readProductDict("src/test/resources/data/product_dict.json");
+			cpeLookUp.loadProductDict(productDict);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
 
 
 	@Test
@@ -49,16 +59,9 @@ public class CpeLookUpTest {
 
 		List<String> idList = cpeLookUp.getCPEIds(product);
 
-		boolean correctResult = false;
-		boolean notEmpty = false;
-
-		if (idList != null && idList.size() > 0) {
-			notEmpty = true;
-			correctResult = expectedResult.equals(idList.get(0));
-		}
-
-		assertTrue("Result is not empty", notEmpty);
-		assertTrue("Result is correct", correctResult);
+		assertNotNull("idList was null", idList);
+		assertNotEquals("idList was empty", idList.size(), 0);
+		assertEquals("actual result was not expected result", expectedResult, idList.get(0));
 	}
 
 	@Test
