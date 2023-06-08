@@ -968,8 +968,9 @@ CREATE TABLE `patchsourceurl` (
 
 
 CREATE TABLE `patchcommit` (
-    `source_id` INT NOT NULL,
+    `source_id` INT NOT NULL AUTO_INCREMENT,
     `commit_url` VARCHAR(500) NOT NULL,
     `commit_date` DATETIME NULL,
-    `commit_message` VARCHAR(500) NULL
+    `commit_message` VARCHAR(500) NULL,
+    PRIMARY KEY (`source_id`),
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
