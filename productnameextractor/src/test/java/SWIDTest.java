@@ -12,7 +12,7 @@ public class SWIDTest {
                 "name=\"Example Software\" " +
                 "tagId=\"ExampleVendor.ExampleSoftware.1.0.0\" " +
                 "version=\"1.0.0\">" +
-                "<Entity name=\"ExampleVendor\" regid=\"ExampleVendor\" role=\"tagCreator softwareCreator\"/>" +
+                "<Entity name=\"ExampleVendor\" regid=\"com.ExampleVendor\">" +
                 "<Meta product=\"Example Software\" colloquialVersion=\"1.0.0\"/>" +
                 "<Payload>" +
                 "<File name=\"ExampleSoftware.exe\" size=\"532712\" SHA256:hash=\"a314fc2dc663ae7a6b6bc6787594057396e6b3f569cd50fd5ddb4d1bbafd2b6a\"/>" +
@@ -34,7 +34,7 @@ public class SWIDTest {
                 "name=\"Example Software\" " +
                 "tagId=\"ExampleVendor.ExampleSoftware\" " +
                 "version=\"\">" +
-                "<Entity name=\"ExampleVendor\" regid=\"ExampleVendor\" role=\"tagCreator softwareCreator\"/>" +
+                "<Entity name=\"ExampleVendor\" regid=\"com.ExampleVendor\">" +
                 "<Meta product=\"Example Software\" colloquialVersion=\"\"/>" +
                 "<Payload>" +
                 "<File name=\"ExampleSoftware.exe\" size=\"532712\" SHA256:hash=\"a314fc2dc663ae7a6b6bc6787594057396e6b3f569cd50fd5ddb4d1bbafd2b6a\"/>" +
