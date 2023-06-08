@@ -54,12 +54,12 @@ public final class PatchFinder {
 		// Parse for patches and store them in the database
 		PatchUrlFinder patchURLFinder = new PatchUrlFinder();
 		Map<String, ArrayList<String>> cpes = databaseHelper.getCPEsAndCVE();
-		Map<String, ArrayList<String>> possiblePatchURLs = patchURLFinder.parseMassURLs(cpes, 20);
+		Map<String, ArrayList<String>> possiblePatchURLs = patchURLFinder.parseMassURLs(cpes, 10);
 
 		// repos will be cloned to patch-repos directory, multi-threaded 6 threads.
 		PatchFinder patchfinder = new PatchFinder();
 		ArrayList<PatchCommit> patchCommits = patchfinder.findPatchesMultiThreaded(possiblePatchURLs,
-				"patch-repos", 10,2);
+				"nvip_data/patch-repos", 10,1);
 
 		for (PatchCommit patchCommit: patchCommits) {
 			int vulnId = databaseHelper.getVulnIdByCveId(patchCommit.getCveId());
