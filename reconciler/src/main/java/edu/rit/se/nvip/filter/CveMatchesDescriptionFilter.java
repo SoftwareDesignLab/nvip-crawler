@@ -31,7 +31,7 @@ import edu.rit.se.nvip.model.RawVulnerability;
  *
  * @author jqm4954@rit.edu
  */
-public class CveIdIsDescriptionFilter extends Filter{
+public class CveMatchesDescriptionFilter extends Filter{
     @Override
     public boolean passesFilter(RawVulnerability rawVuln) {
         return rawVuln.getDescription().equals(rawVuln.getCveId()) ? false:true;
