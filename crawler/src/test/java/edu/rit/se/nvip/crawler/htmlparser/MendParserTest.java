@@ -57,7 +57,7 @@ public class MendParserTest extends AbstractParserTest{
     @Test
     public void testMend2() {
         MendParser parser = new MendParser("mend");
-        String html = parser.grabDynamicHTML("https://www.mend.io/vulnerability-database/CVE-2013-6646", null);
+        String html = parser.grabDynamicHTML("https://www.mend.io/vulnerability-database/CVE-2013-6646");
         List<RawVulnerability> list = new MendParser("mend").parseWebPage(
                 "https://www.mend.io/vulnerability-database/CVE-2013-6646",
                 html

@@ -446,7 +446,7 @@ public class DatabaseHelper {
 
 			return 1;
 		} catch (Exception e) {
-			logger.error("ERROR: Failed to insert data for CVE {} into rawdescription table\n{}", vuln.getCveId(), e);
+			logger.error("ERROR: Failed to insert data for CVE {} (sourceURL: {}) into rawdescription table\n{}", vuln.getCveId(), vuln.getSourceURL(), e);
 		}
 
 		return 0;

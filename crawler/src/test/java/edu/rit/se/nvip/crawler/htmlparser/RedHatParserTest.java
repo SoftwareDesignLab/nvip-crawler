@@ -23,6 +23,7 @@
  */
 package edu.rit.se.nvip.crawler.htmlparser;
 
+import edu.rit.se.nvip.crawler.CveCrawler;
 import edu.rit.se.nvip.model.RawVulnerability;
 import org.junit.Test;
 import org.junit.BeforeClass;

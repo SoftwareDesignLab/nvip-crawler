@@ -38,9 +38,9 @@ public class AutodeskParserTest extends AbstractParserTest{
     @Test
     public void testAutodesk() {
         AutodeskParser parser  = new AutodeskParser("autodesk");
-        String html = parser.grabDynamicHTML("https://autodesk.com/trust/security-advisories/adsk-sa-2022-0017", null);
+        String html = parser.grabDynamicHTML("https://autodesk.com/trust/security-advisories/adsk-sa-2022-0017");
         // String html = safeReadHtml("src/test/resources/test-autodesk-table-multi.html");
-        List<RawVulnerability> list = parser.parseWebPage("autodesk").parseWebPage("autodesk", html);
+        List<RawVulnerability> list = parser.parseWebPage("autodesk", html);
         assertEquals(18, list.size());
         RawVulnerability vuln = getVulnerability(list, "CVE-2021-45960");
         assertNotNull(vuln);

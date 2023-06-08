@@ -40,7 +40,7 @@ public class TibcoParserTest extends AbstractParserTest{
     @Test
     public void testTibco() {
         TibcoParser parser = new TibcoParser("tibco");
-        String html = parser.grabDynamicHTML("https://www.tibco.com/support/advisories/2023/02/tibco-security-advisory-february-22-2023-tibco-businessconnect-cve-2022-41567", null);
+        String html = parser.grabDynamicHTML("https://www.tibco.com/support/advisories/2023/02/tibco-security-advisory-february-22-2023-tibco-businessconnect-cve-2022-41567");
         // String html = safeReadHtml("src/test/resources/test-tibco.html");
         List<RawVulnerability> list = parser.parseWebPage(
                 "https://www.tibco.com/support/advisories/2023/02/tibco-security-advisory-february-22-2023-tibco-businessconnect-cve-2022-41567",
