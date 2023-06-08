@@ -48,6 +48,15 @@ public class CpeGroup implements Serializable{
 		this.groupID = vendor+":"+product;
 		this.versions = new HashMap<>();
 	}
+
+	protected CpeGroup(String vendor, String product, String commonTitle, HashMap<String, CpeEntry> versions) {
+		super();
+		this.vendor = vendor;
+		this.product = product;
+		this.groupID = vendor+":"+product;
+		this.commonTitle = commonTitle;
+		this.versions = versions;
+	}
 	
 	public String getCommonTitle() {
 		return commonTitle;
@@ -92,11 +101,9 @@ public class CpeGroup implements Serializable{
 	public String getVendor() {
 		return vendor;
 	}
-
 	public String getProduct() {
 		return product;
 	}
-
 	public String getGroupID() {
 		return groupID;
 	}
