@@ -52,6 +52,7 @@ public class VersionManager {
                         this.type = RangeType.fromString(versionData[1]);
                         this.version1 = new ProductVersion(versionData[0]);
                         this.version2 = new ProductVersion(versionData[2]);
+                        break;
                     default:
                         throw new IllegalArgumentException("Could not initialize VersionRange with the given arguments.");
                 }
@@ -88,6 +89,7 @@ public class VersionManager {
 
     public void addRangeFromString(String rangeString) throws IllegalArgumentException {
         if (!rangeString.contains("-")) {
+            rangeString = rangeString.replace(".x", "");
             this.versionRanges.add(new VersionRange(rangeString));
         } else logger.warn("Range string '{}' was ignored, as it does not contain a valid version range.", rangeString);
     }
@@ -121,6 +123,11 @@ public class VersionManager {
         String lastVersion = null;
         for (int i = 0; i < versionWords.length; i++) {
             String version = versionWords[i].trim().replace(",", "");
+            if(version.isEmpty()) {
+                logger.warn("Skipping blank version...");
+                continue;
+            }
+
             // If version is version, add it
             if (isVersion(version)) addRangeFromString(version);
             else {
@@ -140,14 +147,18 @@ public class VersionManager {
                 if(lastVersion != null && version.contains("through"))
                     versionRangeString.append(lastVersion).append(" ");
 
-                versionRangeString.append(version).append(" ");
-                versionRangeString.append(nextVersion);
+                // Ensure next version is version before adding
+                if(isVersion(nextVersion)) {
+                    // Add next version
+                    versionRangeString.append(version).append(" ");
+                    versionRangeString.append(nextVersion);
+                } else logger.warn("'{}' keyword followed by an invalid version '{}', skipping...", version, nextVersion);
 
                 try {
                     // Add range to VersionManager
                     this.addRangeFromString(versionRangeString.toString());
                 } catch (IllegalArgumentException e) {
-                    logger.error("Failed to add version range '{}' from string: {}", versionRangeString, e.toString());
+                    logger.error("Failed to parse version range string '{}': {}", versionRangeString, e.toString());
                 }
             }
 
