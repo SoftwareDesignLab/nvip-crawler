@@ -413,8 +413,9 @@ public class CpeLookUp {
 						final ProductVersion version = new ProductVersion(versionKey);
 						if(versionManager.isAffected(version)) {
 							matchesCounter++;
-							cpeIDs.add(entryValue.getCpeID());
-							productsToAdd.add(new Product(group.getCommonTitle(), entryValue.getCpeID()));
+							String cpeName = "cpe:2.3:a:" + selectedGroups.get(0).getCpeGroup().getGroupID() + ":" + versionKey + ":*:*:*:*:*:*:*";
+							cpeIDs.add(cpeName);
+							productsToAdd.add(new Product(group.getCommonTitle(), cpeName));
 						}
 					} catch (NumberFormatException e) {
 						logger.error("Error parsing version string '{}': {}", versionKey, e.toString());
