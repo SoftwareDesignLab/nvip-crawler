@@ -21,7 +21,7 @@ public class ProductNameExtractorController {
         int cveLimit = 300;
         int maxPages = 5;
         int maxAttemptsPerPage = 2;
-        final String productDictPath = "src/test/resources/product_dict.json";
+        final String productDictPath = "src/main/resources/product_dict.json";
         try {
             cveLimit = Integer.parseInt(System.getenv("CVE_LIMIT"));
             logger.info("Setting CVE_LIMIT to {}", cveLimit);
