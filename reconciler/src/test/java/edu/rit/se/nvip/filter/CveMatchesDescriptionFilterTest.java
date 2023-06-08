@@ -23,20 +23,49 @@
  */
 package edu.rit.se.nvip.filter;
 
-
 import edu.rit.se.nvip.model.RawVulnerability;
+import org.junit.jupiter.api.Test;
 
-/**
- * This class acts as a filter for rawVuln entries where the description matches the CVE ID
- *
- * @author jqm4954@rit.edu
- */
-public class CveMatchesDescriptionFilter extends Filter{
-    @Override
-    public boolean passesFilter(RawVulnerability rawVuln) {
-        String description = rawVuln.getDescription();
-        String cveId = rawVuln.getCveId();
-        description = description.trim();
-        return !description.equals(cveId);
+import static org.junit.jupiter.api.Assertions.*;
+
+class CveMatchesDescriptionFilterTest {
+
+    @Test
+    void passesFilter() {
+        RawVulnerability rawVuln = new RawVulnerability(1,
+                "CVE-2023-0608",
+                "test description",
+                null,
+                null,
+                null,
+                null);
+        Filter filter = new CveMatchesDescriptionFilter();
+        assertTrue(filter.passesFilter(rawVuln));
+    }
+
+    @Test
+    void failsFilter() {
+        RawVulnerability rawVuln = new RawVulnerability(1,
+                "CVE-2023-0608",
+                "CVE-2023-0608",
+                null,
+                null,
+                null,
+                null);
+        Filter filter = new CveMatchesDescriptionFilter();
+        assertFalse(filter.passesFilter(rawVuln));
+    }
+
+    @Test
+    void failsFilterWhitespace() {
+        RawVulnerability rawVuln = new RawVulnerability(1,
+                "CVE-2023-0608",
+                "\nCVE-2023-0608    ",
+                null,
+                null,
+                null,
+                null);
+        Filter filter = new CveMatchesDescriptionFilter();
+        assertFalse(filter.passesFilter(rawVuln));
     }
 }
