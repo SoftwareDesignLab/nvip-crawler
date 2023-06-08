@@ -60,40 +60,22 @@ public class PatchUrlFinder {
 	private static int advanceSearchCount;
 
 	/**
-	 * Main method just for calling to find all patch URLs
-	 *
-	 * @param args
-	 * @throws IOException
-	 * @throws InterruptedException
-	 */
-	public static void main(String[] args) throws IOException, InterruptedException {
-
-		logger.info("PatchFinder Started!");
-
-		PatchUrlFinder main = new PatchUrlFinder();
-
-		db = DatabaseHelper.getInstance();
-		Map<String, ArrayList<String>> cpes = db.getCPEsAndCVE();
-		logger.info("Pulled {} cpes from the DB", cpes.size());
-		main.parseMassURLs(cpes);
-		//logger.info("Found {} URLs", main.cveCpeUrls.size());
-		logger.info("PatchFinder Finished!");
-
-	}
-
-
-	/**
 	 * Parse URLs from all CPEs given within the map
 	 * @param cpes
 	 * @throws IOException
 	 * @throws InterruptedException
 	 */
-	public Map<String, ArrayList<String>> parseMassURLs(Map<String, ArrayList<String>> cpes) throws IOException, InterruptedException {
+	public Map<String, ArrayList<String>> parseMassURLs(Map<String, ArrayList<String>> cpes, int cveLimit) throws IOException, InterruptedException {
 
 		Map<String, ArrayList<String>> cveCpeUrls = new HashMap<>();
 
 		// for each CPE, make a set of URLs for potential patch locations, then map them to their CVE
 		for (String cveId: cpes.keySet()) {
+			// break out of loop if limit is reached
+			if (cveCpeUrls.size() > cveLimit) {
+				break;
+			}
+
 			ArrayList<String> urls = new ArrayList<>();
 			for (String cpe: cpes.get(cveId)) {
 				urls.addAll(parseURL(cpe));
