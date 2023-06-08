@@ -77,12 +77,12 @@ public class GitController {
 	 * 
 	 * @return
 	 */
-	public boolean cloneRepo(String subLocation) {
+	public boolean cloneRepo() {
 		Git git = null;
 		File localFileDir;
 		try {
 			logger.info("{} repository does not exist! Cloning repo now, this will take some time, please wait!...", localPath);
-			localFileDir = new File(localPath + File.separator + subLocation);
+			localFileDir = new File(localPath);
 			CloneCommand cloneCommand = Git.cloneRepository();
 			cloneCommand.setURI(remotePath);
 			cloneCommand.setDirectory(localFileDir);
@@ -113,7 +113,7 @@ public class GitController {
 			FileUtils.deleteDirectory(new File(localPath));
 			logger.info("Successfully deleted repo @ {}", localPath);
 		} catch (Exception e) {
-			logger.error("ERORR: Failed to delete repo @ {}", localPath);
+			logger.error("ERORR: Failed to delete repo @ {}\n{}", localPath, e);
 		}
 	}
 

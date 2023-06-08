@@ -43,6 +43,7 @@ import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.internal.storage.file.FileRepository;
 import org.eclipse.jgit.internal.storage.file.WindowCache;
+import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ProgressMonitor;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.patch.Patch;
@@ -57,7 +58,7 @@ import org.eclipse.jgit.util.FileUtils;
 public class PatchCommitScraper {
 
 	private static final Logger logger = LogManager.getLogger(PatchCommitScraper.class.getName());
-	private static final String[] patchRegex = new String[] {"vulnerability|Vulnerability|vuln|Vuln|VULN[ #]*([0-9]+)", "(CVE[-]*[0-9]*[-]*[0-9]*)"};
+	private static final String[] patchRegex = new String[] {"vulnerability|Vulnerability|vuln|Vuln|VULN[ #]*([0-9]+)"};
 	private final String localDownloadLoc;
 	private final String repoSource;
 
@@ -75,41 +76,38 @@ public class PatchCommitScraper {
 	 * @return
 	 */
 	public List<PatchCommit> parseCommits(String cveId) {
-		String repoLocation = this.localDownloadLoc + File.separator + this.repoSource;
 		List<PatchCommit> patchCommits = new ArrayList<>();
 
-		logger.info("Grabbing Commits List for repo @ {}...", repoLocation);
-		try {
-			// Read configuration from environment variables
-			// and scan up the file system tree
-			FileRepositoryBuilder repositoryBuilder = new FileRepositoryBuilder();
-			Repository repository = repositoryBuilder.setGitDir(new File(repoLocation))
-					.readEnvironment()
-					.findGitDir()
-					.build();
+		logger.info("Grabbing Commits List for repo @ {}...", localDownloadLoc);
 
+		// Initialize commit list form the repo's .git folder
+		try (Repository repository = new FileRepositoryBuilder().setGitDir(new File(localDownloadLoc+"/.git")).build()){
 			// Iterate through each commit and check if there's a commit message that contains a CVE ID
 			// or the 'vulnerability' keyword
 			try (Git git = new Git(repository)) {
-				Iterable<RevCommit> commits = git.log().all().call();
+				ObjectId startingRevision = repository.resolve("master");
+				Iterable<RevCommit> commits = git.log().add(startingRevision).call();
 				for (RevCommit commit : commits) {
 					// Check if the commit message matches any of the regex provided
 					for (String regex: patchRegex) {
 						Pattern pattern = Pattern.compile(regex);
 						Matcher matcher = pattern.matcher(commit.getFullMessage());
-						// If found, add the patch commit to the returned list
-						if (matcher.find()) {
+						// If found the CVE ID is found, add the patch commit to the returned list
+						if (matcher.find() || commit.getFullMessage().contains(cveId)) {
 							String commitUrl = repository.getConfig().getString("remote", "origin", "url");
 							LocalDateTime commitDateTime = LocalDateTime.ofInstant(
 									Instant.ofEpochSecond(commit.getCommitTime()),
 									ZoneId.systemDefault()
 							);
-							logger.info("Found patch commit @ {} for CVE {}", commitUrl, cveId);
-							PatchCommit patchCommit = new PatchCommit(commitUrl,  cveId, commit.getName(), commitDateTime, commit.getFullMessage());
+							logger.info("Found patch commit @ {} in repo {}", commitUrl, localDownloadLoc);
+							PatchCommit patchCommit = new PatchCommit(commitUrl, cveId, commit.getName(), commitDateTime, commit.getFullMessage());
 							patchCommits.add(patchCommit);
 						}
 					}
+				}
 
+				if (patchCommits.isEmpty()) {
+					logger.info("No patches for CVE {} found in repo {} ", cveId, localDownloadLoc);
 				}
 			}
 		} catch (IOException | GitAPIException e) {

@@ -48,13 +48,17 @@ public final class PatchFinder {
 	private final ArrayList<PatchCommit> patchCommits = new ArrayList<>();
 
 	public static void main(String[] args) throws IOException, InterruptedException {
-		logger.info("Started Patches Application");
+//		logger.info("Started Patches Application");
 		DatabaseHelper databaseHelper = DatabaseHelper.getInstance();
+//
+//		// Parse for patches and store them in the database
+//		PatchUrlFinder patchURLFinder = new PatchUrlFinder();
+//		Map<String, ArrayList<String>> cpes = databaseHelper.getCPEsAndCVE();
+//		Map<String, ArrayList<String>> possiblePatchURLs = patchURLFinder.parseMassURLs(cpes, 10);
 
-		// Parse for patches and store them in the database
-		PatchUrlFinder patchURLFinder = new PatchUrlFinder();
-		Map<String, ArrayList<String>> cpes = databaseHelper.getCPEsAndCVE();
-		Map<String, ArrayList<String>> possiblePatchURLs = patchURLFinder.parseMassURLs(cpes, 10);
+		Map<String, ArrayList<String>> possiblePatchURLs = new HashMap<>();
+		possiblePatchURLs.put("CVE-2022-0315", new ArrayList<>());
+		possiblePatchURLs.get("CVE-2022-0315").add("https://github.com/tylermcginnis/github-notetaker-egghead");
 
 		// repos will be cloned to patch-repos directory, multi-threaded 6 threads.
 		PatchFinder patchfinder = new PatchFinder();

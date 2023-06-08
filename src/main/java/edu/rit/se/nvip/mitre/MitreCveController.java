@@ -88,7 +88,7 @@ public class MitreCveController {
 				logger.error("Could not pull git repo at: {} to: {}", remotePath, localPath);
 			}
 		} else {
-			if (gitController.cloneRepo(""))
+			if (gitController.cloneRepo())
 				logger.info("Cloned git repo at: {} to: {}, now parsing each CVE...", remotePath, localPath);
 			else {
 				logger.error("Could not clone git repo at: {} to: {}", remotePath, localPath);

@@ -45,11 +45,11 @@ public class PatchFinderThread implements Runnable {
 
 	/**
 	 * Thread object used for multithreaded patchfinding
-	 * @param sources
+	 * @param cvePatchEntry
 	 * @param clonePath
 	 */
-	public PatchFinderThread(HashMap<String, ArrayList<String>> sources, String clonePath, PatchFinder patchFinder) {
-		this.cvePatchEntry = sources;
+	public PatchFinderThread(HashMap<String, ArrayList<String>> cvePatchEntry, String clonePath, PatchFinder patchFinder) {
+		this.cvePatchEntry = cvePatchEntry;
 		this.clonePath = clonePath;
 		this.patchFinder = patchFinder;
 	}
@@ -67,18 +67,18 @@ public class PatchFinderThread implements Runnable {
 			for (String patchSource: cvePatchEntry.get(cve)) {
 				try {
 					// Clone git repo
-					GitController gitController = new GitController(clonePath, patchSource+".git");
-					gitController.cloneRepo(cve);
+					GitController gitController = new GitController(clonePath + "/" + cve, patchSource+".git");
+					gitController.cloneRepo();
 
 					// Find patch commits
-					PatchCommitScraper commitScraper = new PatchCommitScraper(clonePath, patchSource);
+					PatchCommitScraper commitScraper = new PatchCommitScraper(clonePath + "/" + cve, patchSource);
 					List<PatchCommit> patchCommits = commitScraper.parseCommits(cve);
 					foundPatchCommits.addAll(patchCommits);
 
 					// Delete repo when done
 					gitController.deleteRepo();
 				} catch (Exception e) {
-					logger.error(e.toString());
+					logger.error("ERROR: Failed to find patch from source {} for CVE {}\n{}", patchSource, cve, e.toString());
 				}
 			}
 		}

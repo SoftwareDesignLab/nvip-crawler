@@ -130,7 +130,7 @@ public class PyPAGithubScraper {
                 else
                     logger.error("Failed to pull git repo at: " + remotePath + " to: " + gitFolder);
             } else {
-                if (gitController.cloneRepo(""))
+                if (gitController.cloneRepo())
                     logger.info("Cloned git repo at: " + remotePath + " to: " + gitFolder);
                 else
                     logger.error("Could not clone git repo at: " + remotePath + " to: " + gitFolder);
