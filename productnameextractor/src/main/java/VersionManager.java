@@ -46,7 +46,7 @@ public class VersionManager {
                     this.version1 = new ProductVersion(versionData[0]);
                     this.version2 = new ProductVersion(versionData[2]);
                 default:
-                    throw new IllegalArgumentException("Could not initilize VersionRange with the given arguments.");
+                    throw new IllegalArgumentException("Could not initialize VersionRange with the given arguments.");
             }
         }
         public VersionRange(ProductVersion version1, ProductVersion version2, RangeType type) {
@@ -62,11 +62,11 @@ public class VersionManager {
         public boolean withinRange(ProductVersion testVersion) {
             switch (this.type) {
                 case BEFORE:
-                    return version1.compareTo(testVersion) <= 0;
-                case THROUGH:
-                    return version1.compareTo(testVersion) >= 0 && version2.compareTo(testVersion) <= 0;
-                case AFTER:
                     return version1.compareTo(testVersion) >= 0;
+                case THROUGH:
+                    return version1.compareTo(testVersion) <= 0 && version2.compareTo(testVersion) >= 0;
+                case AFTER:
+                    return version1.compareTo(testVersion) <= 0;
                 case EXACT:
                     return version1.equals(testVersion);
                 default:
