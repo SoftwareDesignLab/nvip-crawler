@@ -424,6 +424,21 @@ public class CpeLookUp {
 						logger.warn("Error parsing version string '{}': {}", versionKey, e.toString());
 					}
 				}
+					//tru  to find version using a different method
+					try{
+						final ProductVersion version = new ProductVersion(versionWords[versionWords.length - 1]);
+						for (String versionWord : versionWords) {
+							if(versionManager.isAffected(version)) {
+								matchesCounter++;
+								String cpeName = "cpe:2.3:a:" + selectedGroups.get(0).getCpeGroup().getGroupID() + ":" + versionWord + ":*:*:*:*:*:*:*";
+								cpeIDs.add(cpeName);
+								productsToAdd.add(new Product(selectedGroups.get(0).getCpeGroup().getCommonTitle(), cpeName));
+							}
+						}
+					} catch (IllegalArgumentException e) {
+						logger.warn("Error parsing version string '{}': {}", versionWords[0], e.toString());
+
+					}
 
 //				// try to find version using a hashmap key
 //				for (String versionWord : versionWords) {
