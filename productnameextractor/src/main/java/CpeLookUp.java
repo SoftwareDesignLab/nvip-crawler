@@ -127,6 +127,9 @@ public class CpeLookUp {
 	 */
 	@SuppressWarnings({"unchecked", "rawtypes"})
 	public Map<String, CpeGroup> loadProductDict(int maxPages, int maxAttemptsPerPage) {
+		// If maxPages is set to 0, no limit on pages
+		if(maxPages == 0) maxPages = Integer.MAX_VALUE;
+
 		// Init cpeMapFile
 		cpeMapFile = new HashMap<>();
 
@@ -369,7 +372,7 @@ public class CpeLookUp {
 	 * @param selectedGroups                product
 	 *
 	 * @return list of CPEgroupFromMap objects
-	 */ // TODO: Versions
+	 */
 	private ArrayList<String> getCPEIdsFromGroups(ArrayList<CPEGroupFromMap> selectedGroups, ProductItem product) {
 
 		ArrayList<String> cpeIDs = new ArrayList<>();
@@ -417,8 +420,8 @@ public class CpeLookUp {
 							cpeIDs.add(cpeName);
 							productsToAdd.add(new Product(group.getCommonTitle(), cpeName));
 						}
-					} catch (NumberFormatException e) {
-						logger.error("Error parsing version string '{}': {}", versionKey, e.toString());
+					} catch (IllegalArgumentException e) {
+						logger.warn("Error parsing version string '{}': {}", versionKey, e.toString());
 					}
 				}
 

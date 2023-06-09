@@ -4,6 +4,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.regex.Pattern;
 
@@ -18,9 +19,10 @@ public class ProductVersion implements Comparable<ProductVersion> {
     private final static Logger logger = LogManager.getLogger(ProductVersion.class);
 
 
-    public ProductVersion(String versionString) {
+    public ProductVersion(String versionString) throws IllegalArgumentException {
         // Ensure provided version is valid
-        assert isVersion(versionString);
+        if(!isVersion(versionString))
+            throw new IllegalArgumentException("Failed to create ProductVersion from String '" + versionString + "'");
 
         // Split version into parts
         try {
