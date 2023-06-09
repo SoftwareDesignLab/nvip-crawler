@@ -32,6 +32,10 @@ public class FilterFactory {
     public static final String BLANK_DESCRIPTION = "BLANK_DESCRIPTION";
     public static final String OPENAI = "OPENAI";
 
+    public static final String INTEGER_DESCRIPTION = "INTEGER_DESCRIPTION";
+
+    public static final String MULTIPLE_CVE_DESCRIPTION = "MULTIPLE_CVE_DESCRIPTION";
+
     public static Filter createFilter(String type) {
         switch (type) {
             case SIMPLE:
@@ -40,6 +44,10 @@ public class FilterFactory {
                 return new CveMatchesDescriptionFilter();
             case BLANK_DESCRIPTION:
                 return new BlankDescriptionFilter();
+            case INTEGER_DESCRIPTION:
+                return new IntegerDescriptionFilter();
+            case MULTIPLE_CVE_DESCRIPTION:
+                return new MultipleCveDescriptionsFilter();
             case OPENAI:
                 return new GPTFilter();
             default:
