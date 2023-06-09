@@ -8,7 +8,7 @@ env:
   AWS_REGION: 'us-east-1'
 
 jobs:
-  build-test-crawler:
+  build-test-backend:
     runs-on: ubuntu-latest
     steps:
       - name: checkout
@@ -48,7 +48,67 @@ jobs:
       - name: Publish Test Report
         if: success() || failure()
         uses: scacap/action-surefire-report@v1
-        
+
+  build-test-crawler:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+        with:
+          lfs: 'true'
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+      - name: Prepare MySQL Test DB
+        run: |
+          sudo /etc/init.d/mysql start
+          mysql -e 'CREATE DATABASE nvip;' -uroot -proot
+          mysql -e 'SHOW DATABASES;' -uroot -proot
+          mysql -e 'source nvip_data/mysql-database/CreateAndInitializeDb.sql' -uroot -proot
+
+      - name: Test and Build Crawler with Maven
+        run: |
+          cd crawler
+          mvn dependency:go-offline
+          mvn package
+
+      - name: Publish Test Report
+        if: success() || failure()
+        uses: scacap/action-surefire-report@v1
+
+  build-test-reonciler:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+        with:
+          lfs: 'true'
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+      - name: Prepare MySQL Test DB
+        run: |
+          sudo /etc/init.d/mysql start
+          mysql -e 'CREATE DATABASE nvip;' -uroot -proot
+          mysql -e 'SHOW DATABASES;' -uroot -proot
+          mysql -e 'source nvip_data/mysql-database/CreateAndInitializeDb.sql' -uroot -proot
+
+      - name: Test and Build Reconciler with Maven
+        run: |
+          cd reconciler
+          mvn dependency:go-offline
+          mvn package
+
+      - name: Publish Test Report
+        if: success() || failure()
+        uses: scacap/action-surefire-report@v1
+
+
+
   deploy-crawler:
     runs-on: ubuntu-latest
     needs: build-test-crawler

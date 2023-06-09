@@ -30,6 +30,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import edu.rit.se.nvip.crawler.CveCrawler;
+import edu.rit.se.nvip.crawler.QuickCveCrawler;
 import edu.rit.se.nvip.crawler.github.PyPAGithubScraper;
 
 import edu.rit.se.nvip.exploit.ExploitIdentifier;
@@ -45,6 +46,7 @@ import org.apache.logging.log4j.Logger;
 import edu.rit.se.nvip.characterizer.CveCharacterizer;
 import edu.rit.se.nvip.crawler.CveCrawlController;
 import edu.rit.se.nvip.crawler.QuickCveCrawler;
+import edu.rit.se.nvip.crawler.github.GithubScraper;
 import edu.rit.se.nvip.cveprocess.CveLogDiff;
 import edu.rit.se.nvip.cveprocess.CveProcessor;
 import edu.rit.se.nvip.cvereconcile.AbstractCveReconciler;
@@ -374,7 +376,7 @@ public class NVIPMain {
 	 * @param warningMessage
 	 */
 	private void addEnvvarString(Map<String, Object> envvarMap, String envvarName, String envvarValue,
-								 	String defaultValue, String warningMessage) {
+								 String defaultValue, String warningMessage) {
 		if (envvarValue != null && !envvarValue.isEmpty()) {
 			envvarMap.put(envvarName, envvarValue);
 		} else {
@@ -582,6 +584,9 @@ public class NVIPMain {
 		}
 
 		logger.info("{} of {} CVEs found in the CNA summary pages did not exist in the Mitre GitHub repo.", countCVEsNotInMitreGithub, list.size());
+
+		// TODO: Is this correct? Was "List<CompositeVulnerability> list = new ArrayList<>(0);", but threw an error
+		list = new ArrayList<>(0);
 
 		/**
 		 * Crawl CVE from CNAs

@@ -79,6 +79,7 @@ public class CpeLookUp {
 
 	static Logger logger = LogManager.getLogger(UtilHelper.class);
 
+
 	/**
 	 * Thread safe singleton implementation
 	 * 
@@ -313,7 +314,7 @@ public class CpeLookUp {
 		if (product.getVersions().size() == 0) {
 			String cpeID = "cpe:2.3:a:" + selectedGroups.get(0).getCpeGroup().getGroupID() + ":*:*:*:*:*:*:*:*";
 			cpeIDs.add(cpeID);
-			addProductToDatabase(new Product(selectedGroups.get(0).getCpeGroup().getCommonTitle(), cpeID));
+			addProductToDatabase(new Product(selectedGroups.get(0).getCpeGroup().getCommonTitle(), cpeID, product.getSwid()));
 			return cpeIDs;
 		}
 
@@ -333,7 +334,7 @@ public class CpeLookUp {
 					if (cpeEntry != null) {
 						mathcesCounter++;
 						cpeIDs.add(cpeEntry.getCpeID());
-						addProductToDatabase(new Product(cpeEntry.getTitle(), cpeEntry.getCpeID()));
+						addProductToDatabase(new Product(cpeEntry.getTitle(), cpeEntry.getCpeID(), product.getSwid()));
 					}
 				}
 
@@ -345,7 +346,7 @@ public class CpeLookUp {
 						for (String versionWord : versionWords) {
 							if (entryTitle.contains(versionWord)) {
 								cpeIDs.add(entry.getValue().getCpeID());
-								addProductToDatabase(new Product(entry.getValue().getTitle(), entry.getValue().getCpeID()));
+								addProductToDatabase(new Product(entry.getValue().getTitle(), entry.getValue().getCpeID(), product.getSwid()));
 								break;
 							}
 						}
@@ -359,7 +360,7 @@ public class CpeLookUp {
 		if (cpeIDs.size() == 0) {
 			String cpeID = "cpe:2.3:a:" + selectedGroups.get(0).getCpeGroup().getGroupID() + ":*:*:*:*:*:*:*:*";
 			cpeIDs.add(cpeID);
-			addProductToDatabase(new Product(selectedGroups.get(0).getCpeGroup().getCommonTitle(), cpeID));
+			addProductToDatabase(new Product(selectedGroups.get(0).getCpeGroup().getCommonTitle(), cpeID, product.getSwid()));
 			return cpeIDs;
 		}
 
@@ -391,7 +392,7 @@ public class CpeLookUp {
 		ProductItem pItem = new ProductItem(domain);
 		ArrayList<String> cpeList = getCPEids(pItem);
 		if (cpeList != null && cpeList.size() > 0)
-			return new Product(domain, cpeList.get(0));
+			return new Product(domain, cpeList.get(0), pItem.getSwid());
 
 		return null;
 	}
@@ -487,9 +488,9 @@ public class CpeLookUp {
 			}
 
 			if (cpeEntry != null) {
-				p = new Product(cpeEntry.getTitle(), cpe);
+				p = new Product(cpeEntry.getTitle(), cpe, null);
 			} else {
-				p = new Product(cpeGroup.getCommonTitle(), cpe);
+				p = new Product(cpeGroup.getCommonTitle(), cpe, null);
 			}
 		}
 
