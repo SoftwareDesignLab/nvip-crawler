@@ -42,7 +42,7 @@ public class CpeLookUpTest {
 	private static final CpeLookUp cpeLookUp = new CpeLookUp();
 	static {
 		try {
-			final Map<String, CpeGroup> productDict = ProductNameExtractorController.readProductDict("src/test/resources/data/product_dict.json");
+			final Map<String, CpeGroup> productDict = ProductNameExtractorController.readProductDict("C:\\Users\\richa\\Downloads\\nvip\\nvip-crawler\\src\\main\\resources\\data\\product_dict.json");
 			cpeLookUp.loadProductDict(productDict);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
@@ -80,6 +80,7 @@ public class CpeLookUpTest {
 			notEmpty = true;
 			correctResult = expectedResult.equals(idList.get(0));
 		}
+		System.out.println(idList);
 
 		assertTrue("Result is not empty", notEmpty);
 		assertTrue("Result is correct", correctResult);
