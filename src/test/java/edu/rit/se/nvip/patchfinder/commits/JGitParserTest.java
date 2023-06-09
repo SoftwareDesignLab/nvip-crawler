@@ -96,8 +96,8 @@ public class JGitParserTest {
         try (MockedStatic<Git> git = Mockito.mockStatic(Git.class)) {
             git.when(Git::cloneRepository).thenReturn(cc);
             PatchCommitScraper jGit = new PatchCommitScraper(testSourceURl, "src/test/resources/test-jgitparser");
-            jGit.cloneRepository();
-            Map<Date, ArrayList<String>> commits = jGit.parseCommits(testCveId);
+            //jGit.cloneRepository();
+            Map<Date, ArrayList<String>> commits = (Map<Date, ArrayList<String>>) jGit.parseCommits(testCveId);
             assertEquals(2, commits.size());
             Date date = new Date(1617372481000L);
             assertTrue(commits.containsKey(date));
