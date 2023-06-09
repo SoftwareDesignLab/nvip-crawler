@@ -31,7 +31,6 @@ import org.jsoup.select.Elements;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 public class MozillaParser extends AbstractCveParser {
 
@@ -51,19 +50,31 @@ public class MozillaParser extends AbstractCveParser {
         Document doc = Jsoup.parse(sCVEContentHTML);
 
         Element summaryDL = doc.select("dl.summary").first();
+        String date = LocalDate.now().toString();
         // extract date from the next child element after "Announced"
-        Element announced = Objects.requireNonNull(summaryDL).children().select("dt:contains(Announced)").first();
-        Element dateEl = Objects.requireNonNull(announced).nextElementSibling();
-        String date = Objects.requireNonNull(dateEl).text();
+        if (summaryDL != null) {
+            Element announced = summaryDL.children().select("dt:contains(Announced)").first();
+            if (announced != null) {
+                Element dateEl = announced.nextElementSibling();
+                if (dateEl != null)
+                    date = dateEl.text();
+            }
+        }
 
         // extract each CVE section on the page
         Elements cveSections = doc.select("section.cve");
         // add info from each section to vuln list
         for (Element cveSec : cveSections) {
             Elements children = cveSec.children();
-            String cve = Objects.requireNonNull(children.select("h4").first()).id();
-            Element descEl = Objects.requireNonNull(children.select("h5:contains(Description)").first()).nextElementSibling();
-            String description = Objects.requireNonNull(descEl).text();
+            Element header = children.select("h4").first();
+            if (header == null) continue;
+            String cve = header.id();
+            String description = cveSec.text();
+            Element descEl = children.select("h5:contains(Description)").first();
+            if (descEl != null) {
+                Element descNext = descEl.nextElementSibling();
+                if (descNext != null) description = descNext.text();
+            }
             vulnList.add(new RawVulnerability(
                sSourceURL, cve, date, date, description
             ));

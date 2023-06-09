@@ -90,15 +90,22 @@ public class HuntrParser extends AbstractCveParser {
         // create a formatter to parse date
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM dd uuuu");
         // get rid of any date ordinals for parsing using regex
-        String reportedDate = LocalDate
-                .parse(Objects.requireNonNull(reportedDateEl).text().replaceAll("(?<=\\d)(st|nd|rd|th)", ""), formatter)
+        String reportedDate;
+        if (reportedDateEl == null) reportedDate = LocalDate.now().toString();
+        else reportedDate = LocalDate
+                .parse(reportedDateEl.text().replaceAll("(?<=\\d)(st|nd|rd|th)", ""), formatter)
                 .toString();
         // get last modified date computed from the most recent message's timestamp
         Element messageContainer = doc.select("div#messages-container").first();
         // get the last message box in messageContainer
-        Element lastMessage = Objects.requireNonNull(messageContainer).children().select("div#message-box").last();
-        Element timeStampEl = Objects.requireNonNull(lastMessage).children().select("span:contains(ago)").first();
-        String timeStamp = Objects.requireNonNull(timeStampEl).text();
+        String timeStamp = reportedDate;
+        if (messageContainer != null) {
+            Element lastMessage = messageContainer.children().select("div#message-box").last();
+            if (lastMessage != null) {
+                Element timeStampEl = lastMessage.children().select("span:contains(ago)").first();
+                timeStamp = timeStampEl != null ? timeStampEl.text() : reportedDate;
+            }
+        }
 
         String lastModified = agoToDate(timeStamp);
         if (lastModified == null) lastModified = reportedDate;
