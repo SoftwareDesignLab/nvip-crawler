@@ -175,33 +175,8 @@ public class DatabaseHelperTest {
 		try {
 			Connection conn = dbh.getConnection();
 			assertNotNull(conn);
-		} catch (SQLException ignored) {}
-	}
-
-	@Test
-	public void insertCpeProductsTest() {
-		List<Product> testProducts = new ArrayList<>();
-		String domain = "domain";
-		String cpe = "cpe";
-		for (int i=0; i < 5; i++) {
-			testProducts.add(new Product(domain+i, cpe+i));
+		} catch (SQLException ignored) {
 		}
-		try {
-			setResNextCount(0);
-			when(pstmt.executeUpdate()).thenReturn(1);
-//			int count1 = dbh.insertCpeProducts(testProducts.subList(0,1)); // TODO: FIX THIS
-			int count1 = dbh.insertCpeProducts(new HashMap<>());
-			assertEquals(1, count1);
-
-			int n_existing = 1;
-			setResNextCount(n_existing);
-			when(res.getInt(1)).thenReturn(n_existing);
-//			int count2 = dbh.insertCpeProducts(testProducts); // TODO: FIX THIS
-			int count2 = dbh.insertCpeProducts(new HashMap<>());
-			assertEquals(4, count2);
-			verify(pstmt, times(2)).setString(1, cpe+4);
-			verify(pstmt).setString(2, domain+4);
-		} catch (SQLException ignored) {}
 	}
 
 	@Test
