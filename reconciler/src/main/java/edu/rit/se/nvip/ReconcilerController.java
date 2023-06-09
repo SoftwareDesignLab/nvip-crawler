@@ -22,6 +22,7 @@ public class ReconcilerController {
 
     public ReconcilerController(List<String> filterTypes, String reconcilerType, List<String> processorTypes, Map<String, Integer> knownCveSources) {
         this.dbh = DatabaseHelper.getInstance();
+        addLocalFilters();
         for (String filterType : filterTypes) {
             filters.add(FilterFactory.createFilter(filterType));
         }
@@ -107,5 +108,15 @@ public class ReconcilerController {
             }
         }
         return count;
+    }
+
+    /**
+     * Helper method for adding all local/simple filters
+     */
+    private void addLocalFilters() {
+        filters.add(FilterFactory.createFilter(FilterFactory.BLANK_DESCRIPTION));
+        filters.add(FilterFactory.createFilter(FilterFactory.CVE_MATCHES_DESCRIPTION));
+        filters.add(FilterFactory.createFilter(FilterFactory.INTEGER_DESCRIPTION));
+        filters.add(FilterFactory.createFilter(FilterFactory.MULTIPLE_CVE_DESCRIPTION));
     }
 }
