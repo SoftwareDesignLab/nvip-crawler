@@ -11,6 +11,7 @@ import java.util.concurrent.*;
  * Extension of the Filter class which implements filterAll() by running the passesFilter() calls in parallel.
  */
 public abstract class AsyncFilter extends Filter {
+
     @Override
     public Set<RawVulnerability> filterAll(Set<RawVulnerability> rawVulns) {
         Set<RawVulnerability> rejects = new HashSet<>();
@@ -30,11 +31,11 @@ public abstract class AsyncFilter extends Filter {
                     rejects.add(threadOutput.getKey());
                 }
             } catch (InterruptedException | ExecutionException e) {
-                e.printStackTrace();
+                logger.error("Error while polling future");
+                logger.error(e);
             }
         }
         executor.shutdown();
-
         return rejects;
     }
 
@@ -45,9 +46,14 @@ public abstract class AsyncFilter extends Filter {
         }
 
         @Override
-        public Pair<RawVulnerability, Boolean> call() throws Exception {
-            boolean result =  passesFilter(vuln);
-            return new Pair<>(vuln, result);
+        public Pair<RawVulnerability, Boolean> call() {
+            // respect API rate limits!
+            waitForLimiters(vuln);
+            return new Pair<>(vuln, passesFilter(vuln));
         }
+    }
+
+    protected void waitForLimiters(RawVulnerability vuln) {
+        return;
     }
 }

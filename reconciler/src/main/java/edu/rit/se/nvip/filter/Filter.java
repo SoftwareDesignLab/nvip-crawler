@@ -24,6 +24,8 @@
 package edu.rit.se.nvip.filter;
 
 import edu.rit.se.nvip.model.RawVulnerability;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.*;
 
@@ -31,6 +33,9 @@ import java.util.*;
  * abstract representation of a filtering stage
  */
 public abstract class Filter {
+
+    protected final Logger logger = LogManager.getLogger(getClass().getSimpleName());
+
     /**
      * Checks to see if a RawVulnerability contains a well-formed description
      * @param rawVuln A RawVulnerability in need of verification
