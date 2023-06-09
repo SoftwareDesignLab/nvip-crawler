@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+import model.ProductVersion;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -42,7 +43,7 @@ public class CpeLookUpTest {
 	private static final CpeLookUp cpeLookUp = new CpeLookUp();
 	static {
 		try {
-			final Map<String, CpeGroup> productDict = ProductNameExtractorController.readProductDict("C:\\Users\\richa\\Downloads\\nvip\\nvip-crawler\\src\\main\\resources\\data\\product_dict.json");
+			final Map<String, CpeGroup> productDict = ProductNameExtractorController.readProductDict("src/test/resources/data/product_dict.json");
 			cpeLookUp.loadProductDict(productDict);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
@@ -53,9 +54,9 @@ public class CpeLookUpTest {
 	@Test
 	public void legitimateProduct() {
 		ProductItem product = new ProductItem("phpMyAdmin");
-		product.addVersion("4.8.4");
+		product.addVersion("4.1.5");
 
-		String expectedResult = "cpe:2.3:a:phpmyadmin:phpmyadmin:4.8.4:*:*:*:*:*:*:*";
+		String expectedResult = "cpe:2.3:a:phpmyadmin:phpmyadmin:4.1.5:*:*:*:*:*:*:*";
 
 		List<String> idList = cpeLookUp.getCPEIds(product);
 
@@ -67,23 +68,15 @@ public class CpeLookUpTest {
 	@Test
 	public void legitimateComplexProduct() {
 		ProductItem product = new ProductItem("phpMyAdmin.");
-		product.addVersion("before  4.8.4");
+		product.addVersion("before  4.1.5");
 
-		String expectedResult = "cpe:2.3:a:phpmyadmin:phpmyadmin:4.8.4:*:*:*:*:*:*:*";
+		String expectedResult = "cpe:2.3:a:phpmyadmin:phpmyadmin:4.1.5:*:*:*:*:*:*:*";
 
 		List<String> idList = cpeLookUp.getCPEIds(product);
 
-		boolean correctResult = false;
-		boolean notEmpty = false;
-
-		if (idList != null && idList.size() > 0) {
-			notEmpty = true;
-			correctResult = expectedResult.equals(idList.get(0));
-		}
-		System.out.println(idList);
-
-		assertTrue("Result is not empty", notEmpty);
-		assertTrue("Result is correct", correctResult);
+		assertNotNull("idList was null", idList);
+		assertNotEquals("idList was empty", idList.size(), 0);
+		assertEquals("actual result was not expected result", expectedResult, idList.get(0));
 	}
 
 	@Test
@@ -91,22 +84,18 @@ public class CpeLookUpTest {
 		ProductItem product = new ProductItem("phpMyAdmin:.");
 		product.addVersion("https://www.openwall.com/lists/oss-security/2012/05/10/6");
 		product.addVersion("before");
-		product.addVersion("4.8.4");
+		product.addVersion("4.1.5");
 
-		String expectedResult = "cpe:2.3:a:phpmyadmin:phpmyadmin:4.8.4:*:*:*:*:*:*:*";
+		ProductVersion beforeVersion = new ProductVersion("4.1.5");
 
 		List<String> idList = cpeLookUp.getCPEIds(product);
 
-		boolean correctResult = false;
-		boolean notEmpty = false;
+		assertNotNull("idList was null", idList);
+		assertNotEquals("idList was empty", idList.size(), 0);
 
-		if (idList != null && idList.size() > 0) {
-			notEmpty = true;
-			correctResult = expectedResult.equals(idList.get(0));
-		}
+		ProductVersion actualVersion = new ProductVersion(idList.get(0));
 
-		assertTrue("Result is not empty", notEmpty);
-		assertTrue("Result is correct", correctResult);
+		assertTrue(String.format("%s was not valid", actualVersion), actualVersion.compareTo(beforeVersion) <= 0);
 	}
 
 	@Test
@@ -118,16 +107,9 @@ public class CpeLookUpTest {
 
 		List<String> idList = cpeLookUp.getCPEIds(product);
 
-		boolean correctResult = false;
-		boolean notEmpty = false;
-
-		if (idList != null && idList.size() > 0) {
-			notEmpty = true;
-			correctResult = expectedResult.equals(idList.get(0));
-		}
-
-		assertTrue("Result is not empty", notEmpty);
-		assertTrue("Result is correct", correctResult);
+		assertNotNull("idList was null", idList);
+		assertNotEquals("idList was empty", idList.size(), 0);
+		assertEquals("actual result was not expected result", expectedResult, idList.get(0));
 	}
 
 	@Test
@@ -143,22 +125,11 @@ public class CpeLookUpTest {
 
 		List<String> idList = cpeLookUp.getCPEIds(product);
 
-		boolean correctResult1 = false;
-		boolean correctResult2 = false;
-		boolean correctResult3 = false;
-		boolean notEmpty = false;
-
-		if (idList != null && idList.size() > 0) {
-			notEmpty = true;
-			correctResult1 = expectedResult1.equals(idList.get(0));
-			correctResult2 = expectedResult2.equals(idList.get(1));
-			correctResult3 = expectedResult3.equals(idList.get(2));
-		}
-
-		assertTrue("Result is not empty", notEmpty);
-		assertTrue("Result is correct for 4.8.0.1", correctResult1);
-		assertTrue("Result is correct for 4.8.4", correctResult2);
-		assertTrue("Result is correct for 4.7.9", correctResult3);
+		assertNotNull("idList was null", idList);
+		assertNotEquals("idList was empty", idList.size(), 0);
+		assertEquals("actual result was not expected result", expectedResult1, idList.get(0));
+		assertEquals("actual result was not expected result", expectedResult2, idList.get(1));
+		assertEquals("actual result was not expected result", expectedResult3, idList.get(2));
 	}
 
 	@Test
@@ -169,16 +140,9 @@ public class CpeLookUpTest {
 
 		List<String> idList = cpeLookUp.getCPEIds(product);
 
-		boolean correctResult = false;
-		boolean notEmpty = false;
-
-		if (idList != null && idList.size() > 0) {
-			notEmpty = true;
-			correctResult = expectedResult.equals(idList.get(0));
-		}
-
-		assertTrue("Result is not empty", notEmpty);
-		assertTrue("Result is correct", correctResult);
+		assertNotNull("idList was null", idList);
+		assertNotEquals("idList was empty", idList.size(), 0);
+		assertEquals("actual result was not expected result", expectedResult, idList.get(0));
 	}
 
 	@Test
@@ -189,11 +153,10 @@ public class CpeLookUpTest {
 		List<String> sn1List = cpeLookUp.getCPETitles(sn1);
 		List<String> sn2List = cpeLookUp.getCPETitles(sn2);
 
-		boolean sn1NotEmpty = (sn1List != null && sn1List.size() > 0);
-		boolean sn2NotEmpty = (sn2List != null && sn2List.size() > 0);
-
-		assertTrue("Result for \"Explorer.\" is not empty", sn1NotEmpty);
-		assertTrue("Result for \"Linux\" is not empty", sn2NotEmpty);
+		assertNotNull("sn1List was null", sn1List);
+		assertNotNull("sn2List was null", sn2List);
+		assertNotEquals("sn1List was empty", sn1List.size(), 0);
+		assertNotEquals("sn2List was empty", sn2List.size(), 0);
 	}
 
 }
