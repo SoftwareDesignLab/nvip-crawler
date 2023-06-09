@@ -17,6 +17,12 @@ public class ProductNameExtractorController {
     private static final DatabaseHelper databaseHelper = DatabaseHelper.getInstance();
     private static final ObjectMapper OM = new ObjectMapper();
 
+    /**
+     * TODO: docstring
+     * @param productDictPath
+     * @return
+     * @throws IOException
+     */
     public static Map<String, CpeGroup> readProductDict(String productDictPath) throws IOException {
         // Read in data
         final LinkedHashMap<String, LinkedHashMap> rawProductDict = OM.readValue(Paths.get(productDictPath).toFile(), LinkedHashMap.class);
@@ -24,7 +30,7 @@ public class ProductNameExtractorController {
         // Init CPE dict
         final LinkedHashMap<String, CpeGroup> productDict = new LinkedHashMap<>();
 
-        // Process into CpeGroups/GpeEntries
+        // Process into CpeGroups/CpeEntries
         for (Map.Entry<String, LinkedHashMap> entry : rawProductDict.entrySet()) {
             final String key = entry.getKey();
             LinkedHashMap value = entry.getValue();
@@ -102,7 +108,7 @@ public class ProductNameExtractorController {
 
             // Write CPE dict to file
             try {
-                OM.writeValue(new File(productDictPath), productDict);
+                OM.writerWithDefaultPrettyPrinter().writeValue(new File(productDictPath), productDict);
             } catch (IOException ioe) {
                 logger.error("Error writing product dict to filepath '{}': {}", productDictPath, ioe.toString());
             }
