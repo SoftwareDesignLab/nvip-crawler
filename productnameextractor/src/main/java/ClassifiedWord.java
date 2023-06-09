@@ -21,23 +21,32 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+
+import java.util.HashMap;
+
 /**
  * ClassifiedWord class for results of words classification in the CVE description into "Software Name", "Software Version", and "Others"
- * 0 - SN
- * 1 - SV
- * 2 - O
+ * 0 - SOFTWARE_NAME
+ * 1 - SOFTWARE_VERSION
+ * 2 - OTHER
  * 
  * @author Igor Khokhlov
  *
  */
 
 public class ClassifiedWord {
-	
 	private final String word;
-	private int assignedClass = -1;
+	private WordType assignedClass = WordType.UNDEFINED;
 	private float assignedClassConfidence = 0;
 	private final int numberOfClasses;
 	private final float[] confidences;
+
+	public enum WordType {
+		SOFTWARE_NAME,
+		SOFTWARE_VERSION,
+		OTHER,
+		UNDEFINED;
+	}
 	
 	/**
 	 * Class constructor
@@ -60,7 +69,7 @@ public class ClassifiedWord {
 		for (int i=0; i<confidences.length; i++) {
 			if(confidences[i]>assignedClassConfidence) {
 				assignedClassConfidence=confidences[i];
-				assignedClass=i;
+				assignedClass=WordType.values()[i];
 			}
 		}	
 	
@@ -78,7 +87,7 @@ public class ClassifiedWord {
 	 * Returns assigned class of the classified word
 	 * @return Class number (int)
 	 */
-	public int getAssignedClass() {
+	public WordType getAssignedClass() {
 		return assignedClass;
 	}
 
@@ -112,7 +121,7 @@ public class ClassifiedWord {
 	 * @param assignedClass Class number (int)
 	 * @param confidence Confidence level (float)
 	 */
-	public void setAssignedClass(int assignedClass, float confidence) {
+	public void setAssignedClass(WordType assignedClass, float confidence) {
 		this.assignedClass = assignedClass;
 		this.assignedClassConfidence = confidence;
 	}
@@ -124,18 +133,7 @@ public class ClassifiedWord {
 			return "";
 		}
 		
-		String classString;
-		if (assignedClass==0) {
-			classString = "SN";
-		}
-		else if (assignedClass==1) {
-			classString = "SV";
-		}
-		else {
-			classString = "O";
-		}
-		
-		return word + "; " + classString;
+		return word + ": " + assignedClass;
 	}
 	
 	

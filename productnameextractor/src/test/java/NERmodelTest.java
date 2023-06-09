@@ -179,9 +179,9 @@ public class NERmodelTest {
 		
 		if (notNull) {
 			lengthNotZero = result.size()>0;
-			hasOther = result.get(0).getAssignedClass()==2;
-			hasSN = result.get(4).getAssignedClass()==0;
-			hasSV = result.get(5).getAssignedClass()==1;
+			hasOther = result.get(0).getAssignedClass()== ClassifiedWord.WordType.OTHER;
+			hasSN = result.get(4).getAssignedClass()== ClassifiedWord.WordType.SOFTWARE_NAME;
+			hasSV = result.get(5).getAssignedClass()== ClassifiedWord.WordType.SOFTWARE_VERSION;
 		}
 		
 		

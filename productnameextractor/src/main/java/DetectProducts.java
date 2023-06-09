@@ -146,31 +146,31 @@ public class DetectProducts {
 
 		for (int i = 0; i < tags.length; i++) {
 			// Check if SN word has low confidence
-			if (result.get(i).getAssignedClass() == 0 && result.get(i).getAssignedClassConfidence() < confThreshold) {
+			if (result.get(i).getAssignedClass() == ClassifiedWord.WordType.SOFTWARE_NAME && result.get(i).getAssignedClassConfidence() < confThreshold) {
 				// Check in the CPE
 				boolean inTheCPE = hasMatch(nerResult, words, i);
-				// if not in the CPE set it to the class with second highest confidence
+				// if not in the CPE set it to the class with second-highest confidence
 				if (!inTheCPE) {
 					if (result.get(i).getConfidences()[2] >= result.get(i).getConfidences()[1]) {
-						result.get(i).setAssignedClass(2, result.get(i).getConfidences()[2]);
+						result.get(i).setAssignedClass(ClassifiedWord.WordType.OTHER, result.get(i).getConfidences()[2]);
 					} else {
-						result.get(i).setAssignedClass(1, result.get(i).getConfidences()[1]);
+						result.get(i).setAssignedClass(ClassifiedWord.WordType.SOFTWARE_VERSION, result.get(i).getConfidences()[1]);
 					}
 				}
 			} else if (checkTriggerWords(words[i], ignoreWords)) {
-				result.get(i).setAssignedClass(2, 1);
+				result.get(i).setAssignedClass(ClassifiedWord.WordType.OTHER, 1);
 			}
 			// Word is a proper noun
 			else if (tags[i].equals(NNP)) {
 				// Check if it is not a exclusion word
 				boolean excluded = exclusionWordsList.contains(words[i].toLowerCase());
-				if (!excluded && i < maxSNDistance + 1 && result.get(i).getAssignedClass() == 2) {
+				if (!excluded && i < maxSNDistance + 1 && result.get(i).getAssignedClass() == ClassifiedWord.WordType.OTHER) {
 
 					// Check if word in the CPE and assign SN class if it there
 					boolean inTheCPE = hasMatch(nerResult, words, i);
 
 					if (inTheCPE) {
-						result.get(i).setAssignedClass(0, 1);
+						result.get(i).setAssignedClass(ClassifiedWord.WordType.SOFTWARE_NAME, 1);
 					}
 				}
 			}
@@ -183,11 +183,11 @@ public class DetectProducts {
 				snDistance++;
 			}
 
-			if (result.get(i).getAssignedClass() == 0) {
+			if (result.get(i).getAssignedClass() == ClassifiedWord.WordType.SOFTWARE_NAME) {
 				snDistance = 0;
 			} else if (snDistance == 1 && i < result.size() - 1 && words[i].length() > 1) {
-				if (result.get(i + 1).getAssignedClass() == 0) {
-					result.get(i).setAssignedClass(0, 1);
+				if (result.get(i + 1).getAssignedClass() == ClassifiedWord.WordType.SOFTWARE_NAME) {
+					result.get(i).setAssignedClass(ClassifiedWord.WordType.SOFTWARE_NAME, 1);
 					snDistance = 0;
 				}
 			}
@@ -271,7 +271,7 @@ public class DetectProducts {
 				return false;
 			}
 			if (cpewords[1].equalsIgnoreCase(words[index + 1])) {
-				nerResult.get(index + 1).setAssignedClass(0, 1);
+				nerResult.get(index + 1).setAssignedClass(ClassifiedWord.WordType.SOFTWARE_NAME, 1);
 				return true;
 			}
 		}
@@ -281,7 +281,7 @@ public class DetectProducts {
 				return false;
 			}
 			if (cpewords[cpewords.length - 2].equalsIgnoreCase(words[index - 1])) {
-				nerResult.get(index - 1).setAssignedClass(0, 1);
+				nerResult.get(index - 1).setAssignedClass(ClassifiedWord.WordType.SOFTWARE_NAME, 1);
 				return true;
 			}
 		}
@@ -289,13 +289,13 @@ public class DetectProducts {
 		else {
 			if (index + 1 <= words.length - 1) {
 				if (cpewords[matchingIndex + 1].equalsIgnoreCase(words[index + 1])) {
-					nerResult.get(index + 1).setAssignedClass(0, 1);
+					nerResult.get(index + 1).setAssignedClass(ClassifiedWord.WordType.SOFTWARE_NAME, 1);
 					result = true;
 				}
 			}
 			if (index - 1 >= 0) {
 				if (cpewords[matchingIndex - 1].equalsIgnoreCase(words[index - 1])) {
-					nerResult.get(index - 1).setAssignedClass(0, 1);
+					nerResult.get(index - 1).setAssignedClass(ClassifiedWord.WordType.SOFTWARE_NAME, 1);
 					result = true;
 				}
 			}
@@ -357,8 +357,8 @@ public class DetectProducts {
 
 		// Classify all SV words with confidence level less than threshold to Other
 		for (ClassifiedWord classifiedWord : nerResult) {
-			if (classifiedWord.getAssignedClass() == 1 && classifiedWord.getAssignedClassConfidence() < confThreshold) {
-				classifiedWord.setAssignedClass(2, classifiedWord.getConfidences()[2]);
+			if (classifiedWord.getAssignedClass() == ClassifiedWord.WordType.SOFTWARE_VERSION && classifiedWord.getAssignedClassConfidence() < confThreshold) {
+				classifiedWord.setAssignedClass(ClassifiedWord.WordType.OTHER, classifiedWord.getConfidences()[2]);
 			}
 		}
 
@@ -370,20 +370,20 @@ public class DetectProducts {
 				svDistance++;
 			}
 			// assign SV class
-			if (nerResult.get(i).getAssignedClass() == 2 && !checkTriggerWords(words[i], ignoreWords) && (words[i].matches(".*\\d.*") || checkTriggerWords(words[i], trigerWords))) {
+			if (nerResult.get(i).getAssignedClass() == ClassifiedWord.WordType.OTHER && !checkTriggerWords(words[i], ignoreWords) && (words[i].matches(".*\\d.*") || checkTriggerWords(words[i], trigerWords))) {
 				if ((snDistance >= 0 && snDistance <= maxSNDistance) || prevWordIsSV) {
-					nerResult.get(i).setAssignedClass(1, 1);
+					nerResult.get(i).setAssignedClass(ClassifiedWord.WordType.SOFTWARE_VERSION, 1);
 					prevWordIsSV = true;
 					svDistance = 0;
 					snDistance = -1;
 				}
 			}
 			// reset SN distance
-			else if (nerResult.get(i).getAssignedClass() == 0) {
+			else if (nerResult.get(i).getAssignedClass() == ClassifiedWord.WordType.SOFTWARE_NAME) {
 				snDistance = 0;
 			}
 			// set previous word is SV flag
-			else if (nerResult.get(i).getAssignedClass() == 1) {
+			else if (nerResult.get(i).getAssignedClass() == ClassifiedWord.WordType.SOFTWARE_VERSION) {
 				svDistance = 0;
 				prevWordIsSV = true;
 				snDistance = -1;
@@ -401,12 +401,12 @@ public class DetectProducts {
 				svDistance++;
 			}
 
-			if (nerResult.get(i).getAssignedClass() == 1) {
+			if (nerResult.get(i).getAssignedClass() == ClassifiedWord.WordType.SOFTWARE_VERSION) {
 				svDistance = 0;
 			} else if (svDistance == 1 && i < nerResult.size() - 1 && checkTriggerWords(words[i], possibleWords)) {
 
-				if (nerResult.get(i + 1).getAssignedClass() == 1) {
-					nerResult.get(i).setAssignedClass(1, 1);
+				if (nerResult.get(i + 1).getAssignedClass() == ClassifiedWord.WordType.SOFTWARE_VERSION) {
+					nerResult.get(i).setAssignedClass(ClassifiedWord.WordType.SOFTWARE_VERSION, 1);
 					svDistance = 0;
 				}
 			}
@@ -461,7 +461,7 @@ public class DetectProducts {
 
 		boolean prevWordSN = false;
 		for (ClassifiedWord word : words) {
-			if (word.getAssignedClass() == 0) {
+			if (word.getAssignedClass() == ClassifiedWord.WordType.SOFTWARE_NAME) {
 				// Adds word to existing product name
 				if (prevWordSN) {
 					ProductItem product = products.get(products.size() - 1);
@@ -473,7 +473,7 @@ public class DetectProducts {
 					products.add(new ProductItem(word.getWord()));
 				}
 				prevWordSN = true;
-			} else if (word.getAssignedClass() == 1) {
+			} else if (word.getAssignedClass() == ClassifiedWord.WordType.SOFTWARE_VERSION) {
 				// adds version to the product item
 				if (products.size() > 0) {
 					ProductItem product = products.get(products.size() - 1);
