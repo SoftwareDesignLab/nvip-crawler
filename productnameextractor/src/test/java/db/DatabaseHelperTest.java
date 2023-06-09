@@ -78,7 +78,6 @@ public class DatabaseHelperTest {
 			when(conn.prepareStatement(any())).thenReturn(pstmt);
 			when(pstmt.executeQuery()).thenReturn(res);
 			when(conn.createStatement()).thenReturn(pstmt);
-			when(pstmt.executeQuery(any())).thenReturn(res);
 		} catch (SQLException ignored) {}
 	}
 
@@ -140,7 +139,7 @@ public class DatabaseHelperTest {
 	private List<AffectedRelease> buildDummyReleases(int count) {
 		List<AffectedRelease> releases = new ArrayList<>();
 		for (int i = 0; i < count; i++) {
-			releases.add(new AffectedRelease(1337, "cve"+i, "cpe"+i, "date"+i, "version"+i));
+			releases.add(new AffectedRelease(i, "cve"+i, "cpe"+i, "date"+i, "version"+i));
 		}
 		return releases;
 	}
@@ -196,16 +195,20 @@ public class DatabaseHelperTest {
 		} catch (SQLException ignored) {}
 	}
 
+	/**
+	 * Tests the insertAffectedReleases method. In this case since there are 5 releases,
+	 * there should be 8 psmt.setStrings() so 8x5=40
+	 * @throws SQLException
+	 */
 	@Test
 	public void insertAffectedReleasesV2Test() {
 		int inCount = 5;
 		List<AffectedRelease> releases = buildDummyReleases(inCount);
 		dbh.insertAffectedReleasesV2(releases);
 		try {
-			verify(pstmt, atLeast(inCount*3)).setString(anyInt(), any());
-			verify(pstmt, times(inCount)).setInt(anyInt(), anyInt());
+			verify(pstmt, times(inCount*8)).setString(anyInt(), any());
 			verify(pstmt, times(inCount)).executeUpdate();
-			verify(pstmt).setString(4, releases.get(0).getVersion());
+			verify(pstmt).setString(1, releases.get(inCount-1).getCveId());
 		} catch (SQLException ignored) {}
 	}
 
