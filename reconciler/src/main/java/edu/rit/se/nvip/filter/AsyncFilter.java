@@ -1,7 +1,6 @@
 package edu.rit.se.nvip.filter;
 
 import edu.rit.se.nvip.model.RawVulnerability;
-import javafx.util.Pair;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -17,18 +16,18 @@ public abstract class AsyncFilter extends Filter {
         Set<RawVulnerability> rejects = new HashSet<>();
         // set up threads
         ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-        Set<Future<Pair<RawVulnerability, Boolean>>> futures = new HashSet<>();
+        Set<Future<FilterTaskReturn>> futures = new HashSet<>();
         for (RawVulnerability vuln : rawVulns) {
-            Future<Pair<RawVulnerability, Boolean>> future = executor.submit(new FilterTask(vuln));
+            Future<FilterTaskReturn> future = executor.submit(new FilterTask(vuln));
             futures.add(future);
         }
         // poll the futures and handle the rejects
-        for (Future<Pair<RawVulnerability, Boolean>> future : futures) {
+        for (Future<FilterTaskReturn> future : futures) {
             try {
-                Pair<RawVulnerability, Boolean> threadOutput = future.get();
-                if (!threadOutput.getValue()) {
-                    rawVulns.remove(threadOutput.getKey());
-                    rejects.add(threadOutput.getKey());
+                FilterTaskReturn threadOutput = future.get();
+                if (!threadOutput.passes) {
+                    rawVulns.remove(threadOutput.vulnInput);
+                    rejects.add(threadOutput.vulnInput);
                 }
             } catch (InterruptedException | ExecutionException e) {
                 logger.error("Error while polling future");
@@ -39,17 +38,26 @@ public abstract class AsyncFilter extends Filter {
         return rejects;
     }
 
-    private class FilterTask implements Callable<Pair<RawVulnerability, Boolean>> {
+    private class FilterTask implements Callable<FilterTaskReturn> {
         private final RawVulnerability vuln;
         public FilterTask(RawVulnerability vuln) {
             this.vuln = vuln;
         }
 
         @Override
-        public Pair<RawVulnerability, Boolean> call() {
+        public FilterTaskReturn call() {
             // respect API rate limits!
             waitForLimiters(vuln);
-            return new Pair<>(vuln, passesFilter(vuln));
+            return new FilterTaskReturn(vuln, passesFilter(vuln));
+        }
+    }
+
+    private static class FilterTaskReturn {
+        public RawVulnerability vulnInput;
+        public boolean passes;
+        FilterTaskReturn(RawVulnerability vulnInput, boolean passes) {
+            this.vulnInput = vulnInput;
+            this.passes = passes;
         }
     }
 
