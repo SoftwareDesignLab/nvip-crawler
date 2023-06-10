@@ -118,5 +118,6 @@ public class ReconcilerController {
         filters.add(FilterFactory.createFilter(FilterFactory.CVE_MATCHES_DESCRIPTION));
         filters.add(FilterFactory.createFilter(FilterFactory.INTEGER_DESCRIPTION));
         filters.add(FilterFactory.createFilter(FilterFactory.MULTIPLE_CVE_DESCRIPTION));
+        filters.add(FilterFactory.createFilter(FilterFactory.DESCRIPTION_SIZE));
     }
 }

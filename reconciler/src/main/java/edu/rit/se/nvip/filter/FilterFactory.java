@@ -26,15 +26,12 @@ package edu.rit.se.nvip.filter;
 public class FilterFactory {
 
     public static final String SIMPLE = "SIMPLE";
-
     public static final String CVE_MATCHES_DESCRIPTION = "CVE_MATCHES_DESCRIPTION";
-
     public static final String BLANK_DESCRIPTION = "BLANK_DESCRIPTION";
     public static final String OPENAI = "OPENAI";
-
     public static final String INTEGER_DESCRIPTION = "INTEGER_DESCRIPTION";
-
     public static final String MULTIPLE_CVE_DESCRIPTION = "MULTIPLE_CVE_DESCRIPTION";
+    public static final String DESCRIPTION_SIZE = "DESCRIPTION_SIZE";
 
     public static Filter createFilter(String type) {
         switch (type) {
@@ -50,6 +47,8 @@ public class FilterFactory {
                 return new IntegerDescriptionFilter();
             case MULTIPLE_CVE_DESCRIPTION:
                 return new MultipleCveDescriptionsFilter();
+            case DESCRIPTION_SIZE:
+                return new DescriptionSizeFilter();
             default:
                 return new SimpleFilter();
         }
