@@ -63,8 +63,6 @@ public class CrawlerMain {
         long crawlEndTime = System.currentTimeMillis();
         logger.info("Crawler Finished\nTime: {}", crawlEndTime - crawlStartTime);
 
-        CveCrawler.driver.quit();
-
         // Merge CVEs found in python GitHub with CVEs that were crawled
         logger.info("Merging Python CVEs with Crawled CVEs");
         for (String pyCve: pyCves.keySet()) {

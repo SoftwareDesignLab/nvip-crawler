@@ -60,12 +60,13 @@ public class CveCrawler extends WebCrawler {
 	private final HashMap<String, ArrayList<RawVulnerability>> foundCVEs = new HashMap<>();
 	private final CveParserFactory parserFactory = new CveParserFactory();
 
-	public static WebDriver driver = startDynamicWebDriver();
+	private WebDriver driver;
 
 
 	public CveCrawler(List<String> myCrawlDomains, String outputDir) {
 		this.myCrawlDomains = myCrawlDomains;
 		this.outputDir = outputDir;
+		this.driver = startDynamicWebDriver();
 	}
 
 	public static WebDriver startDynamicWebDriver() {
@@ -86,6 +87,7 @@ public class CveCrawler extends WebCrawler {
 	 */
 	@Override
 	public HashMap<String, ArrayList<RawVulnerability>> getMyLocalData() {
+		this.driver.quit();
 		return foundCVEs;
 	}
 
@@ -142,6 +144,7 @@ public class CveCrawler extends WebCrawler {
 				vulnerabilityList = parseWebPage(pageURL, html);
 			} catch (Exception e) {
 				logger.warn("WARNING: Crawler error when parsing {} --> {}", page.getWebURL(), e.toString());
+				e.printStackTrace();
 				updateCrawlerReport("Crawler error when parsing " +  page.getWebURL() +" --> " + e);
 			}
 
@@ -172,7 +175,7 @@ public class CveCrawler extends WebCrawler {
 	 */
 	public List<RawVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
 		// get parser and parse
-		AbstractCveParser parser = parserFactory.createParser(sSourceURL);
+		AbstractCveParser parser = parserFactory.createParser(sSourceURL, driver);
 		return parser.parseWebPage(sSourceURL, sCVEContentHTML);
 	}
 

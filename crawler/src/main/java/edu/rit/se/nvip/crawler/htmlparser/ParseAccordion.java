@@ -16,11 +16,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import static edu.rit.se.nvip.crawler.CveCrawler.driver;
-
 public class ParseAccordion extends AbstractCveParser implements ParserStrategy {
 
     private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
+
+    WebDriver driver;
 
     // init actions to be able to click around
     Actions actions;
@@ -31,7 +31,8 @@ public class ParseAccordion extends AbstractCveParser implements ParserStrategy 
      * Generic parser accordion strategy
      * @param sourceDomainName - domain name of source
      */
-    public ParseAccordion(String sourceDomainName) {
+    public ParseAccordion(String sourceDomainName, WebDriver driver) {
+        this.driver = driver;
         this.sourceDomainName = sourceDomainName;
         actions = new Actions(driver);
     }

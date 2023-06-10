@@ -18,11 +18,11 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.util.*;
 
-import static edu.rit.se.nvip.crawler.CveCrawler.driver;
-
 public class ParseTable extends AbstractCveParser implements ParserStrategy {
 
     private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
+
+    WebDriver driver;
 
     WebDriverWait wait;
 
@@ -33,8 +33,9 @@ public class ParseTable extends AbstractCveParser implements ParserStrategy {
 
     Set<String> allCVEs = new HashSet<>();
 
-    public ParseTable(String sourceDomainName) {
+    public ParseTable(String sourceDomainName, WebDriver driver) {
         this.sourceDomainName = sourceDomainName;
+        this.driver = driver;
         wait = new WebDriverWait(driver, Duration.ofSeconds(5));
         actions = new Actions(driver);
     }

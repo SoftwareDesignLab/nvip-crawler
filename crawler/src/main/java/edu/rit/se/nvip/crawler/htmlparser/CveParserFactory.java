@@ -23,6 +23,8 @@
  */
 package edu.rit.se.nvip.crawler.htmlparser;
 
+import org.openqa.selenium.WebDriver;
+
 /**
  * 
  * @author axoeec
@@ -33,7 +35,7 @@ public class CveParserFactory {
 	/**
 	 * return the parser for this Url
 	 */
-	public AbstractCveParser createParser(String sPageUrl) {
+	public AbstractCveParser createParser(String sPageUrl, WebDriver driver) {
 		if (sPageUrl == null) {
 			return new NullParser();
 		}
@@ -67,7 +69,7 @@ public class CveParserFactory {
 			else if (sPageUrl.contains("blogs"))
 				return new NullParser();
 			else
-				return new GenericCveParser("nat_available");
+				return new GenericCveParser("nat_available", driver);
 		}
 		else if (sPageUrl.contains("vmware") && sPageUrl.contains("advisories"))
 			return new VMWareAdvisoriesParser("vmware");
@@ -162,7 +164,7 @@ public class CveParserFactory {
 		else if (sPageUrl.contains("mitre.org") || sPageUrl.contains("nist.gov"))
 			return new NullParser();
 
-		return new GenericCveParser("nat_available");
+		return new GenericCveParser("nat_available", driver);
 	}
 
 }
