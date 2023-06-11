@@ -412,6 +412,9 @@ public class CpeLookUp {
 					final String versionKey = gv.getKey();
 					final CpeEntry entryValue = gv.getValue();
 
+					//If versionKey is not a valid version, go next
+					if(!VersionManager.isVersion(versionKey)) continue;
+
 					try {
 						final ProductVersion version = new ProductVersion(versionKey);
 						if(versionManager.isAffected(version)) {
@@ -424,33 +427,6 @@ public class CpeLookUp {
 						logger.warn("Error parsing version string '{}': {}", versionKey, e.toString());
 					}
 				}
-					//tru  to find version using a different method
-					try{
-						final ProductVersion version = new ProductVersion(versionWords[versionWords.length - 1]);
-						for (String versionWord : versionWords) {
-							if(versionManager.isAffected(version)) {
-								matchesCounter++;
-								String cpeName = "cpe:2.3:a:" + selectedGroups.get(0).getCpeGroup().getGroupID() + ":" + versionWord + ":*:*:*:*:*:*:*";
-								cpeIDs.add(cpeName);
-								productsToAdd.add(new Product(selectedGroups.get(0).getCpeGroup().getCommonTitle(), cpeName));
-							}
-						}
-					} catch (IllegalArgumentException e) {
-						logger.warn("Error parsing version string '{}': {}", versionWords[0], e.toString());
-
-					}
-
-//				// try to find version using a hashmap key
-//				for (String versionWord : versionWords) {
-//					CpeEntry cpeEntry = groupVersions.get(versionWord);
-//
-//					if (cpeEntry != null) {
-//						matchesCounter++;
-//						String cpeName = "cpe:2.3:a:" + selectedGroups.get(0).getCpeGroup().getGroupID() + ":" + versionWord + ":*:*:*:*:*:*:*";
-//						cpeIDs.add(cpeName);
-//						productsToAdd.add(new Product(selectedGroups.get(0).getCpeGroup().getCommonTitle(), cpeName));
-//					}
-//				}
 
 				// look in the titles if did not find versions in the previous step
 				if (matchesCounter == 0) {
@@ -458,6 +434,10 @@ public class CpeLookUp {
 						String entryTitle = entry.getValue().getTitle().toLowerCase();
 
 						for (String versionWord : versionWords) {
+
+							//If versionWord is not a valid version, go next
+							if(!VersionManager.isVersion(versionWord)) continue;
+
 							if (entryTitle.contains(versionWord)) {
 								String cpeName = "cpe:2.3:a:" + selectedGroups.get(0).getCpeGroup().getGroupID() + ":" + versionWord + ":*:*:*:*:*:*:*";
 								cpeIDs.add(cpeName);
