@@ -8,8 +8,11 @@ import edu.rit.se.nvip.process.Processor;
 import edu.rit.se.nvip.process.ProcessorFactory;
 import edu.rit.se.nvip.reconciler.Reconciler;
 import edu.rit.se.nvip.reconciler.ReconcilerFactory;
+import edu.rit.se.nvip.characterizer.CveCharacterizer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+
 
 import java.util.*;
 
@@ -19,6 +22,7 @@ public class ReconcilerController {
     private final Reconciler reconciler;
     private final List<Filter> filters = new ArrayList<>();
     private final List<Processor> processors = new ArrayList<>();
+
 
     public ReconcilerController(List<String> filterTypes, String reconcilerType, List<String> processorTypes, Map<String, Integer> knownCveSources) {
         this.dbh = DatabaseHelper.getInstance();
@@ -45,6 +49,8 @@ public class ReconcilerController {
 
         runProcessors(reconciledVulns);
 
+        characterizeCVEs(reconciledVulns);
+
         int upsertCount = 0;
         for (CompositeVulnerability vuln : reconciledVulns) {
             int status = dbh.insertOrUpdateVulnerabilityFull(vuln);
@@ -54,6 +60,36 @@ public class ReconcilerController {
             logger.info("Finished job for cveId " + vuln.getCveId());
         }
         logger.info("Upserted {} vulnerabilities", upsertCount);
+    }
+
+    private Set<CompositeVulnerability> characterizeCVEs(Set<CompositeVulnerability> crawledVulnerabilityList) {
+        // Parse CAPECs page to link CVEs to a given Attack Pattern in characterizer
+        // CapecParser capecParser = new CapecParser();
+        // ArrayList<Capec> capecs = capecParser.parseWebPage(crawler);
+
+        // characterize
+        logger.info("Characterizing and scoring NEW CVEs...");
+
+        try {
+            String[] trainingDataInfo = System.getenv("NVIP_CVE_CHARACTERIZATION_TRAINING_DATA").split(",");
+            logger.info("Setting NVIP_CVE_CHARACTERIZATION_LIMIT to {}", System.getenv("NVIP_CVE_CHARACTERIZATION_LIMIT"));
+
+            CveCharacterizer cveCharacterizer = new CveCharacterizer(trainingDataInfo[0], trainingDataInfo[1], properties.getCveCharacterizationApproach(),
+                    properties.getCveCharacterizationMethod(), false);
+        }
+        catch (NullPointerException | NumberFormatException e) { logger.warn("Could not fetch NVIP_CVE_CHARACTERIZATION_TRAINING_DATA from env vars, defaulting to {}", System.getenv("NVIP_CVE_CHARACTERIZATION_LIMIT")); }
+
+        return cveCharacterizer.characterizeCveList(crawledVulnerabilityList, dbh,
+                (Integer) characterizationVars.get("cveCharacterizationLimit"));
+
+        // OLD CODE
+
+//        String[] trainingDataInfo = properties.getCveCharacterizationTrainingDataInfo();
+//        CveCharacterizer cveCharacterizer = new CveCharacterizer(trainingDataInfo[0], trainingDataInfo[1], properties.getCveCharacterizationApproach(),
+//                properties.getCveCharacterizationMethod(), false);
+//
+//        return cveCharacterizer.characterizeCveList(crawledVulnerabilityList, databaseHelper,
+//                (Integer) characterizationVars.get("cveCharacterizationLimit"));
     }
 
     private CompositeVulnerability handleReconcilerJob(String cveId) {
