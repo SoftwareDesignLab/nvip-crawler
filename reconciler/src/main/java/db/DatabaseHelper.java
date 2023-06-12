@@ -1,3 +1,5 @@
+package db;
+
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import com.zaxxer.hikari.pool.HikariPool;
@@ -7,9 +9,11 @@ import model.NvdVulnerability;
 import model.RawVulnerability;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import java.sql.*;
-import java.util.*;
 
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 public class DatabaseHelper {
 
     private HikariConfig config = null;
@@ -58,7 +62,7 @@ public class DatabaseHelper {
 
     protected DatabaseHelper(HikariConfig config) {
         try {
-            logger.info("New NVIP.DatabaseHelper instantiated! It is configured to use " + databaseType + " database!");
+            logger.info("New NVIP.db.DatabaseHelper instantiated! It is configured to use " + databaseType + " database!");
             Class.forName("com.mysql.cj.jdbc.Driver");
 
         } catch (ClassNotFoundException e2) {
@@ -227,6 +231,8 @@ public class DatabaseHelper {
             logger.error("Error retrieving used rawdescriptions with cve_id " + cveId);
             logger.error(ex);
             return new HashSet<>();
+
+
         }
         return rawVulns;
     }
@@ -239,10 +245,10 @@ public class DatabaseHelper {
     public int insertOrUpdateVulnerabilityFull(CompositeVulnerability vuln) {
         boolean isUpdate;
         switch (vuln.getReconciliationStatus()) {
-            case ReconciliationStatus.UPDATED:
+            case UPDATED:
                 isUpdate = true;
                 break;
-            case ReconciliationStatus.NEW:
+            case NEW:
                 isUpdate = false;
                 break;
             default:

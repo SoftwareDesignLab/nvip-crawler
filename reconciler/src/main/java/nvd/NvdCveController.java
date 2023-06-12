@@ -23,7 +23,7 @@
  */
 package nvd;
 
-import edu.rit.se.nvip.DatabaseHelper;
+import db.DatabaseHelper;
 import model.CompositeVulnerability;
 import model.NvdVulnerability;
 import org.apache.logging.log4j.LogManager;

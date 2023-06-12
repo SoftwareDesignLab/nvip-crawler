@@ -1,0 +1,2163 @@
+/**
+ * Copyright 2023 Rochester Institute of Technology (RIT). Developed with
+ * government support under contract 70RSAT19CB0000020 awarded by the United
+ * States Department of Homeland Security.
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+package db;
+
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
+import com.zaxxer.hikari.pool.HikariPool.PoolInitializationException;
+import model.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import utils.MyProperties;
+import utils.PropertyLoader;
+
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
+import java.sql.*;
+import java.text.DateFormat;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+/**
+ * 
+ * The DatabaseHelper class is used to insert and update vulnerabilities found
+ * from the webcrawler/processor to a sqlite database
+ */
+public class DatabaseHelper {
+	protected NumberFormat formatter = new DecimalFormat("#0.00000");
+	private HikariConfig config = null;
+	private HikariDataSource dataSource;
+	private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
+	String databaseType = "mysql";
+
+	public final DateFormat longDateFormatMySQL = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+	/**
+	 * SQL sentences. Please include the INSERT/UPDATE/DELETE SQL sentences of each
+	 * entity in this section!
+	 */
+	private final String insertVulnSql = "INSERT INTO vulnerability (cve_id, description, platform, introduced_date, published_date, created_date, last_modified_date, "
+			+ "fixed_date, exists_at_nvd, exists_at_mitre, time_gap_nvd, time_gap_mitre) VALUES (?,?,?,?,?,?,?,?,?,?,?,?);";
+	private final String insertVulnDescriptionSql = "INSERT INTO vulnerability (cve_id, description) VALUES (?,?);";
+	private final String updateVulnSql = "UPDATE vulnerability SET description = ?," + "platform = ?,"
+			+ "introduced_date = ?," + "published_date = ?," + "last_modified_date = ?,"
+			+ "fixed_date = ? WHERE (cve_id = ?);";
+	private final String updateVulnDescriptionSql = "UPDATE vulnerability SET description = ? WHERE cve_id = ?;";
+
+	private final String updateNvdTimeGapSql = "UPDATE vulnerability SET time_gap_nvd = ? WHERE cve_id = ?;";
+	private final String updateNvdStatusSql = "UPDATE vulnerability SET exists_at_nvd = ? WHERE cve_id = ?;";
+	private final String updateMitreTimeGapSql = "UPDATE vulnerability SET time_gap_mitre = ? WHERE cve_id = ?;";
+	private final String updateMitreStatusSql = "UPDATE vulnerability SET exists_at_mitre = ? WHERE cve_id = ?;";
+	private final String deleteVulnSql = "DELETE FROM vulnerability WHERE cve_id=?;";
+	private final String insertCveStatusSql = "INSERT INTO cvestatuschange (vuln_id, cve_id, cpmpared_against, old_status_code, new_status_code, cve_description, time_gap_recorded, time_gap_hours, status_date, cve_create_date) VALUES (?,?,?,?,?,?,?,?,?,?);";
+
+	private final String insertVulnSourceSql = "INSERT INTO vulnsourceurl (cve_id, url) VALUES (?,?);";
+	private final String deleteVulnSourceSql = "DELETE FROM vulnsourceurl WHERE cve_id=?;";
+
+	private final String insertNvipSourceSql = "INSERT INTO nvipsourceurl (url, description, http_status) VALUES (?,?,?);";
+	private final String updateNvipSourceSql = "UPDATE nvipsourceurl SET http_status = ? WHERE (url = ?);";
+	private final String deleteNvipSourceSql = "DELETE FROM nvipsourceurl WHERE url = ?;";
+	private final String deleteAllNvipSourceSql = "DELETE FROM nvipsourceurl;";
+	private final String selectAllNvipSourceSql = "SELECT * FROM nvipsourceurl;";
+
+	private final String insertDailyRunSql = "INSERT INTO dailyrunhistory (run_date_time, crawl_time_min, total_cve_count, not_in_nvd_count, not_in_mitre_count,"
+			+ "not_in_both_count, new_cve_count, avg_time_gap_nvd, avg_time_gap_mitre, added_cve_count, updated_cve_count) VALUES (?,?,?,?,?,?,?,?,?,?,?);";
+	private final String updateDailyRunSql = "UPDATE dailyrunhistory SET avg_time_gap_nvd = ?, avg_time_gap_mitre = ? WHERE (run_id = ?);";
+	private final String selectAverageTimeGapNvd = "SELECT avg(v.time_gap_nvd) as gapNvd from vulnerability v where Date(v.created_date) >= DATE_SUB(CURDATE(), INTERVAL 1 MONTH)";
+	private final String selectAverageTimeGapMitre = "SELECT avg(v.time_gap_mitre) as gapMitre from vulnerability v where Date(v.created_date) >= DATE_SUB(CURDATE(), INTERVAL 1 MONTH)";
+
+	private final String insertVdoCharacteristicSql = "INSERT INTO vdocharacteristic (cve_id, vdo_label_id,vdo_confidence,vdo_noun_group_id) VALUES (?,?,?,?);";
+	private final String deleteVdoCharacteristicSql = "DELETE FROM vdocharacteristic WHERE cve_id=?;";
+
+	private final String insertCvssScoreSql = "INSERT INTO cvssscore (cve_id, cvss_severity_id, severity_confidence, impact_score, impact_confidence) VALUES (?,?,?,?,?);";
+	private final String deleteCvssScoreSql = "DELETE FROM cvssscore WHERE cve_id=?;";
+
+	private final String selectCvssSeveritySql = "SELECT * FROM cvssseverity;";
+
+	private final String insertProductSql = "INSERT INTO product (CPE, swid, domain) VALUES (?, ?, ?);";
+	private final String getProductCountFromCpeSql = "SELECT count(*) from product where cpe = ?";
+	private final String getIdFromCpe = "SELECT * FROM product where cpe = ?;";
+	private final String getPatchSourceByIdSql = "SELECT source_url_id from patchsourceurl WHERE source_url = ?;";
+	private final String insertPatchSourceURLSql = "INSERT INTO patchsourceurl (vuln_id, source_url) VALUES (?, ?);";
+	private final String insertPatchCommitSql = "INSERT INTO patchcommit (source_id, commit_url, commit_date, commit_message) VALUES (?, ?, ?, ?);";
+	private final String deletePatchCommitSql = "DELETE FROM patchcommit WHERE source_id = ?;";
+	private final String deletePatchSourceURLSql = "DELETE FROM patchsourceurl WHERE source_url_id = ?;";
+
+	private final String getPSURLAndVulnID = "SELECT vuln_id, source_url FROM patchsourceurl";
+
+	private final String getCPEById = "SELECT cpe FROM product WHERE product_id = ?;";
+	private final String selectCpesByCve = "SELECT v.vuln_id, v.cve_id, p.cpe FROM vulnerability v LEFT JOIN affectedrelease ar ON ar.cve_id = v.cve_id LEFT JOIN product p ON p.product_id = ar.product_id WHERE p.cpe IS NOT NULL AND v.cve_id = ?;";
+	private final String selectCpesAndCve = "SELECT v.vuln_id, v.cve_id, p.cpe FROM vulnerability v LEFT JOIN affectedrelease ar ON ar.cve_id = v.cve_id LEFT JOIN product p ON p.product_id = ar.product_id WHERE p.cpe IS NOT NULL;";
+	private final String getSWIDsById = "SELECT swid FROM product WHERE product_id = ?;";
+	private final String selectSwidsByCve = "SELECT v.vuln_id, v.cve_id, p.swid FROM vulnerability v LEFT JOIN affectedrelease ar ON ar.cve_id = v.cve_id LEFT JOIN product p ON p.product_id = ar.product_id WHERE p.swid IS NOT NULL AND v.cve_id = ?;";
+	private final String selectSwidsAndCve = "SELECT v.vuln_id, v.cve_id, p.swid FROM vulnerability v LEFT JOIN affectedrelease ar ON ar.cve_id = v.cve_id LEFT JOIN product p ON p.product_id = ar.product_id WHERE p.swid IS NOT NULL;";
+	private final String insertSwidSql = "INSERT INTO product (swid) where product_id = ? values (?);";
+	private final String insertAffectedReleaseSql = "INSERT INTO affectedrelease (cve_id, product_id, release_date, version) VALUES (?, ?, ?, ?);";
+
+	private final String insertVulnerabilityUpdateSql = "INSERT INTO vulnerabilityupdate (vuln_id, column_name, column_value, run_id) VALUES (?,?,?,?);";
+	private final String selectVulnerabilityIdSql = "SELECT vuln_id FROM vulnerability WHERE cve_id = ?";
+	private final String selectCVEIdSql = "SELECT cve_id FROM vulnerability WHERE vuln_id = ?";
+
+	private final String selectVdoLabelSql = "SELECT * FROM vdolabel;";
+	private final String selectVdoNounGroupSql = "SELECT * FROM vdonoungroup;";
+
+	private final String getExploitsByCVEId =  "SELECT exploit_id FROM exploit WHERE cve_id = ?";
+	private final String insertExploitSql = "INSERT INTO exploit (vuln_id, cve_id, publisher_id, publish_date, publisher_url, description, exploit_code, nvip_record_date) VALUES (?,?,?,?,?,?,?,?);";
+	private final String deleteExploitSql = "DELETE FROM exploit WHERE vuln_id=?;";
+
+	private final String selEmailsSql = "SELECT email, role_id, first_name FROM user;";
+	private final String selEmailsByUserNameSql = "SELECT email, role_id, first_name FROM user WHERE user_name = ?";
+	private final String getCVEByDate = "SELECT cve_id, description FROM vulnerabilityaggregate WHERE run_date_time >= ? AND run_date_time < ?";
+
+	private final String getCVEAndDescription = "SELECT cve_id, description FROM vulnerability WHERE description NOT LIKE '%** RESERVED **%' AND cve_id LIKE '%CVE-2021%'";
+	private final String getVulnIdByCveId = "SELECT vuln_id FROM vulnerability WHERE cve_id = ?";
+
+	private static DatabaseHelper databaseHelper = null;
+	private static Map<String, Vulnerability> existingVulnMap = new HashMap<String, Vulnerability>();
+
+	/**
+	 * Thread safe singleton implementation
+	 * 
+	 * @return
+	 */
+	public static synchronized DatabaseHelper getInstance() {
+		if (databaseHelper == null)
+			databaseHelper = new DatabaseHelper();
+
+		return databaseHelper;
+	}
+
+	/**
+	 * The private constructor sets up HikariCP for connection pooling. Singleton
+	 * DP!
+	 */
+	private DatabaseHelper() {
+		try {
+			MyProperties propertiesNvip = new MyProperties();
+			propertiesNvip = new PropertyLoader().loadConfigFile(propertiesNvip);
+			databaseType = propertiesNvip.getDatabaseType();
+			logger.info("New NVIP.DatabaseHelper instantiated! It is configured to use " + databaseType + " database!");
+			if (databaseType.equalsIgnoreCase("mysql"))
+				Class.forName("com.mysql.cj.jdbc.Driver");
+
+		} catch (ClassNotFoundException e2) {
+			logger.error("Error while loading database type from the nvip.properties! " + e2.toString());
+		}
+
+		String configFile = "db-" + databaseType + ".properties";
+
+		if(config == null){
+			logger.info("Attempting to create HIKARI from ENVVARs");
+			config = createHikariConfigFromEnvironment();
+		}
+
+		if(config == null){
+			config = createHikariConfigFromProperties(configFile);
+		}
+
+		try {
+
+			dataSource = new HikariDataSource(config); // init data source
+		} catch (PoolInitializationException e2) {
+			logger.error("Error initializing data source! Check the value of the database user/password in the config file '{}'! Current values are: {}", configFile, config.getDataSourceProperties());
+			System.exit(1);
+
+		}
+	}
+
+	private HikariConfig createHikariConfigFromEnvironment() {
+
+		String url = System.getenv("HIKARI_URL");
+		HikariConfig hikariConfig;
+
+		if (url != null){
+			logger.info("Creating HikariConfig with url={}", url);
+			hikariConfig = new HikariConfig();
+			hikariConfig.setJdbcUrl(url);
+			hikariConfig.setUsername(System.getenv("HIKARI_USER"));
+			hikariConfig.setPassword(System.getenv("HIKARI_PASSWORD"));
+
+			System.getenv().entrySet().stream()
+					.filter(e -> e.getKey().startsWith("HIKARI_"))
+					.peek(e -> logger.info("Setting {} to HikariConfig", e.getKey()))
+					.forEach(e -> hikariConfig.addDataSourceProperty(e.getKey(), e.getValue()));
+
+		} else {
+			hikariConfig = null;
+		}
+
+		return hikariConfig;
+	}
+
+	private HikariConfig createHikariConfigFromProperties(String configFile) {
+		HikariConfig config;
+		try {
+			Properties props = new Properties();
+			try {
+				// get config file from the root path
+				try (InputStream inputStream = new FileInputStream(configFile)) {
+					props.load(inputStream);
+					logger.info("DatabaseHelper initialized using config file {} at {}", configFile,
+							System.getProperty("user.dir"));
+				}
+			} catch (FileNotFoundException e) {
+				String currDir = System.getProperty("user.dir");
+				logger.warn("Could not locate db config file in the root path \"{}\", getting it from resources! Warning: {}",
+						currDir, e.getMessage());
+				ClassLoader loader = Thread.currentThread().getContextClassLoader();
+
+				try (InputStream inputStream = loader.getResourceAsStream(configFile)) {
+					props.load(inputStream);
+				}
+
+			}
+
+			config = new HikariConfig(props);
+			config.setMaximumPoolSize(50);
+		} catch (Exception e1) {
+			logger.warn(
+					"Could not load db.properties(" + configFile + ") from src/main/resources! Looking at the root path now!");
+			config = new HikariConfig("db-" + databaseType + ".properties"); // in the production system get it from the
+			// root dir
+		}
+
+		return config;
+	}
+
+	/**
+	 * Retrieves the connection from the DataSource (HikariCP)
+	 * 
+	 * @return the connection pooling connection
+	 * @throws SQLException
+	 */
+	public Connection getConnection() throws SQLException {
+		return dataSource.getConnection();
+	}
+
+	public boolean testDbConnection() {
+		try {
+			Connection conn = dataSource.getConnection();
+			if (conn != null) {
+				conn.close();
+				return true;
+			} else
+				return false;
+		} catch (SQLException e) {
+			logger.error(e.toString());
+		}
+		return false;
+	}
+
+	/**
+	 * Checks if the tableName table exists in the database. Takes in the HikariCP
+	 * connection as a parameter.
+	 * 
+	 * @param conn
+	 * @param tableName
+	 * @return
+	 * @throws SQLException
+	 */
+	private boolean checkTableExist(Connection conn, String tableName) throws SQLException {
+		try (ResultSet rs = conn.getMetaData().getTables(null, null, tableName, null)) {
+			while (rs.next()) {
+				String table = rs.getString("TABLE_NAME");
+				if (table != null && table.equalsIgnoreCase(tableName)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * For formatting inputted dates to mysql dates
+	 * @return
+	 */
+	public String formatDate(String date) {
+		Date dateObj;
+		String formattedDate = "";
+		SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+		if (date == null || date.isEmpty()) {
+			dateObj = new Date();
+			formattedDate = df.format(dateObj);
+			return formattedDate;
+		}
+
+		if (date.contains("T")) {
+			date = date.substring(0, 10) + " " + date.substring(11, 19);
+		}
+
+		Pattern dateRegex = Pattern.compile("(\\d{4}-\\d{2}-\\d{2}|\\d{2}\\/\\d{2}\\/\\d{4})");
+		// Pattern dateRegex = Pattern.compile("(?i:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*?\\s+\\d{1,2}(?:[a-z]{2})?(?:\\s+|,\\s*)\\d{4}\\b");
+		Matcher regexMatcher = dateRegex.matcher(date);
+
+		if (regexMatcher.find()) {
+			date = regexMatcher.group() + " 00:00:00";
+			// mitigate unparseable date error by getting rid of ordinal in date
+			date = date.replaceFirst("(?<=\\d)(?:st|nd|rd|th)", "");
+		}
+
+		try {
+			try {
+				dateObj = new Date(date);
+				formattedDate = df.format(dateObj);
+			} catch (IllegalArgumentException e) {
+				dateObj = df.parse(date);
+				formattedDate = df.format(dateObj);
+			}
+		} catch (Exception e) {
+			logger.info("ERROR: Failed to parse date: {}\n{}", date, e.toString());
+		}
+		return formattedDate;
+	}
+
+	/**
+	 * used to insert a list of CPE products into the database
+	 *
+	 * @param products List of product objects
+	 * @return Number of inserted products, <0 if error.
+	 */
+	public int insertCpeProducts(Collection<Product> products) {
+		try (Connection conn = getConnection();
+				PreparedStatement pstmt = conn.prepareStatement(insertProductSql);
+				PreparedStatement getCount = conn.prepareStatement(getProductCountFromCpeSql);) {
+			int count = 0;
+			int total = products.size();
+			for (Product product : products) {
+				getCount.setString(1, product.getCpe());
+				ResultSet res = getCount.executeQuery();
+				if (res.next() && res.getInt(1) != 0) {
+					continue; // product already exists, skip!
+				}
+				pstmt.setString(1, product.getCpe());
+				pstmt.setString(2, product.getSwid());
+				pstmt.setString(3, product.getDomain());
+				pstmt.executeUpdate();
+				count++;
+			}
+
+			logger.info(
+					"\rInserted: " + count + " of " + total + " products to DB! Skipped: " + (total - count) + " existing ones!");
+			return count;
+		} catch (SQLException e) {
+			logger.error(e.getMessage());
+			return -1;
+		}
+	}
+
+	/**
+	 * Insert the SWID tag for the corresponding product
+	 */
+	public int insertSwidTags(Collection<Product> products) {
+		try (Connection conn = getConnection();
+				PreparedStatement pstmt = conn.prepareStatement(insertSwidSql);) {
+			int count = 0;
+			int total = products.size();
+			for (Product product : products) {
+				pstmt.setString(1, product.getSwid());
+				pstmt.setString(2, product.getSwidTag());
+				pstmt.executeUpdate();
+				count++;
+			}
+
+			logger.info("\rInserted: " + count + " of " + total + " products to DB!");
+			return count;
+		} catch (SQLException e) {
+			logger.error(e.getMessage());
+			return -1;
+		}
+	}
+
+
+	/**
+	 * Grabs CPE from a specified product ID within the product table
+	 * 
+	 * @param product_id
+	 * @return
+	 */
+	public Map<String, ArrayList<String>> getCPEById(int product_id) {
+
+		String product = "";
+		ArrayList<String> data = new ArrayList<String>();
+		data.add("2159485");
+		data.add("CVE-123-4567");
+		Map<String, ArrayList<String>> cpe = new HashMap<String, ArrayList<String>>();
+
+		try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(getCPEById);) {
+			pstmt.setInt(1, product_id);
+			ResultSet res = pstmt.executeQuery();
+
+			if (res.next()) {
+				product = res.getString("cpe");
+				cpe.put(product, data);
+			}
+
+		} catch (Exception e) {
+			logger.error(e);
+		}
+
+		return cpe;
+
+	}
+
+	/**
+	 * Grabs the source_id of the given sourceURL if it exists in the patch source
+	 * table returns -1 if entry doesn't exist
+	 * 
+	 * @param address
+	 * @return
+	 */
+	public int getPatchSourceId(String address) {
+
+		int patchURLId = -1;
+
+		try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(getPatchSourceByIdSql);) {
+			pstmt.setString(1, address);
+			ResultSet res = pstmt.executeQuery();
+
+			if (res.next()) {
+				patchURLId = res.getInt("source_url_id");
+			}
+
+		} catch (Exception e) {
+			logger.error(e);
+		}
+
+		return patchURLId;
+	}
+
+	/**
+	 * Inserts given source URL into the patch source table
+	 * 
+	 * @param vuln_id
+	 *
+	 * @return
+	 */
+	public boolean insertPatchSourceURL(int vuln_id, String sourceURL) {
+		try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(insertPatchSourceURLSql);) {
+			pstmt.setInt(1, vuln_id);
+			pstmt.setString(2, sourceURL);
+			pstmt.executeUpdate();
+
+			logger.info("Inserted PatchURL: " + sourceURL);
+			conn.close();
+			return true;
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+			return false;
+		}
+	}
+
+	/**
+	 * Method for deleting duplicate patch entries by vuln_id within the commit
+	 * table
+	 *
+	 */
+	public void deleteCommits(int source_id) {
+		Connection conn = null;
+		try {
+			conn = getConnection();
+			PreparedStatement pstmt = conn.prepareStatement(deletePatchCommitSql);
+			pstmt.setInt(1, source_id);
+			pstmt.executeUpdate();
+			conn.close();
+			logger.info("Deleted exiting commits for source ID: " + source_id);
+		} catch (Exception e) {
+			logger.error("ERROR: Failed to delete commits for patch in source_id {}" ,source_id);
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * Deletes given patch url from patch source table
+	 *
+	 */
+	public void deletePatchURL(int source_id) {
+		Connection conn;
+		try {
+			conn = getConnection();
+			PreparedStatement pstmt = conn.prepareStatement(deletePatchSourceURLSql);
+			pstmt.setInt(1, source_id);
+			pstmt.executeUpdate();
+			conn.close();
+			logger.info("Deleted duplicate patch URL for source ID: " + source_id);
+		} catch (Exception e) {
+			logger.info("ERROR: Failed to delete patch URL for source {}", source_id);
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * Collects a a list of CPEs correlated with a specified CVE_Id
+	 * 
+	 * @return
+	 */
+	public Map<String, ArrayList<String>> getCPEsByCVE(String cve_id) {
+		Connection conn = null;
+		Map<String, ArrayList<String>> cpes = new HashMap<>();
+		try {
+			conn = getConnection();
+			PreparedStatement pstmt = conn.prepareStatement(selectCpesByCve);
+			pstmt.setString(1, cve_id);
+			ResultSet res = pstmt.executeQuery();
+			while (res.next()) {
+				ArrayList<String> data = new ArrayList<>();
+				data.add(res.getString("vuln_id"));
+				data.add(res.getString("cve_id"));
+				cpes.put(res.getString("cpe"), data);
+			}
+		} catch (Exception e) {
+		}
+
+		try {
+			conn.close();
+		} catch (SQLException e) {
+		}
+		return cpes;
+	}
+
+	/**
+	 * Collects a map of CPEs with their correlated CVE and Vuln ID used for
+	 * collecting patches
+	 * 
+	 * @return
+	 */
+	public Map<String, ArrayList<String>> getCPEsAndCVE() {
+		Connection conn = null;
+		Map<String, ArrayList<String>> cpes = new HashMap<>();
+		try {
+			conn = getConnection();
+			PreparedStatement pstmt = conn.prepareStatement(selectCpesAndCve);
+			ResultSet res = pstmt.executeQuery();
+			while (res.next()) {
+				ArrayList<String> data = new ArrayList<>();
+				data.add(res.getString("vuln_id"));
+				data.add(res.getString("cve_id"));
+				cpes.put(res.getString("cpe"), data);
+			}
+
+		} catch (Exception e) {
+		}
+
+		try {
+			conn.close();
+		} catch (SQLException e) {
+		}
+
+		return cpes;
+	}
+
+	/**
+	 * Get SWID tag from id
+	 *
+	 * @param id
+	 * @return
+	 */
+	public String getSwidsbyId(int id) {
+		Connection conn = null;
+		String swid = "";
+		try {
+			conn = getConnection();
+			PreparedStatement pstmt = conn.prepareStatement(getSWIDsById);
+			pstmt.setInt(1, id);
+			ResultSet res = pstmt.executeQuery();
+			while (res.next()) {
+				swid = res.getString("swid");
+			}
+		} catch (Exception e) {
+		}
+
+		try {
+			conn.close();
+		} catch (SQLException e) {
+		}
+		return swid;
+	}
+
+	/**
+	 * Select SWID by CVE
+	 *
+	 * @param cve
+	 * @return
+	 */
+	public String getSwidsbyCVE(String cve) {
+		Connection conn = null;
+		String swid = "";
+		try {
+			conn = getConnection();
+			PreparedStatement pstmt = conn.prepareStatement(selectSwidsByCve);
+			pstmt.setString(1, cve);
+			ResultSet res = pstmt.executeQuery();
+			while (res.next()) {
+				swid = res.getString("swid");
+			}
+		} catch (Exception e) {
+		}
+
+		try {
+			conn.close();
+		} catch (SQLException e) {
+		}
+		return swid;
+	}
+
+	/**
+	 * Select SWIDS and CVEs
+	 *
+	 * @return
+	 */
+
+	public Map<String, ArrayList<String>> getSwidsAndCVE() {
+		Connection conn = null;
+		Map<String, ArrayList<String>> swids = new HashMap<>();
+		try {
+			conn = getConnection();
+			PreparedStatement pstmt = conn.prepareStatement(selectSwidsAndCve);
+			ResultSet res = pstmt.executeQuery();
+			while (res.next()) {
+				ArrayList<String> data = new ArrayList<>();
+				data.add(res.getString("vuln_id"));
+				data.add(res.getString("cve_id"));
+				swids.put(res.getString("swid"), data);
+			}
+
+		} catch (Exception e) {
+		}
+
+		try {
+			conn.close();
+		} catch (SQLException e) {
+		}
+
+		return swids;
+	}
+
+	/**
+	 * gets a product ID from database based on CPE
+	 *
+	 * @param cpe CPE string of product
+	 * @return product ID if product exists in database, -1 otherwise
+	 */
+	public int getProdIdFromCpe(String cpe) {
+		int result;
+		try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(getIdFromCpe);) {
+			pstmt.setString(1, cpe);
+			ResultSet res = pstmt.executeQuery();
+			if (res.next())
+				result = res.getInt("product_id");
+			else
+				result = -1;
+		} catch (SQLException e) {
+			logger.error(e.getMessage());
+			result = -2;
+		}
+		return result;
+	}
+
+	/**
+	 * updates the affected release table with a list of affected releases
+	 * 
+	 * @param affectedReleases list of affected release objects
+	 */
+	public void insertAffectedReleasesV2(List<AffectedRelease> affectedReleases) {
+		logger.info("Inserting {} affected releases...", affectedReleases.size());
+		int count = 0;
+		try (Connection conn = getConnection();
+				Statement stmt = conn.createStatement();
+				PreparedStatement pstmt = conn.prepareStatement(insertAffectedReleaseSql);) {
+			for (AffectedRelease affectedRelease : affectedReleases) {
+				try {
+					int prodId = getProdIdFromCpe(affectedRelease.getCpe());
+					pstmt.setString(1, affectedRelease.getCveId());
+					pstmt.setInt(2, prodId);
+					pstmt.setString(3, affectedRelease.getReleaseDate());
+					pstmt.setString(4, affectedRelease.getVersion());
+					count += pstmt.executeUpdate();
+//					logger.info("Added {} as an affected release for {}", prodId, affectedRelease.getCveId());
+				} catch (Exception e) {
+					logger.error("Could not add affected release for Cve: {} Related Cpe: {}, Error: {}",
+							affectedRelease.getCveId(), affectedRelease.getCpe(), e.toString());
+					//e.printStackTrace();
+				}
+			}
+		} catch (SQLException e) {
+			logger.error(e.toString());
+		}
+		logger.info("Done. Inserted {} affected releases into the database!", count);
+	}
+
+	/**
+	 * delete affected releases for given CVEs
+	 * 
+	 * @param affectedReleases
+	 */
+	public void deleteAffectedReleases(List<AffectedRelease> affectedReleases) {
+		logger.info("Deleting existing affected releases in database for {} items..", affectedReleases.size());
+		String deleteAffectedReleaseSql = "DELETE FROM affectedrelease where cve_id = ?;";
+		try (Connection conn = getConnection();
+				Statement stmt = conn.createStatement();
+				PreparedStatement pstmt = conn.prepareStatement(deleteAffectedReleaseSql);) {
+			for (AffectedRelease affectedRelease : affectedReleases) {
+				pstmt.setString(1, affectedRelease.getCveId());
+				pstmt.executeUpdate();
+			}
+		} catch (SQLException e) {
+			logger.error(e.toString());
+		}
+		logger.info("Done. Deleted existing affected releases in database!");
+	}
+
+	/**
+	 * Get existing vulnerabilities hash map. This method was added to improve
+	 * DatabaseHelper, NOT to query each CVEID during a CVE update! Existing
+	 * vulnerabilities are read only once, and this hash map is queried during
+	 * individual update operations!
+	 * 
+	 * @return
+	 */
+	public Map<String, Vulnerability> getExistingVulnerabilities() {
+
+		if (existingVulnMap.size() == 0) {
+			synchronized (DatabaseHelper.class) {
+				if (existingVulnMap.size() == 0) {
+					int vulnId;
+					String cveId, description, createdDate;
+					int existAtNvd, existAtMitre;
+					existingVulnMap = new HashMap<>();
+					try (Connection connection = getConnection();) {
+
+						String selectSql = "SELECT vuln_id, cve_id, description, created_date, exists_at_nvd, exists_at_mitre from vulnerability";
+						PreparedStatement pstmt = connection.prepareStatement(selectSql);
+						ResultSet rs = pstmt.executeQuery();
+
+						while (rs.next()) {
+							vulnId = rs.getInt("vuln_id");
+							cveId = rs.getString("cve_id");
+							description = rs.getString("description");
+							createdDate = rs.getString("created_date");
+							existAtNvd = rs.getInt("exists_at_nvd");
+							existAtMitre = rs.getInt("exists_at_mitre");
+							Vulnerability existingVulnInfo = new Vulnerability(vulnId, cveId, description, existAtNvd, existAtMitre,
+									createdDate);
+							existingVulnMap.put(cveId, existingVulnInfo);
+						}
+						logger.info("NVIP has loaded {} existing CVE items from DB!", existingVulnMap.size());
+					} catch (Exception e) {
+						logger.error("Error while getting existing vulnerabilities from DB\nException: {}", e.getMessage());
+						logger.error(
+								"This is a serious error! NVIP will not be able to decide whether to insert or update! Exiting...");
+						System.exit(1);
+					}
+				}
+			}
+		} else {
+			logger.warn("NVIP has loaded {} existing CVE items from memory!", existingVulnMap.size());
+		}
+
+		return existingVulnMap;
+	}
+
+	/**
+	 * For Inserting a Vulnerability into the vulnerability table
+	 */
+	public void insertVulnerability(CompositeVulnerability vuln) {
+		try (Connection connection = getConnection(); PreparedStatement pstmt = connection.prepareStatement(insertVulnSql);) {
+
+			pstmt.setString(1, vuln.getCveId());
+			pstmt.setString(2, vuln.getDescription());
+			pstmt.setString(3, vuln.getPlatform());
+			pstmt.setString(4, vuln.getPatch());
+			pstmt.setString(5, formatDate(vuln.getPublishDate()));
+
+			pstmt.setString(6, formatDate(vuln.getLastModifiedDate())); // during insert create date is last modified date
+			pstmt.setString(7, formatDate(vuln.getLastModifiedDate()));
+			pstmt.setString(8, formatDate(vuln.getFixDate()));
+			/**
+			 * Bug fix: indexes 9 and 10 were wrong
+			 */
+			pstmt.setInt(9, vuln.getNvdStatus());
+			pstmt.setInt(10, vuln.getMitreStatus());
+			pstmt.setInt(11, vuln.getTimeGapNvd());
+			pstmt.setInt(12, vuln.getTimeGapMitre());
+			pstmt.executeUpdate();
+		} catch (Exception e) {
+			logger.error("ERROR: Failed to insert CVE: {}\n{}", vuln.getCveId(), e.toString());
+		}
+	}
+
+
+	/**
+	 * Updates the Vulnerability table with the Vulnerability object (vuln) passed
+	 * in.
+	 * 
+	 * @param vuln            Vulnerability object to be updated in database
+	 * @throws SQLException
+	 */
+	public int updateVulnerability(CompositeVulnerability vuln) throws SQLException {
+
+		try (Connection connection = getConnection();
+			 PreparedStatement pstmt = connection.prepareStatement(updateVulnSql)) {
+			// update vulnerability
+			pstmt.setString(1, vuln.getDescription());
+			pstmt.setString(2, vuln.getPlatform());
+			pstmt.setString(3, vuln.getPatch());
+			pstmt.setString(4, formatDate(vuln.getPublishDate()));
+			pstmt.setString(5, formatDate(vuln.getLastModifiedDate()));
+			pstmt.setString(6, formatDate(vuln.getFixDate()));
+			pstmt.setString(7, vuln.getCveId()); // WHERE clause in SQL statement
+
+			pstmt.executeUpdate();
+		} catch (Exception e1) {
+			// you may still continue updating other vuln attribs below!
+			logger.error("Error while updating CVE: {} Exception: {}:{}", vuln.getCveId(), e1.toString(), e1.getMessage());
+		}
+
+		return 1;
+	}
+
+	/**
+	 * insert a vulnerability column value
+	 * 
+	 * @param vulnId
+	 * @param columnName
+	 * @param columnValue
+	 * @param runId
+	 * @return
+	 */
+	public boolean insertVulnerabilityUpdate(int vulnId, String columnName, String columnValue, int runId) {
+		try (Connection connection = getConnection();
+			 PreparedStatement pstmt = connection.prepareStatement(insertVulnerabilityUpdateSql)){
+			pstmt.setInt(1, vulnId);
+			pstmt.setString(2, columnName);
+			pstmt.setString(3, columnValue);
+			pstmt.setInt(4, runId);
+			pstmt.executeUpdate();
+		} catch (SQLException e) {
+			logger.error("Error while logging vuln updates!\n{}", e.getMessage());
+			return false;
+		}
+		return true;
+	}
+
+	/**
+	 * Record CVE status changes in NVD/MITRE
+	 * 
+	 * @param vuln
+	 * @param existingAttribs
+	 * @param comparedAgainst
+	 * @param oldStatus
+	 * @param newStatus
+	 * @param timeGapFound
+	 * @param timeGap
+	 */
+	public boolean addToCveStatusChangeHistory(CompositeVulnerability vuln,
+			Vulnerability existingAttribs, String comparedAgainst, int oldStatus, int newStatus,
+			boolean timeGapFound, int timeGap) {
+
+		try (Connection connection = getConnection();
+			 PreparedStatement pstmt = connection.prepareStatement(insertCveStatusSql);) {
+			pstmt.setInt(1, existingAttribs.getVulnID());
+			pstmt.setString(2, vuln.getCveId());
+			pstmt.setString(3, comparedAgainst);
+			pstmt.setInt(4, oldStatus);
+			pstmt.setInt(5, newStatus);
+			pstmt.setString(6, vuln.getDescription());
+
+			int timeGapRecorded = (timeGapFound) ? 1 : 0;
+			pstmt.setInt(7, timeGapRecorded);
+			pstmt.setInt(8, timeGap);
+			try {
+				pstmt.setTimestamp(9, new java.sql.Timestamp(longDateFormatMySQL.parse(formatDate(vuln.getLastModifiedDate().toString())).getTime()));
+			} catch (Exception e) {
+				logger.warn("WARNING: Failed to parse last modified date: {}", vuln.getLastModifiedDate());
+				pstmt.setTimestamp(9, new java.sql.Timestamp(longDateFormatMySQL.parse(formatDate(vuln.getPublishDate().toString())).getTime()));
+			}
+			pstmt.setTimestamp(10, new java.sql.Timestamp(longDateFormatMySQL.parse(existingAttribs.getCreateDate().toString()).getTime()));
+			pstmt.executeUpdate();
+		} catch (Exception e) {
+			logger.error("Error recording CVE status change for {}:\n{}", vuln.getCveId(), e);
+			return false;
+		}
+
+		return true;
+	}
+
+	/**
+	 * For Updating the Nvd status of a CVE
+	 * @param newStatus
+	 * @param cveId
+	 */
+	public void updateNvdStatus(int newStatus, String cveId) {
+		try (Connection connection = getConnection();
+			PreparedStatement pstmt = connection.prepareStatement(updateNvdStatusSql)) {
+			pstmt.setInt(1,newStatus);
+			pstmt.setString(2, cveId);
+			pstmt.executeUpdate();
+		} catch (SQLException e) {
+			logger.error("ERROR: Failed to update NVD Status for CVE: {}\n{}", cveId, e);
+		}
+	}
+
+	/**
+	 * For Updating the Mitre status of a CVE
+	 * @param newstatus
+	 * @param cveId
+	 */
+	public void updateMitreStatus(int newstatus, String cveId) {
+		try (Connection connection = getConnection();
+			PreparedStatement pstmt = connection.prepareStatement(updateMitreStatusSql);) {
+			pstmt.setInt(1, newstatus);
+			pstmt.setString(2, cveId);
+			pstmt.executeUpdate();
+		} catch (SQLException e) {
+			logger.error("ERROR: Failed to update Mitre Status for CVE: {}\n{}", cveId, e);
+		}
+	}
+
+	/**
+	 * For Updating the NVD time gap in a vulnerability
+	 * @param timeGap
+	 * @param cveId
+	 */
+	public void updateNvdTimeGap(int timeGap, String cveId) {
+		try (Connection connection = getConnection();
+			 PreparedStatement pstmt = connection.prepareStatement(updateNvdTimeGapSql)) {
+			pstmt.setInt(1, timeGap);
+			pstmt.setString(2, cveId);
+			pstmt.executeUpdate();
+		} catch (SQLException e) {
+			logger.error("ERROR: Failed to update Mitre Status for CVE: {}\n{}", cveId, e);
+		}
+	}
+
+	/**
+	 * For updating MITRe time gaps in a vulnerability
+	 * @param timeGap
+	 * @param cveId
+	 */
+	public void updateMitreTimeGap(int timeGap, String cveId) {
+		try (Connection connection = getConnection();
+			 PreparedStatement pstmt = connection.prepareStatement(updateMitreTimeGapSql)) {
+			pstmt.setInt(1, timeGap);
+			pstmt.setString(2, cveId);
+			pstmt.executeUpdate();
+		} catch (SQLException e) {
+			logger.error("ERROR: Failed to update Mitre Status for CVE: {}\n{}", cveId, e);
+		}
+	}
+
+	/**
+	 * Takes in a list of NvipSourceUrl objects (nvipSourceList) and updates the
+	 * NvipSourceUrl table in the database.
+	 * 
+	 * @param nvipSourceList
+	 * @param notOkUrls
+	 * @return
+	 */
+	public boolean insertNvipSource(List<NvipSource> nvipSourceList, HashMap<String, Integer> notOkUrls) {
+		HashMap<String, NvipSource> existingNvipSourceMap = new HashMap<String, NvipSource>();
+		int insertedUrlCount = 0;
+		int notOkUrlCount = 0;
+		try (Connection conn = getConnection();
+				PreparedStatement pstmt = conn.prepareStatement(insertNvipSourceSql);
+				PreparedStatement pstmt2 = conn.prepareStatement(updateNvipSourceSql);
+				Statement stmt = conn.createStatement();
+				ResultSet rs = stmt.executeQuery(selectAllNvipSourceSql);) {
+
+			while (rs.next()) {
+				String sUrl = rs.getString("url");
+				int httpStatus = rs.getInt("http_status");
+				existingNvipSourceMap.put(sUrl, new NvipSource(sUrl, "", httpStatus));
+			}
+
+			// urls found
+			for (int i = 0; i < nvipSourceList.size(); i++) {
+				String nvipSourceUrl = null;
+				try {
+					nvipSourceUrl = nvipSourceList.get(i).getUrl();
+					int httpStatus = nvipSourceList.get(i).getHttpStatus();
+
+					if (existingNvipSourceMap.containsKey(nvipSourceUrl)) {
+						continue;
+					}
+					// does not exist, insert it!
+					pstmt.setString(1, nvipSourceUrl);
+					pstmt.setString(2, nvipSourceList.get(i).getDescription());
+					pstmt.setInt(3, httpStatus);
+					pstmt.executeUpdate();
+					insertedUrlCount++;
+				} catch (Exception e) {
+					logger.error(
+							"Error while saving source url: " + nvipSourceUrl + ", continuing with the next one! " + e.toString());
+				}
+			}
+
+			// not ok urls
+			for (String nvipSourceUrl : notOkUrls.keySet()) {
+				int httpStatus = notOkUrls.get(nvipSourceUrl);
+				// update entry
+				pstmt2.setInt(1, httpStatus);
+				pstmt2.setString(2, nvipSourceUrl); // where
+				pstmt2.executeUpdate();
+				notOkUrlCount++;
+			}
+		} catch (SQLException e) {
+			logger.error(e.getMessage());
+			return false;
+		}
+
+		logger.info("Out of " + nvipSourceList.size() + " crawled URLs, " + insertedUrlCount
+				+ " of them were NEW and INSERTED into database!");
+		logger.info(notOkUrlCount + " URLs were not reachable, http status codes saved to the database!");
+		return true;
+	}
+
+	/**
+	 * Returns an ArrayList of NvipSource objects gathered from all rows in the
+	 * NvipSourceUrl table.
+	 * 
+	 * @return A list of all NvipSource in the NvipSourceUrl table
+	 */
+	public ArrayList<NvipSource> getNvipCveSources() {
+		ArrayList<NvipSource> nvipSourceList = new ArrayList<NvipSource>();
+		Connection conn = null;
+		try {
+			conn = getConnection();
+			Statement stmt = conn.createStatement();
+			ResultSet rs = stmt.executeQuery(selectAllNvipSourceSql);
+
+			while (rs.next()) {
+				int sourceId = rs.getInt("source_id");
+				String url = rs.getString("url");
+				String description = rs.getString("description");
+				int httpStatus = rs.getInt("http_status");
+
+				NvipSource nvipSource = new NvipSource(url, description, httpStatus);
+				nvipSource.setSourceId(sourceId);
+				nvipSourceList.add(nvipSource);
+			}
+		} catch (SQLException e) {
+			logger.error(e.getMessage());
+		} finally {
+			try {
+				conn.close();
+			} catch (SQLException ignored) {
+
+			}
+		}
+
+		return nvipSourceList;
+	}
+
+	/**
+	 * With the same connection
+	 * 
+	 * @param vulnSourceList
+	 * @return
+	 */
+	public boolean insertVulnSource(List<VulnSource> vulnSourceList) {
+		try (Connection connection = getConnection(); PreparedStatement pstmt = connection.prepareStatement(insertVulnSourceSql);) {
+			for (int i = 0; i < vulnSourceList.size(); i++) {
+				pstmt.setString(1, vulnSourceList.get(i).getCveId());
+				pstmt.setString(2, vulnSourceList.get(i).getUrl());
+				pstmt.executeUpdate();
+			}
+		} catch (SQLException e) {
+			logger.error(e.getMessage());
+			return false;
+		}
+		return true;
+	}
+
+	/**
+	 * delete sources for the given cve id
+	 * 
+	 * @param cveId
+	 * @return
+	 */
+	public int deleteVulnSource(String cveId) {
+		Connection conn = null;
+		try {
+			conn = getConnection();
+			PreparedStatement pstmt = conn.prepareStatement(deleteVulnSourceSql);
+			pstmt.setString(1, cveId);
+			int count = pstmt.executeUpdate();
+			return count;
+		} catch (SQLException e) {
+			logger.error("Error in deleteVulnSource(): " + e.getMessage());
+		} finally {
+			try {
+				conn.close();
+			} catch (SQLException e) {
+
+			}
+		}
+		return 0;
+	}
+
+	/**
+	 * with the same connection
+	 * 
+	 * @param cveId
+	 * @param conn
+	 * @return
+	 */
+	public int deleteVulnSource(String cveId, Connection conn) {
+		try {
+			PreparedStatement pstmt = conn.prepareStatement(deleteVulnSourceSql);
+			pstmt.setString(1, cveId);
+			int count = pstmt.executeUpdate();
+			return count;
+		} catch (SQLException e) {
+			logger.error(e.getMessage());
+		}
+		return 0;
+	}
+
+	/**
+	 * Inserts <dailyRun> into the DailyRunHistory table in the database.
+	 * 
+	 * @param dailyRun
+	 * @return max run_id
+	 */
+	public int insertDailyRun(DailyRun dailyRun) {
+		logger.info("Inserting Daily Run Stats...");
+		ResultSet rs;
+		int maxRunId = -1;
+		Connection conn = null;
+		try {
+			conn = getConnection();
+			Statement stmt = conn.createStatement();
+
+			PreparedStatement pstmt = conn.prepareStatement(insertDailyRunSql);
+			pstmt.setString(1, dailyRun.getRunDateTime());
+			pstmt.setFloat(2, dailyRun.getCrawlTimeMin());
+			pstmt.setInt(3, dailyRun.getTotalCveCount());
+			pstmt.setInt(4, dailyRun.getNotInNvdCount());
+			pstmt.setInt(5, dailyRun.getNotInMitreCount());
+			pstmt.setInt(6, dailyRun.getNotInBothCount());
+			pstmt.setInt(7, dailyRun.getNewCveCount());
+			pstmt.setDouble(8, dailyRun.getAvgTimeGapNvd());
+			pstmt.setDouble(9, dailyRun.getAvgTimeGapMitre());
+			pstmt.setInt(10, dailyRun.getAddedCveCount());
+			pstmt.setInt(11, dailyRun.getUpdatedCveCount());
+			pstmt.executeUpdate();
+
+			logger.info("Daily Run Stats Inputted Successfully!");
+
+			String maxRunIdSQL = "SELECT max(run_id) as run_id FROM dailyrunhistory";
+			rs = stmt.executeQuery(maxRunIdSQL);
+			if (rs.next()) {
+				maxRunId = rs.getInt("run_id");
+			}
+
+		} catch (Exception e) {
+			logger.error("ERROR: Error when trying to input Daily Run Stats\n{}", e.toString());
+		} finally {
+			try {
+				conn.close();
+			} catch (SQLException e) {
+				logger.error("ERROR: Error when trying to close connection for Daily Run Stats\n{}", e.toString());
+			}
+		}
+		return maxRunId;
+	}
+
+
+	/**
+	 * For getting the latest run ID from dailyrunhistory
+	 * @return
+	 */
+	public int getLatestRunId() {
+		int maxRunId = -1;
+
+		try (Connection conn = getConnection();
+			 Statement stmt = conn.createStatement();) {
+			String maxRunIdSQL = "SELECT max(run_id) as run_id FROM dailyrunhistory";
+			ResultSet rs = stmt.executeQuery(maxRunIdSQL);
+			if (rs.next()) {
+				maxRunId = rs.getInt("run_id");
+			}
+		} catch (Exception e) {
+			logger.error("ERROR: Error when trying to input Daily Run Stats\n{}", e.toString());
+		}
+
+		return maxRunId;
+	}
+
+	/**
+	 * For calculating CVE Time Gaps after new CVEs are inserted
+	 * Calculates mean time gaps within the past week, then adds them to the existing daily run entry that was
+	 * just inserted
+	 * @param runId
+	 * @param dailyRun
+	 * @return
+	 */
+	public void updateDailyRun(int runId, DailyRun dailyRun) {
+		PreparedStatement pstmt = null;
+		DecimalFormat df = new DecimalFormat("#.00");
+		try (Connection conn = getConnection();
+			 Statement stmt = conn.createStatement()){
+
+			/**
+			 * calculate avg nvd and mitre times
+			 */
+			ResultSet rs = stmt.executeQuery(this.selectAverageTimeGapMitre);
+			if (rs.next())
+				dailyRun.setAvgTimeGapMitre(Double.parseDouble(formatter.format(rs.getDouble("gapMitre"))));
+
+			rs = stmt.executeQuery(this.selectAverageTimeGapNvd);
+			if (rs.next())
+				dailyRun.setAvgTimeGapNvd(Double.parseDouble(formatter.format(rs.getDouble("gapNvd"))));
+
+			pstmt = conn.prepareStatement(updateDailyRunSql);
+
+			double avgNvdTime = Double.parseDouble(df.format(dailyRun.getAvgTimeGapNvd()));
+			pstmt.setDouble(1, avgNvdTime);
+
+			double avgMitreTime = Double.parseDouble(df.format(dailyRun.getAvgTimeGapMitre()));
+			pstmt.setDouble(2, avgMitreTime);
+			pstmt.setInt(3, runId);
+			pstmt.executeUpdate();
+
+			logger.info("AVG NVD TIME: {}", avgNvdTime);
+			logger.info("AVG MITRE TIME: {}", avgMitreTime);
+
+		} catch (Exception e) {
+			try {
+				logger.error("Error in updateDailyRun()!  " + e.getMessage() + "\nSQL:" + pstmt.toString());
+			} catch (Exception e2) {
+				logger.error("Error in updateDailyRun()! " + e.getMessage() + "\n" + e2.getMessage());
+			}
+		}
+	}
+
+	/**
+	 * Insert vdo characteristic
+	 * 
+	 * @param vdoCharacteristicList
+	 * @return
+	 */
+	public boolean insertVdoCharacteristic(List<VdoCharacteristic> vdoCharacteristicList) {
+		try (Connection conenction = getConnection();
+			 PreparedStatement pstmt = conenction.prepareStatement(insertVdoCharacteristicSql);){
+			for (int i = 0; i < vdoCharacteristicList.size(); i++) {
+
+				pstmt.setString(1, vdoCharacteristicList.get(i).getCveId());
+				pstmt.setInt(2, vdoCharacteristicList.get(i).getVdoLabelId());
+				pstmt.setDouble(3, vdoCharacteristicList.get(i).getVdoConfidence());
+				pstmt.setInt(4, vdoCharacteristicList.get(i).getVdoNounGroupId());
+				pstmt.executeUpdate();
+			}
+
+		} catch (SQLException e) {
+			logger.error("Error inserting VDO characterization: " + e.getMessage());
+			return false;
+		}
+		return true;
+	}
+
+	/**
+	 * Flush VDO data for CVE
+	 * 
+	 * @param cveId
+	 * @param vdoCharacteristicList
+	 */
+	public void updateVdoLabels(String cveId, List<VdoCharacteristic> vdoCharacteristicList) {
+
+		// Delete existing VDO Labels
+		try (Connection connection = getConnection();
+			 PreparedStatement pstmt = connection.prepareStatement(deleteVdoCharacteristicSql);) {
+			pstmt.setString(1, cveId);
+			pstmt.executeUpdate();
+		} catch (SQLException e) {
+			logger.error(e.toString());
+		}
+
+		// Insert new ones
+		try (Connection connection = getConnection();
+			 PreparedStatement pstmt = connection.prepareStatement(insertVdoCharacteristicSql);) {
+			for (int i = 0; i < vdoCharacteristicList.size(); i++) {
+				pstmt.setString(1, vdoCharacteristicList.get(i).getCveId());
+				pstmt.setInt(2, vdoCharacteristicList.get(i).getVdoLabelId());
+				pstmt.setDouble(3, vdoCharacteristicList.get(i).getVdoConfidence());
+				pstmt.setInt(4, vdoCharacteristicList.get(i).getVdoNounGroupId());
+				pstmt.executeUpdate();
+			}
+		} catch (SQLException e) {
+			logger.error(e.toString());
+		}
+
+	}
+
+	/**
+	 * Insert cvss scores
+	 * 
+	 * @param cvssScoreList
+	 * @return
+	 */
+	public void insertCvssScore(List<CvssScore> cvssScoreList) {
+
+		for (int i = 0; i < cvssScoreList.size(); i++) {
+			try (Connection connection = getConnection();
+				 PreparedStatement pstmt = connection.prepareStatement(insertCvssScoreSql);) {
+				pstmt.setString(1, cvssScoreList.get(i).getCveId());
+				pstmt.setInt(2, cvssScoreList.get(i).getSeverityId());
+				pstmt.setDouble(3, cvssScoreList.get(i).getSeverityConfidence());
+				pstmt.setString(4, cvssScoreList.get(i).getImpactScore());
+				pstmt.setDouble(5, cvssScoreList.get(i).getImpactConfidence());
+				pstmt.executeUpdate();
+			} catch (SQLException e) {
+				logger.error(e.toString());
+			}
+		}
+	}
+
+	/**
+	 * Delete cvss for cve
+	 * 
+	 * @param cveId
+	 * @return
+	 */
+	public int deleteCvssScore(String cveId) {
+		try (Connection connection = getConnection();
+			 PreparedStatement pstmt = connection.prepareStatement(deleteCvssScoreSql);) {
+			pstmt.setString(1, cveId);
+			return pstmt.executeUpdate();
+		} catch (SQLException e) {
+			logger.error(e.toString());
+		}
+		return 0;
+	}
+
+	/**
+	 * Delete vulnerability
+	 * 
+	 * @param cveId
+	 * @return
+	 */
+	public int deleteVuln(String cveId) {
+		try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(deleteVulnSql);) {
+			pstmt.setString(1, cveId);
+			return pstmt.executeUpdate();
+		} catch (SQLException e) {
+			logger.error(e.getMessage());
+		}
+		return 0;
+	}
+
+	/**
+	 * IMPORTANT NOTE: Please do not use this method. Use getInstance() instead.
+	 * This method is used while storing tens of thousands of CVEs with
+	 * multi-threading.
+	 * 
+	 * 
+	 * If you need to use this method, do not forget to invoke shutdown() when you
+	 * are done!
+	 * 
+	 * @return
+	 */
+	public static DatabaseHelper getInstanceForMultiThreading() {
+		return new DatabaseHelper();
+	}
+
+	/**
+	 * Hikari active connections
+	 * 
+	 * @return
+	 */
+	public int getActiveConnections() {
+		return dataSource.getHikariPoolMXBean().getActiveConnections();
+	}
+
+	/**
+	 * Hikari idle connections
+	 * 
+	 * @return
+	 */
+	public int getIdleConnections() {
+		return dataSource.getHikariPoolMXBean().getIdleConnections();
+	}
+
+	/**
+	 * Hikari total connections!
+	 * 
+	 * @return
+	 */
+	public int getTotalConnections() {
+		return dataSource.getHikariPoolMXBean().getTotalConnections();
+	}
+
+	/**
+	 * active, idle and total connections on the current instance
+	 * 
+	 * @return
+	 */
+	public String getConnectionStatus() {
+		return "[" + getActiveConnections() + "," + this.getIdleConnections() + "]=" + getTotalConnections();
+	}
+
+	/**
+	 * shut down connection pool. U
+	 */
+	public void shutdown() {
+		dataSource.close();
+		config = null;
+	}
+
+	/**
+	 * clear existing CVEs map
+	 */
+	public static void clearExistingVulnMap() {
+		existingVulnMap.clear();
+	}
+
+	/**
+	 * get vulnerability Id(s) of the CVE
+	 * 
+	 * @param cveId
+	 * @return
+	 */
+	public List<Integer> getVulnerabilityIdList(String cveId) {
+		List<Integer> vulnIdList = new ArrayList<>();
+		ResultSet rs;
+
+		try (Connection connection = getConnection();
+			 PreparedStatement pstmt = connection.prepareStatement(selectVulnerabilityIdSql)){
+
+			pstmt.setString(1, cveId);
+			rs = pstmt.executeQuery();
+			while (rs.next()) {
+				vulnIdList.add(rs.getInt("vuln_id"));
+			}
+		} catch (SQLException e) {
+			logger.error(e.toString());
+		}
+		return vulnIdList;
+	}
+
+	/**
+	 * get defined cvss severity labels as hash map
+	 * 
+	 * @return
+	 */
+	public Map<String, Integer> getCvssSeverityLabels() {
+		return getTableDataAsHashMap(selectCvssSeveritySql, "cvss_severity_id", "cvss_severity_class");
+	}
+
+	/**
+	 * get vdo labels as hash map
+	 * 
+	 * @return
+	 */
+	public Map<String, Integer> getVdoLabels() {
+		return getTableDataAsHashMap(selectVdoLabelSql, "vdo_label_id", "vdo_label_name");
+	}
+
+	public Map<String, Integer> getVdoNounGrpups() {
+		return getTableDataAsHashMap(selectVdoNounGroupSql, "vdo_noun_group_id", "vdo_noun_group_name");
+	}
+
+	/**
+	 * get table data as Map<name,id>
+	 * 
+	 * @param sqlSentence
+	 * @param intField
+	 * @param stringField
+	 * @return
+	 */
+	public Map<String, Integer> getTableDataAsHashMap(String sqlSentence, String intField, String stringField) {
+		Map<String, Integer> cvssSeverityLabels = new HashMap<String, Integer>();
+		Connection conn = null;
+		try {
+			conn = getConnection();
+			Statement stmt = conn.createStatement();
+			ResultSet rs = stmt.executeQuery(sqlSentence);
+
+			while (rs.next()) {
+				int id = rs.getInt(intField);
+				String name = rs.getString(stringField);
+				cvssSeverityLabels.put(name, id);
+			}
+		} catch (SQLException e) {
+			logger.error(e.getMessage());
+		} finally {
+			try {
+				conn.close();
+			} catch (SQLException e) {
+
+			}
+		}
+		return cvssSeverityLabels;
+	}
+
+	/**
+	 * delete the source url from the crawled URLs list
+	 * 
+	 * @param sourceUrl
+	 * @return
+	 */
+	public int deleteNvipSourceUrl(String sourceUrl) {
+		try (Connection conn = getConnection();) {
+
+			PreparedStatement pstmt = conn.prepareStatement(deleteNvipSourceSql);
+			pstmt.setString(1, sourceUrl);
+			int count = pstmt.executeUpdate();
+			return count;
+		} catch (SQLException e) {
+			logger.error("Error while removing source url: {}, {} ", sourceUrl, e);
+		}
+		return 0;
+	}
+
+	public int flushNvipSourceUrl() {
+		try (Connection conn = getConnection();) {
+			PreparedStatement pstmt = conn.prepareStatement(deleteAllNvipSourceSql);
+			int count = pstmt.executeUpdate();
+			return count;
+		} catch (SQLException e) {
+			logger.error("Error while flushing source urls {} ", e);
+		}
+		return 0;
+	}
+
+	/**
+	 * Grab exploits by CVE ID
+	 * @param cveId
+	 * @return
+	 */
+	public ArrayList<Integer> getExploitIds(String cveId) {
+
+		ArrayList<Integer> exploitIds = new ArrayList<>();
+		try (Connection connection = getConnection();
+			 PreparedStatement stmt = connection.prepareStatement(getExploitsByCVEId);) {
+
+			stmt.setString(1, cveId);
+			ResultSet rs = stmt.executeQuery();
+
+			while (rs.next()) {
+				exploitIds.add(rs.getInt("exploit_id"));
+			}
+
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}
+
+		return exploitIds;
+	}
+
+	/**
+	 * save exploit
+	 * 
+	 * @param exploit
+	 * @return
+	 */
+	public boolean insertExploit(Exploit exploit) {
+		try (Connection conn = getConnection();
+			 PreparedStatement pstmt = conn.prepareStatement(insertExploitSql)) {
+			/**
+			 * "INSERT INTO Exploit (vuln_id, cve_id, publisher_id, publish_date,
+			 * publisher_url, description, exploit_code, nvip_record_date) VALUES
+			 * (?,?,?,?,?,?,?,?);";
+			 * 
+			 */
+			pstmt.setInt(1, exploit.getVulnId());
+			pstmt.setString(2, exploit.getCveId());
+			pstmt.setInt(3, exploit.getPublisherId());
+			pstmt.setString(4, formatDate(exploit.getPublishDate()));
+			pstmt.setString(5, exploit.getPublisherUrl());
+			pstmt.setString(6, exploit.getDescription());
+			pstmt.setString(7, exploit.getExploitCode());
+			pstmt.setString(8, exploit.getNvipRecordDate());
+
+			pstmt.executeUpdate();
+		} catch (SQLException e) {
+			logger.error("ERROR: Failed to save exploit with Vuln Id: {}\n{}", exploit.getVulnId(), e.toString());
+			return false;
+		}
+		return true;
+	}
+
+	/**
+	 * delete exploits of this vulnerability from DB
+	 *
+	 * @return
+	 */
+	public int deleteExploits(Connection connection, int vulnerabilityId) {
+		try (PreparedStatement pstmt = connection.prepareStatement(deleteExploitSql);) {
+			pstmt.setInt(1, vulnerabilityId);
+			return pstmt.executeUpdate();
+		} catch (SQLException e) {
+			logger.error(e.toString());
+		}
+		return 0;
+	}
+
+	public int updateVulnerabilityDataFromCsv(CompositeVulnerability vuln, Map<String, Vulnerability> existingVulnMap,
+			int runId) throws SQLException {
+		Connection connection = null;
+		try {
+			connection = getConnection();
+			Vulnerability existingAttribs = existingVulnMap.get(vuln.getCveId());
+			if (existingAttribs == null) {
+				try (PreparedStatement pstmt = connection.prepareStatement(insertVulnDescriptionSql);) {
+					// insert
+					pstmt.setString(1, vuln.getCveId());
+					pstmt.setString(2, vuln.getDescription());
+					pstmt.executeUpdate();
+				} catch (SQLException e1) {
+					logger.error("Error while inserting vuln {} -- {}", vuln, e1.toString());
+				}
+			} else {
+				try (PreparedStatement pstmt = connection.prepareStatement(updateVulnDescriptionSql);) {
+					// update vulnerability
+					pstmt.setString(1, vuln.getDescription());
+					pstmt.setString(2, vuln.getCveId());
+					pstmt.executeUpdate();
+				} catch (SQLException e1) {
+					logger.error("Error while updating vuln {} -- {}", vuln, e1.toString());
+				}
+			}
+
+			/**
+			 * vdo characters
+			 */
+			if (!vuln.getVdoCharacteristicInfo().isEmpty()) {
+				updateVdoLabels(vuln.getCveId(), vuln.getVdoCharacteristicInfo());
+
+				deleteCvssScore(vuln.getCveId()); // clear existing ones
+				insertCvssScore(vuln.getCvssScoreInfo()); // add them
+			}
+			return 1; // done
+		} catch (Exception e) {
+			logger.error(e.toString());
+		} finally {
+			if (connection != null)
+				connection.close();
+		}
+
+		return 0;
+	} // updateVuln
+
+	public int getMaxRunId() {
+		String maxRunIdSQL = "SELECT max(run_id) as run_id FROM dailyrunhistory";
+		try (Connection connection = getConnection(); ResultSet rs = connection.createStatement().executeQuery(maxRunIdSQL);) {
+			int maxRunId = 0;
+			if (rs.next())
+				maxRunId = rs.getInt("run_id");
+			return maxRunId;
+		} catch (SQLException e) {
+			logger.error(e.toString());
+		}
+		return 0;
+	}
+
+	/**
+	 * Obtains a collection of vuln IDs with their correlated patch sources
+	 * 
+	 * @param limit
+	 * @return
+	 */
+	public Map<String, Integer> getVulnIdPatchSource(int limit) {
+		String query = getPSURLAndVulnID;
+
+		HashMap<String, Integer> results = new HashMap<>();
+
+		if (limit > 0) {
+			query += " LIMIT " + limit;
+		}
+
+		try (Connection connection = getConnection(); ResultSet rs = connection.createStatement().executeQuery(query)) {
+			while (rs.next()) {
+				results.put(rs.getString("source_url"), rs.getInt("vuln_id"));
+			}
+		} catch (Exception e) {
+			logger.error(e.toString());
+		}
+
+		return results;
+
+	}
+
+	/**
+	 * Collect a CVE ID from the Vulnerability table by Vuln ID
+	 * 
+	 * @param vulnId
+	 * @return
+	 */
+	public String getCveId(String vulnId) {
+
+		String cve_id = "";
+
+		try (Connection connection = getConnection()) {
+
+			PreparedStatement pstmt = connection.prepareStatement(selectCVEIdSql);
+			pstmt.setInt(1, Integer.parseInt(vulnId));
+			ResultSet rs = pstmt.executeQuery();
+
+			if (rs.next()) {
+				cve_id = rs.getString("cve_id");
+			}
+		} catch (Exception e) {
+			logger.error(e.toString());
+		}
+
+		return cve_id;
+	}
+
+	/**
+	 * Method for inserting a patch commit into the patchcommit table
+	 * 
+	 * @param sourceId
+	 * @param sourceURL
+	 * @param commitId
+	 * @param commitDate
+	 * @param commitMessage
+	 */
+	public void insertPatchCommit(int sourceId, String sourceURL, String commitId, Date commitDate,
+			String commitMessage) {
+
+		try (Connection connection = getConnection();
+				PreparedStatement pstmt = connection.prepareStatement(insertPatchCommitSql);) {
+
+			pstmt.setInt(1, sourceId);
+			pstmt.setString(2, sourceURL + "/commit/" + commitId);
+			pstmt.setDate(3, new java.sql.Date(commitDate.getTime()));
+			pstmt.setString(4, commitMessage);
+			pstmt.executeUpdate();
+		} catch (Exception e) {
+			logger.error(e.toString());
+		}
+	}
+
+	/**
+	 * Collects a list of user emails
+	 * TODO: These next 2 functions are duplicate
+	 * @return
+	 */
+	public ArrayList<ArrayList<String>> getEmailsRoleId() {
+
+		ArrayList<ArrayList<String>> results = new ArrayList<>();
+
+		try (Connection connection = getConnection();
+			 PreparedStatement pstmt = connection.prepareStatement(selEmailsSql);) {
+
+			ResultSet rs = pstmt.executeQuery();
+
+			while (rs.next()) {
+				ArrayList list = new ArrayList<String>();
+				list.add(rs.getString("email"));
+				list.add(rs.getString("first_name"));
+				list.add(rs.getInt("role_id") + "");
+				results.add(list);
+			}
+
+		} catch (Exception e) {
+			logger.error(e.toString());
+		}
+
+		return results;
+
+	}
+
+	/**
+	 * Obtains a users role Id by their email
+	 * 
+	 * @return
+	 */
+	public ArrayList<String> getEmailRoleIdByUser(String username) {
+
+		ArrayList<String> results = new ArrayList<>();
+
+		try (Connection connection = getConnection();
+				PreparedStatement pstmt = connection.prepareStatement(selEmailsByUserNameSql);) {
+
+			pstmt.setString(1, username);
+
+			ResultSet rs = pstmt.executeQuery();
+
+			if (rs.next()) {
+				results.add(rs.getString("email"));
+				results.add(rs.getString("first_name"));
+				results.add(rs.getInt("role_id") + "");
+			}
+
+		} catch (Exception e) {
+			logger.error(e.toString());
+		}
+
+		return results;
+	}
+
+	/**
+	 * Collects CVE ID and Description with the given run_date_time
+	 * 
+	 * @param runDateTime
+	 * @return
+	 */
+	public HashMap<String, String> getCVEByRunDate(Date runDateTime) {
+
+		// Tomorrows date
+		java.sql.Date endpoint = new java.sql.Date(runDateTime.getTime() + (86400000));
+		java.sql.Date startpoint = new java.sql.Date(runDateTime.getTime() - (21600000));
+		HashMap<String, String> data = new HashMap<>();
+
+		try (Connection connection = getConnection();
+				PreparedStatement pstmt = connection.prepareStatement(getCVEByDate);) {
+
+			pstmt.setDate(1, startpoint);
+			pstmt.setDate(2, endpoint);
+			ResultSet rs = pstmt.executeQuery();
+
+			while (rs.next()) {
+				data.put(rs.getString("cve_id"), rs.getString("description"));
+			}
+
+		} catch (Exception e) {
+			logger.error(e.toString());
+		}
+
+		return data;
+	}
+
+	/**
+	 * Gets all CVE-IDs from the vulnerability tale with their descriptions
+	 * 
+	 * @return
+	 */
+	public Map<String, String> getAllCveIdAndDescriptions() {
+		HashMap<String, String> results = new HashMap<>();
+
+		try (Connection connection = getConnection();
+				ResultSet rs = connection.createStatement().executeQuery(getCVEAndDescription)) {
+			while (rs.next()) {
+				results.put(rs.getString("cve_id"), rs.getString("description"));
+			}
+		} catch (Exception e) {
+			logger.error(e.toString());
+		}
+
+		return results;
+	}
+
+	/**
+	 * Collects the vulnId for a specific CVE with a given CVE-ID
+	 * 
+	 * @param cveId
+	 * @return
+	 */
+	public int getVulnIdByCveId(String cveId) {
+		int result = -1;
+		try (Connection connection = getConnection();
+				PreparedStatement pstmt = connection.prepareStatement(getVulnIdByCveId);) {
+			pstmt.setString(1, cveId);
+			ResultSet rs = pstmt.executeQuery();
+			if (rs.next()) {
+				result = rs.getInt("vuln_id");
+			}
+		} catch (Exception e) {
+			logger.error(e.toString());
+		}
+
+		return result;
+	}
+
+
+	private final String selectNewCVEs = "SELECT v.vuln_id," +
+			"   v.cve_id," +
+			"   v.description," +
+			"   v.platform," +
+			"   v.published_date," +
+			"   v.last_modified_date," +
+			"   v.fixed_date," +
+			"   v.exists_at_nvd," +
+			"   v.exists_at_mitre," +
+			"   vc.vdo_labels," +
+			"   vc.vdo_label_confidences," +
+			"   vc.vdo_noun_groups," +
+			"   vsu.urls," +
+			"   cs.base_severities," +
+			"   cs.severity_confidences," +
+			"   cs.impact_scores," +
+			"   cs.impact_confidences," +
+			"   vap.product_id," +
+			"   vap.cpe," +
+			"   vap.swid," +
+			"   vap.domain," +
+			"   vap.version," +
+			"   expl.publish_date," +
+			"   expl.publisher_url," +
+			"   vu.run_date_time," +
+			" FROM (SELECT vu.vuln_id," +
+			" MAX(drh.run_id)        AS \"run_id\"," +
+			" MAX(drh.run_date_time) AS \"run_date_time\"" +
+			"  FROM dailyrunhistory drh" +
+			"   INNER JOIN vulnerabilityupdate vu ON vu.run_id = drh.run_id" +
+			"  WHERE drh.run_date_time BETWEEN ? AND ?" +
+			"  GROUP BY vu.vuln_id) vu" +
+			" INNER JOIN vulnerability v" +
+			" ON v.vuln_id = vu.vuln_id" +
+			" LEFT JOIN (SELECT vc.cve_id," +
+			"   group_concat(vl.vdo_label_name SEPARATOR ';') AS vdo_labels," +
+			"   group_concat(vc.vdo_confidence SEPARATOR ';') AS vdo_label_confidences," +
+			"   group_concat(ifnull(vn.vdo_noun_group_name, 'None')" +
+			" SEPARATOR" +
+			" ';')                                      AS vdo_noun_groups" +
+			" FROM vdocharacteristic vc" +
+			" INNER JOIN vdonoungroup vn ON vn.vdo_noun_group_id = vc.vdo_noun_group_id" +
+			" INNER JOIN vdolabel vl ON vl.vdo_label_id = vc.vdo_label_id" +
+			" GROUP BY vc.cve_id) vc" +
+			"   ON vc.cve_id = v.cve_id" +
+			" LEFT JOIN (SELECT cve_id," +
+			"   group_concat(DISTINCT url SEPARATOR ';') AS urls" +
+			" FROM vulnsourceurl" +
+			" GROUP BY cve_id) vsu" +
+			"   ON vsu.cve_id = v.cve_id" +
+			" LEFT JOIN (SELECT csc.cve_id," +
+			"   group_concat(DISTINCT cse.cvss_severity_class SEPARATOR ';') AS base_severities," +
+			"   group_concat(DISTINCT csc.severity_confidence SEPARATOR ';') AS severity_confidences," +
+			"   group_concat(DISTINCT csc.impact_score SEPARATOR ';')        AS impact_scores," +
+			"   group_concat(DISTINCT csc.impact_confidence SEPARATOR ';')   AS impact_confidences" +
+			" FROM cvssscore csc" +
+			" INNER JOIN cvssseverity cse ON cse.cvss_severity_id = csc.cvss_severity_id" +
+			" GROUP BY csc.cve_id) cs" +
+			"   ON cs.cve_id = v.cve_id" +
+			" LEFT JOIN (SELECT cve_id," +
+			"   group_concat(DISTINCT ar.product_id SEPARATOR ';') AS product_id," +
+			"   group_concat(DISTINCT cpe SEPARATOR ';')           AS cpe," +
+			"   group_concat(DISTINCT swid SEPARATOR ';')        AS swid," +
+			"   group_concat(DISTINCT domain SEPARATOR ';')        AS domain," +
+			"   group_concat(DISTINCT version SEPARATOR ';')       AS version" +
+			" FROM affectedrelease ar" +
+			" INNER JOIN product p ON p.product_id = ar.product_id" +
+			" GROUP BY cve_id) vap" +
+			"   ON vap.cve_id = v.cve_id" +
+			" LEFT JOIN exploit as expl on expl.vuln_id = v.vuln_id" +
+			" LEFT JOIN swid on swid.vuln_id = v.vuln_id" +
+			" WHERE v.status_id <> 2" +
+			"  and v.description is not null" +
+			"  and v.description not like '%** RESERVED ** This candidate%'" +
+			"  and v.description not like '%** REJECT ** DO NOT USE%'" +
+			"  and length(v.description) >= 50" +
+			"  and vdo_labels is not null" +
+			" ORDER BY v.vuln_id desc;";
+
+	/**
+	 * Prepare CVEs for UI by grabbing all CVEs from the past week and
+	 * Inserting them into the vulnerabilityaggregate cache table
+	 * @return
+	 */
+	public int prepareCVEsForUI(Timestamp start, Timestamp end, Timestamp pastweek) {
+
+		int insertCount = 0;
+		ResultSet rs;
+		try (Connection connection = getConnection();
+			 PreparedStatement pstmt = connection.prepareStatement(selectNewCVEs);) {
+
+			logger.info("Grabbing new CVEs from past run (between {} and {})", start, end);
+
+			pstmt.setTimestamp(1, start); // From past 5 hours (the latest run)
+			pstmt.setTimestamp(2, end); // 5 hours ahead in case of time zone differences in CVEs
+
+			rs =  pstmt.executeQuery();
+
+			// Insert each CVE individually
+			while(rs.next()) {
+				boolean inserted = insertCVEIntoAggregate(
+						rs.getInt(1),
+						rs.getString(2),
+						rs.getString(3),
+						rs.getString(4),
+						rs.getDate(5),
+						rs.getDate(6),
+						rs.getDate(7),
+						rs.getInt(8),
+						rs.getInt(9),
+						rs.getString(10),
+						rs.getString(11),
+						rs.getString(12),
+						rs.getString(13),
+						rs.getString(14),
+						rs.getString(15),
+						rs.getString(16),
+						rs.getString(17),
+						rs.getString(18),
+						rs.getString(19),
+						rs.getString(20),
+						rs.getString(21),
+						rs.getString(22),
+						rs.getDate(23),
+						rs.getString(24),
+						rs.getTimestamp(25)
+				);
+
+				if (inserted) {
+					insertCount++;
+				}
+			}
+
+			// Trim aggregate table
+			trimAggregateTable(pastweek);
+		} catch (Exception e) {
+			logger.error("ERROR: Failed to update cache table for CVEs for this run\n{}", e.getMessage());
+		}
+
+		return insertCount;
+	}
+
+	private final String insertIntoAggregate = "INSERT IGNORE INTO vulnerabilityaggregate(" +
+			"vuln_id, " +
+			"cve_id," +
+			"description," +
+			"platform," +
+			"published_date," +
+			"last_modified_date," +
+			"fixed_date," +
+			"exists_at_nvd," +
+			"exists_at_mitre," +
+			"vdo_labels," +
+			"vdo_label_confidences," +
+			"vdo_noun_groups," +
+			"urls," +
+			"base_severities," +
+			"severity_confidences," +
+			"impact_scores," +
+			"impact_confidences," +
+			"product_id," +
+			"cpe," +
+			"swid," +
+			"domain," +
+			"version," +
+			"exploit_publish_date," +
+			"exploit_url," +
+			"run_date_time" +
+			") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);";
+
+	/**
+	 * Helper function for inserting a single CVE into the vulnerabilityaggregate table
+	 * @param vuln_id
+	 * @param cve_id
+	 * @param desc
+	 * @param platform
+	 * @param pubDate
+	 * @param modDate
+	 * @param fixDate
+	 * @param existNvd
+	 * @param existMitre
+	 * @param vdoLabels
+	 * @param vdoConfidences
+	 * @param vdoNGroups
+	 * @param urls
+	 * @param baseSeverities
+	 * @param severConfidences
+	 * @param impScores
+	 * @param impConfidences
+	 * @param productId
+	 * @param cpe
+	 * @param swid
+	 * @param domain
+	 * @param version
+	 * @param exploitDate
+	 * @param exploitUrl
+	 * @param runDatetime
+	 * @return
+	 */
+	public boolean insertCVEIntoAggregate(int vuln_id, String cve_id, String desc, String platform, java.sql.Date pubDate, java.sql.Date modDate,
+										   java.sql.Date fixDate, int existNvd, int existMitre, String vdoLabels, String vdoConfidences,
+										   String vdoNGroups, String urls, String baseSeverities, String severConfidences, String impScores,
+										   String impConfidences, String productId, String cpe, String swid, String domain, String version, java.sql.Date exploitDate,
+										   String exploitUrl, Timestamp runDatetime) {
+
+		try (Connection connection = getConnection();
+			 PreparedStatement pstmt = connection.prepareStatement(insertIntoAggregate);) {
+
+			pstmt.setInt(1, vuln_id);
+			pstmt.setString(2, cve_id);
+			pstmt.setString(3, desc);
+			pstmt.setString(4, platform);
+			pstmt.setDate(5, pubDate);
+			pstmt.setDate(6, modDate);
+			pstmt.setDate(7, fixDate);
+			pstmt.setInt(8, existNvd);
+			pstmt.setInt(9, existMitre);
+			pstmt.setString(10, vdoLabels);
+			pstmt.setString(11, vdoConfidences);
+			pstmt.setString(12, vdoNGroups);
+			pstmt.setString(13, urls);
+			pstmt.setString(14, baseSeverities);
+			pstmt.setString(15, severConfidences);
+			pstmt.setString(16, impScores);
+			pstmt.setString(17, impConfidences);
+			pstmt.setString(18, productId);
+			pstmt.setString(19, cpe);
+			pstmt.setString(20, swid);
+			pstmt.setString(21, domain);
+			pstmt.setString(22, version);
+			pstmt.setDate(23, exploitDate);
+			pstmt.setString(24, exploitUrl);
+			pstmt.setTimestamp(25, runDatetime);
+
+			pstmt.executeUpdate();
+
+//			logger.info("Inserted CVE: {} into aggregate table", cve_id);
+			return true;
+
+		} catch (SQLException e) {
+			logger.error("ERROR: Failed ot insert CVE {} into aggregate table\n{}", cve_id, e.getMessage());
+		}
+
+		return false;
+	}
+
+	private final String trimAggregateTable = "DELETE FROM vulnerabilityaggregate WHERE run_date_time < ?;";
+
+	/**
+	 * Helper function for removing old entries in aggregate table
+	 * @return
+	 */
+	public void trimAggregateTable(Timestamp pastWeek) {
+
+		logger.info("Trimming CVEs before {} from vulnerabilityaggregate table", pastWeek);
+
+		try (Connection connection = getConnection();
+			 PreparedStatement pstmt = connection.prepareStatement(trimAggregateTable);) {
+
+			pstmt.setTimestamp(1, pastWeek);
+			pstmt.execute();
+
+			logger.info("Successfully trimmed CVEs before {} from vulnerabilityaggregate table", pastWeek);
+
+		} catch (SQLException e) {
+			logger.error("ERROR: Failed to remove CVEs before {} from vulnerabilityaggreate\n{}", pastWeek, e.getMessage());
+		}
+
+	}
+}

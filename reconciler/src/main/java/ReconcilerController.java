@@ -1,3 +1,4 @@
+import db.DatabaseHelper;
 import filter.Filter;
 import filter.FilterFactory;
 import model.CompositeVulnerability;
