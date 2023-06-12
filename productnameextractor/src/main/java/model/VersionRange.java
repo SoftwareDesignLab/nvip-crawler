@@ -50,11 +50,6 @@ public class VersionRange {
             throw e;
         }
     }
-    public VersionRange(ProductVersion version1, ProductVersion version2, RangeType type) {
-        this.version1 = version1;
-        this.version2 = version2;
-        this.type = type;
-    }
 
     public RangeType getType() {
         return type;
