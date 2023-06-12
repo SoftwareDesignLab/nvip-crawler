@@ -1,4 +1,4 @@
-package edu.rit.se.nvip.filter;
+package filter;
 
 public class FilterFactory {
 

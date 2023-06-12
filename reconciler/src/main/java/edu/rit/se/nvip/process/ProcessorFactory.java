@@ -1,4 +1,4 @@
-package edu.rit.se.nvip.process;
+package process;
 
 public class ProcessorFactory {
 

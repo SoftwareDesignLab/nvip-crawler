@@ -1,4 +1,4 @@
-package edu.rit.se.nvip.process;
+package process;
 
 import edu.rit.se.nvip.model.CompositeVulnerability;
 import edu.rit.se.nvip.nvd.NvdCveController;

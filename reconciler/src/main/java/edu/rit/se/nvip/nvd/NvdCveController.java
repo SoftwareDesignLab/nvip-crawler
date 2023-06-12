@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package edu.rit.se.nvip.nvd;
+package nvd;
 
 import edu.rit.se.nvip.DatabaseHelper;
 import edu.rit.se.nvip.model.CompositeVulnerability;

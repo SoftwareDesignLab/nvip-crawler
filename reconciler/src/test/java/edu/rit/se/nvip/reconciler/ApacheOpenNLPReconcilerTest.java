@@ -1,4 +1,4 @@
-package edu.rit.se.nvip.reconciler;
+package reconciler;
 
 import edu.rit.se.nvip.reconciler.models.ApacheOpenNLPModel;
 import org.junit.jupiter.api.Test;

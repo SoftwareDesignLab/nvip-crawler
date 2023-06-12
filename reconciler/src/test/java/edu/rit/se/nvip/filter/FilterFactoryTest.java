@@ -1,4 +1,4 @@
-package edu.rit.se.nvip.filter;
+package filter;
 
 import org.junit.jupiter.api.Test;
 

@@ -1,4 +1,4 @@
-package edu.rit.se.nvip.reconciler;
+package reconciler;
 
 import edu.rit.se.nvip.model.CompositeDescription;
 import edu.rit.se.nvip.model.CompositeVulnerability;

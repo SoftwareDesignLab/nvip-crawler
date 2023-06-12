@@ -1,4 +1,4 @@
-package edu.rit.se.nvip.reconciler;
+package reconciler;
 
 import java.sql.Timestamp;
 import java.util.HashMap;

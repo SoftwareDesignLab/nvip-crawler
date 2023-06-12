@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package edu.rit.se.nvip.reconciler;
+package reconciler;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

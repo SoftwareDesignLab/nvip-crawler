@@ -1,4 +1,4 @@
-package edu.rit.se.nvip.reconciler.models;
+package reconciler.models;
 
 import opennlp.tools.postag.POSModel;
 import opennlp.tools.postag.POSTaggerME;

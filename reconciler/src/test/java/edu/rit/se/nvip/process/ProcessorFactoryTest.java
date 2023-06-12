@@ -1,4 +1,4 @@
-package edu.rit.se.nvip.process;
+package process;
 
 import org.junit.jupiter.api.Test;
 

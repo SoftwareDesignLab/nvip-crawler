@@ -1,4 +1,4 @@
-package edu.rit.se.nvip.filter;
+package filter;
 
 import edu.rit.se.nvip.model.RawVulnerability;
 import org.junit.jupiter.api.Test;

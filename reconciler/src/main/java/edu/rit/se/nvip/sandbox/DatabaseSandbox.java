@@ -1,4 +1,4 @@
-package edu.rit.se.nvip.sandbox;
+package sandbox;
 
 import com.zaxxer.hikari.HikariConfig;
 import edu.rit.se.nvip.DatabaseHelper;
