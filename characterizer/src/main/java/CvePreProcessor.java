@@ -22,22 +22,13 @@
  * SOFTWARE.
  */
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import preprocessor.*;
 
-import edu.rit.se.nvip.characterizer.preprocessor.PreProcCleanUp;
-import edu.rit.se.nvip.characterizer.preprocessor.PreProcCodeTermExtractor;
-import edu.rit.se.nvip.characterizer.preprocessor.PreProcStemmer;
-import edu.rit.se.nvip.characterizer.preprocessor.PreProcStopWords;
-import edu.rit.se.nvip.characterizer.preprocessor.PreProcessor;
+import java.io.*;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * 

@@ -22,26 +22,27 @@
  * SOFTWARE.
  */
 
+import automatedcvss.CvssScoreCalculator;
+import automatedcvss.PartialCvssVectorGenerator;
+import classifier.AbstractCveClassifier;
+import classifier.CveClassifierFactory;
+import db.DatabaseHelper;
+import exploitability.ImpactPredictor;
+import exploitability.SeverityPredictor;
+import model.CompositeVulnerability;
+import model.CvssScore;
+import model.VdoCharacteristic;
+import org.apache.commons.io.FileUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import utils.MyProperties;
+import utils.PropertyLoader;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import org.apache.commons.io.FileUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import automatedcvss.CvssScoreCalculator;
-import automatedcvss.PartialCvssVectorGenerator;
-import classifier.AbstractCveClassifier;
-import classifier.CveClassifierFactory;
-import edu.rit.se.nvip.db.DatabaseHelper;
-import edu.rit.se.nvip.exploitability.ImpactPredictor;
-import edu.rit.se.nvip.exploitability.SeverityPredictor;
-import edu.rit.se.nvip.model.CompositeVulnerability;
-import edu.rit.se.nvip.model.CvssScore;
-import edu.rit.se.nvip.model.VdoCharacteristic;
 
 
 /**

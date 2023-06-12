@@ -23,13 +23,12 @@
  */
 package preprocessor;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import preprocessor.utils.Stemmer;
 
-import edu.rit.se.nvip.characterizer.preprocessor.utils.Stemmer;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 

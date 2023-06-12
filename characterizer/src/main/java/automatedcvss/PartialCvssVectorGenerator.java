@@ -32,11 +32,11 @@ import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import edu.rit.se.nvip.automatedcvss.enums.AttackTheater;
-import edu.rit.se.nvip.automatedcvss.enums.ImpactMethod;
-import edu.rit.se.nvip.automatedcvss.enums.LogicalImpact;
-import edu.rit.se.nvip.automatedcvss.enums.Mitigation;
-import edu.rit.se.nvip.automatedcvss.enums.VdoNounGroup;
+import automatedcvss.enums.AttackTheater;
+import automatedcvss.enums.ImpactMethod;
+import automatedcvss.enums.LogicalImpact;
+import automatedcvss.enums.Mitigation;
+import automatedcvss.enums.VdoNounGroup;
 
 /**
  *

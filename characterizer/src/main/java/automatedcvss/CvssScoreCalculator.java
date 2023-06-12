@@ -23,16 +23,15 @@
  */
 package automatedcvss;
 
-import java.util.Arrays;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.python.core.PyList;
 import org.python.core.PyObject;
 import org.python.util.PythonInterpreter;
+import utils.MyProperties;
+import utils.PropertyLoader;
 
-import edu.rit.se.nvip.utils.MyProperties;
-import edu.rit.se.nvip.utils.PropertyLoader;
+import java.util.Arrays;
 
 /**
  * 
