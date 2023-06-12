@@ -36,6 +36,7 @@ import model.cpe.CpeGroup;
 import model.cpe.Product;
 import model.cpe.ProductItem;
 import model.cpe.ProductVersion;
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -451,6 +452,30 @@ public class CpeLookUp {
 								productsToAdd.add(new Product(selectedGroups.get(0).getCpeGroup().getCommonTitle(), cpeName));
 								break;
 							}
+						}
+					}
+				}
+
+				//If we did not find versions in titles, try to find the version from the versions list
+				if (matchesCounter == 0) {
+
+					//Find the version from the versions list
+					for (String versionWord : versionWords) {
+
+						// If versionWord is not a valid version, go next
+						if (!VersionManager.isVersion(versionWord)) continue;
+
+						// If versionWord is a valid version, check if it is affected
+						try {
+							final ProductVersion version = new ProductVersion(versionWord);
+							if (versionManager.isAffected(version)) {
+								matchesCounter++;
+								String cpeName = "cpe:2.3:a:" + selectedGroups.get(0).getCpeGroup().getGroupID() + ":" + versionWord + ":*:*:*:*:*:*:*";
+								cpeIDs.add(cpeName);
+								productsToAdd.add(new Product(group.getCommonTitle(), cpeName));
+							}
+						} catch (IllegalArgumentException e) {
+							logger.warn("Error parsing version string '{}': {}", versionWord, e.toString());
 						}
 					}
 				}
