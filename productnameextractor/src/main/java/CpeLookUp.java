@@ -45,6 +45,8 @@ import opennlp.tools.tokenize.WhitespaceTokenizer;
  * This class is to check is a software name in the CPE dictionary
  * 
  * @author Igor Khokhlov
+ * @author Dylan Mulligan
+ * @author Paul Vickers
  *
  */
 
