@@ -156,9 +156,12 @@ public class AffectedProductIdentifier {
 
 	// TODO: Docstring
 	public Map<String, Product> identifyAffectedReleases(int cveLimit) {
-		logger.info("Starting to identify affected products for " + vulnList.size() + " CVEs.");
-		long start = System.currentTimeMillis();
+		// Set # to process based on cveLimit. If cveLimit is 0, assume no limit.
+		if(cveLimit == 0) cveLimit = Integer.MAX_VALUE;
+		int totalCVEtoProcess = Math.min(vulnList.size(), cveLimit);
 
+		logger.info("Starting to identify affected products for " + totalCVEtoProcess + " CVEs.");
+		long start = System.currentTimeMillis();
 
 		DetectProducts productNameDetector;
 		try {
@@ -178,10 +181,6 @@ public class AffectedProductIdentifier {
 		AtomicLong totalNERTime = new AtomicLong();
 		AtomicLong totalCPETime = new AtomicLong();
 		AtomicLong totalCVETime = new AtomicLong();
-
-		// Set # to process based on cveLimit. If cveLimit is 0, assume no limit.
-		if(cveLimit == 0) cveLimit = Integer.MAX_VALUE;
-		int totalCVEtoProcess = Math.min(vulnList.size(), cveLimit);
 
 		logger.info("Starting product name extraction process... # CVEs to be processed: {}", totalCVEtoProcess);
 

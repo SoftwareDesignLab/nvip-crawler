@@ -404,15 +404,19 @@ public class CpeLookUp {
 				// [ "1.2.2", "1.2.3", ... "1.3", 1.5, "1.8.0", ... "1.8.9" ]
 				versionManager.processVersions(versionWords);
 
-				// Init counter for matching CpeGroups
+				// If no version ranges derived, continue to next group
+				if(versionManager.getVersionRanges().size() == 0){
+					continue;
+				}
+
+				// Counter for matching versions
 				int matchesCounter = 0;
 
 				// Iterate over groupVersions map to check for affected CpeEntries
 				for (Map.Entry<String, CpeEntry> gv : groupVersions.entrySet()) {
 					final String versionKey = gv.getKey();
-					final CpeEntry entryValue = gv.getValue();
 
-					//If versionKey is not a valid version, go next
+					// If versionKey is not a valid version, go next
 					if(!VersionManager.isVersion(versionKey)) continue;
 
 					try {
@@ -435,7 +439,7 @@ public class CpeLookUp {
 
 						for (String versionWord : versionWords) {
 
-							//If versionWord is not a valid version, go next
+							// If versionWord is not a valid version, go next
 							if(!VersionManager.isVersion(versionWord)) continue;
 
 							if (entryTitle.contains(versionWord)) {
