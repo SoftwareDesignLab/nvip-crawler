@@ -53,7 +53,7 @@ public class AffectedProductIdentifier {
 	}
 
 	private void processVulnerability(
-			DetectProducts productNameDetector,
+			ProductDetector productNameDetector,
 			CpeLookUp cpeLookUp,
 			CompositeVulnerability vulnerability,
 			AtomicInteger counterOfBadDescriptionCVEs,
@@ -163,9 +163,9 @@ public class AffectedProductIdentifier {
 		logger.info("Starting to identify affected products for " + totalCVEtoProcess + " CVEs.");
 		long start = System.currentTimeMillis();
 
-		DetectProducts productNameDetector;
+		ProductDetector productNameDetector;
 		try {
-			productNameDetector = new DetectProducts(this.cpeLookUp);
+			productNameDetector = new ProductDetector(this.cpeLookUp);
 		} catch (Exception e1) {
 			logger.error("Severe Error! Could not initialize the models for product name/version extraction! Skipping affected release identification step! {}", e1.toString());
 			return null;

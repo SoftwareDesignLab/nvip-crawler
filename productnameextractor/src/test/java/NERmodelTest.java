@@ -24,7 +24,6 @@
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.Test;
@@ -148,9 +147,9 @@ public class NERmodelTest {
 
 		String anticipatedResult = "SN: Apache. SV:  versions <1.10.15 2.0.0 and 2.0.1";
 
-		DetectProducts nameDetector = null;
+		ProductDetector nameDetector = null;
 		try {
-			nameDetector = new DetectProducts(cpeLookUp);
+			nameDetector = new ProductDetector(cpeLookUp);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}

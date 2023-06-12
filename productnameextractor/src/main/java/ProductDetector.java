@@ -33,9 +33,6 @@ import org.apache.logging.log4j.Logger;
 
 import opennlp.tools.postag.POSModel;
 import opennlp.tools.postag.POSTaggerME;
-import opennlp.tools.sentdetect.SentenceDetector;
-import opennlp.tools.sentdetect.SentenceDetectorME;
-import opennlp.tools.sentdetect.SentenceModel;
 import opennlp.tools.tokenize.WhitespaceTokenizer;
 
 /**
@@ -46,7 +43,7 @@ import opennlp.tools.tokenize.WhitespaceTokenizer;
  *
  */
 
-public class DetectProducts {
+public class ProductDetector {
 
 	public static final String NNP = "NNP";
 	public static final String IN = "IN";
@@ -57,17 +54,14 @@ public class DetectProducts {
 
 	private final POSTaggerME tagger;
 	private final POSModel model;
-	private final SentenceModel sentenceModel;
-	private final SentenceDetector sentenceDetector;
 	private final String modelPath = "nlp/en-pos-perceptron.bin";
-	private final String sentenceModelPath = "nlp/en-sent.bin";
 
-	static private final Logger logger = LogManager.getLogger(DetectProducts.class);
+	static private final Logger logger = LogManager.getLogger(ProductDetector.class);
 
 	/**
 	 * Class constructor
 	 */
-	public DetectProducts(CpeLookUp cpeLookUp) throws IOException {
+	public ProductDetector(CpeLookUp cpeLookUp) throws IOException {
 		try {
 			// Load NER model
 			logger.info("Loading NER model...");
@@ -85,15 +79,10 @@ public class DetectProducts {
 			tagger = new POSTaggerME(model);
 			modelStream.close();
 
-			InputStream modelIn = this.getClass().getClassLoader().getResourceAsStream(sentenceModelPath);
-			assert modelIn != null;
-			sentenceModel = new SentenceModel(modelIn);
-			sentenceDetector = new SentenceDetectorME(sentenceModel);
-			modelIn.close();
 			logger.info("Product detector initialization done!");
 		} catch (IOException e) {
 			// Log and rethrow error to stop program execution
-			logger.error("Error while initializing product detector, model path {}, sentence model path {}, exception detail {}", modelPath, sentenceModelPath, e.toString());
+			logger.error("Error while initializing product detector, model path {}, exception detail {}", modelPath, e.toString());
 			throw e;
 		}
 	}
