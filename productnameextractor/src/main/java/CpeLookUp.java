@@ -77,20 +77,39 @@ public class CpeLookUp {
 		private final float score;
 		private final CpeGroup cpeGroup;
 
+		/**
+		 * Create new instance of CPEGroupFromMap, mapping CpeGroup to score
+		 *
+		 * @param score score of cpeGroup quality TODO: what is this score based on?
+		 * @param cpeGroup cpeGroup being scored
+		 */
 		public CPEGroupFromMap(float score, CpeGroup cpeGroup) {
 			super();
 			this.score = score;
 			this.cpeGroup = cpeGroup;
 		}
 
+
+		/**
+		 * @return the CpeGroup's score
+		 */
 		public float getScore() {
 			return score;
 		}
 
+		/**
+		 * @return the CpeGroup
+		 */
 		public CpeGroup getCpeGroup() {
 			return cpeGroup;
 		}
 
+		/**
+		 * Compare this.score to o.score.
+		 *
+		 * @param o the object to be compared.
+		 * @return -1 | 0 | 1 based on score comparison
+		 */
 		@Override
 		public int compareTo(CPEGroupFromMap o) {
 			float compareScore = o.getScore();
@@ -98,40 +117,57 @@ public class CpeLookUp {
 		}
 	}
 
-
-
+	/**
+	 * Create new instance of CpeLookUp
+	 */
 	public CpeLookUp() {
 		this.productsToBeAddedToDatabase = new HashMap<>();
 	}
 
+	/**
+	 * @return a map of products marked for database insertion
+	 */
 	public Map<String, Product> getProductsToBeAddedToDatabase() {
 		return this.productsToBeAddedToDatabase;
 	}
 
+	/**
+	 * Adds a given product to the database
+	 * @param p product to be added
+	 */
 	public void addProductToDatabase(Product p) {
 		this.productsToBeAddedToDatabase.put(p.getCpe(), p);
 	}
 
+	/**
+	 * Adds a given list of products to the database
+	 * @param products list of products to be added
+	 */
 	public void addProductsToDatabase(List<Product> products) {
 		for (Product p : products) {
 			addProductToDatabase(p);
 		}
 	}
 
+	/**
+	 * Loads a CPE dictionary of products from file
+	 */
 	protected void loadProductDict(Map<String, CpeGroup> productDict) {
 		this.cpeMapFile = productDict;
 		logger.info("Successfully loaded CPE dictionary with {} entries", productDict.size());
 	}
 
 	/**
-	 * loads serialized CPE list of products from dictionary file in nvip data
+	 * Compiles a CPE dictionary of products from querying NVD's CPE API
 	 *
-	 * @return assigns list of product
+	 * @return a map of loaded CpeGroup objects
 	 */
 	@SuppressWarnings({"unchecked", "rawtypes"})
 	public Map<String, CpeGroup> loadProductDict(int maxPages, int maxAttemptsPerPage) {
 		// If maxPages is set to 0, no limit on pages
 		if(maxPages == 0) maxPages = Integer.MAX_VALUE;
+		// If maxAttemptsPerPage is set to 0, no limit on attempts
+		if(maxAttemptsPerPage == 0) maxAttemptsPerPage = Integer.MAX_VALUE;
 
 		// Init cpeMapFile
 		cpeMapFile = new HashMap<>();
@@ -247,6 +283,14 @@ public class CpeLookUp {
 		return cpeMapFile;
 	}
 
+	/**
+	 * Queries NVD with the given startIndex parameter, returning the raw mapped data
+	 *
+	 * @param startIndex offset for query
+	 * @return raw mapped data
+	 * @throws JsonParseException if an exception occurs while attempting to parse the page contents
+	 * @throws IOException if an exception occurs while attempting to retrieve the page contents
+	 */
 	@SuppressWarnings("unchecked")
 	private LinkedHashMap<String, ?> getNvdCpeData(int startIndex) throws JsonParseException, IOException {
 		// Pagination parameter addition
@@ -260,7 +304,14 @@ public class CpeLookUp {
 		return OM.readValue(contents, LinkedHashMap.class);
 	}
 
-	private static String getContentFromUrl(String url) throws InterruptedIOException {
+	/**
+	 * Queries and gets the contents of a given url, returning the result as a String.
+	 *
+	 * @param url url to query
+	 * @return String contents of url
+	 * @throws IOException if an error occurs while parsing the given url
+	 */
+	private static String getContentFromUrl(String url) throws IOException {
 		StringBuilder response = new StringBuilder();
 		BufferedReader bufferedReader;
 
@@ -293,11 +344,11 @@ public class CpeLookUp {
 	}
 
 	/**
-	 * Find CPE groups based on the product name
+	 * Find CPE groups based on the given product's name
 	 * 
-	 * @param product product
+	 * @param product product to search
 	 *
-	 * @return list of CPEgroupFromMap objects
+	 * @return a list of found CPEGroupFromMap objects
 	 */
 	private ArrayList<CPEGroupFromMap> findCPEGroups(ProductItem product) {
 
@@ -370,11 +421,10 @@ public class CpeLookUp {
 	/**
 	 * Finds IDs of the relevant CPE entries
 	 * 
-	 * @param product<CPEgroupFromMap> selectedGroups - result from the
-	 *                                   findCPEgroups method
-	 * @param selectedGroups                product
+	 * @param selectedGroups result from the findCPEGroups method
+	 * @param product product to search
 	 *
-	 * @return list of CPEgroupFromMap objects
+	 * @return a list of found CPE ID Strings
 	 */
 	private ArrayList<String> getCPEIdsFromGroups(ArrayList<CPEGroupFromMap> selectedGroups, ProductItem product) {
 
@@ -472,11 +522,11 @@ public class CpeLookUp {
 	}
 
 	/**
-	 * Get CPE IDs based on the product
+	 * Get CPE IDs based on the given product
 	 * 
-	 * @param product product
+	 * @param product product to search
 	 *
-	 * @return list of string with CPE IDs
+	 * @return a list of found CPE ID Strings
 	 */
 	public ArrayList<String> getCPEIds(ProductItem product) {
 		ArrayList<CPEGroupFromMap> cpeGroups = findCPEGroups(product);
@@ -484,11 +534,11 @@ public class CpeLookUp {
 	}
 
 	/**
-	 * Get CPE titles based on the product name
+	 * Get CPE titles based on the given productName
 	 * 
-	 * @param productName productName
+	 * @param productName name of product to get titles for
 	 *
-	 * @return list of CPE titles
+	 * @return a list of found CPE titles
 	 */
 	public ArrayList<String> getCPETitles(String productName) {
 
@@ -509,21 +559,30 @@ public class CpeLookUp {
 		return groupsList;
 	}
 
+	/**
+	 * Gets the version component of a given CPE ID
+	 *
+	 * @param cpeID CPE ID to search
+	 * @return found version String
+	 */
 	public static String getVersionFromCPEid(String cpeID) {
+		String vendor = null;
 
-		String version = null;
+		// Match against CPE regex
+		final Matcher m = CPE_PATTERN.matcher(cpeID);
+		if(m.find()) vendor = m.group(3);
+		else logger.warn("Could not match CPE String {}", cpeID);
 
-		String[] cpeIDelements = cpeID.split(":");
-		// parse CPE id to elements
-		if (cpeIDelements.length >= 11) {
-			version = cpeIDelements[5];
-
-		}
-		return version;
+		return vendor;
 	}
 
+	/**
+	 * Gets the vendor component of a given CPE ID
+	 *
+	 * @param cpeID CPE ID to search
+	 * @return found vendor String
+	 */
 	public static String getVendorFromCPEid(String cpeID) {
-
 		String vendor = null;
 
 		// Match against CPE regex
