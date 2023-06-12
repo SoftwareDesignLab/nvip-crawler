@@ -31,9 +31,13 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
+import model.cpe.CpeGroup;
+import model.cpe.Product;
+import model.cpe.ProductItem;
+import model.cve.AffectedRelease;
+import model.cve.CompositeVulnerability;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import model.*;
 
 import opennlp.tools.tokenize.WhitespaceTokenizer;
 

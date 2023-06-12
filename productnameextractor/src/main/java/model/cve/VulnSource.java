@@ -21,28 +21,20 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package model;
+package model.cve;
 
 /**
  * 
  * @author axoeec
  *
  */
-public class CvssScore {
-	private String cveId;
-	private final int severityId;
-	private final double severityConfidence;
+public class VulnSource {
+	String cveId;
+	String url;
 
-	private final String impactScore;
-	private final double impactConfidence;
-
-	public CvssScore(String cveId, int severityId, double severityConfidence, String impactScore, double impactConfidence) {
-		super();
+	public VulnSource(String cveId, String url) {
 		this.cveId = cveId;
-		this.severityId = severityId;
-		this.severityConfidence = severityConfidence;
-		this.impactScore = impactScore;
-		this.impactConfidence = impactConfidence;
+		this.url = url;
 	}
 
 	public String getCveId() {
@@ -53,25 +45,33 @@ public class CvssScore {
 		this.cveId = cveId;
 	}
 
-	public int getSeverityId() {
-		return severityId;
+	public String getUrl() {
+		return url;
 	}
 
-	public double getSeverityConfidence() {
-		return severityConfidence;
-	}
-
-	public String getImpactScore() {
-		return impactScore;
-	}
-
-	public double getImpactConfidence() {
-		return impactConfidence;
+	public void setUrl(String url) {
+		this.url = url;
 	}
 
 	@Override
-	public String toString() {
-		return "CvssScore [cveId=" + cveId + ", baseSeverity=" + severityId + ", severityConfidence=" + severityConfidence + ", impactScore=" + impactScore + ", impactConfidence=" + impactConfidence + "]";
+	public boolean equals(Object obj) {
+		// null?
+		if (obj == null)
+			return false;
+
+		// different instance?
+		if (!(obj instanceof VulnSource))
+			return false;
+
+		// same instance, check URLs?
+		return getUrl().equalsIgnoreCase(((VulnSource) obj).getUrl());
+	}
+
+	@Override
+	public int hashCode() {
+		if (getUrl() == null)
+			return 0;
+		return getUrl().hashCode();
 	}
 
 }

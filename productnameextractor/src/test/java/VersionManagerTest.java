@@ -1,5 +1,4 @@
-import model.ProductVersion;
-import model.VersionRange;
+import model.cpe.ProductVersion;
 
 import org.junit.Test;
 import static org.junit.Assert.*;

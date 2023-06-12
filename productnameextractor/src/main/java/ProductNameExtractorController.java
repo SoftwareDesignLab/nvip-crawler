@@ -1,6 +1,9 @@
 import com.fasterxml.jackson.databind.ObjectMapper;
-import model.*;
 import db.*;
+import model.cpe.CpeEntry;
+import model.cpe.CpeGroup;
+import model.cpe.Product;
+import model.cve.CompositeVulnerability;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

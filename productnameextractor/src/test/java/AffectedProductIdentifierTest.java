@@ -23,7 +23,8 @@
  */
 
 
-import model.CompositeVulnerability;
+import model.cve.CompositeVulnerability;
+import model.cpe.CpeGroup;
 import org.junit.Test;
 
 import java.io.IOException;

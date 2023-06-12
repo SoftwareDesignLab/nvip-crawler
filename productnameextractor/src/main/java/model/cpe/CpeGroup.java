@@ -1,4 +1,4 @@
-/**
+package model.cpe; /**
  * Copyright 2023 Rochester Institute of Technology (RIT). Developed with
  * government support under contract 70RSAT19CB0000020 awarded by the United
  * States Department of Homeland Security.
@@ -22,7 +22,6 @@
  * SOFTWARE.
  */
 
-import java.io.Serializable;
 import java.util.HashMap;
 import opennlp.tools.tokenize.WhitespaceTokenizer;
 
@@ -32,9 +31,7 @@ import opennlp.tools.tokenize.WhitespaceTokenizer;
  *
  */
 
-public class CpeGroup implements Serializable{
-
-	private static final long serialVersionUID = -7959189738206183192L;
+public class CpeGroup {
 	private final String vendor;
 	private final String product;
 	private final String groupID;
@@ -49,7 +46,7 @@ public class CpeGroup implements Serializable{
 		this.versions = new HashMap<>();
 	}
 
-	protected CpeGroup(String vendor, String product, String commonTitle, HashMap<String, CpeEntry> versions) {
+	public CpeGroup(String vendor, String product, String commonTitle, HashMap<String, CpeEntry> versions) {
 		super();
 		this.vendor = vendor;
 		this.product = product;
@@ -129,7 +126,4 @@ public class CpeGroup implements Serializable{
 			return other.groupID == null;
 		} else return groupID.equals(other.groupID);
 	}
-	
-	
-
 }

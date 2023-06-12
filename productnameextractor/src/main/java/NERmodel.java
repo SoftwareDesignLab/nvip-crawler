@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Random;
 
+import model.cpe.ClassifiedWord;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;

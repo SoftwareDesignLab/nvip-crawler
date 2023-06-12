@@ -1,10 +1,9 @@
-package model;
+package model.cpe;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.regex.Pattern;
 

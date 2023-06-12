@@ -1,4 +1,4 @@
-/**
+package model.cpe; /**
  * Copyright 2023 Rochester Institute of Technology (RIT). Developed with
  * government support under contract 70RSAT19CB0000020 awarded by the United
  * States Department of Homeland Security.
@@ -22,16 +22,13 @@
  * SOFTWARE.
  */
 
-
-import java.io.Serializable;
-
 /**
  * This class is for CPE items
  * @author Igor Khokhlov
  *
  */
 
-public class CpeEntry implements Serializable{
+public class CpeEntry {
 
 	private String title, version, update, cpeID, platform;
 

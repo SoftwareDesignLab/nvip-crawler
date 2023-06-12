@@ -2,17 +2,17 @@
  * Copyright 2023 Rochester Institute of Technology (RIT). Developed with
  * government support under contract 70RSAT19CB0000020 awarded by the United
  * States Department of Homeland Security.
- *
+ * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- *
+ * 
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- *
+ * 
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -21,70 +21,50 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package model;
-
-
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+package model.cve;
 
 /**
- *
+ * 
  * @author axoeec
  *
  */
-public class Product {
-	private static final String regexVersionInfo = "(\\d+\\.(?:\\d+\\.)*\\d+)";
-	private final String domain;
-	private final String cpe;
-	private final int prodId;
+public class VdoCharacteristic {
+	private String cveId;
+	private final int vdoLabelId;
+	private final double vdoConfidence;
+	private final int vdoNounGroupId;
 
-	public Product(String domain, String cpe, int prodId) {
-		this.domain = domain;
-		this.cpe = cpe;
-		this.prodId = prodId;
+	public VdoCharacteristic(String cveId, int vdoLabelId, double vdoConfidence, int vdoNounGroupId) {
+		super();
+		this.cveId = cveId;
+		this.vdoLabelId = vdoLabelId;
+		this.vdoConfidence = vdoConfidence;
+		this.vdoNounGroupId = vdoNounGroupId;
 	}
 
-	public Product(String domain, String cpe) {
-		this.prodId = 0;
-		this.domain = domain;
-		this.cpe = cpe;
+	public String getCveId() {
+		return cveId;
 	}
 
-	public String getDomain() {
-		return domain;
+	public void setCveId(String cveId) {
+		this.cveId = cveId;
 	}
 
-	public String getCpe() {
-		return cpe;
+	public double getVdoConfidence() {
+		return vdoConfidence;
 	}
 
-	public int getProdId() {
-		return prodId;
+	public int getVdoLabelId() {
+		return vdoLabelId;
 	}
 
-	public String getVersion() {
-		Pattern pattern = Pattern.compile(regexVersionInfo);
-		Matcher matcher = pattern.matcher(this.domain);
-		if (matcher.find())
-			return matcher.group();
-		return "";
+	public int getVdoNounGroupId() {
+		return vdoNounGroupId;
 	}
 
 	@Override
 	public String toString() {
-		return this.domain;
+		return "VdoCharacteristic [cveId=" + cveId + ", vdoLabel=" + vdoLabelId + ", vdoConfidence=" + vdoConfidence + "]";
 	}
 
-	@Override
-	public int hashCode() {
-		return this.cpe.hashCode();
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (obj instanceof Product) {
-			return this.cpe.equals(((Product) obj).cpe);
-		}
-		return false;
-	}
 }

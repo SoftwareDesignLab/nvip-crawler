@@ -23,22 +23,20 @@
  */
 package db;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
 import java.sql.*;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import model.cpe.Product;
+import model.cve.AffectedRelease;
+import model.cve.CompositeVulnerability;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import com.zaxxer.hikari.pool.HikariPool.PoolInitializationException;
-
-import model.*;
 
 /**
  * 

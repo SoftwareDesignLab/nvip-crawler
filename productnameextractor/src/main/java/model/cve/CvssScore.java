@@ -21,25 +21,28 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package model;
+package model.cve;
 
 /**
  * 
  * @author axoeec
  *
  */
-public class VdoCharacteristic {
+public class CvssScore {
 	private String cveId;
-	private final int vdoLabelId;
-	private final double vdoConfidence;
-	private final int vdoNounGroupId;
+	private final int severityId;
+	private final double severityConfidence;
 
-	public VdoCharacteristic(String cveId, int vdoLabelId, double vdoConfidence, int vdoNounGroupId) {
+	private final String impactScore;
+	private final double impactConfidence;
+
+	public CvssScore(String cveId, int severityId, double severityConfidence, String impactScore, double impactConfidence) {
 		super();
 		this.cveId = cveId;
-		this.vdoLabelId = vdoLabelId;
-		this.vdoConfidence = vdoConfidence;
-		this.vdoNounGroupId = vdoNounGroupId;
+		this.severityId = severityId;
+		this.severityConfidence = severityConfidence;
+		this.impactScore = impactScore;
+		this.impactConfidence = impactConfidence;
 	}
 
 	public String getCveId() {
@@ -50,21 +53,25 @@ public class VdoCharacteristic {
 		this.cveId = cveId;
 	}
 
-	public double getVdoConfidence() {
-		return vdoConfidence;
+	public int getSeverityId() {
+		return severityId;
 	}
 
-	public int getVdoLabelId() {
-		return vdoLabelId;
+	public double getSeverityConfidence() {
+		return severityConfidence;
 	}
 
-	public int getVdoNounGroupId() {
-		return vdoNounGroupId;
+	public String getImpactScore() {
+		return impactScore;
+	}
+
+	public double getImpactConfidence() {
+		return impactConfidence;
 	}
 
 	@Override
 	public String toString() {
-		return "VdoCharacteristic [cveId=" + cveId + ", vdoLabel=" + vdoLabelId + ", vdoConfidence=" + vdoConfidence + "]";
+		return "CvssScore [cveId=" + cveId + ", baseSeverity=" + severityId + ", severityConfidence=" + severityConfidence + ", impactScore=" + impactScore + ", impactConfidence=" + impactConfidence + "]";
 	}
 
 }

@@ -1,5 +1,5 @@
-import model.ProductVersion;
-import model.VersionRange;
+import model.cpe.ProductVersion;
+import model.cpe.VersionRange;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

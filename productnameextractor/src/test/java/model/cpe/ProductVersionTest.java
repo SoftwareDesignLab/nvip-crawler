@@ -1,5 +1,6 @@
-import model.AffectedRelease;
-import model.ProductVersion;
+package model.cpe;
+
+import model.cpe.ProductVersion;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

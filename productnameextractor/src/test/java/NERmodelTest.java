@@ -26,6 +26,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Map;
 
+import model.cpe.ClassifiedWord;
+import model.cpe.CpeGroup;
+import model.cpe.ProductItem;
 import org.junit.Test;
 
 import static org.junit.Assert.*;

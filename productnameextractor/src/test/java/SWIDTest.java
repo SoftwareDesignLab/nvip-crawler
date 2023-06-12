@@ -1,4 +1,4 @@
-import model.AffectedRelease;
+import model.cve.AffectedRelease;
 
 import org.junit.Test;
 

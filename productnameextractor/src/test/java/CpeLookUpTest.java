@@ -22,7 +22,9 @@
  * SOFTWARE.
  */
 
-import model.ProductVersion;
+import model.cpe.CpeGroup;
+import model.cpe.ProductItem;
+import model.cpe.ProductVersion;
 import org.junit.Test;
 
 import java.io.IOException;

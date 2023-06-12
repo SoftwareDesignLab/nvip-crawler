@@ -2,17 +2,17 @@
  * Copyright 2023 Rochester Institute of Technology (RIT). Developed with
  * government support under contract 70RSAT19CB0000020 awarded by the United
  * States Department of Homeland Security.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -21,57 +21,70 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package model;
+package model.cpe;
+
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
- * 
+ *
  * @author axoeec
  *
  */
-public class VulnSource {
-	String cveId;
-	String url;
+public class Product {
+	private static final String regexVersionInfo = "(\\d+\\.(?:\\d+\\.)*\\d+)";
+	private final String domain;
+	private final String cpe;
+	private final int prodId;
 
-	public VulnSource(String cveId, String url) {
-		this.cveId = cveId;
-		this.url = url;
+	public Product(String domain, String cpe, int prodId) {
+		this.domain = domain;
+		this.cpe = cpe;
+		this.prodId = prodId;
 	}
 
-	public String getCveId() {
-		return cveId;
+	public Product(String domain, String cpe) {
+		this.prodId = 0;
+		this.domain = domain;
+		this.cpe = cpe;
 	}
 
-	public void setCveId(String cveId) {
-		this.cveId = cveId;
+	public String getDomain() {
+		return domain;
 	}
 
-	public String getUrl() {
-		return url;
+	public String getCpe() {
+		return cpe;
 	}
 
-	public void setUrl(String url) {
-		this.url = url;
+	public int getProdId() {
+		return prodId;
+	}
+
+	public String getVersion() {
+		Pattern pattern = Pattern.compile(regexVersionInfo);
+		Matcher matcher = pattern.matcher(this.domain);
+		if (matcher.find())
+			return matcher.group();
+		return "";
 	}
 
 	@Override
-	public boolean equals(Object obj) {
-		// null?
-		if (obj == null)
-			return false;
-
-		// different instance?
-		if (!(obj instanceof VulnSource))
-			return false;
-
-		// same instance, check URLs?
-		return getUrl().equalsIgnoreCase(((VulnSource) obj).getUrl());
+	public String toString() {
+		return this.domain;
 	}
 
 	@Override
 	public int hashCode() {
-		if (getUrl() == null)
-			return 0;
-		return getUrl().hashCode();
+		return this.cpe.hashCode();
 	}
 
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof Product) {
+			return this.cpe.equals(((Product) obj).cpe);
+		}
+		return false;
+	}
 }

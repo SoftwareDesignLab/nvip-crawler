@@ -1,4 +1,4 @@
-package model;
+package model.cpe;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

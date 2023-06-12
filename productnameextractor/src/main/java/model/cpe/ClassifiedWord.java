@@ -1,4 +1,4 @@
-/**
+package model.cpe; /**
  * Copyright 2023 Rochester Institute of Technology (RIT). Developed with
  * government support under contract 70RSAT19CB0000020 awarded by the United
  * States Department of Homeland Security.
@@ -21,8 +21,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-
-import java.util.HashMap;
 
 /**
  * ClassifiedWord class for results of words classification in the CVE description into "Software Name", "Software Version", and "Others"

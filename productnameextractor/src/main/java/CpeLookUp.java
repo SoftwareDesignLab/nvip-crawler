@@ -31,11 +31,14 @@ import java.util.regex.Pattern;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import model.ProductVersion;
+import model.cpe.CpeEntry;
+import model.cpe.CpeGroup;
+import model.cpe.Product;
+import model.cpe.ProductItem;
+import model.cpe.ProductVersion;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import model.Product;
 import opennlp.tools.tokenize.WhitespaceTokenizer;
 
 /**
