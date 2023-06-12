@@ -1,4 +1,3 @@
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import model.*;
 import db.*;
@@ -7,15 +6,22 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.stream.Collectors;
 
+/**
+ * Controller for the isolated ProductNameExtractor package.
+ *
+ * @author Dylan Mulligan
+ */
 public class ProductNameExtractorController {
     private static final Logger logger = LogManager.getLogger(ProductNameExtractorController.class);
     private static final DatabaseHelper databaseHelper = DatabaseHelper.getInstance();
     private static final ObjectMapper OM = new ObjectMapper();
+    private static int cveLimit = 300;
+    private static int maxPages = 5;
+    private static int maxAttemptsPerPage = 2;
+    private static String productDictPath = "src/main/resources/data/product_dict.json";
 
     /**
      * TODO: docstring
@@ -58,22 +64,41 @@ public class ProductNameExtractorController {
         return productDict;
     }
 
+    // TODO: Docstring
+    private static void fetchEnvVars() {
+        // Fetch ENV_VARS and set all found configurable properties
+        final Map<String, String> props = System.getenv();
+
+        try {
+            if(props.containsKey("CVE_LIMIT")) {
+                cveLimit = Integer.parseInt(System.getenv("CVE_LIMIT"));
+                logger.info("Setting CVE_LIMIT to {}", cveLimit);
+            } else throw new Exception();
+        } catch (Exception ignored) { logger.warn("Could not fetch CVE_LIMIT from env vars, defaulting to {}", cveLimit); }
+
+        try {
+            if(props.containsKey("MAX_PAGES")) {
+                maxPages = Integer.parseInt(System.getenv("MAX_PAGES"));
+                logger.info("Setting MAX_PAGES to {}", maxPages);
+            } else throw new Exception();
+        } catch (Exception ignored) { logger.warn("Could not fetch MAX_PAGES from env vars, defaulting to {}", maxPages); }
+
+        try {
+            if(props.containsKey("MAX_ATTEMPTS_PER_PAGE")) {
+                maxAttemptsPerPage = Integer.parseInt(System.getenv("MAX_ATTEMPTS_PER_PAGE"));
+                logger.info("Setting MAX_ATTEMPTS_PER_PAGE to {}", maxAttemptsPerPage);
+            } else throw new Exception();
+        } catch (Exception ignored) { logger.warn("Could not fetch MAX_ATTEMPTS_PER_PAGE from env vars, defaulting to {}", maxAttemptsPerPage); }
+
+        if(props.containsKey("PRODUCT_DICT_PATH")) {
+            productDictPath = System.getenv("PRODUCT_DICT_PATH");
+            logger.info("Setting PRODUCT_DICT_PATH to {}", productDictPath);
+        } else logger.warn("Could not fetch PRODUCT_DICT_PATH from env vars, defaulting to {}", productDictPath);
+    }
+
     public static void main(String[] args) {
-        // Fetch ENV_VARS
-        int cveLimit = 300;
-        int maxPages = 5;
-        int maxAttemptsPerPage = 2;
-        final String productDictPath = "src/main/resources/data/product_dict.json";
-        try {
-            cveLimit = Integer.parseInt(System.getenv("CVE_LIMIT"));
-            logger.info("Setting CVE_LIMIT to {}", cveLimit);
-        }
-        catch (NullPointerException | NumberFormatException e) { logger.warn("Could not fetch CVE_LIMIT from env vars, defaulting to {}", cveLimit); }
-        try {
-            maxPages = Integer.parseInt(System.getenv("MAX_PAGES"));
-            logger.info("Setting MAX_PAGES to {}", maxPages);
-        }
-        catch (NullPointerException | NumberFormatException e) { logger.warn("Could not fetch MAX_PAGES from env vars, defaulting to {}", maxPages); }
+        // Fetch values for required environment variables
+        ProductNameExtractorController.fetchEnvVars();
 
         logger.info("Pulling existing CVEs from the database...");
         final long getCVEStart = System.currentTimeMillis();
