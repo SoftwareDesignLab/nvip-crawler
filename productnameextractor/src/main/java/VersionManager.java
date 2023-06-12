@@ -110,6 +110,12 @@ public class VersionManager {
             }else if(versionWord.equals("to") && !beforeFlag){
                 throughFlag = true;
             }
+
+            //Handles "3.9.5+" case
+            if(versionWords[i].charAt(versionWords[i].length() - 1) == '+' && isVersion(versionWords[i].substring(0,(versionWords[i].length()) - 1))){
+                addRangeFromString("after " + versionWords[i].substring(0,(versionWords[i].length()) - 1));
+            }
+
             i++;
         }
     }
@@ -130,12 +136,13 @@ public class VersionManager {
      * Handles cases such as "1.7," or "v1.2" to turn them into "1.7" and "1.2"
      * @param versionWords
      */
-    private void formatVersions(String[] versionWords){
+    public void formatVersions(String[] versionWords){
         for(int i = 0; i < versionWords.length; i++){
             versionWords[i] = versionWords[i].replace(",","");
             versionWords[i] = versionWords[i].replace(".x","");
             versionWords[i] = versionWords[i].replace("v","");
             versionWords[i] = versionWords[i].replace(")","");
+            versionWords[i] = versionWords[i].replace("(","");
 
             //Removes period at the end of a version "1.9.2." to "1.9.2"
             if(versionWords[i].charAt((versionWords[i].length()) - 1) == '.'){
@@ -150,11 +157,6 @@ public class VersionManager {
             //Same as above but for 'b'
             if(!versionWords[i].equals("before")){
                 versionWords[i] = versionWords[i].replace("b","");
-            }
-
-            //Handles "3.9.5+" case
-            if(versionWords[i].charAt(versionWords[i].length() - 1) == '+'){
-                addRangeFromString("after " + versionWords[i].substring(0,(versionWords[i].length()) - 1));
             }
         }
     }
