@@ -31,7 +31,6 @@ import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import utils.*;
 import opennlp.tools.postag.POSModel;
 import opennlp.tools.postag.POSTaggerME;
 import opennlp.tools.sentdetect.SentenceDetector;
@@ -63,7 +62,7 @@ public class DetectProducts {
 	private final String modelPath = "nlp/en-pos-perceptron.bin";
 	private final String sentenceModelPath = "nlp/en-sent.bin";
 
-	static private final Logger logger = LogManager.getLogger(UtilHelper.class);
+	static private final Logger logger = LogManager.getLogger(DetectProducts.class);
 
 	/**
 	 * Class constructor
