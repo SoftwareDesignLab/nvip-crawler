@@ -40,7 +40,7 @@ public class DatabaseHelper {
     private static final String DELETE_JOB = "DELETE FROM cvejobtrack WHERE cve_id = ?";
 
     private String GET_ALL_NEW_CVES = "SELECT cve_id, published_date, status FROM nvddata order by cve_id desc";
-    private final String insertIntoNvdData = "INSERT INTO nvd_data (cve_id, published_date, status) VALUES (?, ?, ?)";
+    private final String insertIntoNvdData = "INSERT INTO nvddata (cve_id, published_date, status) VALUES (?, ?, ?)";
 
     public static synchronized DatabaseHelper getInstance() {
         if (databaseHelper == null) {
