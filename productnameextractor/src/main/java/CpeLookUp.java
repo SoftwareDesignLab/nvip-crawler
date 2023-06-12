@@ -434,6 +434,9 @@ public class CpeLookUp {
 		ArrayList<String> cpeIDs = new ArrayList<>();
 		ArrayList<Product> productsToAdd = new ArrayList<>();
 
+		//Ensures that there are no duplicate entries
+		HashSet<String> addedVersions = new HashSet<>();
+
 		if (selectedGroups.size() == 0) {
 			return null;
 		}
@@ -472,14 +475,15 @@ public class CpeLookUp {
 				for (Map.Entry<String, CpeEntry> gv : groupVersions.entrySet()) {
 					final String versionKey = gv.getKey();
 
-					// If versionKey is not a valid version, go next
-					if(!VersionManager.isVersion(versionKey)) continue;
+					// If versionKey is not a valid version or cpe has already been made with that version, go next
+					if(!VersionManager.isVersion(versionKey) || addedVersions.contains(versionKey)) continue;
 
 					try {
 						final ProductVersion version = new ProductVersion(versionKey);
 						if(versionManager.isAffected(version)) {
+							addedVersions.add(versionKey);
 							matchesCounter++;
-							String cpeName = "cpe:2.3:a:" + selectedGroups.get(0).getCpeGroup().getGroupID() + ":" + versionKey + ":*:*:*:*:*:*:*";
+							String cpeName = "cpe:2.3:a:" + group.getGroupID() + ":" + versionKey + ":*:*:*:*:*:*:*";
 							cpeIDs.add(cpeName);
 							productsToAdd.add(new Product(group.getCommonTitle(), cpeName));
 						}
@@ -495,13 +499,15 @@ public class CpeLookUp {
 
 						for (String versionWord : versionWords) {
 
-							// If versionWord is not a valid version, go next
-							if(!VersionManager.isVersion(versionWord)) continue;
+							// If versionWord is not a valid version or cpe has already been made with that version, go next
+							if(!VersionManager.isVersion(versionWord) || addedVersions.contains(versionWord)) continue;
 
 							if (entryTitle.contains(versionWord)) {
-								String cpeName = "cpe:2.3:a:" + selectedGroups.get(0).getCpeGroup().getGroupID() + ":" + versionWord + ":*:*:*:*:*:*:*";
+								addedVersions.add(versionWord);
+								matchesCounter++;
+								String cpeName = "cpe:2.3:a:" + group.getGroupID() + ":" + versionWord + ":*:*:*:*:*:*:*";
 								cpeIDs.add(cpeName);
-								productsToAdd.add(new Product(selectedGroups.get(0).getCpeGroup().getCommonTitle(), cpeName));
+								productsToAdd.add(new Product(group.getCommonTitle(), cpeName));
 								break;
 							}
 						}
@@ -514,15 +520,16 @@ public class CpeLookUp {
 					//Find the version from the versions list
 					for (String versionWord : versionWords) {
 
-						// If versionWord is not a valid version, go next
-						if (!VersionManager.isVersion(versionWord)) continue;
+						// If versionWord is not a valid version or cpe has already been made with that version, go next
+						if (!VersionManager.isVersion(versionWord) || addedVersions.contains(versionWord)) continue;
 
 						// If versionWord is a valid version, check if it is affected
 						try {
 							final ProductVersion version = new ProductVersion(versionWord);
 							if (versionManager.isAffected(version)) {
+								addedVersions.add(versionWord);
 								matchesCounter++;
-								String cpeName = "cpe:2.3:a:" + selectedGroups.get(0).getCpeGroup().getGroupID() + ":" + versionWord + ":*:*:*:*:*:*:*";
+								String cpeName = "cpe:2.3:a:" + group.getGroupID() + ":" + versionWord + ":*:*:*:*:*:*:*";
 								cpeIDs.add(cpeName);
 								productsToAdd.add(new Product(group.getCommonTitle(), cpeName));
 							}
