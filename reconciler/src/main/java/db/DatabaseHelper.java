@@ -1,4 +1,4 @@
-package edu.rit.se.nvip;
+package db;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
