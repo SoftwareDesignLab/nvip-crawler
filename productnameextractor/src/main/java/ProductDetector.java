@@ -46,7 +46,6 @@ import opennlp.tools.tokenize.WhitespaceTokenizer;
  */
 
 public class ProductDetector {
-
 	public static final String NNP = "NNP";
 	public static final String IN = "IN";
 

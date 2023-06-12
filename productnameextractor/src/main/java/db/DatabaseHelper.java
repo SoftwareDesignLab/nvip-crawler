@@ -136,7 +136,6 @@ public class DatabaseHelper {
 
 	/**
 	 * Store affected products in DB
-	 * TODO: This should be in DB Helper
 	 * @param vulnList
 	 */
 	public void insertAffectedProductsToDB(List<CompositeVulnerability> vulnList, Map<String, Product> productMap) {
@@ -156,8 +155,9 @@ public class DatabaseHelper {
 		// now insert affected releases (referenced products are already in db)
 		databaseHelper.insertAffectedReleasesV2(listAllAffectedReleases);
 
+		// TODO: Should be in program driver, probably PNEController
 //		// prepare CVE summary table for Web UI
-//		// TODO: This should be in NVIPMAIN
+
 //		logger.info("Preparing CVE summary table for Web UI...");
 //		PrepareDataForWebUi cveDataForWebUi = new PrepareDataForWebUi();
 //		cveDataForWebUi.prepareDataforWebUi();
@@ -166,7 +166,7 @@ public class DatabaseHelper {
 	}
 
 	/**
-	 * gets a product ID from database based on CPE
+	 * Gets a product ID from database based on CPE
 	 *
 	 * @param cpe CPE string of product
 	 * @return product ID if product exists in database, -1 otherwise
@@ -188,7 +188,7 @@ public class DatabaseHelper {
 	}
 
 	/**
-	 * updates the affected release table with a list of affected releases
+	 * Updates the affected release table with a list of affected releases
 	 * 
 	 * @param affectedReleases list of affected release objects
 	 */
@@ -235,9 +235,9 @@ public class DatabaseHelper {
 	}
 
 	/**
-	 * delete affected releases for given CVEs
+	 * Deletes affected releases for given CVEs
 	 * 
-	 * @param affectedReleases
+	 * @param affectedReleases list of releases to delete
 	 */
 	public void deleteAffectedReleases(List<AffectedRelease> affectedReleases) {
 		logger.info("Deleting existing affected releases in database for {} items..", affectedReleases.size());
@@ -255,6 +255,13 @@ public class DatabaseHelper {
 		logger.info("Done. Deleted existing affected releases in database!");
 	}
 
+	/**
+	 * Gets list of vulnerabilities from the database, formatting them into CompositeVulnerability objects,
+	 * and limiting the return to maxVulnerabilities size.
+	 *
+	 * @param maxVulnerabilities max number of vulnerabilities to get
+	 * @return a map of fetched vulnerabilities
+	 */
 	public Map<String, CompositeVulnerability> getExistingCompositeVulnerabilities(int maxVulnerabilities) {
 		if (existingCompositeVulnMap.size() == 0) {
 		synchronized (DatabaseHelper.class) {
@@ -301,12 +308,10 @@ public class DatabaseHelper {
 	}
 
 	/**
-	 * shut down connection pool. U
+	 * Shut down connection pool.
 	 */
 	public void shutdown() {
 		dataSource.close();
 		config = null;
 	}
-
-
 }

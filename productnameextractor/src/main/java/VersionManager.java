@@ -6,6 +6,13 @@ import org.apache.logging.log4j.Logger;
 import java.util.HashSet;
 import java.util.regex.Pattern;
 
+/**
+ * Controller class for processing non-specific versions into version ranges
+ * for comparison.
+ *
+ * @author Dylan Mulligan
+ * @author Paul Vickers
+ */
 public class VersionManager {
     private final HashSet<VersionRange> versionRanges;
     // Regex101: https://regex101.com/r/cy9Hp3/1
@@ -24,6 +31,13 @@ public class VersionManager {
         this.versionRanges.add(new VersionRange(rangeString));
     }
 
+    /**
+     * Tests whether a given version "is affected" (within) any of the ranges
+     * within this.versionRanges.
+     *
+     * @param version version to test
+     * @return result of test
+     */
     public boolean isAffected(ProductVersion version) {
         // Default to not affected
         boolean affected = false;
@@ -121,12 +135,13 @@ public class VersionManager {
     }
 
     /**
-     * Function to determine whether a string is a version or not using regex matcher
-     * Regex101: https://regex101.com/r/cy9Hp3/1
-     * @param version
-     * @return true if version, false if not
+     * Tests whether a string is a version or not using regex matcher
+     *
+     * @param version version to test
+     * @return result of test
      */
     public static boolean isVersion(String version) {
+        // TODO: Remove this and make sure we are not still getting random commas in versions
         if(version.contains(",")) logger.warn("VERSION '{}' CONTAINED UNEXPECTED CHARACTER ','", version);
         return VERSION_PATTERN.matcher(version).matches();
     }
@@ -134,7 +149,7 @@ public class VersionManager {
     /**
      * Function to format version words into acceptable composition for isVersion() function
      * Handles cases such as "1.7," or "v1.2" to turn them into "1.7" and "1.2"
-     * @param versionWords
+     * @param versionWords array of words to format
      */
     public void formatVersions(String[] versionWords){
         for(int i = 0; i < versionWords.length; i++){

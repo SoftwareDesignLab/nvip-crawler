@@ -27,10 +27,11 @@ public class ProductNameExtractorController {
     private static String productDictPath = "src/main/resources/data/product_dict.json";
 
     /**
-     * TODO: docstring
-     * @param productDictPath
-     * @return
-     * @throws IOException
+     * Reads in the CPE dictionary from file at the given path.
+     *
+     * @param productDictPath path to read from
+     * @return parsed CPE dictionary
+     * @throws IOException if an exception occurs while parsing the CPE dictionary from file
      */
     public static Map<String, CpeGroup> readProductDict(String productDictPath) throws IOException {
         // Read in data
@@ -67,7 +68,10 @@ public class ProductNameExtractorController {
         return productDict;
     }
 
-    // TODO: Docstring
+    /**
+     * Attempts to get all required environment variables from System.getenv() safely, logging
+     * any missing or incorrect variables.
+     */
     private static void fetchEnvVars() {
         // Fetch ENV_VARS and set all found configurable properties
         final Map<String, String> props = System.getenv();
@@ -99,6 +103,13 @@ public class ProductNameExtractorController {
         } else logger.warn("Could not fetch PRODUCT_DICT_PATH from env vars, defaulting to {}", productDictPath);
     }
 
+    /**
+     * Main driver for the ProductNameExtractor, responsible for pulling vulnerabilities from the db,
+     * loading the CPE dictionary, and cross-referencing that information to generate and store
+     * entries in the affectedproducts table.
+     *
+     * @param args (unused) program arguments
+     */
     public static void main(String[] args) {
         // Fetch values for required environment variables
         ProductNameExtractorController.fetchEnvVars();

@@ -54,7 +54,6 @@ import opennlp.tools.tokenize.WhitespaceTokenizer;
  */
 
 public class NERmodel {
-
 	private final boolean timingOn = false;
 
 	private MultiLayerNetwork model = null; // NER model
