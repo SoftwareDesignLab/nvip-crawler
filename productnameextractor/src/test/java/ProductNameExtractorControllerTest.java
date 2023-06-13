@@ -16,12 +16,12 @@ public class ProductNameExtractorControllerTest {
 
     @Test
     public void readProductDictMainTest(){
-        String productDictPath = "src/main/resources/data/product_dict.json";
+        String productDictPath = "src/test/resources/data/product_dict.json";
         Map<String, CpeGroup> productDict = null;
-        try{
+        try {
             productDict = ProductNameExtractorController.readProductDict(productDictPath);
-        }catch(IOException e){
-
+        } catch(IOException e) {
+            fail(e.toString());
         }
 
         //Ensure product dict size is greater than 0 and not null

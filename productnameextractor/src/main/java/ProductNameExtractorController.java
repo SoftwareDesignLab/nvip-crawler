@@ -29,7 +29,7 @@ public class ProductNameExtractorController {
     protected static int maxPages = 5;
     protected static int maxAttemptsPerPage = 2;
     protected static boolean prettyPrint = false;
-    private static String productDictPath = "src/main/resources/data/product_dict.json";
+    private static String productDictPath = "src/test/resources/data/product_dict.json";
     private static Instant productDictLastCompilationDate;
 
     /**
