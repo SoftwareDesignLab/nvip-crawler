@@ -41,6 +41,7 @@ import org.openqa.selenium.chrome.ChromeOptions;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -77,6 +78,11 @@ public class CveCrawler extends WebCrawler {
 		options.addArguments("--enable-javascript");
 		options.addArguments("--no-sandbox");
 		options.addArguments("--disable-dev-shm-usage");
+		Map<String, Object> timeouts = new HashMap<>();
+		timeouts.put("implicit", 20);
+		timeouts.put("pageLoad", 60);
+		timeouts.put("script", 30);
+		options.setCapability("timeouts", timeouts);
 		WebDriverManager.chromedriver().setup();
 		ChromeDriverService chromeDriverService = new ChromeDriverService.Builder().build();
 		return new ChromeDriver(chromeDriverService, options);
