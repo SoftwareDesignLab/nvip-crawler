@@ -1,4 +1,5 @@
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
 import db.*;
 import model.cpe.CpeEntry;
 import model.cpe.CpeGroup;
@@ -13,7 +14,6 @@ import java.nio.file.Paths;
 import java.time.DateTimeException;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 /**
@@ -28,6 +28,7 @@ public class ProductNameExtractorController {
     protected static int cveLimit = 300;
     protected static int maxPages = 5;
     protected static int maxAttemptsPerPage = 2;
+    protected static boolean prettyPrint = false;
     private static String productDictPath = "src/main/resources/data/product_dict.json";
     private static Instant productDictLastCompilationDate;
 
@@ -117,6 +118,11 @@ public class ProductNameExtractorController {
             productDictPath = System.getenv("PRODUCT_DICT_PATH");
             logger.info("Setting PRODUCT_DICT_PATH to {}", productDictPath);
         } else logger.warn("Could not fetch PRODUCT_DICT_PATH from env vars, defaulting to {}", productDictPath);
+
+        if(props.containsKey("PRETTY_PRINT")) {
+            prettyPrint = Boolean.parseBoolean(System.getenv("PRETTY_PRINT"));
+            logger.info("Setting PRETTY_PRINT to {}", prettyPrint);
+        } else logger.warn("Could not fetch PRETTY_PRINT from env vars, defaulting to {}", prettyPrint);
     }
 
     public static void writeProductDict(Map<String, CpeGroup> productDict) {
@@ -127,7 +133,8 @@ public class ProductNameExtractorController {
 
         // Write data to file
         try {
-            OM.writerWithDefaultPrettyPrinter().writeValue(new File(productDictPath), data);
+            final ObjectWriter w = prettyPrint ? OM.writerWithDefaultPrettyPrinter() : OM.writer();
+            w.writeValue(new File(productDictPath), data);
             logger.info("Successfully wrote {} products to product dict file at filepath '{}'", productDict.size(), productDictPath);
         } catch (IOException ioe) {
             logger.error("Error writing product dict to filepath '{}': {}", productDictPath, ioe.toString());
