@@ -47,7 +47,7 @@ public class DatabaseHelper {
 	private HikariConfig config = null;
 	private HikariDataSource dataSource;
 	private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
-	String databaseType = "mysql";
+	final String databaseType;
 
 	private final String insertProductSql = "INSERT INTO affectedproduct (cve_id, cpe) VALUES (?, ?);";
 	private final String getProductCountFromCpeSql = "SELECT count(*) from affectedproduct where cpe = ?";
@@ -75,12 +75,13 @@ public class DatabaseHelper {
 	 * DP!
 	 */
 	private DatabaseHelper() {
+		// Get database type from envvars
+		databaseType = System.getenv("DB_TYPE");
+		logger.info("New NVIP.DatabaseHelper instantiated! It is configured to use " + databaseType + " database!");
+
 		try {
-			databaseType = System.getenv("DB_TYPE");
-			logger.info("New NVIP.DatabaseHelper instantiated! It is configured to use " + databaseType + " database!");
 			if (databaseType.equalsIgnoreCase("mysql"))
 				Class.forName("com.mysql.cj.jdbc.Driver");
-
 		} catch (ClassNotFoundException e2) {
 			logger.error("Error while loading database type from environment variables! " + e2.toString());
 		}
