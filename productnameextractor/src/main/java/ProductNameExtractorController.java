@@ -47,7 +47,7 @@ public class ProductNameExtractorController {
 
         // Extract compilation time from file, default to 2000 if fails
         try {
-            productDictLastCompilationDate = Instant.parse((String) rawData.get("time"));
+            productDictLastCompilationDate = Instant.parse((String) rawData.get("comptime"));
         } catch (DateTimeException e) {
             logger.error("Error parsing compilation date from dictionary: {}", e.toString());
             productDictLastCompilationDate = Instant.parse("2000-01-01T00:00:00.00Z");
@@ -119,6 +119,21 @@ public class ProductNameExtractorController {
         } else logger.warn("Could not fetch PRODUCT_DICT_PATH from env vars, defaulting to {}", productDictPath);
     }
 
+    public static void writeProductDict(Map<String, CpeGroup> productDict) {
+        // Build output data map
+        Map data = new LinkedHashMap<>();
+        data.put("comptime", Instant.now().toString());
+        data.put("products", productDict);
+
+        // Write data to file
+        try {
+            OM.writerWithDefaultPrettyPrinter().writeValue(new File(productDictPath), data);
+            logger.info("Successfully wrote {} products to product dict file at filepath '{}'", productDict.size(), productDictPath);
+        } catch (IOException ioe) {
+            logger.error("Error writing product dict to filepath '{}': {}", productDictPath, ioe.toString());
+        }
+    }
+
     /**
      * Main driver for the ProductNameExtractor, responsible for pulling vulnerabilities from the db,
      * loading the CPE dictionary, and cross-referencing that information to generate and store
@@ -155,23 +170,25 @@ public class ProductNameExtractorController {
             // Read in product dict
             productDict = readProductDict(productDictPath);
 
+            // Calculate time since last compilation
+            final long timeSinceLastComp = Duration.between(productDictLastCompilationDate, Instant.now()).getSeconds();
+            logger.info("Successfully read product dictionary from file '{}' ({} hours old)",
+                    productDictPath,
+                    timeSinceLastComp / 3600 // seconds -> hours
+            );
+
             // Check if product dict is stale (change ChronoUnit and value to adjust frequency)
-            if(Duration.between(productDictLastCompilationDate, Instant.now()).get(ChronoUnit.DAYS) > 0) {
+            if(timeSinceLastComp / (60 * 60 * 24) > 0) { // 60sec/min * 60min/hr * 24hrs = 1 day
                 // TODO: Update/fetch new dict
             }
 
-            // Load CPE dict
+            // Load CPE dict into affectedProductIdentifier
             affectedProductIdentifier.loadCPEDict(productDict);
         } catch (Exception e) {
             logger.error("Failed to load product dict at filepath '{}', querying NVD...: {}", productDictPath, e.toString());
             productDict = affectedProductIdentifier.loadCPEDict(maxPages, maxAttemptsPerPage);
 
-            // Write CPE dict to file
-            try {
-                OM.writerWithDefaultPrettyPrinter().withRootName("products").writeValue(new File(productDictPath), productDict);
-            } catch (IOException ioe) {
-                logger.error("Error writing product dict to filepath '{}': {}", productDictPath, ioe.toString());
-            }
+            writeProductDict(productDict);
         }
 
         // Run the AffectedProductIdentifier with the fetched vuln list
