@@ -13,10 +13,6 @@ import static org.junit.Assert.*;
  *
  */
 public class ProductNameExtractorControllerTest {
-    @Test
-    public void fetchEnvVarsTest(){
-
-    }
 
     @Test
     public void readProductDictMainTest(){
