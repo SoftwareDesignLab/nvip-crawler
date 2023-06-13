@@ -218,6 +218,16 @@ public class DatabaseHelperTest {
 	}
 
 	@Test
+	public void insertAffectedProductsToDBTest() {
+		// TODO
+	}
+
+	@Test
+	public void getExistingCompositeVulnerabilitiesTest() {
+		// TODO
+	}
+
+	@Test
 	public void shutdownTest() {
 		dbh.shutdown();
 		verify(hds).close();
