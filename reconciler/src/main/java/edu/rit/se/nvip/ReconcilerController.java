@@ -63,6 +63,16 @@ public class ReconcilerController {
         int newRawCount;
         int rejectCount;
         Set<RawVulnerability> rawVulns = dbh.getRawVulnerabilities(cveId);
+        //Eliminate duplicate rawVulns (vulns that have same description)
+        Set<String> descriptions = new HashSet<>();
+        Set<RawVulnerability> notDuplicateRawVulns = new HashSet<>();
+        for (RawVulnerability rawVuln : rawVulns) {
+            if (!descriptions.contains(rawVuln.getDescription())) {
+                notDuplicateRawVulns.add(rawVuln);
+                descriptions.add(rawVuln.getDescription());
+            }
+        }
+        rawVulns = notDuplicateRawVulns;
         rawCount = rawVulns.size();
         newRawCount = rawCount;
         CompositeVulnerability existing = dbh.getCompositeVulnerability(cveId);
