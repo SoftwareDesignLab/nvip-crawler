@@ -25,9 +25,9 @@ public class ProductNameExtractorController {
     private static final Logger logger = LogManager.getLogger(ProductNameExtractorController.class);
     private static final DatabaseHelper databaseHelper = DatabaseHelper.getInstance();
     private static final ObjectMapper OM = new ObjectMapper();
-    private static int cveLimit = 300;
-    private static int maxPages = 5;
-    private static int maxAttemptsPerPage = 2;
+    protected static int cveLimit = 300;
+    protected static int maxPages = 5;
+    protected static int maxAttemptsPerPage = 2;
     private static String productDictPath = "src/main/resources/data/product_dict.json";
     private static Instant productDictLastCompilationDate;
 
@@ -88,7 +88,7 @@ public class ProductNameExtractorController {
      * Attempts to get all required environment variables from System.getenv() safely, logging
      * any missing or incorrect variables.
      */
-    private static void fetchEnvVars() {
+    protected static void fetchEnvVars() {
         // Fetch ENV_VARS and set all found configurable properties
         final Map<String, String> props = System.getenv();
 
