@@ -186,7 +186,18 @@ public class CpeLookUp {
 			// Extract results data
 			int remainingResults = (int) rawData.get("totalResults");
 			final int totalPages = (int) Math.ceil((double) remainingResults / RESULTS_PER_PAGE);
-			while(remainingResults > 0 && attempts < maxAttemptsPerPage) {
+			while(remainingResults > 0) {
+				// Skip page after it has reach max attempts
+				if(attempts >= maxAttemptsPerPage) {
+					// Reduce remaining results by number parsed
+					remainingResults -= RESULTS_PER_PAGE;
+					// Increment index
+					index += RESULTS_PER_PAGE;
+					// Sleep 2 sec between queries (adjust until we do not get 403 errors)
+					Thread.sleep(2000);
+					// Reset attempt count
+					attempts = 0;
+				}
 				try {
 					// Skip first query, as it was already done in order to get the totalResults number
 					if(index > 0) {
@@ -255,15 +266,16 @@ public class CpeLookUp {
 
 					// Reduce remaining results by number parsed
 					remainingResults -= RESULTS_PER_PAGE;
-
 					// Increment index
 					index += RESULTS_PER_PAGE;
 					// Sleep 2 sec between queries (adjust until we do not get 403 errors)
 					Thread.sleep(2000);
+					// Reset attempt count
+					attempts = 0;
 
 					final int page = index / RESULTS_PER_PAGE;
 					logger.info("Successfully loaded CPE dictionary page {}/{}", page, totalPages);
-					if(page >= maxPages) {
+					if(page >= maxPages + 1) {
 						logger.warn("MAX_PAGES reached, the remaining {} pages will not be queried", totalPages - maxPages);
 						break;
 					}
@@ -273,7 +285,7 @@ public class CpeLookUp {
 					Thread.sleep(10000);
 					throw e;
 				} catch (Exception e) {
-					logger.error("Error loading CPE dictionary page {}/{}, Attempt {}/{}: {}", index / RESULTS_PER_PAGE, totalPages, attempts + 1, maxAttemptsPerPage, e.toString());
+					logger.error("Error loading CPE dictionary page {}/{}, Attempt {}/{}: {}", (index / RESULTS_PER_PAGE) + 1, totalPages, attempts + 1, maxAttemptsPerPage, e.toString());
 					attempts++;
 				}
 			}
