@@ -235,8 +235,9 @@ public class DatabaseHelperTest {
 		List<Product> testProducts = new ArrayList<>();
 		String domain = "domain";
 		String cpe = "cpe";
+		String swid = "swid";
 		for (int i=0; i < 5; i++) {
-			testProducts.add(new Product(domain+i, cpe+i));
+			testProducts.add(new Product(domain+i, cpe+i, swid+i));
 		}
 		try {
 			setResNextCount(0);
@@ -250,7 +251,7 @@ public class DatabaseHelperTest {
 			int count2 = dbh.insertCpeProducts(testProducts);
 			assertEquals(4, count2);
 			verify(pstmt, times(2)).setString(1, cpe+4);
-			verify(pstmt).setString(2, domain+4);
+			verify(pstmt).setString(3, domain+4);
 		} catch (SQLException ignored) {}
 	}
 

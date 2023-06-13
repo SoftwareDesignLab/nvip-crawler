@@ -21,7 +21,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.stream.Collectors;
@@ -44,7 +43,6 @@ import org.nd4j.linalg.factory.Nd4j;
  */
 
 public class Char2vec {
-		
 	//Supported symbols
 	private final char[] dict = {'!', '"', '#', '$', '%', '&', '\'', '(', ')', '*', '+', ',', '-', '.',
             '/', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ':', ';', '<',

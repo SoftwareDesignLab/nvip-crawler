@@ -23,9 +23,11 @@
  */
 package edu.rit.se.nvip.crawler.htmlparser;
 
-import edu.rit.se.nvip.crawler.QuickCveCrawler;
+import edu.rit.se.nvip.crawler.CveCrawler;
 import edu.rit.se.nvip.model.RawVulnerability;
 import org.junit.Test;
+import org.junit.BeforeClass;
+import org.junit.AfterClass;
 
 import java.util.List;
 
@@ -35,9 +37,10 @@ public class AutodeskParserTest extends AbstractParserTest{
 
     @Test
     public void testAutodesk() {
-        String html = QuickCveCrawler.getContentFromDynamicPage("https://autodesk.com/trust/security-advisories/adsk-sa-2022-0017", null);
+        AutodeskParser parser  = new AutodeskParser("autodesk");
+        String html = parser.grabDynamicHTML("https://autodesk.com/trust/security-advisories/adsk-sa-2022-0017");
         // String html = safeReadHtml("src/test/resources/test-autodesk-table-multi.html");
-        List<RawVulnerability> list = new AutodeskParser("autodesk").parseWebPage("autodesk", html);
+        List<RawVulnerability> list = parser.parseWebPage("autodesk", html);
         assertEquals(18, list.size());
         RawVulnerability vuln = getVulnerability(list, "CVE-2021-45960");
         assertNotNull(vuln);
@@ -62,6 +65,16 @@ public class AutodeskParserTest extends AbstractParserTest{
         assertFalse(vuln.getDescription().contains("Applications and services that utilize"));
         assertEquals("2022-12-14 00:00:00", vuln.getPublishDate());
         assertEquals("2022-12-14 00:00:00", vuln.getLastModifiedDate());
+    }
+
+    @BeforeClass
+    public static void setupWebDriver(){
+        if(CveCrawler.driver.toString().contains("(null)")) CveCrawler.driver = CveCrawler.startDynamicWebDriver();
+    }
+
+    @AfterClass
+    public static void destroyWebDriver(){
+        if(CveCrawler.driver != null) CveCrawler.driver.quit();
     }
 
 }

@@ -24,10 +24,7 @@
 package db;
 
 import com.zaxxer.hikari.HikariDataSource;
-import com.zaxxer.hikari.HikariPoolMXBean;
-import model.AffectedRelease;
-import model.Product;
-import model.Vulnerability;
+import model.cve.AffectedRelease;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.AfterClass;
@@ -35,7 +32,6 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -43,10 +39,7 @@ import org.mockito.stubbing.Answer;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.sql.*;
-import java.text.ParseException;
-import java.time.LocalDateTime;
 import java.util.*;
-import java.util.Date;
 
 
 import static org.junit.Assert.*;
@@ -78,7 +71,6 @@ public class DatabaseHelperTest {
 			when(conn.prepareStatement(any())).thenReturn(pstmt);
 			when(pstmt.executeQuery()).thenReturn(res);
 			when(conn.createStatement()).thenReturn(pstmt);
-			when(pstmt.executeQuery(any())).thenReturn(res);
 		} catch (SQLException ignored) {}
 	}
 
@@ -140,7 +132,7 @@ public class DatabaseHelperTest {
 	private List<AffectedRelease> buildDummyReleases(int count) {
 		List<AffectedRelease> releases = new ArrayList<>();
 		for (int i = 0; i < count; i++) {
-			releases.add(new AffectedRelease(1337, "cve"+i, "cpe"+i, "date"+i, "version"+i));
+			releases.add(new AffectedRelease(i, "cve"+i, "cpe"+i, "date"+i, "version"+i));
 		}
 		return releases;
 	}
@@ -175,31 +167,8 @@ public class DatabaseHelperTest {
 		try {
 			Connection conn = dbh.getConnection();
 			assertNotNull(conn);
-		} catch (SQLException ignored) {}
-	}
-
-	@Test
-	public void insertCpeProductsTest() {
-		List<Product> testProducts = new ArrayList<>();
-		String domain = "domain";
-		String cpe = "cpe";
-		for (int i=0; i < 5; i++) {
-			testProducts.add(new Product(domain+i, cpe+i));
+		} catch (SQLException ignored) {
 		}
-		try {
-			setResNextCount(0);
-			when(pstmt.executeUpdate()).thenReturn(1);
-			int count1 = dbh.insertCpeProducts(testProducts.subList(0,1));
-			assertEquals(1, count1);
-
-			int n_existing = 1;
-			setResNextCount(n_existing);
-			when(res.getInt(1)).thenReturn(n_existing);
-			int count2 = dbh.insertCpeProducts(testProducts);
-			assertEquals(4, count2);
-			verify(pstmt, times(2)).setString(1, cpe+4);
-			verify(pstmt).setString(2, domain+4);
-		} catch (SQLException ignored) {}
 	}
 
 	@Test
@@ -219,16 +188,20 @@ public class DatabaseHelperTest {
 		} catch (SQLException ignored) {}
 	}
 
+	/**
+	 * Tests the insertAffectedReleases method. In this case since there are 5 releases,
+	 * there should be 8 psmt.setStrings() so 8x5=40
+	 * @throws SQLException
+	 */
 	@Test
 	public void insertAffectedReleasesV2Test() {
 		int inCount = 5;
 		List<AffectedRelease> releases = buildDummyReleases(inCount);
 		dbh.insertAffectedReleasesV2(releases);
 		try {
-			verify(pstmt, atLeast(inCount*3)).setString(anyInt(), any());
-			verify(pstmt, times(inCount)).setInt(anyInt(), anyInt());
+			verify(pstmt, times(inCount*8)).setString(anyInt(), any());
 			verify(pstmt, times(inCount)).executeUpdate();
-			verify(pstmt).setString(4, releases.get(0).getVersion());
+			verify(pstmt).setString(1, releases.get(inCount-1).getCveId());
 		} catch (SQLException ignored) {}
 	}
 

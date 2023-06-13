@@ -23,23 +23,20 @@
  */
 package db;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
 import java.sql.*;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import model.cpe.Product;
+import model.cve.AffectedRelease;
+import model.cve.CompositeVulnerability;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import com.zaxxer.hikari.pool.HikariPool.PoolInitializationException;
-
-import model.*;
-import utils.*;
 
 /**
  * 
@@ -56,7 +53,7 @@ public class DatabaseHelper {
 	private final String getProductCountFromCpeSql = "SELECT count(*) from affectedproduct where cpe = ?";
 	private final String getIdFromCpe = "SELECT * FROM affectedproduct where cpe = ?;";
 
-	private final String insertAffectedReleaseSql = "INSERT INTO affectedproduct (cve_id, cpe, product_name, release_date, version, vendor, purl) VALUES (?, ?, ?, ?, ?, ?, ?);";
+	private final String insertAffectedReleaseSql = "INSERT INTO affectedproduct (cve_id, cpe, product_name, release_date, version, vendor, purl, swid_tag) VALUES (?, ?, ?, ?, ?, ?, ?, ?);";
 
 	private static DatabaseHelper databaseHelper = null;
 	private static Map<String, CompositeVulnerability> existingCompositeVulnMap = new HashMap<>();
@@ -138,50 +135,10 @@ public class DatabaseHelper {
 	}
 
 	/**
-	 * used to insert a list of CPE products into the database
-	 *
-	 * @param productMap List of product objects
-	 * @return Number of inserted products, <0 if error.
-	 */
-	public int insertCpeProducts(Map<String, Product> productMap) {
-		try (Connection conn = getConnection();
-				PreparedStatement pstmt = conn.prepareStatement(insertProductSql);
-				PreparedStatement getCount = conn.prepareStatement(getProductCountFromCpeSql);) {
-			int count = 0;
-			int total = productMap.size();
-			for (Map.Entry<String, Product> productEntry : productMap.entrySet()) {
-				final String id = productEntry.getKey();
-				final Product product = productEntry.getValue();
-
-				getCount.setString(1, product.getCpe());
-				ResultSet res = getCount.executeQuery();
-				if (res.next() && res.getInt(1) != 0) {
-					continue; // product already exists, skip!
-				}
-				pstmt.setString(1, id);
-				pstmt.setString(2, product.getCpe());
-				pstmt.executeUpdate();
-				count++;
-			}
-
-			logger.info(
-					"\rInserted: " + count + " of " + total + " products to DB! Skipped: " + (total - count) + " existing ones!");
-			return count;
-		} catch (SQLException e) {
-			logger.error("Error inserting CPEs: {}", e.getMessage());
-			return -1;
-		}
-	}
-
-	/**
 	 * Store affected products in DB
-	 * TODO: This should be in DB Helper
 	 * @param vulnList
 	 */
 	public void insertAffectedProductsToDB(List<CompositeVulnerability> vulnList, Map<String, Product> productMap) {
-		logger.info("Inserting found products to DB!");
-		final int count = insertNewCpeItemsIntoDatabase(productMap);
-		logger.info("Successfully inserted {} found products to DB", count);
 
 		// get all identified affected releases
 		List<AffectedRelease> listAllAffectedReleases = new ArrayList<>();
@@ -191,15 +148,16 @@ public class DatabaseHelper {
 			listAllAffectedReleases.addAll(vulnerability.getAffectedReleases());
 		}
 
-		logger.info("Inserting Affected Releases to DB!");
+		logger.info("Inserting Affected Products to DB!");
 		// delete existing affected release info in db ( for CVEs in the list)
 		databaseHelper.deleteAffectedReleases(listAllAffectedReleases);
 
 		// now insert affected releases (referenced products are already in db)
 		databaseHelper.insertAffectedReleasesV2(listAllAffectedReleases);
 
+		// TODO: Should be in program driver, probably PNEController
 //		// prepare CVE summary table for Web UI
-//		// TODO: This should be in NVIPMAIN
+
 //		logger.info("Preparing CVE summary table for Web UI...");
 //		PrepareDataForWebUi cveDataForWebUi = new PrepareDataForWebUi();
 //		cveDataForWebUi.prepareDataforWebUi();
@@ -208,21 +166,7 @@ public class DatabaseHelper {
 	}
 
 	/**
-	 * insert CPE products identified by the loader into the database
-	 * TODO: Should be in DB Helper
-	 */
-	private int insertNewCpeItemsIntoDatabase(Map<String, Product> productMap) {
-		try {
-			return insertCpeProducts(productMap);
-		} catch (Exception e) {
-			logger.error("Error while adding " + productMap.size() + " new products!");
-			return -1;
-		}
-
-	}
-
-	/**
-	 * gets a product ID from database based on CPE
+	 * Gets a product ID from database based on CPE
 	 *
 	 * @param cpe CPE string of product
 	 * @return product ID if product exists in database, -1 otherwise
@@ -244,7 +188,7 @@ public class DatabaseHelper {
 	}
 
 	/**
-	 * updates the affected release table with a list of affected releases
+	 * Updates the affected release table with a list of affected releases
 	 * 
 	 * @param affectedReleases list of affected release objects
 	 */
@@ -274,6 +218,7 @@ public class DatabaseHelper {
 					pstmt.setString(5, affectedRelease.getVersion());
 					pstmt.setString(6, affectedRelease.getVendor());
 					pstmt.setString(7, affectedRelease.getPURL(productName));
+					pstmt.setString(8, affectedRelease.getSWID(productName));
 
 					count += pstmt.executeUpdate();
 //					logger.info("Added {} as an affected release for {}", prodId, affectedRelease.getCveId());
@@ -290,9 +235,9 @@ public class DatabaseHelper {
 	}
 
 	/**
-	 * delete affected releases for given CVEs
+	 * Deletes affected releases for given CVEs
 	 * 
-	 * @param affectedReleases
+	 * @param affectedReleases list of releases to delete
 	 */
 	public void deleteAffectedReleases(List<AffectedRelease> affectedReleases) {
 		logger.info("Deleting existing affected releases in database for {} items..", affectedReleases.size());
@@ -310,6 +255,13 @@ public class DatabaseHelper {
 		logger.info("Done. Deleted existing affected releases in database!");
 	}
 
+	/**
+	 * Gets list of vulnerabilities from the database, formatting them into CompositeVulnerability objects,
+	 * and limiting the return to maxVulnerabilities size.
+	 *
+	 * @param maxVulnerabilities max number of vulnerabilities to get
+	 * @return a map of fetched vulnerabilities
+	 */
 	public Map<String, CompositeVulnerability> getExistingCompositeVulnerabilities(int maxVulnerabilities) {
 		if (existingCompositeVulnMap.size() == 0) {
 		synchronized (DatabaseHelper.class) {
@@ -356,12 +308,10 @@ public class DatabaseHelper {
 	}
 
 	/**
-	 * shut down connection pool. U
+	 * Shut down connection pool.
 	 */
 	public void shutdown() {
 		dataSource.close();
 		config = null;
 	}
-
-
 }

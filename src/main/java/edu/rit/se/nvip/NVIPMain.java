@@ -370,7 +370,7 @@ public class NVIPMain {
 	 * @param warningMessage
 	 */
 	private void addEnvvarString(Map<String, Object> envvarMap, String envvarName, String envvarValue,
-								 	String defaultValue, String warningMessage) {
+								 String defaultValue, String warningMessage) {
 		if (envvarValue != null && !envvarValue.isEmpty()) {
 			envvarMap.put(envvarName, envvarValue);
 		} else {

@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-import model.AffectedRelease;
+import model.cve.AffectedRelease;
 
 import org.junit.Test;
 

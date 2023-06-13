@@ -19,9 +19,17 @@
         </addColumn>
     </changeSet> -->
 
-    <changeSet author="paul" id="modify_purl_column">
+    <!-- <changeSet author="paul" id="modify_purl_column">
         <addColumn tableName="affectedproduct">
             <column name="purl" type="TINYTEXT">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet> -->
+
+    <changeSet author="richard" id="modify_swid_tag_column">
+        <addColumn tableName="affectedproduct">
+            <column name="swid_tag" type="VARCHAR(1000)">
                 <constraints nullable="true"/>
             </column>
         </addColumn>

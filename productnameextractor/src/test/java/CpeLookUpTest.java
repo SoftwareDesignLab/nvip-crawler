@@ -2,17 +2,17 @@
  * Copyright 2023 Rochester Institute of Technology (RIT). Developed with
  * government support under contract 70RSAT19CB0000020 awarded by the United
  * States Department of Homeland Security.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -22,124 +22,99 @@
  * SOFTWARE.
  */
 
+import model.cpe.CpeGroup;
+import model.cpe.ProductItem;
+import model.cpe.ProductVersion;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * Unit tests for the CpeLookUp class
- * 
+ *
  * @author Igor Khokhlov
  *
  */
 
 public class CpeLookUpTest {
+	// Init cpeLookUp
+	private static final CpeLookUp cpeLookUp = new CpeLookUp();
+	static {
+		try {
+			final Map<String, CpeGroup> productDict = ProductNameExtractorController.readProductDict("src/main/resources/data/product_dict.json");
+			cpeLookUp.loadProductDict(productDict);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
 
 	@Test
 	public void legitimateProduct() {
-
-		CpeLookUp cpeLookUp = CpeLookUp.getInstance();
-
 		ProductItem product = new ProductItem("phpMyAdmin");
-		product.addVersion("4.8.4");
+		product.addVersion("4.1.5");
 
-		String expectedResult = "cpe:2.3:a:phpmyadmin:phpmyadmin:4.8.4:*:*:*:*:*:*:*";
+		String expectedResult = "cpe:2.3:a:phpmyadmin:phpmyadmin:4.1.5:*:*:*:*:*:*:*";
 
-		List<String> idList = cpeLookUp.getCPEids(product);
+		List<String> idList = cpeLookUp.getCPEIds(product);
 
-		boolean correctResult = false;
-		boolean notEmpty = false;
-
-		if (idList != null && idList.size() > 0) {
-			notEmpty = true;
-			correctResult = expectedResult.equals(idList.get(0));
-		}
-
-		assertTrue("Result is not empty", notEmpty);
-		assertTrue("Result is correct", correctResult);
+		assertNotNull("idList was null", idList);
+		assertNotEquals("idList was empty", idList.size(), 0);
+		assertEquals("actual result was not expected result", expectedResult, idList.get(0));
 	}
 
 	@Test
 	public void legitimateComplexProduct() {
+		ProductItem product = new ProductItem("cacheos.");
+		product.addVersion("before");
+		product.addVersion("4.0");
 
-		CpeLookUp cpeLookUp = CpeLookUp.getInstance();
+		String expectedResult = "cpe:2.3:a:bluecoat:cacheos:4.0:*:*:*:*:*:*:*";
 
-		ProductItem product = new ProductItem("phpMyAdmin.");
-		product.addVersion("before  4.8.4");
+		List<String> idList = cpeLookUp.getCPEIds(product);
 
-		String expectedResult = "cpe:2.3:a:phpmyadmin:phpmyadmin:4.8.4:*:*:*:*:*:*:*";
-
-		List<String> idList = cpeLookUp.getCPEids(product);
-
-		boolean correctResult = false;
-		boolean notEmpty = false;
-
-		if (idList != null && idList.size() > 0) {
-			notEmpty = true;
-			correctResult = expectedResult.equals(idList.get(0));
-		}
-
-		assertTrue("Result is not empty", notEmpty);
-		assertTrue("Result is correct", correctResult);
+		assertNotNull("idList was null", idList);
+		assertNotEquals("idList was empty", idList.size(), 0);
+		assertEquals("actual result was not expected result", expectedResult, idList.get(0));
 	}
 
 	@Test
 	public void legitimateComplexProduct2() {
-
-		CpeLookUp cpeLookUp = CpeLookUp.getInstance();
-
 		ProductItem product = new ProductItem("phpMyAdmin:.");
 		product.addVersion("https://www.openwall.com/lists/oss-security/2012/05/10/6");
 		product.addVersion("before");
-		product.addVersion("4.8.4");
+		product.addVersion("3.3.4.0");
 
-		String expectedResult = "cpe:2.3:a:phpmyadmin:phpmyadmin:4.8.4:*:*:*:*:*:*:*";
+		String expected = "cpe:2.3:a:phpmyadmin:phpmyadmin:3.3.4.0:*:*:*:*:*:*:*";
 
-		List<String> idList = cpeLookUp.getCPEids(product);
+		List<String> idList = cpeLookUp.getCPEIds(product);
 
-		boolean correctResult = false;
-		boolean notEmpty = false;
+		assertNotNull("idList was null", idList);
+		assertNotEquals("idList was empty", idList.size(), 0);
+		assertEquals("actual result was not expected result", expected, idList.get(0));
 
-		if (idList != null && idList.size() > 0) {
-			notEmpty = true;
-			correctResult = expectedResult.equals(idList.get(0));
-		}
-
-		assertTrue("Result is not empty", notEmpty);
-		assertTrue("Result is correct", correctResult);
 	}
 
 	@Test
 	public void legitimateComplexProduct3() {
-
-		CpeLookUp cpeLookUp = CpeLookUp.getInstance();
-
 		ProductItem product = new ProductItem("the Linux.");
 		product.addVersion("https://www.openwall.com/lists/oss-security/2012/05/10/6");
 
 		String expectedResult = "cpe:2.3:a:sun:linux:*:*:*:*:*:*:*:*";
 
-		List<String> idList = cpeLookUp.getCPEids(product);
+		List<String> idList = cpeLookUp.getCPEIds(product);
 
-		boolean correctResult = false;
-		boolean notEmpty = false;
-
-		if (idList != null && idList.size() > 0) {
-			notEmpty = true;
-			correctResult = expectedResult.equals(idList.get(0));
-		}
-
-		assertTrue("Result is not empty", notEmpty);
-		assertTrue("Result is correct", correctResult);
+		assertNotNull("idList was null", idList);
+		assertNotEquals("idList was empty", idList.size(), 0);
+		assertEquals("actual result was not expected result", expectedResult, idList.get(0));
 	}
 
 	@Test
 	public void legitimateComplexProductMultipleVersions() {
-
-		CpeLookUp cpeLookUp = CpeLookUp.getInstance();
-
 		ProductItem product = new ProductItem("phpMyAdmin.");
 		product.addVersion("4.8.0.1");
 		product.addVersion("4.8.4");
@@ -149,65 +124,40 @@ public class CpeLookUpTest {
 		String expectedResult2 = "cpe:2.3:a:phpmyadmin:phpmyadmin:4.8.4:*:*:*:*:*:*:*";
 		String expectedResult3 = "cpe:2.3:a:phpmyadmin:phpmyadmin:4.7.9:*:*:*:*:*:*:*";
 
-		List<String> idList = cpeLookUp.getCPEids(product);
+		List<String> idList = cpeLookUp.getCPEIds(product);
 
-		boolean correctResult1 = false;
-		boolean correctResult2 = false;
-		boolean correctResult3 = false;
-		boolean notEmpty = false;
-
-		if (idList != null && idList.size() > 0) {
-			notEmpty = true;
-			correctResult1 = expectedResult1.equals(idList.get(0));
-			correctResult2 = expectedResult2.equals(idList.get(1));
-			correctResult3 = expectedResult3.equals(idList.get(2));
-		}
-
-		assertTrue("Result is not empty", notEmpty);
-		assertTrue("Result is correct for 4.8.0.1", correctResult1);
-		assertTrue("Result is correct for 4.8.4", correctResult2);
-		assertTrue("Result is correct for 4.7.9", correctResult3);
+		assertNotNull("idList was null", idList);
+		assertNotEquals("idList was empty", idList.size(), 0);
+		assertEquals("actual result was not expected result", expectedResult1, idList.get(0));
+		assertEquals("actual result was not expected result", expectedResult2, idList.get(1));
+		assertEquals("actual result was not expected result", expectedResult3, idList.get(2));
 	}
 
 	@Test
 	public void legitimateComplexProductNoVersion() {
+		ProductItem product = new ProductItem("Canon ImageRunner 5000i");
 
-		CpeLookUp cpeLookUp = CpeLookUp.getInstance();
+		String expectedResult = "cpe:2.3:a:canon:imagerunner:*:*:*:*:*:*:*:*";
 
-		ProductItem product = new ProductItem("Microsoft Internet Explorer. ");
+		List<String> idList = cpeLookUp.getCPEIds(product);
 
-		String expectedResult = "cpe:2.3:a:microsoft:internet_explorer:*:*:*:*:*:*:*:*";
-
-		List<String> idList = cpeLookUp.getCPEids(product);
-
-		boolean correctResult = false;
-		boolean notEmpty = false;
-
-		if (idList != null && idList.size() > 0) {
-			notEmpty = true;
-			correctResult = expectedResult.equals(idList.get(0));
-		}
-
-		assertTrue("Result is not empty", notEmpty);
-		assertTrue("Result is correct", correctResult);
+		assertNotNull("idList was null", idList);
+		assertNotEquals("idList was empty", idList.size(), 0);
+		assertEquals("actual result was not expected result", expectedResult, idList.get(0));
 	}
 
 	@Test
 	public void checkSNVerification() {
-
-		CpeLookUp cpeLookUp = CpeLookUp.getInstance();
-
 		String sn1 = "Explorer.";
 		String sn2 = "Linux";
 
-		List<String> sn1List = cpeLookUp.getCPEtitles(sn1);
-		List<String> sn2List = cpeLookUp.getCPEtitles(sn2);
+		List<String> sn1List = cpeLookUp.getCPETitles(sn1);
+		List<String> sn2List = cpeLookUp.getCPETitles(sn2);
 
-		boolean sn1NotEmpty = (sn1List != null && sn1List.size() > 0);
-		boolean sn2NotEmpty = (sn2List != null && sn2List.size() > 0);
-
-		assertTrue("Result for \"Explorer.\" is not empty", sn1NotEmpty);
-		assertTrue("Result for \"Linux\" is not empty", sn2NotEmpty);
+		assertNotNull("sn1List was null", sn1List);
+		assertNotNull("sn2List was null", sn2List);
+		assertNotEquals("sn1List was empty", sn1List.size(), 0);
+		assertNotEquals("sn2List was empty", sn2List.size(), 0);
 	}
 
 }

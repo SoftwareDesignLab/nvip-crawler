@@ -172,6 +172,9 @@
             <column name="purl" type="TINYTEXT">
                 <constraints nullable="true"/>
             </column>
+            <column name="swid_tag" type="VARCHAR(1000)">
+                <constraints nullable="true"/>
+            </column>
         </createTable>
 
         <createIndex
@@ -509,7 +512,7 @@
             <column name="cve_id"/>
         </createIndex>
     </changeSet>
-    
+
     <changeSet author="nvddata" id="nvddata">
         <createTable tableName="nvddata">
             <column name="cve_id" type="VARCHAR(20)">
