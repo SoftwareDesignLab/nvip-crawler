@@ -10,6 +10,10 @@ import org.apache.logging.log4j.Logger;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.time.DateTimeException;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 /**
@@ -25,6 +29,7 @@ public class ProductNameExtractorController {
     private static int maxPages = 5;
     private static int maxAttemptsPerPage = 2;
     private static String productDictPath = "src/main/resources/data/product_dict.json";
+    private static Instant productDictLastCompilationDate;
 
     /**
      * Reads in the CPE dictionary from file at the given path.
@@ -34,8 +39,19 @@ public class ProductNameExtractorController {
      * @throws IOException if an exception occurs while parsing the CPE dictionary from file
      */
     public static Map<String, CpeGroup> readProductDict(String productDictPath) throws IOException {
-        // Read in data
-        final LinkedHashMap<String, LinkedHashMap> rawProductDict = OM.readValue(Paths.get(productDictPath).toFile(), LinkedHashMap.class);
+        // Read in raw data
+        final LinkedHashMap<String, ?> rawData = OM.readValue(Paths.get(productDictPath).toFile(), LinkedHashMap.class);
+
+        // Extract raw product data
+        final LinkedHashMap<String, LinkedHashMap> rawProductDict = (LinkedHashMap<String, LinkedHashMap>) rawData.get("products");
+
+        // Extract compilation time from file, default to 2000 if fails
+        try {
+            productDictLastCompilationDate = Instant.parse((String) rawData.get("time"));
+        } catch (DateTimeException e) {
+            logger.error("Error parsing compilation date from dictionary: {}", e.toString());
+            productDictLastCompilationDate = Instant.parse("2000-01-01T00:00:00.00Z");
+        }
 
         // Init CPE dict
         final LinkedHashMap<String, CpeGroup> productDict = new LinkedHashMap<>();
@@ -139,6 +155,11 @@ public class ProductNameExtractorController {
             // Read in product dict
             productDict = readProductDict(productDictPath);
 
+            // Check if product dict is stale (change ChronoUnit and value to adjust frequency)
+            if(Duration.between(productDictLastCompilationDate, Instant.now()).get(ChronoUnit.DAYS) > 0) {
+                // TODO: Update/fetch new dict
+            }
+
             // Load CPE dict
             affectedProductIdentifier.loadCPEDict(productDict);
         } catch (Exception e) {
@@ -147,7 +168,7 @@ public class ProductNameExtractorController {
 
             // Write CPE dict to file
             try {
-                OM.writerWithDefaultPrettyPrinter().writeValue(new File(productDictPath), productDict);
+                OM.writerWithDefaultPrettyPrinter().withRootName("products").writeValue(new File(productDictPath), productDict);
             } catch (IOException ioe) {
                 logger.error("Error writing product dict to filepath '{}': {}", productDictPath, ioe.toString());
             }
