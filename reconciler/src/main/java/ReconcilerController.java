@@ -1,16 +1,15 @@
-import db.DatabaseHelper;
+import characterizer.CveCharacterizer;
+import characterizer.db.DatabaseHelper;
 import filter.Filter;
 import filter.FilterFactory;
 import model.CompositeVulnerability;
 import model.RawVulnerability;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import process.Processor;
 import process.ProcessorFactory;
 import reconciler.Reconciler;
 import reconciler.ReconcilerFactory;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-
 
 import java.util.*;
 
@@ -73,12 +72,13 @@ public class ReconcilerController {
             String[] trainingDataInfo = System.getenv("NVIP_CVE_CHARACTERIZATION_TRAINING_DATA").split(",");
             logger.info("Setting NVIP_CVE_CHARACTERIZATION_LIMIT to {}", System.getenv("NVIP_CVE_CHARACTERIZATION_LIMIT"));
             try{
+
                 CveCharacterizer cveCharacterizer = new CveCharacterizer(trainingDataInfo[0], trainingDataInfo[1], System.getenv("NVIP_CHARACTERIZATION_APPROACH"),
                         System.getenv("NVIP_CHARACTERIZATION_METHOD"), false);
 
-                return cveCharacterizer.characterizeCveList((List<CompositeVulnerability>) crawledVulnerabilityList, dbh,
+                return cveCharacterizer.characterizeCveList((List<CompositeVulnerability>)crawledVulnerabilityList, dbh,
                         (Integer) characterizationVars.get("cveCharacterizationLimit"));
-            }catch (NullPointerException | NumberFormatException e) { logger.warn("Could not fetch ___________ from env vars, defaulting to {}", System.getenv("NVIP_CVE_CHARACTERIZATION_LIMIT")); }
+            }catch (NullPointerException | NumberFormatException e) { logger.warn("Could not fetch _________________ from env vars, defaulting to {}", System.getenv("NVIP_CVE_CHARACTERIZATION_LIMIT")); }
 
         }
         catch (NullPointerException | NumberFormatException e) { logger.warn("Could not fetch NVIP_CVE_CHARACTERIZATION_TRAINING_DATA from env vars, defaulting to {}", System.getenv("NVIP_CVE_CHARACTERIZATION_LIMIT")); }
