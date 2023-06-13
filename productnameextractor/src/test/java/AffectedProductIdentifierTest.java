@@ -56,7 +56,7 @@ public class AffectedProductIdentifierTest {
 		AffectedProductIdentifier affectedProductIdentifier = new AffectedProductIdentifier(vulnList);
 		// Init cpeLookUp
 		try {
-			final Map<String, CpeGroup> productDict = ProductNameExtractorController.readProductDict("src/test/resources/data/product_dict.json");
+			final Map<String, CpeGroup> productDict = ProductNameExtractorController.readProductDict("src/main/resources/data/product_dict.json");
 			affectedProductIdentifier.loadCPEDict(productDict);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
