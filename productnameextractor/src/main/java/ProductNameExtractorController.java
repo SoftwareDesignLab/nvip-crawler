@@ -201,7 +201,7 @@ public class ProductNameExtractorController {
         // Run the AffectedProductIdentifier with the fetched vuln list
         final Map<String, Product> productMap = affectedProductIdentifier.identifyAffectedReleases(cveLimit);
 
-        databaseHelper.insertAffectedProductsToDB(vulnerabilities, productMap);
+        databaseHelper.insertAffectedProductsToDB(vulnerabilities);
 
         logger.info("AffectedProductIdentifier found {} affected products in {} seconds", productMap.size(), Math.floor(((double) (System.currentTimeMillis() - getProdStart) / 1000) * 100) / 100);
     }

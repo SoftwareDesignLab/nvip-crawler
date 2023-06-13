@@ -139,7 +139,7 @@ public class DatabaseHelper {
 	 * Store affected products in DB
 	 * @param vulnList
 	 */
-	public void insertAffectedProductsToDB(List<CompositeVulnerability> vulnList, Map<String, Product> productMap) {
+	public void insertAffectedProductsToDB(List<CompositeVulnerability> vulnList) {
 
 		// get all identified affected releases
 		List<AffectedRelease> listAllAffectedReleases = new ArrayList<>();
