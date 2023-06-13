@@ -220,7 +220,7 @@ public class DatabaseHelper {
 		}
 	}
 
-	private HikariConfig createHikariConfigFromEnvironment() {
+	public static HikariConfig createHikariConfigFromEnvironment() {
 
 		String url = System.getenv("HIKARI_URL");
 		HikariConfig hikariConfig;

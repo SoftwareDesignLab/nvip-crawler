@@ -23,7 +23,7 @@
  */
 package characterizer.classifier;
 
-import divergence.VdoLabelDistribution;
+import characterizer.divergence.VdoLabelDistribution;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

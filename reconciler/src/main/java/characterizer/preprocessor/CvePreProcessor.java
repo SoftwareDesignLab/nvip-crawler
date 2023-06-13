@@ -24,7 +24,6 @@ package characterizer.preprocessor; /**
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import preprocessor.*;
 
 import java.io.*;
 import java.util.Arrays;

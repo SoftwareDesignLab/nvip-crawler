@@ -23,20 +23,11 @@
  */
 package characterizer.automatedcvss;
 
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
+import characterizer.automatedcvss.enums.*;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import automatedcvss.enums.AttackTheater;
-import automatedcvss.enums.ImpactMethod;
-import automatedcvss.enums.LogicalImpact;
-import automatedcvss.enums.Mitigation;
-import automatedcvss.enums.VdoNounGroup;
 
 /**
  *

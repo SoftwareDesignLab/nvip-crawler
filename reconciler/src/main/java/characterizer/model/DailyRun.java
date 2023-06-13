@@ -23,9 +23,6 @@
  */
 package characterizer.model;
 
-import model.CompositeVulnerability;
-
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -84,13 +81,13 @@ public class DailyRun {
 		return notInBothCount;
 	}
 
-	public void calculateAddedUpdateCVEs(List<model.CompositeVulnerability> crawledVulnerabilityList) {
+	public void calculateAddedUpdateCVEs(List<CompositeVulnerability> crawledVulnerabilityList) {
 		// Count added/updated CVEs
 		int addedCveCount = 0, updatedCveCount = 0;
-		for (model.CompositeVulnerability vuln : crawledVulnerabilityList) {
-			if (vuln.getCveReconcileStatus().equals(model.CompositeVulnerability.CveReconcileStatus.INSERT))
+		for (CompositeVulnerability vuln : crawledVulnerabilityList) {
+			if (vuln.getCveReconcileStatus().equals(CompositeVulnerability.CveReconcileStatus.INSERT))
 				addedCveCount++;
-			else if (vuln.getCveReconcileStatus().equals(model.CompositeVulnerability.CveReconcileStatus.UPDATE))
+			else if (vuln.getCveReconcileStatus().equals(CompositeVulnerability.CveReconcileStatus.UPDATE))
 				updatedCveCount++;
 		}
 
@@ -103,7 +100,7 @@ public class DailyRun {
 	 * TODO: Deprecate this and use DBHelper instead for now
 	 * @param crawledVulnerabilityList
 	 */
-	public void calculateAvgTimeGaps(List<model.CompositeVulnerability> crawledVulnerabilityList) {
+	public void calculateAvgTimeGaps(List<CompositeVulnerability> crawledVulnerabilityList) {
 		// Add up all time gaps, then get the mean average
 		int totalTimeGapNvd = 0;
 		int totalTimeGapMitre = 0;

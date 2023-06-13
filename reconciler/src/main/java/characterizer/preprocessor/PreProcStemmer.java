@@ -25,7 +25,7 @@ package characterizer.preprocessor;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import preprocessor.utils.Stemmer;
+import characterizer.preprocessor.utils.Stemmer;
 
 import java.util.ArrayList;
 import java.util.List;

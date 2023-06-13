@@ -23,13 +23,12 @@
  */
 package characterizer.db;
 
-import db.DatabaseHelper;
-import model.CompositeVulnerability;
-import model.Vulnerability;
+import characterizer.model.CompositeVulnerability;
+import characterizer.model.Vulnerability;
+import characterizer.utils.CveUtils;
 import org.apache.commons.collections4.ListUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import utils.CveUtils;
 
 import java.util.List;
 import java.util.Map;
@@ -111,7 +110,7 @@ public class DbParallelProcessor {
 	 *
 	 */
 	private class VulnRecordThread extends Thread implements Runnable {
-		db.DatabaseHelper databaseHelper;
+		characterizer.db.DatabaseHelper databaseHelper;
 		private final List<CompositeVulnerability> vulnList;
 		private int runId = 0;
 
@@ -119,7 +118,7 @@ public class DbParallelProcessor {
 			logger.info("NEW VULN RECORD THREAD");
 			this.vulnList = vulnList;
 			this.runId = runId;
-			databaseHelper = db.DatabaseHelper.getInstanceForMultiThreading();
+			databaseHelper = characterizer.db.DatabaseHelper.getInstanceForMultiThreading();
 		}
 
 		// run process
