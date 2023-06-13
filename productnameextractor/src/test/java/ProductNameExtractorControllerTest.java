@@ -45,7 +45,7 @@ public class ProductNameExtractorControllerTest {
 
     @Test
     public void readProductDictSmallTest(){
-        String productDictPath = "src/test/resources/data/test_product_dict1.json";
+        String productDictPath = "src/test/resources/data/test_product_dict_small.json";
         Map<String, CpeGroup> productDict = null;
         try{
             productDict = ProductNameExtractorController.readProductDict(productDictPath);
@@ -74,7 +74,7 @@ public class ProductNameExtractorControllerTest {
 
     @Test
     public void readProductDictLargeTest(){
-        String productDictPath = "src/test/resources/data/test_product_dict2.json";
+        String productDictPath = "src/test/resources/data/test_product_dict_large.json";
         Map<String, CpeGroup> productDict = null;
         try{
             productDict = ProductNameExtractorController.readProductDict(productDictPath);
