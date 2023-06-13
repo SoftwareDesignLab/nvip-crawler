@@ -1,8 +1,8 @@
 import characterizer.CveCharacterizer;
-import characterizer.db.DatabaseHelper;
+import db.DatabaseHelper;
+import model.CompositeVulnerability;
 import filter.Filter;
 import filter.FilterFactory;
-import model.CompositeVulnerability;
 import model.RawVulnerability;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -37,9 +37,9 @@ public class ReconcilerController {
     public void main() {
         Set<String> jobs = dbh.getJobs();
         logger.info(jobs.size() + " jobs found for reconciliation");
-        Set<CompositeVulnerability> reconciledVulns = new HashSet<>();
+        Set<model.CompositeVulnerability> reconciledVulns = new HashSet<>();
         for (String job : jobs) {
-            CompositeVulnerability vuln = handleReconcilerJob(job);
+            model.CompositeVulnerability vuln = handleReconcilerJob(job);
             if (vuln != null) {
                 reconciledVulns.add(vuln);
             }
@@ -48,9 +48,9 @@ public class ReconcilerController {
         runProcessors(reconciledVulns);
 
         characterizeCVEs(reconciledVulns);
-
+`
         int upsertCount = 0;
-        for (CompositeVulnerability vuln : reconciledVulns) {
+        for (model.CompositeVulnerability vuln : reconciledVulns) {
             int status = dbh.insertOrUpdateVulnerabilityFull(vuln);
             if (status != -1) {
                 upsertCount += status;

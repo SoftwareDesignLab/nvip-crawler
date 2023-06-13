@@ -22,17 +22,17 @@ package characterizer; /**
  * SOFTWARE.
  */
 
-import characterizer.automatedcvss.CvssScoreCalculator;
-import characterizer.automatedcvss.PartialCvssVectorGenerator;
-import characterizer.classifier.AbstractCveClassifier;
-import characterizer.classifier.CveClassifierFactory;
-import characterizer.db.DatabaseHelper;
-import characterizer.exploitability.ImpactPredictor;
-import characterizer.exploitability.SeverityPredictor;
+import automatedcvss.CvssScoreCalculator;
+import automatedcvss.PartialCvssVectorGenerator;
+import classifier.AbstractCveClassifier;
+import classifier.CveClassifierFactory;
+import db.DatabaseHelper;
+import exploitability.ImpactPredictor;
+import exploitability.SeverityPredictor;
 import characterizer.model.CompositeVulnerability;
 import characterizer.model.CvssScore;
 import characterizer.model.VdoCharacteristic;
-import characterizer.preprocessor.CvePreProcessor;
+import preprocessor.CvePreProcessor;
 import characterizer.utils.MyProperties;
 import characterizer.utils.PropertyLoader;
 import org.apache.commons.io.FileUtils;
