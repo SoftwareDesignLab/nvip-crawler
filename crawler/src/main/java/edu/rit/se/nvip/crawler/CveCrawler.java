@@ -80,8 +80,8 @@ public class CveCrawler extends WebCrawler {
 		options.addArguments("--disable-dev-shm-usage");
 		Map<String, Object> timeouts = new HashMap<>();
 		timeouts.put("implicit", 20);
-		timeouts.put("pageLoad", 60);
-		timeouts.put("script", 30);
+		timeouts.put("pageLoad", 60000);
+		timeouts.put("script", 60000);
 		options.setCapability("timeouts", timeouts);
 		WebDriverManager.chromedriver().setup();
 		ChromeDriverService chromeDriverService = new ChromeDriverService.Builder().build();
