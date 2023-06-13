@@ -25,7 +25,7 @@ public class ProductDetectorTest {
     public void setUp() throws IOException {
         // Initialize ProductDetector with a mock CpeLookUp object or a real implementation for testing
         CpeLookUp cpeLookUp = new CpeLookUp();
-        final Map<String, CpeGroup> productDict = ProductNameExtractorController.readProductDict("src/main/resources/data/product_dict.json");
+        final Map<String, CpeGroup> productDict = ProductNameExtractorController.readProductDict("src/test/resources/data/product_dict.json");
         cpeLookUp.loadProductDict(productDict);
         productDetector = new ProductDetector(cpeLookUp);
 
