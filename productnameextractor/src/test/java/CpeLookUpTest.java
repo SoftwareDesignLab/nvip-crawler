@@ -106,7 +106,7 @@ public class CpeLookUpTest {
 		ProductItem product = new ProductItem("the Linux.");
 		product.addVersion("https://www.openwall.com/lists/oss-security/2012/05/10/6");
 
-		String expectedResult = "cpe:2.3:a:sun:linux:*:*:*:*:*:*:*:*";
+		String expectedResult = "cpe:2.3:a:redhat:linux:*:*:*:*:*:*:*:*";
 
 		List<String> idList = cpeLookUp.getCPEIds(product);
 
