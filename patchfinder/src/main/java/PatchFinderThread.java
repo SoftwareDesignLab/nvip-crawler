@@ -28,6 +28,7 @@ import commits.PatchCommit;
 import commits.PatchCommitScraper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import utils.GitController;
 
 /**
  * Runnable thread class for multithreaded patch finder
