@@ -166,14 +166,14 @@ public class CpeLookUp {
 	 * @return a map of loaded CpeGroup objects
 	 */
 	@SuppressWarnings({"unchecked", "rawtypes"})
-	public Map<String, CpeGroup> loadProductDict(int maxPages, int maxAttemptsPerPage) {
+	public Map<String, CpeGroup> queryProductDict(int maxPages, int maxAttemptsPerPage) {
 		// If maxPages is set to 0, no limit on pages
 		if(maxPages == 0) maxPages = Integer.MAX_VALUE;
 		// If maxAttemptsPerPage is set to 0, no limit on attempts
 		if(maxAttemptsPerPage == 0) maxAttemptsPerPage = Integer.MAX_VALUE;
 
 		// Init cpeMapFile
-		cpeMapFile = new HashMap<>();
+		final HashMap<String, CpeGroup> productDict = new HashMap<>();
 
 		// Collect CPE data from NVD API
 		try {
@@ -238,7 +238,7 @@ public class CpeLookUp {
 						// Add data to cpeMapFile
 						CpeGroup value;
 						// If key is not found, create new group and entry
-						if(!cpeMapFile.containsKey(key)) {
+						if(!productDict.containsKey(key)) {
 							// Create group
 							value = new CpeGroup(vendorName, productName);
 
@@ -246,12 +246,12 @@ public class CpeLookUp {
 							value.addVersion(new CpeEntry(productName, version, cpeId));
 
 							// Add group to cpeMapFile
-							cpeMapFile.put(key, value);
+							productDict.put(key, value);
 						}
 						// Update existing entries with versions
 						else {
 							// Get existing group from cpeMapFile
-							final CpeGroup existingValue = cpeMapFile.get(key);
+							final CpeGroup existingValue = productDict.get(key);
 
 							// Get existing versions from group
 							final Set<String> existingVersions = existingValue.getVersions().keySet();
@@ -264,6 +264,8 @@ public class CpeLookUp {
 						}
 					});
 
+					final int page = 1 + (index / RESULTS_PER_PAGE);
+
 					// Reduce remaining results by number parsed
 					remainingResults -= RESULTS_PER_PAGE;
 					// Increment index
@@ -273,9 +275,8 @@ public class CpeLookUp {
 					// Reset attempt count
 					attempts = 0;
 
-					final int page = index / RESULTS_PER_PAGE;
 					logger.info("Successfully loaded CPE dictionary page {}/{}", page, totalPages);
-					if(page >= maxPages + 1) {
+					if(page >= maxPages) {
 						logger.warn("MAX_PAGES reached, the remaining {} pages will not be queried", totalPages - maxPages);
 						break;
 					}
@@ -295,7 +296,7 @@ public class CpeLookUp {
 			logger.error("Error loading CPE dictionary: {}", e.toString());
 		}
 
-		return cpeMapFile;
+		return productDict;
 	}
 
 	/**
@@ -316,7 +317,11 @@ public class CpeLookUp {
 		final String contents = getContentFromUrl(url);
 
 		// Parse contents (if fails, will throw JsonParseException)
-		return OM.readValue(contents, LinkedHashMap.class);
+		try {
+			return OM.readValue(contents, LinkedHashMap.class);
+		} catch (JsonParseException e) {
+			throw e;
+		}
 	}
 
 	/**
