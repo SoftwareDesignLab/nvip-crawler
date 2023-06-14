@@ -237,15 +237,6 @@ public class VersionManager {
                 versionWords[i] = versionWords[i].substring(0, versionWords[i].length() - 1);
             }
 
-            //Remove any "1.2.3a" to be "1.2.3", makes sure to not affect "after" word
-            if(!versionWords[i].equals("after")){
-                versionWords[i] = versionWords[i].replace("a","");
-            }
-
-            //Same as above but for 'b'
-            if(!versionWords[i].equals("before")){
-                versionWords[i] = versionWords[i].replace("b","");
-            }
         }
     }
 }
