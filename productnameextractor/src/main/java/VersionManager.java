@@ -87,10 +87,13 @@ public class VersionManager {
                     addRangeFromString(versionWord);
                 }
 
-                //Through case - "1.2.5 through 2.4.1" "8.6 to 9.1"
+                //Through case - "1.2.5 through 2.4.1" "8.6 to 9.1" "through 8.6"
                 if(throughFlag){
                     if(isVersion(versionWords[i - 2])) {
                         String rangeString = versionWords[i - 2] + " through " + versionWord;
+                        addRangeFromString(rangeString);
+                    }else{
+                        String rangeString = "before " + versionWord;
                         addRangeFromString(rangeString);
                     }
                     throughFlag = false;
@@ -141,8 +144,6 @@ public class VersionManager {
      * @return result of test
      */
     public static boolean isVersion(String version) {
-        // TODO: Remove this and make sure we are not still getting random commas in versions
-        if(version.contains(",")) logger.warn("VERSION '{}' CONTAINED UNEXPECTED CHARACTER ','", version);
         return VERSION_PATTERN.matcher(version).matches();
     }
 
