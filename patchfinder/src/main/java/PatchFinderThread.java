@@ -39,17 +39,15 @@ public class PatchFinderThread implements Runnable {
 	private final HashMap<String, ArrayList<String>> cvePatchEntry;
 	private final String clonePath;
 	private static final Logger logger = LogManager.getLogger(PatchFinder.class.getName());
-	private final PatchFinder patchFinder;
 
 	/**
 	 * Thread object used for multithreaded patchfinding
 	 * @param cvePatchEntry
 	 * @param clonePath
 	 */
-	public PatchFinderThread(HashMap<String, ArrayList<String>> cvePatchEntry, String clonePath, PatchFinder patchFinder) {
+	public PatchFinderThread(HashMap<String, ArrayList<String>> cvePatchEntry, String clonePath) {
 		this.cvePatchEntry = cvePatchEntry;
 		this.clonePath = clonePath;
-		this.patchFinder = patchFinder;
 	}
 
 	/**
@@ -82,6 +80,6 @@ public class PatchFinderThread implements Runnable {
 		}
 
 		// Add found commits to total list after finished
-		this.patchFinder.getPatchCommits().addAll(foundPatchCommits);
+		PatchFinder.getPatchCommits().addAll(foundPatchCommits);
 	}
 }

@@ -23,6 +23,7 @@
  */
 
 import db.DatabaseHelper;
+import model.CpeGroup;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eclipse.jgit.api.LsRemoteCommand;
@@ -39,6 +40,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 
@@ -60,16 +62,16 @@ public class PatchUrlFinder {
 
 	/**
 	 * Parse URLs from all CPEs given within the map
-	 * @param cpes
+	 * @param affectedProducts
 	 * @throws IOException
 	 * @throws InterruptedException
 	 */
-	public Map<String, ArrayList<String>> parseMassURLs(Map<String, ArrayList<String>> cpes, int cveLimit) throws IOException, InterruptedException {
+	public Map<String, ArrayList<String>> parseMassURLs(Map<String, CpeGroup> affectedProducts, int cveLimit) throws IOException, InterruptedException {
 
 		Map<String, ArrayList<String>> cveCpeUrls = new HashMap<>();
 
 		// for each CPE, make a set of URLs for potential patch locations, then map them to their CVE
-		for (String cveId: cpes.keySet()) {
+		for (String cveId: affectedProducts.keySet()) {
 			// break out of loop if limit is reached
 			if (cveCpeUrls.size() > cveLimit) {
 				logger.info("CVE limit of {} reached for patchfinder", cveLimit);
@@ -77,8 +79,8 @@ public class PatchUrlFinder {
 			}
 
 			ArrayList<String> urls = new ArrayList<>();
-			for (String cpe: cpes.get(cveId)) {
-				urls.addAll(parseURL(cpe));
+			for (CpeGroup group: affectedProducts.values()) {
+				urls.addAll(parseURL(group.getGroupID()));
 			}
 			logger.info("Found {} potential patch sources for CVE: {}", urls.size(), cveId);
 			cveCpeUrls.put(cveId, urls);
@@ -95,35 +97,42 @@ public class PatchUrlFinder {
 	 * @throws InterruptedException
 	 */
 	private ArrayList<String> parseURL(String cpe) throws IOException, InterruptedException {
-		String[] wordArr = cpe.split(":");
+		final Matcher m = DatabaseHelper.CPE_PATTERN.matcher(cpe);
 		ArrayList<String> newAddresses = new ArrayList<>();
 
-		// Parse keywords from CPE to create links for github, bitbucket and gitlab
-		// Also checks if the created URL is already used
-		if (!wordArr[3].equals("*")) {
-			HashSet<String> addresses = initializeAddresses(wordArr[3]);
-			for (String address : addresses) {
-				if (!wordArr[4].equals("*")) {
-					address += wordArr[4];
-				}
-
-				// Check the http connections for each URL,
-				// If any successful, add them to the list to be stored
-				newAddresses = testConnection(address);
-			}
-
-		} else if (!wordArr[4].equals("*")) {
-			for (String base : ADDRESS_BASES) {
-				String address = base + wordArr[4];;
-				newAddresses = testConnection(address);
-			}
+		// Ensure CPE matches pattern
+		if(!m.find()) {
+			logger.warn("Invalid cpe '{}' could not be parsed, skipping url", cpe);
+			return newAddresses;
 		}
 
-		// If no successful URLs, try an advanced search with
-		// GitHub's search feature to double check
-		if (newAddresses.isEmpty()) {
-			newAddresses = advanceParseSearch(wordArr[3], wordArr[4]);
-		}
+		// TODO: Fix this
+//		// Parse keywords from CPE to create links for github, bitbucket and gitlab
+//		// Also checks if the created URL is already used
+//		if (!wordArr[3].equals("*")) {
+//			HashSet<String> addresses = initializeAddresses(wordArr[3]);
+//			for (String address : addresses) {
+//				if (!wordArr[4].equals("*")) {
+//					address += wordArr[4];
+//				}
+//
+//				// Check the http connections for each URL,
+//				// If any successful, add them to the list to be stored
+//				newAddresses = testConnection(address);
+//			}
+//
+//		} else if (!wordArr[4].equals("*")) {
+//			for (String base : ADDRESS_BASES) {
+//				String address = base + wordArr[4];;
+//				newAddresses = testConnection(address);
+//			}
+//		}
+//
+//		// If no successful URLs, try an advanced search with
+//		// GitHub's search feature to double check
+//		if (newAddresses.isEmpty()) {
+//			newAddresses = advanceParseSearch(wordArr[3], wordArr[4]);
+//		}
 
 		return newAddresses;
 		

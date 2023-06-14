@@ -26,14 +26,17 @@ package db;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import com.zaxxer.hikari.pool.HikariPool.PoolInitializationException;
+import model.CpeEntry;
+import model.CpeGroup;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.sql.*;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * 
@@ -46,10 +49,12 @@ public class DatabaseHelper {
 	private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
 	final String databaseType;
 
-	private final String selectCpesAndCve = "SELECT v.cve_id, p.cpe FROM vulnerability v LEFT JOIN affectedrelease ar ON ar.cve_id = v.cve_id LEFT JOIN product p ON p.product_id = ar.product_id WHERE p.cpe IS NOT NULL;";
+	private final String selectAffectedProducts = "SELECT cve_id, cpe FROM nvip.affectedproduct GROUP BY product_name, affected_product_id ORDER BY cve_id DESC, version ASC;";
 	private final String getVulnIdByCveId = "SELECT vuln_id FROM vulnerability WHERE cve_id = ?";
 	private final String insertPatchSourceURLSql = "INSERT INTO patchsourceurl (vuln_id, source_url) VALUES (?, ?);";
 	private final String insertPatchCommitSql = "INSERT INTO patchcommit (source_id, commit_url, commit_date, commit_message) VALUES (?, ?, ?, ?);";
+	// Regex101: https://regex101.com/r/9uaTQb/1
+	public static final Pattern CPE_PATTERN = Pattern.compile("cpe:2\\.3:[aho\\*\\-]:([^:]*):([^:]*):([^:]*):.*");
 
 	/**
 	 * The private constructor sets up HikariCP for connection pooling. Singleton
@@ -128,34 +133,49 @@ public class DatabaseHelper {
 	 * Collects a map of CPEs with their correlated CVE and Vuln ID used for
 	 * collecting patches
 	 *
-	 * @return
+	 * @return a map of affected products
 	 */
-	public Map<String, ArrayList<String>> getCPEsAndCVE() {
-		Map<String, ArrayList<String>> cpes = new HashMap<>();
+	public Map<String, CpeGroup> getAffectedProducts() {
+		Map<String, CpeGroup> affectedProducts = new HashMap<>();
+		// Prepare statement
 		try (Connection conn = getConnection();
-			 PreparedStatement pstmt = conn.prepareStatement(selectCpesAndCve);) {
-
+			 PreparedStatement pstmt = conn.prepareStatement(selectAffectedProducts)
+		) {
+			// Execute and get result set
 			ResultSet res = pstmt.executeQuery();
 
+			// Parse results
 			while (res.next()) {
+				// Extract cveId and cpe from result
+				final String cveId = res.getString("cve_id");
+				final String cpe = res.getString("cpe");
 
-				String cveId = res.getString("cve_id");
-				String cpe = res.getString("cpe");
+				// Extract product name and version from cpe
+				final Matcher m = CPE_PATTERN.matcher(cpe);
+				if(!m.find()) {
+					logger.warn("Invalid cpe '{}' could not be parsed, skipping product", cpe);
+					continue;
+				}
+				final String vendor = m.group(1);
+				final String name = m.group(2);
+				final String version = m.group(3);
+				final CpeEntry entry = new CpeEntry(name, version, cpe);
 
-				if (cpes.containsKey(cveId)) {
-					cpes.get(cveId).add(cpe);
+				// If we already have this cveId stored, add specific version
+				if (affectedProducts.containsKey(cveId)) {
+					affectedProducts.get(cveId).addVersion(entry);
 				} else {
-					ArrayList<String> data = new ArrayList<>();
-					data.add(cpe);
-					cpes.put(cveId, data);
+					final CpeGroup group = new CpeGroup(vendor, name);
+					group.addVersion(entry);
+					affectedProducts.put(cveId, group);
 				}
 			}
 
 		} catch (Exception e) {
-			logger.error("ERROR: Failed to grab CVEs and CPEs from DB:\n{}", e);
+			logger.error("ERROR: Failed to grab CVEs and CPEs from DB:\n{}", e.toString());
 		}
 
-		return cpes;
+		return affectedProducts;
 	}
 
 	/**

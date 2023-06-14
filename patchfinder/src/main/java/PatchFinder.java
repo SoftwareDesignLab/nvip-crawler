@@ -24,6 +24,7 @@
 
 import commits.PatchCommit;
 import db.DatabaseHelper;
+import model.CpeGroup;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eclipse.jgit.util.FileUtils;
@@ -40,30 +41,63 @@ import java.util.concurrent.Executors;
  * Main class for collecting CVE Patches within repos that were
  * previously collected from the PatchURLFinder class
  */
-public final class PatchFinder {
-
+public class PatchFinder {
 	private static final Logger logger = LogManager.getLogger(PatchFinder.class.getName());
 
-	private final ArrayList<PatchCommit> patchCommits = new ArrayList<>();
+	private static final ArrayList<PatchCommit> patchCommits = new ArrayList<>();
+	protected static int cveLimit = 10;
+	protected static int maxThreads = 10;
+	protected static int cvesPerThread = 1;
+
+	/**
+	 * Attempts to get all required environment variables from System.getenv() safely, logging
+	 * any missing or incorrect variables.
+	 */
+	protected static void fetchEnvVars() {
+		// Fetch ENV_VARS and set all found configurable properties
+		final Map<String, String> props = System.getenv();
+
+		try {
+			if(props.containsKey("CVE_LIMIT")) {
+				cveLimit = Integer.parseInt(System.getenv("CVE_LIMIT"));
+				logger.info("Setting CVE_LIMIT to {}", cveLimit);
+			} else throw new Exception();
+		} catch (Exception ignored) { logger.warn("Could not fetch CVE_LIMIT from env vars, defaulting to {}", cveLimit); }
+
+	}
 
 	public static void main(String[] args) throws IOException, InterruptedException {
-//		logger.info("Started Patches Application");
+		logger.info("Starting PatchFinder...");
+		final long start = System.currentTimeMillis();
+
+		// Load env vars
+		fetchEnvVars();
+
+		// Init db helper
 		final DatabaseHelper databaseHelper = new DatabaseHelper();
 
-		// Parse for patches and store them in the database
+		// Init PatchUrlFinder
 		PatchUrlFinder patchURLFinder = new PatchUrlFinder();
-		Map<String, ArrayList<String>> cpes = databaseHelper.getCPEsAndCVE();
-		Map<String, ArrayList<String>> possiblePatchURLs = patchURLFinder.parseMassURLs(cpes, 10);
-//
-//		Map<String, ArrayList<String>> possiblePatchURLs = new HashMap<>();
-//		possiblePatchURLs.put("CVE-2022-0315", new ArrayList<>());
-//		possiblePatchURLs.get("CVE-2022-0315").add("https://github.com/tylermcginnis/github-notetaker-egghead");
 
-		// repos will be cloned to patch-repos directory, multi-threaded 6 threads.
-		PatchFinder patchfinder = new PatchFinder();
-		ArrayList<PatchCommit> patchCommits = patchfinder.findPatchesMultiThreaded(possiblePatchURLs,
-				"nvip_data/patch-repos", 10,1);
+		// Fetch affectedProducts from db
+		Map<String, CpeGroup> affectedProducts = databaseHelper.getAffectedProducts();
 
+		// Parse patch source urls from affectedProducts
+		Map<String, ArrayList<String>> possiblePatchURLs = patchURLFinder.parseMassURLs(affectedProducts, cveLimit);
+
+		// Find patches
+		// Repos will be cloned to patch-repos directory, multi-threaded 6 threads.
+		PatchFinder.findPatchesMultiThreaded(
+				possiblePatchURLs,
+				"nvip_data/patch-repos",
+				maxThreads,
+				cvesPerThread
+		);
+
+		// Get found patches from patchfinder
+		ArrayList<PatchCommit> patchCommits = PatchFinder.getPatchCommits();
+
+		// Insert patches
 		for (PatchCommit patchCommit: patchCommits) {
 			int vulnId = databaseHelper.getVulnIdByCveId(patchCommit.getCveId());
 			databaseHelper.insertPatchSourceURL(vulnId, patchCommit.getCommitUrl());
@@ -72,7 +106,8 @@ public final class PatchFinder {
 		}
 
 
-		logger.info("Patches Application Finished!");
+		long delta = (System.currentTimeMillis() - start) / 1000;
+		logger.info("Successfully patched {} affected products in {} seconds", patchCommits.size(), delta);
 	}
 
 	/**
@@ -80,8 +115,8 @@ public final class PatchFinder {
 	 * Used byb threads to add more entries
 	 * @return
 	 */
-	public ArrayList<PatchCommit> getPatchCommits() {
-		return this.patchCommits;
+	public static ArrayList<PatchCommit> getPatchCommits() {
+		return patchCommits;
 	}
 
 	/**
@@ -89,7 +124,7 @@ public final class PatchFinder {
 	 * @param clonePath
 	 * @throws IOException
 	 */
-	public ArrayList<PatchCommit> findPatchesMultiThreaded(Map<String, ArrayList<String>> possiblePatchSources, String clonePath,
+	public static void findPatchesMultiThreaded(Map<String, ArrayList<String>> possiblePatchSources, String clonePath,
 														   int maxThreads, int limitCvePerThread) throws IOException {
 		logger.info("Applying multi threading...");
 		File dir = new File(clonePath);
@@ -112,14 +147,11 @@ public final class PatchFinder {
 			sourceBatches.get(thread).put(cveId, possiblePatchSources.get(cveId));
 			numSourcesAdded++;
 			if (numSourcesAdded % limitCvePerThread == 0 && thread < maxThreads - 1) {
-				es.execute(new PatchFinderThread(sourceBatches.get(thread), clonePath, this));
+				es.execute(new PatchFinderThread(sourceBatches.get(thread), clonePath));
 				thread++;
 			}
 		}
 
 		es.shutdown();
-		return this.patchCommits;
 	}
-
-
 }
