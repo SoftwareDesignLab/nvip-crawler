@@ -99,7 +99,8 @@ public class VersionManager {
      *
      * For example, a list of ["before", "1.8.9", "1.9", "9.6+"]
      * would become version ranges [BEFORE 1.8.9, EXACT 1.9, AFTER 9.6]
-     * TODO: handle between case
+     * TODO: handle between case, handle "v2 to 1.3.3" becoming "1.3.3 through 2", not "2 through 1.3.3"
+     * TODO: version 2.0 should match with EXACT 2, GROUP VERSIONS with 1.3.2_4 should work
      * @param versionWords list of product version words derived from NER model
      */
     public void processVersions(String[] versionWords) {
@@ -166,10 +167,13 @@ public class VersionManager {
             }else if(versionWord.equals("to") && !beforeFlag){
                 throughFlag = true;
 
-            //Handles "6.3.1 and earlier"
+            //Handles "6.3.1 and earlier" "6.3.1 and prior versions" as well as after and later
             }else if(versionWord.equals("and")){
-                if(versionWords[i + 1].equals("earlier")){
+                if(versionWords[i + 1].equals("earlier") || versionWords[i + 1].equals("prior")){
                     if(isVersion(versionWords[i - 1])) addRangeFromString("before " + versionWords[i - 1]);
+                }
+                if(versionWords[i + 1].equals("after") || versionWords[i + 1].equals("later")){
+                    if(isVersion(versionWords[i - 1])) addRangeFromString("after " + versionWords[i - 1]);
                 }
             }
 
@@ -210,11 +214,13 @@ public class VersionManager {
      */
     public void formatVersions(String[] versionWords){
         for(int i = 0; i < versionWords.length; i++){
-            //If word is protected, continue
+            //Always remove commas
+            versionWords[i] = versionWords[i].replace(",","");
+
+            //If word is in protectedWords, continue
             if(protectedWords.contains(versionWords[i])) continue;
 
             //Remove junk characters
-            versionWords[i] = versionWords[i].replace(",","");
             versionWords[i] = versionWords[i].replace(".x","");
             versionWords[i] = versionWords[i].replace("v","");
             versionWords[i] = versionWords[i].replace(")","");
@@ -223,6 +229,8 @@ public class VersionManager {
             versionWords[i] = versionWords[i].replace("b","");
             versionWords[i] = versionWords[i].replace("c","");
             versionWords[i] = versionWords[i].replace(":","");
+            versionWords[i] = versionWords[i].replace("r","");
+            versionWords[i] = versionWords[i].replace("h","");
 
             //Removes period at the end of a version "1.9.2." to "1.9.2"
             if(versionWords[i].charAt((versionWords[i].length()) - 1) == '.'){
