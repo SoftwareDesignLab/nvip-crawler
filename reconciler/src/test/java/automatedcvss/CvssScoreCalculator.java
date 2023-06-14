@@ -21,18 +21,17 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package edu.rit.se.nvip.automatedcvss;
-
-import java.util.Arrays;
+package automatedcvss;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.python.core.PyList;
 import org.python.core.PyObject;
 import org.python.util.PythonInterpreter;
-
 import utils.MyProperties;
 import utils.PropertyLoader;
+
+import java.util.Arrays;
 
 /**
  * 

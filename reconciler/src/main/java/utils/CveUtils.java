@@ -21,32 +21,28 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package classifier;
+package utils;
 
-import utils.MyProperties;
-import utils.PropertyLoader;
-import org.junit.Test;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
-import static org.junit.Assert.assertEquals;
 
-public class EntropyThenOrdinaryClassifierTest {
-    @Test
-    public void testTrainMLModel() {
-        MyProperties propertiesNvip = new MyProperties();
-        propertiesNvip = new PropertyLoader().loadConfigFile(propertiesNvip);
-        String[] trainingDataInfo = propertiesNvip.getCveCharacterizationTrainingDataInfo();
-        String trainingDataPath = trainingDataInfo[0];
-        String trainingDataFiles = trainingDataInfo[1];
-        String[] trainingDataFileArr = trainingDataFiles.split(",");
-        String trainingDataFileName = trainingDataFileArr[0];
-        trainingDataFileName = trainingDataPath + trainingDataFileName;
+public class CveUtils {
+	private static final Logger logger = LogManager.getLogger(CveUtils.class);
+	final static String RESERVED_CVE = "** RESERVED ** This candidate has been reserved";
+	final static String REJECTED_CVE = "** REJECT **  DO NOT USE THIS CANDIDATE NUMBER";
 
-        // pre-process training data and store it
-        String preProcessedTrainingDataFile = trainingDataFileName.concat("-processed.csv");
+	public static boolean isCveReservedEtc(String vulnDescr) {
 
-        EntropyThenOrdinaryClassifier entropyBasedCveClassifier = new EntropyThenOrdinaryClassifier(preProcessedTrainingDataFile);
-        entropyBasedCveClassifier.trainMLModel();
+		boolean isReserved = false;
 
-        assertEquals(entropyBasedCveClassifier.histograms.size(), 4);
-    }
+		try {
+			isReserved = vulnDescr.contains(RESERVED_CVE) || vulnDescr.contains(REJECTED_CVE) || vulnDescr.startsWith("** DISPUTED **");
+		} catch (Exception e) {
+			logger.error("ERROR: Failed to check if CVE with description: {} is reserved\n{}", vulnDescr, e);
+		}
+
+		return isReserved;
+	}
+
 }

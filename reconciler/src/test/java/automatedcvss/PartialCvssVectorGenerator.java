@@ -21,22 +21,13 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package edu.rit.se.nvip.automatedcvss;
+package automatedcvss;
 
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
+import automatedcvss.enums.*;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import edu.rit.se.nvip.automatedcvss.enums.AttackTheater;
-import edu.rit.se.nvip.automatedcvss.enums.ImpactMethod;
-import edu.rit.se.nvip.automatedcvss.enums.LogicalImpact;
-import edu.rit.se.nvip.automatedcvss.enums.Mitigation;
-import edu.rit.se.nvip.automatedcvss.enums.VdoNounGroup;
 
 /**
  *

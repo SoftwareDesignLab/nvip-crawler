@@ -23,17 +23,13 @@
  */
 package db;
 
-import archived.Vulnerability;
-import characterizer.model.*;
-import characterizer.utils.MyProperties;
-import characterizer.utils.PropertyLoader;
+import model.*;
+import utils.MyProperties;
+import utils.PropertyLoader;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import com.zaxxer.hikari.pool.HikariPool;
 import com.zaxxer.hikari.pool.HikariPool.PoolInitializationException;
-import model.CompositeDescription;
-import characterizer.model.CompositeVulnerability;
-import model.RawVulnerability;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -59,9 +55,9 @@ import java.util.regex.Pattern;
 public class DatabaseHelper {
 	private HikariConfig config = null;
 	private HikariDataSource dataSource;
-	private static final Logger logger = LogManager.getLogger(DatabaseHelper.class.getSimpleName());
+	private static final Logger logger = LogManager.getLogger(db.DatabaseHelper.class.getSimpleName());
 	private static String databaseType = "mysql";
-	private static DatabaseHelper databaseHelper = null;
+	private static db.DatabaseHelper databaseHelper = null;
 
 	private static final String GET_JOBS = "SELECT * FROM cvejobtrack";
 	private static final String GET_RAW_BY_CVE_ID = "SELECT * FROM rawdescription WHERE cve_id = ? AND is_garbage = 0";
@@ -176,9 +172,9 @@ public class DatabaseHelper {
 	 *
 	 * @return
 	 */
-	public static synchronized DatabaseHelper getInstance() {
+	public static synchronized db.DatabaseHelper getInstance() {
 		if (databaseHelper == null)
-			databaseHelper = new DatabaseHelper();
+			databaseHelper = new db.DatabaseHelper();
 
 		return databaseHelper;
 	}
@@ -775,10 +771,11 @@ public class DatabaseHelper {
 	public Map<String, Vulnerability> getExistingVulnerabilities() {
 
 		if (existingVulnMap.size() == 0) {
-			synchronized (DatabaseHelper.class) {
+			synchronized (db.DatabaseHelper.class) {
 				if (existingVulnMap.size() == 0) {
 					int vulnId;
-					String cveId, description, createdDate;
+					String cveId, description;
+					Timestamp createdDate;
 					int existAtNvd, existAtMitre;
 					existingVulnMap = new HashMap<>();
 					try (Connection connection = getConnection();) {
@@ -791,7 +788,7 @@ public class DatabaseHelper {
 							vulnId = rs.getInt("vuln_id");
 							cveId = rs.getString("cve_id");
 							description = rs.getString("description");
-							createdDate = rs.getString("created_date");
+							createdDate = rs.getTimestamp("created_date");
 							existAtNvd = rs.getInt("exists_at_nvd");
 							existAtMitre = rs.getInt("exists_at_mitre");
 							Vulnerability existingVulnInfo = new Vulnerability(vulnId, cveId, description, existAtNvd, existAtMitre,
@@ -824,10 +821,10 @@ public class DatabaseHelper {
 			pstmt.setString(2, vuln.getDescription());
 			pstmt.setString(3, vuln.getPlatform());
 			pstmt.setString(4, vuln.getPatch());
-			pstmt.setString(5, formatDate(vuln.getPublishDate()));
+			pstmt.setString(5, formatDate(String.valueOf(vuln.getPublishDate())));
 
-			pstmt.setString(6, formatDate(vuln.getLastModifiedDate())); // during insert create date is last modified date
-			pstmt.setString(7, formatDate(vuln.getLastModifiedDate()));
+			pstmt.setString(6, formatDate(String.valueOf(vuln.getLastModifiedDate()))); // during insert create date is last modified date
+			pstmt.setString(7, formatDate(String.valueOf(vuln.getLastModifiedDate())));
 			pstmt.setString(8, formatDate(vuln.getFixDate()));
 			/**
 			 * Bug fix: indexes 9 and 10 were wrong
@@ -858,8 +855,8 @@ public class DatabaseHelper {
 			pstmt.setString(1, vuln.getDescription());
 			pstmt.setString(2, vuln.getPlatform());
 			pstmt.setString(3, vuln.getPatch());
-			pstmt.setString(4, formatDate(vuln.getPublishDate()));
-			pstmt.setString(5, formatDate(vuln.getLastModifiedDate()));
+			pstmt.setString(4, formatDate(String.valueOf(vuln.getPublishDate())));
+			pstmt.setString(5, formatDate(String.valueOf(vuln.getLastModifiedDate())));
 			pstmt.setString(6, formatDate(vuln.getFixDate()));
 			pstmt.setString(7, vuln.getCveId()); // WHERE clause in SQL statement
 
@@ -1414,8 +1411,8 @@ public class DatabaseHelper {
 	 *
 	 * @return
 	 */
-	public static DatabaseHelper getInstanceForMultiThreading() {
-		return new DatabaseHelper();
+	public static db.DatabaseHelper getInstanceForMultiThreading() {
+		return new db.DatabaseHelper();
 	}
 
 	/**

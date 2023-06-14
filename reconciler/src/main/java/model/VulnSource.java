@@ -2,17 +2,17 @@
  * Copyright 2023 Rochester Institute of Technology (RIT). Developed with
  * government support under contract 70RSAT19CB0000020 awarded by the United
  * States Department of Homeland Security.
- *
+ * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- *
+ * 
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- *
+ * 
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -21,32 +21,57 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package classifier;
+package model;
 
-import utils.MyProperties;
-import utils.PropertyLoader;
-import org.junit.Test;
+/**
+ * 
+ * @author axoeec
+ *
+ */
+public class VulnSource {
+	String cveId;
+	String url;
 
-import static org.junit.Assert.assertEquals;
+	public VulnSource(String cveId, String url) {
+		this.cveId = cveId;
+		this.url = url;
+	}
 
-public class EntropyThenOrdinaryClassifierTest {
-    @Test
-    public void testTrainMLModel() {
-        MyProperties propertiesNvip = new MyProperties();
-        propertiesNvip = new PropertyLoader().loadConfigFile(propertiesNvip);
-        String[] trainingDataInfo = propertiesNvip.getCveCharacterizationTrainingDataInfo();
-        String trainingDataPath = trainingDataInfo[0];
-        String trainingDataFiles = trainingDataInfo[1];
-        String[] trainingDataFileArr = trainingDataFiles.split(",");
-        String trainingDataFileName = trainingDataFileArr[0];
-        trainingDataFileName = trainingDataPath + trainingDataFileName;
+	public String getCveId() {
+		return cveId;
+	}
 
-        // pre-process training data and store it
-        String preProcessedTrainingDataFile = trainingDataFileName.concat("-processed.csv");
+	public void setCveId(String cveId) {
+		this.cveId = cveId;
+	}
 
-        EntropyThenOrdinaryClassifier entropyBasedCveClassifier = new EntropyThenOrdinaryClassifier(preProcessedTrainingDataFile);
-        entropyBasedCveClassifier.trainMLModel();
+	public String getUrl() {
+		return url;
+	}
 
-        assertEquals(entropyBasedCveClassifier.histograms.size(), 4);
-    }
+	public void setUrl(String url) {
+		this.url = url;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		// null?
+		if (obj == null)
+			return false;
+
+		// different instance?
+		if (!(obj instanceof VulnSource))
+			return false;
+
+		// same instance, check URLs?
+		return getUrl().equalsIgnoreCase(((VulnSource) obj).getUrl());
+	}
+
+	@Override
+	public int hashCode() {
+		if (getUrl() == null)
+			return 0;
+		return getUrl().hashCode();
+	}
+
 }

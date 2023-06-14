@@ -28,8 +28,8 @@ import org.apache.logging.log4j.Logger;
 import org.python.core.PyList;
 import org.python.core.PyObject;
 import org.python.util.PythonInterpreter;
-import characterizer.utils.MyProperties;
-import characterizer.utils.PropertyLoader;
+import utils.MyProperties;
+import utils.PropertyLoader;
 
 import java.util.Arrays;
 

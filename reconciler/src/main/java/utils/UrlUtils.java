@@ -2,17 +2,17 @@
  * Copyright 2023 Rochester Institute of Technology (RIT). Developed with
  * government support under contract 70RSAT19CB0000020 awarded by the United
  * States Department of Homeland Security.
- *
+ * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- *
+ * 
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- *
+ * 
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -21,32 +21,27 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package classifier;
+package utils;
 
-import utils.MyProperties;
-import utils.PropertyLoader;
-import org.junit.Test;
+import java.net.MalformedURLException;
+import java.net.URL;
 
-import static org.junit.Assert.assertEquals;
+/**
+ * 
+ * @author axoeec
+ *
+ */
+public class UrlUtils {
 
-public class EntropyThenOrdinaryClassifierTest {
-    @Test
-    public void testTrainMLModel() {
-        MyProperties propertiesNvip = new MyProperties();
-        propertiesNvip = new PropertyLoader().loadConfigFile(propertiesNvip);
-        String[] trainingDataInfo = propertiesNvip.getCveCharacterizationTrainingDataInfo();
-        String trainingDataPath = trainingDataInfo[0];
-        String trainingDataFiles = trainingDataInfo[1];
-        String[] trainingDataFileArr = trainingDataFiles.split(",");
-        String trainingDataFileName = trainingDataFileArr[0];
-        trainingDataFileName = trainingDataPath + trainingDataFileName;
+	public String getBaseUrl(String sFullUrl) {
+		String sBaseUrl = sFullUrl;
+		try {
+			URL url = new URL(sFullUrl);
+			sBaseUrl = url.getProtocol() + "://" + url.getHost();
+		} catch (MalformedURLException e) {
+			sBaseUrl = null;
+		}
+		return sBaseUrl;
+	}
 
-        // pre-process training data and store it
-        String preProcessedTrainingDataFile = trainingDataFileName.concat("-processed.csv");
-
-        EntropyThenOrdinaryClassifier entropyBasedCveClassifier = new EntropyThenOrdinaryClassifier(preProcessedTrainingDataFile);
-        entropyBasedCveClassifier.trainMLModel();
-
-        assertEquals(entropyBasedCveClassifier.histograms.size(), 4);
-    }
 }

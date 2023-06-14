@@ -23,9 +23,9 @@
  */
 package db;
 
-import characterizer.model.CompositeVulnerability;
-import archived.Vulnerability;
-import characterizer.utils.CveUtils;
+import model.CompositeVulnerability;
+import model.Vulnerability;
+import utils.CveUtils;
 import org.apache.commons.collections4.ListUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -94,7 +94,7 @@ public class DbParallelProcessor {
 				logger.error("A serious error has occurred! The parallel job was terminated due to timeout before DONE! Check log files!");
 			}
 
-			DatabaseHelper.clearExistingVulnMap(); // clear existing CVEs map!
+			db.DatabaseHelper.clearExistingVulnMap(); // clear existing CVEs map!
 		} catch (InterruptedException e2) {
 			logger.error(
 					"Error while awaiting task completion! # of threads: " + numberOfThreads + " # of lists in the partitioned large vuln list: " + vulnList2.size() + " Exception: " + e2.toString());
@@ -110,7 +110,7 @@ public class DbParallelProcessor {
 	 *
 	 */
 	private class VulnRecordThread extends Thread implements Runnable {
-		DatabaseHelper databaseHelper;
+		db.DatabaseHelper databaseHelper;
 		private final List<CompositeVulnerability> vulnList;
 		private int runId = 0;
 
@@ -118,7 +118,7 @@ public class DbParallelProcessor {
 			logger.info("NEW VULN RECORD THREAD");
 			this.vulnList = vulnList;
 			this.runId = runId;
-			databaseHelper = DatabaseHelper.getInstanceForMultiThreading();
+			databaseHelper = db.DatabaseHelper.getInstanceForMultiThreading();
 		}
 
 		// run process

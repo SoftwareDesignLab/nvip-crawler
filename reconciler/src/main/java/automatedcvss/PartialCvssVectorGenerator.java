@@ -24,7 +24,6 @@
 package automatedcvss;
 
 import automatedcvss.enums.*;
-import characterizer.automatedcvss.enums.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;

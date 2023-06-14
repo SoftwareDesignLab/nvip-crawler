@@ -21,9 +21,9 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package edu.rit.se.nvip.characterizer.classifier;
+package classifier;
 
-import edu.rit.se.nvip.characterizer.CvePreProcessor;
+import preprocessor.CvePreProcessor;
 import utils.MyProperties;
 import utils.PropertyLoader;
 import org.junit.Test;

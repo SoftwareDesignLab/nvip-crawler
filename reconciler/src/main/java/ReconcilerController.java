@@ -48,7 +48,7 @@ public class ReconcilerController {
         runProcessors(reconciledVulns);
 
         characterizeCVEs(reconciledVulns);
-`
+
         int upsertCount = 0;
         for (model.CompositeVulnerability vuln : reconciledVulns) {
             int status = dbh.insertOrUpdateVulnerabilityFull(vuln);

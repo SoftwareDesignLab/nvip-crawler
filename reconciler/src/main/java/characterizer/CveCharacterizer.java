@@ -24,20 +24,19 @@ package characterizer; /**
 
 import automatedcvss.CvssScoreCalculator;
 import automatedcvss.PartialCvssVectorGenerator;
+import model.CvssScore;
+import model.VdoCharacteristic;
 import classifier.AbstractCveClassifier;
 import classifier.CveClassifierFactory;
 import db.DatabaseHelper;
 import exploitability.ImpactPredictor;
 import exploitability.SeverityPredictor;
-import characterizer.model.CompositeVulnerability;
-import characterizer.model.CvssScore;
-import characterizer.model.VdoCharacteristic;
-import preprocessor.CvePreProcessor;
-import characterizer.utils.MyProperties;
-import characterizer.utils.PropertyLoader;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import preprocessor.CvePreProcessor;
+import utils.MyProperties;
+import utils.PropertyLoader;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -154,7 +153,7 @@ public class CveCharacterizer {
 	 * 
 	 * @param cveList
 	 */
-	public List<CompositeVulnerability> characterizeCveList(List<CompositeVulnerability> cveList, DatabaseHelper databaseHelper, int limit) {
+	public List<model.CompositeVulnerability> characterizeCveList(List<model.CompositeVulnerability> cveList, DatabaseHelper databaseHelper, int limit) {
 
 		long start = System.currentTimeMillis();
 		int totCharacterized = 0;
@@ -168,7 +167,7 @@ public class CveCharacterizer {
 
 		// predict for each CVE, the model was trained in the constructor!
 		for (int i = 0; i < cveList.size(); i++) {
-			CompositeVulnerability vulnerability = null;
+			model.CompositeVulnerability vulnerability = null;
 			/**
 			 * To skip the rest of the characterization for the very first run or if the
 			 * system has not been run for a long time. The process could be time consuming
@@ -194,7 +193,7 @@ public class CveCharacterizer {
 					countBadDescription++;
 					continue; // if no description or old CVE skip!
 				}
-				if (vulnerability.getCveReconcileStatus() == CompositeVulnerability.CveReconcileStatus.DO_NOT_CHANGE) {
+				if (vulnerability.getCveReconcileStatus() == model.CompositeVulnerability.CveReconcileStatus.DO_NOT_CHANGE) {
 					//logger.info("No change in description for Characterization of {}", cveDesc);
 					countNotChanged++;
 					continue; // the same CVE in db

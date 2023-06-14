@@ -21,14 +21,13 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package edu.rit.se.nvip.characterizer.classifier;
+package classifier;
 
-import static org.junit.Assert.assertEquals;
-
+import org.junit.Test;
 import utils.MyProperties;
 import utils.PropertyLoader;
 
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
 
 public class CveClassifierFactorTest {
     @Test
