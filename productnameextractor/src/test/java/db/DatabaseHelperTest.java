@@ -219,8 +219,25 @@ public class DatabaseHelperTest {
 	}
 
 	@Test
-	public void insertAffectedProductsToDBTest() {
-		// TODO
+	public void insertAffectedProductsToDBTest() throws SQLException {
+		insertAffectedReleasesV2Test();
+		// Prepare test data
+		int count = 5;
+		List<CompositeVulnerability> products = new ArrayList<>();
+		for (int i = 0; i < count; i++) {
+			products.add(new CompositeVulnerability(i, "CVE-" + i));
+		}
+
+		// Mock the database interactions
+		when(hds.getConnection()).thenReturn(conn);
+		when(conn.prepareStatement(anyString())).thenReturn(pstmt);
+
+		// Call the method under test
+		dbh.insertAffectedProductsToDB(products);
+
+		// Verify the expected interactions
+		verify(pstmt, times(count*5)).setString(anyInt(), anyString());
+		verify(pstmt, times(count)).executeUpdate();
 	}
 
 	@Test
