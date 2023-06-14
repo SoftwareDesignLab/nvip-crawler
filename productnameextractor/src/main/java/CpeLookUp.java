@@ -446,9 +446,6 @@ public class CpeLookUp {
 		ArrayList<String> cpeIDs = new ArrayList<>();
 		ArrayList<Product> productsToAdd = new ArrayList<>();
 
-		//Ensures that there are no duplicate entries
-		HashSet<String> addedVersions = new HashSet<>();
-
 		if (selectedGroups.size() == 0) {
 			return null;
 		}
@@ -459,26 +456,29 @@ public class CpeLookUp {
 			cpeIDs.add(cpeName);
 			productsToAdd.add(new Product(selectedGroups.get(0).getCpeGroup().getCommonTitle(), cpeName));
 		} else {
+			// Get raw version words array
+			String[] versionWords = product.getVersions() // Get product versions
+					.stream().map(String::toLowerCase) // Map each element toLowerCase
+					.toArray(String[]::new); // Return elements in a String[]
+
+			// Process non-specific versions into enumerated ranges
+			// [ "1.2.2", "through", "1.3", "1.5", "before", "1.8.9" ]
+			// [ "1.2.2", "1.2.3", ... "1.3", 1.5, "1.8.0", ... "1.8.9" ]
+			versionManager.processVersions(versionWords);
+
 			for (CPEGroupFromMap selectedGroup : selectedGroups) {
+
+				//Ensures that there are no duplicate entries
+				HashSet<String> addedVersions = new HashSet<>();
+
+				//If no version ranges available, break
+				if(versionManager.getVersionRanges().size() == 0){
+					break;
+				}
 
 				// Get versions from group
 				final CpeGroup group = selectedGroup.getCpeGroup();
 				final HashMap<String, CpeEntry> groupVersions = group.getVersions();
-
-				// Get raw version words array
-				String[] versionWords = product.getVersions() // Get product versions
-						.stream().map(String::toLowerCase) // Map each element toLowerCase
-						.toArray(String[]::new); // Return elements in a String[]
-
-				// Process non-specific versions into enumerated ranges
-				// [ "1.2.2", "through", "1.3", "1.5", "before", "1.8.9" ]
-				// [ "1.2.2", "1.2.3", ... "1.3", 1.5, "1.8.0", ... "1.8.9" ]
-				versionManager.processVersions(versionWords);
-
-				// If no version ranges derived, continue to next group
-				if(versionManager.getVersionRanges().size() == 0){
-					continue;
-				}
 
 				// Counter for matching versions
 				int matchesCounter = 0;
