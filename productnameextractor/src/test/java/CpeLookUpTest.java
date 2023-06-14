@@ -163,11 +163,11 @@ public class CpeLookUpTest {
 	}
 
 	@Test
-	public void loadProductDictTest() {
+	public void queryProductDictTest() {
 		int maxPages = 2;
 		int maxAttemptsPerPage = 3;
 		// Call the method to load the product dictionary
-		Map<String, CpeGroup> loadedDict = cpeLookUp.loadProductDict(maxPages, maxAttemptsPerPage);
+		Map<String, CpeGroup> loadedDict = cpeLookUp.queryProductDict(maxPages, maxAttemptsPerPage);
 
 		// Assert that the loaded dictionary is not null
 		Assertions.assertNotNull(loadedDict);
