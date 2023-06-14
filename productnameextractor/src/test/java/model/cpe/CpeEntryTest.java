@@ -1,46 +1,71 @@
 package model.cpe;
 
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
+import static org.junit.Assert.*;
 
 public class CpeEntryTest {
 
     @Test
-    public void testCpeEntryEquals() {
-        // Create two CpeEntry objects with the same properties
-        CpeEntry entry1 = new CpeEntry("title", "version", "update", "cpeID", "platform");
-        CpeEntry entry2 = new CpeEntry("title", "version", "update", "cpeID", "platform");
+    public void testGettersAndConstructor() {
+        CpeEntry entry = new CpeEntry("Title", "1.0", "update", "cpeID", "platform");
 
-        // Assert that the two objects are equal
-        Assertions.assertEquals(entry1, entry2);
+        // Test getters
+        assertEquals("Title", entry.getTitle());
+        assertEquals("1.0", entry.getVersion());
+        assertEquals("update", entry.getUpdate());
+        assertEquals("cpeID", entry.getCpeID());
+        assertEquals("platform", entry.getPlatform());
     }
 
     @Test
-    public void testCpeEntryNotEquals() {
-        // Create two CpeEntry objects with different properties
-        CpeEntry entry1 = new CpeEntry("title1", "version1", "update1", "cpeID1", "platform1");
-        CpeEntry entry2 = new CpeEntry("title2", "version2", "update2", "cpeID2", "platform2");
+    public void testSetters() {
+        CpeEntry entry = new CpeEntry("Title", "1.0", "update", "cpeID", "platform");
 
-        // Assert that the two objects are not equal
-        Assertions.assertNotEquals(entry1, entry2);
+        // Test setters
+        entry.setTitle("New Title");
+        entry.setVersion("2.0");
+        entry.setUpdate("new update");
+        entry.setCpeID("new cpeID");
+        entry.setPlatform("new platform");
+
+        assertEquals("New Title", entry.getTitle());
+        assertEquals("2.0", entry.getVersion());
+        assertEquals("new update", entry.getUpdate());
+        assertEquals("new cpeID", entry.getCpeID());
+        assertEquals("new platform", entry.getPlatform());
     }
 
     @Test
-    public void testCpeEntryHashCode() {
-        // Create two CpeEntry objects with the same properties
-        CpeEntry entry1 = new CpeEntry("title", "version", "update", "cpeID", "platform");
-        CpeEntry entry2 = new CpeEntry("title", "version", "update", "cpeID", "platform");
+    public void testEquals() {
+        CpeEntry entry1 = new CpeEntry("Title", "1.0", "update", "cpeID", "platform");
+        CpeEntry entry2 = new CpeEntry("Title", "1.0", "update", "cpeID", "platform");
+        CpeEntry entry3 = new CpeEntry("Different Title", "2.0", "update", "cpeID", "platform");
 
-        // Assert that the hash codes of the two objects are equal
-        Assertions.assertEquals(entry1.hashCode(), entry2.hashCode());
+        // Test equality between two CpeEntry instances with the same values
+        assertEquals(entry1, entry2);
+
+        // Test inequality between two CpeEntry instances with different values
+        assertNotEquals(entry1, entry3);
     }
 
     @Test
-    public void testCpeEntryToString() {
-        // Create a CpeEntry object
-        CpeEntry entry = new CpeEntry("title", "version", "update", "cpeID", "platform");
+    public void testHashCode() {
+        CpeEntry entry1 = new CpeEntry("Title", "1.0", "update", "cpeID", "platform");
+        CpeEntry entry2 = new CpeEntry("Title", "1.0", "update", "cpeID", "platform");
+        CpeEntry entry3 = new CpeEntry("Different Title", "2.0", "update", "cpeID", "platform");
 
-        // Assert the string representation of the object
-        Assertions.assertEquals("CpeEntry [title=title, cpeID=cpeID]", entry.toString());
+        // Test that two equal CpeEntry instances have the same hash code
+        assertEquals(entry1.hashCode(), entry2.hashCode());
+
+        // Test that two different CpeEntry instances have different hash codes
+        assertNotEquals(entry1.hashCode(), entry3.hashCode());
+    }
+
+    @Test
+    public void testToString() {
+        CpeEntry entry = new CpeEntry("Title", "1.0", "update", "cpeID", "platform");
+
+        String expected = "CpeEntry [title=Title, cpeID=cpeID]";
+        assertEquals(expected, entry.toString());
     }
 }
