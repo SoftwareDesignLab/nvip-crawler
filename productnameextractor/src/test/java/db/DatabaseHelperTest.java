@@ -25,6 +25,7 @@ package db;
 
 import com.zaxxer.hikari.HikariDataSource;
 import model.cve.AffectedRelease;
+import model.cve.CompositeVulnerability;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.AfterClass;
@@ -223,8 +224,34 @@ public class DatabaseHelperTest {
 	}
 
 	@Test
-	public void getExistingCompositeVulnerabilitiesTest() {
-		// TODO
+	public void getExistingCompositeVulnerabilitiesTest() throws SQLException {
+		// Prepare test data
+		int maxVulnerabilities = 5;
+		int expectedVulnerabilities = 3;
+
+		// Mock the database interactions
+		when(conn.prepareStatement(anyString())).thenReturn(pstmt);
+		when(pstmt.executeQuery()).thenReturn(res);
+		when(res.next()).thenReturn(true, true, true, false); // Simulate 3 rows returned from the query, followed by an extra call returning false
+		when(res.getInt("vuln_id")).thenReturn(1, 2, 3);
+		when(res.getString("cve_id")).thenReturn("CVE-2021-001", "CVE-2021-002", "CVE-2021-003");
+		when(res.getString("description")).thenReturn("Description 1", "Description 2", "Description 3");
+
+		// Call the method under test
+		Map<String, CompositeVulnerability> result = dbh.getExistingCompositeVulnerabilities(maxVulnerabilities);
+
+		// Verify the expected interactions
+		verify(conn).prepareStatement(anyString());
+		verify(pstmt).executeQuery();
+		verify(res, times(expectedVulnerabilities)).getInt("vuln_id");
+		verify(res, times(expectedVulnerabilities)).getString("cve_id");
+		verify(res, times(expectedVulnerabilities)).getString("description");
+
+		// Verify the result
+		assertEquals(expectedVulnerabilities, result.size());
+		assertEquals("Description 1", result.get("CVE-2021-001").getDescription());
+		assertEquals("Description 2", result.get("CVE-2021-002").getDescription());
+		assertEquals("Description 3", result.get("CVE-2021-003").getDescription());
 	}
 
 	@Test
