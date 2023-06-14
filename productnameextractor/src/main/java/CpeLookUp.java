@@ -617,14 +617,14 @@ public class CpeLookUp {
 	 * @return found version String
 	 */
 	public static String getVersionFromCPEid(String cpeID) {
-		String vendor = null;
+		String version = null;
 
 		// Match against CPE regex
 		final Matcher m = CPE_PATTERN.matcher(cpeID);
-		if(m.find()) vendor = m.group(3);
+		if(m.find()) version = m.group(3);
 		else logger.warn("Could not match CPE String {}", cpeID);
 
-		return vendor;
+		return version;
 	}
 
 	/**
