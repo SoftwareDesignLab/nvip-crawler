@@ -124,6 +124,9 @@ public class CpeGroup {
 		CpeGroup other = (CpeGroup) obj;
 		if (groupID == null) {
 			return other.groupID == null;
-		} else return groupID.equals(other.groupID);
+		}
+		if(!groupID.equals(other.groupID))
+			return false;
+		return versions.equals(other.versions);
 	}
 }
