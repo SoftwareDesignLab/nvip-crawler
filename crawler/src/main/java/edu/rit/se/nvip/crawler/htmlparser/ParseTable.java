@@ -179,11 +179,26 @@ public class ParseTable extends AbstractCveParser implements ParserStrategy {
         return nextPage;
     }
 
+    private void tryPageGet(String sSourceURL) {
+        int tries = 0;
+        while (tries < 2) {
+            try {
+                driver.get(sSourceURL);
+                break;
+            } catch (TimeoutException e) {
+                logger.info("Retrying page get...");
+                tries++;
+            }
+        }
+    }
+
     @Override
     public List<RawVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
         sourceUrl = sSourceURL;
         // get the page
-        driver.get(sSourceURL);
+        tryPageGet(sSourceURL);
+        if (driver.getPageSource() == null) return new ArrayList<>();
+//        driver.get(sSourceURL);
         // click on any cookie agree button before trying to parse and click on anything else
         clickAcceptCookies();
         List<RawVulnerability> vulnList = new ArrayList<>();

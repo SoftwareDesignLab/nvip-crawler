@@ -80,10 +80,24 @@ public class ParseAccordion extends AbstractCveParser implements ParserStrategy 
         return cves;
     }
 
+    private void tryPageGet(String sSourceURL) {
+        int tries = 0;
+        while (tries < 2) {
+            try {
+                driver.get(sSourceURL);
+                break;
+            } catch (TimeoutException e) {
+                logger.info("Retrying page get...");
+                tries++;
+            }
+        }
+    }
+
     @Override
     public List<RawVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
         sourceUrl = sSourceURL;
-        driver.get(sSourceURL);
+        tryPageGet(sSourceURL);
+        if (driver.getPageSource() == null) return new ArrayList<>();
         clickAcceptCookies();
         List<RawVulnerability> vulnList = new ArrayList<>();
 
