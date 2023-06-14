@@ -26,11 +26,12 @@ public class ProductNameExtractorController {
     private static final DatabaseHelper databaseHelper = DatabaseHelper.getInstance();
     private static final ObjectMapper OM = new ObjectMapper();
     protected static int cveLimit = 300;
-    protected static int maxPages = 5;
+    protected static int maxPages = 10;
     protected static int maxAttemptsPerPage = 2;
     protected static boolean prettyPrint = false;
     private static String productDictPath = "src/test/resources/data/product_dict.json";
     private static Instant productDictLastCompilationDate;
+    private static AffectedProductIdentifier affectedProductIdentifier;
 
     /**
      * Reads in the CPE dictionary from file at the given path.
@@ -141,6 +142,33 @@ public class ProductNameExtractorController {
         }
     }
 
+    private static void updateProductDict(Map<String, CpeGroup> productDict, long timeSinceLastComp) {
+        // Check if product dict is stale
+        if(timeSinceLastComp / (60 * 60 * 12) > 0) { // 60sec/min * 60min/hr * 24hrs = 1 day
+            logger.info("Product dictionary file is stale, fetching data from NVD to refresh it...");
+            int insertedCounter = 0;
+            int notChangedCounter = 0;
+            int updatedCounter = 0;
+            final Map<String, CpeGroup> updatedProductDict = affectedProductIdentifier.queryCPEDict(maxPages, maxAttemptsPerPage); // Query
+
+            logger.info("Refreshing product dictionary...");
+            for (Map.Entry<String, CpeGroup> e : updatedProductDict.entrySet()) {
+                final CpeGroup oldValue = productDict.put(e.getKey(), e.getValue());
+                if(oldValue == null) insertedCounter++;
+                else if(oldValue.equals(e.getValue())) notChangedCounter++;
+                else updatedCounter++;
+            }
+
+            logger.info("Successfully refreshed the product dictionary with {} inserted, {} updated, and {} unchanged entries",
+                    insertedCounter,
+                    updatedCounter,
+                    notChangedCounter
+            );
+
+            writeProductDict(productDict); // Write updated product dict
+        }
+    }
+
     /**
      * Main driver for the ProductNameExtractor, responsible for pulling vulnerabilities from the db,
      * loading the CPE dictionary, and cross-referencing that information to generate and store
@@ -168,7 +196,7 @@ public class ProductNameExtractorController {
         final long getProdStart = System.currentTimeMillis();
 
         // Init AffectedProductIdentifier
-        final AffectedProductIdentifier affectedProductIdentifier = new AffectedProductIdentifier(vulnerabilities);
+        ProductNameExtractorController.affectedProductIdentifier = new AffectedProductIdentifier(vulnerabilities);
 
         // Init CPE dict data storage
         Map<String, CpeGroup> productDict;
@@ -179,23 +207,23 @@ public class ProductNameExtractorController {
 
             // Calculate time since last compilation
             final long timeSinceLastComp = Duration.between(productDictLastCompilationDate, Instant.now()).getSeconds();
-            logger.info("Successfully read product dictionary from file '{}' ({} hours old)",
+            logger.info("Successfully read {} products from file '{}' ({} hours old)",
+                    productDict.size(),
                     productDictPath,
                     timeSinceLastComp / 3600 // seconds -> hours
             );
 
-            // Check if product dict is stale (change ChronoUnit and value to adjust frequency)
-            if(timeSinceLastComp / (60 * 60 * 24) > 0) { // 60sec/min * 60min/hr * 24hrs = 1 day
-                // TODO: Update/fetch new dict
-            }
+            // Update dict as needed
+            updateProductDict(productDict, timeSinceLastComp);
 
             // Load CPE dict into affectedProductIdentifier
             affectedProductIdentifier.loadCPEDict(productDict);
         } catch (Exception e) {
             logger.error("Failed to load product dict at filepath '{}', querying NVD...: {}", productDictPath, e.toString());
-            productDict = affectedProductIdentifier.loadCPEDict(maxPages, maxAttemptsPerPage);
+            productDict = affectedProductIdentifier.queryCPEDict(maxPages, maxAttemptsPerPage); // Query
+            affectedProductIdentifier.loadCPEDict(productDict); // Load into CpeLookup
 
-            writeProductDict(productDict);
+            writeProductDict(productDict); // Write product dict
         }
 
         // Run the AffectedProductIdentifier with the fetched vuln list
