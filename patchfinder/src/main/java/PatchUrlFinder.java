@@ -80,7 +80,7 @@ public class PatchUrlFinder {
 
 			ArrayList<String> urls = new ArrayList<>();
 			for (CpeGroup group: affectedProducts.values()) {
-				urls.addAll(parseURL(group.getGroupID()));
+				urls.addAll(parseURL("cpe:2.3:a:" + group.getGroupID() + ":*:*:*:*:*:*"));
 			}
 			logger.info("Found {} potential patch sources for CVE: {}", urls.size(), cveId);
 			cveCpeUrls.put(cveId, urls);
@@ -107,32 +107,32 @@ public class PatchUrlFinder {
 		}
 
 		// TODO: Fix this
-//		// Parse keywords from CPE to create links for github, bitbucket and gitlab
-//		// Also checks if the created URL is already used
-//		if (!wordArr[3].equals("*")) {
-//			HashSet<String> addresses = initializeAddresses(wordArr[3]);
-//			for (String address : addresses) {
-//				if (!wordArr[4].equals("*")) {
-//					address += wordArr[4];
-//				}
-//
-//				// Check the http connections for each URL,
-//				// If any successful, add them to the list to be stored
-//				newAddresses = testConnection(address);
-//			}
-//
-//		} else if (!wordArr[4].equals("*")) {
-//			for (String base : ADDRESS_BASES) {
-//				String address = base + wordArr[4];;
-//				newAddresses = testConnection(address);
-//			}
-//		}
-//
-//		// If no successful URLs, try an advanced search with
-//		// GitHub's search feature to double check
-//		if (newAddresses.isEmpty()) {
-//			newAddresses = advanceParseSearch(wordArr[3], wordArr[4]);
-//		}
+		// Parse keywords from CPE to create links for github, bitbucket and gitlab
+		// Also checks if the created URL is already used
+		if (!m.group(1).equals("*")) {
+			HashSet<String> addresses = initializeAddresses(m.group(1));
+			for (String address : addresses) {
+				if (!m.group(2).equals("*")) {
+					address += m.group(2);
+				}
+
+				// Check the http connections for each URL,
+				// If any successful, add them to the list to be stored
+				newAddresses = testConnection(address);
+			}
+
+		} else if (!m.group(2).equals("*")) {
+			for (String base : ADDRESS_BASES) {
+				String address = base + m.group(2);
+				newAddresses = testConnection(address);
+			}
+		}
+
+		// If no successful URLs, try an advanced search with
+		// GitHub's search feature to double check
+		if (newAddresses.isEmpty()) {
+			newAddresses = advanceParseSearch(m.group(1), m.group(2));
+		}
 
 		return newAddresses;
 		
