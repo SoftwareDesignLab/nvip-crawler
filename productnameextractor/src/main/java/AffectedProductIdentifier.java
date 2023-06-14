@@ -284,8 +284,8 @@ public class AffectedProductIdentifier {
 	 * @param maxAttemptsPerPage limit to number of query attempts per page, set to 0 for no limit
 	 * @return a map of loaded CpeGroup objects
 	 */
-	public Map<String, CpeGroup> loadCPEDict(int maxPages, int maxAttemptsPerPage) {
-		return this.cpeLookUp.loadProductDict(maxPages, maxAttemptsPerPage);
+	public Map<String, CpeGroup> queryCPEDict(int maxPages, int maxAttemptsPerPage) {
+		return this.cpeLookUp.queryProductDict(maxPages, maxAttemptsPerPage);
 	}
 
 	/**
