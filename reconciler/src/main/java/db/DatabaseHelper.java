@@ -2445,7 +2445,7 @@ public class DatabaseHelper {
 			while (rs.next()) {
 
 				try {
-					nvdVulnerabilities.add(new model.NvdVulnerability(rs.getString("cve_id"), rs.getTimestamp("published_date").toLocalDateTime(), rs.getString("status")));
+					nvdVulnerabilities.add(new model.NvdVulnerability(rs.getString("cve_id"), rs.getTimestamp("published_date"), NvdVulnerability.nvdStatus.valueOf(rs.getString("status"))));
 				} catch (Exception ignore) {}
 
 			}
@@ -2457,14 +2457,14 @@ public class DatabaseHelper {
 	}
 
 
-	public int insertNvdCve(model.NvdVulnerability nvdCve) {
+	public int insertNvdCve(NvdVulnerability nvdCve) {
 
 		try (Connection connection = getConnection();
 			 PreparedStatement pstmt = connection.prepareStatement(insertIntoNvdData);) {
 
 			pstmt.setString(1, nvdCve.getCveId());
 			pstmt.setTimestamp(2, nvdCve.getPublishDate());
-			pstmt.setString(3, nvdCve.getStatus());
+			pstmt.setString(3, String.valueOf(nvdCve.getStatus()));
 			pstmt.execute();
 
 			logger.info("Successfully Inserted CVE {} with Published Date {} and Status {} into nvd_data", nvdCve.getCveId(), nvdCve.getPublishDate(), nvdCve.getStatus());
