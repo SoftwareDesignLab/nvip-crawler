@@ -74,7 +74,7 @@ public class ReconcilerController {
             try{
 
                 CveCharacterizer cveCharacterizer = new CveCharacterizer(trainingDataInfo[0], trainingDataInfo[1], "ML",
-                        "VOTE", false);
+                        "VOTE");
 
                 return cveCharacterizer.characterizeCveList((List<CompositeVulnerability>)crawledVulnerabilityList, dbh,
                         (Integer) characterizationVars.get("cveCharacterizationLimit"));

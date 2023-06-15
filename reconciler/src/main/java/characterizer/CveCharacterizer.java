@@ -27,7 +27,6 @@ import automatedcvss.PartialCvssVectorGenerator;
 import characterizer.classifier.AbstractCveClassifier;
 import characterizer.classifier.CveClassifierFactory;
 import db.DatabaseHelper;
-import exploitability.ImpactPredictor;
 import model.CvssScore;
 import model.VdoCharacteristic;
 import org.apache.commons.io.FileUtils;
@@ -66,9 +65,11 @@ public class CveCharacterizer {
 	 * @param trainingDataFiles
 	 * @param approach
 	 * @param method
-	 * @param loadSerializedModels
+	 //* @param loadSerializedModels
 	 */
-	public CveCharacterizer(String trainingDataPath, String trainingDataFiles, String approach, String method, boolean loadSerializedModels) {
+
+	//removed  boolean loadSerializedModels as well as exploitability package
+	public CveCharacterizer(String trainingDataPath, String trainingDataFiles, String approach, String method) {
 		try {
 
 			/**
@@ -111,19 +112,6 @@ public class CveCharacterizer {
 					trainingDataPath, e.getMessage());
 		}
 
-		try {
-			if (loadSerializedModels) {
-//				MyProperties propertiesNvip = new MyProperties();
-//				propertiesNvip = new PropertyLoader().loadConfigFile(propertiesNvip);
-//				new SeverityPredictor(propertiesNvip.getDataDir());
-//				new ImpactPredictor(propertiesNvip.getDataDir());
-				//new SeverityPredictor("nvip_data");
-				new ImpactPredictor("nvip_data");
-			}
-		} catch (Exception e) {
-			logger.error(e.toString());
-
-		}
 	}
 
 	/**
