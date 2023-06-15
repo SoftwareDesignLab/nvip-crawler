@@ -25,6 +25,7 @@
 import commits.PatchCommit;
 import db.DatabaseHelper;
 import model.CpeGroup;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eclipse.jgit.util.FileUtils;
@@ -46,6 +47,7 @@ public class PatchFinder {
 
 	private static final ArrayList<PatchCommit> patchCommits = new ArrayList<>();
 	protected static int cveLimit = 10;
+	protected static int cpeLimit = 10;
 	protected static int maxThreads = 10;
 	protected static int cvesPerThread = 1;
 
@@ -64,6 +66,12 @@ public class PatchFinder {
 			} else throw new Exception();
 		} catch (Exception ignored) { logger.warn("Could not fetch CVE_LIMIT from env vars, defaulting to {}", cveLimit); }
 
+		try {
+			if(props.containsKey("CPE_LIMIT")) {
+				cpeLimit = Integer.parseInt(System.getenv("CPE_LIMIT"));
+				logger.info("Setting CPE_LIMIT to {}", cpeLimit);
+			} else throw new Exception();
+		} catch (Exception ignored) { logger.warn("Could not fetch CPE_LIMIT from env vars, defaulting to {}", cpeLimit); }
 	}
 
 	public static void main(String[] args) throws IOException, InterruptedException {
