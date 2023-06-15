@@ -1,17 +1,18 @@
 package reconciler;
 
-import java.sql.Timestamp;
-import java.util.HashMap;
-import java.util.LinkedHashSet;
-import java.util.Set;
-
 import model.CompositeDescription;
 import model.CompositeVulnerability;
 import model.RawVulnerability;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import java.sql.Timestamp;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.Set;
+
 import static model.CompositeDescription.equivalentBuildStrings;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ReconcilerTest {
 

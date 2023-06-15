@@ -44,6 +44,7 @@ public class CompositeDescription {
         this.descriptionTree = new DescriptionTree(null, sources.stream().map(DescriptionTree::new).collect(Collectors.toList()));
         this.sources = new HashSet<>(sources);
     }
+
     /**
      * Creates a CompositeDescription from a single source by copying relevant fields
      * @param newSingleSource A RawVulnerability to build a CompositeDescription from
