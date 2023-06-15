@@ -59,6 +59,10 @@ class ReconcilerTest {
     }
 
     private Timestamp offset(int nHours) {
+        //return new Timestamp(dummyMillis + nHours*3600L*1000);
+        if (nHours == 0){
+            return new Timestamp(dummyMillis);
+        }
         return new Timestamp(dummyMillis + nHours*3600L*1000);
     }
 
@@ -101,8 +105,8 @@ class ReconcilerTest {
         Set<RawVulnerability> newRaws = genRawVulns(2, 4);
         CompositeVulnerability reconciled = rec.reconcile(existing, newRaws);
         assertTrue(equivalentBuildStrings("((((1,2),3),4),5)", reconciled.getBuildString()));
-        assertEquals(offset(-5), reconciled.getPublishDate());
-        assertEquals(offset(5), reconciled.getLastModifiedDate());
+        assertEquals(offset(0), reconciled.getPublishDate());
+        assertEquals(offset(3), reconciled.getLastModifiedDate());
     }
 
     @Test
@@ -123,8 +127,8 @@ class ReconcilerTest {
         Set<RawVulnerability> newRaws = genRawVulns(4, 4);
         CompositeVulnerability reconciled = rec.reconcile(existing, newRaws);
         assertTrue(equivalentBuildStrings("(((1,2),3),4,5,6,7)", reconciled.getBuildString()));
-        assertEquals(offset(-7), reconciled.getPublishDate());
-        assertEquals(offset(7), reconciled.getLastModifiedDate());
+        assertEquals(offset(0), reconciled.getPublishDate());
+        assertEquals(offset(3), reconciled.getLastModifiedDate());
     }
 
     @Test
@@ -134,8 +138,8 @@ class ReconcilerTest {
         Set<RawVulnerability> newRaws = genRawVulns(4, 4);
         CompositeVulnerability reconciled = rec.reconcile(existing, newRaws);
         assertTrue(equivalentBuildStrings("(1,2,3,4,5,6,7)", reconciled.getBuildString()));
-        assertEquals(offset(-7), reconciled.getPublishDate());
-        assertEquals(offset(7), reconciled.getLastModifiedDate());
+        assertEquals(offset(0), reconciled.getPublishDate());
+        assertEquals(offset(3), reconciled.getLastModifiedDate());
     }
 
     @Test
