@@ -28,7 +28,6 @@ import characterizer.classifier.AbstractCveClassifier;
 import characterizer.classifier.CveClassifierFactory;
 import db.DatabaseHelper;
 import exploitability.ImpactPredictor;
-import exploitability.SeverityPredictor;
 import model.CvssScore;
 import model.VdoCharacteristic;
 import org.apache.commons.io.FileUtils;
@@ -118,7 +117,7 @@ public class CveCharacterizer {
 //				propertiesNvip = new PropertyLoader().loadConfigFile(propertiesNvip);
 //				new SeverityPredictor(propertiesNvip.getDataDir());
 //				new ImpactPredictor(propertiesNvip.getDataDir());
-				new SeverityPredictor("nvip_data");
+				//new SeverityPredictor("nvip_data");
 				new ImpactPredictor("nvip_data");
 			}
 		} catch (Exception e) {

@@ -253,6 +253,7 @@ public class DatabaseHelper {
 				}
 			} catch (FileNotFoundException e) {
 				String currDir = System.getProperty("user.dir");
+
 				logger.warn("Could not locate db config file in the root path \"{}\", getting it from resources! Warning: {}",
 						currDir, e.getMessage());
 				ClassLoader loader = Thread.currentThread().getContextClassLoader();
