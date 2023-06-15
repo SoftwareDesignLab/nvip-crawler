@@ -28,8 +28,6 @@ import org.apache.logging.log4j.Logger;
 import org.python.core.PyList;
 import org.python.core.PyObject;
 import org.python.util.PythonInterpreter;
-import utils.MyProperties;
-import utils.PropertyLoader;
 
 import java.util.Arrays;
 
@@ -51,14 +49,14 @@ public class CvssScoreCalculator {
 	 */
 	public CvssScoreCalculator() {
 		// load properties file
-		MyProperties propertiesNvip = new MyProperties();
-		propertiesNvip = new PropertyLoader().loadConfigFile(propertiesNvip);
+//		MyProperties propertiesNvip = new MyProperties();
+//		propertiesNvip = new PropertyLoader().loadConfigFile(propertiesNvip);
 
 		logger.info("Initializing PythonInterpreter for " + pythonMethodName + " in " + pythonPyFile);
 
 		// change the directory and execute the .py script
 		PythonInterpreter myPythonInterpreter = new PythonInterpreter();
-		String workingDir = propertiesNvip.getDataDir() + "/cvss/";
+		String workingDir = "nvip_data" + "/cvss/";
 		logger.info("Importing os for jython...");
 		myPythonInterpreter.exec("import os");
 		logger.info("Changing dir to {} for jython. Current directory is {}", workingDir, System.getProperty("user.dir"));

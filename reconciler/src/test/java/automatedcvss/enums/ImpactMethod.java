@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package edu.rit.se.nvip.automatedcvss.enums;
+package automatedcvss.enums;
 
 /**
  * 

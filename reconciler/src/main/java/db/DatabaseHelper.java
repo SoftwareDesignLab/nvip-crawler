@@ -23,16 +23,13 @@
  */
 package db;
 
-import model.*;
-import utils.MyProperties;
-import utils.PropertyLoader;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import com.zaxxer.hikari.pool.HikariPool;
 import com.zaxxer.hikari.pool.HikariPool.PoolInitializationException;
+import model.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -185,9 +182,11 @@ public class DatabaseHelper {
 	 */
 	private DatabaseHelper() {
 		try {
-			MyProperties propertiesNvip = new MyProperties();
-			propertiesNvip = new PropertyLoader().loadConfigFile(propertiesNvip);
-			databaseType = propertiesNvip.getDatabaseType();
+			//MyProperties propertiesNvip = new MyProperties();
+			//propertiesNvip = new PropertyLoader().loadConfigFile(propertiesNvip);
+			//databaseType = propertiesNvip.getDatabaseType();
+			//databaseType = System.getenv("DB_TYPE");
+			databaseType = "mysql";
 			logger.info("New NVIP.db.DatabaseHelper instantiated! It is configured to use " + databaseType + " database!");
 			if (databaseType.equalsIgnoreCase("mysql"))
 				Class.forName("com.mysql.cj.jdbc.Driver");

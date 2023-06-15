@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Rochester Institute of Technology (RIT). Developed with
+ * Copyright 2023 Rochester Institute of Technology (RIT). Developed with
  * government support under contract 70RSAT19CB0000020 awarded by the United
  * States Department of Homeland Security.
  * 
@@ -21,25 +21,23 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package utomatedcvss.enums;
+package characterizer.preprocessor;
+
+import java.util.List;
 
 /**
- *
- * Mitigation values
  * 
- * @author axoeec
+ * @author Carlos Castro
+ * 
+ *         This Interface exposes the functions related to the preprocessing of
+ *         text. It is set up as a Chain of Command design pattern, where each
+ *         preprocessor does its operation and calls on the next one This allows
+ *         for dynamic set up of the pre-processing steps, as well as adding or
+ *         removing steps later on
  *
  */
-public enum Mitigation {
-	ASLR("ASLR"), MultiFactorAuthentication("MultiFactor Authentication"), Sandboxed("Sandboxed"), HPKPHSTS("HPKP/HSTS"), PhysicalSecurity("Physical Security");
+public interface PreProcessor {
+	PreProcessor setNextPreProcessor(PreProcessor next);
 
-	private final String nounGroupValue;
-
-	Mitigation(final String nounGroupValue) {
-		this.nounGroupValue = nounGroupValue;
-	}
-
-	public String getNounGroupValue() {
-		return nounGroupValue;
-	}
+	List<String> process(String text);
 }

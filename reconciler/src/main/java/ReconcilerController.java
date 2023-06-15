@@ -69,19 +69,20 @@ public class ReconcilerController {
         logger.info("Characterizing and scoring NEW CVEs...");
 
         try {
-            String[] trainingDataInfo = System.getenv("NVIP_CVE_CHARACTERIZATION_TRAINING_DATA").split(",");
+            String[] trainingDataInfo = {"characterization/", "AttackTheater.csv,Context.csv,ImpactMethod.csv,LogicalImpact.csv,Mitigation.csv"};
             logger.info("Setting NVIP_CVE_CHARACTERIZATION_LIMIT to {}", System.getenv("NVIP_CVE_CHARACTERIZATION_LIMIT"));
             try{
 
-                CveCharacterizer cveCharacterizer = new CveCharacterizer(trainingDataInfo[0], trainingDataInfo[1], System.getenv("NVIP_CHARACTERIZATION_APPROACH"),
-                        System.getenv("NVIP_CHARACTERIZATION_METHOD"), false);
+                CveCharacterizer cveCharacterizer = new CveCharacterizer(trainingDataInfo[0], trainingDataInfo[1], "ML",
+                        "VOTE", false);
 
                 return cveCharacterizer.characterizeCveList((List<CompositeVulnerability>)crawledVulnerabilityList, dbh,
                         (Integer) characterizationVars.get("cveCharacterizationLimit"));
-            }catch (NullPointerException | NumberFormatException e) { logger.warn("Could not fetch _________________ from env vars, defaulting to {}", System.getenv("NVIP_CVE_CHARACTERIZATION_LIMIT")); }
+                //CATCH NEEDS TO BE EDITED
+            }catch (NullPointerException | NumberFormatException e) { logger.warn("Could not fetch NVIP_CHARACTERIZATION_METHOD from env vars, defaulting to {}", System.getenv("NVIP_CVE_CHARACTERIZATION_LIMIT")); }
 
         }
-        catch (NullPointerException | NumberFormatException e) { logger.warn("Could not fetch NVIP_CVE_CHARACTERIZATION_TRAINING_DATA from env vars, defaulting to {}", System.getenv("NVIP_CVE_CHARACTERIZATION_LIMIT")); }
+        catch (NullPointerException | NumberFormatException e) { logger.warn("Could not fetch NVIP_CVE_CHARACTERIZATION_TRAINING_DATA or NVIP_CVE_CHARACTERIZATION_TRAINING_DATA_DIR from env vars, defaulting to {}", System.getenv("NVIP_CVE_CHARACTERIZATION_LIMIT")); }
 
 
         // OLD CODE

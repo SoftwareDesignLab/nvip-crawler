@@ -24,19 +24,17 @@ package characterizer; /**
 
 import automatedcvss.CvssScoreCalculator;
 import automatedcvss.PartialCvssVectorGenerator;
-import model.CvssScore;
-import model.VdoCharacteristic;
-import classifier.AbstractCveClassifier;
-import classifier.CveClassifierFactory;
+import characterizer.classifier.AbstractCveClassifier;
+import characterizer.classifier.CveClassifierFactory;
 import db.DatabaseHelper;
 import exploitability.ImpactPredictor;
 import exploitability.SeverityPredictor;
+import model.CvssScore;
+import model.VdoCharacteristic;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import preprocessor.CvePreProcessor;
-import utils.MyProperties;
-import utils.PropertyLoader;
+import characterizer.preprocessor.CvePreProcessor;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -116,10 +114,12 @@ public class CveCharacterizer {
 
 		try {
 			if (loadSerializedModels) {
-				MyProperties propertiesNvip = new MyProperties();
-				propertiesNvip = new PropertyLoader().loadConfigFile(propertiesNvip);
-				new SeverityPredictor(propertiesNvip.getDataDir());
-				new ImpactPredictor(propertiesNvip.getDataDir());
+//				MyProperties propertiesNvip = new MyProperties();
+//				propertiesNvip = new PropertyLoader().loadConfigFile(propertiesNvip);
+//				new SeverityPredictor(propertiesNvip.getDataDir());
+//				new ImpactPredictor(propertiesNvip.getDataDir());
+				new SeverityPredictor("nvip_data");
+				new ImpactPredictor("nvip_data");
 			}
 		} catch (Exception e) {
 			logger.error(e.toString());
