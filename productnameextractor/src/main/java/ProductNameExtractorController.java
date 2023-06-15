@@ -126,7 +126,7 @@ public class ProductNameExtractorController {
         } else logger.warn("Could not fetch PRETTY_PRINT from env vars, defaulting to {}", prettyPrint);
     }
 
-    public static void writeProductDict(Map<String, CpeGroup> productDict) {
+    public static void writeProductDict(Map<String, CpeGroup> productDict, String productDictPath) {
         // Build output data map
         Map data = new LinkedHashMap<>();
         data.put("comptime", Instant.now().toString());
@@ -165,7 +165,7 @@ public class ProductNameExtractorController {
                     notChangedCounter
             );
 
-            writeProductDict(productDict); // Write updated product dict
+            writeProductDict(productDict, productDictPath); // Write updated product dict
         }
     }
 
@@ -223,7 +223,7 @@ public class ProductNameExtractorController {
             productDict = affectedProductIdentifier.queryCPEDict(maxPages, maxAttemptsPerPage); // Query
             affectedProductIdentifier.loadCPEDict(productDict); // Load into CpeLookup
 
-            writeProductDict(productDict); // Write product dict
+            writeProductDict(productDict, productDictPath); // Write product dict
         }
 
         // Run the AffectedProductIdentifier with the fetched vuln list
