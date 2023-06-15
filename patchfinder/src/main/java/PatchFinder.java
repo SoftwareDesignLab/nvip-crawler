@@ -46,8 +46,8 @@ public class PatchFinder {
 	private static final Logger logger = LogManager.getLogger(PatchFinder.class.getName());
 
 	private static final ArrayList<PatchCommit> patchCommits = new ArrayList<>();
-	protected static int cveLimit = 10;
-	protected static int cpeLimit = 10;
+	protected static int cveLimit = 5;
+//	protected static int cpeLimit = 10;
 	protected static int maxThreads = 10;
 	protected static int cvesPerThread = 1;
 
@@ -66,12 +66,12 @@ public class PatchFinder {
 			} else throw new Exception();
 		} catch (Exception ignored) { logger.warn("Could not fetch CVE_LIMIT from env vars, defaulting to {}", cveLimit); }
 
-		try {
-			if(props.containsKey("CPE_LIMIT")) {
-				cpeLimit = Integer.parseInt(System.getenv("CPE_LIMIT"));
-				logger.info("Setting CPE_LIMIT to {}", cpeLimit);
-			} else throw new Exception();
-		} catch (Exception ignored) { logger.warn("Could not fetch CPE_LIMIT from env vars, defaulting to {}", cpeLimit); }
+//		try {
+//			if(props.containsKey("CPE_LIMIT")) {
+//				cpeLimit = Integer.parseInt(System.getenv("CPE_LIMIT"));
+//				logger.info("Setting CPE_LIMIT to {}", cpeLimit);
+//			} else throw new Exception();
+//		} catch (Exception ignored) { logger.warn("Could not fetch CPE_LIMIT from env vars, defaulting to {}", cpeLimit); }
 	}
 
 	public static void main(String[] args) throws IOException, InterruptedException {
@@ -97,7 +97,7 @@ public class PatchFinder {
 		// Repos will be cloned to patch-repos directory, multi-threaded 6 threads.
 		PatchFinder.findPatchesMultiThreaded(
 				possiblePatchURLs,
-				"nvip_data/patch-repos",
+				"src/main/resources/patch-repos",
 				maxThreads,
 				cvesPerThread
 		);
@@ -114,7 +114,7 @@ public class PatchFinder {
 		}
 
 
-		long delta = (System.currentTimeMillis() - start) / 1000;
+		final long delta = (System.currentTimeMillis() - start) / 1000;
 		logger.info("Successfully patched {} affected products in {} seconds", patchCommits.size(), delta);
 	}
 
@@ -136,7 +136,8 @@ public class PatchFinder {
 														   int maxThreads, int limitCvePerThread) throws IOException {
 		logger.info("Applying multi threading...");
 		File dir = new File(clonePath);
-		FileUtils.delete(dir, 1);
+		try { FileUtils.delete(dir, FileUtils.RECURSIVE); }
+		catch (IOException e) { logger.error("Failed to delete dir '{}': {}", dir, e.toString()); }
 
 		logger.info(maxThreads + " available processors found");
 		ArrayList<HashMap<String, ArrayList<String>>> sourceBatches = new ArrayList<>();

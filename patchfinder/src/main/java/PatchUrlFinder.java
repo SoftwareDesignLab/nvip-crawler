@@ -67,25 +67,30 @@ public class PatchUrlFinder {
 	 * @throws InterruptedException
 	 */
 	public Map<String, ArrayList<String>> parseMassURLs(Map<String, CpeGroup> affectedProducts, int cveLimit) throws IOException, InterruptedException {
-
 		Map<String, ArrayList<String>> cveCpeUrls = new HashMap<>();
 
-		// for each CPE, make a set of URLs for potential patch locations, then map them to their CVE
-		for (String cveId: affectedProducts.keySet()) {
-			// break out of loop if limit is reached
+		final long totalStart = System.currentTimeMillis();
+		for (Map.Entry<String, CpeGroup> entry : affectedProducts.entrySet()) {
+			final long entryStart = System.currentTimeMillis();
+			final String cveId = entry.getKey();
+			final CpeGroup group = entry.getValue();
+			// Break out of loop when limit is reached
 			if (cveCpeUrls.size() > cveLimit) {
 				logger.info("CVE limit of {} reached for patchfinder", cveLimit);
 				break;
 			}
 
-			ArrayList<String> urls = new ArrayList<>();
-			for (CpeGroup group: affectedProducts.values()) {
-				urls.addAll(parseURL("cpe:2.3:a:" + group.getGroupID() + ":*:*:*:*:*:*"));
-			}
-			logger.info("Found {} potential patch sources for CVE: {}", urls.size(), cveId);
+			// Find urls
+			final ArrayList<String> urls = parseURL(group.getVendor(), group.getProduct());
+
+			// Store found urls
 			cveCpeUrls.put(cveId, urls);
+			long entryDelta = (System.currentTimeMillis() - entryStart) / 1000;
+			logger.info("Found {} potential patch sources for CVE '{}' in {} seconds", urls.size(), cveId, entryDelta);
 		}
 
+		long totalDelta = (System.currentTimeMillis() - totalStart) / 1000;
+		logger.info("Found {} potential patch sources for {} CVEs in {} seconds", cveCpeUrls.size(), Math.min(cveLimit, affectedProducts.size()), totalDelta);
 		return cveCpeUrls;
 	}
 
@@ -96,24 +101,17 @@ public class PatchUrlFinder {
 	 * @throws IOException
 	 * @throws InterruptedException
 	 */
-	private ArrayList<String> parseURL(String cpe) throws IOException, InterruptedException {
-		final Matcher m = DatabaseHelper.CPE_PATTERN.matcher(cpe);
+	private ArrayList<String> parseURL(String vendor, String product) throws IOException, InterruptedException {
 		ArrayList<String> newAddresses = new ArrayList<>();
-
-		// Ensure CPE matches pattern
-		if(!m.find()) {
-			logger.warn("Invalid cpe '{}' could not be parsed, skipping url", cpe);
-			return newAddresses;
-		}
-
+		
 		// TODO: Fix this
 		// Parse keywords from CPE to create links for github, bitbucket and gitlab
 		// Also checks if the created URL is already used
-		if (!m.group(1).equals("*")) {
-			HashSet<String> addresses = initializeAddresses(m.group(1));
+		if (!vendor.equals("*")) {
+			HashSet<String> addresses = initializeAddresses(vendor);
 			for (String address : addresses) {
-				if (!m.group(2).equals("*")) {
-					address += m.group(2);
+				if (!product.equals("*")) {
+					address += product;
 				}
 
 				// Check the http connections for each URL,
@@ -121,9 +119,9 @@ public class PatchUrlFinder {
 				newAddresses = testConnection(address);
 			}
 
-		} else if (!m.group(2).equals("*")) {
+		} else if (!product.equals("*")) {
 			for (String base : ADDRESS_BASES) {
-				String address = base + m.group(2);
+				String address = base + product;
 				newAddresses = testConnection(address);
 			}
 		}
@@ -131,7 +129,7 @@ public class PatchUrlFinder {
 		// If no successful URLs, try an advanced search with
 		// GitHub's search feature to double check
 		if (newAddresses.isEmpty()) {
-			newAddresses = advanceParseSearch(m.group(1), m.group(2));
+			newAddresses = advanceParseSearch(vendor, product);
 		}
 
 		return newAddresses;
