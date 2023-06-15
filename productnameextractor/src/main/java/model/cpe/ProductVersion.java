@@ -29,6 +29,7 @@ import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.regex.Pattern;
 
 /**
@@ -41,8 +42,29 @@ public class ProductVersion implements Comparable<ProductVersion> {
     private static final Pattern VERSION_PATTERN = Pattern.compile("^((?:[0-9]\\.?)*)$");
     private final static Logger logger = LogManager.getLogger(ProductVersion.class);
 
+    //Set of words to be protected from removing characters
+    private final static HashSet<String> protectedWords;
+    static{
+        protectedWords = new HashSet<>();
+        protectedWords.add("earlier");
+        protectedWords.add("after");
+        protectedWords.add("and");
+        protectedWords.add("version");
+        protectedWords.add("before");
+        protectedWords.add("through");
+        protectedWords.add("prior");
+        protectedWords.add("to");
+        protectedWords.add("versions");
+        protectedWords.add("between");
+        protectedWords.add("later");
+    }
 
     public ProductVersion(String versionString) throws IllegalArgumentException {
+
+        //Change versionString into acceptable form. Allows for 1.3.2_4 to work
+        //Does not affect group versions, database will still insert 1.3.2_4
+        versionString = formatVersionWord(versionString);
+
         // Ensure provided version is valid
         if(!isVersion(versionString))
             throw new IllegalArgumentException("Failed to create ProductVersion from String '" + versionString + "'");
@@ -54,10 +76,6 @@ public class ProductVersion implements Comparable<ProductVersion> {
             logger.error("Failed to create ProductVersion from String '{}'", versionString);
             throw e;
         }
-    }
-
-    private ProductVersion(int[] versionParts) {
-        this.versionParts = versionParts;
     }
 
     private boolean isVersion(String version) {
@@ -85,6 +103,48 @@ public class ProductVersion implements Comparable<ProductVersion> {
         // If the versions differ in length, the longer one is greater, otherwise, they are equal
         if(parts.length == otherParts.length) return 0;
         else return parts.length > otherParts.length ? 1 : -1;
+    }
+
+    /**
+     * Function to format version word into acceptable composition for isVersion() function
+     * Handles cases such as "1.7," or "v1.2" to turn them into "1.7" and "1.2"
+     *
+     * @param versionWord string word to format
+     */
+    public static String formatVersionWord(String versionWord){
+        //Always remove commas
+        versionWord = versionWord.replace(",","");
+
+        //If word is in protectedWords, continue
+        if(protectedWords.contains(versionWord)) return versionWord;
+
+        //Remove junk characters
+        versionWord = versionWord.replace(".x","");
+        versionWord = versionWord.replace("v","");
+        versionWord = versionWord.replace(")","");
+        versionWord = versionWord.replace("(","");
+        versionWord = versionWord.replace("a","");
+        versionWord = versionWord.replace("b","");
+        versionWord = versionWord.replace("c","");
+        versionWord = versionWord.replace(":","");
+        versionWord = versionWord.replace("r","");
+        versionWord = versionWord.replace("h","");
+        versionWord = versionWord.replace("_", ".");
+        versionWord = versionWord.replace("p","");
+        versionWord = versionWord.replace("-","");
+        versionWord = versionWord.replace("=","");
+
+        //Removes period at the end of a version "1.9.2." to "1.9.2"
+        if(versionWord.endsWith(".")){
+            versionWord = versionWord.substring(0, versionWord.length() - 1);
+        }
+
+        //Changes 2.0 to 2. Doesn't affect the version that is put into the database, but helps with compareTo
+        if(versionWord.endsWith(".0")){
+            versionWord = versionWord.substring(0, versionWord.length() - 2);
+        }
+
+        return versionWord;
     }
 
     @Override
