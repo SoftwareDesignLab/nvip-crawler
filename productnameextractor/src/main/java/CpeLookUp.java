@@ -502,6 +502,7 @@ public class CpeLookUp {
 							matchesCounter++;
 							String cpeName = "cpe:2.3:a:" + group.getGroupID() + ":" + versionKey + ":*:*:*:*:*:*:*";
 							cpeIDs.add(cpeName);
+							addedVersions.add(versionKey);
 							productsToAdd.add(new Product(group.getCommonTitle(), cpeName));
 						}
 					} catch (IllegalArgumentException e) {

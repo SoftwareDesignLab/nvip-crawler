@@ -58,7 +58,7 @@ public class VersionManagerTest {
         versionWords[9] = "3.8.5+";
 
         VersionManager manager = new VersionManager();
-        manager.formatVersions(versionWords);
+        manager.formatVersionWords(versionWords);
 
         assertEquals(versionWords[0], "before");
         assertEquals(versionWords[1], "1.8.2");

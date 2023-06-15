@@ -62,8 +62,17 @@ public class VersionRange {
                     break;
                 case 3: // "1.2.3 through 3.4.5"
                     this.type = RangeType.fromString(versionData[1]);
-                    this.version1 = new ProductVersion(versionData[0]);
-                    this.version2 = new ProductVersion(versionData[2]);
+                    ProductVersion newVersion1 = new ProductVersion(versionData[0]);
+                    ProductVersion newVersion2 = new ProductVersion(versionData[2]);
+
+                    //make sure that "2 through 1.2" becomes "1.2 through 2"
+                    if(newVersion1.compareTo(newVersion2) >= 0){
+                        this.version1 = newVersion2;
+                        this.version2 = newVersion1;
+                    }else{
+                        this.version1 = new ProductVersion(versionData[0]);
+                        this.version2 = new ProductVersion(versionData[2]);
+                    }
                     break;
                 default:
                     throw new IllegalArgumentException("Could not initialize VersionRange with the given arguments.");
