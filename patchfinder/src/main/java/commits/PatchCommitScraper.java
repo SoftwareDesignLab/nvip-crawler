@@ -86,6 +86,7 @@ public class PatchCommitScraper {
 			// or the 'vulnerability' keyword
 			try (Git git = new Git(repository)) {
 				ObjectId startingRevision = repository.resolve("master");
+				// TODO: Fix this, startingRevision = null
 				Iterable<RevCommit> commits = git.log().add(startingRevision).call();
 				for (RevCommit commit : commits) {
 					// Check if the commit message matches any of the regex provided
