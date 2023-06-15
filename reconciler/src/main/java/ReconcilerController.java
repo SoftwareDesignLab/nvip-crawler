@@ -50,7 +50,7 @@ public class ReconcilerController {
         characterizeCVEs(reconciledVulns);
 
         int upsertCount = 0;
-        for (model.CompositeVulnerability vuln : reconciledVulns) {
+        for (CompositeVulnerability vuln : reconciledVulns) {
             int status = dbh.insertOrUpdateVulnerabilityFull(vuln);
             if (status != -1) {
                 upsertCount += status;

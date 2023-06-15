@@ -24,7 +24,7 @@
 package characterizer.classifier;
 
 import org.junit.Test;
-import characterizer.preprocessor.CvePreProcessor;
+import automatedcvss.preprocessor.CvePreProcessor;
 import weka.core.Instance;
 import weka.core.SparseInstance;
 

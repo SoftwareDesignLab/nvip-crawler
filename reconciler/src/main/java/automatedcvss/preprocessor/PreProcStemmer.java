@@ -21,11 +21,11 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package characterizer.preprocessor;
+package automatedcvss.preprocessor;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import characterizer.preprocessor.utils.Stemmer;
+import automatedcvss.preprocessor.utils.Stemmer;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -34,7 +34,7 @@ import model.VdoCharacteristic;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import characterizer.preprocessor.CvePreProcessor;
+import automatedcvss.preprocessor.CvePreProcessor;
 
 import java.io.File;
 import java.util.ArrayList;

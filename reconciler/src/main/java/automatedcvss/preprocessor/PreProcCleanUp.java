@@ -21,45 +21,31 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package characterizer.preprocessor;
+package automatedcvss.preprocessor;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.StringTokenizer;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 
 /**
+ *
  * 
- * @author axoeec
+ * @author Carlos Castro
+ *
+ *         This Pre-Processor cleans up the text, eliminating all 'non
+ *         characters' (punctuation marks, numbers, etc) It is set up as a Chain
+ *         of Command design pattern, where each preprocessor does its operation
+ *         and calls on the next one This allows for dynamic set up of the
+ *         pre-processing steps, as well as adding or removing steps later on
  *
  */
-public class PreProcCodeTermExtractor implements PreProcessor {
-	private static final String DELIM = " .,:;/?'\"[]{})(-_=+~!@#$%^&*<>\n\t\r1234567890";
-	private static final String SPLIT_REGEX = "[A-Z][a-z]+|[a-z]+|[A-Z]+";
+public final class PreProcCleanUp implements PreProcessor {
 
 	// Next in the chain of command
+
 	PreProcessor _next;
 
-	public List<String> process(String content) {
-		List<String> result = new ArrayList<>();
-
-		// 1- break down into tokens
-		StringTokenizer st = new StringTokenizer(content, DELIM);
-
-		// 2- For each token, it breaks down the terms
-		while (st.hasMoreTokens()) {
-			String token = st.nextToken();
-			Pattern pattern = Pattern.compile(SPLIT_REGEX);
-			Matcher m = pattern.matcher(token);
-			while (m.find()) {
-				String subStringFound = m.group();
-				result.add(subStringFound.toLowerCase());
-			}
-		}
-
-		return result;
+	public PreProcCleanUp() {
 	}
 
 	public PreProcessor setNextPreProcessor(PreProcessor next) {
@@ -72,4 +58,17 @@ public class PreProcCodeTermExtractor implements PreProcessor {
 		return this;
 	}
 
+	public List<String> process(String text) {
+		String initialText = text;
+		List<String> results = new ArrayList<>();
+		String singleResult = "";
+
+		// Reduces the text to only characters - using Regular Expressions
+		singleResult = initialText.replaceAll("[^\\p{L}]", " ");
+		// Eliminates any duplicate whitespace - using Regular Expressions
+		singleResult = singleResult.replaceAll("\\s+", " ");
+		results.add(singleResult);
+		return results;
+
+	}
 }

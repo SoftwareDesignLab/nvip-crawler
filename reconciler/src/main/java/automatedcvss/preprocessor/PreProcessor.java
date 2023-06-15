@@ -21,54 +21,23 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package characterizer.preprocessor;
+package automatedcvss.preprocessor;
 
-import java.util.ArrayList;
 import java.util.List;
 
-
 /**
- *
  * 
  * @author Carlos Castro
- *
- *         This Pre-Processor cleans up the text, eliminating all 'non
- *         characters' (punctuation marks, numbers, etc) It is set up as a Chain
- *         of Command design pattern, where each preprocessor does its operation
- *         and calls on the next one This allows for dynamic set up of the
- *         pre-processing steps, as well as adding or removing steps later on
+ * 
+ *         This Interface exposes the functions related to the preprocessing of
+ *         text. It is set up as a Chain of Command design pattern, where each
+ *         preprocessor does its operation and calls on the next one This allows
+ *         for dynamic set up of the pre-processing steps, as well as adding or
+ *         removing steps later on
  *
  */
-public final class PreProcCleanUp implements PreProcessor {
+public interface PreProcessor {
+	PreProcessor setNextPreProcessor(PreProcessor next);
 
-	// Next in the chain of command
-
-	PreProcessor _next;
-
-	public PreProcCleanUp() {
-	}
-
-	public PreProcessor setNextPreProcessor(PreProcessor next) {
-		// Integrity checks
-		if (next == null) {
-			throw new IllegalArgumentException("The next preProcessor can't be null");
-		}
-		// Sets the next chain link
-		_next = next;
-		return this;
-	}
-
-	public List<String> process(String text) {
-		String initialText = text;
-		List<String> results = new ArrayList<>();
-		String singleResult = "";
-
-		// Reduces the text to only characters - using Regular Expressions
-		singleResult = initialText.replaceAll("[^\\p{L}]", " ");
-		// Eliminates any duplicate whitespace - using Regular Expressions
-		singleResult = singleResult.replaceAll("\\s+", " ");
-		results.add(singleResult);
-		return results;
-
-	}
+	List<String> process(String text);
 }

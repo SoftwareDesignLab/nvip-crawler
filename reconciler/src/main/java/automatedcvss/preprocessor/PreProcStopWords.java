@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package characterizer.preprocessor;
+package automatedcvss.preprocessor;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -64,7 +64,6 @@ public class PreProcStopWords implements PreProcessor {
 
 			BufferedReader in;
 			in = new BufferedReader(new InputStreamReader(inputStream));
-
 			// Reads the file
 			while ((stopWord = in.readLine()) != null) {
 				// Adds the stop word to the array

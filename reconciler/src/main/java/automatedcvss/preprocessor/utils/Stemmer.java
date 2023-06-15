@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package characterizer.preprocessor.utils;
+package automatedcvss.preprocessor.utils;
 
 /*
    Porter stemmer in Java. The original paper is in

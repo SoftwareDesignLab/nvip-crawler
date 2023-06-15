@@ -1,4 +1,4 @@
-package characterizer.preprocessor; /**
+package automatedcvss.preprocessor; /**
  * Copyright 2023 Rochester Institute of Technology (RIT). Developed with
  * government support under contract 70RSAT19CB0000020 awarded by the United
  * States Department of Homeland Security.
@@ -42,7 +42,7 @@ public class CvePreProcessor {
 
 	public CvePreProcessor(boolean removeCommonStopWords) {
 		super();
-
+		System.out.println(STOPWORDS_FILE);
 		this.removeCommonStopWords = removeCommonStopWords;
 
 		PreProcessor preProc1 = new PreProcCleanUp(); // removes funny characters
