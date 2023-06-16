@@ -119,7 +119,6 @@ public class ProductVersion implements Comparable<ProductVersion> {
         if(protectedWords.contains(versionWord)) return versionWord;
 
         //Remove junk characters
-        versionWord = versionWord.replace(".x","");
         versionWord = versionWord.replace("v","");
         versionWord = versionWord.replace(")","");
         versionWord = versionWord.replace("(","");
@@ -143,11 +142,18 @@ public class ProductVersion implements Comparable<ProductVersion> {
         versionWord = versionWord.replace("e","");
         versionWord = versionWord.replace("d","");
         versionWord = versionWord.replace(";","");
+        versionWord = versionWord.replace("g","");
+        versionWord = versionWord.replace("-",".");
 
         //Removes < and > unless it is the case of <2.4.5
         if(!versionWord.startsWith(">") && !versionWord.startsWith("<")){
             versionWord = versionWord.replace("<", "");
             versionWord = versionWord.replace(">", "");
+        }
+
+        //Keeps 5.x, but will remove 1.2x
+        if(!versionWord.endsWith(".x")){
+            versionWord = versionWord.replace("x","");
         }
 
         //Removes period at the end of a version "1.9.2." to "1.9.2"

@@ -65,7 +65,7 @@ public class VersionManagerTest {
         assertEquals(versionWords[2], "1.9.3");
         assertEquals(versionWords[3], "prior");
         assertEquals(versionWords[4], "to");
-        assertEquals(versionWords[5], "1.4");
+        assertEquals(versionWords[5], "1.4.x");
         assertEquals(versionWords[6], "1.4.2");
         assertEquals(versionWords[7], "to");
         assertEquals(versionWords[8], "1.7.5");
