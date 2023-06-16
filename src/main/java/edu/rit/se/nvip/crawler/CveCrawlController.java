@@ -104,6 +104,7 @@ public class CveCrawlController {
         config1.setPolitenessDelay((Integer) crawlerVars.get("crawlerPoliteness"));
         config1.setMaxPagesToFetch((Integer) crawlerVars.get("maxPages"));
         config1.setMaxDepthOfCrawling((Integer) crawlerVars.get("depth"));
+        config1.setUserAgentString(DEFAULT_USER_AGENT);
 
         BasicURLNormalizer normalizer1 = BasicURLNormalizer.newBuilder().idnNormalization(BasicURLNormalizer.IdnNormalization.NONE).build();
         PageFetcher pageFetcher1 = new PageFetcher(config1, normalizer1);
