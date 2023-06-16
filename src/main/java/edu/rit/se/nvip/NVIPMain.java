@@ -618,8 +618,8 @@ public class NVIPMain {
 	 * announcing a new security problem. When the candidate has been publicized,
 	 * the details for this candidate will be provided.
 	 *
-	 * @param cveHashMapNotScraped
-	 * @param cveHashMapScrapedFromCNAs
+	 * @param cveHashMapNotScraped CVEs from Quick CVE Crawler
+	 * @param cveHashMapScrapedFromCNAs CVEs from main crawler functions
 	 * @return
 	 */
 	public HashMap<String, CompositeVulnerability> mergeCVEsDerivedFromCNAsAndGit(HashMap<String, List<CompositeVulnerability>> cveHashMapNotScraped,
@@ -629,10 +629,13 @@ public class NVIPMain {
 		logger.info("Merging {} scraped CVEs with {} Github", cveHashMapScrapedFromCNAs.size(), cveHashMapNotScraped.size());
 		HashMap<String, List<CompositeVulnerability>> mergedMap = new HashMap<>(); // merged CVE Lists
 
+		// Add quick crawler CVEs first
 		for (String cveId: cveHashMapNotScraped.keySet()) {
 			mergedMap.put(cveId, cveHashMapNotScraped.get(cveId));
 		}
 
+		// Add the crawled CVEs from raw sources
+		// any duplicate entries just get added to the existing list in the HashMap
 		for (String cveId: cveHashMapScrapedFromCNAs.keySet()) {
 			if (mergedMap.containsKey(cveId)) {
 				for (CompositeVulnerability cnaVuln: cveHashMapScrapedFromCNAs.get(cveId)) {
