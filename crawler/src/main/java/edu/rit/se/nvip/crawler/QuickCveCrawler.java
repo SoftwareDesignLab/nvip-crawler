@@ -84,6 +84,8 @@ public class QuickCveCrawler {
 		// Tenable
 		getTenableCveUpdates(crawler, list);
 
+		crawler.getDriver().quit();
+
 		return list;
 	}
 

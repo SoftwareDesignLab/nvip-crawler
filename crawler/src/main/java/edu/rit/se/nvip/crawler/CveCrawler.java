@@ -95,7 +95,8 @@ public class CveCrawler extends WebCrawler {
 		ClientConfig config = ClientConfig
 				.defaultConfig()
 				.readTimeout(Duration.ofSeconds(20));
-		return new ChromeDriver(chromeDriverService, options, config);
+
+		return new ChromeDriver(chromeDriverService, options);
 	}
 
 	private void tryDiverQuit(){
@@ -224,4 +225,7 @@ public class CveCrawler extends WebCrawler {
 		}
 	}
 
+	public WebDriver getDriver(){
+		return driver;
+	}
 }
