@@ -655,6 +655,7 @@ public class NVIPMain {
 			for (CompositeVulnerability rawVuln: mergedMap.get(cveId)) {
 				if (rawVuln != null) {
 					// Did we find garbage or valid description?
+					// If it's the same description, just ignore it :D
 					if (!CveUtils.isCveReservedEtc(rawVuln.getDescription()) && nlpUtil.sentenceDetect(rawVuln.getDescription()) != null) {
 						if (!fullDescription.contains(rawVuln.getDescription())) {
 							fullDescription += rawVuln.getDescription() + "\n\n\n";
@@ -679,8 +680,11 @@ public class NVIPMain {
 						"");
 
 				// Combine remaining sources
+				// Filter duplicate source URLs
 				for (int i=1; i< totalSourceURLs.size(); i++)  {
-					compiledVuln.addSourceURL(totalSourceURLs.get(i));
+					if (!compiledVuln.getSourceURL().contains(totalSourceURLs.get(i))) {
+						compiledVuln.addSourceURL(totalSourceURLs.get(i));
+					}
 				}
 
 				cveHashMapAll.put(cveId, compiledVuln);
