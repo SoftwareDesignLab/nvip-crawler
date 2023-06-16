@@ -24,10 +24,8 @@
 package db;
 
 import com.zaxxer.hikari.HikariDataSource;
-import com.zaxxer.hikari.HikariPoolMXBean;
-import model.AffectedRelease;
-import model.Product;
-import model.Vulnerability;
+import model.cve.AffectedRelease;
+import model.cve.CompositeVulnerability;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.AfterClass;
@@ -35,7 +33,6 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -43,10 +40,7 @@ import org.mockito.stubbing.Answer;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.sql.*;
-import java.text.ParseException;
-import java.time.LocalDateTime;
 import java.util.*;
-import java.util.Date;
 
 
 import static org.junit.Assert.*;
@@ -222,6 +216,59 @@ public class DatabaseHelperTest {
 			verify(pstmt, times(count)).executeUpdate();
 			verify(pstmt).setString(1, releases.get(count-1).getCveId());
 		} catch (SQLException ignored) {}
+	}
+
+	@Test
+	public void insertAffectedProductsToDBTest() throws SQLException {
+		insertAffectedReleasesV2Test();
+		// Prepare test data
+		int count = 5;
+		List<CompositeVulnerability> products = new ArrayList<>();
+		for (int i = 0; i < count; i++) {
+			products.add(new CompositeVulnerability(i, "CVE-" + i));
+		}
+
+		// Mock the database interactions
+		when(hds.getConnection()).thenReturn(conn);
+		when(conn.prepareStatement(anyString())).thenReturn(pstmt);
+
+		// Call the method under test
+		dbh.insertAffectedProductsToDB(products);
+
+		// Verify the expected interactions
+		verify(pstmt, times(count*5)).setString(anyInt(), anyString());
+		verify(pstmt, times(count)).executeUpdate();
+	}
+
+	@Test
+	public void getExistingCompositeVulnerabilitiesTest() throws SQLException {
+		// Prepare test data
+		int maxVulnerabilities = 5;
+		int expectedVulnerabilities = 3;
+
+		// Mock the database interactions
+		when(conn.prepareStatement(anyString())).thenReturn(pstmt);
+		when(pstmt.executeQuery()).thenReturn(res);
+		when(res.next()).thenReturn(true, true, true, false); // Simulate 3 rows returned from the query, followed by an extra call returning false
+		when(res.getInt("vuln_id")).thenReturn(1, 2, 3);
+		when(res.getString("cve_id")).thenReturn("CVE-2021-001", "CVE-2021-002", "CVE-2021-003");
+		when(res.getString("description")).thenReturn("Description 1", "Description 2", "Description 3");
+
+		// Call the method under test
+		Map<String, CompositeVulnerability> result = dbh.getExistingCompositeVulnerabilities(maxVulnerabilities);
+
+		// Verify the expected interactions
+		verify(conn).prepareStatement(anyString());
+		verify(pstmt).executeQuery();
+		verify(res, times(expectedVulnerabilities)).getInt("vuln_id");
+		verify(res, times(expectedVulnerabilities)).getString("cve_id");
+		verify(res, times(expectedVulnerabilities)).getString("description");
+
+		// Verify the result
+		assertEquals(expectedVulnerabilities, result.size());
+		assertEquals("Description 1", result.get("CVE-2021-001").getDescription());
+		assertEquals("Description 2", result.get("CVE-2021-002").getDescription());
+		assertEquals("Description 3", result.get("CVE-2021-003").getDescription());
 	}
 
 	@Test

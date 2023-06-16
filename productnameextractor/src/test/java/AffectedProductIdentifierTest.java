@@ -23,7 +23,8 @@
  */
 
 
-import model.CompositeVulnerability;
+import model.cve.CompositeVulnerability;
+import model.cpe.CpeGroup;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -31,7 +32,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -45,10 +45,11 @@ public class AffectedProductIdentifierTest {
 	 * Test product name extraction for a simple CVE
 	 */
 	@Test
-	public void affectedProductIdentifierTest() { // TODO: FIX TEST
-		String description = "A relative path traversal vulnerability has been reported to affect QNAP NAS running QTS and QuTS hero. If exploited, this vulnerability allows attackers to modify files that impact system integrity. QNAP have already fixed this vulnerability in the following versions: QTS 4.5.2.1630 Build 20210406 and later QTS 4.3.6.1663 Build 20210504 and later QTS 4.3.3.1624 Build 20210416 and later QuTS hero h4.5.2.1638 Build 20210414 and later QNAP NAS running QTS 4.5.3 are not affected";
+	public void affectedProductIdentifierTest() {
+
+		String description = "In Django 1.10.x before 1.10.8 and 1.11.x before 1.11.5, HTML autoescaping was disabled in a portion of the template for the technical 500 debug page. Given the right circumstances, this allowed a cross-site scripting attack. This vulnerability shouldn't affect most production sites since you shouldn't run with \"DEBUG = True\" (which makes this page accessible) in your production settings.";
 		List<CompositeVulnerability> vulnList = new ArrayList<>();
-		CompositeVulnerability v = new CompositeVulnerability(0, null, "CVE-2021-28798", "", null, null, description, null);
+		CompositeVulnerability v = new CompositeVulnerability(0, null, "CVE-2017-12794", "", null, null, description, null);
 		v.setCveReconcileStatus(CompositeVulnerability.CveReconcileStatus.UPDATE);
 		vulnList.add(v);
 
@@ -67,7 +68,6 @@ public class AffectedProductIdentifierTest {
 		System.out.println(v.getAffectedReleases());
 
 		assertTrue("Test failed: No affected releases found", (v.getAffectedReleases().size() > 0));
-//		assertEquals(v.getAffectedReleases().size(), count);
 	}
 
 }

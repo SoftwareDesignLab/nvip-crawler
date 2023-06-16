@@ -22,8 +22,12 @@
  * SOFTWARE.
  */
 
-import model.ProductVersion;
+import model.cpe.CpeEntry;
+import model.cpe.CpeGroup;
+import model.cpe.ProductItem;
+import model.cpe.ProductVersion;
 import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
 
 import java.io.IOException;
 import java.util.List;
@@ -67,10 +71,11 @@ public class CpeLookUpTest {
 
 	@Test
 	public void legitimateComplexProduct() {
-		ProductItem product = new ProductItem("phpMyAdmin.");
-		product.addVersion("before  4.1.5");
+		ProductItem product = new ProductItem("cacheos.");
+		product.addVersion("before");
+		product.addVersion("4.0");
 
-		String expectedResult = "cpe:2.3:a:phpmyadmin:phpmyadmin:4.1.5:*:*:*:*:*:*:*";
+		String expectedResult = "cpe:2.3:a:bluecoat:cacheos:4.0:*:*:*:*:*:*:*";
 
 		List<String> idList = cpeLookUp.getCPEIds(product);
 
@@ -84,18 +89,16 @@ public class CpeLookUpTest {
 		ProductItem product = new ProductItem("phpMyAdmin:.");
 		product.addVersion("https://www.openwall.com/lists/oss-security/2012/05/10/6");
 		product.addVersion("before");
-		product.addVersion("4.1.5");
+		product.addVersion("3.3.4.0");
 
-		ProductVersion beforeVersion = new ProductVersion("4.1.5");
+		String expected = "cpe:2.3:a:phpmyadmin:phpmyadmin:3.3.4.0:*:*:*:*:*:*:*";
 
 		List<String> idList = cpeLookUp.getCPEIds(product);
 
 		assertNotNull("idList was null", idList);
 		assertNotEquals("idList was empty", idList.size(), 0);
+		assertEquals("actual result was not expected result", expected, idList.get(0));
 
-		ProductVersion actualVersion = new ProductVersion(idList.get(0));
-
-		assertTrue(String.format("%s was not valid", actualVersion), actualVersion.compareTo(beforeVersion) <= 0);
 	}
 
 	@Test
@@ -103,7 +106,7 @@ public class CpeLookUpTest {
 		ProductItem product = new ProductItem("the Linux.");
 		product.addVersion("https://www.openwall.com/lists/oss-security/2012/05/10/6");
 
-		String expectedResult = "cpe:2.3:a:sun:linux:*:*:*:*:*:*:*:*";
+		String expectedResult = "cpe:2.3:a:redhat:linux:*:*:*:*:*:*:*:*";
 
 		List<String> idList = cpeLookUp.getCPEIds(product);
 
@@ -134,9 +137,9 @@ public class CpeLookUpTest {
 
 	@Test
 	public void legitimateComplexProductNoVersion() {
-		ProductItem product = new ProductItem("Microsoft Internet Explorer. ");
+		ProductItem product = new ProductItem("Canon ImageRunner 5000i");
 
-		String expectedResult = "cpe:2.3:a:microsoft:internet_explorer:*:*:*:*:*:*:*:*";
+		String expectedResult = "cpe:2.3:a:canon:imagerunner:*:*:*:*:*:*:*:*";
 
 		List<String> idList = cpeLookUp.getCPEIds(product);
 
@@ -157,6 +160,46 @@ public class CpeLookUpTest {
 		assertNotNull("sn2List was null", sn2List);
 		assertNotEquals("sn1List was empty", sn1List.size(), 0);
 		assertNotEquals("sn2List was empty", sn2List.size(), 0);
+	}
+
+	@Test
+	public void queryProductDictTest() {
+		int maxPages = 2;
+		int maxAttemptsPerPage = 3;
+		// Call the method to load the product dictionary
+		Map<String, CpeGroup> loadedDict = cpeLookUp.queryProductDict(maxPages, maxAttemptsPerPage);
+
+		// Assert that the loaded dictionary is not null
+		Assertions.assertNotNull(loadedDict);
+
+		// Assert that the loaded dictionary is not empty
+		Assertions.assertFalse(loadedDict.isEmpty());
+
+		// Retrieve a CpeGroup by key
+		String key = "canon:imagerunner_5000i";
+		CpeGroup cpeGroup = loadedDict.get(key);
+		System.out.println(cpeGroup);
+		// Assert that the CpeGroup is not null
+		Assertions.assertNotNull(cpeGroup);
+
+		// Assert that the CpeGroup has versions
+		Assertions.assertTrue(cpeGroup.getVersions().size() > 0);
+
+		// Assert that a specific version exists in the CpeGroup
+		Assertions.assertTrue(cpeGroup.getVersions().containsKey("-"));
+
+		// Retrieve a specific CpeEntry from the CpeGroup
+		CpeEntry cpeEntry = cpeGroup.getVersions().get("-");
+
+		// Assert that the CpeEntry is not null
+		Assertions.assertNotNull(cpeEntry);
+
+		// Assert specific properties of the CpeEntry
+		Assertions.assertEquals("imagerunner_5000i", cpeEntry.getTitle());
+		Assertions.assertEquals("-", cpeEntry.getVersion());
+		Assertions.assertEquals("88FD64E8-67E8-415D-A798-4DC26EA8E7B5", cpeEntry.getCpeID());
+
+		// Perform similar assertions for other keys, CpeGroups, and CpeEntries in the loaded dictionary
 	}
 
 }

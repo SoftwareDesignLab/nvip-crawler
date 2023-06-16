@@ -159,6 +159,7 @@ https://nifi.apache.org
 https://nlnetlabs.nl
 https://nns.ee
 https://nodejs.org
+https://nostarttls.secvuln.info
 https://ntware.atlassian.net
 https://obdev.at
 https://octagon.net
@@ -179,6 +180,7 @@ https://pointernull.com
 https://portal.microfocus.com
 https://portal.nutanix.com
 https://portswigger.net
+https://projects.ow2.org
 https://psirt.bosch.com
 https://psirt.canon
 https://psirt.global.sonicwall.com
@@ -253,6 +255,7 @@ https://trust.mi.com
 https://trust.okta.com
 https://trust.zscaler.com
 https://trustedcomputinggroup.org
+https://tuleap.net/
 https://typo3.org
 https://ubuntu.com
 https://unify.com
@@ -351,6 +354,7 @@ https://www.krcert.or.kr
 https://www.kyoceradocumentsolutions.com
 https://www.lexmark.com
 https://www.libreoffice.org
+https://libreswan.org
 https://www.m-files.com
 https://www.malwarebytes.com
 https://www.manageengine.com
@@ -375,6 +379,7 @@ https://www.nvidia.com
 https://www.offensity.com
 https://www.omicronenergy.com
 https://www.opencloudos.org
+https://www.opencve.io
 https://www.opendesign.com
 https://www.openeuler.org
 https://www.opennms.com
@@ -385,6 +390,7 @@ https://www.oxygenxml.com
 https://www.panasonic.com
 https://www.papercut.com
 https://www.pega.com
+https://phabricator.wikimedia.org
 https://www.philips.com
 https://www.php.net
 https://www.postgresql.org
@@ -399,6 +405,7 @@ https://www.qualcomm.com
 https://www.qualys.com
 https://www.rapid7.com
 https://www.red-gate.com
+https://www.redpacketsecurity.com
 https://www.redteam-pentesting.de
 https://www.replicated.com
 https://www.ricoh.com
@@ -469,3 +476,14 @@ https://zammad.com
 https://zigrin.com
 https://zoom.us
 https://zuso.ai
+http://groovy-lang.org/
+https://arstechnica.com/
+https://confluence.atlassian.com/
+https://groovy-lang.org/security.html
+https://oss-security.openwall.org/
+https://security.paloaltonetworks.com/
+https://www.auscert.org.au/
+https://www.hitachi.co.jp/
+https://www.jenkins.io/
+https://www.saddns.net/
+https://www.zdnet.com/
