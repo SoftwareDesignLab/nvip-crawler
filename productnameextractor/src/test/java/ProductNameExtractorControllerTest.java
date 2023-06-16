@@ -2,6 +2,7 @@ import model.cpe.CpeEntry;
 import model.cpe.CpeGroup;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
+import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
 import java.io.FileReader;
@@ -171,6 +172,26 @@ public class ProductNameExtractorControllerTest {
 
     private Map<String, CpeGroup> readProductDictFromFile(String filePath) throws IOException {
         return ProductNameExtractorController.readProductDict(filePath);
+    }
+
+    @Test
+    public void testFetchEnvVars() {
+        // Set up test data
+        Map<String, String> envVars = new HashMap<>();
+        envVars.put("CVE_LIMIT", "1000");
+        envVars.put("MAX_PAGES", "5");
+        envVars.put("MAX_ATTEMPTS_PER_PAGE", "2");
+        envVars.put("PRETTY_PRINT", "false");
+
+        // Mock the System.getenv() method
+        ProductNameExtractorController.fetchEnvVars();
+
+        // Assert that the properties are set correctly
+        assertEquals(1000, ProductNameExtractorController.cveLimit);
+        assertEquals(5, ProductNameExtractorController.maxPages);
+        assertEquals(2, ProductNameExtractorController.maxAttemptsPerPage);
+        assertEquals(false, ProductNameExtractorController.prettyPrint);
+
     }
 
 }
