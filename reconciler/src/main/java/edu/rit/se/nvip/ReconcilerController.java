@@ -63,16 +63,6 @@ public class ReconcilerController {
         int newRawCount;
         int rejectCount;
         Set<RawVulnerability> rawVulns = dbh.getRawVulnerabilities(cveId);
-        //Eliminate duplicate rawVulns (vulns that have same description)
-        Set<String> descriptions = new HashSet<>();
-        Set<RawVulnerability> notDuplicateRawVulns = new HashSet<>();
-        for (RawVulnerability rawVuln : rawVulns) {
-            if (!descriptions.contains(rawVuln.getDescription())) {
-                notDuplicateRawVulns.add(rawVuln);
-                descriptions.add(rawVuln.getDescription());
-            }
-        }
-        rawVulns = notDuplicateRawVulns;
         rawCount = rawVulns.size();
         newRawCount = rawCount;
         CompositeVulnerability existing = dbh.getCompositeVulnerability(cveId);
@@ -91,9 +81,28 @@ public class ReconcilerController {
     }
 
     private Set<RawVulnerability> runFilters(Set<RawVulnerability> vulns) {
-        Set<RawVulnerability> out = new HashSet<>();
+        // set up equivalence classes partitioned by equal descriptions
+        Map<String, Set<RawVulnerability>> equivClasses = new HashMap<>();
+        Set<RawVulnerability> samples = new HashSet<>(); // holds one from each equivalence class
+        for (RawVulnerability rawVuln : vulns) {
+            String desc = rawVuln.getDescription();
+            if (!equivClasses.containsKey(desc)) {
+                equivClasses.put(desc, new HashSet<>());
+                samples.add(rawVuln);
+            }
+            equivClasses.get(desc).add(rawVuln);
+        }
+        // filter a sample from each equivalence class
+        Set<RawVulnerability> failedSamples = new HashSet<>();
         for (Filter filter : filters) {
-            out.addAll(filter.filterAll(vulns));
+            failedSamples.addAll(filter.filterAll(samples));
+        }
+        // if a sample failed then all the vulns it represents fail too
+        Set<RawVulnerability> out = new HashSet<>();
+        for (RawVulnerability failure : failedSamples) {
+            Set<RawVulnerability> equivSet = equivClasses.get(failure.getDescription());
+            out.addAll(equivSet); // we return the failures
+            vulns.removeAll(equivSet); // the input set should no longer contain the failures
         }
         return out;
     }
