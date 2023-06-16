@@ -37,12 +37,14 @@ import io.github.bonigarcia.wdm.WebDriverManager;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeDriverService;
 import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.remote.http.ClientConfig;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
 import java.util.regex.Pattern;
+import java.time.Duration;
 
 /**
  *
@@ -90,15 +92,35 @@ public class CveCrawler extends WebCrawler {
 		options.setCapability("timeouts", timeouts);
 		WebDriverManager.chromedriver().setup();
 		ChromeDriverService chromeDriverService = new ChromeDriverService.Builder().build();
-		return new ChromeDriver(chromeDriverService, options);
+		ClientConfig config = ClientConfig
+				.defaultConfig()
+				.readTimeout(Duration.ofSeconds(20));
+		return new ChromeDriver(chromeDriverService, options, config);
 	}
+
+	private void tryDiverQuit(){
+		int tries = 0;
+        while (tries < 2) {
+            try {
+                driver.quit();
+                break;
+            } catch (Exception e) {
+                logger.info("Retrying driver quit...");
+                tries++;
+            }
+        }
+	}
+
+	@Override
+	public void onBeforeExit() {
+        tryDiverQuit();
+    }
 
 	/**
 	 * get Cve data from crawler thread
 	 */
 	@Override
 	public HashMap<String, ArrayList<RawVulnerability>> getMyLocalData() {
-		this.driver.quit();
 		return foundCVEs;
 	}
 

@@ -94,15 +94,17 @@ public class ParseTable extends AbstractCveParser implements ParserStrategy {
             htmlBefore = driver.findElement(By.tagName("tbody")).getAttribute("innerHTML").replace("\n", "").replace("\t", "");
             try {
                 new WebDriverWait(driver, Duration.ofSeconds(5)).until(ExpectedConditions.elementToBeClickable(rowElement));
-                actions.scrollToElement(rowElement).perform();
+                actions.moveToElement(rowElement).perform();
                 actions.click(rowElement).perform();
-            } catch (StaleElementReferenceException | MoveTargetOutOfBoundsException e) {
+            } catch (StaleElementReferenceException | MoveTargetOutOfBoundsException | TimeoutException e) {
                 if (!retryClick(rowElement)) logger.info("Unable to click row for " + cveIDs);
             }
             String htmlAfter = driver.findElement(By.tagName("tbody")).getAttribute("innerHTML").replace("\n", "").replace("\t", "");
             diff = StringUtils.difference(htmlBefore, htmlAfter).replace("\n", "").replace("\t", "");
-        } catch (StaleElementReferenceException | MoveTargetOutOfBoundsException e) {
+        } catch (StaleElementReferenceException | MoveTargetOutOfBoundsException | NoSuchElementException e) {
             // logger.info("Row not found for " + cveIDs);
+        } catch (TimeoutException e){
+            logger.warn("WARNING: Action for {} timed out", sourceUrl);
         }
         String description = "";
         // if we gain new information from clicking, add it onto our html to parse
@@ -175,6 +177,8 @@ public class ParseTable extends AbstractCveParser implements ParserStrategy {
             logger.warn("Next Button found raises ElementNotInteractableException...");
         } catch (StaleElementReferenceException s) {
             logger.warn("Next Button found raises StaleElementReferenceException...");
+        } catch (MoveTargetOutOfBoundsException e){
+            logger.warn("Next Button found raises MoveTargetOutOfBoundsException...");
         }
         return nextPage;
     }
@@ -197,8 +201,12 @@ public class ParseTable extends AbstractCveParser implements ParserStrategy {
         sourceUrl = sSourceURL;
         // get the page
         tryPageGet(sSourceURL);
-        if (driver.getPageSource() == null) return new ArrayList<>();
-//        driver.get(sSourceURL);
+        try{
+            if (driver.getPageSource() == null) return new ArrayList<>();
+        } catch (TimeoutException e) {
+            logger.warn("Unable to get {}", sourceUrl);
+            return new ArrayList<>();
+        }
         // click on any cookie agree button before trying to parse and click on anything else
         clickAcceptCookies();
         List<RawVulnerability> vulnList = new ArrayList<>();
@@ -227,7 +235,11 @@ public class ParseTable extends AbstractCveParser implements ParserStrategy {
             vulnList.addAll(parseTableSource(next));
             next = getNextPage(next);
         }
-        driver.manage().deleteAllCookies();
+        try{
+            driver.manage().deleteAllCookies();
+        } catch (TimeoutException e) {
+            logger.warn("Unable to clear cookies for {}", sourceUrl);
+        }
         return vulnList;
     }
 }
