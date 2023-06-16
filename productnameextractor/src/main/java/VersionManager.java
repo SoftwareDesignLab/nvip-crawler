@@ -24,8 +24,7 @@
 
 import model.cpe.ProductVersion;
 import model.cpe.VersionRange;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.nd4j.common.util.Index;
 
 import java.util.HashSet;
 import java.util.regex.Pattern;
@@ -39,15 +38,15 @@ import java.util.regex.Pattern;
  */
 public class VersionManager {
     private final HashSet<VersionRange> versionRanges;
-    // Regex101: https://regex101.com/r/cy9Hp3/2
+    // Regex101: https://regex101.com/r/cy9Hp3/4
 
-    private final static Pattern VERSION_PATTERN = Pattern.compile("^((?:\\d{1,8}\\.){0,7}\\d{1,5})$");
+    private final static Pattern VERSION_PATTERN = Pattern.compile("^((?:[\\dx]{1,5}\\.)*[\\dx]{1,5})$");
 
     public VersionManager() {
         this.versionRanges = new HashSet<>();
     }
 
-    public HashSet<VersionRange> getVersionRanges(){
+    public HashSet<VersionRange> getVersionRanges() {
         return versionRanges;
     }
 
@@ -67,8 +66,8 @@ public class VersionManager {
         boolean affected = false;
 
         // If any range validates, set to true and break loop
-        for (VersionRange vr : this.versionRanges){
-            if(vr.withinRange(version)) {
+        for (VersionRange vr : this.versionRanges) {
+            if (vr.withinRange(version)) {
                 affected = true;
                 break;
             }
@@ -81,10 +80,10 @@ public class VersionManager {
     /**
      * Function to take in a list of versionWords from a product and configure them
      * into VersionRange objects to be added to this.versionRanges
-     *
+     * <p>
      * For example, a list of ["before", "1.8.9", "1.9", "9.6+"]
      * would become version ranges [BEFORE 1.8.9, EXACT 1.9, AFTER 9.6]
-     * TODO: make 5.0.x become 5.0 through 5.1 instead of 5.0, but still work with other scenarios
+     *
      * @param versionWords list of product version words derived from NER model
      */
     public void processVersions(String[] versionWords) {
@@ -95,7 +94,7 @@ public class VersionManager {
             this.versionRanges.clear();
         }
 
-        //Format versions into acceptable format - no "3.7.x" or "5.7,"
+        //Format versions into acceptable format - no "v3.6" or "5.7,"
         formatVersionWords(versionWords);
 
         boolean beforeFlag = false;
@@ -103,20 +102,22 @@ public class VersionManager {
         boolean throughFlag = false;
         int i = 0;
 
-        while(i < versionWords.length){
+        while (i < versionWords.length) {
+            //Current version word
             String versionWord = versionWords[i];
-            if(isVersion(versionWord) && !versionWord.isEmpty()) {
+
+            if (isVersion(versionWord) && !versionWord.isEmpty()) {
                 //Standalone version - "1.5.6"
-                if(!afterFlag && !beforeFlag && !throughFlag){
+                if (!afterFlag && !beforeFlag && !throughFlag) {
                     addRangeFromString(versionWord);
                 }
 
                 //Through case - "1.2.5 through 2.4.1" "8.6 to 9.1" "through 8.6"
-                if(throughFlag){
-                    if(isVersion(versionWords[i - 2])) {
+                if (throughFlag) {
+                    if (isVersion(versionWords[i - 2])) {
                         String rangeString = versionWords[i - 2] + " through " + versionWord;
                         addRangeFromString(rangeString);
-                    }else{
+                    } else {
                         String rangeString = "before " + versionWord;
                         addRangeFromString(rangeString);
                     }
@@ -124,107 +125,169 @@ public class VersionManager {
                 }
 
                 //Before case - "before 3.7.1"
-                if(beforeFlag){
+                if (beforeFlag) {
                     String rangeString = "before " + versionWord;
                     addRangeFromString(rangeString);
                     beforeFlag = false;
                 }
 
                 //After case - "after 3.7.1"
-                if(afterFlag) {
+                if (afterFlag) {
                     String rangeString = "after " + versionWord;
                     addRangeFromString(rangeString);
                     afterFlag = false;
                 }
 
-            //If word is "before", "after", or "through", sets appropriate flag
-            }else if(versionWord.equals("before")){
+                //If word is "before", "after", or "through", sets appropriate flag
+            } else if (versionWord.equals("before")) {
                 beforeFlag = true;
-            }else if(versionWord.equals("after")){
+            } else if (versionWord.equals("after")) {
                 afterFlag = true;
-            }else if(versionWord.equals("through")){
+            } else if (versionWord.equals("through")) {
                 throughFlag = true;
 
-            //Handles "1.8 to 4.2", "prior to 3.4", "prior 1.3"
-            }else if(versionWord.equals("prior")){
+                //Handles "1.8 to 4.2", "prior to 3.4", "prior 1.3"
+            } else if (versionWord.equals("prior")) {
                 beforeFlag = true;
-            }else if(versionWord.equals("to") && !beforeFlag){
+            } else if (versionWord.equals("to") && !beforeFlag) {
                 throughFlag = true;
 
-            //Handles "6.3.1 and earlier" "6.3.1 and prior versions" as well as after and later
-            }else if(versionWord.equals("and")){
-                if(versionWords[i + 1].equals("earlier") || versionWords[i + 1].equals("prior")){
-                    try{
+                //Handles "6.3.1 and earlier" "6.3.1 version and prior versions" as well as after and later
+            } else if (versionWord.equals("and")) {
+                try {
+                    if (versionWords[i + 1].equals("earlier") || versionWords[i + 1].equals("prior")) {
                         int j = i - 1;
-                        while(!isVersion(versionWords[j])){
-                            j-=1;
+                        if (versionWords[j].endsWith(".x")) {
+                            versionWords[j] = versionWords[j].replace("x", "9");
+                        }
+                        while (!isVersion(versionWords[j])) {
+                            j -= 1;
                         }
                         addRangeFromString("before " + versionWords[j]);
-                    }catch(IndexOutOfBoundsException e){
-                        break;
                     }
+                } catch (IndexOutOfBoundsException e) {
+                    break;
                 }
-                if(versionWords[i + 1].equals("after") || versionWords[i + 1].equals("later")){
-                    try{
+                try {
+                    if (versionWords[i + 1].equals("after") || versionWords[i + 1].equals("later")) {
                         int j = i - 1;
-                        while(!isVersion(versionWords[j])){
-                            j-=1;
+                        if (versionWords[j].endsWith(".x")) {
+                            versionWords[j] = versionWords[j].replace(".x", "");
+                        }
+                        while (!isVersion(versionWords[j])) {
+                            j -= 1;
                         }
                         addRangeFromString("after " + versionWords[j]);
-                    }catch(IndexOutOfBoundsException e){
-                        break;
-                    }
 
+                    }
+                } catch (IndexOutOfBoundsException e) {
+                    break;
                 }
 
-            //Handles "between 1.5 and 2.8" case
-            }else if(versionWord.equals("between")){
-                System.out.println("hello");
+                //Handles "between 1.5 and 2.8" case
+            } else if (versionWord.equals("between")) {
                 String version1 = null;
                 String version2 = null;
                 boolean bothFound = false;
-                try{
-                    while(!bothFound){
+                try {
+                    while (!bothFound) {
                         i++;
-                        if(isVersion(versionWords[i])){
-                            if(version1 == null){
-                                version1 = versionWords[i];
+                        String possibleVersion = versionWords[i];
+
+                        //Handle "between 8.x and 10" or "between 5.2 and 6.x"
+                        if (possibleVersion.endsWith(".x")) {
+                            String removedX = possibleVersion.replace(".x", "");
+                            String replacedX = removedX + ".9";
+                            if (version1 == null) {
+                                //In case "between" word is random, account for 5.x range
+                                addRangeFromString(removedX + " through " + replacedX);
+                                possibleVersion = removedX;
+                            } else {
+                                possibleVersion = replacedX;
+                            }
+                        }
+                        if (isVersion(possibleVersion)) {
+                            if (version1 == null) {
+                                version1 = possibleVersion;
 
                                 //in case no other version is found
                                 addRangeFromString(version1);
-                            }else{
-                                version2 = versionWords[i];
+                            } else {
+                                version2 = possibleVersion;
                                 bothFound = true;
                             }
                         }
                     }
 
                     addRangeFromString(version1 + " through " + version2);
-                }catch(IndexOutOfBoundsException e){
+                } catch (IndexOutOfBoundsException e) {
                     break;
                 }
-            }
+                //Handles "3.9+" case
+            } else if (versionWord.endsWith("+")) {
+                versionWord = versionWord.replace("+", "");
+                //"3.9.x+" becomes "3.9+"
+                if (versionWord.endsWith(".x")) {
+                    versionWord = versionWord.replace(".x", "");
+                }
+                addRangeFromString("after " + versionWord);
 
-            //Handles "3.9.5+" case
-            if(versionWord.endsWith("+") && isVersion(versionWord.substring(0,(versionWord.length()) - 1))){
-                addRangeFromString("after " + versionWord.substring(0,(versionWord.length()) - 1));
-            }
-
-            //Handles "<1.2.4" case and "<, 1.2.4" case where 1.2.4 is the next line
-            if(versionWord.startsWith("<")){
-                if(isVersion(versionWord.substring(1))) {
+                //Handles "<1.2.4" case and "<, 1.2.4" case where 1.2.4 is the next word in line
+            } else if (versionWord.startsWith("<")) {
+                //"<2.x" becomes "<2.9"
+                if (versionWord.endsWith(".x")) {
+                    versionWord = versionWord.replace("x", "9");
+                }
+                if (isVersion(versionWord.substring(1))) {
                     addRangeFromString("before " + versionWord.substring(1));
-                }else if(versionWord.length() == 1){
+                } else if (versionWord.length() == 1) {
                     beforeFlag = true;
                 }
-            }
 
-            //Handles ">1.2.4" case
-            if(versionWord.startsWith(">")){
-                if(isVersion(versionWord.substring(1))){
+                //Handles ">1.2.4" case and ">, 1.2.4" case where 1.2.4 is the next word in line
+            } else if (versionWord.startsWith(">")) {
+                //>2.x becomes >2
+                if (versionWord.endsWith(".x")) {
+                    versionWord = versionWord.replace(".x", "");
+                }
+                if (isVersion(versionWord.substring(1))) {
                     addRangeFromString("after " + versionWord.substring(1));
-                }else if(versionWord.length() == 1){
+                } else if (versionWord.length() == 1) {
                     afterFlag = true;
+                }
+
+                //Handle .x case first - have to make sure "before 5.x" becomes "before 5.9"
+                //and standalone "8.2.x" works where "8.2.x" becomes 8.2 through 8.2.9
+            } else if (versionWord.endsWith(".x")) {
+                String removedX = versionWord.substring(0, versionWord.length() - 2);
+                String replacedX = removedX + ".9";
+
+                //"before 5.x" becomes "before 5.9"
+                if (beforeFlag) {
+                    addRangeFromString("before " + replacedX);
+                    beforeFlag = false;
+                }
+
+                //"after 5.x" becomes "after 5"
+                else if (afterFlag) {
+                    addRangeFromString("after " + removedX);
+                    afterFlag = false;
+                }
+
+                //"4.2.3 through 5.x" becomes "4.2.3 through 5.9"
+                else if (throughFlag) {
+                    if (isVersion(versionWords[i - 2])) {
+                        String rangeString = versionWords[i - 2] + " through " + replacedX;
+                        addRangeFromString(rangeString);
+                    } else {
+                        String rangeString = "before " + replacedX;
+                        addRangeFromString(rangeString);
+                    }
+                    throughFlag = false;
+
+                    //Standalone "5.x" version becomes "5.x through 5.9"
+                } else {
+                    addRangeFromString(removedX + " through " + replacedX);
                 }
             }
 
@@ -239,7 +302,7 @@ public class VersionManager {
      * @return result of test
      */
     public static boolean isVersion(String version) {
-        if(version.length() == 0){
+        if (version.length() == 0) {
             return false;
         }
         return VERSION_PATTERN.matcher(version).matches();
@@ -252,8 +315,11 @@ public class VersionManager {
      *
      * @param versionWords array of words to format
      */
-    public void formatVersionWords(String[] versionWords){
-        for(int i = 0; i < versionWords.length; i++) {
+    public void formatVersionWords(String[] versionWords) {
+        for (int i = 0; i < versionWords.length; i++) {
+            if (versionWords[i] == null) {
+                continue;
+            }
             versionWords[i] = ProductVersion.formatVersionWord(versionWords[i]);
         }
     }

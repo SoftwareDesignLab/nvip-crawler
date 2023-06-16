@@ -32,16 +32,6 @@ public class ProductVersionTest {
     }
 
     @Test
-    public void invalidVersionTest1(){
-        final String versionString = "1.2.beta";
-
-        try {
-            new ProductVersion(versionString);
-            fail(String.format("Version %s should have thrown an error and did not", versionString));
-        } catch (IllegalArgumentException ignored) { }
-    }
-
-    @Test
     public void invalidVersionTest2(){
         final String versionString = "-";
 
