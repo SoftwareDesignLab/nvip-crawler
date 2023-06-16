@@ -78,9 +78,10 @@ public class PatchCommitScraper {
 			try(final Git git = new Git(repository)) {
 				// Iterate through each commit and check if there's a commit message that contains a CVE ID
 				// or the 'vulnerability' keyword
+				// TODO: Test now that localDownloadLoc is fixed
 				final ObjectId startingRevision = repository.resolve("refs/heads/master");
-				if(startingRevision != null) {
-					final Iterable<RevCommit> commits = git.log().add(startingRevision).call();
+				if(startingRevision != null || true) {
+					final Iterable<RevCommit> commits = git.log()/*.add(startingRevision)*/.call();
 
 					int ignoredCounter = 0;
 

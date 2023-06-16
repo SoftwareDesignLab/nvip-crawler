@@ -64,14 +64,19 @@ public class PatchFinderThread implements Runnable {
 			for (String patchSource: cvePatchEntry.get(cve)) {
 				try {
 					// Clone git repo
+					String localDownloadLoc = clonePath + "/" + cve + "-" + patchSource.substring(patchSource.lastIndexOf("/") + 1);
+
 					GitController gitController = new GitController(
-							clonePath + "/" + cve + "-" + patchSource.substring(patchSource.lastIndexOf("/") + 1),
+							localDownloadLoc,
 							patchSource+".git"
 					);
 					gitController.cloneRepo();
 
 					// Find patch commits
-					PatchCommitScraper commitScraper = new PatchCommitScraper(clonePath + "/" + cve, patchSource);
+					PatchCommitScraper commitScraper = new PatchCommitScraper(
+							localDownloadLoc,
+							patchSource
+					);
 					List<PatchCommit> patchCommits = commitScraper.parseCommits(cve);
 					foundPatchCommits.addAll(patchCommits);
 

@@ -37,6 +37,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Main class for collecting CVE Patches within repos that were
@@ -100,7 +102,7 @@ public class PatchFinder {
 				"src/main/resources/patch-repos",
 				maxThreads,
 				cvesPerThread
-		);
+		); // TODO: Wait for completion?
 
 		// Get found patches from patchfinder
 		ArrayList<PatchCommit> patchCommits = PatchFinder.getPatchCommits();
@@ -115,7 +117,7 @@ public class PatchFinder {
 
 
 		final long delta = (System.currentTimeMillis() - start) / 1000;
-		logger.info("Successfully patched {} affected products in {} seconds", patchCommits.size(), delta);
+		logger.info("Successfully collected {} patch commits from {} affected products in {} seconds", patchCommits.size(), affectedProducts.size(), delta);
 	}
 
 	/**
@@ -161,6 +163,17 @@ public class PatchFinder {
 			}
 		}
 
-		es.shutdown();
+		try {
+			// Shut down the executor to release resources after all tasks are complete
+			final int timeout = 60;
+			final TimeUnit unit = TimeUnit.MINUTES;
+			if(!es.awaitTermination(60, TimeUnit.MINUTES)) {
+				throw new TimeoutException(String.format("Product extraction thread pool runtime exceeded timeout value of %s %s", timeout, unit.toString()));
+			}
+			logger.info("Product extraction thread pool completed all jobs, shutting down...");
+			es.shutdown();
+		} catch (Exception e) {
+			logger.error("Product extraction failed: {}", e.toString());
+		}
 	}
 }
