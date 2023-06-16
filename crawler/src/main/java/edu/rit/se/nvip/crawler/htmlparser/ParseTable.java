@@ -227,7 +227,7 @@ public class ParseTable extends AbstractCveParser implements ParserStrategy {
             vulnList.addAll(parseTableSource(next));
             next = getNextPage(next);
         }
-
+        driver.manage().deleteAllCookies();
         return vulnList;
     }
 }

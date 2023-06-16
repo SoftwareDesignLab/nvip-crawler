@@ -158,6 +158,7 @@ public class ParseAccordion extends AbstractCveParser implements ParserStrategy 
                 }
             }
         }
+        driver.manage().deleteAllCookies();
         return vulnList;
     }
 }

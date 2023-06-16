@@ -1,5 +1,4 @@
 https://groups.google.com/g/libarchive-announce
-https://github.com/CISecurity/OVALRepo/tree/master/repository/definitions/vulnerability
 https://github.com/DrizzlingSun/Tenda/tree/main/AC18
 https://github.com/GSMcNamara/CVE/blob/main/disclosures/index.md
 https://github.com/Mirantis/security/blob/main/advisories/advisories.md
