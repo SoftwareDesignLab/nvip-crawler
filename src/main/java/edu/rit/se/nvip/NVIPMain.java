@@ -661,16 +661,19 @@ public class NVIPMain {
 				if (rawVuln != null) {
 					// Did we find garbage or valid description?
 					if (!CveUtils.isCveReservedEtc(rawVuln.getDescription()) && nlpUtil.sentenceDetect(rawVuln.getDescription()) != null) {
-						fullDescription += rawVuln.getDescription() + "\n\n\n";
-						for (String sourceUrl : rawVuln.getSourceURL()) {
-							if (!totalSourceURLs.contains(sourceUrl)) {
-								totalSourceURLs.add(sourceUrl);
+						if (!fullDescription.contains(rawVuln.getDescription())) {
+							fullDescription += rawVuln.getDescription() + "\n\n\n";
+							for (String sourceUrl : rawVuln.getSourceURL()) {
+								if (!totalSourceURLs.contains(sourceUrl)) {
+									totalSourceURLs.add(sourceUrl);
+								}
 							}
 						}
 					}
 				}
 			}
 
+			// Use created date as default if published date and last modified dates aren't provided
 			try {
 				CompositeVulnerability compiledVuln = new CompositeVulnerability(0, totalSourceURLs.size() > 0 ? totalSourceURLs.get(0) : "",
 						cveId,
