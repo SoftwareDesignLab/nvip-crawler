@@ -23,30 +23,22 @@
  */
 package edu.rit.se.nvip.mitre;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import edu.rit.se.nvip.crawler.github.GitController;
+import edu.rit.se.nvip.model.MitreVulnerability;
+import org.apache.commons.io.FileUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-
-import edu.rit.se.nvip.model.MitreVulnerability;
-import org.apache.commons.io.FileUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-
-import edu.rit.se.nvip.model.CompositeVulnerability;
-import edu.rit.se.nvip.utils.CsvUtils;
-import edu.rit.se.nvip.crawler.github.GitController;
-import edu.rit.se.nvip.utils.UtilHelper;
 
 /**
  * 
