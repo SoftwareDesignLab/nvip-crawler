@@ -24,9 +24,8 @@
 package utils;
 
 import java.io.File;
-import java.io.IOException;
 
-import org.apache.commons.io.FileUtils;
+import org.eclipse.jgit.util.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eclipse.jgit.api.CloneCommand;
@@ -109,8 +108,8 @@ public class GitController {
 	 */
 	public void deleteRepo() {
 		logger.info("Deleting local repo @ {}", localPath);
-		try {
-			FileUtils.deleteDirectory(new File(localPath));
+		try { // TODO: Throwing AccessDeniedExceptions
+			FileUtils.delete(new File(localPath), FileUtils.RECURSIVE);
 			logger.info("Successfully deleted repo @ {}", localPath);
 		} catch (Exception e) {
 			logger.error("ERORR: Failed to delete repo @ {}\n{}", localPath, e);
