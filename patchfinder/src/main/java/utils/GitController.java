@@ -98,7 +98,7 @@ public class GitController {
 			logger.error("Error while cloning repo at: {}\n{}", remotePath, e);
 			return false;
 		} finally {
-			git.close();
+			if(git != null) git.close();
 		}
 		return true;
 	}
