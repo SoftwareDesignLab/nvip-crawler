@@ -144,6 +144,10 @@
             referencedTableName="description"
             referencedColumnNames="description_id"
             constraintName="description_id_fk"/>
+
+        <addUniqueConstraint
+                columnNames="cve_id"
+                tableName="vulnerability"/>
     </changeSet>
 
     <changeSet author="affectedproduct" id="affectedproduct">
@@ -190,6 +194,7 @@
             referencedTableName="vulnerability"
             referencedColumnNames="cve_id"
             constraintName="affectedproduct_cve_id_fk"/>
+
     </changeSet>
 
     <changeSet author="cvss" id="cvss">
@@ -496,6 +501,10 @@
             referencedTableName="runhistory"
             referencedColumnNames="runhistory_id"
             constraintName="aggregate_run_date_time_id"/>
+
+        <addUniqueConstraint
+                columnNames="cve_id"
+                tableName="vulnerabilityaggregate"/>
     </changeSet>
 
     <changeSet author="cvejobtrack" id="cvejobtrack">
@@ -511,6 +520,10 @@
             unique="true">
             <column name="cve_id"/>
         </createIndex>
+
+        <addUniqueConstraint
+                columnNames="cve_id"
+                tableName="cvejobtrack"/>
     </changeSet>
 
     <changeSet author="nvddata" id="nvddata">
@@ -532,6 +545,10 @@
             unique="true">
             <column name="cve_id"/>
         </createIndex>
+
+        <addUniqueConstraint
+                columnNames="cve_id"
+                tableName="nvddata"/>
     </changeSet>
 
     

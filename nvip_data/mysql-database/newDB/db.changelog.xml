@@ -27,12 +27,27 @@
         </addColumn>
     </changeSet> -->
 
-    <changeSet author="richard" id="modify_swid_tag_column">
-        <addColumn tableName="affectedproduct">
-            <column name="swid_tag" type="VARCHAR(1000)">
-                <constraints nullable="true"/>
-            </column>
-        </addColumn>
+<!--    <changeSet author="richard" id="modify_swid_tag_column">-->
+<!--        <addColumn tableName="affectedproduct">-->
+<!--            <column name="swid_tag" type="VARCHAR(1000)">-->
+<!--                <constraints nullable="true"/>-->
+<!--            </column>-->
+<!--        </addColumn>-->
+<!--    </changeSet>-->
+
+    <changeSet author="andrew" id="add-cve-id-unique-const">
+        <addUniqueConstraint
+                columnNames="cve_id"
+                tableName="vulnerability"/>
+        <addUniqueConstraint
+                columnNames="cve_id"
+                tableName="vulnerabilityaggregate"/>
+        <addUniqueConstraint
+                columnNames="cve_id"
+                tableName="nvddata"/>
+        <addUniqueConstraint
+                columnNames="cve_id"
+                tableName="cvejobtrack"/>
     </changeSet>
 
 </databaseChangeLog>

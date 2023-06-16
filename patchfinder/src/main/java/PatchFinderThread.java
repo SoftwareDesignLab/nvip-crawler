@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+import java.net.URI;
 import java.util.*;
 
 import commits.PatchCommit;
@@ -63,11 +64,19 @@ public class PatchFinderThread implements Runnable {
 			for (String patchSource: cvePatchEntry.get(cve)) {
 				try {
 					// Clone git repo
-					GitController gitController = new GitController(clonePath + "/" + cve, patchSource+".git");
+					String localDownloadLoc = clonePath + "/" + cve + "-" + patchSource.substring(patchSource.lastIndexOf("/") + 1);
+
+					GitController gitController = new GitController(
+							localDownloadLoc,
+							patchSource+".git"
+					);
 					gitController.cloneRepo();
 
 					// Find patch commits
-					PatchCommitScraper commitScraper = new PatchCommitScraper(clonePath + "/" + cve, patchSource);
+					PatchCommitScraper commitScraper = new PatchCommitScraper(
+							localDownloadLoc,
+							patchSource
+					);
 					List<PatchCommit> patchCommits = commitScraper.parseCommits(cve);
 					foundPatchCommits.addAll(patchCommits);
 
@@ -75,6 +84,7 @@ public class PatchFinderThread implements Runnable {
 					gitController.deleteRepo();
 				} catch (Exception e) {
 					logger.error("ERROR: Failed to find patch from source {} for CVE {}\n{}", patchSource, cve, e.toString());
+					e.printStackTrace();
 				}
 			}
 		}
