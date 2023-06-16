@@ -61,9 +61,6 @@ public class ReconcilerController {
     }
 
     private List<CompositeVulnerability> characterizeCVEs(Set<CompositeVulnerability> crawledVulnerabilityList) {
-        // Parse CAPECs page to link CVEs to a given Attack Pattern in characterizer
-        // CapecParser capecParser = new CapecParser();
-        // ArrayList<Capec> capecs = capecParser.parseWebPage(crawler);
 
         // characterize
         logger.info("Characterizing and scoring NEW CVEs...");
@@ -85,14 +82,6 @@ public class ReconcilerController {
         catch (NullPointerException | NumberFormatException e) { logger.warn("Could not fetch NVIP_CVE_CHARACTERIZATION_TRAINING_DATA or NVIP_CVE_CHARACTERIZATION_TRAINING_DATA_DIR from env vars, defaulting to {}", System.getenv("NVIP_CVE_CHARACTERIZATION_LIMIT")); }
 
 
-        // OLD CODE
-
-//        String[] trainingDataInfo = properties.getCveCharacterizationTrainingDataInfo();
-//        CveCharacterizer cveCharacterizer = new CveCharacterizer(trainingDataInfo[0], trainingDataInfo[1], properties.getCveCharacterizationApproach(),
-//                properties.getCveCharacterizationMethod(), false);
-//
-//        return cveCharacterizer.characterizeCveList(crawledVulnerabilityList, databaseHelper,
-//                (Integer) characterizationVars.get("cveCharacterizationLimit"));
         return null;
     }
 

@@ -19,7 +19,8 @@ public class DatabaseHelper {
 	private static final Logger logger = LogManager.getLogger(DatabaseHelper.class.getSimpleName());
 	private static final String databaseType = "mysql";
 	private static DatabaseHelper databaseHelper = null;
-	private final String selectCvssSeveritySql = "SELECT * FROM cvssseverity;";
+	private final String selectVdoLabelSql = "SELECT * FROM vdolabel;";
+	private final String selectVdoNounGroupSql = "SELECT * FROM vdonoungroup;";
 	private static final String GET_JOBS = "SELECT * FROM cvejobtrack";
 	private static final String GET_RAW_BY_CVE_ID = "SELECT * FROM rawdescription WHERE cve_id = ? AND is_garbage = 0";
 	private static final String MARK_GARBAGE = "UPDATE rawdescription SET is_garbage = ? WHERE raw_description_id = ?";
@@ -32,15 +33,13 @@ public class DatabaseHelper {
 			"INNER JOIN rawdescription AS rd ON rdjt.raw_description_id = rd.raw_description_id " +
 			"WHERE v.cve_id = ?";
 
+	private final String selectCvssSeveritySql = "SELECT * FROM cvssseverity;";
 
 	private static final String INSERT_VULNERABILITY = "INSERT INTO vulnerability (cve_id, description_id, created_date, published_date, last_modified_date) VALUES (?, ?, ?, ?, ?)";
 	private static final String UPDATE_VULNERABILITY = "UPDATE vulnerability SET description_id = ?, published_date = ?, last_modified_date = ? WHERE cve_id = ?";
 	private static final String INSERT_JT = "INSERT INTO rawdescriptionjt (description_id, raw_description_id) VALUES (?, ?)";
 	private static final String INSERT_DESCRIPTION = "INSERT INTO description (description, created_date, gpt_func, cve_id) VALUES (?, ?, ?, ?)";
 	private static final String DELETE_JOB = "DELETE FROM cvejobtrack WHERE cve_id = ?";
-
-	private final String selectVdoLabelSql = "SELECT * FROM vdolabel;";
-	private final String selectVdoNounGroupSql = "SELECT * FROM vdonoungroup;";
 
 	private String GET_ALL_NEW_CVES = "SELECT cve_id, published_date, status FROM nvddata order by cve_id desc";
 	private final String insertIntoNvdData = "INSERT INTO nvd_data (cve_id, published_date, status) VALUES (?, ?, ?)";
@@ -401,6 +400,7 @@ public class DatabaseHelper {
 
 		return 0;
 	}
+
 	/**
 	 * get table data as Map<name,id>
 	 *
@@ -437,6 +437,12 @@ public class DatabaseHelper {
 	public Map<String, Integer> getCvssSeverityLabels() {
 		return getTableDataAsHashMap(selectCvssSeveritySql, "cvss_severity_id", "cvss_severity_class");
 	}
+
+	/**
+	 * get vdo labels as hash map
+	 *
+	 * @return
+	 */
 	public Map<String, Integer> getVdoLabels() {
 		return getTableDataAsHashMap(selectVdoLabelSql, "vdo_label_id", "vdo_label_name");
 	}
@@ -444,4 +450,6 @@ public class DatabaseHelper {
 	public Map<String, Integer> getVdoNounGrpups() {
 		return getTableDataAsHashMap(selectVdoNounGroupSql, "vdo_noun_group_id", "vdo_noun_group_name");
 	}
+
+
 }
