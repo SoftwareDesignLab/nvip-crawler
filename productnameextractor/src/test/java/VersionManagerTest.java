@@ -189,4 +189,20 @@ public class VersionManagerTest {
         assertFalse(manager.isAffected(version3));
         assertFalse(manager.isAffected(version4));
     }
+
+    @Test
+    public void processVersionsBetweenTest() {
+        String[] versionWords = {
+                "before", "1.8.2.,", "v1.9.3", "between", "1.4", "and", "1.7.5", "3.8.5+"
+        };
+
+        VersionManager manager = new VersionManager();
+        manager.processVersions(versionWords);
+
+        assertEquals(5, manager.getVersionRanges().size());
+        assertTrue(manager.getVersionRanges().toString().contains("BEFORE 1.8.2"));
+        assertTrue(manager.getVersionRanges().toString().contains("EXACT 1.9.3"));
+        assertTrue(manager.getVersionRanges().toString().contains("1.4 THROUGH 1.7.5"));
+        assertTrue(manager.getVersionRanges().toString().contains("AFTER 3.8.5"));
+    }
 }
