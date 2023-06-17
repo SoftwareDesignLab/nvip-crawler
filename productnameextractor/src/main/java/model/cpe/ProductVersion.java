@@ -131,8 +131,24 @@ public class ProductVersion implements Comparable<ProductVersion> {
         versionWord = versionWord.replace("h","");
         versionWord = versionWord.replace("_", ".");
         versionWord = versionWord.replace("p","");
-        versionWord = versionWord.replace("-","");
+        versionWord = versionWord.replace("l",".");
+        versionWord = versionWord.replace("t","");
+        versionWord = versionWord.replace("f","");
+        versionWord = versionWord.replace("o","");
+        versionWord = versionWord.replace("r","");
+        versionWord = versionWord.replace("m","");
         versionWord = versionWord.replace("=","");
+        versionWord = versionWord.replace("/","");
+        versionWord = versionWord.replace("\\","");
+        versionWord = versionWord.replace("e","");
+        versionWord = versionWord.replace("d","");
+        versionWord = versionWord.replace(";","");
+
+        //Removes < and > unless it is the case of <2.4.5
+        if(!versionWord.startsWith(">") && !versionWord.startsWith("<")){
+            versionWord = versionWord.replace("<", "");
+            versionWord = versionWord.replace(">", "");
+        }
 
         //Removes period at the end of a version "1.9.2." to "1.9.2"
         if(versionWord.endsWith(".")){

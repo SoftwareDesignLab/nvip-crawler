@@ -39,10 +39,9 @@ import java.util.regex.Pattern;
  */
 public class VersionManager {
     private final HashSet<VersionRange> versionRanges;
-    // Regex101: https://regex101.com/r/cy9Hp3/1
+    // Regex101: https://regex101.com/r/cy9Hp3/2
 
-    private final static Pattern VERSION_PATTERN = Pattern.compile("^((?:[0-9]\\.?)*)$");
-    private final static Logger logger = LogManager.getLogger(VersionManager.class);
+    private final static Pattern VERSION_PATTERN = Pattern.compile("^((?:\\d{1,8}\\.){0,7}\\d{1,5})$");
 
     public VersionManager() {
         this.versionRanges = new HashSet<>();
@@ -86,8 +85,6 @@ public class VersionManager {
      * For example, a list of ["before", "1.8.9", "1.9", "9.6+"]
      * would become version ranges [BEFORE 1.8.9, EXACT 1.9, AFTER 9.6]
      * TODO: make 5.0.x become 5.0 through 5.1 instead of 5.0, but still work with other scenarios
-     * TODO: change regex so that 210042104201 does not work as a version but 2023 etc does
-     * TODO: make "and earlier" case go back to the most recent version instead of just checking the word before "and"
      * @param versionWords list of product version words derived from NER model
      */
     public void processVersions(String[] versionWords) {
@@ -157,10 +154,27 @@ public class VersionManager {
             //Handles "6.3.1 and earlier" "6.3.1 and prior versions" as well as after and later
             }else if(versionWord.equals("and")){
                 if(versionWords[i + 1].equals("earlier") || versionWords[i + 1].equals("prior")){
-                    if(isVersion(versionWords[i - 1])) addRangeFromString("before " + versionWords[i - 1]);
+                    try{
+                        int j = i - 1;
+                        while(!isVersion(versionWords[j])){
+                            j-=1;
+                        }
+                        addRangeFromString("before " + versionWords[j]);
+                    }catch(IndexOutOfBoundsException e){
+                        break;
+                    }
                 }
                 if(versionWords[i + 1].equals("after") || versionWords[i + 1].equals("later")){
-                    if(isVersion(versionWords[i - 1])) addRangeFromString("after " + versionWords[i - 1]);
+                    try{
+                        int j = i - 1;
+                        while(!isVersion(versionWords[j])){
+                            j-=1;
+                        }
+                        addRangeFromString("after " + versionWords[j]);
+                    }catch(IndexOutOfBoundsException e){
+                        break;
+                    }
+
                 }
 
             //Handles "between 1.5 and 2.8" case
@@ -192,18 +206,26 @@ public class VersionManager {
             }
 
             //Handles "3.9.5+" case
-            if(versionWords[i].endsWith("+") && isVersion(versionWords[i].substring(0,(versionWords[i].length()) - 1))){
-                addRangeFromString("after " + versionWords[i].substring(0,(versionWords[i].length()) - 1));
+            if(versionWord.endsWith("+") && isVersion(versionWord.substring(0,(versionWord.length()) - 1))){
+                addRangeFromString("after " + versionWord.substring(0,(versionWord.length()) - 1));
             }
 
-            //Handles "<1.2.4" case
-            if(versionWords[i].startsWith("<") && isVersion(versionWords[i].substring(1))){
-                addRangeFromString("before " + versionWords[i].substring(1));
+            //Handles "<1.2.4" case and "<, 1.2.4" case where 1.2.4 is the next line
+            if(versionWord.startsWith("<")){
+                if(isVersion(versionWord.substring(1))) {
+                    addRangeFromString("before " + versionWord.substring(1));
+                }else if(versionWord.length() == 1){
+                    beforeFlag = true;
+                }
             }
 
             //Handles ">1.2.4" case
-            if(versionWords[i].startsWith(">") && isVersion(versionWords[i].substring(1))){
-                addRangeFromString("after " + versionWords[i].substring(1));
+            if(versionWord.startsWith(">")){
+                if(isVersion(versionWord.substring(1))){
+                    addRangeFromString("after " + versionWord.substring(1));
+                }else if(versionWord.length() == 1){
+                    afterFlag = true;
+                }
             }
 
             i++;
@@ -217,6 +239,9 @@ public class VersionManager {
      * @return result of test
      */
     public static boolean isVersion(String version) {
+        if(version.length() == 0){
+            return false;
+        }
         return VERSION_PATTERN.matcher(version).matches();
     }
 
