@@ -443,9 +443,7 @@ public class CpeLookUp {
 	 * 
 	 * @param selectedGroups result from the findCPEGroups method
 	 * @param product product to search
-	 * TODO: Add in blacklist for generic product names such as "Security" or "Server"
-	 * TODO: Figure out why 12832818 still gets added
-	 * TODO: Fix NERmodel Random Errors
+	 * TODO: Add in blacklist for generic product names such as "Security" or "Server" - needs more looking into
 	 * @return a list of found CPE ID Strings
 	 */
 	private ArrayList<String> getCPEIdsFromGroups(ArrayList<CPEGroupFromMap> selectedGroups, ProductItem product) {
