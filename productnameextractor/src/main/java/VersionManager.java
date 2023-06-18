@@ -24,7 +24,6 @@
 
 import model.cpe.ProductVersion;
 import model.cpe.VersionRange;
-import org.nd4j.common.util.Index;
 
 import java.util.HashSet;
 import java.util.regex.Pattern;
@@ -38,9 +37,9 @@ import java.util.regex.Pattern;
  */
 public class VersionManager {
     private final HashSet<VersionRange> versionRanges;
-    // Regex101: https://regex101.com/r/cy9Hp3/4
+    // Regex101: https://regex101.com/r/y88Gsj/1
 
-    private final static Pattern VERSION_PATTERN = Pattern.compile("^((?:[\\dx]{1,5}\\.)*[\\dx]{1,5})$");
+    private final static Pattern VERSION_PATTERN = Pattern.compile("^((?:\\d{1,5}\\.)*\\d{1,5})$");
 
     public VersionManager() {
         this.versionRanges = new HashSet<>();
@@ -256,7 +255,7 @@ public class VersionManager {
                     afterFlag = true;
                 }
 
-                //Handle .x case first - have to make sure "before 5.x" becomes "before 5.9"
+                //Have to make sure "before 5.x" becomes "before 5.9"
                 //and standalone "8.2.x" works where "8.2.x" becomes 8.2 through 8.2.9
             } else if (versionWord.endsWith(".x")) {
                 String removedX = versionWord.substring(0, versionWord.length() - 2);
