@@ -194,7 +194,7 @@ public class DatabaseHelper {
 	 * @param affectedReleases list of affected release objects
 	 */
 	public void insertAffectedReleasesV2(List<AffectedRelease> affectedReleases) {
-		logger.info("Inserting {} affected releases...", affectedReleases.size());
+		logger.info("Inserting {} affected products...", affectedReleases.size());
 		// CPE 2.3 Regex
 		// Regex101: https://regex101.com/r/9uaTQb/1
 		final Pattern cpePattern = Pattern.compile("cpe:2\\.3:[aho\\*\\-]:([^:]*):([^:]*):([^:]*):.*");
@@ -232,7 +232,7 @@ public class DatabaseHelper {
 		} catch (SQLException e) {
 			logger.error(e.toString());
 		}
-		logger.info("Done. Inserted {} affected releases into the database!", count);
+		logger.info("Done. Inserted {} affected products into the database!", count);
 	}
 
 	/**
@@ -241,7 +241,7 @@ public class DatabaseHelper {
 	 * @param affectedReleases list of releases to delete
 	 */
 	public void deleteAffectedReleases(List<AffectedRelease> affectedReleases) {
-		logger.info("Deleting existing affected releases in database for {} items..", affectedReleases.size());
+		logger.info("Deleting existing affected products in database for {} items..", affectedReleases.size());
 		String deleteAffectedReleaseSql = "DELETE FROM affectedproduct where cve_id = ?;";
 		try (Connection conn = getConnection();
 				Statement stmt = conn.createStatement();
@@ -253,7 +253,7 @@ public class DatabaseHelper {
 		} catch (SQLException e) {
 			logger.error(e.toString());
 		}
-		logger.info("Done. Deleted existing affected releases in database!");
+		logger.info("Done. Deleted existing affected products in database!");
 	}
 
 	/**
