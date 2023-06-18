@@ -26,7 +26,6 @@ package model.cpe;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -84,7 +83,7 @@ public class ProductVersion implements Comparable<ProductVersion> {
     }
 
     @Override
-    public int compareTo(@NotNull ProductVersion o) {
+    public int compareTo(ProductVersion o) {
         // Extract parts lists
         int[] parts = this.versionParts;
         int[] otherParts = o.versionParts;
