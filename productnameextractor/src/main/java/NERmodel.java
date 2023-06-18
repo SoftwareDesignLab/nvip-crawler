@@ -321,8 +321,10 @@ public class NERmodel {
 		// get word embedding from char2vector model (on the character level)
 		try {
 			wordVector2 = charModel.word2vec(word);
-		} catch (Exception e) {
-			log.error(e);
+		}catch (IllegalArgumentException e){
+			//This gets thrown whenever russian or chinese characters are passed in; errors clog up logs
+		}catch (Exception e) {
+			log.error(e + " for word " + word);
 		}
 
 		// convert double[] to float[]
