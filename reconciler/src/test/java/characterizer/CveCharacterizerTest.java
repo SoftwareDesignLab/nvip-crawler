@@ -24,6 +24,7 @@ package characterizer; /**
 
 import db.DatabaseHelper;
 import model.CompositeVulnerability;
+import model.RawVulnerability;
 import org.junit.Test;
 import utils.CsvUtils;
 
@@ -39,9 +40,6 @@ public class CveCharacterizerTest {
 
 	@Test
 	public void testCveCharacterization() {
-//		MyProperties propertiesNvip = new MyProperties();
-//		propertiesNvip = new PropertyLoader().loadConfigFile(propertiesNvip);
-//		String[] trainingDataInfo = propertiesNvip.getCveCharacterizationTrainingDataInfo();
 		String[] trainingDataInfo = {"characterization/", "AttackTheater.csv,Context.csv,ImpactMethod.csv,LogicalImpact.csv,Mitigation.csv"};
 		// test prediction
 		String cveDesc = "7.2 HIGH9.0 HIGHCVE-2020-11544 Ã¢â‚¬â€� An issue was discovered in Project Worlds Official Car Rental System 1. It allows the admin user to run commands on the server with their account because the upload section on the file-manager page contains an arbitrary file upload vulnerability via... read CVE-2020-11544 Published: April 06, 2020; 12:15:13 PM -04:00 CVE-2020-11544read CVE-2020-11544V3.1:7.2 HIGH6.5 MEDIUM";
@@ -72,13 +70,15 @@ public class CveCharacterizerTest {
 			String description = line[1];
 			if (description.contains("** RESERVED") || description.contains("** REJECT"))
 				continue;
-			CompositeVulnerability vuln = new CompositeVulnerability(0, null, cveId, null, null, null, description, null);
+			CompositeVulnerability vuln = new CompositeVulnerability(new RawVulnerability(1, "", "", null, null, null, ""));
+			//CompositeVulnerability vuln = new CompositeVulnerability(0, null, cveId, null, null, null, description, null);
 			vuln.setCveReconcileStatus(CompositeVulnerability.CveReconcileStatus.UPDATE);
 			vulnList.add(vuln);
 		}
 
 		List<CompositeVulnerability> newList = cveCharacterizer.characterizeCveList(vulnList, db, 5000);
 		assertEquals(10, newList.size());
+
 
 	}
 }
