@@ -35,7 +35,7 @@
 <!--        </addColumn>-->
 <!--    </changeSet>-->
 
-    <changeSet author="andrew" id="add-cve-id-unique-const">
+    <!-- <changeSet author="andrew" id="add-cve-id-unique-const">
         <addUniqueConstraint
                 columnNames="cve_id"
                 tableName="vulnerability"/>
@@ -48,6 +48,16 @@
         <addUniqueConstraint
                 columnNames="cve_id"
                 tableName="cvejobtrack"/>
+    </changeSet> -->
+
+    <changeSet author="dylan" id="modify_commit_message_column">
+        <dropColumn tableName="patchcommit" columnName="commit_message"/>
+
+        <addColumn tableName="patchcommit">
+            <column name="commit_message" type="VARCHAR(1000)">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
     </changeSet>
 
 </databaseChangeLog>

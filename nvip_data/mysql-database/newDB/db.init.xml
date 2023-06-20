@@ -335,7 +335,7 @@
             <column name="commit_date" type="DATETIME">
                 <constraints nullable="false"/>
             </column>
-            <column name="commit_message" type="VARCHAR(500)">
+            <column name="commit_message" type="VARCHAR(1000)">
                 <constraints nullable="false"/>
             </column>
         </createTable>
