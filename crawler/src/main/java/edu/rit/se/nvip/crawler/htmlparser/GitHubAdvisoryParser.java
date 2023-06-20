@@ -24,6 +24,10 @@
 package edu.rit.se.nvip.crawler.htmlparser;
 
 import edu.rit.se.nvip.model.RawVulnerability;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -32,8 +36,11 @@ import org.jsoup.select.Elements;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.time.LocalDate;
 
 public class GitHubAdvisoryParser extends AbstractCveParser {
+
+    private static final Logger logger = LogManager.getLogger(RawVulnerability.class);
 
     /**
      * Parse advisories listed to github.com/advisories
@@ -69,8 +76,8 @@ public class GitHubAdvisoryParser extends AbstractCveParser {
         }
 
         // get publish and modified dates in top subhead description
-        String publishDate = "";
-        String lastModifiedDate = "";
+        String publishDate = null;
+        String lastModifiedDate = null;
         Element subhead = doc.select("div.Subhead-description").first();
         if (subhead != null) {
             Elements dates = subhead.select("relative-time");
@@ -80,6 +87,13 @@ public class GitHubAdvisoryParser extends AbstractCveParser {
                 if (dates.size() > 1)
                     lastModifiedDate = dates.get(1).attr("title");
             }
+        }
+
+        if(publishDate == null){
+            publishDate = LocalDate.now().toString();
+        }
+        if(lastModifiedDate == null){
+            lastModifiedDate = LocalDate.now().toString();
         }
 
         vulnList.add(new RawVulnerability(
