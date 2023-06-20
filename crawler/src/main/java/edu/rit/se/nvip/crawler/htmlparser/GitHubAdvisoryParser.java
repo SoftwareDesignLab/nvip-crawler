@@ -33,6 +33,9 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.TimeoutException;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -42,18 +45,46 @@ public class GitHubAdvisoryParser extends AbstractCveParser {
 
     private static final Logger logger = LogManager.getLogger(RawVulnerability.class);
 
+    private WebDriver driver;
+
     /**
      * Parse advisories listed to github.com/advisories
      * @param domainName - github domain
      */
-    public GitHubAdvisoryParser(String domainName) { sourceDomainName = domainName; }
+    public GitHubAdvisoryParser(String domainName, WebDriver driver) { 
+        sourceDomainName = domainName;
+        this.driver = driver;
+    }
+
+    private void tryPageGet(String sSourceURL) {
+        int tries = 0;
+        while (tries < 2) {
+            try {
+                driver.get(sSourceURL);
+                break;
+            } catch (TimeoutException e) {
+                logger.info("Retrying page get...");
+                tries++;
+            }
+        }
+    }
 
     @Override
     public List<RawVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
-
+        // get the page
+        tryPageGet(sSourceURL);
+        try{
+            if (driver.getPageSource() == null) return new ArrayList<>();
+        } catch (TimeoutException e) {
+            logger.warn("Unable to get {}", sSourceURL);
+            return new ArrayList<>();
+        }
+        // click on any cookie agree button before trying to parse and click on anything else
         List<RawVulnerability> vulnList = new ArrayList<>();
 
-        Document doc = Jsoup.parse(sCVEContentHTML);
+        String html = driver.getPageSource();
+
+        Document doc = Jsoup.parse(html);
 
         // first get CVE ID in right hand section
         Element cveIDHeader = doc.select("h3:contains(CVE ID)").first();

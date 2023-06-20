@@ -41,7 +41,7 @@ public class CveParserFactory {
 		}
 
 		if (sPageUrl.contains("https://github.com/advisories/"))
-			return new GitHubAdvisoryParser("github");
+			return new GitHubAdvisoryParser("github", driver);
 
 		if (sPageUrl.contains("tenable.com") && !sPageUrl.contains("blog")) {
 			if (sPageUrl.contains("security"))
@@ -118,7 +118,7 @@ public class CveParserFactory {
 		else if (sPageUrl.contains("jvn"))
 			return new JVNParser("jvn");
 		else if (sPageUrl.contains("github.com/advisories"))
-			return new GitHubAdvisoryParser("github.com/advisories");
+			return new GitHubAdvisoryParser("github.com/advisories", driver);
 		else if (sPageUrl.contains("curl"))
 			return new CurlParser("curl");
 		else if (sPageUrl.contains("snyk.io"))
