@@ -23,8 +23,34 @@
  */
 package db;
 
+import com.zaxxer.hikari.HikariDataSource;
+import model.AffectedRelease;
+import model.RawVulnerability;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.MockedConstruction;
+import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.stubbing.Answer;
+import org.springframework.test.util.ReflectionTestUtils;
+
+import java.lang.reflect.Field;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.*;
+
+import static org.junit.Assert.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 /**
  * Collection of tests for the DatabaseHelper class. The general approach here it to use mocking/spying in order to
@@ -34,5 +60,296 @@ import org.mockito.junit.MockitoJUnitRunner;
  */
 @RunWith(MockitoJUnitRunner.class)
 public class DatabaseHelperTest {
+
+    private Logger logger = LogManager.getLogger(getClass().getSimpleName());
+
+    private DatabaseHelper dbh;
+
+    @Mock
+    private DatabaseHelper mockDBH = Mockito.mock(DatabaseHelper.class);
+    @Mock
+    private HikariDataSource hds;
+    @Mock
+    private Connection conn;
+    @Mock
+    private PreparedStatement pstmt;
+    @Mock
+    private ResultSet res;
+
+    private void setMocking() {
+        try {
+            when(hds.getConnection()).thenReturn(conn);
+            when(conn.prepareStatement(any())).thenReturn(pstmt);
+            when(pstmt.executeQuery()).thenReturn(res);
+            when(conn.createStatement()).thenReturn(pstmt);
+            when(pstmt.executeQuery(any())).thenReturn(res);
+        } catch (SQLException ignored) {}
+    }
+
+    /**
+     * Sets up the "database" results to return n rows
+     * @param n Number of rows (number of times next() will return true)
+     */
+    private void setResNextCount(int n) {
+        try {
+            when(res.next()).thenAnswer(new Answer<Boolean>() {
+                private int iterations = n;
+                public Boolean answer(InvocationOnMock invocation) {
+                    return iterations-- > 0;
+                }
+            });
+        } catch (SQLException ignored) {}
+    }
+
+    /**
+     * Helper method for populating the "database" results.
+     * @param getStringArg Name of the column to retrieve from. Used for that column's value as well with a suffix.
+     * @param count Number of results to populate.
+     */
+    private void setResStrings(String getStringArg, int count) {
+        try {
+            when(res.getString(getStringArg)).thenAnswer(new Answer<String>() {
+                private int index = 0;
+
+                public String answer(InvocationOnMock invocation) {
+                    if (index == count) {
+                        return null;
+                    }
+                    return getStringArg + index++;
+                }
+            });
+        } catch (SQLException ignored) {}
+    }
+
+    /**
+     * Helper method for populating the "database" results. Just returns multiples of 1337
+     * @param getIntArg Name of the column to retrieve from.
+     * @param count Number of results to populate.
+     */
+    private void setResInts(String getIntArg, int count) {
+        try {
+            when(res.getInt(getIntArg)).thenAnswer(new Answer<Integer>() {
+                private int index = 0;
+
+                public Integer answer(InvocationOnMock invocation) {
+                    if (index == count) {
+                        return 0;
+                    }
+                    return 1337 * index++;
+                }
+            });
+        } catch (SQLException ignored) {}
+    }
+
+    private List<AffectedRelease> buildDummyReleases(int count) {
+        List<AffectedRelease> releases = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            releases.add(new AffectedRelease(1337, "cve"+i, "cpe"+i, "date"+i, "version"+i));
+        }
+        return releases;
+    }
+
+    @BeforeClass
+    public static void classSetUp() {
+        try (MockedConstruction<HikariDataSource> mock = mockConstruction(HikariDataSource.class)){
+            // forces a constructor, only want to do once
+            DatabaseHelper.getInstance();
+        }
+    }
+
+    @Before
+    public void setUp() {
+
+        try (MockedConstruction<HikariDataSource> mock = mockConstruction(HikariDataSource.class)){
+
+            this.dbh = DatabaseHelper.getInstance();
+            ReflectionTestUtils.setField(this.dbh, "dataSource", this.hds);
+            this.setMocking();
+
+        }
+
+    }
+
+    @AfterClass
+    public static void tearDown() {
+
+        try (MockedConstruction<HikariDataSource> mock = mockConstruction(HikariDataSource.class)){
+            DatabaseHelper dbh = DatabaseHelper.getInstance();
+            ReflectionTestUtils.setField(dbh, "databaseHelper", null);
+
+        }
+    }
+
+    @Test
+    public void getInstanceTest() {
+        assertNotNull(DatabaseHelper.getInstance());
+    }
+
+    @Test
+    public void getConnectionTest() {
+        try {
+            Connection conn = dbh.getConnection();
+            assertNotNull(conn);
+        } catch (SQLException ignored) {
+        }
+    }
+
+    @Test
+    public void testDbConnectionTest() {
+        try {
+            assertTrue(this.dbh.testDbConnection());
+            when(hds.getConnection()).thenReturn(null);
+            assertFalse(this.dbh.testDbConnection());
+        } catch (SQLException ignored) {}
+    }
+    @Test
+    public void getCvssSeverityLabelsTest() {
+        setResNextCount(2);
+        setResInts("cvss_severity_id", 2);
+        setResStrings("cvss_severity_class", 2);
+        Map<String, Integer> map = dbh.getCvssSeverityLabels();
+        assertNotNull(map);
+        assertEquals(2, map.size());
+    }
+
+    @Test
+    public void getVdoLabelsTest() {
+        setResNextCount(3);
+        setResInts("vdo_label_id", 3);
+        setResStrings("vdo_label_name", 3);
+        Map<String, Integer> map = dbh.getVdoLabels();
+        assertNotNull(map);
+        assertEquals(3, map.size());
+    }
+
+    @Test
+    public void getVdoNounGroupsTest() {
+        setResNextCount(4);
+        setResInts("vdo_noun_group_id", 4);
+        setResStrings("vdo_noun_group_name", 4);
+        Map<String, Integer> map = dbh.getVdoNounGrpups();
+        assertNotNull(map);
+        assertEquals(4, map.size());
+    }
+
+    @Test
+    public void getTableDataAsHashMapTest() {
+        setResNextCount(3);
+        setResStrings("stringfield", 3);
+        setResInts("intfield", 3);
+        try {
+            Map<String, Integer> map = dbh.getTableDataAsHashMap("sentence", "intfield", "stringfield");
+            assertNotNull(map);
+            assertEquals(3, map.size());
+            verify(pstmt).executeQuery("sentence");
+            assertEquals(0, (int) map.get("stringfield0"));
+            assertEquals(1337, (int) map.get("stringfield1"));
+            assertEquals(2674, (int) map.get("stringfield2"));
+        } catch (SQLException ignored) {}
+    }
+
+    @Test
+    public void getJobsTest() {
+        try {
+            // Set up the mock objects and their behavior
+            when(conn.prepareStatement(anyString())).thenReturn(pstmt);
+            when(pstmt.executeQuery()).thenReturn(res);
+            when(res.next()).thenReturn(true, true, false);
+            when(res.getString("cve_id")).thenReturn("CVE-2021-1234", "CVE-2021-5678");
+
+            // Access the private GET_JOBS constant using reflection
+            Field getJobsField = DatabaseHelper.class.getDeclaredField("GET_JOBS");
+            getJobsField.setAccessible(true);
+
+
+            // Call the method under test
+            Set<String> result = dbh.getJobs();
+
+            // Verify the expected output
+            Set<String> expected = new HashSet<>();
+            expected.add("CVE-2021-1234");
+            expected.add("CVE-2021-5678");
+            assertEquals(expected, result);
+        } catch (SQLException | NoSuchFieldException e) {
+            logger.error("Error loading database");
+        }
+    }
+    @Test
+    public void getRawVulnerabilitiesTest() {
+        try {
+            // Set up the mock objects and their behavior
+            when(conn.prepareStatement(anyString())).thenReturn(pstmt);
+            when(pstmt.executeQuery()).thenReturn(res);
+            when(res.next()).thenReturn(true, true, false);
+
+            // Set up the expected data
+            String cveId = "CVE-2023-5678";
+
+            // Call the method under test
+            Set<RawVulnerability> result = dbh.getRawVulnerabilities(cveId);
+
+            // Verify the expected output
+            assertEquals(2, result.size());
+
+            // Verify pstmt.setString() call
+            verify(pstmt).setString(1, cveId);
+        } catch (SQLException ignored) {
+            logger.error("Error loading database");
+        }
+    }
+
+    @Test
+    public void markGarbageTest() throws SQLException {
+        // Create a mocked Connection, PreparedStatement, and set of RawVulnerabilities
+        Connection conn = mock(Connection.class);
+        PreparedStatement pstmt = mock(PreparedStatement.class);
+        Set<RawVulnerability> mockedRawVulns = new HashSet<>();
+        mockedRawVulns.add(new RawVulnerability(1, "CVE-2021-1234", "Description", null, null, null, ""));
+        mockedRawVulns.add(new RawVulnerability(2, "CVE-2021-5678", "Description", null, null, null, ""));
+
+        // Mock the behavior of the getConnection and prepareStatement methods
+        when(dbh.getConnection()).thenReturn(conn);
+        when(conn.prepareStatement(anyString())).thenReturn(pstmt);
+
+        // Call the markGarbage method
+        dbh.markGarbage(mockedRawVulns);
+
+        // Verify that pstmt.setInt() is called with the correct arguments
+        verify(pstmt, times(2)).setInt(eq(1), eq(1));
+        verify(pstmt).setInt(eq(2), eq(1));
+        verify(pstmt).setInt(eq(2), eq(2));
+
+        // Verify that pstmt.addBatch() is called for each RawVulnerability
+        verify(pstmt, times(2)).addBatch();
+
+        // Verify that pstmt.executeBatch() is called once
+        verify(pstmt).executeBatch();
+    }
+
+    @Test
+    public void getCompositeVulnerabilityTest() {
+
+    }
+
+    @Test
+    public void getUsedRawVulnerabilitiesTest() {
+
+    }
+
+    @Test
+    public void insertOrUpdateVulnerabilityFullTest() {
+
+    }
+
+
+    @Test
+    public void getAllNvdCVEsTest() {
+
+    }
+
+    @Test
+    public void insertNvdCveTest() {
+
+    }
 
 }
