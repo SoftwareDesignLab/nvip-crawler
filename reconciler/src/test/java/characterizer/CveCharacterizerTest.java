@@ -24,6 +24,7 @@ package characterizer; /**
 
 import db.DatabaseHelper;
 import model.CompositeVulnerability;
+import model.RawVulnerability;
 import org.junit.Test;
 import utils.CsvUtils;
 
@@ -72,7 +73,8 @@ public class CveCharacterizerTest {
 			String description = line[1];
 			if (description.contains("** RESERVED") || description.contains("** REJECT"))
 				continue;
-			CompositeVulnerability vuln = new CompositeVulnerability(0, null, cveId, null, null, null, description, null);
+			CompositeVulnerability vuln = new CompositeVulnerability(new RawVulnerability(1, cveId, description, null, null, null, ""));
+			//CompositeVulnerability vuln = new CompositeVulnerability(0, null, cveId, null, null, null, description, null);
 			vuln.setCveReconcileStatus(CompositeVulnerability.CveReconcileStatus.UPDATE);
 			vulnList.add(vuln);
 		}
