@@ -22,6 +22,7 @@ public class ReconcilerController {
 
     public ReconcilerController(List<String> filterTypes, String reconcilerType, List<String> processorTypes, Map<String, Integer> knownCveSources) {
         this.dbh = DatabaseHelper.getInstance();
+        addLocalFilters();
         for (String filterType : filterTypes) {
             filters.add(FilterFactory.createFilter(filterType));
         }
@@ -80,9 +81,28 @@ public class ReconcilerController {
     }
 
     private Set<RawVulnerability> runFilters(Set<RawVulnerability> vulns) {
-        Set<RawVulnerability> out = new HashSet<>();
+        // set up equivalence classes partitioned by equal descriptions
+        Map<String, Set<RawVulnerability>> equivClasses = new HashMap<>();
+        Set<RawVulnerability> samples = new HashSet<>(); // holds one from each equivalence class
+        for (RawVulnerability rawVuln : vulns) {
+            String desc = rawVuln.getDescription();
+            if (!equivClasses.containsKey(desc)) {
+                equivClasses.put(desc, new HashSet<>());
+                samples.add(rawVuln);
+            }
+            equivClasses.get(desc).add(rawVuln);
+        }
+        // filter a sample from each equivalence class
+        Set<RawVulnerability> failedSamples = new HashSet<>();
         for (Filter filter : filters) {
-            out.addAll(filter.filterAll(vulns));
+            failedSamples.addAll(filter.filterAll(samples));
+        }
+        // if a sample failed then all the vulns it represents fail too
+        Set<RawVulnerability> out = new HashSet<>();
+        for (RawVulnerability failure : failedSamples) {
+            Set<RawVulnerability> equivSet = equivClasses.get(failure.getDescription());
+            out.addAll(equivSet); // we return the failures
+            vulns.removeAll(equivSet); // the input set should no longer contain the failures
         }
         return out;
     }
@@ -107,5 +127,16 @@ public class ReconcilerController {
             }
         }
         return count;
+    }
+
+    /**
+     * Helper method for adding all local/simple filters
+     */
+    private void addLocalFilters() {
+        filters.add(FilterFactory.createFilter(FilterFactory.BLANK_DESCRIPTION));
+        filters.add(FilterFactory.createFilter(FilterFactory.CVE_MATCHES_DESCRIPTION));
+        filters.add(FilterFactory.createFilter(FilterFactory.INTEGER_DESCRIPTION));
+        filters.add(FilterFactory.createFilter(FilterFactory.MULTIPLE_CVE_DESCRIPTION));
+        filters.add(FilterFactory.createFilter(FilterFactory.DESCRIPTION_SIZE));
     }
 }
