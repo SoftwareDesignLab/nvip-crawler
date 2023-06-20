@@ -6,53 +6,53 @@ import org.junit.jupiter.api.Test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
-public class AffectedReleaseTest {
+public class AffectedProductTest {
 
     @Test
     public void testEquals_WithEqualObjects() {
-        // Create two AffectedRelease objects with different CVE ID and CPE
-        AffectedRelease release1 = new AffectedRelease(1, "CVE-2023-1234", "cpe:2.3:a:vulnerable_product:1.0", "2023-01-01", "1.0");
-        AffectedRelease release2 = new AffectedRelease(2, "CVE-2023-5678", "cpe:2.3:a:vulnerable_product:1.0", "2023-01-01", "1.0");
+        // Create two AffectedProduct objects with different CVE ID and CPE
+        AffectedProduct product1 = new AffectedProduct(1, "CVE-2023-1234", "cpe:2.3:a:vulnerable_product:1.0", "2023-01-01", "1.0");
+        AffectedProduct product2 = new AffectedProduct(2, "CVE-2023-5678", "cpe:2.3:a:vulnerable_product:1.0", "2023-01-01", "1.0");
 
         // Assert that the two objects are not equal
-        Assertions.assertFalse(release1.equals(release2));
+        Assertions.assertNotEquals(product1, product2);
     }
 
     @Test
     public void testEquals_WithDifferentObjects() {
-        // Create two AffectedRelease objects with different CPEs
-        AffectedRelease release1 = new AffectedRelease(1, "CVE-2023-1234", "cpe:2.3:a:vulnerable_product:1.0", "2023-01-01", "1.0");
-        AffectedRelease release2 = new AffectedRelease(2, "CVE-2023-5678", "cpe:2.3:a:vulnerable_product:2.0", "2023-01-01", "2.0");
+        // Create two AffectedProduct objects with different CPEs
+        AffectedProduct Product1 = new AffectedProduct(1, "CVE-2023-1234", "cpe:2.3:a:vulnerable_product:1.0", "2023-01-01", "1.0");
+        AffectedProduct Product2 = new AffectedProduct(2, "CVE-2023-5678", "cpe:2.3:a:vulnerable_product:2.0", "2023-01-01", "2.0");
 
         // Assert that the two objects are not equal
-        Assertions.assertNotEquals(release1, release2);
+        Assertions.assertNotEquals(Product1, Product2);
     }
 
     @Test
     public void testEquals_WithNullObject() {
-        // Create an AffectedRelease object
-        AffectedRelease release = new AffectedRelease(1, "CVE-2023-1234", "cpe:2.3:a:vulnerable_product:1.0", "2023-01-01", "1.0");
+        // Create an AffectedProduct object
+        AffectedProduct product = new AffectedProduct(1, "CVE-2023-1234", "cpe:2.3:a:vulnerable_product:1.0", "2023-01-01", "1.0");
 
         // Assert that the object is not equal to null
-        Assertions.assertNotEquals(release, null);
+        Assertions.assertNotEquals(product, null);
     }
 
     @Test
     public void testGetPURL_WithUnknownProductName() {
-        // Create an AffectedRelease object with an unknown product name
-        AffectedRelease release = new AffectedRelease("cpe:2.3:a:vulnerable_product:1.0", "2023-01-01", "1.0");
+        // Create an AffectedProduct object with an unknown productname
+        AffectedProduct product = new AffectedProduct("cpe:2.3:a:vulnerable_product:1.0", "2023-01-01", "1.0");
 
         // Assert that getPURL returns null
-        Assertions.assertNull(release.getPURL("UNKNOWN"));
+        Assertions.assertNull(product.getPURL("UNKNOWN"));
     }
 
     @Test
     public void testGetSWID_WithUnknownProductName() {
-        // Create an AffectedRelease object with an unknown product name
-        AffectedRelease release = new AffectedRelease("cpe:2.3:a:vulnerable_product:1.0", "2023-01-01", "1.0");
+        // Create an AffectedProduct object with an unknown product name
+        AffectedProduct product = new AffectedProduct("cpe:2.3:a:vulnerable_product:1.0", "2023-01-01", "1.0");
 
         // Assert that getSWID returns null
-        Assertions.assertNull(release.getSWID("UNKNOWN"));
+        Assertions.assertNull(product.getSWID("UNKNOWN"));
     }
 
     @org.junit.Test
@@ -72,7 +72,7 @@ public class AffectedReleaseTest {
         String vendor = "ExampleVendor";
         String version = "1.0.0";
 
-        AffectedRelease product = new AffectedRelease(1, "", "", "", version, vendor);
+        AffectedProduct product = new AffectedProduct(1, "", "", "", version, vendor);
 
         assertEquals(expectedSWID, product.getSWID(productName));
     }
@@ -94,7 +94,7 @@ public class AffectedReleaseTest {
         String vendor = "ExampleVendor";
         String version = "";
 
-        AffectedRelease product = new AffectedRelease(1, "", "", "", version, vendor);
+        AffectedProduct product = new AffectedProduct(1, "", "", "", version, vendor);
 
         assertEquals(expectedSWID, product.getSWID(productName));
     }
@@ -106,7 +106,7 @@ public class AffectedReleaseTest {
         String vendor = "ExampleVendor";
         String version = "1.0.0";
 
-        AffectedRelease product = new AffectedRelease(1, "", "", "", version, vendor);
+        AffectedProduct product = new AffectedProduct(1, "", "", "", version, vendor);
 
         assertNull(product.getSWID(productName));
     }
@@ -115,7 +115,7 @@ public class AffectedReleaseTest {
     @org.junit.Test
     public void purlGenerationWOVersionTest(){
         String productName = "android";
-        AffectedRelease product = new AffectedRelease(1, "", "", "", "", "google");
+        AffectedProduct product = new AffectedProduct(1, "", "", "", "", "google");
 
         String expected = "pkg:google/android";
 
@@ -125,7 +125,7 @@ public class AffectedReleaseTest {
     @org.junit.Test
     public void purlGenerationVersionTest(){
         String productName = "security";
-        AffectedRelease product = new AffectedRelease(1, "", "", "", "1.6.2", "gentoo");
+        AffectedProduct product = new AffectedProduct(1, "", "", "", "1.6.2", "gentoo");
 
         String expected = "pkg:gentoo/security@1.6.2";
 
@@ -135,7 +135,7 @@ public class AffectedReleaseTest {
     @org.junit.Test
     public void purlGenerationProductUNKNOWN(){
         String productName = "UNKNOWN";
-        AffectedRelease product = new AffectedRelease(1, "", "", "", "1.6.2", "gentoo");
+        AffectedProduct product = new AffectedProduct(1, "", "", "", "1.6.2", "gentoo");
 
         assertNull(product.getPURL(productName));
     }

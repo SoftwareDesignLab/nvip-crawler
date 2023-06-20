@@ -34,7 +34,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import model.cpe.CpeGroup;
 import model.cpe.Product;
 import model.cpe.ProductItem;
-import model.cve.AffectedRelease;
+import model.cve.AffectedProduct;
 import model.cve.CompositeVulnerability;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -128,13 +128,13 @@ public class AffectedProductIdentifier {
 				descriptionWords = subStringArray;
 			}
 
-			// Get list of existing releases and ensure it is not null (should be empty list instead)
-			final List<AffectedRelease> existingReleases = vulnerability.getAffectedReleases();
-			assert existingReleases != null;
+			// Get list of existing affected products and ensure it is not null (should be empty list instead)
+			final List<AffectedProduct> existingProducts = vulnerability.getAffectedProducts();
+			assert existingProducts != null;
 
 			// if no products found by crawlers, use AI/ML model to extract product/version
 			// from text
-			if (existingReleases.isEmpty()) {
+			if (existingProducts.isEmpty()) {
 
 				// Time measurement
 				long startNERTime = System.currentTimeMillis();
@@ -159,10 +159,10 @@ public class AffectedProductIdentifier {
 						logger.warn("The product name ({}) predicted by AI/ML model could not be found in the CPE dictionary!\tCVE-ID: {}", productItem.toString(), vulnerability.getCveId());
 						continue;
 					}
-					// if CPE identified, add it as affected release
+					// if CPE identified, add it as affected product
 					for (String itemID : productIDs) {
 //							logger.info("Found Affected Product for {}: {}", vulnerability.getCveId(), itemID);
-						existingReleases.add(new AffectedRelease(0, vulnerability.getCveId(), itemID, vulnerability.getPublishDate(), CpeLookUp.getVersionFromCPEid(itemID), CpeLookUp.getVendorFromCPEid(itemID)));
+						existingProducts.add(new AffectedProduct(0, vulnerability.getCveId(), itemID, vulnerability.getPublishDate(), CpeLookUp.getVersionFromCPEid(itemID), CpeLookUp.getVendorFromCPEid(itemID)));
 						numOfProductsMappedToCpe.getAndIncrement();
 					}
 				}
@@ -173,7 +173,7 @@ public class AffectedProductIdentifier {
 			}
 
 		} catch (Exception e) {
-			logger.error("Error {} while extracting affected releases! Processed: {} out of {} CVEs; CVE: {}", e, counterOfProcessedCVEs.toString(), Integer.toString(totalCVEtoProcess),
+			logger.error("Error {} while extracting affected products! Processed: {} out of {} CVEs; CVE: {}", e, counterOfProcessedCVEs.toString(), Integer.toString(totalCVEtoProcess),
 					vulnerability.toString());
 		}
 
@@ -195,7 +195,7 @@ public class AffectedProductIdentifier {
 	 * @param cveLimit limit of CVEs to drive
 	 * @return a map of products affected by pulled CVEs
 	 */
-	public Map<String, Product> identifyAffectedReleases(int cveLimit) {
+	public Map<String, Product> identifyAffectedProducts(int cveLimit) {
 		// Set # to process based on cveLimit. If cveLimit is 0, assume no limit.
 		if(cveLimit == 0) cveLimit = Integer.MAX_VALUE;
 		int totalCVEtoProcess = Math.min(vulnList.size(), cveLimit);
@@ -207,7 +207,7 @@ public class AffectedProductIdentifier {
 		try {
 			productNameDetector = new ProductDetector(this.cpeLookUp);
 		} catch (Exception e1) {
-			logger.error("Severe Error! Could not initialize the models for product name/version extraction! Skipping affected release identification step! {}", e1.toString());
+			logger.error("Severe Error! Could not initialize the models for product name/version extraction! Skipping affected product identification step! {}", e1.toString());
 			return null;
 		}
 
@@ -270,8 +270,8 @@ public class AffectedProductIdentifier {
 		logger.info("Extracted product(s) for {} out of {} CVEs so far! {} CVEs skipped", counterOfProcessedCVEs, totalCVEtoProcess, counterOfSkippedCVEs);
 
 		AtomicInteger count = new AtomicInteger();
-		vulnList.stream().map(v -> v.getAffectedReleases().size()).forEach(count::addAndGet);
-		logger.info("Found {} affected releases from {} CVEs in {} seconds", count, totalCVEtoProcess, Math.floor(((double) (System.currentTimeMillis() - start) / 1000) * 100) / 100);
+		vulnList.stream().map(v -> v.getAffectedProducts().size()).forEach(count::addAndGet);
+		logger.info("Found {} affected products from {} CVEs in {} seconds", count, totalCVEtoProcess, Math.floor(((double) (System.currentTimeMillis() - start) / 1000) * 100) / 100);
 
 		return this.cpeLookUp.getProductsToBeAddedToDatabase();
 	}

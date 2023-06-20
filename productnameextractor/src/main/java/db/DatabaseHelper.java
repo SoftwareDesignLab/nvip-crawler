@@ -29,7 +29,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import model.cpe.Product;
-import model.cve.AffectedRelease;
+import model.cve.AffectedProduct;
 import model.cve.CompositeVulnerability;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -50,7 +50,7 @@ public class DatabaseHelper {
 	final String databaseType;
 	private final String getIdFromCpe = "SELECT * FROM affectedproduct where cpe = ?;";
 
-	private final String insertAffectedReleaseSql = "INSERT INTO affectedproduct (cve_id, cpe, product_name, release_date, version, vendor, purl, swid_tag) VALUES (?, ?, ?, ?, ?, ?, ?, ?);";
+	private final String insertAffectedProductSql = "INSERT INTO affectedproduct (cve_id, cpe, product_name, release_date, version, vendor, purl, swid_tag) VALUES (?, ?, ?, ?, ?, ?, ?, ?);";
 
 	private static DatabaseHelper databaseHelper = null;
 	private static Map<String, CompositeVulnerability> existingCompositeVulnMap = new HashMap<>();
@@ -139,19 +139,19 @@ public class DatabaseHelper {
 	public void insertAffectedProductsToDB(List<CompositeVulnerability> vulnList) {
 
 		// get all identified affected releases
-		List<AffectedRelease> listAllAffectedReleases = new ArrayList<>();
+		List<AffectedProduct> listAllAffectedProducts = new ArrayList<>();
 		for (CompositeVulnerability vulnerability : vulnList) {
 			if (vulnerability.getCveReconcileStatus() == CompositeVulnerability.CveReconcileStatus.DO_NOT_CHANGE)
 				continue; // skip the ones that are not changed!
-			listAllAffectedReleases.addAll(vulnerability.getAffectedReleases());
+			listAllAffectedProducts.addAll(vulnerability.getAffectedProducts());
 		}
 
 		logger.info("Inserting Affected Products to DB!");
 		// delete existing affected release info in db ( for CVEs in the list)
-		databaseHelper.deleteAffectedReleases(listAllAffectedReleases);
+		databaseHelper.deleteAffectedProducts(listAllAffectedProducts);
 
 		// now insert affected releases (referenced products are already in db)
-		databaseHelper.insertAffectedReleasesV2(listAllAffectedReleases);
+		databaseHelper.insertAffectedProductsV2(listAllAffectedProducts);
 
 		// TODO: Should be in program driver, probably PNEController
 //		// prepare CVE summary table for Web UI
@@ -188,10 +188,10 @@ public class DatabaseHelper {
 	/**
 	 * Updates the affected release table with a list of affected releases
 	 * 
-	 * @param affectedReleases list of affected release objects
+	 * @param affectedProducts list of affected release objects
 	 */
-	public void insertAffectedReleasesV2(List<AffectedRelease> affectedReleases) {
-		logger.info("Inserting {} affected products...", affectedReleases.size());
+	public void insertAffectedProductsV2(List<AffectedProduct> affectedProducts) {
+		logger.info("Inserting {} affected products...", affectedProducts.size());
 		// CPE 2.3 Regex
 		// Regex101: https://regex101.com/r/9uaTQb/1
 		final Pattern cpePattern = Pattern.compile("cpe:2\\.3:[aho\\*\\-]:([^:]*):([^:]*):([^:]*):.*");
@@ -199,30 +199,30 @@ public class DatabaseHelper {
 		int count = 0;
 		try (Connection conn = getConnection();
 				Statement stmt = conn.createStatement();
-				PreparedStatement pstmt = conn.prepareStatement(insertAffectedReleaseSql);) {
-			for (AffectedRelease affectedRelease : affectedReleases) {
+				PreparedStatement pstmt = conn.prepareStatement(insertAffectedProductSql);) {
+			for (AffectedProduct affectedProduct : affectedProducts) {
 				try {
 					// Validate and extract CPE data
-					final String cpe = affectedRelease.getCpe();
+					final String cpe = affectedProduct.getCpe();
 					final Matcher m = cpePattern.matcher(cpe);
 					String productName = "UNKNOWN";
 					if(!m.find()) logger.warn("CPE in invalid format {}", cpe);
 					else productName = m.group(2);
 
-					pstmt.setString(1, affectedRelease.getCveId());
+					pstmt.setString(1, affectedProduct.getCveId());
 					pstmt.setString(2, cpe);
 					pstmt.setString(3, productName);
-					pstmt.setString(4, affectedRelease.getReleaseDate());
-					pstmt.setString(5, affectedRelease.getVersion());
-					pstmt.setString(6, affectedRelease.getVendor());
-					pstmt.setString(7, affectedRelease.getPURL(productName));
-					pstmt.setString(8, affectedRelease.getSWID(productName));
+					pstmt.setString(4, affectedProduct.getReleaseDate());
+					pstmt.setString(5, affectedProduct.getVersion());
+					pstmt.setString(6, affectedProduct.getVendor());
+					pstmt.setString(7, affectedProduct.getPURL(productName));
+					pstmt.setString(8, affectedProduct.getSWID(productName));
 
 					count += pstmt.executeUpdate();
-//					logger.info("Added {} as an affected release for {}", prodId, affectedRelease.getCveId());
+//					logger.info("Added {} as an affected release for {}", prodId, affectedProduct.getCveId());
 				} catch (Exception e) {
 					logger.error("Could not add affected release for Cve: {} Related Cpe: {}, Error: {}",
-							affectedRelease.getCveId(), affectedRelease.getCpe(), e.toString());
+							affectedProduct.getCveId(), affectedProduct.getCpe(), e.toString());
 					//e.printStackTrace();
 				}
 			}
@@ -235,16 +235,16 @@ public class DatabaseHelper {
 	/**
 	 * Deletes affected releases for given CVEs
 	 * 
-	 * @param affectedReleases list of releases to delete
+	 * @param affectedProducts list of releases to delete
 	 */
-	public void deleteAffectedReleases(List<AffectedRelease> affectedReleases) {
-		logger.info("Deleting existing affected products in database for {} items..", affectedReleases.size());
-		String deleteAffectedReleaseSql = "DELETE FROM affectedproduct where cve_id = ?;";
+	public void deleteAffectedProducts(List<AffectedProduct> affectedProducts) {
+		logger.info("Deleting existing affected products in database for {} items..", affectedProducts.size());
+		String deleteAffectedProductSql = "DELETE FROM affectedproduct where cve_id = ?;";
 		try (Connection conn = getConnection();
 				Statement stmt = conn.createStatement();
-				PreparedStatement pstmt = conn.prepareStatement(deleteAffectedReleaseSql);) {
-			for (AffectedRelease affectedRelease : affectedReleases) {
-				pstmt.setString(1, affectedRelease.getCveId());
+				PreparedStatement pstmt = conn.prepareStatement(deleteAffectedProductSql);) {
+			for (AffectedProduct affectedProduct : affectedProducts) {
+				pstmt.setString(1, affectedProduct.getCveId());
 				pstmt.executeUpdate();
 			}
 		} catch (SQLException e) {
