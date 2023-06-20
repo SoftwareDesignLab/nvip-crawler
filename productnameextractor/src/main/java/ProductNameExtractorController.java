@@ -227,7 +227,7 @@ public class ProductNameExtractorController {
         }
 
         // Run the AffectedProductIdentifier with the fetched vuln list
-        final Map<String, Product> productMap = affectedProductIdentifier.identifyAffectedReleases(cveLimit);
+        final Map<String, Product> productMap = affectedProductIdentifier.identifyAffectedProducts(cveLimit);
 
         databaseHelper.insertAffectedProductsToDB(vulnerabilities);
 

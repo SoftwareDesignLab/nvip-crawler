@@ -63,11 +63,11 @@ public class AffectedProductIdentifierTest {
 		}
 
 		// Identify releases
-		affectedProductIdentifier.identifyAffectedReleases(100);
+		affectedProductIdentifier.identifyAffectedProducts(100);
 
-		System.out.println(v.getAffectedReleases());
+		System.out.println(v.getAffectedProducts());
 
-		assertTrue("Test failed: No affected releases found", (v.getAffectedReleases().size() > 0));
+		assertTrue("Test failed: No affected releases found", (v.getAffectedProducts().size() > 0));
 	}
 
 }

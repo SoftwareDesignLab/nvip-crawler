@@ -28,7 +28,7 @@ package model.cve;
  * @author axoeec
  *
  */
-public class AffectedRelease {
+public class AffectedProduct {
 
 	private final int id;
 	private String cveId;
@@ -39,7 +39,7 @@ public class AffectedRelease {
 	private String pURL;
 	private String swid;
 
-	public AffectedRelease(int id, String cveId, String cpe, String releaseDate, String version) {
+	public AffectedProduct(int id, String cveId, String cpe, String releaseDate, String version) {
 		this.id = id;
 		this.cveId = cveId;
 		this.cpe = cpe;
@@ -47,12 +47,12 @@ public class AffectedRelease {
 		this.version = version;
 	}
 
-	public AffectedRelease(int id, String cveId, String cpe, String releaseDate, String version, String vendor) {
+	public AffectedProduct(int id, String cveId, String cpe, String releaseDate, String version, String vendor) {
 		this(id, cveId, cpe, releaseDate, version);
 		this.vendor = vendor;
 	}
 
-	public AffectedRelease(String cpe, String releaseDate, String version) {
+	public AffectedProduct(String cpe, String releaseDate, String version) {
 		this.id = 0;
 		this.cveId = null;
 		this.cpe = cpe;
@@ -60,7 +60,7 @@ public class AffectedRelease {
 		this.version = version;
 	}
 
-	public AffectedRelease(AffectedRelease a) {
+	public AffectedProduct(AffectedProduct a) {
 		this.id = a.id;
 		this.cveId = a.cveId;
 		this.cpe = a.cpe;
@@ -68,6 +68,7 @@ public class AffectedRelease {
 		this.version = a.version;
 		this.vendor = a.vendor;
 		this.pURL = a.pURL;
+		this.swid = a.swid;
 	}
 
 	public int getId() {
@@ -180,16 +181,16 @@ public class AffectedRelease {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (!(obj instanceof AffectedRelease))
+		if (!(obj instanceof AffectedProduct))
 			return false;
-		AffectedRelease other = (AffectedRelease) obj;
+		AffectedProduct other = (AffectedProduct) obj;
 		return other.cveId.equals(this.cveId) && other.cpe.equals(this.cpe);
 
 	}
 
 	@Override
 	public String toString() {
-		return "AffectedRelease [cveId=" + cveId + ", cpe=" + cpe + ", releaseDate=" + releaseDate + ", version=" + version + "]";
+		return "AffectedProduct [cveId=" + cveId + ", cpe=" + cpe + ", releaseDate=" + releaseDate + ", version=" + version + "]";
 	}
 
 }
