@@ -102,7 +102,7 @@ public class PatchFinder {
 				"src/main/resources/patch-repos",
 				maxThreads,
 				cvesPerThread
-		); // TODO: Wait for completion?
+		);
 
 		// Get found patches from patchfinder
 		ArrayList<PatchCommit> patchCommits = PatchFinder.getPatchCommits();
@@ -162,6 +162,7 @@ public class PatchFinder {
 			}
 		}
 
+		// TODO: Fix multi-threading such that threads that are hanging dont or check if task queue is empty maybe
 		try {
 			// Shut down the executor to release resources after all tasks are complete
 			final int timeout = 4;

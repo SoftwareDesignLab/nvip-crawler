@@ -81,6 +81,7 @@ public class PatchCommitScraper {
 				// TODO: Test now that localDownloadLoc is fixed
 				final ObjectId startingRevision = repository.resolve("refs/heads/master");
 				if(startingRevision != null || true) {
+					// TODO: Catch NoHeadException, possibly due to empty repos, investigate further
 					final Iterable<RevCommit> commits = git.log()/*.add(startingRevision)*/.call();
 
 					int ignoredCounter = 0;
@@ -92,12 +93,15 @@ public class PatchCommitScraper {
 							// If found the CVE ID is found, add the patch commit to the returned list
 							if (matcher.find() || commit.getFullMessage().contains(cveId)) {
 								String commitUrl = repository.getConfig().getString("remote", "origin", "url");
-								LocalDateTime commitDateTime = LocalDateTime.ofInstant(
-										Instant.ofEpochSecond(commit.getCommitTime()),
-										ZoneId.systemDefault()
-								);
 								logger.info("Found patch commit @ {} in repo {}", commitUrl, localDownloadLoc);
-								PatchCommit patchCommit = new PatchCommit(commitUrl, cveId, commit.getName(), commitDateTime, commit.getFullMessage());
+								//TODO: Verify that this is not needed, I just passed the raw time value along,
+								// as we do not appear to need a LocalDateTime object, rather a java.sql.Date object,
+								// which can be easily created from long:
+								// LocalDateTime commitDateTime = LocalDateTime.ofInstant(
+								// 		Instant.ofEpochSecond(commit.getCommitTime()),
+								// 		ZoneId.systemDefault()
+								// );
+								PatchCommit patchCommit = new PatchCommit(commitUrl, cveId, commit.getName(), commit.getCommitTime(), commit.getFullMessage());
 								patchCommits.add(patchCommit);
 							} else ignoredCounter++;
 						}
