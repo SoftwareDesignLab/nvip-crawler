@@ -30,6 +30,7 @@ import org.jsoup.nodes.Element;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.time.LocalDate;
 
 public class MicrosoftParser extends AbstractCveParser {
 

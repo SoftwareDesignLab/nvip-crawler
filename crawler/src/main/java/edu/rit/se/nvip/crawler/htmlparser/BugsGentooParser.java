@@ -26,6 +26,7 @@ package edu.rit.se.nvip.crawler.htmlparser;
 import edu.rit.se.nvip.model.RawVulnerability;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.util.*;

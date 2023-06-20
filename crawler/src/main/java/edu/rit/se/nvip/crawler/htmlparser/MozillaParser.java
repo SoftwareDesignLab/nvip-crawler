@@ -31,6 +31,7 @@ import org.jsoup.select.Elements;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.time.LocalDate;
 
 public class MozillaParser extends AbstractCveParser {
 
