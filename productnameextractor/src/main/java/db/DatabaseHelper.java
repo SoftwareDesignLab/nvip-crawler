@@ -48,9 +48,6 @@ public class DatabaseHelper {
 	private HikariDataSource dataSource;
 	private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
 	final String databaseType;
-
-	private final String insertProductSql = "INSERT INTO affectedproduct (cve_id, cpe) VALUES (?, ?);";
-	private final String getProductCountFromCpeSql = "SELECT count(*) from affectedproduct where cpe = ?";
 	private final String getIdFromCpe = "SELECT * FROM affectedproduct where cpe = ?;";
 
 	private final String insertAffectedReleaseSql = "INSERT INTO affectedproduct (cve_id, cpe, product_name, release_date, version, vendor, purl, swid_tag) VALUES (?, ?, ?, ?, ?, ?, ?, ?);";
