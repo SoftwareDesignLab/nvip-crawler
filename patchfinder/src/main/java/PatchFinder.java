@@ -84,7 +84,7 @@ public class PatchFinder {
 		fetchEnvVars();
 
 		// Init db helper
-		final DatabaseHelper databaseHelper = new DatabaseHelper();
+		final DatabaseHelper databaseHelper = DatabaseHelper.getInstance();
 
 		// Init PatchUrlFinder
 		PatchUrlFinder patchURLFinder = new PatchUrlFinder();
@@ -109,9 +109,8 @@ public class PatchFinder {
 
 		// Insert patches
 		for (PatchCommit patchCommit: patchCommits) {
-			int vulnId = databaseHelper.getVulnIdByCveId(patchCommit.getCveId());
-			databaseHelper.insertPatchSourceURL(vulnId, patchCommit.getCommitUrl());
-			databaseHelper.insertPatchCommit(vulnId, patchCommit.getCommitUrl(), patchCommit.getCommitId(),
+			final int sourceUrlId = databaseHelper.insertPatchSourceURL(patchCommit.getCveId(), patchCommit.getCommitUrl());
+			databaseHelper.insertPatchCommit(sourceUrlId, patchCommit.getCommitUrl(), patchCommit.getCommitId(),
 					patchCommit.getCommitDate(), patchCommit.getCommitMessage());
 		}
 
@@ -165,9 +164,9 @@ public class PatchFinder {
 
 		try {
 			// Shut down the executor to release resources after all tasks are complete
-			final int timeout = 60;
+			final int timeout = 4;
 			final TimeUnit unit = TimeUnit.MINUTES;
-			if(!es.awaitTermination(60, TimeUnit.MINUTES)) {
+			if(!es.awaitTermination(timeout, unit)) {
 				throw new TimeoutException(String.format("Product extraction thread pool runtime exceeded timeout value of %s %s", timeout, unit.toString()));
 			}
 			logger.info("Product extraction thread pool completed all jobs, shutting down...");
