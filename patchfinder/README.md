@@ -1,5 +1,6 @@
 
 # NVIP Crawler Backend - Patch Finder
+
 The patch finder component of NVIP Crawler identifies possible patches for CVEs
 - Patches are found by crawling available repos for the affected products of a CVE
 - Each repo is cloned, then each commit is navigated to identify patches by checking for keywords in the commit messages
@@ -7,6 +8,7 @@ The patch finder component of NVIP Crawler identifies possible patches for CVEs
 > **NOTE:** This component relies directly on the affected product data from product extraction and should be ran after affected product data is populated in the db
 
 ## System Requirements
+
 * Patch Finder requires at least Java version 8.
     - Download Link: https://www.oracle.com/java/technologies/javase/javase8-archive-downloads.html
 
@@ -30,6 +32,7 @@ The patch finder component of NVIP Crawler identifies possible patches for CVEs
 * Because the crawling process is a multi-threaded process and the characterization and product name extraction trains AI/ML models, minimum 8GB RAM is needed to run the system.
 
 ## Summary of Open Source Technologies/Systems Used
+
 * MySQL database is used to store crawled and characterized CVEs and products affected by said CVEs: https://www.mysql.com/
 
 * NVIP also uses Log4j for logging errors and state: https://logging.apache.org/log4j/2.x/javadoc.html
@@ -38,6 +41,7 @@ The patch finder component of NVIP Crawler identifies possible patches for CVEs
 # Installation and Setup Guide
 
 ## 1. Download & Install MySQL, Create the Database
+
 * Download “mysql-installer-community-8.0.20.0.msi” from  https://dev.mysql.com/downloads/installer/.
 
 
@@ -47,6 +51,7 @@ The patch finder component of NVIP Crawler identifies possible patches for CVEs
 * During the configuration of MySQL Server, when prompted for a password (for user "root"), make sure you use the "same password" that you have at the **HIKARI_PASSWORD** Environment Variable.
 
 ## 2. Create Database (via MySQL Workbench)
+
 * After the setup process is finished open "MySQL Workbench" program (Click start and search for "MySQL Workbench" to find it).
 
 
@@ -77,12 +82,10 @@ After the build process, the output jar will be located under the "target" direc
 
 ## 4. Create a Configuration to run the Patch Finder (IntelliJ)
 
+> **NOTE:** Intellij does not read env.list files automatically, the contents of the patch finder env.list file can be copied directly into the menu shown in the image below. See **Environment Variables** for more information. <img src="src/main/resources/docs/configMenu.png">
 
 
-> **NOTE:** Intellij does not read env.list files automatically, the contents of the patch finder env.list file can be copied directly into this menu: <img src="src/main/resources/documentation/configMenu.png">
-
-
-## 4. Install Docker and Build via Docker CLI
+## 5. Install Docker and Build via Docker CLI (Only for deployment)
 
 #### Build Crawler Image
     $ docker build -t crawler .
