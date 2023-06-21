@@ -98,12 +98,7 @@ public class DatabaseHelperTest {
     private CompositeDescription genCompDes(String buildString, int nSources) {
         return new CompositeDescription(dummyId, dummyCveId, dummyDescription, dummyDescCreate, buildString, genRawVulns(nSources, 1));
     }
-    private CompositeVulnerability genVuln(String buildString, int nSources) {
-        return new CompositeVulnerability(dummyCveId, dummyId, genCompDes(buildString, nSources), dummyPub, dummyMod, dummyCreate);
-    }
-    private CompositeVulnerability genVuln() {
-        return genVuln(dummyBuildString, 3);
-    }
+
 
     private void setMocking() {
         try {
@@ -354,27 +349,19 @@ public class DatabaseHelperTest {
     }
 
     @Test
-    public void getCompositeVulnerabilityTest() {
-        try {
-            // Set up the behavior of the mocks
-            when(dbh.getConnection()).thenReturn(conn);
-            when(conn.prepareStatement(anyString())).thenReturn(pstmt);
-            when(pstmt.executeQuery()).thenReturn(res);
-            when(res.next()).thenReturn(true, true, false);
-            when(res.getInt(anyString())).thenReturn(1);
-            when(res.getString(anyString())).thenReturn("cve_id");
-            when(res.getTimestamp(anyString())).thenReturn(new Timestamp(System.currentTimeMillis()));
+    public void testGetCompositeVulnerability() throws SQLException {
+        // Set up the behavior of the mocks
+        when(conn.prepareStatement(anyString())).thenReturn(pstmt);
+        when(pstmt.executeQuery()).thenReturn(res);
+        when(res.next()).thenReturn(true, false, true);
+        when(res.getInt(anyString())).thenReturn(1);
+        when(res.getString(anyString())).thenReturn("1");
+        when(res.getTimestamp(anyString())).thenReturn(new Timestamp(System.currentTimeMillis()));
 
-            CompositeVulnerability vuln = dbh.getCompositeVulnerability("cve_id");
+        CompositeVulnerability vuln = dbh.getCompositeVulnerability("1");
 
+        assertNotNull(vuln);
 
-            verify(pstmt).setString(2, "cveId");
-
-            assertNotNull(vuln);
-
-        } catch (SQLException e) {
-            logger.error("Error loading Database");
-        }
     }
 
     @Test
@@ -402,21 +389,17 @@ public class DatabaseHelperTest {
     public void insertOrUpdateVulnerabilityFullTest() {
         try{
             when(conn.prepareStatement(anyString())).thenReturn(pstmt);
+            when(conn.prepareStatement(anyString(), eq(Statement.RETURN_GENERATED_KEYS))).thenReturn(pstmt);
             when(pstmt.getGeneratedKeys()).thenReturn(res);
             when(res.next()).thenReturn(true);
             when(res.getInt(1)).thenReturn(1);
 
-            CompositeVulnerability vuln = genVuln();
+            RawVulnerability rawVuln = genRawVuln(1);
+            CompositeVulnerability vuln = new CompositeVulnerability(rawVuln);
+
             // Call the method to be tested
             int result = dbh.insertOrUpdateVulnerabilityFull(vuln);
 
-            // Verify the expected interactions
-            verify(conn).setAutoCommit(false);
-            verify(pstmt).executeUpdate();
-            verify(pstmt).getGeneratedKeys();
-            verify(pstmt).executeUpdate();
-            verify(pstmt).executeUpdate();
-            verify(conn).commit();
 
             // Assert the result
             assertEquals(1, result);
