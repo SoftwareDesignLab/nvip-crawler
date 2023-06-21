@@ -25,8 +25,9 @@ package edu.rit.se.nvip.characterizer; /**
 import edu.rit.se.nvip.db.DatabaseHelper;
 import edu.rit.se.nvip.model.CompositeVulnerability;
 import edu.rit.se.nvip.model.RawVulnerability;
-import org.junit.Test;
 import edu.rit.se.nvip.utils.CsvUtils;
+import org.junit.Test;
+import org.mockito.MockedConstruction;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -35,6 +36,7 @@ import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mockConstruction;
 
 public class CveCharacterizerTest {
 
@@ -55,32 +57,34 @@ public class CveCharacterizerTest {
 
 		prediction = cveCharacterizer.characterizeCveForVDO(cveDesc, false);
 		assertTrue(prediction.size() > 0);
+		try(MockedConstruction<DatabaseHelper> mock = mockConstruction(DatabaseHelper.class)){
+			//Test characterizeCveList
+			DatabaseHelper db = DatabaseHelper.getInstance();
+			//String csvPath = "src/test/resources/test-composite-vuln-list.csv";
+			String csvPath = System.getProperty("user.dir") + "\\src\\main\\resources\\cvedata\\mitre-cve.csv";
+			CsvUtils utils = new CsvUtils();
+			List<String[]> data = utils.getDataFromCsv(csvPath);
+			List<String[]> testData = new LinkedList<>();
+			for (int i = 0; i < 10; i++) {
+				testData.add(data.get(i));
+			}
+			// generate vuln list
+			List<CompositeVulnerability> vulnList = new ArrayList<>();
+			for (String[] line : testData) {
+				String cveId = line[0];
+				String description = line[1];
+				if (description.contains("** RESERVED") || description.contains("** REJECT"))
+					continue;
+				CompositeVulnerability vuln = new CompositeVulnerability(new RawVulnerability(1, cveId, description, null, null, null, ""));
+				//CompositeVulnerability vuln = new CompositeVulnerability(0, null, cveId, null, null, null, description, null);
+				vuln.setCveReconcileStatus(CompositeVulnerability.CveReconcileStatus.UPDATE);
+				vulnList.add(vuln);
+			}
 
-		//Test characterizeCveList
-		DatabaseHelper db = DatabaseHelper.getInstance();
-		//String csvPath = "src/test/resources/test-composite-vuln-list.csv";
-		String csvPath = System.getProperty("user.dir") + "\\src\\main\\resources\\cvedata\\mitre-cve.csv";
-		CsvUtils utils = new CsvUtils();
-		List<String[]> data = utils.getDataFromCsv(csvPath);
-		List<String[]> testData = new LinkedList<>();
-		for (int i = 0; i < 10; i++) {
-			testData.add(data.get(i));
-		}
-		// generate vuln list
-		List<CompositeVulnerability> vulnList = new ArrayList<>();
-		for (String[] line : testData) {
-			String cveId = line[0];
-			String description = line[1];
-			if (description.contains("** RESERVED") || description.contains("** REJECT"))
-				continue;
-			CompositeVulnerability vuln = new CompositeVulnerability(new RawVulnerability(1, cveId, description, null, null, null, ""));
-			//CompositeVulnerability vuln = new CompositeVulnerability(0, null, cveId, null, null, null, description, null);
-			vuln.setCveReconcileStatus(CompositeVulnerability.CveReconcileStatus.UPDATE);
-			vulnList.add(vuln);
-		}
+			List<CompositeVulnerability> newList = cveCharacterizer.characterizeCveList(vulnList, db, 5000);
+			assertEquals(10, newList.size());
 
-		List<CompositeVulnerability> newList = cveCharacterizer.characterizeCveList(vulnList, db, 5000);
-		assertEquals(10, newList.size());
+		}
 
 	}
 }
