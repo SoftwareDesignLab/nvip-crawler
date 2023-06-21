@@ -43,7 +43,6 @@ import org.nd4j.linalg.factory.Nd4j;
  */
 
 public class Char2vec {
-		
 	//Supported symbols
 	private final char[] dict = {'!', '"', '#', '$', '%', '&', '\'', '(', ')', '*', '+', ',', '-', '.',
             '/', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ':', ';', '<',
@@ -115,12 +114,12 @@ public class Char2vec {
 		INDArray features = Nd4j.zeros(1,wordMatrix.size(),dict.length);
 	
 		//Converts our 2D-array into 3D-array acceptable by DL4J
-		int[] indecies = new int[3];
+		int[] indices = new int[3];
 		for (int i=0; i<wordMatrix.size(); i++) {
-			indecies[1]=i;
+			indices[1]=i;
 			for (int j=0; j<dict.length; j++) {
-				indecies[2]=j;
-				features.putScalar(indecies, wordMatrix.get(i)[j]);
+				indices[2]=j;
+				features.putScalar(indices, wordMatrix.get(i)[j]);
 			}
 		}
 		

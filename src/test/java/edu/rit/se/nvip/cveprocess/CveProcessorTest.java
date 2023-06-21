@@ -1,6 +1,7 @@
 package edu.rit.se.nvip.cveprocess;
 
 import edu.rit.se.nvip.model.CompositeVulnerability;
+import edu.rit.se.nvip.model.MitreVulnerability;
 import edu.rit.se.nvip.model.NvdVulnerability;
 import edu.rit.se.nvip.model.Vulnerability;
 import org.junit.jupiter.api.Test;
@@ -20,13 +21,15 @@ public class CveProcessorTest {
     private Map<String, CompositeVulnerability> foundVulnerabilities = new HashMap<>();
 
     private HashMap<String, NvdVulnerability> testNvdVulns = new HashMap<>();
+    private HashMap<String, MitreVulnerability> testMitreVulns = new HashMap<>();
 
 
 
 
     @BeforeEach public void addFoundVulnerability(){
-        testNvdVulns.put(CVE_ID, new NvdVulnerability(CVE_ID, "", "2023-04-27T00:00:00.000", "Analyzed"));
-        cveProcessor = new CveProcessor(new HashMap<>(), new HashMap<>(), testNvdVulns);
+        testNvdVulns.put(CVE_ID, new NvdVulnerability(CVE_ID, "2023-04-27T00:00:00.000", "2023-04-27T00:00:00.000", "Analyzed"));
+        testMitreVulns.put(CVE_ID, new MitreVulnerability(CVE_ID, "2023-04-27T00:00:00.000", "2023-04-27T00:00:00.000", "PUBLIC"));
+        cveProcessor = new CveProcessor(new HashMap<>(), new HashMap<>(), testNvdVulns, testMitreVulns);
         foundVulnerabilities.put(CVE_ID, new CompositeVulnerability(0, CVE_ID));
         foundVulnerabilities.get(CVE_ID).setCreateDate("2023-04-26 00:00:00");
     }
@@ -41,6 +44,7 @@ public class CveProcessorTest {
 
         Map<String, Vulnerability> existingCves = new HashMap<>();
         testNvdVulns.clear();
+        testMitreVulns.clear();
         HashMap<String, List<Object>> processedCves = cveProcessor.checkAgainstNvdMitre(foundVulnerabilities, existingCves);
 
         assertEquals(1, processedCves.get(CveProcessor.NVD_CVE_KEY).size());
@@ -55,6 +59,7 @@ public class CveProcessorTest {
     public void vulnerabilityNotInNvdWhenNoNvdCves(){
         Map<String, Vulnerability> existingCves = new HashMap<>();
         testNvdVulns.clear();
+        testMitreVulns.clear();
         HashMap<String, List<Object>> processedCves = cveProcessor.checkAgainstNvdMitre(foundVulnerabilities, existingCves);
 
         assertEquals(1, processedCves.get(CveProcessor.NVD_CVE_KEY).size());
@@ -70,7 +75,7 @@ public class CveProcessorTest {
         HashMap<String, String> cves = new HashMap<>();
         cves.put(CVE_ID, "");
         Map<String, Vulnerability> existingCves = new HashMap<>();
-        cveProcessor = new CveProcessor(cves, new HashMap<>(), testNvdVulns);
+        cveProcessor = new CveProcessor(cves, new HashMap<>(), testNvdVulns, new HashMap<>());
 
         HashMap<String, List<Object>> processedCves = cveProcessor.checkAgainstNvdMitre(foundVulnerabilities, existingCves);
 
@@ -87,7 +92,7 @@ public class CveProcessorTest {
         HashMap cves = new HashMap<>();
         cves.put(CVE_ID, "");
         Map<String, Vulnerability> existingCves = new HashMap<>();
-        cveProcessor = new CveProcessor(new HashMap<>(), cves, new HashMap<>());
+        cveProcessor = new CveProcessor(new HashMap<>(), cves, new HashMap<>(), testMitreVulns);
 
         HashMap<String, List<Object>> processedCves = cveProcessor.checkAgainstNvdMitre(foundVulnerabilities, existingCves);
 
@@ -104,7 +109,7 @@ public class CveProcessorTest {
         HashMap<String, String> cves = new HashMap<>();
         cves.put(CVE_ID, "");
         Map<String, Vulnerability> existingCves = new HashMap<>();
-        cveProcessor = new CveProcessor(cves, cves, testNvdVulns);
+        cveProcessor = new CveProcessor(cves, cves, testNvdVulns, testMitreVulns);
 
         HashMap<String, List<Object>> processedCves = cveProcessor.checkAgainstNvdMitre(foundVulnerabilities, existingCves);
 
@@ -123,7 +128,7 @@ public class CveProcessorTest {
         HashMap<String, String> cves = new HashMap<>();
         cves.put(CVE_ID, "");
         Map<String, Vulnerability> existingCves = new HashMap<>();
-        cveProcessor = new CveProcessor(cves, cves, testNvdVulns);
+        cveProcessor = new CveProcessor(cves, cves, testNvdVulns, testMitreVulns);
 
         HashMap<String, List<Object>> processedCves = cveProcessor.checkAgainstNvdMitre(foundVulnerabilities, existingCves);
 
@@ -132,7 +137,7 @@ public class CveProcessorTest {
         assertEquals(0, processedCves.get(CveProcessor.NVD_MITRE_CVE_KEY).size());
         assertEquals(1, processedCves.get(CveProcessor.ALL_CVE_KEY).size());
         assertEquals(1, foundVulnerabilities.get(CVE_ID).getNvdStatus());
-        assertEquals(0, foundVulnerabilities.get(CVE_ID).getMitreStatus());
+        assertEquals(1, foundVulnerabilities.get(CVE_ID).getMitreStatus());
     }
 
     @Test
@@ -156,7 +161,7 @@ public class CveProcessorTest {
     public void vulnerabilityExistsInNvipButNotMitre() {
         Map<String, Vulnerability> existingCves = new HashMap<>();
         existingCves.put(CVE_ID, new Vulnerability(0, CVE_ID, "", 1, 0, null));
-
+        testMitreVulns.clear();
         HashMap<String, List<Object>> processedCves = cveProcessor.checkAgainstNvdMitre(foundVulnerabilities, existingCves);
 
         assertEquals(0, processedCves.get(CveProcessor.NVD_CVE_KEY).size());
@@ -175,11 +180,11 @@ public class CveProcessorTest {
         HashMap<String, List<Object>> processedCves = cveProcessor.checkAgainstNvdMitre(foundVulnerabilities, existingCves);
 
         assertEquals(1, processedCves.get(CveProcessor.NVD_CVE_KEY).size());
-        assertEquals(1, processedCves.get(CveProcessor.MITRE_CVE_KEY).size());
-        assertEquals(1, processedCves.get(CveProcessor.NVD_MITRE_CVE_KEY).size());
+        assertEquals(0, processedCves.get(CveProcessor.MITRE_CVE_KEY).size());
+        assertEquals(0, processedCves.get(CveProcessor.NVD_MITRE_CVE_KEY).size());
         assertEquals(1, processedCves.get(CveProcessor.ALL_CVE_KEY).size());
         assertEquals(0, foundVulnerabilities.get(CVE_ID).getNvdStatus());
-        assertEquals(0, foundVulnerabilities.get(CVE_ID).getMitreStatus());
+        assertEquals(1, foundVulnerabilities.get(CVE_ID).getMitreStatus());
     }
 
     @Test
@@ -190,11 +195,11 @@ public class CveProcessorTest {
         HashMap<String, List<Object>> processedCves = cveProcessor.checkAgainstNvdMitre(foundVulnerabilities, existingCves);
 
         assertEquals(1, processedCves.get(CveProcessor.NVD_CVE_KEY).size());
-        assertEquals(1, processedCves.get(CveProcessor.MITRE_CVE_KEY).size());
-        assertEquals(1, processedCves.get(CveProcessor.NVD_MITRE_CVE_KEY).size());
+        assertEquals(0, processedCves.get(CveProcessor.MITRE_CVE_KEY).size());
+        assertEquals(0, processedCves.get(CveProcessor.NVD_MITRE_CVE_KEY).size());
         assertEquals(1, processedCves.get(CveProcessor.ALL_CVE_KEY).size());
         assertEquals(0, foundVulnerabilities.get(CVE_ID).getNvdStatus());
-        assertEquals(0, foundVulnerabilities.get(CVE_ID).getMitreStatus());
+        assertEquals(1, foundVulnerabilities.get(CVE_ID).getMitreStatus());
     }
 
     @Test
@@ -207,7 +212,7 @@ public class CveProcessorTest {
         testNvdVulns.put(CVE_ID, new NvdVulnerability(CVE_ID, "", "","Analyzed"));
 
 
-        cveProcessor = new CveProcessor(new HashMap<>(), new HashMap<>(), testNvdVulns);
+        cveProcessor = new CveProcessor(new HashMap<>(), new HashMap<>(), testNvdVulns, testMitreVulns);
 
         HashMap<String, List<Object>> processedCves = cveProcessor.checkAgainstNvdMitre(foundVulnerabilities, existingCves);
 
@@ -244,7 +249,7 @@ public class CveProcessorTest {
         HashMap<String, String> nvdCve = new HashMap<>();
         nvdCve.put(CVE_ID, "");
 
-        cveProcessor = new CveProcessor(nvdCve, new HashMap<>(), testNvdVulns);
+        cveProcessor = new CveProcessor(nvdCve, new HashMap<>(), testNvdVulns, testMitreVulns);
 
         HashMap<String, List<Object>> preProcessedCves = cveProcessor.checkAgainstNvdMitre(foundVulnerabilities, existingCves);
         HashMap<String, List<Object>> withTimeGaps = cveProcessor.checkTimeGaps(preProcessedCves, existingCves);
@@ -266,7 +271,7 @@ public class CveProcessorTest {
         HashMap<String, String> nvdCve = new HashMap<>();
         nvdCve.put(CVE_ID, "");
 
-        cveProcessor = new CveProcessor(nvdCve, new HashMap<>(), testNvdVulns);
+        cveProcessor = new CveProcessor(nvdCve, new HashMap<>(), testNvdVulns, testMitreVulns);
 
         HashMap<String, List<Object>> preProcessedCves = cveProcessor.checkAgainstNvdMitre(foundVulnerabilities, existingCves);
         HashMap<String, List<Object>> withTimeGaps = cveProcessor.checkTimeGaps(preProcessedCves, existingCves);
@@ -290,7 +295,7 @@ public class CveProcessorTest {
         HashMap<String, String> nvdCve = new HashMap<>();
         nvdCve.put(CVE_ID, "");
 
-        cveProcessor = new CveProcessor(nvdCve, new HashMap<>(), testNvdVulns);
+        cveProcessor = new CveProcessor(nvdCve, new HashMap<>(), testNvdVulns, testMitreVulns);
 
         HashMap<String, List<Object>> preProcessedCves = cveProcessor.checkAgainstNvdMitre(foundVulnerabilities, existingCves);
         HashMap<String, List<Object>> withTimeGaps = cveProcessor.checkTimeGaps(preProcessedCves, existingCves);

@@ -59,11 +59,13 @@ DROP TABLE IF EXISTS `cvssscore`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `cvssscore` (
+  `id` INT NOT NULL AUTO_INCREMENT,
   `cve_id` varchar(20) DEFAULT NULL,
   `cvss_severity_id` int DEFAULT NULL,
   `severity_confidence` double DEFAULT NULL,
   `impact_score` text,
   `impact_confidence` double DEFAULT NULL,
+  PRIMARY KEY (`id`),
   KEY `CveId` (`cve_id`),
   CONSTRAINT `cvssscore_cve_id_fk` FOREIGN KEY (`cve_id`) REFERENCES `vulnerability` (`cve_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -267,10 +269,12 @@ DROP TABLE IF EXISTS `vdocharacteristic`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `vdocharacteristic` (
+  `id` INT NOT NULL AUTO_INCREMENT,
   `cve_id` varchar(20) NOT NULL,
   `vdo_label_id` int DEFAULT NULL,
   `vdo_confidence` double DEFAULT NULL,
   `vdo_noun_group_id` int DEFAULT NULL,
+  PRIMARY KEY (`id`),
   KEY `CveId` (`cve_id`),
   KEY `vdo_noun_group` (`vdo_noun_group_id`),
   KEY `vdo_label` (`vdo_label_id`)

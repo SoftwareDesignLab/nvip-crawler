@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Random;
 
+import model.cpe.ClassifiedWord;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
@@ -36,7 +37,6 @@ import org.nd4j.linalg.dataset.api.preprocessor.DataNormalization;
 import org.nd4j.linalg.dataset.api.preprocessor.serializer.NormalizerSerializer;
 import org.nd4j.linalg.factory.Nd4j;
 
-import utils.*;
 import opennlp.tools.sentdetect.SentenceDetector;
 import opennlp.tools.sentdetect.SentenceDetectorME;
 import opennlp.tools.sentdetect.SentenceModel;
@@ -54,7 +54,6 @@ import opennlp.tools.tokenize.WhitespaceTokenizer;
  */
 
 public class NERmodel {
-
 	private final boolean timingOn = false;
 
 	private MultiLayerNetwork model = null; // NER model
@@ -322,8 +321,10 @@ public class NERmodel {
 		// get word embedding from char2vector model (on the character level)
 		try {
 			wordVector2 = charModel.word2vec(word);
-		} catch (Exception e) {
-			log.error(e);
+		}catch (IllegalArgumentException e){
+			//This gets thrown whenever russian or chinese characters are passed in; errors clog up logs
+		}catch (Exception e) {
+			log.error(e + " for word " + word);
 		}
 
 		// convert double[] to float[]

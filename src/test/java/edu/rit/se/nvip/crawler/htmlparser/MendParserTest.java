@@ -28,8 +28,11 @@ import edu.rit.se.nvip.crawler.QuickCveCrawler;
 import edu.rit.se.nvip.model.CompositeVulnerability;
 import edu.rit.se.nvip.utils.MyProperties;
 import edu.rit.se.nvip.utils.PropertyLoader;
+
 import org.junit.Ignore;
 import org.junit.Test;
+import org.junit.BeforeClass;
+import org.junit.AfterClass;
 
 import java.util.List;
 import static junit.framework.TestCase.*;
@@ -55,14 +58,24 @@ public class MendParserTest extends AbstractParserTest{
     }
 
     @Test
+    @Ignore
     public void testMend2() {
-
-        String html = QuickCveCrawler.getContentFromDynamicPage("https://www.mend.io/vulnerability-database/CVE-2013-6646", null);
-        List<CompositeVulnerability> list = new MendParser("mend").parseWebPage(
+        MendParser parser = new MendParser("mend");
+        String html = parser.grabDynamicHTML("https://www.mend.io/vulnerability-database/CVE-2013-6646");
+        List<CompositeVulnerability> list = parser.parseWebPage(
                 "https://www.mend.io/vulnerability-database/CVE-2013-6646",
                 html
         );
         assertEquals(1, list.size());
     }
 
+    @BeforeClass
+    public static void setupWebDriver(){
+        if(CveCrawler.driver.toString().contains("(null)")) CveCrawler.driver = CveCrawler.startDynamicWebDriver();
+    }
+
+    @AfterClass
+    public static void destroyWebDriver(){
+        if(CveCrawler.driver != null) CveCrawler.driver.quit();
+    }
 }

@@ -1,23 +1,29 @@
+# Un-needed configs/data files
 logs
 **/.settings
 *.log
 *.csv
-.idea
 nvip.iml
-/target/
 
+# Class outputs
+/target/
 /crawler/target/
+/reconciler/target/
 /productnameextractor/target/
+
+# Large files
 /sleepycat-5.0.84.jar
 /nvip_data/productnameextraction/w2v_model_250.bin
 /nvip_data/mysql-database/newDB/mysql-connector-j-8.0.33.jar
-/reconciler/target/
 
+# Local run files
 .idea/
 output/
-logs/
+
+# Un-moddifiables
+/nvip_data/mysql-database/
 /.github/
-/nvip_data/exploit-repo/exploitdb/
-Servers/
-nvip_data/
-/.metadata/
+
+# Git Repos
+nvip_data/pypa-repo/
+exploitfinder/src/main/resources/exploit-repo

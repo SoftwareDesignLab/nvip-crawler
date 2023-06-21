@@ -95,7 +95,6 @@ public class CveCrawlController {
         }
 
         logger.info("CURRENT CRAWL DEPTH ----> " + config1.getMaxDepthOfCrawling());
-        logger.info("Whitelist: " + whiteList.toArray().toString());
 
         // Setup thread factory and start crawler
         String finalOutputFile = outputFile;
