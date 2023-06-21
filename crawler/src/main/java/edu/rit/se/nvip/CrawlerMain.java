@@ -105,7 +105,8 @@ public class CrawlerMain {
             for (String cveId: crawledCVEs.keySet()) {
                 logger.info("CVE: {}:\n", cveId);
                 for (RawVulnerability vuln: crawledCVEs.get(cveId)) {
-                    logger.info("[{} | {}]\n", vuln.getSourceURL(), vuln.getDescription().substring(0, 100));
+                    String description = vuln.getDescription().length() > 0 ? vuln.getDescription().substring(0, 100) : vuln.getDescription();
+                    logger.info("[{} | {}]\n", vuln.getSourceURL(), description);
                 }
             }
         }
