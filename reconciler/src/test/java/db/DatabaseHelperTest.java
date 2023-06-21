@@ -34,7 +34,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.MockedConstruction;
-import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
@@ -62,8 +61,6 @@ public class DatabaseHelperTest {
     private DatabaseHelper dbh;
 
     @Mock
-    private DatabaseHelper mockDBH = Mockito.mock(DatabaseHelper.class);
-    @Mock
     private HikariDataSource hds;
     @Mock
     private Connection conn;
@@ -73,14 +70,7 @@ public class DatabaseHelperTest {
     private ResultSet res;
 
     private final String dummyCveId = "CVE-xxxx-xxx";
-    private final int dummyId = 1;
-    private final String dummyDescription ="desc";
     private final long dummyMillis = System.currentTimeMillis();
-    private final Timestamp dummyDescCreate = offset(4);
-    private final String dummyBuildString = "((1,2),3)";
-    private final Timestamp dummyPub = offset(0);
-    private final Timestamp dummyMod = offset(3);
-    private final Timestamp dummyCreate = offset(2);
 
     private Timestamp offset(int nHours) {
         return new Timestamp(dummyMillis + nHours*3600L*1000);
@@ -88,17 +78,6 @@ public class DatabaseHelperTest {
     private RawVulnerability genRawVuln(int id) {
         return new RawVulnerability(id, dummyCveId, "description"+id, offset(-id), offset(id), offset(-10), "website"+id );
     }
-    private Set<RawVulnerability> genRawVulns(int size, int startId) {
-        Set<RawVulnerability> out = new LinkedHashSet<>();
-        for (int i = 0; i < size; i++) {
-            out.add(genRawVuln(i+startId));
-        }
-        return out;
-    }
-    private CompositeDescription genCompDes(String buildString, int nSources) {
-        return new CompositeDescription(dummyId, dummyCveId, dummyDescription, dummyDescCreate, buildString, genRawVulns(nSources, 1));
-    }
-
 
     private void setMocking() {
         try {
@@ -163,14 +142,6 @@ public class DatabaseHelperTest {
                 }
             });
         } catch (SQLException ignored) {}
-    }
-
-    private List<AffectedRelease> buildDummyReleases(int count) {
-        List<AffectedRelease> releases = new ArrayList<>();
-        for (int i = 0; i < count; i++) {
-            releases.add(new AffectedRelease(1337, "cve"+i, "cpe"+i, "date"+i, "version"+i));
-        }
-        return releases;
     }
 
     @BeforeClass
