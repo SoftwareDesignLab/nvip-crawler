@@ -26,4 +26,4 @@ output/
 
 # Git Repos
 nvip_data/pypa-repo/
-/nvip_data/exploit-repo/exploitdb/
+exploitfinder/src/main/resources/exploit-repo
