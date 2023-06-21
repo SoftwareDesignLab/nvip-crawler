@@ -67,6 +67,9 @@ public class CpeLookUp {
 		genericProductNames.add("security");
 		genericProductNames.add("hub");
 		genericProductNames.add("server");
+		genericProductNames.add("store");
+		genericProductNames.add("statistics");
+		genericProductNames.add("view");
 	}
 
 	/**
