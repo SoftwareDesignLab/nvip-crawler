@@ -27,6 +27,7 @@ import edu.rit.se.nvip.automatedcvss.PartialCvssVectorGenerator;
 import edu.rit.se.nvip.characterizer.classifier.AbstractCveClassifier;
 import edu.rit.se.nvip.characterizer.classifier.CveClassifierFactory;
 import edu.rit.se.nvip.db.DatabaseHelper;
+import edu.rit.se.nvip.model.CompositeVulnerability;
 import edu.rit.se.nvip.model.CvssScore;
 import edu.rit.se.nvip.model.VdoCharacteristic;
 import org.apache.commons.io.FileUtils;
@@ -140,7 +141,7 @@ public class CveCharacterizer {
 	 * 
 	 * @param cveList
 	 */
-	public List<edu.rit.se.nvip.model.CompositeVulnerability> characterizeCveList(List<edu.rit.se.nvip.model.CompositeVulnerability> cveList, DatabaseHelper databaseHelper, int limit) {
+	public List<CompositeVulnerability> characterizeCveList(List<CompositeVulnerability> cveList, DatabaseHelper databaseHelper, int limit) {
 
 		long start = System.currentTimeMillis();
 		int totCharacterized = 0;
@@ -154,7 +155,7 @@ public class CveCharacterizer {
 
 		// predict for each CVE, the model was trained in the constructor!
 		for (int i = 0; i < cveList.size(); i++) {
-			edu.rit.se.nvip.model.CompositeVulnerability vulnerability = null;
+			CompositeVulnerability vulnerability = null;
 			/**
 			 * To skip the rest of the characterization for the very first run or if the
 			 * system has not been run for a long time. The process could be time consuming
@@ -180,7 +181,7 @@ public class CveCharacterizer {
 					countBadDescription++;
 					continue; // if no description or old CVE skip!
 				}
-				if (vulnerability.getCveReconcileStatus() == edu.rit.se.nvip.model.CompositeVulnerability.CveReconcileStatus.DO_NOT_CHANGE) {
+				if (vulnerability.getCveReconcileStatus() == CompositeVulnerability.CveReconcileStatus.DO_NOT_CHANGE) {
 					//logger.info("No change in description for Characterization of {}", cveDesc);
 					countNotChanged++;
 					continue; // the same CVE in db

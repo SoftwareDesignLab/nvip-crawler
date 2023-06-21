@@ -39,9 +39,9 @@ public class ReconcilerController {
     public void main() {
         Set<String> jobs = dbh.getJobs();
         logger.info(jobs.size() + " jobs found for reconciliation");
-        Set<edu.rit.se.nvip.model.CompositeVulnerability> reconciledVulns = new HashSet<>();
+        Set<CompositeVulnerability> reconciledVulns = new HashSet<>();
         for (String job : jobs) {
-            edu.rit.se.nvip.model.CompositeVulnerability vuln = handleReconcilerJob(job);
+            CompositeVulnerability vuln = handleReconcilerJob(job);
             if (vuln != null) {
                 reconciledVulns.add(vuln);
             }
