@@ -51,6 +51,7 @@ public class CrawlerMain {
      */
     public static void main(String[] args) throws Exception {
 
+        // Initialize Crawler, check if it's in testmode
         CrawlerMain crawlerMain = new CrawlerMain();
         boolean crawlerTestMode = (boolean) crawlerVars.get("testMode");
         if (crawlerTestMode)
@@ -58,6 +59,8 @@ public class CrawlerMain {
                     ((String)crawlerVars.get("seedFileDir")).split("/")[((String)crawlerVars.get("seedFileDir")).split("/").length - 1]);
         else
             logger.info("Starting Crawler...");
+
+        // TODO: Move this to reconciler/processor
         if ((Boolean) dataVars.get("refreshNvdList")) {
             logger.info("Refreshing NVD CVE List");
 //            new NvdCveController().updateNvdDataTable((String) dataVars.get("nvdUrl"));
@@ -108,17 +111,22 @@ public class CrawlerMain {
         }
     }
 
+    /**
+     * Util method used for mapping source types to each CVE source
+     */
     private static void createSourceTypeMap(){
         if (sourceTypes == null)
             sourceTypes = new HashMap<>();
         try {
+            // Read in source type mapping file
             File sources = new File((String) crawlerVars.get("sourceTypeFileDir"));
             BufferedReader sourceReader = new BufferedReader(new FileReader(sources));
 
+            // Map each source URL to its source type and fill in the sourceTypes hashmap
             String source = "";
             while (source != null) {
                 String[] tokens = source.split(" ");
-                if(tokens.length < 2)
+                if (tokens.length < 2)
                     logger.warn("Source {} is not formatted correctly", source);
                 else
                     sourceTypes.put(tokens[0], tokens[1]);
@@ -132,9 +140,15 @@ public class CrawlerMain {
         }
     }
 
+    /**
+     * Util method used for updating source types for found CVEs
+     * @param crawledCves
+     */
     private static void updateSourceTypes(HashMap<String, ArrayList<RawVulnerability>> crawledCves){
+        // Prepare source types mapping
         createSourceTypeMap();
 
+        // For each raw CVE,
         for (String cveId: crawledCves.keySet()) {
             for (RawVulnerability vuln: crawledCves.get(cveId)) {
                 if(vuln.getSourceURL() == null || vuln.getSourceURL().equals("")){
@@ -142,6 +156,8 @@ public class CrawlerMain {
                     continue;
                 }
 
+                // Set source type if the URL is listed in the types file
+                // Otherwise, just set the source type to 'other'
                 try{
                     URL sourceURL = new URL(vuln.getSourceURL());
                     vuln.setSourceType(sourceTypes.get(sourceURL.getHost()));
