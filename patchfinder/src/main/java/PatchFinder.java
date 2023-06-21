@@ -29,6 +29,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eclipse.jgit.util.FileUtils;
+import utils.GitController;
 
 import java.io.File;
 import java.io.IOException;
@@ -101,12 +102,14 @@ public class PatchFinder {
 		ArrayList<PatchCommit> patchCommits = PatchFinder.getPatchCommits();
 
 		// Insert patches
-		for (PatchCommit patchCommit: patchCommits) {
+		for (PatchCommit patchCommit : patchCommits) {
 			final int sourceUrlId = databaseHelper.insertPatchSourceURL(patchCommit.getCveId(), patchCommit.getCommitUrl());
 			databaseHelper.insertPatchCommit(sourceUrlId, patchCommit.getCommitUrl(), patchCommit.getCommitId(),
 					patchCommit.getCommitDate(), patchCommit.getCommitMessage());
+//			logger.info(patchCommit.getUniDiff());
 		}
 
+		// Delete cloned repos
 
 		final long delta = (System.currentTimeMillis() - start) / 1000;
 		logger.info("Successfully collected {} patch commits from {} affected products in {} seconds", patchCommits.size(), affectedProducts.size(), delta);
@@ -169,4 +172,5 @@ public class PatchFinder {
 			logger.error("Product extraction failed: {}", e.toString());
 		}
 	}
+
 }

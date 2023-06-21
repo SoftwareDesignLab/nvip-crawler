@@ -251,14 +251,14 @@ public class DatabaseHelper {
 	 * @param commitDate
 	 * @param commitMessage
 	 */
-	public void insertPatchCommit(int sourceId, String sourceURL, String commitId, long commitDate, String commitMessage) {
+	public void insertPatchCommit(int sourceId, String sourceURL, String commitId, java.util.Date commitDate, String commitMessage) {
 
 		try (Connection connection = getConnection();
 			 PreparedStatement pstmt = connection.prepareStatement(insertPatchCommitSql);) {
 
 			pstmt.setInt(1, sourceId);
 			pstmt.setString(2, sourceURL + "/commit/" + commitId);
-			pstmt.setDate(3, new java.sql.Date(commitDate));
+			pstmt.setDate(3, new java.sql.Date(commitDate.getTime()));
 			pstmt.setString(4, commitMessage);
 			pstmt.executeUpdate();
 		} catch (Exception e) {
