@@ -163,9 +163,6 @@ A list of the environment variables is provided below:
 * **NVIP_OUTPUT_DIR**: Output directory path for the web crawler(s)
     - Default value: output/crawlers
 
-* **EXPLOIT_DB_URL**: URL used for cloning and scraping the ExploitDB Git repo
-    - Default value: https://gitlab.com/exploit-database/exploitdb
-
 #### Product Name Extractor
 
 * **CHAR_2_VEC_CONFIG**: Path to the char2vec config file

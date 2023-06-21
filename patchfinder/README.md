@@ -156,9 +156,6 @@ A list of the environment variables is provided below:
 * **NVIP_OUTPUT_DIR**: Output directory path for the web crawler(s)
     - Default value: output/crawlers
 
-* **EXPLOIT_DB_URL**: URL used for cloning and scraping the ExploitDB Git repo
-    - Default value: https://gitlab.com/exploit-database/exploitdb
-
 #### Patch Finder
 
 * **PATCHFINDER_SOURCE_LIMIT**: Limit of maximum # of repos to scrape for patches
