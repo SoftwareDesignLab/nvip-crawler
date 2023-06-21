@@ -60,6 +60,15 @@ public class CpeLookUp {
 	// Regex101: https://regex101.com/r/9uaTQb/1
 	private static final Pattern CPE_PATTERN = Pattern.compile("cpe:2\\.3:[aho\\*\\-]:([^:]*):([^:]*):([^:]*):.*");
 
+	//Set of generic standalone product names to blacklist from getting CPE groups matched
+	private static final HashSet<String> genericProductNames;
+	static{
+		genericProductNames = new HashSet<>();
+		genericProductNames.add("security");
+		genericProductNames.add("hub");
+		genericProductNames.add("server");
+	}
+
 	/**
 	 * A hash map of <CPE, Domain>
 	 */
@@ -382,6 +391,12 @@ public class CpeLookUp {
 		// Result list
 		ArrayList<CPEGroupFromMap> groupsList = new ArrayList<>();
 
+		//Ensures that generic product names do not get matched to CPE groups such as "security" or "server"
+		String[] splitProductName = productName.split(" ");
+		if(splitProductName.length == 1 && genericProductNames.contains(productName)){
+			return groupsList;
+		}
+
 		// iterate through all cpe groups
 		for (Map.Entry<String, CpeGroup> entry : cpeMapFile.entrySet()) {
 
@@ -443,7 +458,6 @@ public class CpeLookUp {
 	 * 
 	 * @param selectedGroups result from the findCPEGroups method
 	 * @param product product to search
-	 * TODO: Add in blacklist for generic product names such as "Security" or "Server" - needs more looking into
 	 * @return a list of found CPE ID Strings
 	 */
 	private ArrayList<String> getCPEIdsFromGroups(ArrayList<CPEGroupFromMap> selectedGroups, ProductItem product) {
