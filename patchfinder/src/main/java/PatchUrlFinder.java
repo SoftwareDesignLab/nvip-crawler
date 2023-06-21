@@ -52,8 +52,6 @@ import java.util.regex.Pattern;
 public class PatchUrlFinder {
 
 	private static final Logger logger = LogManager.getLogger(PatchUrlFinder.class.getName());
-	private static DatabaseHelper db;
-
 	// TODO: add to envvars?
 	private static final String[] ADDRESS_BASES = { "https://www.github.com/", "https://www.gitlab.com/" };
 
@@ -75,7 +73,7 @@ public class PatchUrlFinder {
 			final String cveId = entry.getKey();
 			final CpeGroup group = entry.getValue();
 			// Break out of loop when limit is reached
-			if (cveCpeUrls.size() > cveLimit) {
+			if (cveCpeUrls.size() >= cveLimit) {
 				logger.info("CVE limit of {} reached for patchfinder", cveLimit);
 				break;
 			}
