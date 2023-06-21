@@ -11,6 +11,8 @@
         <module>productnameextractor</module>
         <module>patchfinder</module>
         <module>exploitfinder</module>
+        <module>reconciler</module>
+        <module>crawler</module>
     </modules>
 
     <properties>
