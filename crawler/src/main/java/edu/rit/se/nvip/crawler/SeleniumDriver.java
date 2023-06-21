@@ -142,33 +142,27 @@ public class SeleniumDriver {
     	WebElement element = null;
     	try{
     		new WebDriverWait(driver, Duration.ofSeconds(3))
-          		.until(driver -> driver.findElement(findBy);
-      	} catch (NoSuchElementException e){
-      		logger.warn("Finding element {} raised NoSuchElementException", xpath);
-      	} catch (TimeoutException e){
-      		logger.warn("Finding element {} raised TimeoutException", xpath);
+          		.until(driver -> driver.findElement(findBy));
+      	} catch (Exception e){
+      		logger.warn("Finding element {} raised {}", findBy.toString(), e.toString());
       	}
         return element;
     }
 
     //TODO Maybe comment out logger statements, maybe break on stale or move ex.
-    public void tryClickElement(WebElement element, int timeoutDuration){
+    public boolean tryClickElement(WebElement element, int timeoutDuration){
     	boolean result = false;
         int attempts = 0;
         while(attempts < MAX_ACTION_TRIES) {
             try {
             	new WebDriverWait(driver, Duration.ofSeconds(timeoutDuration))
-            		.until(ExpectedConditions.elementToBeClickable(rowElement));
+            		.until(ExpectedConditions.elementToBeClickable(element));
                 actions.moveToElement(element).perform();
                 actions.click(element).perform();
                 result = true;
                 break;
-            } catch(StaleElementReferenceException e) {
-            	logger.warn("Clicking element {} raised StaleElementReferenceException", element.getAccessibleName());
-            } catch (MoveTargetOutOfBoundsException e) {
-            	logger.warn("Clicking element {} raised MoveTargetOutOfBoundsException", element.getAccessibleName());
-            } catch (TimeoutException e){
-            	logger.warn("Clicking element {} raised TimeoutException", element.getAccessibleName());
+            } catch(Exception e) {
+            	logger.warn("Clicking element {} raised {}", element.getAccessibleName(), e.toString());
             }
             attempts++;
         }

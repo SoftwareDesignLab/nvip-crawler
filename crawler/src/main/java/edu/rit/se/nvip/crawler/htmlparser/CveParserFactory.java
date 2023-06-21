@@ -23,7 +23,7 @@
  */
 package edu.rit.se.nvip.crawler.htmlparser;
 
-import org.openqa.selenium.WebDriver;
+import edu.rit.se.nvip.crawler.SeleniumDriver;
 
 /**
  * 
@@ -35,7 +35,7 @@ public class CveParserFactory {
 	/**
 	 * return the parser for this Url
 	 */
-	public AbstractCveParser createParser(String sPageUrl, WebDriver driver) {
+	public AbstractCveParser createParser(String sPageUrl, SeleniumDriver driver) {
 		if (sPageUrl == null) {
 			return new NullParser();
 		}

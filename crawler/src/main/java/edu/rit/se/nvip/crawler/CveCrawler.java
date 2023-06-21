@@ -25,19 +25,16 @@ package edu.rit.se.nvip.crawler;
 
 import edu.rit.se.nvip.crawler.htmlparser.AbstractCveParser;
 import edu.rit.se.nvip.crawler.htmlparser.CveParserFactory;
+import edu.rit.se.nvip.crawler.SeleniumDriver;
+
 import edu.uci.ics.crawler4j.crawler.Page;
 import edu.uci.ics.crawler4j.crawler.WebCrawler;
 import edu.uci.ics.crawler4j.parser.HtmlParseData;
 import edu.uci.ics.crawler4j.url.WebURL;
 import edu.rit.se.nvip.model.RawVulnerability;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.openqa.selenium.WebDriver;
-import io.github.bonigarcia.wdm.WebDriverManager;
-import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.chrome.ChromeDriverService;
-import org.openqa.selenium.chrome.ChromeOptions;
-import org.openqa.selenium.remote.http.ClientConfig;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -62,59 +59,22 @@ public class CveCrawler extends WebCrawler {
 	private final HashMap<String, ArrayList<RawVulnerability>> foundCVEs = new HashMap<>();
 	private final CveParserFactory parserFactory = new CveParserFactory();
 
-	private WebDriver driver;
+	private SeleniumDriver driver;
 
 
 	public CveCrawler(List<String> myCrawlDomains, String outputDir) {
 		this.myCrawlDomains = myCrawlDomains;
 		this.outputDir = outputDir;
-		this.driver = startDynamicWebDriver();
+		this.driver = new SeleniumDriver();
 	}
 
-	public static WebDriver startDynamicWebDriver() {
-		System.setProperty("webdriver.chrome.silentOutput", "true");
-		ChromeOptions options = new ChromeOptions();
-		options.addArguments("--headless=new","--user-agent=Mozilla/5.0");
-		options.addArguments("--remote-allow-origins=*");
-		options.addArguments("--enable-javascript");
-		options.addArguments("--no-sandbox");
-		options.addArguments("--disable-dev-shm-usage");
-		options.addArguments("--disk-cache-size=0");
-		options.addArguments("--disable-gpu");
-		options.addArguments("--disable-extensions");
-		options.addArguments("--disable-web-security");
-		options.addArguments("--disable-application-cache");
-
-		Map<String, Object> timeouts = new HashMap<>();
-		timeouts.put("implicit", 20);
-		timeouts.put("pageLoad", 15000);
-		timeouts.put("script", 60000);
-		options.setCapability("timeouts", timeouts);
-		WebDriverManager.chromedriver().setup();
-		ChromeDriverService chromeDriverService = new ChromeDriverService.Builder().build();
-		ClientConfig config = ClientConfig
-				.defaultConfig()
-				.readTimeout(Duration.ofSeconds(20));
-
-		return new ChromeDriver(chromeDriverService, options);
-	}
-
-	private void tryDiverQuit(){
-		int tries = 0;
-        while (tries < 2) {
-            try {
-                driver.quit();
-                break;
-            } catch (Exception e) {
-                logger.info("Retrying driver quit...");
-                tries++;
-            }
-        }
+	public SeleniumDriver getSeleniumDriver(){
+		return driver;
 	}
 
 	@Override
 	public void onBeforeExit() {
-        tryDiverQuit();
+        driver.tryDiverQuit();
     }
 
 	/**
@@ -152,7 +112,7 @@ public class CveCrawler extends WebCrawler {
 		List<String> dynamicSeeds = Arrays.asList("redhat", "tibco", "autodesk", "trustwave", "mend.io");
 		if (dynamicSeeds.stream().anyMatch(url::contains)) {
 			logger.info("Getting content from page with dynamically-loaded HTML {}", url);
-			return QuickCveCrawler.getContentFromDynamicPage(url, driver);
+			return QuickCveCrawler.getContentFromDynamicPage(url, driver.getDriver());
 		}
 		HtmlParseData htmlParseData = (HtmlParseData) page.getParseData();
 		return htmlParseData.getHtml();
@@ -223,9 +183,5 @@ public class CveCrawler extends WebCrawler {
 		} catch (IOException e) {
 			logger.info("Failure writing report to {}: {}", outputDir, e);
 		}
-	}
-
-	public WebDriver getDriver(){
-		return driver;
 	}
 }
