@@ -23,6 +23,7 @@
  */
 package commits;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.time.Instant;
@@ -41,24 +42,60 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.diff.DiffFormatter;
+import org.eclipse.jgit.diff.RawTextComparator;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
+import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 
 /**
  *	For Scraping repo commits for possible patch commits
  */
 public class PatchCommitScraper {
 
+
 	private static final Logger logger = LogManager.getLogger(PatchCommitScraper.class.getName());
 	private static final Pattern[] patchRegex = new Pattern[] {Pattern.compile("vulnerability|Vulnerability|vuln|Vuln|VULN[ #]*([0-9]+)")};
 	private final String localDownloadLoc;
 	private final String repoSource;
 
+
 	public PatchCommitScraper(String localDownloadLoc, String repoSource) {
 		this.localDownloadLoc = localDownloadLoc;
 		this.repoSource = repoSource;
 	}
+
+
+	/**
+	 * Retrieve the unified diff for a specific commit in the repository.
+	 *
+	 * @param repository The Git repository.
+	 * @param commit The commit for which to retrieve the unified diff.
+	 * @return The unified diff as a string.
+	 * @throws IOException If an I/O error occurs.
+	 */
+	private String getCommitUnifiedDiff(Repository repository, RevCommit commit) throws IOException {
+		try (DiffFormatter diffFormatter = new DiffFormatter(new ByteArrayOutputStream())) {
+			diffFormatter.setRepository(repository);
+			diffFormatter.setDiffComparator(RawTextComparator.DEFAULT);
+			diffFormatter.setDetectRenames(true);
+
+
+			CanonicalTreeParser oldTreeParser = new CanonicalTreeParser();
+			oldTreeParser.reset(repository.newObjectReader(), commit.getParents()[0].getTree());
+			CanonicalTreeParser newTreeParser = new CanonicalTreeParser();
+			newTreeParser.reset(repository.newObjectReader(), commit.getTree());
+
+
+			ByteArrayOutputStream diffOutputStream = new ByteArrayOutputStream();
+			diffFormatter.format(oldTreeParser, newTreeParser);
+			return diffOutputStream.toString();
+		}
+	}
+
+
+
 
 	/**
 	 * Parse commits to prepare for extraction of patches for a repo. Uses preset
@@ -71,54 +108,64 @@ public class PatchCommitScraper {
 	public List<PatchCommit> parseCommits(String cveId) {
 		List<PatchCommit> patchCommits = new ArrayList<>();
 
+
 		logger.info("Grabbing Commits List for repo @ {}...", localDownloadLoc);
 
-		// Initialize commit list form the repo's .git folder
-		try (final Repository repository = new FileRepositoryBuilder().setGitDir(new File(localDownloadLoc+"/.git")).build()){
-			try(final Git git = new Git(repository)) {
-				// Iterate through each commit and check if there's a commit message that contains a CVE ID
-				// or the 'vulnerability' keyword
-				// TODO: Test now that localDownloadLoc is fixed
+
+		try (final Repository repository = new FileRepositoryBuilder().setGitDir(new File(localDownloadLoc + "/.git")).build()) {
+			try (final Git git = new Git(repository)) {
 				final ObjectId startingRevision = repository.resolve("refs/heads/master");
-				if(startingRevision != null || true) {
-					// TODO: Catch NoHeadException, possibly due to empty repos, investigate further
-					final Iterable<RevCommit> commits = git.log()/*.add(startingRevision)*/.call();
+				if (startingRevision != null) {
+					final Iterable<RevCommit> commits = git.log().add(startingRevision).call();
+
 
 					int ignoredCounter = 0;
 
+
 					for (RevCommit commit : commits) {
-						// Check if the commit message matches any of the regex provided
 						for (Pattern pattern : patchRegex) {
 							Matcher matcher = pattern.matcher(commit.getFullMessage());
-							// If found the CVE ID is found, add the patch commit to the returned list
 							if (matcher.find() || commit.getFullMessage().contains(cveId)) {
 								String commitUrl = repository.getConfig().getString("remote", "origin", "url");
 								logger.info("Found patch commit @ {} in repo {}", commitUrl, localDownloadLoc);
-								//TODO: Verify that this is not needed, I just passed the raw time value along,
-								// as we do not appear to need a LocalDateTime object, rather a java.sql.Date object,
-								// which can be easily created from long:
-								// LocalDateTime commitDateTime = LocalDateTime.ofInstant(
-								// 		Instant.ofEpochSecond(commit.getCommitTime()),
-								// 		ZoneId.systemDefault()
-								// );
-								PatchCommit patchCommit = new PatchCommit(commitUrl, cveId, commit.getName(), commit.getCommitTime(), commit.getFullMessage());
+
+
+								// Retrieve the unified diff for the commit
+								String unifiedDiff;
+								try {
+									unifiedDiff = getCommitUnifiedDiff(repository, commit);
+								} catch (IOException e) {
+									logger.error("Failed to retrieve unified diff for commit: {}", commit.getName());
+									unifiedDiff = "";
+								}
+
+
+								PatchCommit patchCommit = new PatchCommit(commitUrl, cveId, commit.getName(), commit.getCommitTime(), commit.getFullMessage(), unifiedDiff);
 								patchCommits.add(patchCommit);
-							} else ignoredCounter++;
+							} else {
+								ignoredCounter++;
+							}
 						}
 					}
 
+
 					logger.info("Ignored {} non-patch commits", ignoredCounter);
+
 
 					if (patchCommits.isEmpty()) {
 						logger.info("No patches for CVE {} found in repo {} ", cveId, localDownloadLoc);
 					}
-				} else logger.warn("Could not get starting revision from repo {}", localDownloadLoc);
+				} else {
+					logger.warn("Could not get starting revision from repo {}", localDownloadLoc);
+				}
 			}
 		} catch (IOException | GitAPIException e) {
 			logger.error("ERROR: Failed to scrape repo @ {} for patch commits for CVE {}\n{}", repoSource, cveId, e);
 		}
 
+
 		return patchCommits;
 	}
+
 
 }

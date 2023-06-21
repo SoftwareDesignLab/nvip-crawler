@@ -23,11 +23,14 @@
  */
 package commits;
 
+
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.joda.time.DateTime;
 
+
 import java.time.Instant;
 import java.time.LocalDateTime;
+
 
 /**
  * Model class for patchcommits found by patchfinder
@@ -38,31 +41,59 @@ public class PatchCommit {
 	private final String commitId;
 	private long commitDate;
 	private final String commitMessage;
+	private final String unifiedDiff;
+
 
 	/**
 	 * Model class for patch commit objects
 	 * @param commitURL
 	 * @param cveId
+	 * @param commitId
 	 * @param commitDate
 	 * @param commitMessage
+	 * @param unifiedDiff
 	 */
-	public PatchCommit(String commitURL, String cveId, String commitId, long commitDate, String commitMessage) {
-		this.cveId = cveId;
+	public PatchCommit(String commitURL, String cveId, String commitId, long commitDate, String commitMessage, String unifiedDiff) {
 		this.commitURL = commitURL;
+		this.cveId = cveId;
 		this.commitId = commitId;
 		this.commitDate = commitDate;
 		this.commitMessage = commitMessage;
+		this.unifiedDiff = unifiedDiff;
 	}
+
+
+	public String getCommitURL() {
+		return commitURL;
+	}
+
+
+	public String getCveId() {
+		return cveId;
+	}
+
+
+	public String getCommitId() {
+		return commitId;
+	}
+
+
+	public long getCommitDate() {
+		return commitDate;
+	}
+
 
 	public String getCommitUrl() {
 		return this.commitURL;
 	}
 
-	public String getCveId() { return this.cveId; }
 
-	public long getCommitDate() {return this.commitDate; }
+	public String getCommitMessage() {
+		return commitMessage;
+	}
 
-	public String getCommitMessage() { return this.commitMessage; }
 
-	public String getCommitId() { return this.commitId; }
+	public String getUnifiedDiff() {
+		return unifiedDiff;
+	}
 }
