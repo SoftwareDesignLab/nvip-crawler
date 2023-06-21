@@ -160,8 +160,8 @@ public class JGitParser {
 			}
 			return revCommits;
 		} catch (GitAPIException e) {
-			e.getMessage();
-			logger.info(e.toString());
+			logger.error("ERROR: Failed to get commit list for repo {}\n{}",
+					git.getRepository().getDirectory().getName(), e.toString());
 		}
 		return null;
 	}
@@ -182,7 +182,6 @@ public class JGitParser {
 		List<RevCommit> allCommits = this.getAllCommitList();
 
 		if (allCommits != null) {
-
 			for (RevCommit repoCommit : allCommits) {
 
 				String message = repoCommit.getFullMessage();
