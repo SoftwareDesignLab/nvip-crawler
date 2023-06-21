@@ -21,8 +21,8 @@ public class DatabaseHelper {
     private static DatabaseHelper databaseHelper = null;
 
     private static final String GET_JOBS = "SELECT * FROM cvejobtrack";
-    private static final String GET_RAW_BY_CVE_ID = "SELECT * FROM rawdescription WHERE cve_id = ? AND is_garbage = 0";
-    private static final String MARK_GARBAGE = "UPDATE rawdescription SET is_garbage = ? WHERE raw_description_id = ?";
+    private static final String GET_RAW_BY_CVE_ID = "SELECT * FROM rawdescription WHERE cve_id = ? AND is_garbage < 2";
+    private static final String UPDATE_FILTER_STATUS = "UPDATE rawdescription SET is_garbage = ? WHERE raw_description_id = ?";
     private static final String GET_VULN = "SELECT v.*, d.description_id, d.description, d.created_date AS description_date, d.gpt_func " +
             "FROM vulnerability AS v INNER JOIN description AS d ON v.description_id = d.description_id WHERE v.cve_id = ?";
     private static final String GET_USED_RAW_VULNS = "SELECT rd.* " +
@@ -165,10 +165,10 @@ public class DatabaseHelper {
         return rawVulns;
     }
 
-    public void markGarbage(Set<RawVulnerability> rejectedRawVulns) {
-        try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(MARK_GARBAGE)) {
+    public void updateFilterStatus(Set<RawVulnerability> rejectedRawVulns) {
+        try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(UPDATE_FILTER_STATUS)) {
             for (RawVulnerability vuln : rejectedRawVulns) {
-                pstmt.setInt(1, 1);
+                pstmt.setInt(1, vuln.getFilterStatus().value);
                 pstmt.setInt(2, vuln.getId());
                 pstmt.addBatch();
             }
@@ -339,7 +339,8 @@ public class DatabaseHelper {
                     res.getTimestamp("last_modified_date"),
                     res.getTimestamp("published_date"),
                     res.getString("source_url"),
-                    res.getString("source_type")
+                    res.getString("source_type"),
+                    res.getInt("is_garbage") // todo change this column to "filter_status" to reflect its new purpose
             );
         } catch (SQLException ex) {
             logger.error(ex);

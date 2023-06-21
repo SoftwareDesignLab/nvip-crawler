@@ -73,7 +73,8 @@ public class ReconcilerController {
         // filter
         Set<RawVulnerability> failed = runFilters(rawVulns);
         rejectCount = failed.size();
-        dbh.markGarbage(failed);
+        dbh.updateFilterStatus(failed);
+        dbh.updateFilterStatus(rawVulns);
         logger.info("{} raw vulnerabilities with CVE ID {} were found, {} were new, {} of the new raw vulns were rejected, and {} are being submitted for reconciliation",
                 rawCount, cveId, newRawCount, rejectCount, newRawCount);
         // reconcile
@@ -95,7 +96,7 @@ public class ReconcilerController {
         // filter a sample from each equivalence class
         Set<RawVulnerability> failedSamples = new HashSet<>();
         for (Filter filter : filters) {
-            failedSamples.addAll(filter.filterAll(samples));
+            failedSamples.addAll(filter.filterAllAndSplit(samples));
         }
         // if a sample failed then all the vulns it represents fail too
         Set<RawVulnerability> out = new HashSet<>();
