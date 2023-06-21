@@ -29,6 +29,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eclipse.jgit.util.FileUtils;
+import utils.GitController;
 
 import java.io.File;
 import java.io.IOException;
@@ -108,6 +109,7 @@ public class PatchFinder {
 //			logger.info(patchCommit.getUniDiff());
 		}
 
+		// Delete cloned repos
 
 		final long delta = (System.currentTimeMillis() - start) / 1000;
 		logger.info("Successfully collected {} patch commits from {} affected products in {} seconds", patchCommits.size(), affectedProducts.size(), delta);

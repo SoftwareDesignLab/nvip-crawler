@@ -26,9 +26,8 @@ package commits;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
+import java.text.DateFormat;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
@@ -98,26 +97,20 @@ public class PatchCommitScraper {
 							if (matcher.find() || commit.getFullMessage().contains(cveId)) {
 								String commitUrl = repository.getConfig().getString("remote", "origin", "url");
 								logger.info("Found patch commit @ {} in repo {}", commitUrl, localDownloadLoc);
-								//TODO: Verify that this is not needed, I just passed the raw time value along,
-								// as we do not appear to need a LocalDateTime object, rather a java.sql.Date object,
-								// which can be easily created from long:
-								// LocalDateTime commitDateTime = LocalDateTime.ofInstant(
-								// 		Instant.ofEpochSecond(commit.getCommitTime()),
-								// 		ZoneId.systemDefault()
-								// );
 								String unifiedDiff = generateUnifiedDiff(git, commit);
-								PatchCommit patchCommit = new PatchCommit(commitUrl, cveId, commit.getName(), commit.getCommitTime(), commit.getFullMessage(), unifiedDiff);
+
+								PatchCommit patchCommit = new PatchCommit(commitUrl, cveId, commit.getName(), new Date(commit.getCommitTime() * 1000L), commit.getFullMessage(), unifiedDiff);
 								patchCommits.add(patchCommit);
 							} else ignoredCounter++;
 						}
 					}
 
-					logger.info("Ignored {} non-patch commits", ignoredCounter);
+//					logger.info("Ignored {} non-patch commits", ignoredCounter);
 
 					if (patchCommits.isEmpty()) {
-						logger.info("No patches for CVE {} found in repo {} ", cveId, localDownloadLoc);
+						logger.info("No patches for CVE {} found in repo {} ", cveId, localDownloadLoc.split("/")[4]);
 					}
-				} else logger.warn("Could not get starting revision from repo {}", localDownloadLoc);
+				} else logger.warn("Could not get starting revision from repo {}", localDownloadLoc.split("/")[4]);
 			}
 		} catch (IOException | GitAPIException e) {
 			logger.error("ERROR: Failed to scrape repo @ {} for patch commits for CVE {}\n{}", repoSource, cveId, e);
