@@ -101,10 +101,11 @@ public class PatchFinder {
 		ArrayList<PatchCommit> patchCommits = PatchFinder.getPatchCommits();
 
 		// Insert patches
-		for (PatchCommit patchCommit: patchCommits) {
+		for (PatchCommit patchCommit : patchCommits) {
 			final int sourceUrlId = databaseHelper.insertPatchSourceURL(patchCommit.getCveId(), patchCommit.getCommitUrl());
 			databaseHelper.insertPatchCommit(sourceUrlId, patchCommit.getCommitUrl(), patchCommit.getCommitId(),
 					patchCommit.getCommitDate(), patchCommit.getCommitMessage());
+//			logger.info(patchCommit.getUniDiff());
 		}
 
 
@@ -169,4 +170,5 @@ public class PatchFinder {
 			logger.error("Product extraction failed: {}", e.toString());
 		}
 	}
+
 }
