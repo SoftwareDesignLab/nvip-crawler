@@ -51,32 +51,42 @@ public class CrawlerMain {
      */
     public static void main(String[] args) throws Exception {
 
-        logger.info("Starting Crawler...");
         CrawlerMain crawlerMain = new CrawlerMain();
+        boolean crawlerTestMode = (boolean) crawlerVars.get("testMode");
+        if (crawlerTestMode)
+            logger.info("Starting Crawler IN TEST MODE using {}",
+                    ((String)crawlerVars.get("seedFileDir")).split("/")[((String)crawlerVars.get("seedFileDir")).split("/").length - 1]);
+        else
+            logger.info("Starting Crawler...");
         if ((Boolean) dataVars.get("refreshNvdList")) {
             logger.info("Refreshing NVD CVE List");
 //            new NvdCveController().updateNvdDataTable((String) dataVars.get("nvdUrl"));
         }
 
-        HashMap<String, RawVulnerability> pyCves = crawlerMain.getCvesFromPythonGitHub();
+        // Get CVEs from Python GitHub
+        HashMap<String, RawVulnerability> pyCves = new HashMap<>();
+        if (!crawlerTestMode)
+             pyCves = crawlerMain.getCvesFromPythonGitHub();
 
         // Crawler
         long crawlStartTime = System.currentTimeMillis();
         HashMap<String, ArrayList<RawVulnerability>> crawledCVEs = crawlerMain.crawlCVEs();
         long crawlEndTime = System.currentTimeMillis();
-        logger.info("Crawler Finished\nTime: {}", crawlEndTime - crawlStartTime);
+        logger.info("Crawler Finished\nTime: {} seconds", (crawlEndTime - crawlStartTime) / 1000.0);
 
         CveCrawler.driver.quit();
 
         // Merge CVEs found in python GitHub with CVEs that were crawled
-        logger.info("Merging Python CVEs with Crawled CVEs");
-        for (String pyCve: pyCves.keySet()) {
-            if (crawledCVEs.containsKey(pyCve)) {
-                crawledCVEs.get(pyCve).add(pyCves.get(pyCve));
-            } else {
-                ArrayList<RawVulnerability> newCveList = new ArrayList<>();
-                newCveList.add(pyCves.get(pyCve));
-                crawledCVEs.put(pyCve, newCveList);
+        if (!crawlerTestMode) {
+            logger.info("Merging Python CVEs with Crawled CVEs");
+            for (String pyCve: pyCves.keySet()) {
+                if (crawledCVEs.containsKey(pyCve)) {
+                    crawledCVEs.get(pyCve).add(pyCves.get(pyCve));
+                } else {
+                    ArrayList<RawVulnerability> newCveList = new ArrayList<>();
+                    newCveList.add(pyCves.get(pyCve));
+                    crawledCVEs.put(pyCve, newCveList);
+                }
             }
         }
 
@@ -86,6 +96,16 @@ public class CrawlerMain {
 
         crawlerMain.insertRawCVEs(crawledCVEs);
         logger.info("Done!");
+
+        if (crawlerTestMode) {
+            logger.info("CVEs Found: {}", crawledCVEs.size());
+            for (String cveId: crawledCVEs.keySet()) {
+                logger.info("CVE: {}", cveId);
+                for (RawVulnerability vuln: crawledCVEs.get(cveId)) {
+                    logger.info("vuln: {}", vuln.toString());
+                }
+            }
+        }
     }
 
     private static void createSourceTypeMap(){
@@ -177,6 +197,7 @@ public class CrawlerMain {
         String depth = System.getenv("NVIP_CRAWLER_DEPTH");
         String enableReport = System.getenv("NVIP_CRAWLER_REPORT_ENABLE");
         String crawlerNum = System.getenv("NVIP_NUM_OF_CRAWLER");
+        String testMode = System.getenv("NVIP_CRAWLER_TEST_MODE");
 
         addEnvvarString(CrawlerMain.crawlerVars,"outputDir", outputDir, "output/crawlers",
                 "WARNING: Crawler output path not defined in NVIP_OUTPUT_DIR, using default path: output/crawlers");
@@ -211,6 +232,9 @@ public class CrawlerMain {
         addEnvvarInt(CrawlerMain.crawlerVars,"crawlerNum", crawlerNum, 10,
                 "WARNING: Number of Crawlers not defined in NVIP_NUM_OF_CRAWLER, using 10 as default value",
                 "NVIP_NUM_OF_CRAWLER");
+
+        addEnvvarBool(CrawlerMain.crawlerVars,"testMode", testMode, false,
+                "WARNING: Crawler Test Mode not defined in NVIP_CRAWLER_TEST_MODE, using false as default value");
     }
 
 
