@@ -338,7 +338,8 @@ public class DatabaseHelper {
                     res.getTimestamp("published_date"),
                     res.getTimestamp("last_modified_date"),
                     res.getTimestamp("published_date"),
-                    res.getString("source_url")
+                    res.getString("source_url"),
+                    res.getString("source_type")
             );
         } catch (SQLException ex) {
             logger.error(ex);
