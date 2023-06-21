@@ -93,19 +93,19 @@ public class CrawlerMain {
             }
         }
 
+        // Update the source types for the found CVEs and insert new entries into the rawdescriptions table
         updateSourceTypes(crawledCVEs);
-
         logger.info("Done! Preparing to insert all raw data found in this run!");
-
         crawlerMain.insertRawCVEs(crawledCVEs);
         logger.info("Done!");
 
+        // Output results in testmode
         if (crawlerTestMode) {
             logger.info("CVEs Found: {}", crawledCVEs.size());
             for (String cveId: crawledCVEs.keySet()) {
-                logger.info("CVE: {}", cveId);
+                logger.info("CVE: {}:\n", cveId);
                 for (RawVulnerability vuln: crawledCVEs.get(cveId)) {
-                    logger.info("vuln: {}", vuln.toString());
+                    logger.info("[{} | {}]\n", vuln.getSourceURL(), vuln.getDescription().substring(0, 100));
                 }
             }
         }
@@ -184,6 +184,7 @@ public class CrawlerMain {
 
         for (String cveId: crawledCves.keySet()) {
             for (RawVulnerability vuln: crawledCves.get(cveId)) {
+                // check if the data is already in the DB before inserting.
                 if (!databaseHelper.checkIfInRawDescriptions(vuln.getCveId(), vuln.getDescription())) {
                     //logger.info("Inserting new raw description for CVE {} into DB" ,cveId);
                     insertedCVEs += databaseHelper.insertRawVulnerability(vuln);
