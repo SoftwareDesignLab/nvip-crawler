@@ -28,4 +28,4 @@ COPY --from=builder /home/app/target/nvip_lib /usr/local/lib/nvip_lib
 COPY --from=builder /home/app/target/crawler-1.0.jar /usr/local/lib/crawler-1.0.jar
 
 WORKDIR /usr/local/lib/
-ENTRYPOINT ["java", "-cp", "nvip-1.0.jar:nvip_lib/*", "edu.rit.se.nvip.CrawlerMain"]
+ENTRYPOINT ["java", "-cp", "crawler-1.0.jar:nvip_lib/*", "edu.rit.se.nvip.CrawlerMain"]
