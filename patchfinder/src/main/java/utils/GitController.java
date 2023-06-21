@@ -112,7 +112,7 @@ public class GitController {
 			FileUtils.delete(new File(localPath), FileUtils.RECURSIVE);
 			logger.info("Successfully deleted repo @ {}", localPath);
 		} catch (Exception e) {
-			logger.error("ERORR: Failed to delete repo @ {}\n{}", localPath, e);
+			logger.error("ERROR: Failed to delete repo @ {}\n{}", localPath, e);
 		}
 	}
 
