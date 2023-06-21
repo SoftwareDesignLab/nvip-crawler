@@ -362,7 +362,6 @@ public class DatabaseHelper {
 			ResultSet rs = pstmt.executeQuery();
 
 			while (rs.next()) {
-
 				try {
 					nvdVulnerabilities.add(new NvdVulnerability(rs.getString("cve_id"), rs.getTimestamp("published_date"), NvdVulnerability.nvdStatus.valueOf(rs.getString("status"))));
 				} catch (Exception ignore) {}

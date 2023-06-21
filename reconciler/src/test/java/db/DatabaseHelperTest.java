@@ -24,8 +24,7 @@
 package db;
 
 import com.zaxxer.hikari.HikariDataSource;
-import model.AffectedRelease;
-import model.RawVulnerability;
+import model.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.AfterClass;
@@ -42,10 +41,7 @@ import org.mockito.stubbing.Answer;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.lang.reflect.Field;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.*;
 
 import static org.junit.Assert.*;
@@ -75,6 +71,39 @@ public class DatabaseHelperTest {
     private PreparedStatement pstmt;
     @Mock
     private ResultSet res;
+
+    private final String dummyCveId = "CVE-xxxx-xxx";
+    private final int dummyId = 1;
+    private final String dummyDescription ="desc";
+    private final long dummyMillis = System.currentTimeMillis();
+    private final Timestamp dummyDescCreate = offset(4);
+    private final String dummyBuildString = "((1,2),3)";
+    private final Timestamp dummyPub = offset(0);
+    private final Timestamp dummyMod = offset(3);
+    private final Timestamp dummyCreate = offset(2);
+
+    private Timestamp offset(int nHours) {
+        return new Timestamp(dummyMillis + nHours*3600L*1000);
+    }
+    private RawVulnerability genRawVuln(int id) {
+        return new RawVulnerability(id, dummyCveId, "description"+id, offset(-id), offset(id), offset(-10), "website"+id );
+    }
+    private Set<RawVulnerability> genRawVulns(int size, int startId) {
+        Set<RawVulnerability> out = new LinkedHashSet<>();
+        for (int i = 0; i < size; i++) {
+            out.add(genRawVuln(i+startId));
+        }
+        return out;
+    }
+    private CompositeDescription genCompDes(String buildString, int nSources) {
+        return new CompositeDescription(dummyId, dummyCveId, dummyDescription, dummyDescCreate, buildString, genRawVulns(nSources, 1));
+    }
+    private CompositeVulnerability genVuln(String buildString, int nSources) {
+        return new CompositeVulnerability(dummyCveId, dummyId, genCompDes(buildString, nSources), dummyPub, dummyMod, dummyCreate);
+    }
+    private CompositeVulnerability genVuln() {
+        return genVuln(dummyBuildString, 3);
+    }
 
     private void setMocking() {
         try {
@@ -301,8 +330,6 @@ public class DatabaseHelperTest {
     @Test
     public void markGarbageTest() throws SQLException {
         // Create a mocked Connection, PreparedStatement, and set of RawVulnerabilities
-        Connection conn = mock(Connection.class);
-        PreparedStatement pstmt = mock(PreparedStatement.class);
         Set<RawVulnerability> mockedRawVulns = new HashSet<>();
         mockedRawVulns.add(new RawVulnerability(1, "CVE-2021-1234", "Description", null, null, null, ""));
         mockedRawVulns.add(new RawVulnerability(2, "CVE-2021-5678", "Description", null, null, null, ""));
@@ -328,28 +355,125 @@ public class DatabaseHelperTest {
 
     @Test
     public void getCompositeVulnerabilityTest() {
+        try {
+            // Set up the behavior of the mocks
+            when(dbh.getConnection()).thenReturn(conn);
+            when(conn.prepareStatement(anyString())).thenReturn(pstmt);
+            when(pstmt.executeQuery()).thenReturn(res);
+            when(res.next()).thenReturn(true, true, false);
+            when(res.getInt(anyString())).thenReturn(1);
+            when(res.getString(anyString())).thenReturn("cve_id");
+            when(res.getTimestamp(anyString())).thenReturn(new Timestamp(System.currentTimeMillis()));
 
+            CompositeVulnerability vuln = dbh.getCompositeVulnerability("cve_id");
+
+
+            verify(pstmt).setString(2, "cveId");
+
+            assertNotNull(vuln);
+
+        } catch (SQLException e) {
+            logger.error("Error loading Database");
+        }
     }
 
     @Test
     public void getUsedRawVulnerabilitiesTest() {
+       try{
+           // Set up the behavior of the mocks
+            when(conn.prepareStatement(anyString())).thenReturn(pstmt);
+            when(pstmt.executeQuery()).thenReturn(res);
+            when(res.next()).thenReturn(true, true, false);
+            when(res.getInt(anyString())).thenReturn(1);
+            when(res.getString(anyString())).thenReturn("desc");
+            when(res.getTimestamp(anyString())).thenReturn(new Timestamp(System.currentTimeMillis()));
 
+            Set<RawVulnerability> rawVulns = dbh.getUsedRawVulnerabilities("cveId");
+
+           verify(pstmt).setString(1, "cveId");
+
+            assertEquals(2, rawVulns.size());
+
+       } catch (SQLException e) {
+           logger.error("Error loading Database");
+        }
     }
-
     @Test
     public void insertOrUpdateVulnerabilityFullTest() {
+        try{
+            when(conn.prepareStatement(anyString())).thenReturn(pstmt);
+            when(pstmt.getGeneratedKeys()).thenReturn(res);
+            when(res.next()).thenReturn(true);
+            when(res.getInt(1)).thenReturn(1);
 
+            CompositeVulnerability vuln = genVuln();
+            // Call the method to be tested
+            int result = dbh.insertOrUpdateVulnerabilityFull(vuln);
+
+            // Verify the expected interactions
+            verify(conn).setAutoCommit(false);
+            verify(pstmt).executeUpdate();
+            verify(pstmt).getGeneratedKeys();
+            verify(pstmt).executeUpdate();
+            verify(pstmt).executeUpdate();
+            verify(conn).commit();
+
+            // Assert the result
+            assertEquals(1, result);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 
     @Test
     public void getAllNvdCVEsTest() {
+        try {
+            // Set up the behavior of the mocks
+            when(conn.prepareStatement(anyString())).thenReturn(pstmt);
+            when(pstmt.executeQuery()).thenReturn(res);
+            when(res.next()).thenReturn(true, true, false);
+            when(res.getString("cve_id")).thenReturn("CVE-2021-1234", "CVE-2021-5678");
+            when(res.getTimestamp("published_date")).thenReturn(new Timestamp(System.currentTimeMillis()));
+            when(res.getString("status")).thenReturn("ANALYZED");
 
+            // Access the private GET_ALL_NEW_CVES constant using reflection
+            Field getNewCvesField = DatabaseHelper.class.getDeclaredField("GET_ALL_NEW_CVES");
+            getNewCvesField.setAccessible(true);
+            String getNewCvesValue = (String) getNewCvesField.get(dbh);
+
+            // Call the method under test
+            ArrayList<NvdVulnerability> result = dbh.getAllNvdCVEs();
+
+            // Verify the expected output
+            assertEquals(2, result.size());
+            assertEquals("CVE-2021-1234", result.get(0).getCveId());
+            assertEquals("CVE-2021-5678", result.get(1).getCveId());
+
+            // Verify that pstmt.prepareStatement() is called with the correct argument
+            verify(conn).prepareStatement(getNewCvesValue);
+        } catch (SQLException | NoSuchFieldException | IllegalAccessException e) {
+            logger.error("Error loading Database");
+        }
     }
 
     @Test
-    public void insertNvdCveTest() {
+    public void insertNvdCveTest() throws SQLException {
+        // Create a sample NvdVulnerability object
+        NvdVulnerability nvdCve = new NvdVulnerability("CVE-2023-1234", new Timestamp(System.currentTimeMillis()), NvdVulnerability.nvdStatus.ANALYZED);
 
+        // Call the insertNvdCve method
+        int result = dbh.insertNvdCve(nvdCve);
+
+        // Verify that pstmt.setString() and pstmt.setTimestamp() are called with the correct arguments
+        verify(pstmt).setString(1, "CVE-2023-1234");
+        verify(pstmt).setTimestamp(2, nvdCve.getPublishDate());
+        verify(pstmt).setString(3, "ANALYZED");
+
+        // Verify that pstmt.execute() is called
+        verify(pstmt).execute();
+
+        // Verify the result of the insertNvdCve method
+        assertEquals(1, result);
     }
-
 }
