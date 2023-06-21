@@ -56,7 +56,7 @@ public class CvssScoreCalculator {
 
 		// change the directory and execute the .py script
 		PythonInterpreter myPythonInterpreter = new PythonInterpreter();
-		String workingDir = "nvip_data" + "/cvss/";
+		String workingDir = System.getenv("DATA_DIR") + "/cvss/";
 		logger.info("Importing os for jython...");
 		myPythonInterpreter.exec("import os");
 		logger.info("Changing dir to {} for jython. Current directory is {}", workingDir, System.getProperty("user.dir"));
