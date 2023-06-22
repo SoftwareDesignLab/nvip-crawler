@@ -23,6 +23,7 @@
  */
 package edu.rit.se.nvip;
 
+
 import edu.rit.se.nvip.characterizer.CveCharacterizer;
 import edu.rit.se.nvip.crawler.CveCrawlController;
 import edu.rit.se.nvip.crawler.CveCrawler;

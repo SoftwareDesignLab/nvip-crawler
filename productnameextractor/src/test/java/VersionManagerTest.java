@@ -1,4 +1,5 @@
-import model.cpe.ProductVersion;
+import edu.rit.se.nvip.VersionManager;
+import edu.rit.se.nvip.model.cpe.ProductVersion;
 
 import org.junit.Test;
 import static org.junit.Assert.*;

@@ -1,5 +1,9 @@
-import model.cpe.ClassifiedWord;
-import model.cpe.CpeGroup;
+import edu.rit.se.nvip.CpeLookUp;
+import edu.rit.se.nvip.NERmodel;
+import edu.rit.se.nvip.ProductDetector;
+import edu.rit.se.nvip.ProductNameExtractorController;
+import edu.rit.se.nvip.model.cpe.ClassifiedWord;
+import edu.rit.se.nvip.model.cpe.CpeGroup;
 import org.junit.Before;
 import org.junit.Test;
 

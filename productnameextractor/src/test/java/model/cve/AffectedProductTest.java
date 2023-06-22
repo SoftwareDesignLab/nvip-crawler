@@ -1,5 +1,6 @@
 package model.cve;
 
+import edu.rit.se.nvip.model.cve.AffectedProduct;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 

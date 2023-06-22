@@ -1,10 +1,12 @@
+package edu.rit.se.nvip;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
-import db.*;
-import model.cpe.CpeEntry;
-import model.cpe.CpeGroup;
-import model.cpe.Product;
-import model.cve.CompositeVulnerability;
+import edu.rit.se.nvip.db.DatabaseHelper;
+import edu.rit.se.nvip.model.cpe.CpeEntry;
+import edu.rit.se.nvip.model.cpe.CpeGroup;
+import edu.rit.se.nvip.model.cpe.Product;
+import edu.rit.se.nvip.model.cve.CompositeVulnerability;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

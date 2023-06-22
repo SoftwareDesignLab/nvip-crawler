@@ -1,4 +1,4 @@
-package model.cpe;
+package edu.rit.se.nvip.model.cpe;
 
 /**
  * Copyright 2023 Rochester Institute of Technology (RIT). Developed with

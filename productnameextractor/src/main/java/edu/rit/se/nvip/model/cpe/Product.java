@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package model.cpe;
+package edu.rit.se.nvip.model.cpe;
 
 
 import java.util.regex.Matcher;

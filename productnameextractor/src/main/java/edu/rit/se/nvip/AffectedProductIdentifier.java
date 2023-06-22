@@ -1,4 +1,4 @@
-/**
+package edu.rit.se.nvip; /**
  * Copyright 2023 Rochester Institute of Technology (RIT). Developed with
  * government support under contract 70RSAT19CB0000020 awarded by the United
  * States Department of Homeland Security.
@@ -22,6 +22,15 @@
  * SOFTWARE.
  */
 
+import edu.rit.se.nvip.model.cpe.CpeGroup;
+import edu.rit.se.nvip.model.cpe.Product;
+import edu.rit.se.nvip.model.cpe.ProductItem;
+import edu.rit.se.nvip.model.cve.AffectedProduct;
+import edu.rit.se.nvip.model.cve.CompositeVulnerability;
+import opennlp.tools.tokenize.WhitespaceTokenizer;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -30,16 +39,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-
-import model.cpe.CpeGroup;
-import model.cpe.Product;
-import model.cpe.ProductItem;
-import model.cve.AffectedProduct;
-import model.cve.CompositeVulnerability;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import opennlp.tools.tokenize.WhitespaceTokenizer;
 
 /**
  * The AffectedProductIdentifier class controls the identification of specific

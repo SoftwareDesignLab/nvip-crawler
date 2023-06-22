@@ -1,6 +1,7 @@
 package model.cpe;
 
-import model.cpe.ProductVersion;
+import edu.rit.se.nvip.model.cpe.ProductVersion;
+import edu.rit.se.nvip.model.cpe.ProductVersion;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

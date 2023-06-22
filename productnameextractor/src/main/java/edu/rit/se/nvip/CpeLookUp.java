@@ -1,4 +1,4 @@
-/**
+package edu.rit.se.nvip; /**
  * Copyright 2023 Rochester Institute of Technology (RIT). Developed with
  * government support under contract 70RSAT19CB0000020 awarded by the United
  * States Department of Homeland Security.
@@ -22,25 +22,22 @@
  * SOFTWARE.
  */
 
-import java.io.*;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import edu.rit.se.nvip.model.cpe.*;
+import opennlp.tools.tokenize.WhitespaceTokenizer;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.InterruptedIOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import model.cpe.CpeEntry;
-import model.cpe.CpeGroup;
-import model.cpe.Product;
-import model.cpe.ProductItem;
-import model.cpe.ProductVersion;
-import org.apache.commons.lang.ArrayUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import opennlp.tools.tokenize.WhitespaceTokenizer;
 
 /**
  * This class is to check is a software name in the CPE dictionary
@@ -167,7 +164,7 @@ public class CpeLookUp {
 	/**
 	 * Loads a CPE dictionary of products from file
 	 */
-	protected void loadProductDict(Map<String, CpeGroup> productDict) {
+	public void loadProductDict(Map<String, CpeGroup> productDict) {
 		this.cpeMapFile = productDict;
 		logger.info("Successfully loaded CPE dictionary with {} entries", productDict.size());
 	}

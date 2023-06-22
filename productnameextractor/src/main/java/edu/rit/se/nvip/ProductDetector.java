@@ -1,4 +1,4 @@
-/**
+package edu.rit.se.nvip; /**
  * Copyright 2023 Rochester Institute of Technology (RIT). Developed with
  * government support under contract 70RSAT19CB0000020 awarded by the United
  * States Department of Homeland Security.
@@ -22,20 +22,19 @@
  * SOFTWARE.
  */
 
+import edu.rit.se.nvip.model.cpe.ClassifiedWord;
+import edu.rit.se.nvip.model.cpe.ProductItem;
+import opennlp.tools.postag.POSModel;
+import opennlp.tools.postag.POSTaggerME;
+import opennlp.tools.tokenize.WhitespaceTokenizer;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
-import model.cpe.ClassifiedWord;
-import model.cpe.ProductItem;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import opennlp.tools.postag.POSModel;
-import opennlp.tools.postag.POSTaggerME;
-import opennlp.tools.tokenize.WhitespaceTokenizer;
 
 /**
  * DetectProducts class implements Expert System to extract Software Names and

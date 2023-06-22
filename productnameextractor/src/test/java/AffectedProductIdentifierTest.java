@@ -23,8 +23,10 @@
  */
 
 
-import model.cve.CompositeVulnerability;
-import model.cpe.CpeGroup;
+import edu.rit.se.nvip.AffectedProductIdentifier;
+import edu.rit.se.nvip.ProductNameExtractorController;
+import edu.rit.se.nvip.model.cve.CompositeVulnerability;
+import edu.rit.se.nvip.model.cpe.CpeGroup;
 import org.junit.Test;
 
 import java.io.IOException;

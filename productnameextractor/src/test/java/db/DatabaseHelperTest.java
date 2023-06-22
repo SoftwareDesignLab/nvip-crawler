@@ -24,8 +24,9 @@
 package db;
 
 import com.zaxxer.hikari.HikariDataSource;
-import model.cve.AffectedProduct;
-import model.cve.CompositeVulnerability;
+import edu.rit.se.nvip.db.DatabaseHelper;
+import edu.rit.se.nvip.model.cve.AffectedProduct;
+import edu.rit.se.nvip.model.cve.CompositeVulnerability;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.AfterClass;
