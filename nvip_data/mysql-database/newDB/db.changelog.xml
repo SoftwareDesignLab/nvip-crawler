@@ -50,11 +50,21 @@
                 tableName="cvejobtrack"/>
     </changeSet> -->
 
-    <changeSet author="dylan" id="modify_commit_message_column">
-        <dropColumn tableName="patchcommit" columnName="commit_message"/>
+<!--    <changeSet author="dylan" id="modify_commit_message_column">-->
+<!--        <dropColumn tableName="patchcommit" columnName="commit_message"/>-->
+
+<!--        <addColumn tableName="patchcommit">-->
+<!--            <column name="commit_message" type="VARCHAR(1000)">-->
+<!--                <constraints nullable="false"/>-->
+<!--            </column>-->
+<!--        </addColumn>-->
+<!--    </changeSet>-->
+
+    <changeSet author="dylan" id="modify_uni_diff_column">
+        <dropColumn tableName="patchcommit" columnName="uni_diff"/>
 
         <addColumn tableName="patchcommit">
-            <column name="commit_message" type="VARCHAR(1000)">
+            <column name="uni_diff" type="TINYTEXT">
                 <constraints nullable="false"/>
             </column>
         </addColumn>

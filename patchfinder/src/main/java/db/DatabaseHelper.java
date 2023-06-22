@@ -53,7 +53,7 @@ public class DatabaseHelper {
 	private final String selectAffectedProducts = "SELECT cve_id, cpe FROM affectedproduct GROUP BY product_name, affected_product_id ORDER BY cve_id DESC, version ASC;";
 	private final String getVulnIdByCveId = "SELECT vuln_id FROM vulnerability WHERE cve_id = ?";
 	private final String insertPatchSourceURLSql = "INSERT INTO patchsourceurl (cve_id, source_url) VALUES (?, ?);";
-	private final String insertPatchCommitSql = "INSERT INTO patchcommit (source_url_id, commit_url, commit_date, commit_message) VALUES (?, ?, ?, ?);";
+	private final String insertPatchCommitSql = "INSERT INTO patchcommit (source_url_id, commit_url, commit_date, commit_message, uni_diff) VALUES (?, ?, ?, ?, ?);";
 	// Regex101: https://regex101.com/r/9uaTQb/1
 	public static final Pattern CPE_PATTERN = Pattern.compile("cpe:2\\.3:[aho\\*\\-]:([^:]*):([^:]*):([^:]*):.*");
 	private static DatabaseHelper databaseHelper = null;
@@ -251,7 +251,7 @@ public class DatabaseHelper {
 	 * @param commitDate
 	 * @param commitMessage
 	 */
-	public void insertPatchCommit(int sourceId, String sourceURL, String commitId, java.util.Date commitDate, String commitMessage) {
+	public void insertPatchCommit(int sourceId, String sourceURL, String commitId, java.util.Date commitDate, String commitMessage, String uniDiff) {
 
 		try (Connection connection = getConnection();
 			 PreparedStatement pstmt = connection.prepareStatement(insertPatchCommitSql);) {
@@ -260,6 +260,7 @@ public class DatabaseHelper {
 			pstmt.setString(2, sourceURL + "/commit/" + commitId);
 			pstmt.setDate(3, new java.sql.Date(commitDate.getTime()));
 			pstmt.setString(4, commitMessage);
+			pstmt.setString(5, uniDiff);
 			pstmt.executeUpdate();
 		} catch (Exception e) {
 			logger.error("ERROR: failed to insert patch commit from source {}\n{}", sourceURL, e);

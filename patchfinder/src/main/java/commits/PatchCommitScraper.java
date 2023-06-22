@@ -41,6 +41,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.diff.DiffFormatter;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.revwalk.RevCommit;
@@ -130,15 +131,28 @@ public class PatchCommitScraper {
 		try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 			 DiffFormatter formatter = new DiffFormatter(outputStream)) {
 			formatter.setRepository(git.getRepository());
+			formatter.setContext(0); // Set context lines to 0 to exclude unchanged lines
 			formatter.format(commit.getParent(0), commit);
 
-			return outputStream.toString();
+			String unifiedDiff = outputStream.toString();
+
+			// Find the start of the patch section
+			int patchStartIndex = unifiedDiff.indexOf("@@");
+
+			if (patchStartIndex >= 0) {
+				// Extract the patch section
+				unifiedDiff = unifiedDiff.substring(patchStartIndex);
+			} else {
+				logger.warn("Failed to find patch section in the unified diff for commit {}", commit.getName());
+				unifiedDiff = ""; // Return empty string if patch section is not found
+			}
+
+			return unifiedDiff;
 		} catch (IOException e) {
 			logger.error("Failed to generate unified diff for commit {}", commit.getName());
 			return "";
 		}
 	}
-
 	/**
 	 * Get the CanonicalTreeParser for a given repository and object ID.
 	 *
