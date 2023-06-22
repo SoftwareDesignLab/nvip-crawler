@@ -53,6 +53,7 @@ public class PatchFinder {
 	protected static int cveLimit = 5;
 	protected static int maxThreads = 10;
 	protected static int cvesPerThread = 1;
+	protected static String clonePath = "src/main/resources/patch-repos";
 	protected static String[] addressBases = { "https://www.github.com/", "https://www.gitlab.com/" };
 
 	/**
@@ -76,6 +77,27 @@ public class PatchFinder {
 				logger.info("Setting ADDRESS_BASES to {}", Arrays.toString(addressBases));
 			} else throw new Exception();
 		}catch(Exception ignored) {logger.warn("Could not fetch ADDRESS_BASES from env vars, defaulting to {}", Arrays.toString(addressBases)); }
+
+		try {
+			if(props.containsKey("MAX_THREADS")) {
+				maxThreads = Integer.parseInt(System.getenv("MAX_THREADS"));
+				logger.info("Setting MAX_THREADS to {}", maxThreads);
+			} else throw new Exception();
+		}catch (Exception ignored) { logger.warn("Could not fetch MAX_THREADS from env vars, defaulting to {}", maxThreads); }
+
+		try{
+			if(props.containsKey("CVES_PER_THREAD")) {
+				cvesPerThread = Integer.parseInt(System.getenv("CVES_PER_THREAD"));
+				logger.info("Setting CVES_PER_THREAD to {}", cvesPerThread);
+			} else throw new Exception();
+		}catch(Exception ignored) {logger.warn("Could not fetch CVES_PER_THREAD from env vars, defaulting to {}", cvesPerThread); }
+
+		try{
+			if(props.containsKey("CLONE_PATH")) {
+				clonePath = System.getenv("CLONE_PATH");
+				logger.info("Setting CLONE_PATH to {}", clonePath);
+			} else throw new Exception();
+		}catch(Exception ignored) {logger.warn("Could not fetch CLONE_PATH from env vars, defaulting to {}", clonePath); }
 	}
 
 	public static void main(String[] args) throws IOException, InterruptedException {
@@ -99,12 +121,7 @@ public class PatchFinder {
 
 		// Find patches
 		// Repos will be cloned to patch-repos directory, multi-threaded 6 threads.
-		PatchFinder.findPatchesMultiThreaded(
-				possiblePatchURLs,
-				"src/main/resources/patch-repos",
-				maxThreads,
-				cvesPerThread
-		);
+		PatchFinder.findPatchesMultiThreaded(possiblePatchURLs);
 
 		// Get found patches from patchfinder
 		ArrayList<PatchCommit> patchCommits = PatchFinder.getPatchCommits();
@@ -134,11 +151,10 @@ public class PatchFinder {
 
 	/**
 	 * Git commit parser that implements multiple threads to increase performance
-	 * @param clonePath
+	 * @param possiblePatchSources
 	 * @throws IOException
 	 */
-	public static void findPatchesMultiThreaded(Map<String, ArrayList<String>> possiblePatchSources, String clonePath,
-														   int maxThreads, int limitCvePerThread) throws IOException {
+	public static void findPatchesMultiThreaded(Map<String, ArrayList<String>> possiblePatchSources) throws IOException {
 		logger.info("Applying multi threading...");
 		File dir = new File(clonePath);
 		try { FileUtils.delete(dir, FileUtils.RECURSIVE); }
@@ -152,7 +168,7 @@ public class PatchFinder {
 			sourceBatches.add(new HashMap<>());
 		}
 
-		ExecutorService es = Executors.newFixedThreadPool(limitCvePerThread);
+		ExecutorService es = Executors.newFixedThreadPool(maxThreads);
 		// Divide cves equally amongst all threads, some threads may
 		// have more sources based on their CVEs provided
 		int numSourcesAdded = 1;
@@ -160,7 +176,7 @@ public class PatchFinder {
 		for (String cveId : possiblePatchSources.keySet()) {
 			sourceBatches.get(thread).put(cveId, possiblePatchSources.get(cveId));
 			numSourcesAdded++;
-			if (numSourcesAdded % limitCvePerThread == 0 && thread < maxThreads - 1) {
+			if (numSourcesAdded % cvesPerThread == 0 && thread < maxThreads - 1) {
 				es.execute(new PatchFinderThread(sourceBatches.get(thread), clonePath));
 				thread++;
 			}

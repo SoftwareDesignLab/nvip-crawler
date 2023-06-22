@@ -161,7 +161,7 @@ public class AffectedProductIdentifier {
 					}
 					// if CPE identified, add it as affected product
 					for (String itemID : productIDs) {
-//							logger.info("Found Affected Product for {}: {}", vulnerability.getCveId(), itemID);
+						logger.info("Found Affected Product for {}: {}", vulnerability.getCveId(), itemID);
 						existingProducts.add(new AffectedProduct(0, vulnerability.getCveId(), itemID, vulnerability.getPublishDate(), CpeLookUp.getVersionFromCPEid(itemID), CpeLookUp.getVendorFromCPEid(itemID)));
 						numOfProductsMappedToCpe.getAndIncrement();
 					}
