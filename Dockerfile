@@ -11,6 +11,13 @@ RUN mvn package -Dmaven.test.skip=true
 ### Run Stage
 FROM openjdk:11-jre-slim
 
+RUN apt-get update \
+    && apt-get install -y libglib2.0-0 libnss3 libxcb1
+
+RUN apt-get install -y wget
+RUN wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+RUN apt-get install -y ./google-chrome-stable_current_amd64.deb
+
 VOLUME /usr/local/lib/nvip_data
 ADD nvip_data /usr/local/lib/nvip_data
 
@@ -21,4 +28,4 @@ COPY --from=builder /home/app/target/nvip_lib /usr/local/lib/nvip_lib
 COPY --from=builder /home/app/target/nvip-1.0.jar /usr/local/lib/nvip-1.0.jar
 
 WORKDIR /usr/local/lib/
-ENTRYPOINT ["java", "-cp", "nvip-1.0.jar:nvip_lib/*", "edu.rit.se.nvip.NVIPMain"]
+CMD ["java", "-cp", "nvip-1.0.jar:nvip_lib/*", "edu.rit.se.nvip.NVIPMain"]
