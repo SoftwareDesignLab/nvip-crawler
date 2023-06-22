@@ -36,6 +36,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.time.LocalDate;
 
 public class AutodeskParser extends AbstractCveParser {
 
@@ -105,7 +106,7 @@ public class AutodeskParser extends AbstractCveParser {
                 out = sdf_out.format(sdf_in.parse(matcher.group()));
             }
         } catch (ParseException e) {
-            out = "";
+            out = LocalDate.now().toString();
         }
         return out;
     }

@@ -101,7 +101,7 @@ public class BugsGentooParser extends AbstractCveParser {
 
 					if (matcher.find()) {
 						String cveId = matcher.group();
-						String commentDescription = null;
+						String commentDescription = "";
 						String patch = null;
 
 						i += 2;

@@ -24,12 +24,14 @@
 package edu.rit.se.nvip.crawler.htmlparser;
 
 import edu.rit.se.nvip.model.RawVulnerability;
+
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.time.LocalDate;
 
 public class AliasRoboParser extends AbstractCveParser {
 
@@ -58,7 +60,7 @@ public class AliasRoboParser extends AbstractCveParser {
         if (!eachLabel.contains("vulnerability")) return vulnList;
 
         // get publish date from top 'opened' date
-        String publishDate = "";
+        String publishDate = = LocalDate.now().toString();
         Element header = doc.select("div#partial-discussion-header").first();
         if (header != null) {
             Element date = header.children().select("relative-time").first();
@@ -67,7 +69,7 @@ public class AliasRoboParser extends AbstractCveParser {
         }
 
         // get last modified date from bottommost github feed date
-        String lastModifiedDate = "";
+        String lastModifiedDate = = LocalDate.now().toString();
         // get CVE id from "cve": or cve:
         String cveId = "";
         // get description from "description": or description:

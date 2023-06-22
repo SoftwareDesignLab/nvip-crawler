@@ -48,7 +48,7 @@
             <column name="last_modified_date" type="DATETIME">
                 <constraints nullable="false"/>
             </column>
-            <column name="source_url" type="TINYTEXT">
+            <column name="source_url" type="TEXT">
                 <constraints nullable="false"/>
             </column>
             <column name="is_garbage" type="INT" defaultValue="0">
