@@ -23,7 +23,7 @@ output/
 # Un-moddifiables
 /nvip_data/mysql-database/
 /.github/
-/pom.xml/
+pom.xml
 
 
 # Git Repos
