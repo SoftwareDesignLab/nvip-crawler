@@ -65,13 +65,12 @@ public class PatchUrlFinder {
 	public Map<String, ArrayList<String>> parseMassURLs(Map<String, CpeGroup> affectedProducts, int cveLimit) throws IOException, InterruptedException {
 		Map<String, ArrayList<String>> cveCpeUrls = new HashMap<>();
 
-		final long totalStart = System.currentTimeMillis();
 		for (Map.Entry<String, CpeGroup> entry : affectedProducts.entrySet()) {
 			final long entryStart = System.currentTimeMillis();
 			final String cveId = entry.getKey();
 			final CpeGroup group = entry.getValue();
 			// Break out of loop when limit is reached
-			if (cveCpeUrls.size() >= cveLimit) {
+			if (cveLimit != 0 && cveCpeUrls.size() >= cveLimit) {
 				logger.info("CVE limit of {} reached for patchfinder", cveLimit);
 				break;
 			}
@@ -85,8 +84,6 @@ public class PatchUrlFinder {
 			logger.info("Found {} potential patch sources for CVE '{}' in {} seconds", urls.size(), cveId, entryDelta);
 		}
 
-		long totalDelta = (System.currentTimeMillis() - totalStart) / 1000;
-		logger.info("Found {} potential patch sources for {} CVEs in {} seconds", cveCpeUrls.size(), Math.min(cveLimit, affectedProducts.size()), totalDelta);
 		return cveCpeUrls;
 	}
 

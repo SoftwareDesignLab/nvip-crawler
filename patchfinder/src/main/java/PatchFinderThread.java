@@ -80,8 +80,8 @@ public class PatchFinderThread implements Runnable {
 					List<PatchCommit> patchCommits = commitScraper.parseCommits(cve);
 					foundPatchCommits.addAll(patchCommits);
 
-					// Delete repo when done
-					gitController.deleteRepo();
+//					// Delete repo when done
+//					gitController.deleteRepo();
 				} catch (Exception e) {
 					logger.error("ERROR: Failed to find patch from source {} for CVE {}\n{}", patchSource, cve, e.toString());
 					e.printStackTrace();
@@ -91,5 +91,6 @@ public class PatchFinderThread implements Runnable {
 
 		// Add found commits to total list after finished
 		PatchFinder.getPatchCommits().addAll(foundPatchCommits);
+		logger.info("Done scraping {} patch commits from {} CVEs", foundPatchCommits.size(), cvePatchEntry.size());
 	}
 }

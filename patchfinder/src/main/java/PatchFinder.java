@@ -102,12 +102,15 @@ public class PatchFinder {
 
 	public static void main(String[] args) throws IOException, InterruptedException {
 		logger.info("Starting PatchFinder...");
-		final long start = System.currentTimeMillis();
+		final long totalStart = System.currentTimeMillis();
 
 		// Load env vars
+		logger.info("Fetching needed environment variables...");
 		fetchEnvVars();
+		logger.info("Done fetching environment variables");
 
 		// Init db helper
+		logger.info("Initializing DatabaseHelper and getting affected products from the database...");
 		final DatabaseHelper databaseHelper = DatabaseHelper.getInstance();
 
 		// Init PatchUrlFinder
@@ -115,28 +118,49 @@ public class PatchFinder {
 
 		// Fetch affectedProducts from db
 		Map<String, CpeGroup> affectedProducts = databaseHelper.getAffectedProducts();
+		final int affectedProductsCount = affectedProducts.values().stream().map(CpeGroup::getVersionsCount).reduce(0, Integer::sum);
+		logger.info("Successfully got {} CVEs mapped to {} affected products from the database", affectedProducts.size(), affectedProductsCount);
 
 		// Parse patch source urls from affectedProducts
+		logger.info("Parsing patch urls from affected product CVEs (limit: {} CVEs)...", cveLimit);
+		final long parseUrlsStart = System.currentTimeMillis();
 		Map<String, ArrayList<String>> possiblePatchURLs = patchURLFinder.parseMassURLs(affectedProducts, cveLimit);
+		final int urlCount = possiblePatchURLs.values().stream().map(ArrayList::size).reduce(0, Integer::sum);
+		logger.info("Successfully parsed {} patch urls for {} CVEs in {} seconds",
+				urlCount,
+				possiblePatchURLs.size(),
+				(System.currentTimeMillis() - parseUrlsStart) / 1000
+		);
 
 		// Find patches
 		// Repos will be cloned to patch-repos directory, multi-threaded 6 threads.
+		logger.info("Starting patch finder with {} max threads, allowing {} CVE(s) per thread...", maxThreads, cvesPerThread);
+		final long findPatchesStart = System.currentTimeMillis();
 		PatchFinder.findPatchesMultiThreaded(possiblePatchURLs);
 
 		// Get found patches from patchfinder
 		ArrayList<PatchCommit> patchCommits = PatchFinder.getPatchCommits();
+		logger.info("Successfully found {} patch commits from {} patch urls in {} seconds",
+				patchCommits.size(),
+				urlCount,
+				(System.currentTimeMillis() - findPatchesStart) / 1000
+		);
 
 		// Insert patches
+		logger.info("Starting insertion of {} patch commits into the database...", patchCommits.size());
+		final long insertPatchesStart = System.currentTimeMillis();
 		for (PatchCommit patchCommit : patchCommits) {
 			final int sourceUrlId = databaseHelper.insertPatchSourceURL(patchCommit.getCveId(), patchCommit.getCommitUrl());
 			databaseHelper.insertPatchCommit(sourceUrlId, patchCommit.getCommitUrl(), patchCommit.getCommitId(),
 					patchCommit.getCommitDate(), patchCommit.getCommitMessage());
 //			logger.info(patchCommit.getUniDiff());
 		}
+		logger.info("Successfully inserted {} patch commits into the database in {} seconds",
+				patchCommits.size(),
+				(System.currentTimeMillis() - insertPatchesStart) / 1000
+		);
 
-		// Delete cloned repos
-
-		final long delta = (System.currentTimeMillis() - start) / 1000;
+		final long delta = (System.currentTimeMillis() - totalStart) / 1000;
 		logger.info("Successfully collected {} patch commits from {} affected products in {} seconds", patchCommits.size(), affectedProducts.size(), delta);
 	}
 
@@ -155,18 +179,18 @@ public class PatchFinder {
 	 * @throws IOException
 	 */
 	public static void findPatchesMultiThreaded(Map<String, ArrayList<String>> possiblePatchSources) throws IOException {
-		logger.info("Applying multi threading...");
+		// Init clone path and clear previously stored repos
 		File dir = new File(clonePath);
+		logger.info("Clearing any existing repos @ '{}'", clonePath);
 		try { FileUtils.delete(dir, FileUtils.RECURSIVE); }
-		catch (IOException e) { logger.error("Failed to delete dir '{}': {}", dir, e.toString()); }
+		catch (IOException e) { logger.error("Failed to clear clone dir @ '{}': {}", dir, e); }
 
-		//If there are less CVEs to process than maxThreads, only create cveLimit number of threads
+		// If there are less CVEs to process than maxThreads, only create cveLimit number of threads
 		if(cveLimit < maxThreads){
-			logger.info("Number of CVEs to process {} is less than available threads, setting number available threads to {}", cveLimit, maxThreads);
+			logger.info("Number of CVEs to process {} is less than available threads {}, setting number of available threads to {}", cveLimit, maxThreads, cveLimit);
 			maxThreads = cveLimit;
 		}
 
-		logger.info(maxThreads + " available processors found");
 		ArrayList<HashMap<String, ArrayList<String>>> sourceBatches = new ArrayList<>();
 
 		// Initialize patchfinder threads
@@ -183,7 +207,7 @@ public class PatchFinder {
 			sourceBatches.get(thread).put(cveId, possiblePatchSources.get(cveId));
 			numSourcesAdded++;
 			if (numSourcesAdded % cvesPerThread == 0 && thread < maxThreads) {
-				es.execute(new PatchFinderThread(sourceBatches.get(thread), clonePath, thread));
+				es.execute(new PatchFinderThread(sourceBatches.get(thread), clonePath));
 				thread++;
 			}
 		}
