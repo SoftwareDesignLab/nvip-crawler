@@ -69,8 +69,8 @@ public abstract class Reconciler {
 			// todo handle the case where we have no passed rawvulns and no existingvuln but still want to report something
 		}
 		// if the existing vuln only uses low prio sources and the new ones are high prio, we dump the old sources and rebuild
-		if (!existingVuln.usesHighPrio() && hasHighPrio(newVulns)) {
-			existingVuln = null;
+		if (existingVuln != null && !existingVuln.usesHighPrio() && hasHighPrio(newVulns)) {
+			existingVuln.resetDescription();
 		}
 		CompositeVulnerability reconciledVuln = null;
 		// TODO figure out what to do if a new rawvulnerability is an updated version of one of the existing sources, right now nothing special happens
@@ -113,6 +113,7 @@ public abstract class Reconciler {
 	private CompositeVulnerability oneByOneHandler(CompositeVulnerability existingVuln, Set<RawVulnerability> newVulns) {
 		CompositeVulnerability reconciledVuln = existingVuln;
 		Set<RawVulnerability> vulnsToUse = new HashSet<>(newVulns);
+		// if nothing already existed then make a compvuln from one of the newvulns and remove it from the set
 		if (reconciledVuln == null) {
 			Iterator<RawVulnerability> it = vulnsToUse.iterator();
 			reconciledVuln = new CompositeVulnerability(it.next());

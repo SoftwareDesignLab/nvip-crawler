@@ -84,6 +84,9 @@ public class CompositeDescription {
     }
 
     public String getBuildString() {
+        if (descriptionTree == null) {
+            return "";
+        }
         return this.descriptionTree.toString();
     }
 
@@ -98,6 +101,13 @@ public class CompositeDescription {
         this.sources.addAll(rawVulns);
         this.descriptionTree = new DescriptionTree(null, this.sources.stream().map(DescriptionTree::new).collect(Collectors.toList()));
         this.description = description;
+        setCreateDateCurrent();
+    }
+
+    public void reset() {
+        this.sources.clear();
+        this.description = "";
+        this.descriptionTree = null;
         setCreateDateCurrent();
     }
 
