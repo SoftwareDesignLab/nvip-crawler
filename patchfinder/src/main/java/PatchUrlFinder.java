@@ -52,13 +52,9 @@ import java.util.regex.Pattern;
 public class PatchUrlFinder {
 
 	private static final Logger logger = LogManager.getLogger(PatchUrlFinder.class.getName());
-	private static DatabaseHelper db;
-
-	// TODO: add to envvars?
-	private static final String[] ADDRESS_BASES = { "https://www.github.com/", "https://www.gitlab.com/" };
 
 	// TODO: all old vars, get rid of these
-	private static int advanceSearchCount;
+	private static int advancedSearchCount;
 
 	/**
 	 * Parse URLs from all CPEs given within the map
@@ -75,7 +71,7 @@ public class PatchUrlFinder {
 			final String cveId = entry.getKey();
 			final CpeGroup group = entry.getValue();
 			// Break out of loop when limit is reached
-			if (cveCpeUrls.size() > cveLimit) {
+			if (cveCpeUrls.size() >= cveLimit) {
 				logger.info("CVE limit of {} reached for patchfinder", cveLimit);
 				break;
 			}
@@ -120,7 +116,7 @@ public class PatchUrlFinder {
 			}
 
 		} else if (!product.equals("*")) {
-			for (String base : ADDRESS_BASES) {
+			for (String base : PatchFinder.addressBases) {
 				String address = base + product;
 				newAddresses = testConnection(address);
 			}
@@ -142,7 +138,7 @@ public class PatchUrlFinder {
 	private HashSet<String> initializeAddresses(String keyword) {
 		HashSet<String> addresses = new HashSet<>();
 
-		for (String base : ADDRESS_BASES) {
+		for (String base : PatchFinder.addressBases) {
 			addresses.add(base + keyword + "/");
 		}
 
@@ -227,7 +223,7 @@ public class PatchUrlFinder {
 			// Loop through all links to find the repo page link (repo tab)
 			for (Element link : links) {
 				if (link.attr("href").contains("repositories")) {
-					newURL = ADDRESS_BASES[0] + link.attr("href").substring(1);
+					newURL = PatchFinder.addressBases[0] + link.attr("href").substring(1);
 					Document reposPage = Jsoup.connect(newURL).timeout(0).get();
 					Elements repoLinks = reposPage.select("li.Box-row a.d-inline-block[href]");
 
@@ -285,7 +281,7 @@ public class PatchUrlFinder {
 	 */
 	private ArrayList<String> advanceParseSearch(String vendor, String product) throws InterruptedException {
 
-		String searchParams = ADDRESS_BASES[0] + "search?q=";
+		String searchParams = PatchFinder.addressBases[0] + "search?q=";
 		ArrayList<String> urls = new ArrayList<>();
 
 			logger.info("Conducting Advanced Search...");
@@ -304,13 +300,13 @@ public class PatchUrlFinder {
 			try {
 				// Sleep for a minute before performing another advance search if
 				// 10 have already been conducted to avoid HTTP 429 error
-				if (advanceSearchCount >= 10) {
+				if (advancedSearchCount >= 10) {
 					logger.info("Performing Sleep before continuing: 1 minute");
 					Thread.sleep(60000);
-					advanceSearchCount = 0;
+					advancedSearchCount = 0;
 				}
 
-				advanceSearchCount++;
+				advancedSearchCount++;
 				Document searchPage = Jsoup.connect(searchParams + "&type=repositories").get();
 				Elements searchResults = searchPage.select("li.repo-list-item a[href]");
 
@@ -358,6 +354,5 @@ public class PatchUrlFinder {
 		}
 		return false;
 	}
-
 
 }

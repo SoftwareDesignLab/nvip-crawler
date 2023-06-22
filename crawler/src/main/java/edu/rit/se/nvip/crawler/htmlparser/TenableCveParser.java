@@ -37,6 +37,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.time.LocalDate;
 
 /**
  * Parse Teenable CVEs
@@ -98,7 +99,7 @@ public class TenableCveParser extends AbstractCveParser {
 		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH);
 		try {
 			publishDate = UtilHelper.longDateFormat.format(dateFormat.parse(publishDate));
-		} catch (ParseException e) {
+		} catch (ParseException | NullPointerException e) {
 			logger.error("Failed to parse date on {}, format not known!", sSourceURL);
 			publishDate = null;
 		}
@@ -110,6 +111,13 @@ public class TenableCveParser extends AbstractCveParser {
 			if (a.text().contains("cpe:")) {
 				cpes.add(a.text());
 			}
+		}
+
+		if(publishDate == null){
+			publishDate = LocalDate.now().toString();
+		}
+		if(updateDate == null){
+			updateDate = LocalDate.now().toString();
 		}
 
 		for (String c : uniqueCves) {

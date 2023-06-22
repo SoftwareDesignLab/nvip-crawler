@@ -1,8 +1,9 @@
-import model.cpe.CpeEntry;
-import model.cpe.CpeGroup;
+import edu.rit.se.nvip.ProductNameExtractorController;
+import edu.rit.se.nvip.model.cpe.CpeEntry;
+import edu.rit.se.nvip.model.cpe.CpeGroup;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
-import org.mockito.Mockito;
 
 import java.io.FileReader;
 import java.io.IOException;
@@ -13,10 +14,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-
 import static org.junit.Assert.*;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.Mockito.when;
 
 /**
  * Class to test ProductNameExtractorController
@@ -171,6 +169,30 @@ public class ProductNameExtractorControllerTest {
 
     private Map<String, CpeGroup> readProductDictFromFile(String filePath) throws IOException {
         return ProductNameExtractorController.readProductDict(filePath);
+    }
+
+    @Test
+    @Ignore
+    /**
+     * TODO: the variables in assert aren't public, use getters or something else
+     */
+    public void testFetchEnvVars() {
+        // Set up test data
+        Map<String, String> envVars = new HashMap<>();
+        envVars.put("CVE_LIMIT", "1000");
+        envVars.put("MAX_PAGES", "5");
+        envVars.put("MAX_ATTEMPTS_PER_PAGE", "2");
+        envVars.put("PRETTY_PRINT", "false");
+
+//        // Mock the System.getenv() method
+//        ProductNameExtractorController.fetchEnvVars();
+//
+//        // Assert that the properties are set correctly
+//        assertEquals(1000, ProductNameExtractorController.cveLimit);
+//        assertEquals(5, ProductNameExtractorController.maxPages);
+//        assertEquals(2, ProductNameExtractorController.maxAttemptsPerPage);
+//        assertEquals(false, ProductNameExtractorController.prettyPrint);
+
     }
 
 }

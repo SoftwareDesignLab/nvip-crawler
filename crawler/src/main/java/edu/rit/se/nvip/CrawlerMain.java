@@ -51,54 +51,81 @@ public class CrawlerMain {
      */
     public static void main(String[] args) throws Exception {
 
-        logger.info("Starting Crawler...");
+        // Initialize Crawler, check if it's in testmode
         CrawlerMain crawlerMain = new CrawlerMain();
+        boolean crawlerTestMode = (boolean) crawlerVars.get("testMode");
+        if (crawlerTestMode)
+            logger.info("Starting Crawler IN TEST MODE using {}",
+                    ((String)crawlerVars.get("seedFileDir")).split("/")[((String)crawlerVars.get("seedFileDir")).split("/").length - 1]);
+        else
+            logger.info("Starting Crawler...");
+
+        // TODO: Move this to reconciler/processor
         if ((Boolean) dataVars.get("refreshNvdList")) {
             logger.info("Refreshing NVD CVE List");
 //            new NvdCveController().updateNvdDataTable((String) dataVars.get("nvdUrl"));
         }
 
-        HashMap<String, RawVulnerability> pyCves = crawlerMain.getCvesFromPythonGitHub();
+        // Get CVEs from Python GitHub
+        HashMap<String, RawVulnerability> pyCves = new HashMap<>();
+        if (!crawlerTestMode)
+             pyCves = crawlerMain.getCvesFromPythonGitHub();
 
         // Crawler
         long crawlStartTime = System.currentTimeMillis();
         HashMap<String, ArrayList<RawVulnerability>> crawledCVEs = crawlerMain.crawlCVEs();
         long crawlEndTime = System.currentTimeMillis();
-        logger.info("Crawler Finished\nTime: {}", crawlEndTime - crawlStartTime);
-
-        CveCrawler.driver.quit();
+        logger.info("Crawler Finished\nTime: {} seconds", (crawlEndTime - crawlStartTime) / 1000.0);
 
         // Merge CVEs found in python GitHub with CVEs that were crawled
-        logger.info("Merging Python CVEs with Crawled CVEs");
-        for (String pyCve: pyCves.keySet()) {
-            if (crawledCVEs.containsKey(pyCve)) {
-                crawledCVEs.get(pyCve).add(pyCves.get(pyCve));
-            } else {
-                ArrayList<RawVulnerability> newCveList = new ArrayList<>();
-                newCveList.add(pyCves.get(pyCve));
-                crawledCVEs.put(pyCve, newCveList);
+        if (!crawlerTestMode) {
+            logger.info("Merging Python CVEs with Crawled CVEs");
+            for (String pyCve: pyCves.keySet()) {
+                if (crawledCVEs.containsKey(pyCve)) {
+                    crawledCVEs.get(pyCve).add(pyCves.get(pyCve));
+                } else {
+                    ArrayList<RawVulnerability> newCveList = new ArrayList<>();
+                    newCveList.add(pyCves.get(pyCve));
+                    crawledCVEs.put(pyCve, newCveList);
+                }
             }
         }
 
+        // Update the source types for the found CVEs and insert new entries into the rawdescriptions table
         updateSourceTypes(crawledCVEs);
-
         logger.info("Done! Preparing to insert all raw data found in this run!");
-
         crawlerMain.insertRawCVEs(crawledCVEs);
         logger.info("Done!");
+
+        // Output results in testmode
+        if (crawlerTestMode) {
+            logger.info("CVEs Found: {}", crawledCVEs.size());
+            for (String cveId: crawledCVEs.keySet()) {
+                logger.info("CVE: {}:\n", cveId);
+                for (RawVulnerability vuln: crawledCVEs.get(cveId)) {
+                    String description = vuln.getDescription().length() > 0 ? vuln.getDescription().substring(0, 100) : vuln.getDescription();
+                    logger.info("[{} | {}]\n", vuln.getSourceURL(), description);
+                }
+            }
+        }
     }
 
+    /**
+     * Util method used for mapping source types to each CVE source
+     */
     private static void createSourceTypeMap(){
         if (sourceTypes == null)
             sourceTypes = new HashMap<>();
         try {
+            // Read in source type mapping file
             File sources = new File((String) crawlerVars.get("sourceTypeFileDir"));
             BufferedReader sourceReader = new BufferedReader(new FileReader(sources));
 
+            // Map each source URL to its source type and fill in the sourceTypes hashmap
             String source = "";
             while (source != null) {
                 String[] tokens = source.split(" ");
-                if(tokens.length < 2)
+                if (tokens.length < 2)
                     logger.warn("Source {} is not formatted correctly", source);
                 else
                     sourceTypes.put(tokens[0], tokens[1]);
@@ -112,9 +139,15 @@ public class CrawlerMain {
         }
     }
 
+    /**
+     * Util method used for updating source types for found CVEs
+     * @param crawledCves
+     */
     private static void updateSourceTypes(HashMap<String, ArrayList<RawVulnerability>> crawledCves){
+        // Prepare source types mapping
         createSourceTypeMap();
 
+        // For each raw CVE,
         for (String cveId: crawledCves.keySet()) {
             for (RawVulnerability vuln: crawledCves.get(cveId)) {
                 if(vuln.getSourceURL() == null || vuln.getSourceURL().equals("")){
@@ -122,6 +155,8 @@ public class CrawlerMain {
                     continue;
                 }
 
+                // Set source type if the URL is listed in the types file
+                // Otherwise, just set the source type to 'other'
                 try{
                     URL sourceURL = new URL(vuln.getSourceURL());
                     vuln.setSourceType(sourceTypes.get(sourceURL.getHost()));
@@ -148,6 +183,7 @@ public class CrawlerMain {
 
         for (String cveId: crawledCves.keySet()) {
             for (RawVulnerability vuln: crawledCves.get(cveId)) {
+                // check if the data is already in the DB before inserting.
                 if (!databaseHelper.checkIfInRawDescriptions(vuln.getCveId(), vuln.getDescription())) {
                     //logger.info("Inserting new raw description for CVE {} into DB" ,cveId);
                     insertedCVEs += databaseHelper.insertRawVulnerability(vuln);
@@ -177,6 +213,7 @@ public class CrawlerMain {
         String depth = System.getenv("NVIP_CRAWLER_DEPTH");
         String enableReport = System.getenv("NVIP_CRAWLER_REPORT_ENABLE");
         String crawlerNum = System.getenv("NVIP_NUM_OF_CRAWLER");
+        String testMode = System.getenv("NVIP_CRAWLER_TEST_MODE");
 
         addEnvvarString(CrawlerMain.crawlerVars,"outputDir", outputDir, "output/crawlers",
                 "WARNING: Crawler output path not defined in NVIP_OUTPUT_DIR, using default path: output/crawlers");
@@ -211,6 +248,9 @@ public class CrawlerMain {
         addEnvvarInt(CrawlerMain.crawlerVars,"crawlerNum", crawlerNum, 10,
                 "WARNING: Number of Crawlers not defined in NVIP_NUM_OF_CRAWLER, using 10 as default value",
                 "NVIP_NUM_OF_CRAWLER");
+
+        addEnvvarBool(CrawlerMain.crawlerVars,"testMode", testMode, false,
+                "WARNING: Crawler Test Mode not defined in NVIP_CRAWLER_TEST_MODE, using false as default value");
     }
 
 

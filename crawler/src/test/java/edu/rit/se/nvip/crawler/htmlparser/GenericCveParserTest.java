@@ -35,11 +35,26 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.ArrayList;
+
+import org.openqa.selenium.WebDriver;
 
 import static org.junit.Assert.*;
 
 public class GenericCveParserTest extends AbstractParserTest {
-	GenericCveParser parser = new GenericCveParser("nat_available");
+	static GenericCveParser parser;
+	static WebDriver driver;
+
+	@BeforeClass
+    public static void setupWebDriver(){
+        driver = new CveCrawler(new ArrayList<>(), "").getDriver();
+        parser = new GenericCveParser("nat_available", driver);
+    }
+
+    @AfterClass
+    public static void destroyWebDriver(){
+        if(driver != null) driver.quit();
+    }
 	
 	@Test
 	public void testJenkins() {
@@ -92,14 +107,4 @@ public class GenericCveParserTest extends AbstractParserTest {
 		ParserStrategy parserAccordion = parser.chooseParserStrategy(accordionHtml);
 		assertTrue(parserAccordion instanceof ParseAccordion);
 	}
-
-	@BeforeClass
-    public static void setupWebDriver(){
-        if(CveCrawler.driver.toString().contains("(null)")) CveCrawler.driver = CveCrawler.startDynamicWebDriver();
-    }
-
-    @AfterClass
-    public static void destroyWebDriver(){
-        if(CveCrawler.driver != null) CveCrawler.driver.quit();
-    }
 }

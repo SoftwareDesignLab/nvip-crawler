@@ -31,7 +31,6 @@ import org.jsoup.select.Elements;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 public class IntelParser extends AbstractCveParser {
 
@@ -51,14 +50,19 @@ public class IntelParser extends AbstractCveParser {
 
         // get the top table
         Element advTable = doc.select("table").first();
+        if (advTable == null) return vulnList;
         // get publish date from table
-        Element release = Objects.requireNonNull(advTable).children().select("td:contains(release)").first();
-        Element publishEl = Objects.requireNonNull(release).nextElementSibling();
-        String publishDate = Objects.requireNonNull(publishEl).text();
+        Element release = advTable.children().select("td:contains(release)").first();
+        if (release == null) return vulnList;
+        Element publishEl = release.nextElementSibling();
+        if (publishEl == null) return vulnList;
+        String publishDate = publishEl.text();
         // get last modified date from table
         Element revised = advTable.children().select("td:contains(revised)").first();
-        Element lastModifiedEl = Objects.requireNonNull(revised).nextElementSibling();
-        String lastModifiedDate = Objects.requireNonNull(lastModifiedEl).text();
+        if (revised == null) return vulnList;
+        Element lastModifiedEl = revised.nextElementSibling();
+        if (lastModifiedEl == null) return vulnList;
+        String lastModifiedDate = lastModifiedEl.text();
 
         // looks to follow the format:
         // CVEID

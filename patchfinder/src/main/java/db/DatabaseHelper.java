@@ -32,7 +32,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.sql.*;
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.sql.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -49,18 +50,31 @@ public class DatabaseHelper {
 	private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
 	final String databaseType;
 
-	private final String selectAffectedProducts = "SELECT cve_id, cpe FROM nvip.affectedproduct GROUP BY product_name, affected_product_id ORDER BY cve_id DESC, version ASC;";
+	private final String selectAffectedProducts = "SELECT cve_id, cpe FROM affectedproduct GROUP BY product_name, affected_product_id ORDER BY cve_id DESC, version ASC;";
 	private final String getVulnIdByCveId = "SELECT vuln_id FROM vulnerability WHERE cve_id = ?";
-	private final String insertPatchSourceURLSql = "INSERT INTO patchsourceurl (vuln_id, source_url) VALUES (?, ?);";
-	private final String insertPatchCommitSql = "INSERT INTO patchcommit (source_id, commit_url, commit_date, commit_message) VALUES (?, ?, ?, ?);";
+	private final String insertPatchSourceURLSql = "INSERT INTO patchsourceurl (cve_id, source_url) VALUES (?, ?);";
+	private final String insertPatchCommitSql = "INSERT INTO patchcommit (source_url_id, commit_url, commit_date, commit_message) VALUES (?, ?, ?, ?);";
 	// Regex101: https://regex101.com/r/9uaTQb/1
 	public static final Pattern CPE_PATTERN = Pattern.compile("cpe:2\\.3:[aho\\*\\-]:([^:]*):([^:]*):([^:]*):.*");
+	private static DatabaseHelper databaseHelper = null;
+
+	/**
+	 * Thread safe singleton implementation
+	 *
+	 * @return
+	 */
+	public static synchronized DatabaseHelper getInstance() {
+		if (databaseHelper == null)
+			databaseHelper = new DatabaseHelper();
+
+		return databaseHelper;
+	}
 
 	/**
 	 * The private constructor sets up HikariCP for connection pooling. Singleton
 	 * DP!
 	 */
-	public DatabaseHelper() {
+	private DatabaseHelper() {
 		// Get database type from envvars
 		databaseType = System.getenv("DB_TYPE");
 		logger.info("New NVIP.DatabaseHelper instantiated! It is configured to use " + databaseType + " database!");
@@ -203,23 +217,28 @@ public class DatabaseHelper {
 	/**
 	 * Inserts given source URL into the patch source table
 	 *
-	 * @param vuln_id
+	 * @param cve_id
 	 *
 	 * @return
 	 */
-	public boolean insertPatchSourceURL(int vuln_id, String sourceURL) {
-		try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(insertPatchSourceURLSql);) {
-			pstmt.setInt(1, vuln_id);
+	public int insertPatchSourceURL(String cve_id, String sourceURL) {
+		try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(insertPatchSourceURLSql, Statement.RETURN_GENERATED_KEYS)) {
+			pstmt.setString(1, cve_id);
 			pstmt.setString(2, sourceURL);
 			pstmt.executeUpdate();
 
+			final ResultSet rs = pstmt.getGeneratedKeys();
+			int generatedKey = 0;
+			if (rs.next()) generatedKey = rs.getInt(1);
+			else throw new SQLException("Could not retrieve key of newly created record, it may not have been inserted");
+
 			logger.info("Inserted PatchURL: " + sourceURL);
 			conn.close();
-			return true;
+			return generatedKey;
 		} catch (Exception e) {
-			logger.error("ERROR: Failed to insert patch source with sourceURL {} for vuln id {}\n{}", sourceURL,
-					vuln_id, e.getMessage());
-			return false;
+			logger.error("ERROR: Failed to insert patch source with sourceURL {} for CVE ID {}\n{}", sourceURL,
+					cve_id, e.getMessage());
+			return -1;
 		}
 	}
 
@@ -232,14 +251,14 @@ public class DatabaseHelper {
 	 * @param commitDate
 	 * @param commitMessage
 	 */
-	public void insertPatchCommit(int sourceId, String sourceURL, String commitId, LocalDateTime commitDate, String commitMessage) {
+	public void insertPatchCommit(int sourceId, String sourceURL, String commitId, java.util.Date commitDate, String commitMessage) {
 
 		try (Connection connection = getConnection();
 			 PreparedStatement pstmt = connection.prepareStatement(insertPatchCommitSql);) {
 
 			pstmt.setInt(1, sourceId);
 			pstmt.setString(2, sourceURL + "/commit/" + commitId);
-			pstmt.setDate(3, java.sql.Date.valueOf(commitDate.toString()));
+			pstmt.setDate(3, new java.sql.Date(commitDate.getTime()));
 			pstmt.setString(4, commitMessage);
 			pstmt.executeUpdate();
 		} catch (Exception e) {

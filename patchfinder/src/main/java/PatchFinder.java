@@ -29,14 +29,18 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eclipse.jgit.util.FileUtils;
+import utils.GitController;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Main class for collecting CVE Patches within repos that were
@@ -47,9 +51,10 @@ public class PatchFinder {
 
 	private static final ArrayList<PatchCommit> patchCommits = new ArrayList<>();
 	protected static int cveLimit = 5;
-//	protected static int cpeLimit = 10;
 	protected static int maxThreads = 10;
 	protected static int cvesPerThread = 1;
+	protected static String clonePath = "src/main/resources/patch-repos";
+	protected static String[] addressBases = { "https://www.github.com/", "https://www.gitlab.com/" };
 
 	/**
 	 * Attempts to get all required environment variables from System.getenv() safely, logging
@@ -66,12 +71,33 @@ public class PatchFinder {
 			} else throw new Exception();
 		} catch (Exception ignored) { logger.warn("Could not fetch CVE_LIMIT from env vars, defaulting to {}", cveLimit); }
 
-//		try {
-//			if(props.containsKey("CPE_LIMIT")) {
-//				cpeLimit = Integer.parseInt(System.getenv("CPE_LIMIT"));
-//				logger.info("Setting CPE_LIMIT to {}", cpeLimit);
-//			} else throw new Exception();
-//		} catch (Exception ignored) { logger.warn("Could not fetch CPE_LIMIT from env vars, defaulting to {}", cpeLimit); }
+		try{
+			if(props.containsKey("ADDRESS_BASES")) {
+				addressBases = System.getenv("ADDRESS_BASES").split(",");
+				logger.info("Setting ADDRESS_BASES to {}", Arrays.toString(addressBases));
+			} else throw new Exception();
+		}catch(Exception ignored) {logger.warn("Could not fetch ADDRESS_BASES from env vars, defaulting to {}", Arrays.toString(addressBases)); }
+
+		try {
+			if(props.containsKey("MAX_THREADS")) {
+				maxThreads = Integer.parseInt(System.getenv("MAX_THREADS"));
+				logger.info("Setting MAX_THREADS to {}", maxThreads);
+			} else throw new Exception();
+		}catch (Exception ignored) { logger.warn("Could not fetch MAX_THREADS from env vars, defaulting to {}", maxThreads); }
+
+		try{
+			if(props.containsKey("CVES_PER_THREAD")) {
+				cvesPerThread = Integer.parseInt(System.getenv("CVES_PER_THREAD"));
+				logger.info("Setting CVES_PER_THREAD to {}", cvesPerThread);
+			} else throw new Exception();
+		}catch(Exception ignored) {logger.warn("Could not fetch CVES_PER_THREAD from env vars, defaulting to {}", cvesPerThread); }
+
+		try{
+			if(props.containsKey("CLONE_PATH")) {
+				clonePath = System.getenv("CLONE_PATH");
+				logger.info("Setting CLONE_PATH to {}", clonePath);
+			} else throw new Exception();
+		}catch(Exception ignored) {logger.warn("Could not fetch CLONE_PATH from env vars, defaulting to {}", clonePath); }
 	}
 
 	public static void main(String[] args) throws IOException, InterruptedException {
@@ -82,7 +108,7 @@ public class PatchFinder {
 		fetchEnvVars();
 
 		// Init db helper
-		final DatabaseHelper databaseHelper = new DatabaseHelper();
+		final DatabaseHelper databaseHelper = DatabaseHelper.getInstance();
 
 		// Init PatchUrlFinder
 		PatchUrlFinder patchURLFinder = new PatchUrlFinder();
@@ -95,27 +121,23 @@ public class PatchFinder {
 
 		// Find patches
 		// Repos will be cloned to patch-repos directory, multi-threaded 6 threads.
-		PatchFinder.findPatchesMultiThreaded(
-				possiblePatchURLs,
-				"src/main/resources/patch-repos",
-				maxThreads,
-				cvesPerThread
-		);
+		PatchFinder.findPatchesMultiThreaded(possiblePatchURLs);
 
 		// Get found patches from patchfinder
 		ArrayList<PatchCommit> patchCommits = PatchFinder.getPatchCommits();
 
 		// Insert patches
-		for (PatchCommit patchCommit: patchCommits) {
-			int vulnId = databaseHelper.getVulnIdByCveId(patchCommit.getCveId());
-			databaseHelper.insertPatchSourceURL(vulnId, patchCommit.getCommitUrl());
-			databaseHelper.insertPatchCommit(vulnId, patchCommit.getCommitUrl(), patchCommit.getCommitId(),
+		for (PatchCommit patchCommit : patchCommits) {
+			final int sourceUrlId = databaseHelper.insertPatchSourceURL(patchCommit.getCveId(), patchCommit.getCommitUrl());
+			databaseHelper.insertPatchCommit(sourceUrlId, patchCommit.getCommitUrl(), patchCommit.getCommitId(),
 					patchCommit.getCommitDate(), patchCommit.getCommitMessage());
+//			logger.info(patchCommit.getUniDiff());
 		}
 
+		// Delete cloned repos
 
 		final long delta = (System.currentTimeMillis() - start) / 1000;
-		logger.info("Successfully patched {} affected products in {} seconds", patchCommits.size(), delta);
+		logger.info("Successfully collected {} patch commits from {} affected products in {} seconds", patchCommits.size(), affectedProducts.size(), delta);
 	}
 
 	/**
@@ -129,15 +151,20 @@ public class PatchFinder {
 
 	/**
 	 * Git commit parser that implements multiple threads to increase performance
-	 * @param clonePath
+	 * @param possiblePatchSources
 	 * @throws IOException
 	 */
-	public static void findPatchesMultiThreaded(Map<String, ArrayList<String>> possiblePatchSources, String clonePath,
-														   int maxThreads, int limitCvePerThread) throws IOException {
+	public static void findPatchesMultiThreaded(Map<String, ArrayList<String>> possiblePatchSources) throws IOException {
 		logger.info("Applying multi threading...");
 		File dir = new File(clonePath);
 		try { FileUtils.delete(dir, FileUtils.RECURSIVE); }
 		catch (IOException e) { logger.error("Failed to delete dir '{}': {}", dir, e.toString()); }
+
+		//If there are less CVEs to process than maxThreads, only create cveLimit number of threads
+		if(cveLimit < maxThreads){
+			logger.info("Number of CVEs to process {} is less than available threads, setting number available threads to {}", cveLimit, maxThreads);
+			maxThreads = cveLimit;
+		}
 
 		logger.info(maxThreads + " available processors found");
 		ArrayList<HashMap<String, ArrayList<String>>> sourceBatches = new ArrayList<>();
@@ -147,20 +174,34 @@ public class PatchFinder {
 			sourceBatches.add(new HashMap<>());
 		}
 
-		ExecutorService es = Executors.newFixedThreadPool(limitCvePerThread);
+		ExecutorService es = Executors.newFixedThreadPool(maxThreads);
 		// Divide cves equally amongst all threads, some threads may
 		// have more sources based on their CVEs provided
-		int numSourcesAdded = 1;
+		int numSourcesAdded = 0;
 		int thread = 0;
 		for (String cveId : possiblePatchSources.keySet()) {
 			sourceBatches.get(thread).put(cveId, possiblePatchSources.get(cveId));
 			numSourcesAdded++;
-			if (numSourcesAdded % limitCvePerThread == 0 && thread < maxThreads - 1) {
-				es.execute(new PatchFinderThread(sourceBatches.get(thread), clonePath));
+			if (numSourcesAdded % cvesPerThread == 0 && thread < maxThreads) {
+				es.execute(new PatchFinderThread(sourceBatches.get(thread), clonePath, thread));
 				thread++;
 			}
 		}
 
-		es.shutdown();
+		// TODO: Fix multi-threading such that threads that are hanging dont or check if task queue is empty maybe
+		try {
+			// Shut down the executor to release resources after all tasks are complete
+			final int timeout = 4;
+			final TimeUnit unit = TimeUnit.MINUTES;
+			if(!es.awaitTermination(timeout, unit)) {
+				throw new TimeoutException(String.format("Product extraction thread pool runtime exceeded timeout value of %s %s", timeout, unit.toString()));
+			}
+			logger.info("Product extraction thread pool completed all jobs, shutting down...");
+			es.shutdown();
+		} catch (Exception e) {
+			logger.error("Product extraction failed: {}", e.toString());
+			es.shutdown();
+		}
 	}
+
 }

@@ -44,8 +44,7 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import static edu.rit.se.nvip.crawler.CveCrawler.driver;
+import org.openqa.selenium.WebDriver;
 
 /**
  *
@@ -76,7 +75,7 @@ public abstract class AbstractCveParser {
 	 * @param url
 	 * @return
 	 */
-	protected String grabDynamicHTML(String url) {
+	protected String grabDynamicHTML(String url, WebDriver driver) {
 		driver.get(url);
 		if (url.contains("mend.io"))
 			return (String) ((JavascriptExecutor) driver).executeScript("return document.getElementsByTagName('html')[0].innerHTML");

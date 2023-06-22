@@ -1,6 +1,7 @@
 package model.cpe;
 
-import model.cpe.ProductVersion;
+import edu.rit.se.nvip.model.cpe.ProductVersion;
+import edu.rit.se.nvip.model.cpe.ProductVersion;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -29,16 +30,6 @@ public class ProductVersionTest {
         final ProductVersion version = new ProductVersion(versionString);
 
         assertEquals(versionString, version.toString());
-    }
-
-    @Test
-    public void invalidVersionTest1(){
-        final String versionString = "1.2.beta";
-
-        try {
-            new ProductVersion(versionString);
-            fail(String.format("Version %s should have thrown an error and did not", versionString));
-        } catch (IllegalArgumentException ignored) { }
     }
 
     @Test

@@ -24,6 +24,7 @@
 package edu.rit.se.nvip.crawler.htmlparser;
 
 import edu.rit.se.nvip.model.RawVulnerability;
+
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -33,6 +34,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.time.LocalDate;
 
 public class CurlParser extends AbstractCveParser {
 
@@ -51,7 +53,7 @@ public class CurlParser extends AbstractCveParser {
         boolean inTimeline = false;
         StringBuilder descriptionBuilder = new StringBuilder();
         StringBuilder timelineBuilder = new StringBuilder();
-        String date = "";
+        String date = LocalDate.now().toString();
         Element content = doc.selectFirst("div.contents");
         if (content == null) return retVal;
         for (Element e : content.children()) {

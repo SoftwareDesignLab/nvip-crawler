@@ -30,15 +30,19 @@ import org.junit.BeforeClass;
 import org.junit.AfterClass;
 
 import java.util.List;
+import java.util.ArrayList;
+
+import org.openqa.selenium.WebDriver;
 
 import static org.junit.Assert.*;
 
 public class AutodeskParserTest extends AbstractParserTest{
+    static WebDriver driver;
 
     @Test
     public void testAutodesk() {
         AutodeskParser parser  = new AutodeskParser("autodesk");
-        String html = parser.grabDynamicHTML("https://autodesk.com/trust/security-advisories/adsk-sa-2022-0017");
+        String html = parser.grabDynamicHTML("https://autodesk.com/trust/security-advisories/adsk-sa-2022-0017", driver);
         // String html = safeReadHtml("src/test/resources/test-autodesk-table-multi.html");
         List<RawVulnerability> list = parser.parseWebPage("autodesk", html);
         assertEquals(18, list.size());
@@ -69,12 +73,12 @@ public class AutodeskParserTest extends AbstractParserTest{
 
     @BeforeClass
     public static void setupWebDriver(){
-        if(CveCrawler.driver.toString().contains("(null)")) CveCrawler.driver = CveCrawler.startDynamicWebDriver();
+        driver = new CveCrawler(new ArrayList<>(), "").getDriver();
     }
 
     @AfterClass
     public static void destroyWebDriver(){
-        if(CveCrawler.driver != null) CveCrawler.driver.quit();
+        if(driver != null) driver.quit();
     }
 
 }

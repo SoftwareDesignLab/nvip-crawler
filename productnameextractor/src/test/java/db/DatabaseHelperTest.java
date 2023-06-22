@@ -24,8 +24,9 @@
 package db;
 
 import com.zaxxer.hikari.HikariDataSource;
-import model.cve.AffectedRelease;
-import model.cve.CompositeVulnerability;
+import edu.rit.se.nvip.db.DatabaseHelper;
+import edu.rit.se.nvip.model.cve.AffectedProduct;
+import edu.rit.se.nvip.model.cve.CompositeVulnerability;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.AfterClass;
@@ -130,12 +131,12 @@ public class DatabaseHelperTest {
 		} catch (SQLException ignored) {}
 	}
 
-	private List<AffectedRelease> buildDummyReleases(int count) {
-		List<AffectedRelease> releases = new ArrayList<>();
+	private List<AffectedProduct> buildDummyProducts(int count) {
+		List<AffectedProduct> products = new ArrayList<>();
 		for (int i = 0; i < count; i++) {
-			releases.add(new AffectedRelease(i, "cve"+i, "cpe"+i, "date"+i, "version"+i));
+			products.add(new AffectedProduct(i, "cve"+i, "cpe"+i, "date"+i, "version"+i));
 		}
-		return releases;
+		return products;
 	}
 
 	@BeforeClass
@@ -190,37 +191,37 @@ public class DatabaseHelperTest {
 	}
 
 	/**
-	 * Tests the insertAffectedReleases method. In this case since there are 5 releases,
+	 * Tests the insertAffectedProducts method. In this case since there are 5 products,
 	 * there should be 8 psmt.setStrings() so 8x5=40
 	 * @throws SQLException
 	 */
 	@Test
-	public void insertAffectedReleasesV2Test() {
+	public void insertAffectedProductsV2Test() {
 		int inCount = 5;
-		List<AffectedRelease> releases = buildDummyReleases(inCount);
-		dbh.insertAffectedReleasesV2(releases);
+		List<AffectedProduct> products = buildDummyProducts(inCount);
+		dbh.insertAffectedProductsV2(products);
 		try {
 			verify(pstmt, times(inCount*8)).setString(anyInt(), any());
 			verify(pstmt, times(inCount)).executeUpdate();
-			verify(pstmt).setString(1, releases.get(inCount-1).getCveId());
+			verify(pstmt).setString(1, products.get(inCount-1).getCveId());
 		} catch (SQLException ignored) {}
 	}
 
 	@Test
-	public void deleteAffectedReleasesTest() {
+	public void deleteAffectedProductsTest() {
 		int count = 5;
-		List<AffectedRelease> releases = buildDummyReleases(count);
-		dbh.deleteAffectedReleases(releases);
+		List<AffectedProduct> products = buildDummyProducts(count);
+		dbh.deleteAffectedProducts(products);
 		try {
 			verify(pstmt, times(count)).setString(anyInt(), any());
 			verify(pstmt, times(count)).executeUpdate();
-			verify(pstmt).setString(1, releases.get(count-1).getCveId());
+			verify(pstmt).setString(1, products.get(count-1).getCveId());
 		} catch (SQLException ignored) {}
 	}
 
 	@Test
 	public void insertAffectedProductsToDBTest() throws SQLException {
-		insertAffectedReleasesV2Test();
+		insertAffectedProductsV2Test();
 		// Prepare test data
 		int count = 5;
 		List<CompositeVulnerability> products = new ArrayList<>();

@@ -31,7 +31,6 @@ import org.jsoup.select.Elements;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 public class TrendMicroParser extends AbstractCveParser {
 
@@ -51,15 +50,19 @@ public class TrendMicroParser extends AbstractCveParser {
 
         // get date - blog posts refer to these overviews as Patch Tuesday
         // so expect this date to always be the second Tuesday of a given month
-        Element dateEl = Objects.requireNonNull(doc.select("h1.title").first()).nextElementSibling();
-        String date = Objects.requireNonNull(dateEl).text().split("\\|")[0].trim();
+        Element dateEl = doc.select("h1.title").first();
+        if (dateEl == null) return vulnList;
+        dateEl = dateEl.nextElementSibling();
+        if (dateEl == null) return vulnList;
+        String date = dateEl.text().split("\\|")[0].trim();
 
         // get the big table element containing all the CVEs
         Elements tableEls = doc.select("table");
         Element table = tableEls.first();
         if (table == null) return null;
         Element tableBody = table.children().select("tbody").first();
-        Elements rows = Objects.requireNonNull(tableBody). children();
+        if (tableBody == null) return null;
+        Elements rows = tableBody.children();
         for (Element row : rows) {
             String text = row.text();
             if (text.contains("CVE-")) {
@@ -67,10 +70,12 @@ public class TrendMicroParser extends AbstractCveParser {
                 Elements rowTDs = row.children().select("td");
                 // cve box
                 Element cveTD = rowTDs.first();
-                String cveId = Objects.requireNonNull(cveTD).text();
+                if (cveTD == null) continue;
+                String cveId = cveTD.text();
                 // "Title" box we will use for description
                 Element descTD = cveTD.nextElementSibling();
-                String description = Objects.requireNonNull(descTD).text();
+                if (descTD == null) continue;
+                String description = descTD.text();
                 vulnList.add(new CompositeVulnerability(
                    0, sSourceURL, cveId, null, date, date, description, sourceDomainName
                 ));

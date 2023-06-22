@@ -23,8 +23,10 @@
  */
 
 
-import model.cve.CompositeVulnerability;
-import model.cpe.CpeGroup;
+import edu.rit.se.nvip.AffectedProductIdentifier;
+import edu.rit.se.nvip.ProductNameExtractorController;
+import edu.rit.se.nvip.model.cve.CompositeVulnerability;
+import edu.rit.se.nvip.model.cpe.CpeGroup;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -63,11 +65,11 @@ public class AffectedProductIdentifierTest {
 		}
 
 		// Identify releases
-		affectedProductIdentifier.identifyAffectedReleases(100);
+		affectedProductIdentifier.identifyAffectedProducts(100);
 
-		System.out.println(v.getAffectedReleases());
+		System.out.println(v.getAffectedProducts());
 
-		assertTrue("Test failed: No affected releases found", (v.getAffectedReleases().size() > 0));
+		assertTrue("Test failed: No affected releases found", (v.getAffectedProducts().size() > 0));
 	}
 
 }

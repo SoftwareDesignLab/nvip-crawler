@@ -1,4 +1,5 @@
-import model.cpe.ProductVersion;
+import edu.rit.se.nvip.VersionManager;
+import edu.rit.se.nvip.model.cpe.ProductVersion;
 
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -65,7 +66,7 @@ public class VersionManagerTest {
         assertEquals(versionWords[2], "1.9.3");
         assertEquals(versionWords[3], "prior");
         assertEquals(versionWords[4], "to");
-        assertEquals(versionWords[5], "1.4");
+        assertEquals(versionWords[5], "1.4.x");
         assertEquals(versionWords[6], "1.4.2");
         assertEquals(versionWords[7], "to");
         assertEquals(versionWords[8], "1.7.5");
@@ -188,5 +189,21 @@ public class VersionManagerTest {
         assertFalse(manager.isAffected(version2));
         assertFalse(manager.isAffected(version3));
         assertFalse(manager.isAffected(version4));
+    }
+
+    @Test
+    public void processVersionsBetweenTest() {
+        String[] versionWords = {
+                "before", "1.8.2.,", "v1.9.3", "between", "1.4", "and", "1.7.5", "3.8.5+"
+        };
+
+        VersionManager manager = new VersionManager();
+        manager.processVersions(versionWords);
+
+        assertEquals(5, manager.getVersionRanges().size());
+        assertTrue(manager.getVersionRanges().toString().contains("BEFORE 1.8.2"));
+        assertTrue(manager.getVersionRanges().toString().contains("EXACT 1.9.3"));
+        assertTrue(manager.getVersionRanges().toString().contains("1.4 THROUGH 1.7.5"));
+        assertTrue(manager.getVersionRanges().toString().contains("AFTER 3.8.5"));
     }
 }

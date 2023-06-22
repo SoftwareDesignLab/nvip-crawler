@@ -30,7 +30,7 @@ import org.jsoup.nodes.Element;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
+import java.time.LocalDate;
 
 public class MicrosoftParser extends AbstractCveParser {
 
@@ -49,21 +49,31 @@ public class MicrosoftParser extends AbstractCveParser {
 
         // extract CVE ID from top of page above "Security Vulnerability"
         Element cve = doc.select("span.css-242:contains(CVE)").first();
-        String cveId = Objects.requireNonNull(cve).text();
+        if (cve == null) return vulnList;
+        String cveId = cve.text();
 
         // extract released and last updated dates
+        String publishDate = LocalDate.now().toString();
+        String lastModifiedDate = publishDate;
         Element dates = doc.select("p:contains(Released)").first();
-        String[] dateSplit = Objects.requireNonNull(dates).text().split("Last updated: ");
-        String publishDate = dateSplit[0].trim();
-        String lastModifiedDate = dateSplit[1];
-        publishDate = publishDate.split(": ")[1].trim();
+        if (dates != null) {
+            String[] dateSplit = dates.text().split("Last updated: ");
+            publishDate = dateSplit[0].trim();
+            lastModifiedDate = dateSplit[1];
+            publishDate = publishDate.split(": ")[1].trim();
+        }
 
         // lack of a description on these pages
         // instead title + FAQ will be extracted
+        // if lack of both this most likely isn't a CVE page, return...
         Element titleEl = doc.select("h1.ms-fontWeight-semibold").first();
-        String title = Objects.requireNonNull(titleEl).text();
+        if (titleEl == null) return vulnList;
+        String title = titleEl.text();
         Element faqTitle = doc.select("h2:contains(FAQ)").first();
-        String faq = Objects.requireNonNull(Objects.requireNonNull(faqTitle).nextElementSibling()).text();
+        if (faqTitle == null) return vulnList;
+        Element faqNext = faqTitle.nextElementSibling();
+        if (faqNext == null) return vulnList;
+        String faq = faqNext.text();
 
         vulnList.add(new RawVulnerability(
            sSourceURL, cveId, publishDate, lastModifiedDate, title + faq

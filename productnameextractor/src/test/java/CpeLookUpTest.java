@@ -22,10 +22,12 @@
  * SOFTWARE.
  */
 
-import model.cpe.CpeEntry;
-import model.cpe.CpeGroup;
-import model.cpe.ProductItem;
-import model.cpe.ProductVersion;
+import edu.rit.se.nvip.CpeLookUp;
+import edu.rit.se.nvip.ProductNameExtractorController;
+import edu.rit.se.nvip.model.cpe.CpeEntry;
+import edu.rit.se.nvip.model.cpe.CpeGroup;
+import edu.rit.se.nvip.model.cpe.ProductItem;
+import edu.rit.se.nvip.model.cpe.ProductVersion;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
 
