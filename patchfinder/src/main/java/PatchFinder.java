@@ -160,6 +160,12 @@ public class PatchFinder {
 		try { FileUtils.delete(dir, FileUtils.RECURSIVE); }
 		catch (IOException e) { logger.error("Failed to delete dir '{}': {}", dir, e.toString()); }
 
+		//If there are less CVEs to process than maxThreads, only create cveLimit number of threads
+		if(cveLimit < maxThreads){
+			logger.info("Number of CVEs to process {} is less than available threads, setting number available threads to {}", cveLimit, maxThreads);
+			maxThreads = cveLimit;
+		}
+
 		logger.info(maxThreads + " available processors found");
 		ArrayList<HashMap<String, ArrayList<String>>> sourceBatches = new ArrayList<>();
 
@@ -171,13 +177,13 @@ public class PatchFinder {
 		ExecutorService es = Executors.newFixedThreadPool(maxThreads);
 		// Divide cves equally amongst all threads, some threads may
 		// have more sources based on their CVEs provided
-		int numSourcesAdded = 1;
+		int numSourcesAdded = 0;
 		int thread = 0;
 		for (String cveId : possiblePatchSources.keySet()) {
 			sourceBatches.get(thread).put(cveId, possiblePatchSources.get(cveId));
 			numSourcesAdded++;
-			if (numSourcesAdded % cvesPerThread == 0 && thread < maxThreads - 1) {
-				es.execute(new PatchFinderThread(sourceBatches.get(thread), clonePath));
+			if (numSourcesAdded % cvesPerThread == 0 && thread < maxThreads) {
+				es.execute(new PatchFinderThread(sourceBatches.get(thread), clonePath, thread));
 				thread++;
 			}
 		}
@@ -194,6 +200,7 @@ public class PatchFinder {
 			es.shutdown();
 		} catch (Exception e) {
 			logger.error("Product extraction failed: {}", e.toString());
+			es.shutdown();
 		}
 	}
 
