@@ -60,7 +60,7 @@ public class AliasRoboParser extends AbstractCveParser {
         if (!eachLabel.contains("vulnerability")) return vulnList;
 
         // get publish date from top 'opened' date
-        String publishDate = = LocalDate.now().toString();
+        String publishDate = LocalDate.now().toString();
         Element header = doc.select("div#partial-discussion-header").first();
         if (header != null) {
             Element date = header.children().select("relative-time").first();
@@ -69,7 +69,7 @@ public class AliasRoboParser extends AbstractCveParser {
         }
 
         // get last modified date from bottommost github feed date
-        String lastModifiedDate = = LocalDate.now().toString();
+        String lastModifiedDate = LocalDate.now().toString();
         // get CVE id from "cve": or cve:
         String cveId = "";
         // get description from "description": or description:
