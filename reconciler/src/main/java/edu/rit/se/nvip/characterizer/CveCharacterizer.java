@@ -24,6 +24,7 @@ package edu.rit.se.nvip.characterizer; /**
 
 import edu.rit.se.nvip.automatedcvss.CvssScoreCalculator;
 import edu.rit.se.nvip.automatedcvss.PartialCvssVectorGenerator;
+import edu.rit.se.nvip.automatedcvss.preprocessor.CvePreProcessor;
 import edu.rit.se.nvip.characterizer.classifier.AbstractCveClassifier;
 import edu.rit.se.nvip.characterizer.classifier.CveClassifierFactory;
 import edu.rit.se.nvip.db.DatabaseHelper;
@@ -33,7 +34,6 @@ import edu.rit.se.nvip.model.VdoCharacteristic;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import edu.rit.se.nvip.automatedcvss.preprocessor.CvePreProcessor;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -58,6 +58,86 @@ public class CveCharacterizer {
 	private PartialCvssVectorGenerator partialCvssVectorGenerator = new PartialCvssVectorGenerator();
 	private CvssScoreCalculator cvssScoreCalculator = new CvssScoreCalculator();
 
+	public enum VDONounGroup{
+		IMPACT_METHOD(1, "ImpactMethod", "Impact Method"),
+		CONTEXT(2, "Context", "Context"),
+		MITIGATION(3, "Mitigation", "Mitigation"),
+		ATTACK_THEATER(4, "AttackTheater", "Attack Theater"),
+		LOGICAL_IMPACT(5, "LogicalImpact", "Logical Impact");
+
+		private int vdoNounGroupId;
+		private String vdoNounGroupName;
+		private String vdoNameForUI;
+
+		VDONounGroup(int vdoNounGroupId, String vdoNounGroupName, String vdoNameForUI) {
+			this.vdoNounGroupId = vdoNounGroupId;
+			this.vdoNounGroupName = vdoNounGroupName;
+			this.vdoNameForUI = vdoNameForUI;
+		}
+
+	}
+
+	public enum VDOLabel {
+		TRUST_FAILURE(1, "Trust Failure", "Trust Failure", VDONounGroup.IMPACT_METHOD),
+		MAN_IN_THE_MIDDLE(2, "Man-in-the-Middle", "Man-in-the-Middle", VDONounGroup.IMPACT_METHOD),
+		CHANNEL(3, "Channel", "Channel", VDONounGroup.CONTEXT),
+		AUTHENTICATION_BYPASS(4, "Authentication Bypass", "Authentication Bypass", VDONounGroup.IMPACT_METHOD),
+		PHYSICAL_HARDWARE(5, "Physical Hardware", "Physical Hardware", VDONounGroup.CONTEXT),
+		APPLICATION(6, "Application", "Application", VDONounGroup.CONTEXT),
+		HOST_OS(7, "Host OS", "Host OS", VDONounGroup.CONTEXT),
+		FIRMWARE(8, "Firmware", "Firmware", VDONounGroup.CONTEXT),
+		CODE_EXECUTION(9, "Code Execution", "Code Execution", VDONounGroup.IMPACT_METHOD),
+		CONTEXT_ESCAPE(10, "Context Escape", "Context Escape", VDONounGroup.IMPACT_METHOD),
+		GUEST_OS(11, "Guest OS", "Guest OS", VDONounGroup.CONTEXT),
+		HYPERVISOR(12, "Hypervisor", "Hypervisor", VDONounGroup.CONTEXT),
+		SANDBOXED(13, "Sandboxed", "Sandboxed", VDONounGroup.MITIGATION),
+		PHYSICAL_SECURITY(14, "Physical Security", "Physical Security", VDONounGroup.MITIGATION),
+		ASLR(15, "ASLR", "ASLR", VDONounGroup.MITIGATION),
+		LIMITED_RMT(16, "Limited Rmt", "Limited Rmt", VDONounGroup.ATTACK_THEATER),
+		LOCAL(17, "Local", "Local", VDONounGroup.ATTACK_THEATER),
+		READ(18, "Read", "Read", VDONounGroup.LOGICAL_IMPACT),
+		RESOURCE_REMOVAL(19, "Resource Removal", "Resource Removal", VDONounGroup.LOGICAL_IMPACT),
+		HPKP_HSTS(20, "HPKP/HSTS", "HPKP/HSTS", VDONounGroup.MITIGATION),
+		MULTIFACTOR_AUTHENTICATION(21, "MultiFactor Authentication", "MultiFactor Authentication", VDONounGroup.MITIGATION),
+		REMOTE(22, "Remote", "Remote", VDONounGroup.ATTACK_THEATER),
+		WRITE(23, "Write", "Write", VDONounGroup.LOGICAL_IMPACT),
+		INDIRECT_DISCLOSURE(24, "Indirect Disclosure", "Indirect Disclosure", VDONounGroup.LOGICAL_IMPACT),
+		SERVICE_INTERRUPT(25, "Service Interrupt", "Service Interrupt", VDONounGroup.LOGICAL_IMPACT),
+		PRIVILEGE_ESCALATION(26, "Privilege Escalation", "Privilege Escalation", VDONounGroup.LOGICAL_IMPACT),
+		PHYSICAL(27, "Physical", "Physical", VDONounGroup.ATTACK_THEATER);
+
+		private int vdoLabelId;
+		private String vdoLabelName;
+		private String vdoLabelForUI;
+		private VDONounGroup vdoNounGroup;
+
+		VDOLabel(int vdoLabelId, String vdoLabelName, String vdoLabelForUI, VDONounGroup vdoNounGroup) {
+			this.vdoLabelId = vdoLabelId;
+			this.vdoLabelName = vdoLabelName;
+			this.vdoLabelForUI = vdoLabelForUI;
+			this.vdoNounGroup = vdoNounGroup;
+		}
+
+	}
+	public enum CVSSSeverity {
+		HIGH(1),
+		MEDIUM(2),
+		NA(3),
+		CRITICAL(4),
+		LOW(5);
+
+		private final int cvssSeverityId;
+
+
+		CVSSSeverity(int cvssSeverityId) {
+			this.cvssSeverityId = cvssSeverityId;
+		}
+
+		public int getCvssSeverityId() {
+			return cvssSeverityId;
+		}
+	}
+	
 	/**
 	 * Construct a CVE Characterizer. You need to provide an initial training data
 	 * as CSV. No incremental training this time.
@@ -136,6 +216,28 @@ public class CveCharacterizer {
 		return prediction;
 	}
 
+	public Map<String, Integer> getTableDataAsHashMap(Enum<?>[] enums) {
+		Map<String, Integer> dataMap = new HashMap<>();
+
+		for (int i = 0; i < enums.length; i++) {
+			int id = i + 1;
+			String name = enums[i].name();
+			dataMap.put(name, id);
+		}
+
+		return dataMap;
+	}
+	public Map<String, Integer> getCvssSeverityLabels() {
+		return getTableDataAsHashMap(CVSSSeverity.values());
+	}
+	public Map<String, Integer> getVdoLabels() {
+		return getTableDataAsHashMap(VDOLabel.values());
+	}
+
+	public Map<String, Integer> getVdoNounGroups() {
+		return getTableDataAsHashMap(VDONounGroup.values());
+	}
+
 	/**
 	 * characterize vulnerabilities in the given <cveList>
 	 * 
@@ -146,9 +248,9 @@ public class CveCharacterizer {
 		long start = System.currentTimeMillis();
 		int totCharacterized = 0;
 
-		Map<String, Integer> cvssSeverityLabels = databaseHelper.getCvssSeverityLabels();
-		Map<String, Integer> vdoLabels = databaseHelper.getVdoLabels();
-		Map<String, Integer> vdoNounGroups = databaseHelper.getVdoNounGroups();
+		Map<String, Integer> cvssSeverityLabels = getCvssSeverityLabels();
+		Map<String, Integer> vdoLabels = getVdoLabels();
+		Map<String, Integer> vdoNounGroups = getVdoNounGroups();
 
 		int countNotChanged = 0;
 		int countBadDescription = 0;
@@ -181,7 +283,7 @@ public class CveCharacterizer {
 					countBadDescription++;
 					continue; // if no description or old CVE skip!
 				}
-				if (vulnerability.getCveReconcileStatus() == CompositeVulnerability.CveReconcileStatus.DO_NOT_CHANGE) {
+				if (vulnerability.getReconciliationStatus() == CompositeVulnerability.ReconciliationStatus.UNCHANGED) {
 					//logger.info("No change in description for Characterization of {}", cveDesc);
 					countNotChanged++;
 					continue; // the same CVE in db

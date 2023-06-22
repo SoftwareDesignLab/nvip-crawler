@@ -76,8 +76,7 @@ public class CveCharacterizerTest {
 				if (description.contains("** RESERVED") || description.contains("** REJECT"))
 					continue;
 				CompositeVulnerability vuln = new CompositeVulnerability(new RawVulnerability(1, cveId, description, null, null, null, ""));
-				//CompositeVulnerability vuln = new CompositeVulnerability(0, null, cveId, null, null, null, description, null);
-				vuln.setCveReconcileStatus(CompositeVulnerability.CveReconcileStatus.UPDATE);
+
 				vulnList.add(vuln);
 			}
 

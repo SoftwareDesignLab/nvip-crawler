@@ -14,7 +14,8 @@ import static edu.rit.se.nvip.model.CompositeDescription.equivalentBuildStrings;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class ReconcilerTest {
+class
+ReconcilerTest {
 
     private final String dummyCveId;
     private final int dummyId;

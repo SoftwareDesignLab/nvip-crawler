@@ -3,17 +3,17 @@ package edu.rit.se.nvip.db;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import com.zaxxer.hikari.pool.HikariPool;
-import edu.rit.se.nvip.db.enums.CVSSSeverity;
-import edu.rit.se.nvip.db.enums.VDOLabel;
-import edu.rit.se.nvip.db.enums.VDONounGroup;
 import edu.rit.se.nvip.model.CompositeDescription;
 import edu.rit.se.nvip.model.CompositeVulnerability;
 import edu.rit.se.nvip.model.NvdVulnerability;
 import edu.rit.se.nvip.model.RawVulnerability;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import java.sql.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 public class DatabaseHelper {
 
@@ -402,36 +402,5 @@ public class DatabaseHelper {
 
 		return 0;
 	}
-
-
-	public Map<String, Integer> getTableDataAsHashMap(Enum<?>[] enums) {
-		Map<String, Integer> dataMap = new HashMap<>();
-
-		for (int i = 0; i < enums.length; i++) {
-			int id = i + 1;
-			String name = enums[i].name();
-			dataMap.put(name, id);
-		}
-
-		return dataMap;
-	}
-
-	public Map<String, Integer> getCvssSeverityLabels() {
-		return getTableDataAsHashMap(CVSSSeverity.values());
-	}
-
-	/**
-	 * get vdo labels as hash map
-	 *
-	 * @return
-	 */
-	public Map<String, Integer> getVdoLabels() {
-		return getTableDataAsHashMap(VDOLabel.values());
-	}
-
-	public Map<String, Integer> getVdoNounGroups() {
-		return getTableDataAsHashMap(VDONounGroup.values());
-	}
-
 
 }

@@ -55,7 +55,11 @@ import static org.mockito.Mockito.*;
  */
 @RunWith(MockitoJUnitRunner.class)
 public class DatabaseHelperTest {
-
+    enum SampleEnum {
+        ENUM_A,
+        ENUM_B,
+        ENUM_C
+    }
     private Logger logger = LogManager.getLogger(getClass().getSimpleName());
 
     private DatabaseHelper dbh;
@@ -195,51 +199,6 @@ public class DatabaseHelperTest {
             assertTrue(this.dbh.testDbConnection());
             when(hds.getConnection()).thenReturn(null);
             assertFalse(this.dbh.testDbConnection());
-        } catch (SQLException ignored) {}
-    }
-    @Test
-    public void getCvssSeverityLabelsTest() {
-        setResNextCount(2);
-        setResInts("cvss_severity_id", 2);
-        setResStrings("cvss_severity_class", 2);
-        Map<String, Integer> map = dbh.getCvssSeverityLabels();
-        assertNotNull(map);
-        assertEquals(2, map.size());
-    }
-
-    @Test
-    public void getVdoLabelsTest() {
-        setResNextCount(3);
-        setResInts("vdo_label_id", 3);
-        setResStrings("vdo_label_name", 3);
-        Map<String, Integer> map = dbh.getVdoLabels();
-        assertNotNull(map);
-        assertEquals(3, map.size());
-    }
-
-    @Test
-    public void getVdoNounGroupsTest() {
-        setResNextCount(4);
-        setResInts("vdo_noun_group_id", 4);
-        setResStrings("vdo_noun_group_name", 4);
-        Map<String, Integer> map = dbh.getVdoNounGrpups();
-        assertNotNull(map);
-        assertEquals(4, map.size());
-    }
-
-    @Test
-    public void getTableDataAsHashMapTest() {
-        setResNextCount(3);
-        setResStrings("stringfield", 3);
-        setResInts("intfield", 3);
-        try {
-            Map<String, Integer> map = dbh.getTableDataAsHashMap("sentence", "intfield", "stringfield");
-            assertNotNull(map);
-            assertEquals(3, map.size());
-            verify(pstmt).executeQuery("sentence");
-            assertEquals(0, (int) map.get("stringfield0"));
-            assertEquals(1337, (int) map.get("stringfield1"));
-            assertEquals(2674, (int) map.get("stringfield2"));
         } catch (SQLException ignored) {}
     }
 
