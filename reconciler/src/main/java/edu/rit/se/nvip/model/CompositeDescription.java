@@ -105,6 +105,12 @@ public class CompositeDescription {
         return this.sources;
     }
 
+    public boolean usesHighPrio() {
+        for (RawVulnerability vuln : sources) {
+            if (vuln.isHighPriority()) return true;
+        }
+        return false;
+    }
 
     /**
      * Models the build tree for a description.

@@ -12,6 +12,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class ReconcilerController {
     private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
@@ -59,29 +60,32 @@ public class ReconcilerController {
 
     private CompositeVulnerability handleReconcilerJob(String cveId) {
         // pull data
-        int rawCount;
-        int newRawCount;
-        int rejectCount;
         Set<RawVulnerability> rawVulns = dbh.getRawVulnerabilities(cveId);
-        rawCount = rawVulns.size();
-        newRawCount = rawCount;
+        int rawCount = rawVulns.size();
+        VulnSetWrapper wrapper = new VulnSetWrapper(rawVulns);
+        // mark new vulns as unevaluated
+        int newRawCount = wrapper.setNewToUneval();
+        // get an existing vuln from prior reconciliation if one exists
         CompositeVulnerability existing = dbh.getCompositeVulnerability(cveId);
-        if (existing != null) {
-            // isolate new raw vulnerabilities
-            newRawCount -= removeUsedVulns(rawVulns, existing.getComponents());
-        }
-        // filter
-        Set<RawVulnerability> failed = runFilters(rawVulns);
-        rejectCount = failed.size();
-        dbh.updateFilterStatus(failed);
-        dbh.updateFilterStatus(rawVulns);
-        logger.info("{} raw vulnerabilities with CVE ID {} were found, {} were new, {} of the new raw vulns were rejected, and {} are being submitted for reconciliation",
-                rawCount, cveId, newRawCount, rejectCount, newRawCount);
+        // filter in waves by priority
+        FilterReturn firstWaveReturn = runFilters(wrapper.firstFilterWave()); //high prio sources
+        FilterReturn secondWaveReturn = runFilters(wrapper.secondFilterWave()); //either empty or low prio depending on filter status of high prio sources
+        // update the filter status in the db for new and newly evaluated vulns
+        dbh.updateFilterStatus(wrapper.toUpdate());
+        logger.info("{} raw vulnerabilities with CVE ID {} were found and {} were new.\n" +
+                        "The first wave of filtering passed {} out of {} new high priority sources.\n" +
+                        "The second wave of filtering passed {} out of {} new backup low priority sources.\n" +
+                        "In total, {} distinct descriptions had to be filtered.",
+                rawCount, cveId, newRawCount,
+                firstWaveReturn.numPassed, firstWaveReturn.numIn,
+                secondWaveReturn.numPassed, secondWaveReturn.numIn,
+                firstWaveReturn.numDistinct + secondWaveReturn.numDistinct);
         // reconcile
-        return reconciler.reconcile(existing, rawVulns);
+        return reconciler.reconcile(existing, wrapper.toReconcile());
     }
 
-    private Set<RawVulnerability> runFilters(Set<RawVulnerability> vulns) {
+
+    private FilterReturn runFilters(Set<RawVulnerability> vulns) {
         // set up equivalence classes partitioned by equal descriptions
         Map<String, Set<RawVulnerability>> equivClasses = new HashMap<>();
         Set<RawVulnerability> samples = new HashSet<>(); // holds one from each equivalence class
@@ -93,41 +97,34 @@ public class ReconcilerController {
             }
             equivClasses.get(desc).add(rawVuln);
         }
-        // filter a sample from each equivalence class
-        Set<RawVulnerability> failedSamples = new HashSet<>();
         for (Filter filter : filters) {
-            failedSamples.addAll(filter.filterAllAndSplit(samples));
+            filter.filterAll(samples);
         }
-        // if a sample failed then all the vulns it represents fail too
-        Set<RawVulnerability> out = new HashSet<>();
-        for (RawVulnerability failure : failedSamples) {
-            Set<RawVulnerability> equivSet = equivClasses.get(failure.getDescription());
-            out.addAll(equivSet); // we return the failures
-            vulns.removeAll(equivSet); // the input set should no longer contain the failures
+        // update filter statuses in each equiv class to match its sample
+        for (RawVulnerability sample : samples) {
+            for (RawVulnerability rv : equivClasses.get(sample.getDescription())) {
+                rv.setFilterStatus(sample.getFilterStatus());
+            }
         }
-        return out;
+        int numPassed = vulns.stream().filter(v->v.getFilterStatus() == RawVulnerability.FilterStatus.PASSED).collect(Collectors.toSet()).size();
+        return new FilterReturn(vulns.size(), samples.size(), numPassed);
+    }
+
+    private static class FilterReturn {
+        public int numIn;
+        public int numDistinct;
+        public int numPassed;
+        public FilterReturn(int numIn, int numDistinct, int numPassed) {
+            this.numIn = numIn;
+            this.numDistinct = numDistinct;
+            this.numPassed = numPassed;
+        }
     }
 
     private void runProcessors(Set<CompositeVulnerability> vulns) {
         for (Processor ap : processors) {
             ap.process(vulns);
         }
-    }
-
-    private int removeUsedVulns(Set<RawVulnerability> totalList, Set<RawVulnerability> usedList) {
-        Iterator<RawVulnerability> iterator = totalList.iterator();
-        int count = 0;
-        while (iterator.hasNext()) {
-            RawVulnerability sample = iterator.next();
-            for (RawVulnerability used : usedList) {
-                if (sample.equals(used)) {
-                    iterator.remove();
-                    count++;
-                    break;
-                }
-            }
-        }
-        return count;
     }
 
     /**
@@ -139,5 +136,53 @@ public class ReconcilerController {
         filters.add(FilterFactory.createFilter(FilterFactory.INTEGER_DESCRIPTION));
         filters.add(FilterFactory.createFilter(FilterFactory.MULTIPLE_CVE_DESCRIPTION));
         filters.add(FilterFactory.createFilter(FilterFactory.DESCRIPTION_SIZE));
+    }
+
+    private static class VulnSetWrapper  {
+        private final Set<RawVulnerability> vulns;
+        public VulnSetWrapper(Set<RawVulnerability> vulns) {
+            this.vulns = vulns;
+        }
+        public boolean hasPassedHighPrio() {
+            for (RawVulnerability v : vulns) {
+                if (v.getFilterStatus() == RawVulnerability.FilterStatus.PASSED && v.isHighPriority()) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        public Set<RawVulnerability> firstFilterWave() {
+            // first wave of filtering will be any high priority sources that haven't been evaluated yet
+            return vulns.stream().filter(v->!v.isFiltered()).filter(RawVulnerability::isHighPriority).collect(Collectors.toSet());
+        }
+        public Set<RawVulnerability> secondFilterWave() {
+            if (hasPassedHighPrio()) {
+                // no need for a second wave
+                return new HashSet<>();
+            }
+            // all the high prio sources failed, release the second wave of low prio sources
+            return vulns.stream().filter(v->!v.isFiltered()).collect(Collectors.toSet());
+        }
+
+        public int setNewToUneval() {
+            int out = 0;
+            for (RawVulnerability v : vulns) {
+                if (v.getFilterStatus() == RawVulnerability.FilterStatus.NEW) {
+                    out ++;
+                    v.setFilterStatus(RawVulnerability.FilterStatus.UNEVALUATED);
+                }
+            }
+            return out;
+        }
+
+        public Set<RawVulnerability> toUpdate() {
+            return vulns.stream().filter(RawVulnerability::filterStatusChanged).collect(Collectors.toSet());
+        }
+        public Set<RawVulnerability> toReconcile() {
+            // if a vuln was changed, it was unevaluated before and thus hasn't been considered for prior reconciliation
+            // then take the changed ones and pick out the passed vulns
+            // don't need to worry about prio here because nothing gets filtered that we don't want to use
+            return toUpdate().stream().filter(v->v.getFilterStatus()== RawVulnerability.FilterStatus.PASSED).collect(Collectors.toSet());
+        }
     }
 }
