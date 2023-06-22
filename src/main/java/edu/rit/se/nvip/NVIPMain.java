@@ -618,8 +618,8 @@ public class NVIPMain {
 	 * announcing a new security problem. When the candidate has been publicized,
 	 * the details for this candidate will be provided.
 	 *
-	 * @param cveHashMapNotScraped
-	 * @param cveHashMapScrapedFromCNAs
+	 * @param cveHashMapNotScraped CVEs from Quick CVE Crawler
+	 * @param cveHashMapScrapedFromCNAs CVEs from main crawler functions
 	 * @return
 	 */
 	public HashMap<String, CompositeVulnerability> mergeCVEsDerivedFromCNAsAndGit(HashMap<String, List<CompositeVulnerability>> cveHashMapNotScraped,
@@ -629,10 +629,13 @@ public class NVIPMain {
 		logger.info("Merging {} scraped CVEs with {} Github", cveHashMapScrapedFromCNAs.size(), cveHashMapNotScraped.size());
 		HashMap<String, List<CompositeVulnerability>> mergedMap = new HashMap<>(); // merged CVE Lists
 
+		// Add quick crawler CVEs first
 		for (String cveId: cveHashMapNotScraped.keySet()) {
 			mergedMap.put(cveId, cveHashMapNotScraped.get(cveId));
 		}
 
+		// Add the crawled CVEs from raw sources
+		// any duplicate entries just get added to the existing list in the HashMap
 		for (String cveId: cveHashMapScrapedFromCNAs.keySet()) {
 			if (mergedMap.containsKey(cveId)) {
 				for (CompositeVulnerability cnaVuln: cveHashMapScrapedFromCNAs.get(cveId)) {
@@ -655,17 +658,21 @@ public class NVIPMain {
 			for (CompositeVulnerability rawVuln: mergedMap.get(cveId)) {
 				if (rawVuln != null) {
 					// Did we find garbage or valid description?
+					// If it's the same description, just ignore it :D
 					if (!CveUtils.isCveReservedEtc(rawVuln.getDescription()) && nlpUtil.sentenceDetect(rawVuln.getDescription()) != null) {
-						fullDescription += rawVuln.getDescription() + "\n\n\n";
-						for (String sourceUrl : rawVuln.getSourceURL()) {
-							if (!totalSourceURLs.contains(sourceUrl)) {
-								totalSourceURLs.add(sourceUrl);
+						if (!fullDescription.contains(rawVuln.getDescription())) {
+							fullDescription += rawVuln.getDescription() + "\n\n\n";
+							for (String sourceUrl : rawVuln.getSourceURL()) {
+								if (!totalSourceURLs.contains(sourceUrl)) {
+									totalSourceURLs.add(sourceUrl);
+								}
 							}
 						}
 					}
 				}
 			}
 
+			// Use created date as default if published date and last modified dates aren't provided
 			try {
 				CompositeVulnerability compiledVuln = new CompositeVulnerability(0, totalSourceURLs.size() > 0 ? totalSourceURLs.get(0) : "",
 						cveId,
@@ -676,8 +683,11 @@ public class NVIPMain {
 						"");
 
 				// Combine remaining sources
+				// Filter duplicate source URLs
 				for (int i=1; i< totalSourceURLs.size(); i++)  {
-					compiledVuln.addSourceURL(totalSourceURLs.get(i));
+					if (!compiledVuln.getSourceURL().contains(totalSourceURLs.get(i))) {
+						compiledVuln.addSourceURL(totalSourceURLs.get(i));
+					}
 				}
 
 				cveHashMapAll.put(cveId, compiledVuln);
