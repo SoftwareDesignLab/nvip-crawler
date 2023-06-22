@@ -45,7 +45,6 @@ import org.apache.logging.log4j.Logger;
 import edu.rit.se.nvip.characterizer.CveCharacterizer;
 import edu.rit.se.nvip.crawler.CveCrawlController;
 
-import edu.rit.se.nvip.crawler.github.GithubScraper;
 import edu.rit.se.nvip.crawler.QuickCveCrawler;
 
 import edu.rit.se.nvip.cveprocess.CveLogDiff;
