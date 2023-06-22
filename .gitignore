@@ -23,6 +23,8 @@ output/
 # Un-moddifiables
 /nvip_data/mysql-database/
 /.github/
+pom.xml
+
 
 # Git Repos
 nvip_data/pypa-repo/

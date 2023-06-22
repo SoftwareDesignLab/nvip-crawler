@@ -26,6 +26,7 @@ package edu.rit.se.nvip.crawler.htmlparser;
 import edu.rit.se.nvip.model.RawVulnerability;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.util.*;
@@ -65,15 +66,20 @@ public class BugsGentooParser extends AbstractCveParser {
 
 		Document doc = Jsoup.parse(sCVEContentHTML);
 
-		publishDate = Objects.requireNonNull(doc.getElementById("bz_show_bug_column_2")).
-				getElementsByTag("table").get(0).getElementsByTag("tr").get(0).
+		Element column = doc.getElementById("bz_show_bug_column_2");
+		if (column == null)
+			return vulns;
+		publishDate = column.
 				getElementsByTag("td").get(0).text().substring(0, 20);
 
-		lastModified = Objects.requireNonNull(doc.getElementById("bz_show_bug_column_2")).
+		lastModified = column.
 				getElementsByTag("table").get(0).getElementsByTag("tr").get(1).
 				getElementsByTag("td").get(0).text().substring(0, 20);
 
-		String[] cves = Objects.requireNonNull(doc.getElementById("alias_nonedit_display")).text().split(",");
+		Element descEl = doc.getElementById("alias_nonedit_display");
+		if (descEl == null)
+			return vulns;
+		String[] cves = descEl.text().split(",");
 		Elements descs = doc.getElementsByClass("bz_first_comment");
 
 		if (descs.size() == 1) {

@@ -23,41 +23,37 @@
  */
 package edu.rit.se.nvip;
 
-import java.io.*;
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
-import java.util.*;
-import java.util.stream.Collectors;
-
-import edu.rit.se.nvip.crawler.QuickCveCrawler;
-import edu.rit.se.nvip.crawler.CveCrawler;
-import edu.rit.se.nvip.crawler.github.PyPAGithubScraper;
-
-import edu.rit.se.nvip.exploit.ExploitIdentifier;
-import edu.rit.se.nvip.mitre.MitreCveController;
-import edu.rit.se.nvip.mitre.MitreCveParser;
-import edu.rit.se.nvip.model.*;
-import edu.rit.se.nvip.nvd.NvdCveController;
-import edu.rit.se.nvip.patchfinder.JGitCVEPatchDownloader;
-import edu.rit.se.nvip.patchfinder.PatchFinder;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import edu.rit.se.nvip.characterizer.CveCharacterizer;
 import edu.rit.se.nvip.crawler.CveCrawlController;
+import edu.rit.se.nvip.crawler.CveCrawler;
+import edu.rit.se.nvip.crawler.QuickCveCrawler;
+import edu.rit.se.nvip.crawler.github.PyPAGithubScraper;
 import edu.rit.se.nvip.cveprocess.CveLogDiff;
 import edu.rit.se.nvip.cveprocess.CveProcessor;
 import edu.rit.se.nvip.cvereconcile.AbstractCveReconciler;
 import edu.rit.se.nvip.cvereconcile.CveReconcilerFactory;
 import edu.rit.se.nvip.db.DatabaseHelper;
 import edu.rit.se.nvip.db.DbParallelProcessor;
+import edu.rit.se.nvip.exploit.ExploitIdentifier;
+import edu.rit.se.nvip.mitre.MitreCveController;
+import edu.rit.se.nvip.model.*;
 import edu.rit.se.nvip.model.CompositeVulnerability.CveReconcileStatus;
+import edu.rit.se.nvip.nvd.NvdCveController;
+import edu.rit.se.nvip.patchfinder.JGitCVEPatchDownloader;
+import edu.rit.se.nvip.patchfinder.PatchFinder;
 import edu.rit.se.nvip.productnameextractor.AffectedProductIdentifier;
-import edu.rit.se.nvip.utils.CveUtils;
-import edu.rit.se.nvip.utils.MyProperties;
-import edu.rit.se.nvip.utils.NlpUtil;
-import edu.rit.se.nvip.utils.PropertyLoader;
-import edu.rit.se.nvip.utils.UtilHelper;
+import edu.rit.se.nvip.utils.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  *

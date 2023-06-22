@@ -32,7 +32,6 @@ import org.jsoup.select.Elements;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class JenkinsParser extends AbstractCveParser {
@@ -67,7 +66,7 @@ public class JenkinsParser extends AbstractCveParser {
             // get description for given CVEs
             StringBuilder description = new StringBuilder();
             Element next = cveLine.nextElementSibling();
-            while (!Objects.requireNonNull(next).tagName().contains("h")) {
+            while (next != null && !next.tagName().contains("h")) {
                 // add p to desc, given that it does not say:
                 // "As of publication of this advisory, there is no fix. Learn why we announce this."
                 if (next.className().contains("paragraph") && !next.text().contains("As of publication of this advisory, there is no fix. Learn why we announce this")) {
