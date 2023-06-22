@@ -2,6 +2,7 @@ FROM maven:3.8-jdk-11-slim AS builder
 
 WORKDIR /home/app
 
+# Build jar file
 ADD pom.xml .
 RUN mvn dependency:go-offline
 ADD src/main src/main
@@ -11,19 +12,24 @@ RUN mvn package -Dmaven.test.skip=true
 ### Run Stage
 FROM openjdk:11-jre-slim
 
+# Not sure what this does
 RUN apt-get update \
     && apt-get install -y libglib2.0-0 libnss3 libxcb1
 
+# Install chrome browser for Selenium
 RUN apt-get install -y wget
 RUN wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
 RUN apt-get install -y ./google-chrome-stable_current_amd64.deb
 
+# Mount data directory
 VOLUME /usr/local/lib/nvip_data
 ADD nvip_data /usr/local/lib/nvip_data
 
+# Mount output dir
 VOLUME /usr/local/lib/output
 ADD output /usr/local/lib/output
 
+# Copy over output jar from build
 COPY --from=builder /home/app/target/nvip_lib /usr/local/lib/nvip_lib
 COPY --from=builder /home/app/target/nvip-1.0.jar /usr/local/lib/nvip-1.0.jar
 
