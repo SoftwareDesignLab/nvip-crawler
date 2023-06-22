@@ -2,16 +2,16 @@ package edu.rit.se.nvip;
 
 import edu.rit.se.nvip.characterizer.CveCharacterizer;
 import edu.rit.se.nvip.db.DatabaseHelper;
-import edu.rit.se.nvip.model.CompositeVulnerability;
 import edu.rit.se.nvip.filter.Filter;
 import edu.rit.se.nvip.filter.FilterFactory;
+import edu.rit.se.nvip.model.CompositeVulnerability;
 import edu.rit.se.nvip.model.RawVulnerability;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import edu.rit.se.nvip.process.Processor;
 import edu.rit.se.nvip.process.ProcessorFactory;
 import edu.rit.se.nvip.reconciler.Reconciler;
 import edu.rit.se.nvip.reconciler.ReconcilerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.*;
 
@@ -68,18 +68,16 @@ public class ReconcilerController {
         logger.info("Characterizing and scoring NEW CVEs...");
 
         try {
-            String[] trainingDataInfo = {"characterization/", "AttackTheater.csv,Context.csv,ImpactMethod.csv,LogicalImpact.csv,Mitigation.csv"};
+            String[] trainingDataInfo = {System.getenv("NVIP_CVE_CHARACTERIZATION_TRAINING_DATA_DIR"), System.getenv("NVIP_CVE_CHARACTERIZATION_TRAINING_DATA")};
             logger.info("Setting NVIP_CVE_CHARACTERIZATION_LIMIT to {}", System.getenv("NVIP_CVE_CHARACTERIZATION_LIMIT"));
-            try{
 
-                CveCharacterizer cveCharacterizer = new CveCharacterizer(trainingDataInfo[0], trainingDataInfo[1], "ML",
-                        "VOTE");
+            CveCharacterizer cveCharacterizer = new CveCharacterizer(trainingDataInfo[0], trainingDataInfo[1], System.getenv("NVIP_CHARACTERIZATION_APPROACH"),
+                    System.getenv("NVIP_CHARACTERIZATION_METHOD"));
 
-                return cveCharacterizer.characterizeCveList((List<CompositeVulnerability>)crawledVulnerabilityList, dbh,
-                        (Integer) characterizationVars.get("cveCharacterizationLimit"));
-                //CATCH NEEDS TO BE EDITED
-            }catch (NullPointerException | NumberFormatException e) { logger.warn("Could not fetch NVIP_CHARACTERIZATION_METHOD from env vars, defaulting to {}", System.getenv("NVIP_CVE_CHARACTERIZATION_LIMIT")); }
+            List<CompositeVulnerability> cveList = new ArrayList<>(crawledVulnerabilityList);
 
+            return cveCharacterizer.characterizeCveList(cveList, dbh,
+                   Integer.parseInt(System.getenv("NVIP_CVE_CHARACTERIZATION_LIMIT")));
         }
         catch (NullPointerException | NumberFormatException e) { logger.warn("Could not fetch NVIP_CVE_CHARACTERIZATION_TRAINING_DATA or NVIP_CVE_CHARACTERIZATION_TRAINING_DATA_DIR from env vars, defaulting to {}", System.getenv("NVIP_CVE_CHARACTERIZATION_LIMIT")); }
 

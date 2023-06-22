@@ -108,7 +108,7 @@ public class CveCharacterizer {
 			}
 
 		} catch (Exception e) {
-			logger.error("An error occurred while tarining a classifier for CVE Characterizer! NVIP will not crash but " +
+			logger.error("An error occurred while training a classifier for CVE Characterizer! NVIP will not crash but " +
 					"CVE Characterizer will NOT work properly. Check your training data at {}\nException: {}",
 					trainingDataPath, e.getMessage());
 		}
@@ -148,7 +148,7 @@ public class CveCharacterizer {
 
 		Map<String, Integer> cvssSeverityLabels = databaseHelper.getCvssSeverityLabels();
 		Map<String, Integer> vdoLabels = databaseHelper.getVdoLabels();
-		Map<String, Integer> vdoNounGroups = databaseHelper.getVdoNounGrpups();
+		Map<String, Integer> vdoNounGroups = databaseHelper.getVdoNounGroups();
 
 		int countNotChanged = 0;
 		int countBadDescription = 0;

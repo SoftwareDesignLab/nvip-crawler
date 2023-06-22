@@ -33,7 +33,7 @@ public class CveClassifierFactorTest {
 //        MyProperties propertiesNvip = new MyProperties();
 //        propertiesNvip = new PropertyLoader().loadConfigFile(propertiesNvip);
 //        String[] trainingDataInfo = propertiesNvip.getCveCharacterizationTrainingDataInfo();
-        String[] trainingDataInfo = {"characterization/", "AttackTheater.csv,Context.csv,ImpactMethod.csv,LogicalImpact.csv,Mitigation.csv"};
+        String[] trainingDataInfo = {System.getenv("NVIP_CVE_CHARACTERIZATION_TRAINING_DATA_DIR"), System.getenv("NVIP_CVE_CHARACTERIZATION_TRAINING_DATA")};
         String trainingDataPath = trainingDataInfo[0];
         String trainingDataFiles = trainingDataInfo[1];
         String[] trainingDataFileArr = trainingDataFiles.split(",");

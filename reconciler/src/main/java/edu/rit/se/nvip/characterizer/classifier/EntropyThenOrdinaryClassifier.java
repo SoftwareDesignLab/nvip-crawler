@@ -23,13 +23,13 @@
  */
 package edu.rit.se.nvip.characterizer.classifier;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-
 import weka.classifiers.trees.J48;
 import weka.core.Instance;
 import weka.core.Instances;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 
 /**
  * Further classification: After finding divergences, train a edu.rit.se.nvip.model with the top

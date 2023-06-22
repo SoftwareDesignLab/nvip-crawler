@@ -3,6 +3,9 @@ package edu.rit.se.nvip.db;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import com.zaxxer.hikari.pool.HikariPool;
+import edu.rit.se.nvip.db.enums.CVSSSeverity;
+import edu.rit.se.nvip.db.enums.VDOLabel;
+import edu.rit.se.nvip.db.enums.VDONounGroup;
 import edu.rit.se.nvip.model.CompositeDescription;
 import edu.rit.se.nvip.model.CompositeVulnerability;
 import edu.rit.se.nvip.model.NvdVulnerability;
@@ -400,41 +403,21 @@ public class DatabaseHelper {
 		return 0;
 	}
 
-	/**
-	 * get table data as Map<name,id>
-	 *
-	 * @param sqlSentence
-	 * @param intField
-	 * @param stringField
-	 * @return
-	 */
-	public Map<String, Integer> getTableDataAsHashMap(String sqlSentence, String intField, String stringField) {
-		Map<String, Integer> cvssSeverityLabels = new HashMap<String, Integer>();
-		Connection conn = null;
-		try {
-			conn = getConnection();
-			Statement stmt = conn.createStatement();
-			ResultSet rs = stmt.executeQuery(sqlSentence);
 
-			while (rs.next()) {
-				int id = rs.getInt(intField);
-				String name = rs.getString(stringField);
-				cvssSeverityLabels.put(name, id);
-			}
-		} catch (SQLException e) {
-			logger.error(e.getMessage());
-		} finally {
-			try {
-				conn.close();
-			} catch (SQLException e) {
+	public Map<String, Integer> getTableDataAsHashMap(Enum<?>[] enums) {
+		Map<String, Integer> dataMap = new HashMap<>();
 
-			}
+		for (int i = 0; i < enums.length; i++) {
+			int id = i + 1;
+			String name = enums[i].name();
+			dataMap.put(name, id);
 		}
-		return cvssSeverityLabels;
+
+		return dataMap;
 	}
 
 	public Map<String, Integer> getCvssSeverityLabels() {
-		return getTableDataAsHashMap(selectCvssSeveritySql, "cvss_severity_id", "cvss_severity_class");
+		return getTableDataAsHashMap(CVSSSeverity.values());
 	}
 
 	/**
@@ -443,11 +426,11 @@ public class DatabaseHelper {
 	 * @return
 	 */
 	public Map<String, Integer> getVdoLabels() {
-		return getTableDataAsHashMap(selectVdoLabelSql, "vdo_label_id", "vdo_label_name");
+		return getTableDataAsHashMap(VDOLabel.values());
 	}
 
-	public Map<String, Integer> getVdoNounGrpups() {
-		return getTableDataAsHashMap(selectVdoNounGroupSql, "vdo_noun_group_id", "vdo_noun_group_name");
+	public Map<String, Integer> getVdoNounGroups() {
+		return getTableDataAsHashMap(VDONounGroup.values());
 	}
 
 

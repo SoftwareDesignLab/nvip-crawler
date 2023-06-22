@@ -70,7 +70,6 @@ public class CveClassifierFactory {
 			} catch (Exception e) {
 				classifier = new RandomForest();
 			}
-
 			cveClassifier = new OrdinaryCveClassifier(classifier, preProcessedTrainingDataFile);
 
 		} else if (approach.equalsIgnoreCase("IT")) {

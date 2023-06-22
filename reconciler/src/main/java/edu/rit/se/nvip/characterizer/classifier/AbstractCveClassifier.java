@@ -23,21 +23,8 @@
  */
 package edu.rit.se.nvip.characterizer.classifier;
 
-import java.io.BufferedWriter;
-import java.io.ByteArrayInputStream;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Random;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import weka.core.DenseInstance;
 import weka.core.Instance;
 import weka.core.InstanceComparator;
@@ -48,6 +35,14 @@ import weka.filters.Filter;
 import weka.filters.unsupervised.attribute.AddValues;
 import weka.filters.unsupervised.attribute.NominalToString;
 import weka.filters.unsupervised.attribute.StringToWordVector;
+
+import java.io.*;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Random;
 
 /**
  * 
@@ -299,7 +294,6 @@ public abstract class AbstractCveClassifier {
 			for (int n = 0; n < folds; n++) {
 				Instances train = randData.trainCV(folds, n, rand);
 				Instances test = randData.testCV(folds, n);
-
 				trainMLModel(train);
 
 				int trueCount = 0, falseCount = 0;

@@ -42,7 +42,6 @@ public class CvePreProcessor {
 
 	public CvePreProcessor(boolean removeCommonStopWords) {
 		super();
-		System.out.println(STOPWORDS_FILE);
 		this.removeCommonStopWords = removeCommonStopWords;
 
 		PreProcessor preProc1 = new PreProcCleanUp(); // removes funny characters
