@@ -109,9 +109,9 @@ public class PatchCommitScraper {
 //					logger.info("Ignored {} non-patch commits", ignoredCounter);
 
 					if (patchCommits.isEmpty()) {
-						logger.info("No patches for CVE {} found in repo {} ", cveId, localDownloadLoc.split("/")[4]);
+						logger.info("No patches for CVE '{}' found in repo '{}' ", cveId, localDownloadLoc.split("/")[4]);
 					}
-				} else logger.warn("Could not get starting revision from repo {}", localDownloadLoc.split("/")[4]);
+				} else logger.warn("Could not get starting revision from repo '{}'", localDownloadLoc.split("/")[4]);
 			}
 		} catch (IOException | GitAPIException e) {
 			logger.error("ERROR: Failed to scrape repo @ {} for patch commits for CVE {}\n{}", repoSource, cveId, e);

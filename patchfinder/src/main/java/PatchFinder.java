@@ -37,10 +37,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 
 /**
  * Main class for collecting CVE Patches within repos that were
@@ -197,34 +194,67 @@ public class PatchFinder {
 			sourceBatches.add(new HashMap<>());
 		}
 
-		ExecutorService es = Executors.newFixedThreadPool(maxThreads);
-		// Divide cves equally amongst all threads, some threads may
-		// have more sources based on their CVEs provided
+		final BlockingQueue<Runnable> workQueue = new ArrayBlockingQueue<>(maxThreads);
+
+		final ThreadPoolExecutor e = new ThreadPoolExecutor(
+				maxThreads / 2,
+				maxThreads,
+				5,
+				TimeUnit.MINUTES,
+				workQueue
+		);
+
+		e.prestartAllCoreThreads();
+
 		int numSourcesAdded = 0;
 		int thread = 0;
 		for (String cveId : possiblePatchSources.keySet()) {
 			sourceBatches.get(thread).put(cveId, possiblePatchSources.get(cveId));
 			numSourcesAdded++;
 			if (numSourcesAdded % cvesPerThread == 0 && thread < maxThreads) {
-				es.execute(new PatchFinderThread(sourceBatches.get(thread), clonePath));
+				workQueue.add(new PatchFinderThread(sourceBatches.get(thread), clonePath));
 				thread++;
 			}
 		}
 
-		// TODO: Fix multi-threading such that threads that are hanging dont or check if task queue is empty maybe
+		e.shutdown();
 		try {
-			// Shut down the executor to release resources after all tasks are complete
-			final int timeout = 4;
-			final TimeUnit unit = TimeUnit.MINUTES;
-			if(!es.awaitTermination(timeout, unit)) {
-				throw new TimeoutException(String.format("Product extraction thread pool runtime exceeded timeout value of %s %s", timeout, unit.toString()));
-			}
-			logger.info("Product extraction thread pool completed all jobs, shutting down...");
-			es.shutdown();
-		} catch (Exception e) {
-			logger.error("Product extraction failed: {}", e.toString());
-			es.shutdown();
+			while(!e.awaitTermination(10, TimeUnit.SECONDS));
+		} catch (InterruptedException ex) {
+			logger.error("Product extraction failed: {}", e);
 		}
+
+//		ExecutorService es = Executors.newFixedThreadPool(maxThreads);
+//		// Divide cves equally amongst all threads, some threads may
+//		// have more sources based on their CVEs provided
+//		int numSourcesAdded = 0;
+//		int thread = 0;
+//		for (String cveId : possiblePatchSources.keySet()) {
+//			sourceBatches.get(thread).put(cveId, possiblePatchSources.get(cveId));
+//			numSourcesAdded++;
+//			if (numSourcesAdded % cvesPerThread == 0 && thread < maxThreads) {
+//				es.execute(new PatchFinderThread(sourceBatches.get(thread), clonePath));
+//				thread++;
+//			}
+//		}
+//
+//		// TODO: Fix multi-threading such that threads that are hanging dont or check if task queue is empty maybe
+//		try {
+//			while(es.awaitTermination(timeout, unit)) {
+//
+//			}
+//			// Shut down the executor to release resources after all tasks are complete
+//			final int timeout = 4;
+//			final TimeUnit unit = TimeUnit.MINUTES;
+//			if(!) {
+//				throw new TimeoutException(String.format("Product extraction thread pool runtime exceeded timeout value of %s %s", timeout, unit.toString()));
+//			}
+//			logger.info("Product extraction thread pool completed all jobs, shutting down...");
+//			es.shutdown();
+//		} catch (Exception e) {
+//			logger.error("Product extraction failed: {}", e.toString());
+//			es.shutdown();
+//		}
 	}
 
 }

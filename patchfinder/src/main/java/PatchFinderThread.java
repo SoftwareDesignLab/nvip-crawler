@@ -91,6 +91,6 @@ public class PatchFinderThread implements Runnable {
 
 		// Add found commits to total list after finished
 		PatchFinder.getPatchCommits().addAll(foundPatchCommits);
-		logger.info("Done scraping {} patch commits from {} CVEs", foundPatchCommits.size(), cvePatchEntry.size());
+		logger.info("Done scraping {} patch commits from CVE(s) {}", foundPatchCommits.size(), cvePatchEntry.keySet());
 	}
 }
