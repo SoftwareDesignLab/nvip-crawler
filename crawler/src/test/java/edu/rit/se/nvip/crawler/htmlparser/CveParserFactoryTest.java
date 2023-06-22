@@ -24,26 +24,42 @@
 package edu.rit.se.nvip.crawler.htmlparser;
 
 import edu.rit.se.nvip.model.RawVulnerability;
-import org.junit.Test;
+import edu.rit.se.nvip.crawler.CveCrawler;
 
 import java.util.List;
+import java.util.ArrayList;
 
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.*;
+import org.junit.Test;
+import org.junit.BeforeClass;
+import org.junit.AfterClass;
 
+import org.openqa.selenium.WebDriver;
 
 public class CveParserFactoryTest extends AbstractParserTest{
 
+    static WebDriver driver;
     CveParserFactory parserFactory = new CveParserFactory();
     AbstractCveParser parser;
+
+    @BeforeClass
+    public static void setupWebDriver(){
+        driver = new CveCrawler(new ArrayList<>(), "").getDriver();
+    }
+
+    @AfterClass
+    public static void destroyWebDriver(){
+        if(driver != null) driver.quit();
+    }
 
     @Test
     public void testFactoryTenable() {
         String html = safeReadHtml("src/test/resources/test-tenable.html");
         String sSourceURL = "https://www.tenable.com/cve/CVE-2022-21953";
-        parser = parserFactory.createParser(sSourceURL);
+        parser = parserFactory.createParser(sSourceURL, driver);
         assertNotNull(parser);
         assertEquals(parser.getClass(), TenableCveParser.class);
         List<RawVulnerability> list = parser.parseWebPage(sSourceURL, html);
@@ -58,7 +74,7 @@ public class CveParserFactoryTest extends AbstractParserTest{
     public void testFactoryTenableSec() {
         String html = safeReadHtml("src/test/resources/test-tenable-security.html");
         String sSourceURL = "https://www.tenable.com/security/research/tra-2023-5";
-        parser = parserFactory.createParser(sSourceURL);
+        parser = parserFactory.createParser(sSourceURL, driver);
         assertNotNull(parser);
         assertEquals(parser.getClass(), TenableSecurityParser.class);
         List<RawVulnerability> list = parser.parseWebPage(sSourceURL, html);
@@ -74,7 +90,7 @@ public class CveParserFactoryTest extends AbstractParserTest{
     public void testFactoryExploitDB() {
         String html = safeReadHtml("src/test/resources/test-exploit-db.html");
         String sSourceURL = "https://www.exploit-db.com/exploits/51031";
-        parser = parserFactory.createParser(sSourceURL);
+        parser = parserFactory.createParser(sSourceURL, driver);
         assertNotNull(parser);
         assertEquals(parser.getClass(), ExploitDBParser.class);
         List<RawVulnerability> list = parser.parseWebPage(sSourceURL, html);
@@ -89,7 +105,7 @@ public class CveParserFactoryTest extends AbstractParserTest{
     public void testFactoryKbCert() {
         String html = safeReadHtml("src/test/resources/test-kb-cert-single.html");
         String sSourceURL = "https://www.kb.cert.org/vuls/id/434994";
-        parser = parserFactory.createParser(sSourceURL);
+        parser = parserFactory.createParser(sSourceURL, driver);
         assertNotNull(parser);
         assertEquals(parser.getClass(), KbCertCveParser.class);
         List<RawVulnerability> list = parser.parseWebPage(sSourceURL, html);
@@ -104,7 +120,7 @@ public class CveParserFactoryTest extends AbstractParserTest{
     public void testFactoryPacketStorm() {
         String html = safeReadHtml("src/test/resources/test-packetstorm-files-2.html");
         String sSourceURL = "https://packetstormsecurity.com/files/170988/Cisco-RV-Series-Authentication-Bypass-Command-Injection.html";
-        parser = parserFactory.createParser(sSourceURL);
+        parser = parserFactory.createParser(sSourceURL, driver);
         assertNotNull(parser);
         assertEquals(parser.getClass(), PacketStormParser.class);
         List<RawVulnerability> list = parser.parseWebPage(sSourceURL, html);
@@ -119,7 +135,7 @@ public class CveParserFactoryTest extends AbstractParserTest{
     public void testFactoryTalos() {
         String html = safeReadHtml("src/test/resources/test-talos.html");
         String sSourceURL = "https://talosintelligence.com/vulnerability_reports/TALOS-2020-1124";
-        parser = parserFactory.createParser(sSourceURL);
+        parser = parserFactory.createParser(sSourceURL, driver);
         assertNotNull(parser);
         assertEquals(parser.getClass(), TalosIntelligenceParser.class);
         List<RawVulnerability> list = parser.parseWebPage(sSourceURL, html);
@@ -134,7 +150,7 @@ public class CveParserFactoryTest extends AbstractParserTest{
     public void testFactoryGentooBugs() {
         String html = safeReadHtml("src/test/resources/test-bugs-gentoo-single-cve.html");
         String sSourceURL = "https://bugs.gentoo.org/600624";
-        parser = parserFactory.createParser(sSourceURL);
+        parser = parserFactory.createParser(sSourceURL, driver);
         assertNotNull(parser);
         assertEquals(parser.getClass(), BugsGentooParser.class);
         List<RawVulnerability> list = parser.parseWebPage(sSourceURL, html);
@@ -147,7 +163,7 @@ public class CveParserFactoryTest extends AbstractParserTest{
     public void testFactoryGentooSecurity() {
         String html = safeReadHtml("src/test/resources/test-security-gentoo-single.html");
         String sSourceURL = "https://security.gentoo.org/glsa/200502-21";
-        parser = parserFactory.createParser(sSourceURL);
+        parser = parserFactory.createParser(sSourceURL, driver);
         assertNotNull(parser);
         assertEquals(parser.getClass(), SecurityGentooParser.class);
         List<RawVulnerability> list = parser.parseWebPage(sSourceURL, html);
@@ -160,7 +176,7 @@ public class CveParserFactoryTest extends AbstractParserTest{
     public void testFactoryVMWare() {
         String html = safeReadHtml("src/test/resources/test-vmware-advisories-single-cve.html");
         String sSourceURL = "https://www.vmware.com/security/advisories/VMSA-2023-0003.html";
-        parser = parserFactory.createParser(sSourceURL);
+        parser = parserFactory.createParser(sSourceURL, driver);
         assertNotNull(parser);
         assertEquals(parser.getClass(), VMWareAdvisoriesParser.class);
         List<RawVulnerability> list = parser.parseWebPage(sSourceURL, html);
@@ -173,7 +189,7 @@ public class CveParserFactoryTest extends AbstractParserTest{
     public void testFactoryBugzilla() {
         String html = safeReadHtml("src/test/resources/test-bugzilla-cvedetail-2.html");
         String sSourceURL = "https://bugzilla.redhat.com/show_bug.cgi?id=1576652";
-        parser = parserFactory.createParser(sSourceURL);
+        parser = parserFactory.createParser(sSourceURL, driver);
         assertNotNull(parser);
         assertEquals(parser.getClass(), BugzillaParser.class);
         List<RawVulnerability> list = parser.parseWebPage(sSourceURL, html);
@@ -186,7 +202,7 @@ public class CveParserFactoryTest extends AbstractParserTest{
     public void testFactorySecLists() {
         String html = safeReadHtml("src/test/resources/test-seclist.html");
         String sSourceURL = "https://seclists.org/bugtraq/2016/Feb/147";
-        parser = parserFactory.createParser(sSourceURL);
+        parser = parserFactory.createParser(sSourceURL, driver);
         assertNotNull(parser);
         assertEquals(parser.getClass(), SeclistsParser.class);
         List<RawVulnerability> list = parser.parseWebPage(sSourceURL, html);
@@ -199,7 +215,7 @@ public class CveParserFactoryTest extends AbstractParserTest{
     public void testFactoryRedhat() {
         String html = safeReadHtml("src/test/resources/test-redhat-security-2.html");
         String sSourceURL = "https://access.redhat.com/security/cve/cve-2023-25725";
-        parser = parserFactory.createParser(sSourceURL);
+        parser = parserFactory.createParser(sSourceURL, driver);
         assertNotNull(parser);
         assertEquals(parser.getClass(), RedHatParser.class);
         List<RawVulnerability> list = parser.parseWebPage(sSourceURL, html);
@@ -212,7 +228,7 @@ public class CveParserFactoryTest extends AbstractParserTest{
     public void testFactoryBosch() {
         String html = safeReadHtml("src/test/resources/test-bosch-security-2.html");
         String sSourceURL = "https://psirt.bosch.com/security-advisories/bosch-sa-464066-bt.html";
-        parser = parserFactory.createParser(sSourceURL);
+        parser = parserFactory.createParser(sSourceURL, driver);
         assertNotNull(parser);
         assertEquals(parser.getClass(), BoschSecurityParser.class);
         List<RawVulnerability> list = parser.parseWebPage(sSourceURL, html);
@@ -225,7 +241,7 @@ public class CveParserFactoryTest extends AbstractParserTest{
     public void testFactoryGoogleCloud() {
         String html = safeReadHtml("src/test/resources/test-google-cloud-bulletin.html");
         String sSourceURL = "https://cloud.google.com/support/bulletins";
-        parser = parserFactory.createParser(sSourceURL);
+        parser = parserFactory.createParser(sSourceURL, driver);
         assertNotNull(parser);
         assertEquals(parser.getClass(), GoogleCloudParser.class);
         assertNotEquals(parser.parseWebPage(sSourceURL, html).size(), 0);
@@ -235,7 +251,7 @@ public class CveParserFactoryTest extends AbstractParserTest{
     public void testFactoryCurl() {
         String html = safeReadHtml("src/test/resources/test-curl.html");
         String sSourceURL = "https://curl.se";
-        parser = parserFactory.createParser(sSourceURL);
+        parser = parserFactory.createParser(sSourceURL, driver);
         assertNotNull(parser);
         assertEquals(parser.getClass(), CurlParser.class);
         assertNotEquals(parser.parseWebPage(sSourceURL, html).size(), 0);
@@ -243,19 +259,19 @@ public class CveParserFactoryTest extends AbstractParserTest{
 
     @Test
     public void testFactoryNull() {
-        parser = parserFactory.createParser(null);
+        parser = parserFactory.createParser(null, driver);
         assertNotNull(parser);
         assertEquals(parser.getClass(), NullParser.class);
-        parser = parserFactory.createParser("gentoo......news");
+        parser = parserFactory.createParser("gentoo......news", driver);
         assertNotNull(parser);
         assertEquals(parser.getClass(), NullParser.class);
-        parser = parserFactory.createParser("gentoo......blogs");
+        parser = parserFactory.createParser("gentoo......blogs", driver);
         assertNotNull(parser);
         assertEquals(parser.getClass(), NullParser.class);
-        parser = parserFactory.createParser("mitre.org");
+        parser = parserFactory.createParser("mitre.org", driver);
         assertNotNull(parser);
         assertEquals(parser.getClass(), NullParser.class);
-        parser = parserFactory.createParser("nist.gov");
+        parser = parserFactory.createParser("nist.gov", driver);
         assertNotNull(parser);
         assertEquals(parser.getClass(), NullParser.class);
 

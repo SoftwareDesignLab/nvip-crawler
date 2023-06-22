@@ -31,17 +31,23 @@ import java.util.regex.Pattern;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import model.ProductVersion;
+import model.cpe.CpeEntry;
+import model.cpe.CpeGroup;
+import model.cpe.Product;
+import model.cpe.ProductItem;
+import model.cpe.ProductVersion;
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import model.Product;
 import opennlp.tools.tokenize.WhitespaceTokenizer;
 
 /**
  * This class is to check is a software name in the CPE dictionary
  * 
  * @author Igor Khokhlov
+ * @author Dylan Mulligan
+ * @author Paul Vickers
  *
  */
 
@@ -53,6 +59,18 @@ public class CpeLookUp {
 
 	// Regex101: https://regex101.com/r/9uaTQb/1
 	private static final Pattern CPE_PATTERN = Pattern.compile("cpe:2\\.3:[aho\\*\\-]:([^:]*):([^:]*):([^:]*):.*");
+
+	//Set of generic standalone product names to blacklist from getting CPE groups matched
+	private static final HashSet<String> genericProductNames;
+	static{
+		genericProductNames = new HashSet<>();
+		genericProductNames.add("security");
+		genericProductNames.add("hub");
+		genericProductNames.add("server");
+		genericProductNames.add("store");
+		genericProductNames.add("statistics");
+		genericProductNames.add("view");
+	}
 
 	/**
 	 * A hash map of <CPE, Domain>
@@ -74,20 +92,39 @@ public class CpeLookUp {
 		private final float score;
 		private final CpeGroup cpeGroup;
 
+		/**
+		 * Create new instance of CPEGroupFromMap, mapping CpeGroup to score
+		 *
+		 * @param score score of cpeGroup quality TODO: what is this score based on?
+		 * @param cpeGroup cpeGroup being scored
+		 */
 		public CPEGroupFromMap(float score, CpeGroup cpeGroup) {
 			super();
 			this.score = score;
 			this.cpeGroup = cpeGroup;
 		}
 
+
+		/**
+		 * @return the CpeGroup's score
+		 */
 		public float getScore() {
 			return score;
 		}
 
+		/**
+		 * @return the CpeGroup
+		 */
 		public CpeGroup getCpeGroup() {
 			return cpeGroup;
 		}
 
+		/**
+		 * Compare this.score to o.score.
+		 *
+		 * @param o the object to be compared.
+		 * @return -1 | 0 | 1 based on score comparison
+		 */
 		@Override
 		public int compareTo(CPEGroupFromMap o) {
 			float compareScore = o.getScore();
@@ -95,40 +132,60 @@ public class CpeLookUp {
 		}
 	}
 
-
-
+	/**
+	 * Create new instance of CpeLookUp
+	 */
 	public CpeLookUp() {
 		this.productsToBeAddedToDatabase = new HashMap<>();
 	}
 
+	/**
+	 * @return a map of products marked for database insertion
+	 */
 	public Map<String, Product> getProductsToBeAddedToDatabase() {
 		return this.productsToBeAddedToDatabase;
 	}
 
+	/**
+	 * Adds a given product to the database
+	 * @param p product to be added
+	 */
 	public void addProductToDatabase(Product p) {
 		this.productsToBeAddedToDatabase.put(p.getCpe(), p);
 	}
 
+	/**
+	 * Adds a given list of products to the database
+	 * @param products list of products to be added
+	 */
 	public void addProductsToDatabase(List<Product> products) {
 		for (Product p : products) {
 			addProductToDatabase(p);
 		}
 	}
 
+	/**
+	 * Loads a CPE dictionary of products from file
+	 */
 	protected void loadProductDict(Map<String, CpeGroup> productDict) {
 		this.cpeMapFile = productDict;
 		logger.info("Successfully loaded CPE dictionary with {} entries", productDict.size());
 	}
 
 	/**
-	 * loads serialized CPE list of products from dictionary file in nvip data
+	 * Compiles a CPE dictionary of products from querying NVD's CPE API
 	 *
-	 * @return assigns list of product
+	 * @return a map of loaded CpeGroup objects
 	 */
 	@SuppressWarnings({"unchecked", "rawtypes"})
-	public Map<String, CpeGroup> loadProductDict(int maxPages, int maxAttemptsPerPage) {
+	public Map<String, CpeGroup> queryProductDict(int maxPages, int maxAttemptsPerPage) {
+		// If maxPages is set to 0, no limit on pages
+		if(maxPages == 0) maxPages = Integer.MAX_VALUE;
+		// If maxAttemptsPerPage is set to 0, no limit on attempts
+		if(maxAttemptsPerPage == 0) maxAttemptsPerPage = Integer.MAX_VALUE;
+
 		// Init cpeMapFile
-		cpeMapFile = new HashMap<>();
+		final HashMap<String, CpeGroup> productDict = new HashMap<>();
 
 		// Collect CPE data from NVD API
 		try {
@@ -141,7 +198,18 @@ public class CpeLookUp {
 			// Extract results data
 			int remainingResults = (int) rawData.get("totalResults");
 			final int totalPages = (int) Math.ceil((double) remainingResults / RESULTS_PER_PAGE);
-			while(remainingResults > 0 && attempts < maxAttemptsPerPage) {
+			while(remainingResults > 0) {
+				// Skip page after it has reach max attempts
+				if(attempts >= maxAttemptsPerPage) {
+					// Reduce remaining results by number parsed
+					remainingResults -= RESULTS_PER_PAGE;
+					// Increment index
+					index += RESULTS_PER_PAGE;
+					// Sleep 2 sec between queries (adjust until we do not get 403 errors)
+					Thread.sleep(2000);
+					// Reset attempt count
+					attempts = 0;
+				}
 				try {
 					// Skip first query, as it was already done in order to get the totalResults number
 					if(index > 0) {
@@ -182,7 +250,7 @@ public class CpeLookUp {
 						// Add data to cpeMapFile
 						CpeGroup value;
 						// If key is not found, create new group and entry
-						if(!cpeMapFile.containsKey(key)) {
+						if(!productDict.containsKey(key)) {
 							// Create group
 							value = new CpeGroup(vendorName, productName);
 
@@ -190,12 +258,12 @@ public class CpeLookUp {
 							value.addVersion(new CpeEntry(productName, version, cpeId));
 
 							// Add group to cpeMapFile
-							cpeMapFile.put(key, value);
+							productDict.put(key, value);
 						}
 						// Update existing entries with versions
 						else {
 							// Get existing group from cpeMapFile
-							final CpeGroup existingValue = cpeMapFile.get(key);
+							final CpeGroup existingValue = productDict.get(key);
 
 							// Get existing versions from group
 							final Set<String> existingVersions = existingValue.getVersions().keySet();
@@ -208,15 +276,17 @@ public class CpeLookUp {
 						}
 					});
 
+					final int page = 1 + (index / RESULTS_PER_PAGE);
+
 					// Reduce remaining results by number parsed
 					remainingResults -= RESULTS_PER_PAGE;
-
 					// Increment index
 					index += RESULTS_PER_PAGE;
 					// Sleep 2 sec between queries (adjust until we do not get 403 errors)
 					Thread.sleep(2000);
+					// Reset attempt count
+					attempts = 0;
 
-					final int page = index / RESULTS_PER_PAGE;
 					logger.info("Successfully loaded CPE dictionary page {}/{}", page, totalPages);
 					if(page >= maxPages) {
 						logger.warn("MAX_PAGES reached, the remaining {} pages will not be queried", totalPages - maxPages);
@@ -228,7 +298,7 @@ public class CpeLookUp {
 					Thread.sleep(10000);
 					throw e;
 				} catch (Exception e) {
-					logger.error("Error loading CPE dictionary page {}/{}, Attempt {}/{}: {}", index / RESULTS_PER_PAGE, totalPages, attempts + 1, maxAttemptsPerPage, e.toString());
+					logger.error("Error loading CPE dictionary page {}/{}, Attempt {}/{}: {}", (index / RESULTS_PER_PAGE) + 1, totalPages, attempts + 1, maxAttemptsPerPage, e.toString());
 					attempts++;
 				}
 			}
@@ -238,9 +308,17 @@ public class CpeLookUp {
 			logger.error("Error loading CPE dictionary: {}", e.toString());
 		}
 
-		return cpeMapFile;
+		return productDict;
 	}
 
+	/**
+	 * Queries NVD with the given startIndex parameter, returning the raw mapped data
+	 *
+	 * @param startIndex offset for query
+	 * @return raw mapped data
+	 * @throws JsonParseException if an exception occurs while attempting to parse the page contents
+	 * @throws IOException if an exception occurs while attempting to retrieve the page contents
+	 */
 	@SuppressWarnings("unchecked")
 	private LinkedHashMap<String, ?> getNvdCpeData(int startIndex) throws JsonParseException, IOException {
 		// Pagination parameter addition
@@ -251,10 +329,21 @@ public class CpeLookUp {
 		final String contents = getContentFromUrl(url);
 
 		// Parse contents (if fails, will throw JsonParseException)
-		return OM.readValue(contents, LinkedHashMap.class);
+		try {
+			return OM.readValue(contents, LinkedHashMap.class);
+		} catch (JsonParseException e) {
+			throw e;
+		}
 	}
 
-	private static String getContentFromUrl(String url) throws InterruptedIOException {
+	/**
+	 * Queries and gets the contents of a given url, returning the result as a String.
+	 *
+	 * @param url url to query
+	 * @return String contents of url
+	 * @throws IOException if an error occurs while parsing the given url
+	 */
+	private static String getContentFromUrl(String url) throws IOException {
 		StringBuilder response = new StringBuilder();
 		BufferedReader bufferedReader;
 
@@ -287,11 +376,11 @@ public class CpeLookUp {
 	}
 
 	/**
-	 * Find CPE groups based on the product name
+	 * Find CPE groups based on the given product's name
 	 * 
-	 * @param product product
+	 * @param product product to search
 	 *
-	 * @return list of CPEgroupFromMap objects
+	 * @return a list of found CPEGroupFromMap objects
 	 */
 	private ArrayList<CPEGroupFromMap> findCPEGroups(ProductItem product) {
 
@@ -304,6 +393,12 @@ public class CpeLookUp {
 
 		// Result list
 		ArrayList<CPEGroupFromMap> groupsList = new ArrayList<>();
+
+		//Ensures that generic product names do not get matched to CPE groups such as "security" or "server"
+		String[] splitProductName = productName.split(" ");
+		if(splitProductName.length == 1 && genericProductNames.contains(productName)){
+			return groupsList;
+		}
 
 		// iterate through all cpe groups
 		for (Map.Entry<String, CpeGroup> entry : cpeMapFile.entrySet()) {
@@ -364,12 +459,10 @@ public class CpeLookUp {
 	/**
 	 * Finds IDs of the relevant CPE entries
 	 * 
-	 * @param product<CPEgroupFromMap> selectedGroups - result from the
-	 *                                   findCPEgroups method
-	 * @param selectedGroups                product
-	 *
-	 * @return list of CPEgroupFromMap objects
-	 */ // TODO: Versions
+	 * @param selectedGroups result from the findCPEGroups method
+	 * @param product product to search
+	 * @return a list of found CPE ID Strings
+	 */
 	private ArrayList<String> getCPEIdsFromGroups(ArrayList<CPEGroupFromMap> selectedGroups, ProductItem product) {
 
 		ArrayList<String> cpeIDs = new ArrayList<>();
@@ -385,54 +478,54 @@ public class CpeLookUp {
 			cpeIDs.add(cpeName);
 			productsToAdd.add(new Product(selectedGroups.get(0).getCpeGroup().getCommonTitle(), cpeName));
 		} else {
+			// Get raw version words array
+			String[] versionWords = product.getVersions() // Get product versions
+					.stream().map(String::toLowerCase) // Map each element toLowerCase
+					.toArray(String[]::new); // Return elements in a String[]
+
+			// Process non-specific versions into enumerated ranges
+			// [ "1.2.2", "through", "1.3", "1.5", "before", "1.8.9" ]
+			// [ "1.2.2", "1.2.3", ... "1.3", 1.5, "1.8.0", ... "1.8.9" ]
+			versionManager.processVersions(versionWords);
+
 			for (CPEGroupFromMap selectedGroup : selectedGroups) {
+
+				//Ensures that there are no duplicate entries
+				HashSet<String> addedVersions = new HashSet<>();
+
+				//If no version ranges available, break
+				if(versionManager.getVersionRanges().size() == 0){
+					break;
+				}
 
 				// Get versions from group
 				final CpeGroup group = selectedGroup.getCpeGroup();
 				final HashMap<String, CpeEntry> groupVersions = group.getVersions();
 
-				// Get raw version words array
-				String[] versionWords = product.getVersions() // Get product versions
-						.stream().map(String::toLowerCase) // Map each element toLowerCase
-						.toArray(String[]::new); // Return elements in a String[]
-
-				// Process non-specific versions into enumerated ranges
-				// [ "1.2.2", "through", "1.3", "1.5", "before", "1.8.9" ]
-				// [ "1.2.2", "1.2.3", ... "1.3", 1.5, "1.8.0", ... "1.8.9" ]
-				versionManager.processVersions(versionWords);
-
-				// Init counter for matching CpeGroups
+				// Counter for matching versions
 				int matchesCounter = 0;
 
 				// Iterate over groupVersions map to check for affected CpeEntries
 				for (Map.Entry<String, CpeEntry> gv : groupVersions.entrySet()) {
 					final String versionKey = gv.getKey();
-					final CpeEntry entryValue = gv.getValue();
+
+					// If versionKey is not a valid version or cpe has already been made with that version, go next
+					if(!VersionManager.isVersion(versionKey) || addedVersions.contains(versionKey)) continue;
 
 					try {
 						final ProductVersion version = new ProductVersion(versionKey);
 						if(versionManager.isAffected(version)) {
+							addedVersions.add(versionKey);
 							matchesCounter++;
-							String cpeName = "cpe:2.3:a:" + selectedGroups.get(0).getCpeGroup().getGroupID() + ":" + versionKey + ":*:*:*:*:*:*:*";
+							String cpeName = "cpe:2.3:a:" + group.getGroupID() + ":" + versionKey + ":*:*:*:*:*:*:*";
 							cpeIDs.add(cpeName);
+							addedVersions.add(versionKey);
 							productsToAdd.add(new Product(group.getCommonTitle(), cpeName));
 						}
-					} catch (NumberFormatException e) {
-						logger.error("Error parsing version string '{}': {}", versionKey, e.toString());
+					} catch (IllegalArgumentException e) {
+						logger.warn("Error parsing version string '{}': {}", versionKey, e.toString());
 					}
 				}
-
-//				// try to find version using a hashmap key
-//				for (String versionWord : versionWords) {
-//					CpeEntry cpeEntry = groupVersions.get(versionWord);
-//
-//					if (cpeEntry != null) {
-//						matchesCounter++;
-//						String cpeName = "cpe:2.3:a:" + selectedGroups.get(0).getCpeGroup().getGroupID() + ":" + versionWord + ":*:*:*:*:*:*:*";
-//						cpeIDs.add(cpeName);
-//						productsToAdd.add(new Product(selectedGroups.get(0).getCpeGroup().getCommonTitle(), cpeName));
-//					}
-//				}
 
 				// look in the titles if did not find versions in the previous step
 				if (matchesCounter == 0) {
@@ -440,12 +533,43 @@ public class CpeLookUp {
 						String entryTitle = entry.getValue().getTitle().toLowerCase();
 
 						for (String versionWord : versionWords) {
+
+							// If versionWord is not a valid version or cpe has already been made with that version, go next
+							if(!VersionManager.isVersion(versionWord) || addedVersions.contains(versionWord)) continue;
+
 							if (entryTitle.contains(versionWord)) {
-								String cpeName = "cpe:2.3:a:" + selectedGroups.get(0).getCpeGroup().getGroupID() + ":" + versionWord + ":*:*:*:*:*:*:*";
+								addedVersions.add(versionWord);
+								matchesCounter++;
+								String cpeName = "cpe:2.3:a:" + group.getGroupID() + ":" + versionWord + ":*:*:*:*:*:*:*";
 								cpeIDs.add(cpeName);
-								productsToAdd.add(new Product(selectedGroups.get(0).getCpeGroup().getCommonTitle(), cpeName));
+								productsToAdd.add(new Product(group.getCommonTitle(), cpeName));
 								break;
 							}
+						}
+					}
+				}
+
+				//If we did not find versions in titles, try to find the version from the versions list
+				if (matchesCounter == 0) {
+
+					//Find the version from the versions list
+					for (String versionWord : versionWords) {
+
+						// If versionWord is not a valid version or cpe has already been made with that version, go next
+						if (!VersionManager.isVersion(versionWord) || addedVersions.contains(versionWord)) continue;
+
+						// If versionWord is a valid version, check if it is affected
+						try {
+							final ProductVersion version = new ProductVersion(versionWord);
+							if (versionManager.isAffected(version)) {
+								addedVersions.add(versionWord);
+								matchesCounter++;
+								String cpeName = "cpe:2.3:a:" + group.getGroupID() + ":" + versionWord + ":*:*:*:*:*:*:*";
+								cpeIDs.add(cpeName);
+								productsToAdd.add(new Product(group.getCommonTitle(), cpeName));
+							}
+						} catch (IllegalArgumentException e) {
+							logger.warn("Error parsing version string '{}': {}", versionWord, e.toString());
 						}
 					}
 				}
@@ -467,11 +591,11 @@ public class CpeLookUp {
 	}
 
 	/**
-	 * Get CPE IDs based on the product
+	 * Get CPE IDs based on the given product
 	 * 
-	 * @param product product
+	 * @param product product to search
 	 *
-	 * @return list of string with CPE IDs
+	 * @return a list of found CPE ID Strings
 	 */
 	public ArrayList<String> getCPEIds(ProductItem product) {
 		ArrayList<CPEGroupFromMap> cpeGroups = findCPEGroups(product);
@@ -479,11 +603,11 @@ public class CpeLookUp {
 	}
 
 	/**
-	 * Get CPE titles based on the product name
+	 * Get CPE titles based on the given productName
 	 * 
-	 * @param productName productName
+	 * @param productName name of product to get titles for
 	 *
-	 * @return list of CPE titles
+	 * @return a list of found CPE titles
 	 */
 	public ArrayList<String> getCPETitles(String productName) {
 
@@ -504,21 +628,30 @@ public class CpeLookUp {
 		return groupsList;
 	}
 
+	/**
+	 * Gets the version component of a given CPE ID
+	 *
+	 * @param cpeID CPE ID to search
+	 * @return found version String
+	 */
 	public static String getVersionFromCPEid(String cpeID) {
-
 		String version = null;
 
-		String[] cpeIDelements = cpeID.split(":");
-		// parse CPE id to elements
-		if (cpeIDelements.length >= 11) {
-			version = cpeIDelements[5];
+		// Match against CPE regex
+		final Matcher m = CPE_PATTERN.matcher(cpeID);
+		if(m.find()) version = m.group(3);
+		else logger.warn("Could not match CPE String {}", cpeID);
 
-		}
 		return version;
 	}
 
+	/**
+	 * Gets the vendor component of a given CPE ID
+	 *
+	 * @param cpeID CPE ID to search
+	 * @return found vendor String
+	 */
 	public static String getVendorFromCPEid(String cpeID) {
-
 		String vendor = null;
 
 		// Match against CPE regex

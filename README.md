@@ -168,19 +168,18 @@ A list of the environment variables is provided below:
 * **HIKARI_PASSWORD**: Database password used to login to the MySQL database
   - There is no default value
 
+### Runtime Data
 
 * **NVIP_DATA_DIR**: Directory path for data resources used by NVIP at runtime
-  - Default value: nvip_data
+    - Default value: nvip_data
 
 
 * **NVIP_REFRESH_NVD_LIST**: Boolean parameter that determines whether or not NVIP should refresh the existing NVD data in the nvd-cve.csv file
-  - Default value: true
+    - Default value: true
 
 
 * **NVIP_PARALLEL_PROCESS_THREAD_LIMIT**: Maximum # of threads for the DBParallelProcess class to use
-  - Default value: 9
-
-### Runtime Data
+    - Default value: 9
 
 * **NVIP_OUTPUT_DIR**: Output directory path for the web crawler(s)
   - Default value: output/crawlers
@@ -223,14 +222,19 @@ A list of the environment variables is provided below:
 * **NVD_API_URL**: URL for NVD API endpoint for grabbing CVEs from NVD
   - Default value: https://services.nvd.nist.gov/rest/json/cves/2.0?pubstartDate=<StartDate>&pubEndDate=<EndDate>
   - Where <StartDate> is the start date of the request and <EndDate> is the end date for the request
-  - Start and enddate values are determined on runtime, end date being the current date and start date is 120 days before
+  - Start and end date values are determined on runtime, end date being the current date and start date is 120 days before
   - Example: https://services.nvd.nist.gov/rest/json/cves/2.0/?pubStartDate=2021-08-04T00:00:00.000&pubEndDate=2021-10-22T00:00:00.000
   
 
 * **NVD_API_REQUEST_LIMIT**: Max # of requests NVIP should make to NVD to collect CVEs for performance comparison 
   - Default value: 10
   - Each requests grabs 2000 CVEs from NVD
-  
+
+### MITRE Comparison
+
+* **MITRE_GITHUB_URL**: Github URL used to pull MITRE's CVE repo and compare with MITREs results
+  - Default value: https://github.com/CVEProject/cvelist
+
 ### Characterizer
 
 * **NVIP_CVE_CHARACTERIZATION_TRAINING_DATA_DIR**: Directory path for folder that contains Characterizer traning data
@@ -249,6 +253,7 @@ A list of the environment variables is provided below:
 * **EXPLOIT_FINDER_ENABLED**: Boolean parameter for enabling the exploit finder
   - Default value: true
 
+
 * **EXPLOIT_DB_URL**: URL used for cloning and scraping the ExploitDB Git repo
   - Default value: https://gitlab.com/exploit-database/exploitdb
 
@@ -264,7 +269,6 @@ A list of the environment variables is provided below:
 
 * **PATCHFINDER_MAX_THREADS**: Limit of maximum # of threads for patch finder
   - Default value: 10
-
 
 ### Email Notification Service
 

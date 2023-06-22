@@ -90,7 +90,6 @@ https://web.mit.edu/kerberos/historical.html
 https://www.atlassian.com/trust/security/advisories
 https://www.atlassian.com/trust/security/advisory-publishing-policy
 https://www.cisa.gov/known-exploited-vulnerabilities-catalog
-https://www.cisa.gov/uscert/ics/alerts
 https://www.esri.com/arcgis-blog/?s=#&tag=cve
 https://www.esri.com/arcgis-blog/?s=#&tag=cve&tag=security
 https://www.freebsd.org
@@ -113,13 +112,15 @@ http://oxnan.com
 http://support.zte.com.cn/support/news/NewsMain.aspx
 http://svn.apache.org/viewvc/tomcat/site/trunk/docs/?pathrev=1907857
 http://www.slackware.com/security
-http://www.squid-cache.org/Advisories/, https://github.com/squid-cache/squid/security/advisories
+http://www.squid-cache.org/Advisories/
+https://github.com/squid-cache/squid/security/advisories
 http://www.vapidlabs.com/list.php
 https://advisories.mageia.org/index.html
 https://advisories.octopus.com
 https://advisory.dualvs.com
 https://airbus-seclab.github.io
-https://akka.io/security/, https://groups.google.com/g/akka-security
+https://akka.io/security/
+https://groups.google.com/g/akka-security
 https://amperecomputing.com/products/product-security.html
 https://ant.apache.org/security.html
 https://appcheck-ng.com/category/security-alerts
@@ -183,7 +184,9 @@ https://devolutions.net/security/advisories
 https://dhis2.org/security/vulnerabilities
 https://discuss.hashicorp.com/c/security/52
 https://discuss.rubyonrails.org/tag/security
-https://doc.powerdns.com/authoritative/security-advisories/, https://doc.powerdns.com/recursor/security-advisories/, https://dnsdist.org/security-advisories
+https://doc.powerdns.com/authoritative/security-advisories/
+https://doc.powerdns.com/recursor/security-advisories/
+https://dnsdist.org/security-advisories
 https://docs.couchdb.org/en/stable/cve
 https://docs.newrelic.com/docs/security/security-privacy/information-security/security-bulletins
 https://docs.senhasegura.io/security-center-advisories
@@ -432,7 +435,6 @@ https://www.johnsoncontrols.com/buildings/specialty-pages/product-security/secur
 https://www.kb.cert.org/vuls/bypublished/desc
 https://www.knime.com/security/advisories
 https://www.krakend.io/tags/security
-https://www.krcert.or.kr/krcert/secNoticeList.do
 https://www.kyoceradocumentsolutions.com/en/our-business/security
 https://www.lexmark.com/en_us/solutions/security/lexmark-security-advisories.html
 https://www.libreoffice.org/about-us/security/advisories
