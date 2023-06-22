@@ -34,6 +34,7 @@ import utils.GitController;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -52,6 +53,7 @@ public class PatchFinder {
 	protected static int cveLimit = 5;
 	protected static int maxThreads = 10;
 	protected static int cvesPerThread = 1;
+	protected static String[] addressBases = { "https://www.github.com/", "https://www.gitlab.com/" };
 
 	/**
 	 * Attempts to get all required environment variables from System.getenv() safely, logging
@@ -68,6 +70,12 @@ public class PatchFinder {
 			} else throw new Exception();
 		} catch (Exception ignored) { logger.warn("Could not fetch CVE_LIMIT from env vars, defaulting to {}", cveLimit); }
 
+		try{
+			if(props.containsKey("ADDRESS_BASES")) {
+				addressBases = System.getenv("ADDRESS_BASES").split(",");
+				logger.info("Setting ADDRESS_BASES to {}", Arrays.toString(addressBases));
+			} else throw new Exception();
+		}catch(Exception ignored) {logger.warn("Could not fetch ADDRESS_BASES from env vars, defaulting to {}", Arrays.toString(addressBases)); }
 	}
 
 	public static void main(String[] args) throws IOException, InterruptedException {
