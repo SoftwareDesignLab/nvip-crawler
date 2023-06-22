@@ -338,6 +338,9 @@
             <column name="commit_message" type="VARCHAR(1000)">
                 <constraints nullable="false"/>
             </column>
+            <column name="commit_message" type="TINYTEXT">
+                <constraints nullable="false"/>
+            </column>
         </createTable>
 
         <createIndex
