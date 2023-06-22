@@ -152,7 +152,7 @@ jobs:
           mysql -e 'SHOW DATABASES;' -uroot -proot
           mysql -e 'source nvip_data/mysql-database/CreateAndInitializeDb.sql' -uroot -proot
 
-      - name: Test and Build Reconciler with Maven
+      - name: Test and Build Product Extractor with Maven
         run: |
           cd productnameextractor
           mvn dependency:go-offline
@@ -218,7 +218,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and Push Docker Image for Backend
+      - name: Build and Push Docker Image for Crawler
         run: |
           cd crawler
           docker build . -t nvip-crawler-sub:dev -t ghcr.io/softwaredesignlab/nvip-crawler-sub:dev
@@ -247,7 +247,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and Push Docker Image for Backend
+      - name: Build and Push Docker Image for Reconciler
         run: |
           cd reconciler
           docker build . -t nvip-reconciler:dev -t ghcr.io/softwaredesignlab/nvip-reconciler:dev
@@ -281,7 +281,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and Push Docker Image for Backend
+      - name: Build and Push Docker Image for Product Extractor
         run: |
           cd productnameextractor
           docker build . -t nvip-product-extractor:dev -t ghcr.io/softwaredesignlab/nvip-product-extractor:dev
