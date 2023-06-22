@@ -42,6 +42,8 @@ import java.util.concurrent.*;
 /**
  * Main class for collecting CVE Patches within repos that were
  * previously collected from the PatchURLFinder class
+ *
+ * @author Dylan Mulligan
  */
 public class PatchFinder {
 	private static final Logger logger = LogManager.getLogger(PatchFinder.class.getName());
@@ -50,8 +52,9 @@ public class PatchFinder {
 	protected static int cveLimit = 5;
 	protected static int maxThreads = 10;
 	protected static int cvesPerThread = 1;
+	protected static int maxCommits = 0; // TODO: Find omptimal value once github scraping is done
 	protected static String clonePath = "src/main/resources/patch-repos";
-	protected static String[] addressBases = { "https://www.github.com/", "https://www.gitlab.com/" };
+	protected static String[] addressBases = { "https://github.com/", "https://www.gitlab.com/" };
 
 	/**
 	 * Attempts to get all required environment variables from System.getenv() safely, logging
@@ -213,14 +216,14 @@ public class PatchFinder {
 			sourceBatches.get(thread).put(cveId, possiblePatchSources.get(cveId));
 			numSourcesAdded++;
 			if (numSourcesAdded % cvesPerThread == 0 && thread < maxThreads) {
-				workQueue.add(new PatchFinderThread(sourceBatches.get(thread), clonePath));
+				workQueue.add(new PatchFinderThread(sourceBatches.get(thread), clonePath, 10000));
 				thread++;
 			}
 		}
 
 		e.shutdown();
 		try {
-			while(!e.awaitTermination(10, TimeUnit.SECONDS));
+			while(!e.awaitTermination(15, TimeUnit.SECONDS));
 		} catch (InterruptedException ex) {
 			logger.error("Product extraction failed: {}", e);
 		}

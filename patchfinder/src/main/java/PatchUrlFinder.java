@@ -48,6 +48,8 @@ import java.util.regex.Pattern;
  * Start patch finder for a given repository list (as .csv)
  *
  * Responsible for finding possible patch source URLs
+ *
+ * @author Dylan Mulligan
  */
 public class PatchUrlFinder {
 
