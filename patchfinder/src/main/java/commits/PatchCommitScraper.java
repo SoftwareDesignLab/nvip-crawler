@@ -57,6 +57,7 @@ public class PatchCommitScraper {
 	private static final Logger logger = LogManager.getLogger(PatchCommitScraper.class.getName());
 	private final String localDownloadLoc;
 	private final String repoSource;
+	private RevCommit vulnerableCommit; // Added
 
 	public PatchCommitScraper(String localDownloadLoc, String repoSource) {
 		this.localDownloadLoc = localDownloadLoc;
@@ -99,8 +100,17 @@ public class PatchCommitScraper {
 								logger.info("Found patch commit @ {} in repo {}", commitUrl, localDownloadLoc);
 								String unifiedDiff = generateUnifiedDiff(git, commit);
 
-								PatchCommit patchCommit = new PatchCommit(commitUrl, cveId, commit.getName(), new Date(commit.getCommitTime() * 1000L), commit.getFullMessage(), unifiedDiff);
-								patchCommits.add(patchCommit);
+								if (vulnerableCommit != null) { // Added
+									long timeToPatch = calculateTimeToPatch(vulnerableCommit, commit); // Added
+									int linesChanged = countLinesChanged(unifiedDiff); // Added
+
+									PatchCommit patchCommit = new PatchCommit(commitUrl, cveId, commit.getName(),
+											new Date(commit.getCommitTime() * 1000L), commit.getFullMessage(), unifiedDiff);
+									patchCommit.setTimeToPatch(timeToPatch);
+									patchCommit.setLinesChanged(linesChanged);
+
+									patchCommits.add(patchCommit);
+								}
 							} else ignoredCounter++;
 						}
 					}
@@ -168,5 +178,21 @@ public class PatchCommitScraper {
 				return new CanonicalTreeParser(null, reader, treeId);
 			}
 		}
+	}
+
+	private long calculateTimeToPatch(RevCommit vulnerableCommit, RevCommit patchCommit) {
+		return patchCommit.getCommitTime() - vulnerableCommit.getCommitTime();
+	}
+
+	private int countLinesChanged(String unifiedDiff) {
+		int linesChanged = 0;
+
+		for (String line : unifiedDiff.split("\n")) {
+			if (line.startsWith("+") || line.startsWith("-")) {
+				linesChanged++;
+			}
+		}
+
+		return linesChanged;
 	}
 }
