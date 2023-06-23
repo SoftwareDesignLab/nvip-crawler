@@ -29,6 +29,7 @@ import org.joda.time.DateTime;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Date;
+import java.util.List;
 
 /**
  * Model class for patchcommits found by patchfinder
@@ -37,40 +38,81 @@ public class PatchCommit {
 	private final String commitURL;
 	private final String cveId;
 	private final String commitId;
-	private Date commitDate;
+	private final Date commitDate;
 	private final String commitMessage;
-
 	private final String uniDiff;
+	private List<RevCommit> timeline;
+	private long timeToPatch;
+	private int linesChanged;
 
 	/**
 	 * Model class for patch commit objects
-	 * @param commitURL
-	 * @param cveId
-	 * @param commitDate
-	 * @param commitMessage
+	 *
+	 * @param commitURL     the URL of the commit
+	 * @param cveId         the CVE ID associated with the patch commit
+	 * @param commitId      the ID of the commit
+	 * @param commitDate    the date of the commit
+	 * @param commitMessage the commit message
+	 * @param uniDiff       the unified diff of the commit
 	 */
 	public PatchCommit(String commitURL, String cveId, String commitId, Date commitDate, String commitMessage, String uniDiff) {
-		this.cveId = cveId;
 		this.commitURL = commitURL;
+		this.cveId = cveId;
 		this.commitId = commitId;
 		this.commitDate = commitDate;
 		this.commitMessage = commitMessage;
 		this.uniDiff = uniDiff;
+	}
 
+	public String getCommitURL() {
+		return commitURL;
+	}
+
+	public String getCveId() {
+		return cveId;
+	}
+
+	public String getCommitId() {
+		return commitId;
+	}
+
+	public Date getCommitDate() {
+		return commitDate;
 	}
 
 	public String getCommitUrl() {
-		return this.commitURL;
+		return commitURL;
 	}
 
-	public String getCveId() { return this.cveId; }
+	public String getCommitMessage() {
+		return commitMessage;
+	}
 
-	public Date getCommitDate() { return this.commitDate; }
+	public String getUniDiff() {
+		return uniDiff;
+	}
 
-	public String getCommitMessage() { return this.commitMessage; }
+	public List<RevCommit> getTimeline() {
+		return timeline;
+	}
 
-	public String getCommitId() { return this.commitId; }
+	public void setTimeline(List<RevCommit> timeline) {
+		this.timeline = timeline;
+	}
 
-	public String getUniDiff() { return this.uniDiff; }
+	public long getTimeToPatch() {
+		return timeToPatch;
+	}
 
+	public void setTimeToPatch(long timeToPatch) {
+		this.timeToPatch = timeToPatch;
+	}
+
+	public int getLinesChanged() {
+		return linesChanged;
+	}
+
+	public void setLinesChanged(int linesChanged) {
+		this.linesChanged = linesChanged;
+	}
 }

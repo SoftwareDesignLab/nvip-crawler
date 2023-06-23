@@ -55,61 +55,54 @@ import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 public class PatchCommitScraper {
 
 	private static final Logger logger = LogManager.getLogger(PatchCommitScraper.class.getName());
-	private static final Pattern[] patchRegex = new Pattern[] {Pattern.compile("vulnerability|Vulnerability|vuln|Vuln|VULN[ #]*([0-9]+)")};
+	private static final Pattern[] patchRegex = new Pattern[]{Pattern.compile("vulnerability|Vulnerability|vuln|Vuln|VULN[ #]*([0-9]+)")};
 	private final String localDownloadLoc;
 	private final String repoSource;
+	private RevCommit vulnerableCommit; // Added
 
 	public PatchCommitScraper(String localDownloadLoc, String repoSource) {
 		this.localDownloadLoc = localDownloadLoc;
 		this.repoSource = repoSource;
 	}
 
-	/**
-	 * Parse commits to prepare for extraction of patches for a repo. Uses preset
-	 * Regex to find commits related to CVEs or bugs for patches
-	 *
-	 * @throws IOException
-	 * @throws GitAPIException
-	 * @return
-	 */
 	public List<PatchCommit> parseCommits(String cveId) {
 		List<PatchCommit> patchCommits = new ArrayList<>();
 
 		logger.info("Grabbing Commits List for repo @ {}...", localDownloadLoc);
 
-		// Initialize commit list form the repo's .git folder
-		try (final Repository repository = new FileRepositoryBuilder().setGitDir(new File(localDownloadLoc+"/.git")).build()){
-			try(final Git git = new Git(repository)) {
-				// Iterate through each commit and check if there's a commit message that contains a CVE ID
-				// or the 'vulnerability' keyword
-				// TODO: Test now that localDownloadLoc is fixed
+		try (final Repository repository = new FileRepositoryBuilder().setGitDir(new File(localDownloadLoc + "/.git")).build()) {
+			try (final Git git = new Git(repository)) {
 				final ObjectId startingRevision = repository.resolve("refs/heads/master");
-				if(startingRevision != null || true) {
-					// TODO: Catch NoHeadException, possibly due to empty repos, investigate further
-					final Iterable<RevCommit> commits = git.log()/*.add(startingRevision)*/.call();
+				if (startingRevision != null || true) {
+					final Iterable<RevCommit> commits = git.log().call();
 
 					int ignoredCounter = 0;
 
 					for (RevCommit commit : commits) {
-						// Check if the commit message matches any of the regex provided
 						for (Pattern pattern : patchRegex) {
 							Matcher matcher = pattern.matcher(commit.getFullMessage());
-							// If found the CVE ID is found, add the patch commit to the returned list
 							if (matcher.find() || commit.getFullMessage().contains(cveId)) {
 								String commitUrl = repository.getConfig().getString("remote", "origin", "url");
 								logger.info("Found patch commit @ {} in repo {}", commitUrl, localDownloadLoc);
 								String unifiedDiff = generateUnifiedDiff(git, commit);
 
-								PatchCommit patchCommit = new PatchCommit(commitUrl, cveId, commit.getName(), new Date(commit.getCommitTime() * 1000L), commit.getFullMessage(), unifiedDiff);
-								patchCommits.add(patchCommit);
+								if (vulnerableCommit != null) { // Added
+									long timeToPatch = calculateTimeToPatch(vulnerableCommit, commit); // Added
+									int linesChanged = countLinesChanged(unifiedDiff); // Added
+
+									PatchCommit patchCommit = new PatchCommit(commitUrl, cveId, commit.getName(),
+											new Date(commit.getCommitTime() * 1000L), commit.getFullMessage(), unifiedDiff);
+									patchCommit.setTimeToPatch(timeToPatch);
+									patchCommit.setLinesChanged(linesChanged);
+
+									patchCommits.add(patchCommit);
+								}
 							} else ignoredCounter++;
 						}
 					}
 
-//					logger.info("Ignored {} non-patch commits", ignoredCounter);
-
 					if (patchCommits.isEmpty()) {
-						logger.info("No patches for CVE '{}' found in repo '{}' ", cveId, localDownloadLoc.split("/")[4]);
+						logger.info("No patches for CVE '{}' found in repo '{}'", cveId, localDownloadLoc.split("/")[4]);
 					}
 				} else logger.warn("Could not get starting revision from repo '{}'", localDownloadLoc.split("/")[4]);
 			}
@@ -120,31 +113,22 @@ public class PatchCommitScraper {
 		return patchCommits;
 	}
 
-	/**
-	 * Generate the unified diff for a specific commit.
-	 *
-	 * @param git    the Git object
-	 * @param commit the commit for which to generate the unified diff
-	 * @return the unified diff as a string
-	 */
 	private String generateUnifiedDiff(Git git, RevCommit commit) {
 		try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 			 DiffFormatter formatter = new DiffFormatter(outputStream)) {
 			formatter.setRepository(git.getRepository());
-			formatter.setContext(0); // Set context lines to 0 to exclude unchanged lines
+			formatter.setContext(0);
 			formatter.format(commit.getParent(0), commit);
 
 			String unifiedDiff = outputStream.toString();
 
-			// Find the start of the patch section
 			int patchStartIndex = unifiedDiff.indexOf("@@");
 
 			if (patchStartIndex >= 0) {
-				// Extract the patch section
 				unifiedDiff = unifiedDiff.substring(patchStartIndex);
 			} else {
 				logger.warn("Failed to find patch section in the unified diff for commit {}", commit.getName());
-				unifiedDiff = ""; // Return empty string if patch section is not found
+				unifiedDiff = "";
 			}
 
 			return unifiedDiff;
@@ -153,22 +137,20 @@ public class PatchCommitScraper {
 			return "";
 		}
 	}
-	/**
-	 * Get the CanonicalTreeParser for a given repository and object ID.
-	 *
-	 * @param repository the Git repository
-	 * @param objectId   the object ID
-	 * @return the CanonicalTreeParser
-	 * @throws IOException if an error occurs while accessing the repository
-	 */
-	private CanonicalTreeParser getCanonicalTreeParser(Repository repository, ObjectId objectId) throws IOException {
-		try (RevWalk walk = new RevWalk(repository)) {
-			RevCommit commit = walk.parseCommit(objectId);
-			ObjectId treeId = commit.getTree().getId();
-			try (ObjectReader reader = repository.newObjectReader()) {
-				return new CanonicalTreeParser(null, reader, treeId);
-			}
-		}
+
+	private long calculateTimeToPatch(RevCommit vulnerableCommit, RevCommit patchCommit) {
+		return patchCommit.getCommitTime() - vulnerableCommit.getCommitTime();
 	}
 
+	private int countLinesChanged(String unifiedDiff) {
+		int linesChanged = 0;
+
+		for (String line : unifiedDiff.split("\n")) {
+			if (line.startsWith("+") || line.startsWith("-")) {
+				linesChanged++;
+			}
+		}
+
+		return linesChanged;
+	}
 }
