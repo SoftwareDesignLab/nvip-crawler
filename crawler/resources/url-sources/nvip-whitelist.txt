@@ -124,6 +124,8 @@ https://irssi.org
 https://issues.apache.org
 https://istio.io
 https://jenkins.io
+http://jenkins.io
+http://www.jenkins.io
 https://jira.atlassian.com
 https://johnjhacking.com
 https://jpn.nec.com
