@@ -27,7 +27,6 @@ import edu.rit.se.nvip.automatedcvss.PartialCvssVectorGenerator;
 import edu.rit.se.nvip.automatedcvss.preprocessor.CvePreProcessor;
 import edu.rit.se.nvip.characterizer.classifier.AbstractCveClassifier;
 import edu.rit.se.nvip.characterizer.classifier.CveClassifierFactory;
-import edu.rit.se.nvip.db.DatabaseHelper;
 import edu.rit.se.nvip.model.CompositeVulnerability;
 import edu.rit.se.nvip.model.CvssScore;
 import edu.rit.se.nvip.model.VdoCharacteristic;
@@ -116,6 +115,15 @@ public class CveCharacterizer {
 			this.vdoLabelName = vdoLabelName;
 			this.vdoLabelForUI = vdoLabelForUI;
 			this.vdoNounGroup = vdoNounGroup;
+		}
+
+		public static Integer getVdoLabelId(String vdoLabelName){
+			for (VDOLabel label : VDOLabel.values()){
+				if (label.vdoLabelName.equals(vdoLabelName)){
+					return label.vdoLabelId;
+				}
+			}
+			return null;
 		}
 
 	}
@@ -243,7 +251,7 @@ public class CveCharacterizer {
 	 * 
 	 * @param cveList
 	 */
-	public List<CompositeVulnerability> characterizeCveList(List<CompositeVulnerability> cveList, DatabaseHelper databaseHelper, int limit) {
+	public List<CompositeVulnerability> characterizeCveList(List<CompositeVulnerability> cveList, int limit) {
 
 		long start = System.currentTimeMillis();
 		int totCharacterized = 0;
@@ -291,15 +299,15 @@ public class CveCharacterizer {
 				
 				// characterize CVE
 				Map<String, ArrayList<String[]>> prediction = characterizeCveForVDO(cveDesc, true);
-				for (String vdoNounGroup : prediction.keySet()) {
-					ArrayList<String[]> predictionsForNounGroup = prediction.get(vdoNounGroup);
-					Integer vdoNounGroupId = vdoNounGroups.get(vdoNounGroup);
-					if (vdoNounGroupId == null) {
-						logger.warn("WARNING: No entry was found for vdo noun group: {}! Please add it to the db.", vdoNounGroup);
-						continue;
-					}
+				for (VDONounGroup vdoNounGroup : VDONounGroup.values()) {
+					ArrayList<String[]> predictionsForNounGroup = prediction.get(vdoNounGroup.vdoNounGroupName);
+					int vdoNounGroupId = vdoNounGroup.vdoNounGroupId;
+//					if (vdoNounGroupId == null) {
+//						logger.warn("WARNING: No entry was found for vdo noun group: {}! Please add it to the db.", vdoNounGroup);
+//						continue;
+//					}
 					for (String[] item : predictionsForNounGroup) {
-						Integer vdoLabelId = vdoLabels.get(item[0]);
+						Integer vdoLabelId = VDOLabel.getVdoLabelId(item[0]);
 						if (vdoLabelId == null)
 							logger.warn("WARNING: No entry was found for vdo noun group label: {}! Please add it to the db", vdoLabelId);
 						else {

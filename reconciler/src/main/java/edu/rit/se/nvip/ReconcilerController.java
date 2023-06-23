@@ -76,7 +76,7 @@ public class ReconcilerController {
 
             List<CompositeVulnerability> cveList = new ArrayList<>(crawledVulnerabilityList);
 
-            return cveCharacterizer.characterizeCveList(cveList, dbh,
+            return cveCharacterizer.characterizeCveList(cveList,
                    Integer.parseInt(System.getenv("NVIP_CVE_CHARACTERIZATION_LIMIT")));
         }
         catch (NullPointerException | NumberFormatException e) { logger.warn("Could not fetch NVIP_CVE_CHARACTERIZATION_TRAINING_DATA or NVIP_CVE_CHARACTERIZATION_TRAINING_DATA_DIR from env vars, defaulting to {}", System.getenv("NVIP_CVE_CHARACTERIZATION_LIMIT")); }

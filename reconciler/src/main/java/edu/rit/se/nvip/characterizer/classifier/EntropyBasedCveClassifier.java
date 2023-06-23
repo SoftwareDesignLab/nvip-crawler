@@ -84,6 +84,7 @@ public class EntropyBasedCveClassifier extends AbstractCveClassifier {
 		int numClassValues = instances.classAttribute().numValues();
 		for (int valIndex = 0; valIndex < numClassValues; valIndex++) {
 			String classValue = instances.classAttribute().value(valIndex);
+			logger.error(instances.classAttribute().toString());
 			histograms.put(classValue, new VdoLabelDistribution(classValue, instances));
 		}
 	}
@@ -134,8 +135,9 @@ public class EntropyBasedCveClassifier extends AbstractCveClassifier {
 			double divergenceMetric = Double.POSITIVE_INFINITY;
 			if (myMethod == Method.CROSS_ENTROPY)
 				divergenceMetric = histogram.calculateCrossEntropy(cveHistogram, true);
-			else if (myMethod == Method.KL_DIVERGENCE)
+			else if (myMethod == Method.KL_DIVERGENCE) {
 				divergenceMetric = histogram.calculateKLDivergence(cveHistogram);
+			}
 			else if (myMethod == Method.JS_DIVERGENCE)
 				divergenceMetric = histogram.calculateJSDivergence(cveHistogram, true);
 

@@ -58,8 +58,6 @@ public class CveCharacterizerTest {
 		prediction = cveCharacterizer.characterizeCveForVDO(cveDesc, false);
 		assertTrue(prediction.size() > 0);
 		try(MockedConstruction<DatabaseHelper> mock = mockConstruction(DatabaseHelper.class)){
-			//Test characterizeCveList
-			DatabaseHelper db = DatabaseHelper.getInstance();
 			//String csvPath = "src/test/resources/test-composite-vuln-list.csv";
 			String csvPath = System.getProperty("user.dir") + "\\src\\main\\resources\\cvedata\\mitre-cve.csv";
 			CsvUtils utils = new CsvUtils();
@@ -80,7 +78,7 @@ public class CveCharacterizerTest {
 				vulnList.add(vuln);
 			}
 
-			List<CompositeVulnerability> newList = cveCharacterizer.characterizeCveList(vulnList, db, 5000);
+			List<CompositeVulnerability> newList = cveCharacterizer.characterizeCveList(vulnList, 5000);
 			assertEquals(10, newList.size());
 
 		}
