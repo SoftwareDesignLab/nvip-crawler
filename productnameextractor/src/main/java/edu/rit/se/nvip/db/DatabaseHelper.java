@@ -135,7 +135,7 @@ public class DatabaseHelper {
 	 * Store affected products in DB
 	 * @param vulnList
 	 */
-	public void insertAffectedProductsToDB(List<CompositeVulnerability> vulnList) {
+	public int insertAffectedProductsToDB(List<CompositeVulnerability> vulnList) {
 
 		// get all identified affected releases
 		List<AffectedProduct> listAllAffectedProducts = new ArrayList<>();
@@ -160,6 +160,7 @@ public class DatabaseHelper {
 //		cveDataForWebUi.prepareDataforWebUi();
 
 		databaseHelper.shutdown();
+		return listAllAffectedProducts.size();
 	}
 
 	/**

@@ -6,17 +6,21 @@ import edu.rit.se.nvip.db.DatabaseHelper;
 import edu.rit.se.nvip.model.cpe.CpeEntry;
 import edu.rit.se.nvip.model.cpe.CpeGroup;
 import edu.rit.se.nvip.model.cpe.Product;
+import edu.rit.se.nvip.model.cve.AffectedProduct;
 import edu.rit.se.nvip.model.cve.CompositeVulnerability;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import com.opencsv.CSVReader;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Paths;
 import java.time.DateTimeException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Controller for the isolated ProductNameExtractor package.
@@ -31,7 +35,8 @@ public class ProductNameExtractorController {
     protected static int maxPages = 10;
     protected static int maxAttemptsPerPage = 2;
     protected static boolean prettyPrint = false;
-    private static String productDictPath = "src/test/resources/data/product_dict.json";
+    protected static boolean testMode = false;
+    private static String productDictPath = "src/main/resources/data/product_dict.json";
     private static Instant productDictLastCompilationDate;
     private static AffectedProductIdentifier affectedProductIdentifier;
 
@@ -126,6 +131,11 @@ public class ProductNameExtractorController {
             prettyPrint = Boolean.parseBoolean(System.getenv("PRETTY_PRINT"));
             logger.info("Setting PRETTY_PRINT to {}", prettyPrint);
         } else logger.warn("Could not fetch PRETTY_PRINT from env vars, defaulting to {}", prettyPrint);
+
+        if(props.containsKey("TEST_MODE")) {
+            testMode = Boolean.parseBoolean(System.getenv("TEST_MODE"));
+            logger.info("Setting TEST_MODE to {}", testMode);
+        } else logger.warn("Could not fetch TEST_MODE from env vars, defaulting to {}", testMode);
     }
 
     public static void writeProductDict(Map<String, CpeGroup> productDict, String productDictPath) {
@@ -172,6 +182,80 @@ public class ProductNameExtractorController {
     }
 
     /**
+     * Method to generate a test vulnerability list of 6 CVEs to be run through the product name extractor
+     *
+     * @return vulnList - list of vulnerabilities
+     */
+    private static ArrayList<CompositeVulnerability> createTestVulnList(){
+        ArrayList<CompositeVulnerability> vulnList = new ArrayList<>();
+        String filePath = "src/main/resources/data/test_vulnerabilities.csv";
+        try{
+            CSVReader reader = new CSVReader(new FileReader(filePath));
+            for(String[] line : reader.readAll()){
+                CompositeVulnerability vulnerability = new CompositeVulnerability(
+                        Integer.parseInt(line[0]),
+                        line[1],
+                        line[2],
+                        CompositeVulnerability.CveReconcileStatus.UPDATE
+                );
+
+                vulnList.add(vulnerability);
+            }
+            reader.close();
+        }catch(FileNotFoundException e){
+            logger.warn("Could not find the test csv file at path {}", filePath);
+        }catch(Exception e){
+            logger.warn("Error {} reading the test csv file", e.toString());
+        }
+
+        return vulnList;
+    }
+
+    /**
+     * This method prints the test run results to both console output and a specific results file
+     * @param vulnList list of vulnerabilities
+     */
+    private static void writeTestResults(List<CompositeVulnerability> vulnList){
+        File testResultsFile = new File("src/main/resources/data/test_results.csv");
+
+        final Pattern cpePattern = Pattern.compile("cpe:2\\.3:[aho\\*\\-]:([^:]*):([^:]*):([^:]*):.*");
+
+        try{
+            PrintWriter writer = new PrintWriter(testResultsFile);
+            // Go through each vulnerability and write it and its affected products to output and the file
+            for (CompositeVulnerability vulnerability : vulnList) {
+                if (vulnerability.getCveReconcileStatus() == CompositeVulnerability.CveReconcileStatus.DO_NOT_CHANGE)
+                    continue; // skip the ones that are not changed!
+                List<AffectedProduct> affectedProducts = new ArrayList<>(vulnerability.getAffectedProducts());
+
+                StringBuilder builder = new StringBuilder();
+                builder.append(vulnerability.getVulnID()).append("\t\t\t").append(vulnerability.getCveId()).append("\t\t\t")
+                        .append(vulnerability.getDescription()).append("\n");
+                builder.append("\n");
+
+                for(AffectedProduct affectedProduct : affectedProducts){
+                    final String cpe = affectedProduct.getCpe();
+                    final Matcher m = cpePattern.matcher(cpe);
+                    String productName = "UNKNOWN";
+                    if(!m.find()) logger.warn("CPE in invalid format {}", cpe);
+                    else productName = m.group(2);
+                    builder.append(affectedProduct.getCpe()).append("\t\t\t").append(affectedProduct.getPURL(productName))
+                            .append("\t\t\t").append(affectedProduct.getSWID(productName)).append("\n");
+                }
+
+                builder.append("\n\n\n");
+                System.out.println("\n" + builder);
+                writer.write(builder.toString());
+            }
+
+            writer.close();
+        }catch(FileNotFoundException e){
+            logger.warn("Could not find the test results csv file at path {}", testResultsFile.getPath());
+        }
+
+    }
+
+    /**
      * Main driver for the ProductNameExtractor, responsible for pulling vulnerabilities from the db,
      * loading the CPE dictionary, and cross-referencing that information to generate and store
      * entries in the affectedproducts table.
@@ -188,17 +272,23 @@ public class ProductNameExtractorController {
         // Fetch vulnerability data from the DB
         final Map<String, CompositeVulnerability> vulnMap = databaseHelper.getExistingCompositeVulnerabilities(0);
 
-        // Extract vuln list for the AffectedProductIdentifier
-        final List<CompositeVulnerability> vulnerabilities = new ArrayList<>(vulnMap.values());
+        // Extract vuln list for the AffectedProductIdentifier - if in test mode, calls createTestVulnList for our vulnList
+        final List<CompositeVulnerability> vulnList;
+        if(testMode){
+            logger.info("Test mode enabled, creating test vulnerability list...");
+            vulnList = createTestVulnList();
+        }else{
+            vulnList = new ArrayList<>(vulnMap.values());
+        }
 
-        logger.info("Successfully pulled {} existing CVEs from the database in {} seconds", vulnerabilities.size(), Math.floor(((double) (System.currentTimeMillis() - getCVEStart) / 1000) * 100) / 100);
+        logger.info("Successfully pulled {} existing CVEs from the database in {} seconds", vulnList.size(), Math.floor(((double) (System.currentTimeMillis() - getCVEStart) / 1000) * 100) / 100);
 
         // This method will find Common Platform Enumerations (CPEs) and store them in the DB
         logger.info("Initializing and starting the AffectedProductIdentifier...");
         final long getProdStart = System.currentTimeMillis();
 
         // Init AffectedProductIdentifier
-        ProductNameExtractorController.affectedProductIdentifier = new AffectedProductIdentifier(vulnerabilities);
+        ProductNameExtractorController.affectedProductIdentifier = new AffectedProductIdentifier(vulnList);
 
         // Init CPE dict data storage
         Map<String, CpeGroup> productDict;
@@ -229,10 +319,15 @@ public class ProductNameExtractorController {
         }
 
         // Run the AffectedProductIdentifier with the fetched vuln list
-        final Map<String, Product> productMap = affectedProductIdentifier.identifyAffectedProducts(cveLimit);
+        affectedProductIdentifier.identifyAffectedProducts(cveLimit);
 
-        databaseHelper.insertAffectedProductsToDB(vulnerabilities);
+        if(testMode){
+            logger.info("Printing test results...");
+            writeTestResults(vulnList);
+        }else{
+            int numAffectedReleases = databaseHelper.insertAffectedProductsToDB(vulnList);
+            logger.info("AffectedProductIdentifier found and inserted {} affected products to the database in {} seconds", numAffectedReleases, Math.floor(((double) (System.currentTimeMillis() - getProdStart) / 1000) * 100) / 100);
+        }
 
-        logger.info("AffectedProductIdentifier found {} affected products in {} seconds", productMap.size(), Math.floor(((double) (System.currentTimeMillis() - getProdStart) / 1000) * 100) / 100);
     }
 }
