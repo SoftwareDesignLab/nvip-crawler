@@ -86,7 +86,7 @@ public class SeclistsParser extends AbstractCveParser {
 		}
 
 		for (String cve : uniqueCves) {
-			RawVulnerability v = new RawVulnerability(sSourceURL, cve, publishDate, updateString, text);
+			RawVulnerability v = new RawVulnerability(sSourceURL, cve, publishDate, updateString, text, getClass().getSimpleName());
 			vulns.add(v);
 		}
 

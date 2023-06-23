@@ -133,7 +133,7 @@ public class ParseTable extends AbstractCveParser implements ParserStrategy {
         for (String cve : cveList)
             rowVulns.add(
                     new RawVulnerability(
-                            sourceUrl, cve, createdDate, lastModifiedDate, description
+                            sourceUrl, cve, createdDate, lastModifiedDate, description, getClass().getSimpleName()
                     )
             );
         return rowVulns;

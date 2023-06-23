@@ -67,7 +67,7 @@ public class AristaParser extends AbstractCveParser {
         Set<String> cves = getCVEs(doc.text());
         for (String cve : cves)
             vulnList.add(new RawVulnerability(
-                    sSourceURL, cve, publishedDate, lastModifiedDate, description.toString()
+                    sSourceURL, cve, publishedDate, lastModifiedDate, description.toString(), getClass().getSimpleName()
             ));
 
 
