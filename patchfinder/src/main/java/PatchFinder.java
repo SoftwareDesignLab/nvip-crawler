@@ -52,7 +52,7 @@ public class PatchFinder {
 	protected static int cveLimit = 5;
 	protected static int maxThreads = 10;
 	protected static int cvesPerThread = 1;
-	protected static int maxCommits = 0; // TODO: Find omptimal value once github scraping is done
+	protected static int maxCommits = 1000; // TODO: Find omptimal value once github scraping is done
 	protected static String clonePath = "src/main/resources/patch-repos";
 	protected static String[] addressBases = { "https://github.com/", "https://www.gitlab.com/" };
 

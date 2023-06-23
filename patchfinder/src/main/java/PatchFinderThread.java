@@ -28,6 +28,7 @@ import java.net.URL;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import commits.PatchCommit;
 import commits.PatchCommitScraper;
@@ -53,6 +54,7 @@ public class PatchFinderThread implements Runnable {
 	private final long timeoutMilli;
 	// Regex101: https://regex101.com/r/YiCdNU/1
 	private final static Pattern commitPattern = Pattern.compile("commit-details-(\\w*)");
+	private static final Pattern[] patchPatterns = new Pattern[] {Pattern.compile("vulnerability|Vulnerability|vuln|Vuln|VULN[ #]*([0-9]+)")};
 	private static final Logger logger = LogManager.getLogger(PatchFinder.class.getName());
 
 	/**
@@ -70,6 +72,7 @@ public class PatchFinderThread implements Runnable {
 	 */
 	@Override
 	public void run() {
+		final long totalStart = System.currentTimeMillis();
 
 		ArrayList<PatchCommit> foundPatchCommits = new ArrayList<>();
 		// For each CVE, iterate through the list of possible patch sources and
@@ -82,12 +85,14 @@ public class PatchFinderThread implements Runnable {
 
 		// Add found commits to total list after finished
 		PatchFinder.getPatchCommits().addAll(foundPatchCommits);
-		logger.info("Done scraping {} patch commits from CVE(s) {}", foundPatchCommits.size(), cvePatchEntry.keySet());
+
+		final long delta = (System.currentTimeMillis() - totalStart) / 1000;
+		logger.info("Done scraping {} patch commits from CVE(s) [{}] in {} seconds", foundPatchCommits.size(), cvePatchEntry.keySet(), delta);
 	}
 
 	private void findPatchCommits(ArrayList<PatchCommit> foundPatchCommits, String cve, String patchSource) {
 		try {
-			final long t1 = System.nanoTime();
+			final long connStart = System.nanoTime();
 
 			// Build connection object and execute connection operation
 			final Connection conn = Jsoup.connect(patchSource).timeout((int) this.timeoutMilli);
@@ -102,17 +107,16 @@ public class PatchFinderThread implements Runnable {
 			// Only allow valid responses
 			if(responseCode >= 200 && responseCode < 300) {
 				// Log connection stats
-				final long t2 = System.nanoTime();
 				logger.info("Connection to URL '{}' successful. Done in {} ms",
 						patchSource,
-						(int) ((t2 - t1) / 1000000)
+						(int) ((System.nanoTime() - connStart) / 1000000)
 				);
 
 				// Get page body as DOM
 				final Document DOM = Jsoup.parse(response.body());
 
 				// Find commit count container
-				final Elements elements = DOM.select("span > span.d-none > span.d-sm-inline");
+				final Elements elements = DOM.select("div > div.js-details-container").select("span.d-none");
 
 				// Throw exception if no elements found
 				if(elements.size() == 0) throw new IllegalArgumentException("Failed to find commit count page element");
@@ -125,7 +129,7 @@ public class PatchFinderThread implements Runnable {
 
 				// If commit count is under threshold, scrape commits from url
 				if(commitCount <= PatchFinder.maxCommits) {
-					findPatchCommitsFromUrl(foundPatchCommits, patchSource, commitCount);
+					findPatchCommitsFromUrl(foundPatchCommits, cve, patchSource, commitCount);
 				} else { // Otherwise, clone repo to parse commits
 					findPatchCommitsFromRepo(foundPatchCommits, cve, patchSource);
 				}
@@ -137,27 +141,53 @@ public class PatchFinderThread implements Runnable {
 		}
 	}
 
-	private void findPatchCommitsFromUrl(ArrayList<PatchCommit> foundPatchCommits, String patchSource, int commitCount) {
+	private void findPatchCommitsFromUrl(ArrayList<PatchCommit> foundPatchCommits, String cve, String patchSource, int commitCount) {
 		// Define page range
 		final int numPags = (int) Math.ceil((double) commitCount / 35);
 		final String baseCommitsUrl = patchSource + "/commits";
 
 		// Query first page and get HEAD commit
 		try {
-			// TODO: Select whole commit element to get message
-			final Elements elements = Jsoup.connect(baseCommitsUrl).get().select("a < a.Button--secondary");
+			// TODO: Paginate
+			// Get DOM and extract commit message container elements
+			final Document DOM = Jsoup.connect(baseCommitsUrl).get();
 
-			// TODO: Paginate based on head commit and properly parse commit messages
-			final String head = commitPattern.matcher(elements.first().id()).toMatchResult().group(1);
+			// Get commit html objects from page
+			final Elements commitObjects = getCommitObjects(DOM);
 
-			for (final Element e : elements) {
+			// Ensure at least one commit was found
+			if(commitObjects.size() == 0) throw new IOException("Failed to extract commits from page data");
 
-			}
+			// Extract the head commit SHA for pagination
+			final String[] headCommitParts = commitObjects.first().attr("href").split("/");
+			final String headCommitEndpoint = "?after=" + headCommitParts[headCommitParts.length - 1];
+
+			// Generate list of page urls to query with head commit SHA
+			final List<String> pageUrls = new ArrayList<>();
+			for (int i = 0; i < numPags * 35; i += 35) pageUrls.add(baseCommitsUrl + headCommitEndpoint + "+" + i);
+
+//			// Extract commit messages and parse into patch commits
+//			final StringBuilder sb = new StringBuilder();
+//			for (final Element e : messageContainers) {
+//				final Elements messageParts = e.select("p");
+//
+//				int count = 0;
+//				for (Element part : messageParts) {
+//					final String partString = part.text();
+//					count++;
+//					// If multipart message, truncate trailing and leading "..."
+//					if(count > 1) {
+//						sb.setLength(sb.length() - 3);
+//						sb.append(partString, 0, partString.length() - 3);
+//					} else sb.append(partString);
+//				}
+//
+//				foundPatchCommits.add(parseCommitMessage(cve, sb.toString()));
+//				sb.setLength(0);
+//			}
 		} catch (IOException e) {
-
+			logger.error("Failed to find patch commits from URL '{}': {}", patchSource, e);
 		}
-
-		// Parse commit messages with pagination
 	}
 
 	private void findPatchCommitsFromRepo(ArrayList<PatchCommit> foundPatchCommits, String cve, String patchSource) {
@@ -176,7 +206,7 @@ public class PatchFinderThread implements Runnable {
 					localDownloadLoc,
 					patchSource
 			);
-			List<PatchCommit> patchCommits = commitScraper.parseCommits(cve);
+			List<PatchCommit> patchCommits = commitScraper.parseCommits(cve, patchPatterns);
 			foundPatchCommits.addAll(patchCommits);
 
 //					// Delete repo when done
@@ -185,5 +215,23 @@ public class PatchFinderThread implements Runnable {
 			logger.error("ERROR: Failed to find patch from source {} for CVE {}\n{}", patchSource, cve, e.toString());
 			e.printStackTrace();
 		}
+	}
+
+	private PatchCommit parseCommitMessage(String cveId, String messageContents) {
+		return null;
+	}
+
+	private Elements getCommitObjects(Document DOM) {
+		final Elements commitObjects = new Elements();
+
+		final Elements commitElements = DOM.select("div.TimelineItem").select("li");
+		final Elements messageContainers = commitElements.select("div.js-details-container");
+		for (Element e : messageContainers) {
+			final Elements messageElements = e.select("a").not("a.commit-author,a.avatar");
+			if(messageElements.size() > 1) {
+				// TODO: Handle split messages
+			} else commitObjects.add(e);
+		}
+		return commitObjects;
 	}
 }
