@@ -55,7 +55,6 @@ import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 public class PatchCommitScraper {
 
 	private static final Logger logger = LogManager.getLogger(PatchCommitScraper.class.getName());
-	private static final Pattern[] patchRegex = new Pattern[] {Pattern.compile("vulnerability|Vulnerability|vuln|Vuln|VULN[ #]*([0-9]+)")};
 	private final String localDownloadLoc;
 	private final String repoSource;
 
@@ -72,7 +71,7 @@ public class PatchCommitScraper {
 	 * @throws GitAPIException
 	 * @return
 	 */
-	public List<PatchCommit> parseCommits(String cveId) {
+	public List<PatchCommit> parseCommits(String cveId, Pattern[] patchPatterns) {
 		List<PatchCommit> patchCommits = new ArrayList<>();
 
 		logger.info("Grabbing Commits List for repo @ {}...", localDownloadLoc);
@@ -92,7 +91,7 @@ public class PatchCommitScraper {
 
 					for (RevCommit commit : commits) {
 						// Check if the commit message matches any of the regex provided
-						for (Pattern pattern : patchRegex) {
+						for (Pattern pattern : patchPatterns) {
 							Matcher matcher = pattern.matcher(commit.getFullMessage());
 							// If found the CVE ID is found, add the patch commit to the returned list
 							if (matcher.find() || commit.getFullMessage().contains(cveId)) {
@@ -170,5 +169,4 @@ public class PatchCommitScraper {
 			}
 		}
 	}
-
 }
