@@ -41,6 +41,8 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import utils.GitController;
 
+import static org.apache.commons.lang3.time.DateUtils.parseDate;
+
 /**
  * Runnable thread class for multithreaded patch finder
  *
@@ -87,7 +89,7 @@ public class PatchFinderThread implements Runnable {
 		PatchFinder.getPatchCommits().addAll(foundPatchCommits);
 
 		final long delta = (System.currentTimeMillis() - totalStart) / 1000;
-		logger.info("Done scraping {} patch commits from CVE(s) [{}] in {} seconds", foundPatchCommits.size(), cvePatchEntry.keySet(), delta);
+		logger.info("Done scraping {} patch commits from CVE(s) {} in {} seconds", foundPatchCommits.size(), cvePatchEntry.keySet(), delta);
 	}
 
 	private void findPatchCommits(ArrayList<PatchCommit> foundPatchCommits, String cve, String patchSource) {
@@ -115,16 +117,19 @@ public class PatchFinderThread implements Runnable {
 				// Get page body as DOM
 				final Document DOM = Jsoup.parse(response.body());
 
-				// Find commit count container
-				final Elements elements = DOM.select("div > div.js-details-container").select("span.d-none");
+				// Get commit count element
+				final Element commitCountElement = DOM.select("div > div.js-details-container").select("strong").first();
 
 				// Throw exception if no elements found
-				if(elements.size() == 0) throw new IllegalArgumentException("Failed to find commit count page element");
+				if(commitCountElement == null) throw new IllegalArgumentException("Failed to find commit count page element");
 
-				// Get commit count element
-				final Element commitCountContainer = elements.get(0);
-				final Element commitCountElement = commitCountContainer.child(0);
-				final int commitCount = Integer.parseInt(commitCountElement.text());
+				// Extract commit count value and throw specific exception if this fails
+				final int commitCount;
+				try {
+					commitCount = Integer.parseInt(commitCountElement.text().replace(",", ""));
+				} catch (NumberFormatException ignored) {
+					throw new IOException("Failed to extract commit count from URL " + patchSource);
+				}
 				logger.info("Found {} commits on the master branch @ URL '{}'", commitCount, patchSource);
 
 				// If commit count is under threshold, scrape commits from url
@@ -149,7 +154,7 @@ public class PatchFinderThread implements Runnable {
 		// Query first page and get HEAD commit
 		try {
 			// TODO: Paginate
-			final Elements firstPageCommitObjects = getCommitObjects(patchSource);
+			final Elements firstPageCommitObjects = getCommitObjects(baseCommitsUrl);
 
 			// Ensure at least one commit was found
 			if(firstPageCommitObjects.size() == 0) throw new IOException("Failed to extract commits from page data");
@@ -158,9 +163,12 @@ public class PatchFinderThread implements Runnable {
 			final String[] headCommitParts = firstPageCommitObjects.first().attr("href").split("/");
 			final String headCommitEndpoint = "?after=" + headCommitParts[headCommitParts.length - 1];
 
+			// Parse first page objects
+			parseCommitObjects(foundPatchCommits, cve, firstPageCommitObjects);
+
 			// Generate list of page urls to query with head commit SHA
 			final List<String> pageUrls = new ArrayList<>();
-			for (int i = 0; i < numPags * 35; i += 35) pageUrls.add(baseCommitsUrl + headCommitEndpoint + "+" + i);
+			for (int i = 35; i < numPags * 35; i += 35) pageUrls.add(baseCommitsUrl + headCommitEndpoint + "+" + i);
 
 			for (String url : pageUrls) {
 				// Extract commit objects from url
@@ -172,32 +180,10 @@ public class PatchFinderThread implements Runnable {
 					continue;
 				}
 
-				// Iterate over found commitObjects and build ParseCommit objects
-				final List<PatchCommit> commits = parseCommitObjects(cve, commitObjects);
-
-				// Parse message
-				foundPatchCommits.addAll(commits);
+				// Iterate over found commitObjects, then build and store ParseCommit objects
+				parseCommitObjects(foundPatchCommits, cve, commitObjects);
 			}
 
-//			// Extract commit messages and parse into patch commits
-//			final StringBuilder sb = new StringBuilder();
-//			for (final Element e : messageContainers) {
-//				final Elements messageParts = e.select("p");
-//
-//				int count = 0;
-//				for (Element part : messageParts) {
-//					final String partString = part.text();
-//					count++;
-//					// If multipart message, truncate trailing and leading "..."
-//					if(count > 1) {
-//						sb.setLength(sb.length() - 3);
-//						sb.append(partString, 0, partString.length() - 3);
-//					} else sb.append(partString);
-//				}
-//
-//				foundPatchCommits.add(parseCommitMessage(cve, sb.toString()));
-//				sb.setLength(0);
-//			}
 		} catch (IOException e) {
 			logger.error("Failed to find patch commits from URL '{}': {}", patchSource, e);
 		}
@@ -231,21 +217,30 @@ public class PatchFinderThread implements Runnable {
 	}
 
 	// TODO: Parse raw data into PatchCommit objects
-	private List<PatchCommit> parseCommitObjects(String cveId, Elements objects) {
-//		// Check if the commit message matches any of the regex provided
-//		for (Pattern pattern : patchPatterns) {
-//			Matcher matcher = pattern.matcher(messageContents);
-//			// If found the CVE ID is found, add the patch commit to the returned list
-//			if (matcher.find() || messageContents.contains(cveId)) {
-//				String commitUrl = repository.getConfig().getString("remote", "origin", "url");
-//				logger.info("Found patch commit @ {} in repo {}", commitUrl, localDownloadLoc);
-//				String unifiedDiff = generateUnifiedDiff(git, commit);
-//
-//				PatchCommit patchCommit = new PatchCommit(commitUrl, cveId, commit.getName(), new Date(commit.getCommitTime() * 1000L), messageContents, unifiedDiff);
-//				patchCommits.add(patchCommit);
-//			} else ignoredCounter++;
-//		}
-		return null;
+	private void parseCommitObjects(List<PatchCommit> patchCommits, String cveId, Elements objects) {
+		// Check if the commit message matches any of the regex provided
+		for (Pattern pattern : patchPatterns) {
+			for (Element object : objects) {
+				Matcher matcher = pattern.matcher(object.text());
+				// If found the CVE ID is found, add the patch commit to the returned list
+				if (matcher.find() || object.text().contains(cveId)) {
+					String commitUrl = object.attr("href");
+					logger.info("Found patch commit @ URL '{}'", commitUrl);
+//					String unifiedDiff = generateUnifiedDiff(git, commit);
+
+					PatchCommit patchCommit = new PatchCommit(
+							commitUrl,
+							cveId,
+							object.text(),
+							new Date(object.attr("commitTime")),
+							object.text(),
+							null // unifiedDiff
+					);
+
+					patchCommits.add(patchCommit);
+				}
+			}
+		}
 	}
 
 	private Elements getCommitObjects(String url) {
@@ -257,36 +252,46 @@ public class PatchFinderThread implements Runnable {
 			final Document DOM = Jsoup.connect(url).get();
 
 
-			// Extract raw commit message containers
+			// Extract raw message containers
 			final Elements commitElements = DOM.select("div.TimelineItem").select("li");
 			final Elements messageContainers = commitElements.select("div.js-details-container");
+			final Elements dateElements = commitElements.select("relative-time");
 
 			// Iterate over found message containers
-			for (Element e : messageContainers) {
+			for (int i = 0, stop = messageContainers.size(); i < stop; i++) {
+				final Element container = messageContainers.get(i);
+
+				//TODO: Include "pre" tagged elements (full commit message descriptions).
+				// Store commit message and commit description separately, using commit message as the
+				// description in the case that there is no description
+
 				// Select message element(s) (will be length 1 a lot)
-				final Elements messageElements = e.select("a").not("a.commit-author,a.avatar");
+				final Elements messageElements = container.select("a").not("a.commit-author,a.avatar");
+
+				// Get the first message element
+				final Element messageElement = messageElements.first();
+
+				// Append date information
+				messageElement.attr("commitTime", dateElements.get(i).attr("datetime"));
 
 				// If not length 1, message is split into multiple parts and must be combined
-				if(messageElements.size() > 1) {
-					// Get the first message element
-					final Element messageElement = messageElements.first();
+				if (messageElements.size() > 1) {
 
 					// Build the full message
 					final String message = String.join("", messageElements
 							.stream().map(me -> {
 								final String text = me.text();
-								if(text.startsWith("...")) return text.substring(3);
-								else if(text.endsWith("...")) return text.substring(0, text.length() - 3);
+								if (text.startsWith("...")) return text.substring(3);
+								else if (text.endsWith("...")) return text.substring(0, text.length() - 3);
 								else return text;
 							}).toArray(String[]::new));
 
 					// Set the first element's text to the combined message
 					messageElement.html(message);
+				}
 
-					// Add element to commit objects
-					commitObjects.add(messageElement);
-				} // Otherwise, message object can just be added
-				else commitObjects.add(e);
+				// Add element to commit objects
+				commitObjects.add(messageElement);
 			}
 		} catch (IOException e) {
 			logger.error("Failed to extract commit objects from URL '{}': {}", url, e);
