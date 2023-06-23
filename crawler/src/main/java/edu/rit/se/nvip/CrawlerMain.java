@@ -1,23 +1,20 @@
 package edu.rit.se.nvip;
 
-import edu.rit.se.nvip.crawler.CveCrawler;
 import edu.rit.se.nvip.crawler.CveCrawlController;
 import edu.rit.se.nvip.crawler.github.GithubScraper;
 import edu.rit.se.nvip.crawler.github.PyPAGithubScraper;
-import edu.rit.se.nvip.model.NvipSource;
 import edu.rit.se.nvip.model.RawVulnerability;
-import edu.rit.se.nvip.nvd.NvdCveController;
+import edu.rit.se.nvip.utils.UtilHelper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import edu.rit.se.nvip.utils.UtilHelper;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.*;
-import java.net.URL;
 import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.*;
 
 public class CrawlerMain {
 
@@ -103,7 +100,7 @@ public class CrawlerMain {
             for (String cveId: crawledCVEs.keySet()) {
                 logger.info("CVE: {}:\n", cveId);
                 for (RawVulnerability vuln: crawledCVEs.get(cveId)) {
-                    String description = vuln.getDescription().length() > 0 ? vuln.getDescription().substring(0, 100) : vuln.getDescription();
+                    String description = vuln.getDescription().length() > 100 ? vuln.getDescription().substring(0, 100) + "...": vuln.getDescription();
                     logger.info("[{} | {}]\n", vuln.getSourceURL(), description);
                 }
             }
