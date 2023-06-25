@@ -161,14 +161,10 @@ public class AffectedProductIdentifier {
 					// if CPE identified, add it as affected product
 					for (String itemID : productIDs) {
 						logger.info("Found Affected Product for {}: {}", vulnerability.getCveId(), itemID);
-						existingProducts.add(new AffectedProduct(0, vulnerability.getCveId(), itemID, vulnerability.getPublishDate(), CpeLookUp.getVersionFromCPEid(itemID), CpeLookUp.getVendorFromCPEid(itemID)));
+						existingProducts.add(new AffectedProduct(0, vulnerability.getCveId(), itemID, CpeLookUp.getNameFromCPEid(itemID), vulnerability.getPublishDate(), CpeLookUp.getVersionFromCPEid(itemID), CpeLookUp.getVendorFromCPEid(itemID)));
 						numOfProductsMappedToCpe.getAndIncrement();
 					}
 				}
-
-				// set platform string
-				// TODO change this so it actually adds something to platform
-				vulnerability.setPlatform("");
 			}
 
 		} catch (Exception e) {
@@ -177,13 +173,6 @@ public class AffectedProductIdentifier {
 		}
 
 		totalCVETime.addAndGet(System.currentTimeMillis() - startCVETime);
-
-		// TODO: Move to executor instead of in runnable
-		if (counterOfProcessedCVEs.get() % 100 == 0) {
-			double percent = Math.floor(((double) (counterOfProcessedCVEs.get() + counterOfBadDescriptionCVEs.get() + counterOfSkippedCVEs.get()) / totalCVEtoProcess * 100) * 100) / 100;
-			logger.info("Extracted {} affected product(s) for {} out of {} CVEs so far! {} CVEs skipped (not-changed or bad description), {}% done.", numOfProductsMappedToCpe, counterOfProcessedCVEs, totalCVEtoProcess,
-					(counterOfBadDescriptionCVEs.get() + counterOfSkippedCVEs.get()), percent);
-		}
 	}
 
 	/**
@@ -194,7 +183,7 @@ public class AffectedProductIdentifier {
 	 * @param cveLimit limit of CVEs to drive
 	 * @return a map of products affected by pulled CVEs
 	 */
-	public Map<String, Product> identifyAffectedProducts(int cveLimit) {
+	public void identifyAffectedProducts(int cveLimit) {
 		// Set # to process based on cveLimit. If cveLimit is 0, assume no limit.
 		if(cveLimit == 0) cveLimit = Integer.MAX_VALUE;
 		int totalCVEtoProcess = Math.min(vulnList.size(), cveLimit);
@@ -207,7 +196,7 @@ public class AffectedProductIdentifier {
 			productNameDetector = new ProductDetector(this.cpeLookUp);
 		} catch (Exception e1) {
 			logger.error("Severe Error! Could not initialize the models for product name/version extraction! Skipping affected product identification step! {}", e1.toString());
-			return null;
+			return;
 		}
 
 		AtomicInteger numOfProductsMappedToCpe = new AtomicInteger();
@@ -249,6 +238,12 @@ public class AffectedProductIdentifier {
 					totalCVETime,
 					totalCVEtoProcess
 			));
+
+			if (counterOfProcessedCVEs.get() % 100 == 0 && counterOfProcessedCPEs.get() != totalCVEtoProcess) {
+				double percent = Math.floor(((double) (counterOfProcessedCVEs.get() + counterOfBadDescriptionCVEs.get() + counterOfSkippedCVEs.get()) / totalCVEtoProcess * 100) * 100) / 100;
+				logger.info("Extracted {} affected product(s) for {} out of {} CVEs so far! {} CVEs skipped (not-changed or bad description), {}% done.", numOfProductsMappedToCpe, counterOfProcessedCVEs, totalCVEtoProcess,
+						(counterOfBadDescriptionCVEs.get() + counterOfSkippedCVEs.get()), percent);
+			}
 		}
 
 		executor.shutdown();
@@ -272,7 +267,6 @@ public class AffectedProductIdentifier {
 		vulnList.stream().map(v -> v.getAffectedProducts().size()).forEach(count::addAndGet);
 		logger.info("Found {} affected products from {} CVEs in {} seconds", count, totalCVEtoProcess, Math.floor(((double) (System.currentTimeMillis() - start) / 1000) * 100) / 100);
 
-		return this.cpeLookUp.getProductsToBeAddedToDatabase();
 	}
 
 	/**

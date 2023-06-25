@@ -49,7 +49,7 @@ public class CpeLookUpTest {
 	private static final CpeLookUp cpeLookUp = new CpeLookUp();
 	static {
 		try {
-			final Map<String, CpeGroup> productDict = ProductNameExtractorController.readProductDict("src/test/resources/data/product_dict.json");
+			final Map<String, CpeGroup> productDict = ProductNameExtractorController.readProductDict("src/test/resources/data/test_product_dict.json");
 			cpeLookUp.loadProductDict(productDict);
 		} catch (IOException e) {
 			throw new RuntimeException(e);

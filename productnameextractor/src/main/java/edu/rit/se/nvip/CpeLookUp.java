@@ -78,7 +78,6 @@ public class CpeLookUp {
 	 * hash map of CPE to Product add list of products to database using
 	 * map.values();
 	 */
-	private final Map<String, Product> productsToBeAddedToDatabase;
 	private final static Logger logger = LogManager.getLogger(CpeLookUp.class);
 	private final static VersionManager versionManager = new VersionManager();
 
@@ -132,34 +131,7 @@ public class CpeLookUp {
 	/**
 	 * Create new instance of CpeLookUp
 	 */
-	public CpeLookUp() {
-		this.productsToBeAddedToDatabase = new HashMap<>();
-	}
-
-	/**
-	 * @return a map of products marked for database insertion
-	 */
-	public Map<String, Product> getProductsToBeAddedToDatabase() {
-		return this.productsToBeAddedToDatabase;
-	}
-
-	/**
-	 * Adds a given product to the database
-	 * @param p product to be added
-	 */
-	public void addProductToDatabase(Product p) {
-		this.productsToBeAddedToDatabase.put(p.getCpe(), p);
-	}
-
-	/**
-	 * Adds a given list of products to the database
-	 * @param products list of products to be added
-	 */
-	public void addProductsToDatabase(List<Product> products) {
-		for (Product p : products) {
-			addProductToDatabase(p);
-		}
-	}
+	public CpeLookUp() {}
 
 	/**
 	 * Loads a CPE dictionary of products from file
@@ -463,7 +435,6 @@ public class CpeLookUp {
 	private ArrayList<String> getCPEIdsFromGroups(ArrayList<CPEGroupFromMap> selectedGroups, ProductItem product) {
 
 		ArrayList<String> cpeIDs = new ArrayList<>();
-		ArrayList<Product> productsToAdd = new ArrayList<>();
 
 		if (selectedGroups.size() == 0) {
 			return null;
@@ -473,7 +444,6 @@ public class CpeLookUp {
 		if (product.getVersions().size() == 0) {
 			String cpeName = "cpe:2.3:a:" + selectedGroups.get(0).getCpeGroup().getGroupID() + ":*:*:*:*:*:*:*:*";
 			cpeIDs.add(cpeName);
-			productsToAdd.add(new Product(selectedGroups.get(0).getCpeGroup().getCommonTitle(), cpeName));
 		} else {
 			// Get raw version words array
 			String[] versionWords = product.getVersions() // Get product versions
@@ -516,8 +486,6 @@ public class CpeLookUp {
 							matchesCounter++;
 							String cpeName = "cpe:2.3:a:" + group.getGroupID() + ":" + versionKey + ":*:*:*:*:*:*:*";
 							cpeIDs.add(cpeName);
-							addedVersions.add(versionKey);
-							productsToAdd.add(new Product(group.getCommonTitle(), cpeName));
 						}
 					} catch (IllegalArgumentException e) {
 						logger.warn("Error parsing version string '{}': {}", versionKey, e.toString());
@@ -539,7 +507,6 @@ public class CpeLookUp {
 								matchesCounter++;
 								String cpeName = "cpe:2.3:a:" + group.getGroupID() + ":" + versionWord + ":*:*:*:*:*:*:*";
 								cpeIDs.add(cpeName);
-								productsToAdd.add(new Product(group.getCommonTitle(), cpeName));
 								break;
 							}
 						}
@@ -563,7 +530,6 @@ public class CpeLookUp {
 								matchesCounter++;
 								String cpeName = "cpe:2.3:a:" + group.getGroupID() + ":" + versionWord + ":*:*:*:*:*:*:*";
 								cpeIDs.add(cpeName);
-								productsToAdd.add(new Product(group.getCommonTitle(), cpeName));
 							}
 						} catch (IllegalArgumentException e) {
 							logger.warn("Error parsing version string '{}': {}", versionWord, e.toString());
@@ -576,12 +542,8 @@ public class CpeLookUp {
 			if (cpeIDs.size() == 0) {
 				String cpeID = "cpe:2.3:a:" + selectedGroups.get(0).getCpeGroup().getGroupID() + ":*:*:*:*:*:*:*:*";
 				cpeIDs.add(cpeID);
-				productsToAdd.add(new Product(selectedGroups.get(0).getCpeGroup().getCommonTitle(), cpeID));
 			}
 		}
-
-		// Add found products
-		addProductsToDatabase(productsToAdd);
 
 		// Return CPEs of found products
 		return cpeIDs;
@@ -640,6 +602,23 @@ public class CpeLookUp {
 		else logger.warn("Could not match CPE String {}", cpeID);
 
 		return version;
+	}
+
+	/**
+	 * Gets the name component of a given CPE ID
+	 *
+	 * @param cpeID CPE ID to search
+	 * @return found name String
+	 */
+	public static String getNameFromCPEid(String cpeID) {
+		String name = null;
+
+		// Match against CPE regex
+		final Matcher m = CPE_PATTERN.matcher(cpeID);
+		if(m.find()) name = m.group(2);
+		else logger.warn("Could not match CPE String {}", cpeID);
+
+		return name;
 	}
 
 	/**

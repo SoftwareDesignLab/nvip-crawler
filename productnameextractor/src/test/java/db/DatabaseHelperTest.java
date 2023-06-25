@@ -134,7 +134,7 @@ public class DatabaseHelperTest {
 	private List<AffectedProduct> buildDummyProducts(int count) {
 		List<AffectedProduct> products = new ArrayList<>();
 		for (int i = 0; i < count; i++) {
-			products.add(new AffectedProduct(i, "cve"+i, "cpe"+i, "date"+i, "version"+i));
+			products.add(new AffectedProduct(i, "cve"+i, "cpe"+i, "productName"+i, "date"+i, "version"+i, "vendor"+i));
 		}
 		return products;
 	}

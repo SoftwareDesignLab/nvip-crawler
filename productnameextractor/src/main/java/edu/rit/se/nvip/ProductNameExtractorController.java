@@ -234,13 +234,8 @@ public class ProductNameExtractorController {
                 builder.append("\n");
 
                 for(AffectedProduct affectedProduct : affectedProducts){
-                    final String cpe = affectedProduct.getCpe();
-                    final Matcher m = cpePattern.matcher(cpe);
-                    String productName = "UNKNOWN";
-                    if(!m.find()) logger.warn("CPE in invalid format {}", cpe);
-                    else productName = m.group(2);
-                    builder.append(affectedProduct.getCpe()).append("\t\t\t").append(affectedProduct.getPURL(productName))
-                            .append("\t\t\t").append(affectedProduct.getSWID(productName)).append("\n");
+                    builder.append(affectedProduct.getCpe()).append("\t\t\t").append(affectedProduct.getPURL())
+                            .append("\t\t\t").append(affectedProduct.getSWID()).append("\n");
                 }
 
                 builder.append("\n\n\n");

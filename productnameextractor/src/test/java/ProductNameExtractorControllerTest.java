@@ -26,7 +26,7 @@ public class ProductNameExtractorControllerTest {
 
     @Test
     public void readProductDictMainTest(){
-        String productDictPath = "src/test/resources/data/product_dict.json";
+        String productDictPath = "src/main/resources/data/product_dict.json";
         Map<String, CpeGroup> productDict = null;
         try {
             productDict = ProductNameExtractorController.readProductDict(productDictPath);

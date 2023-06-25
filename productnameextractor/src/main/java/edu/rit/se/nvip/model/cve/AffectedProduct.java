@@ -33,6 +33,7 @@ public class AffectedProduct {
 	private final int id;
 	private String cveId;
 	private final String cpe;
+	private String productName;
 	private String releaseDate;
 	private String version;
 	private String vendor;
@@ -47,9 +48,12 @@ public class AffectedProduct {
 		this.version = version;
 	}
 
-	public AffectedProduct(int id, String cveId, String cpe, String releaseDate, String version, String vendor) {
+	public AffectedProduct(int id, String cveId, String cpe, String productName, String releaseDate, String version, String vendor) {
 		this(id, cveId, cpe, releaseDate, version);
+		this.productName = productName;
 		this.vendor = vendor;
+		generatePURL();
+		generateSWID();
 	}
 
 	public AffectedProduct(String cpe, String releaseDate, String version) {
@@ -83,6 +87,10 @@ public class AffectedProduct {
 		return cpe;
 	}
 
+	public String getProductName() {
+		return productName;
+	}
+
 	public String getReleaseDate() {
 		return releaseDate;
 	}
@@ -99,22 +107,12 @@ public class AffectedProduct {
 	}
 
 	//Returns pURL. If productName is unknown, sets value to NULL.
-	public String getPURL(String productName){
-		if(productName.equals("UNKNOWN")){
-			pURL = null;
-		}else {
-			generatePURL(productName);
-		}
+	public String getPURL(){
 		return pURL;
 	}
 
 	//Returns swid. If productName is unknown, sets value to NULL.
-	public String getSWID(String productName){
-		if(productName.equals("UNKNOWN")){
-			swid = null;
-		}else {
-			generateSWID(productName);
-		}
+	public String getSWID(){
 		return swid;
 	}
 
@@ -135,9 +133,8 @@ public class AffectedProduct {
 	* Format: scheme:type/namespace/name@version?qualifiers#subpath
 	* Where scheme is "pkg", vendor is the type, product name is the name and version is the version
 	*
-	* @param productName
 	*/
-	private void generatePURL(String productName){
+	private void generatePURL(){
 		String result = "pkg:";
 		StringBuilder purlBuilder = new StringBuilder(result);
 		purlBuilder.append(vendor).append("/").append(productName);
@@ -150,9 +147,8 @@ public class AffectedProduct {
 	/**
 	 * Generate SWID using product name
 	 * Scheme: swid:productname@version
-	 * @param productName
 	 */
-	public void generateSWID(String productName){
+	private void generateSWID(){
 		//match the scheme
 		String result = "<SoftwareIdentity xmlns=\"http://standards.iso.org/iso/19770/-2/2015/schema.xsd\" ";
 		StringBuilder swidBuilder = new StringBuilder(result);
