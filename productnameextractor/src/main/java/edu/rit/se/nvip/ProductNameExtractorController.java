@@ -313,15 +313,15 @@ public class ProductNameExtractorController {
             writeProductDict(productDict, productDictPath); // Write product dict
         }
 
-        // Run the AffectedProductIdentifier with the fetched vuln list
-        affectedProductIdentifier.identifyAffectedProducts(cveLimit);
+        // Run the AffectedProductIdentifier with the cveLimit
+        List<AffectedProduct> affectedProducts = affectedProductIdentifier.identifyAffectedProducts(cveLimit);
 
         if(testMode){
             logger.info("Printing test results...");
             writeTestResults(vulnList);
         }else{
-            int numAffectedReleases = databaseHelper.insertAffectedProductsToDB(vulnList);
-            logger.info("AffectedProductIdentifier found and inserted {} affected products to the database in {} seconds", numAffectedReleases, Math.floor(((double) (System.currentTimeMillis() - getProdStart) / 1000) * 100) / 100);
+            int numAffectedProducts = databaseHelper.insertAffectedProductsToDB(affectedProducts);
+            logger.info("AffectedProductIdentifier found and inserted {} affected products to the database in {} seconds", numAffectedProducts, Math.floor(((double) (System.currentTimeMillis() - getProdStart) / 1000) * 100) / 100);
         }
 
     }

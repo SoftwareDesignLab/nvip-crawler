@@ -224,10 +224,7 @@ public class DatabaseHelperTest {
 		insertAffectedProductsV2Test();
 		// Prepare test data
 		int count = 5;
-		List<CompositeVulnerability> products = new ArrayList<>();
-		for (int i = 0; i < count; i++) {
-			products.add(new CompositeVulnerability(i, "CVE-" + i));
-		}
+		List<AffectedProduct> products = buildDummyProducts(count);
 
 		// Mock the database interactions
 		when(hds.getConnection()).thenReturn(conn);

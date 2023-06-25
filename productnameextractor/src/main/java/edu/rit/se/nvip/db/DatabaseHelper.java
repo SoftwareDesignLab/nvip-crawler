@@ -133,24 +133,16 @@ public class DatabaseHelper {
 
 	/**
 	 * Store affected products in DB
-	 * @param vulnList
+	 * @param affectedProducts
 	 */
-	public int insertAffectedProductsToDB(List<CompositeVulnerability> vulnList) {
-
-		// get all identified affected releases
-		List<AffectedProduct> listAllAffectedProducts = new ArrayList<>();
-		for (CompositeVulnerability vulnerability : vulnList) {
-			if (vulnerability.getCveReconcileStatus() == CompositeVulnerability.CveReconcileStatus.DO_NOT_CHANGE)
-				continue; // skip the ones that are not changed!
-			listAllAffectedProducts.addAll(vulnerability.getAffectedProducts());
-		}
+	public int insertAffectedProductsToDB(List<AffectedProduct> affectedProducts) {
 
 		logger.info("Inserting Affected Products to DB!");
 		// delete existing affected release info in db ( for CVEs in the list)
-		databaseHelper.deleteAffectedProducts(listAllAffectedProducts);
+		databaseHelper.deleteAffectedProducts(affectedProducts);
 
 		// now insert affected releases (referenced products are already in db)
-		databaseHelper.insertAffectedProductsV2(listAllAffectedProducts);
+		databaseHelper.insertAffectedProductsV2(affectedProducts);
 
 		// TODO: Should be in program driver, probably PNEController
 //		// prepare CVE summary table for Web UI
@@ -160,7 +152,7 @@ public class DatabaseHelper {
 //		cveDataForWebUi.prepareDataforWebUi();
 
 		databaseHelper.shutdown();
-		return listAllAffectedProducts.size();
+		return affectedProducts.size();
 	}
 
 	/**

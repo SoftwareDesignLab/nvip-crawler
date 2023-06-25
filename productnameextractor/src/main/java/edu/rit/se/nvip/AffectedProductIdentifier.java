@@ -31,6 +31,7 @@ import opennlp.tools.tokenize.WhitespaceTokenizer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -183,7 +184,7 @@ public class AffectedProductIdentifier {
 	 * @param cveLimit limit of CVEs to drive
 	 * @return a map of products affected by pulled CVEs
 	 */
-	public void identifyAffectedProducts(int cveLimit) {
+	public List<AffectedProduct> identifyAffectedProducts(int cveLimit) {
 		// Set # to process based on cveLimit. If cveLimit is 0, assume no limit.
 		if(cveLimit == 0) cveLimit = Integer.MAX_VALUE;
 		int totalCVEtoProcess = Math.min(vulnList.size(), cveLimit);
@@ -196,7 +197,7 @@ public class AffectedProductIdentifier {
 			productNameDetector = new ProductDetector(this.cpeLookUp);
 		} catch (Exception e1) {
 			logger.error("Severe Error! Could not initialize the models for product name/version extraction! Skipping affected product identification step! {}", e1.toString());
-			return;
+			return null;
 		}
 
 		AtomicInteger numOfProductsMappedToCpe = new AtomicInteger();
@@ -267,6 +268,14 @@ public class AffectedProductIdentifier {
 		vulnList.stream().map(v -> v.getAffectedProducts().size()).forEach(count::addAndGet);
 		logger.info("Found {} affected products from {} CVEs in {} seconds", count, totalCVEtoProcess, Math.floor(((double) (System.currentTimeMillis() - start) / 1000) * 100) / 100);
 
+		List<AffectedProduct> affectedProducts = new ArrayList<>();
+		for (CompositeVulnerability vulnerability : vulnList) {
+			if (vulnerability.getCveReconcileStatus() == CompositeVulnerability.CveReconcileStatus.DO_NOT_CHANGE)
+				continue; // skip the ones that are not changed!
+			affectedProducts.addAll(vulnerability.getAffectedProducts());
+		}
+
+		return affectedProducts;
 	}
 
 	/**
