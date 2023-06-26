@@ -500,7 +500,7 @@ public class NvdCveController {
 					String status = cve.getString("vulnStatus");
 
 					// Adjust published date substring to be mySql acceptable
-					nvdCves.add(new NvdVulnerability(cveId, Timestamp.valueOf(publishedDate), NvdVulnerability.nvdStatus.valueOf(status)));
+					nvdCves.add(new NvdVulnerability(cveId, Timestamp.valueOf(publishedDate), status));
 				}
 			}
 		} catch (IOException e) {

@@ -258,7 +258,7 @@ public class DatabaseHelperTest {
         when(conn.prepareStatement(anyString())).thenReturn(pstmt);
 
         // Call the markGarbage method
-        dbh.markGarbage(mockedRawVulns);
+        dbh.updateFilterStatus(mockedRawVulns);
 
         // Verify that pstmt.setInt() is called with the correct arguments
         verify(pstmt, times(2)).setInt(eq(1), eq(1));
@@ -367,7 +367,7 @@ public class DatabaseHelperTest {
     @Test
     public void insertNvdCveTest() throws SQLException {
         // Create a sample NvdVulnerability object
-        NvdVulnerability nvdCve = new NvdVulnerability("CVE-2023-1234", new Timestamp(System.currentTimeMillis()), NvdVulnerability.nvdStatus.ANALYZED);
+        NvdVulnerability nvdCve = new NvdVulnerability("CVE-2023-1234", new Timestamp(System.currentTimeMillis()), NvdVulnerability.nvdStatus.ANALYZED.toString());
 
         // Call the insertNvdCve method
         int result = dbh.insertNvdCve(nvdCve);

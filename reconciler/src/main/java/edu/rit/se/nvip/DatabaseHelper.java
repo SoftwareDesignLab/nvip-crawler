@@ -364,7 +364,7 @@ public class DatabaseHelper {
             while (rs.next()) {
 
                 try {
-                    nvdVulnerabilities.add(new NvdVulnerability(rs.getString("cve_id"), rs.getTimestamp("published_date").toLocalDateTime(), rs.getString("status")));
+                    nvdVulnerabilities.add(new NvdVulnerability(rs.getString("cve_id"), rs.getTimestamp("published_date"), rs.getString("status")));
                 } catch (Exception ignore) {}
 
             }
@@ -388,7 +388,7 @@ public class DatabaseHelper {
 
             pstmt.setString(1, nvdCve.getCveId());
             pstmt.setTimestamp(2, nvdCve.getPublishDate());
-            pstmt.setString(3, nvdCve.getStatus());
+            pstmt.setString(3, nvdCve.getStatus().toString());
             pstmt.execute();
 
             logger.info("Successfully Inserted CVE {} with Published Date {} and Status {} into nvd_data", nvdCve.getCveId(), nvdCve.getPublishDate(), nvdCve.getStatus());

@@ -23,6 +23,13 @@ public class DatabaseSandbox extends DatabaseHelper {
         return databaseSandbox;
     }
 
+    public static synchronized DatabaseSandbox getInstance(String url, String username, String password)  {
+        if (databaseSandbox == null) {
+            HikariConfig config = createHikariConfigFromArgs(url, username, password);
+            databaseSandbox = new DatabaseSandbox(config);
+        }
+        return databaseSandbox;
+    }
 
 
 
