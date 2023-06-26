@@ -54,7 +54,7 @@ public class ProductDetector {
 
 	private final POSTaggerME tagger;
 	private final POSModel model;
-	private final String modelPath = "nlp/en-pos-perceptron.bin";
+	private final String modelPath = "nvip_data/nlp/en-pos-perceptron.bin";
 
 	static private final Logger logger = LogManager.getLogger(ProductDetector.class);
 

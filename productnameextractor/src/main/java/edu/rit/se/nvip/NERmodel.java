@@ -127,7 +127,7 @@ public class NERmodel {
 
 			// Load Apache Open NLP sentence detector model
 			// path to Apache Open NLP sentence model
-			String sentenceModelPath = "nlp/en-sent.bin";
+			String sentenceModelPath = "nvip_data/nlp/en-sent.bin";
 			try {
 				startTime = System.currentTimeMillis();
 				InputStream modelIn = this.getClass().getClassLoader().getResourceAsStream(sentenceModelPath);
