@@ -101,10 +101,12 @@ public class PatchCommitScraper {
 								String commitUrl = repository.getConfig().getString("remote", "origin", "url");
 								logger.info("Found patch commit @ {} in repo {}", commitUrl, localDownloadLoc);
 								String unifiedDiff = generateUnifiedDiff(git, commit);
-//								List<String> commitTimeLine = calculateCommitTimeline(repository, startingRevision, commit);
-//								logger.info("Commit timeline: {}", commitTimeLine);
+								List<Long> commitTimeline = calculateCommitTimeline(repository, startingRevision, commit);
+//								logger.info("Commit timeline: {}", commitTimeline);
 								int linesChanged = getLinesChanged(repository, commit);
-								logger.info("Lines changed: {}", linesChanged);
+//								logger.info("Lines changed: {}", linesChanged);
+								Long timeToPatch = calculateTimeToPatch(commitTimeline);
+//								logger.info("Time to patch: {}", timeToPatch);
 								PatchCommit patchCommit = new PatchCommit(commitUrl, cveId, commit.getName(), new Date(commit.getCommitTime() * 1000L), commit.getFullMessage(), unifiedDiff);
 								patchCommits.add(patchCommit);
 							} else ignoredCounter++;
@@ -182,27 +184,28 @@ public class PatchCommitScraper {
 	 * prepare a timeline of commits between the vulnerable commit, and the patch commit. Keep track of timeline, estimate how long it took to patch, how many lines needed to be change.
 	 * @param repository
 	 * @param startingRevision
-	 * @param patchCommit
+	 * @param commit
 	 * @return
 	 * @throws IOException
 	 * @throws GitAPIException
 	 */
-	private List<String> calculateCommitTimeline(Repository repository, ObjectId startingRevision, RevCommit patchCommit) throws IOException, GitAPIException {
-		List<String> commitTimeline = new ArrayList<>();
+	private List<Long> calculateCommitTimeline(Repository repository, ObjectId startingRevision, RevCommit commit) throws IOException {
+		List<Long> commitTimeline = new ArrayList<>();
 
-		// Get the canonical tree parser for the starting revision
-		CanonicalTreeParser startingTreeParser = getCanonicalTreeParser(repository, startingRevision);
-
-		// Get the canonical tree parser for the patch commit
-		CanonicalTreeParser patchTreeParser = getCanonicalTreeParser(repository, patchCommit);
-
-		// Get the list of diffs between the starting revision and the patch commit
-		try (Git git = new Git(repository)) {
-			List<DiffEntry> diffs = git.diff().setNewTree(patchTreeParser).setOldTree(startingTreeParser).call();
-
-			// Iterate through the diffs and add the commit messages to the timeline
-			for (DiffEntry diff : diffs) {
-				commitTimeline.add(diff.getChangeType().toString() + " " + diff.getNewPath());
+		try (RevWalk walk = new RevWalk(repository)) {
+			RevCommit currentCommit = commit;
+			while (currentCommit != null) {
+				commitTimeline.add(currentCommit.getCommitTime() * 1000L);
+				if (currentCommit.getParentCount() > 0) {
+					RevCommit parentCommit = walk.parseCommit(currentCommit.getParent(0).getId());
+					if (parentCommit.getId().equals(startingRevision)) {
+						break;
+					} else {
+						currentCommit = parentCommit;
+					}
+				} else {
+					break;
+				}
 			}
 		}
 
@@ -252,5 +255,22 @@ public class PatchCommitScraper {
 			}
 		}
 		return linesChanged;
+	}
+
+	private long calculateTimeToPatch(List<Long> commitTimeline) {
+		if (commitTimeline.size() <= 1) {
+			// If there are no or only one commit in the timeline, return 0 indicating no patch time
+			return 0;
+		}
+
+		// Calculate the time difference between the initial commit and the patch commit in milliseconds
+		long initialCommitTime = commitTimeline.get(0);
+		long patchCommitTime = commitTimeline.get(commitTimeline.size() - 1);
+		long elapsedMillis = patchCommitTime - initialCommitTime;
+
+		// Convert milliseconds to days and ensure it's a positive value
+		long elapsedDays = Math.abs(elapsedMillis / (1000 * 60 * 60 * 24));
+
+		return elapsedDays;
 	}
 }
