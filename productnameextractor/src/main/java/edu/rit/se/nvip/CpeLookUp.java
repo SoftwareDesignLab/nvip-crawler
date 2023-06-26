@@ -74,6 +74,9 @@ public class CpeLookUp {
 	 */
 	private Map<String, CpeGroup> cpeMapFile = null; // CPE items from CPE file
 
+	//HashSet to store how many unique cpe groups are identified
+	private final Set<String> uniqueCPEGroups;
+
 	/**
 	 * hash map of CPE to Product add list of products to database using
 	 * map.values();
@@ -131,7 +134,17 @@ public class CpeLookUp {
 	/**
 	 * Create new instance of CpeLookUp
 	 */
-	public CpeLookUp() {}
+	public CpeLookUp() {
+		uniqueCPEGroups = new HashSet<>();
+	}
+
+	/**
+	 * Returns the size of our unique CPE Groups that have been identified.
+	 * @return
+	 */
+	public int getUniqueCPECount(){
+		return uniqueCPEGroups.size();
+	}
 
 	/**
 	 * Loads a CPE dictionary of products from file
@@ -486,6 +499,7 @@ public class CpeLookUp {
 							matchesCounter++;
 							String cpeName = "cpe:2.3:a:" + group.getGroupID() + ":" + versionKey + ":*:*:*:*:*:*:*";
 							cpeIDs.add(cpeName);
+							uniqueCPEGroups.add(selectedGroup.getCpeGroup().getGroupID() + product.hashCode());
 						}
 					} catch (IllegalArgumentException e) {
 						logger.warn("Error parsing version string '{}': {}", versionKey, e.toString());
@@ -507,7 +521,7 @@ public class CpeLookUp {
 								matchesCounter++;
 								String cpeName = "cpe:2.3:a:" + group.getGroupID() + ":" + versionWord + ":*:*:*:*:*:*:*";
 								cpeIDs.add(cpeName);
-								break;
+								uniqueCPEGroups.add(selectedGroup.getCpeGroup().getGroupID() + product.hashCode());
 							}
 						}
 					}
@@ -530,6 +544,7 @@ public class CpeLookUp {
 								matchesCounter++;
 								String cpeName = "cpe:2.3:a:" + group.getGroupID() + ":" + versionWord + ":*:*:*:*:*:*:*";
 								cpeIDs.add(cpeName);
+								uniqueCPEGroups.add(selectedGroup.getCpeGroup().getGroupID() + product.hashCode());
 							}
 						} catch (IllegalArgumentException e) {
 							logger.warn("Error parsing version string '{}': {}", versionWord, e.toString());
@@ -542,6 +557,7 @@ public class CpeLookUp {
 			if (cpeIDs.size() == 0) {
 				String cpeID = "cpe:2.3:a:" + selectedGroups.get(0).getCpeGroup().getGroupID() + ":*:*:*:*:*:*:*:*";
 				cpeIDs.add(cpeID);
+				uniqueCPEGroups.add(selectedGroups.get(0).getCpeGroup().getGroupID() + product.hashCode());
 			}
 		}
 
