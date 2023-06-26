@@ -11,6 +11,11 @@ import static org.junit.Assert.assertTrue;
 
 public class SimpleReconcilerTest {
 
+    /*
+
+    Not exactly complete... probably will have to switch to using a model like ApacheOpenNLPReconcilerTest
+
+     */
     @Test
     public void testReconcileDescriptions() {
         SimpleReconciler reconciler = new SimpleReconciler();
