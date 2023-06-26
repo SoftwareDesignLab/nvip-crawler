@@ -23,34 +23,26 @@
  */
 package edu.rit.se.nvip.cveprocess;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.time.Duration;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
-import java.util.*;
 
-import edu.rit.se.nvip.db.DatabaseHelper;
-import edu.rit.se.nvip.model.CVE;
+import edu.rit.se.nvip.cvereconcile.CveReconciler;
+import edu.rit.se.nvip.model.CompositeVulnerability;
+import edu.rit.se.nvip.model.MitreVulnerability;
 import edu.rit.se.nvip.model.NvdVulnerability;
 import edu.rit.se.nvip.model.Vulnerability;
+import edu.rit.se.nvip.utils.CsvUtils;
 import it.unimi.dsi.fastutil.Hash;
 import org.apache.commons.collections4.SetUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import edu.rit.se.nvip.cvereconcile.CveReconciler;
-import edu.rit.se.nvip.model.CompositeVulnerability;
-import edu.rit.se.nvip.utils.CsvUtils;
-import org.jdom2.CDATA;
-import org.json.JSONArray;
-import org.json.JSONObject;
+import java.io.File;
+import java.io.IOException;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+
 
 /**
  *
@@ -78,73 +70,36 @@ public class CveProcessor {
 	private HashMap<String, NvdVulnerability> nvdCVEs;
 	private Map<String, String> cvesInMitre = new HashMap<>();
 
+	/**
+	 * New hashmap for CVEs in Mitre
+	 */
+	private HashMap<String, MitreVulnerability> mitreCves;
+
 	CveReconciler cveUtils = new CveReconciler();
 
 	/**
 	 * For tests
+	 *
 	 * @param nvdCves
 	 * @param mitreCves
+	 * @param pulledMitreCves
 	 */
-	public CveProcessor(HashMap<String, String> nvdCves, HashMap<String, String> mitreCves, HashMap<String, NvdVulnerability> pulledNvdCves){
+	public CveProcessor(HashMap<String, String> nvdCves, HashMap<String, String> mitreCves,
+						HashMap<String, NvdVulnerability> pulledNvdCves, HashMap<String, MitreVulnerability> pulledMitreCves){
 		this.cvesInNvd = nvdCves;
 		this.cvesInMitre = mitreCves;
 		this.nvdCVEs = pulledNvdCves;
+		this.mitreCves = pulledMitreCves;
 	}
 
 	/**
 	 * Constructor for processor class
-	 * @param nvdCvePath --> File path to NVD CVE .csv file (not used anymore)
-	 * @param mitreCvePath --> File path to MITRE CVE .csv file
 	 * @param nvdCves --> Hashmap of CVEs in NVD (provided byb NVD Controller class)
 	 */
-	public CveProcessor(String nvdCvePath, String mitreCvePath, HashMap<String, NvdVulnerability> nvdCves) {
 
+	public CveProcessor(HashMap<String, NvdVulnerability> nvdCves, HashMap<String, MitreVulnerability> mitreCves) {
 		this.nvdCVEs = nvdCves;
-
-		try {
-			CsvUtils csvLogger = new CsvUtils();
-			/**
-			 * NVD
-			 */
-			List<String> arrNVD = FileUtils.readLines(new File(nvdCvePath), "UTF-8");
-			if (arrNVD.isEmpty())
-				throw new IOException("Failed to read NVD CSV file: " + nvdCvePath + "  ... Calculations of 'not in NVD' are going to be off");
-			else
-				logger.info("Successfully read in NVD CSV file for calculations of 'not in NVD'");
-			for (String cve : arrNVD) {
-				String[] pieces = cve.split(csvLogger.getSeparatorCharAsRegex());
-				String id = pieces[0];
-				if (pieces.length > 2) {
-					cvesInNvd.put(id, pieces[2]);
-				} else {
-					cvesInNvd.put(id, null);
-				}
-			}
-
-			/**
-			 * MITRE
-			 */
-			arrNVD = FileUtils.readLines(new File(mitreCvePath), "UTF-8");
-			if (arrNVD.isEmpty())
-				throw new IOException("Failed to read MITRE CSV file" + mitreCvePath + "... Calculations of 'not in MITRE' are going to be off");
-			else
-				logger.info("Successfully read in MITRE CSV file for calculations of 'not in MITRE'");
-			for (String cve : arrNVD) {
-				String[] pieces = cve.split(csvLogger.getSeparatorCharAsRegex());
-				String id = pieces[0];
-				if (pieces.length > 2) {
-					cvesInMitre.put(id, pieces[2]);
-				} else {
-					cvesInMitre.put(id, null);
-				}
-			}
-
-		} catch (IOException e) {
-			logger.error("ERROR: Failed to load NVD/MITRE CVEs!\n{}\nPlease check file paths for nvd CVE and mitre CVE .csv files, " +
-					"or disable it in the NVIP_REFRESH_NVD_LIST envvar", e.getMessage());
-			System.exit(1); // This is a serious error, exit!
-		}
-		logger.info("Loaded cve data for NVD(" + cvesInNvd.size() + ") and MITRE(" + cvesInNvd.size() + ")");
+		this.mitreCves = mitreCves;
 	}
 
 	/**
@@ -181,10 +136,9 @@ public class CveProcessor {
 
 				allCveData.add(vuln);
 
-				// Compare w/ NVD
-				if (nvdCVEs.containsKey(vuln.getCveId())){
-					// Check status of CVE in NVD, if RECEIVED, then it is in NVD.
-					// If any other status, then it is not in NVD.
+				// Compare w/ NVD, is the CVE in NVD?
+				if (nvdCVEs.containsKey(vuln.getCveId())) {
+					// Check status of CVE in NVD, if RESERVED or REJECTED, it is considered not in NVD
 					if (nvdCVEs.get(vuln.getCveId()).getStatus() == NvdVulnerability.nvdStatus.NOTINNVD) {
 						vuln.setNvdStatus(0);
 						newCVEDataNotInNvd.add(vuln);
@@ -197,42 +151,50 @@ public class CveProcessor {
 						nvdAwaitingAnalysis = nvdCVEs.get(vuln.getCveId()).getStatus() == NvdVulnerability.nvdStatus.AWAITINGANALYSIS ? nvdAwaitingAnalysis + 1 : nvdAwaitingAnalysis;
 						nvdOther = nvdCVEs.get(vuln.getCveId()).getStatus() == NvdVulnerability.nvdStatus.NOTINNVD ? nvdOther + 1 : nvdOther;
 					}
-				} else if (existingCves.containsKey(vuln.getCveId()) && existingCves.get(vuln.getCveId()).getNvdStatus() == 1) {
+				}
+				// Do we already know the CVE is in NVD?
+				else if (existingCves.containsKey(vuln.getCveId()) && existingCves.get(vuln.getCveId()).getNvdStatus() == 1) {
 					vuln.setNvdStatus(1);
-				} else {
+				}
+				// Is this an ancient CVE?
+				else if (!checkAgeOfCVEByYear(vuln.getCveId())) {
+					vuln.setNvdStatus(1);
+				}
+				// Assume it's not in NVD if none of the above
+				else {
 					logger.info("CVE: {}, is NOT in NVD", vuln.getCveId());
 					vuln.setNvdSearchResult("NA");
 					vuln.setNvdStatus(0);
 					newCVEDataNotInNvd.add(vuln);
 				}
 
-				// Compare w/ MITRE
-				// TODO: will need to use a similar comparison via status like NVD
-				if (vuln.isFoundNewDescriptionForReservedCve()) {
-					vuln.setMitreStatus(0);
-				} else if (cvesInMitre.containsKey(vuln.getCveId())) {
-					vuln.setMitreStatus(1);
-				} else if (existingCves.containsKey(vuln.getCveId()) && existingCves.get(vuln.getCveId()).getMitreStatus() == 0) {
-					long monthsBetween = ChronoUnit.MONTHS.between(LocalDateTime.now(),existingCves.get(vuln.getCveId()).getCreatedDateAsDate());
 
-					// Check if the CVE is within the past month, if it's older, then assume it's in MITRE
-					if (checkAgeOfCVEByYear(vuln.getCveId()) && monthsBetween <= 1 && monthsBetween >= 0) {
-						logger.info("CVE: {}, is NOT in Mitre", vuln.getCveId());
-						vuln.setMitreSearchResult("NA");
+				// Compare w/ MITRE, is the CVE in MITRE?
+				if (mitreCves.containsKey(vuln.getCveId())){
+					// Check status of CVE in MITRE, if PUBLIC or PUBLISHED, then it is in MITRE.
+					// If any other status, then it is not in MITRE.
+					if (mitreCves.get(vuln.getCveId()).getStatus() == MitreVulnerability.mitreStatus.NOTINMITRE ||
+							mitreCves.get(vuln.getCveId()).getStatus() == MitreVulnerability.mitreStatus.RESERVED) {
 						vuln.setMitreStatus(0);
 						newCVEDataNotInMitre.add(vuln);
 					} else {
-						logger.info("CVE: {} is from over a month ago, will assume it's in MITRE: Setting status to 1", vuln.getCveId());
 						vuln.setMitreStatus(1);
 					}
-				} else if (!existingCves.containsKey(vuln.getCveId())) {
-					logger.info("CVE: {} is not in NVIP and not in MITRE: Keeping status as 0", vuln.getCveId());
+				}
+				// Do we already know the CVE is in MITRE?
+				else if (existingCves.containsKey(vuln.getCveId()) && existingCves.get(vuln.getCveId()).getMitreStatus() == 1) {
+					vuln.setMitreStatus(1);
+				}
+				// Is this an ancient CVE?
+				else if (!checkAgeOfCVEByYear(vuln.getCveId())) {
+					vuln.setNvdStatus(1);
+				}
+				// If none of the above, assume it's not in MITRE
+				else {
+					logger.info("CVE: {}, is NOT in MITRE", vuln.getCveId());
 					vuln.setMitreSearchResult("NA");
 					vuln.setMitreStatus(0);
 					newCVEDataNotInMitre.add(vuln);
-				} else {
-					logger.info("CVE: {} is already in DB and is in MITRE: Keeping status as 1", vuln.getCveId());
-					vuln.setMitreStatus(1);
 				}
 
 			} catch (Exception e) {
@@ -266,13 +228,13 @@ public class CveProcessor {
 	 *
 	 * Note this only checks time gaps between NVIP and NVD, MITRE time gaps are not calculated (yet)
 	 *
-	 * TODO: Add time gaps calculation for MITRE
 	 * @param hashMapNvipCve
 	 * @return
 	 */
 	public HashMap<String, List<Object>> checkTimeGaps(Map<String, List<Object>> hashMapNvipCve, Map<String, Vulnerability> existingCves) {
 
 		logger.info("Calculating NVD Time Gaps for {} CVEs", hashMapNvipCve.get(ALL_CVE_KEY).size() - hashMapNvipCve.get(NVD_CVE_KEY).size());
+		logger.info("Calculating NVD Time Gaps for {} CVEs", hashMapNvipCve.get(ALL_CVE_KEY).size() - hashMapNvipCve.get(MITRE_CVE_KEY).size());
 
 		for (Object cveInNvd: hashMapNvipCve.get(ALL_CVE_KEY)) {
 			CompositeVulnerability cve = (CompositeVulnerability) cveInNvd;
@@ -286,16 +248,16 @@ public class CveProcessor {
 					Vulnerability existingCveAttributes = existingCves.get(cve.getCveId());
 
 					// Was the CVE previously found? If so, was it not in NVD before, and is it in NVD now?
-					// Compare original created date with the current date
-					// We won't use the NVD published date for now, since published date can refer to date the CVe is received
-					// which would show a smaller difference.
+					// Compare original created date with the NVD published date
+					// We'll use the NVD published date for now, since published date can refer to date the CVE is received
+					// which would show an accurate difference.
 					if (existingCveAttributes.getNvdStatus() == 0 && cve.getNvdStatus() == 1) {
 						try {
 							logger.info("Calculating NVD Time Gap for {}", cve.getCveId());
-							LocalDateTime lastModifiedDateNVD = LocalDateTime.parse(nvdCVEs.get(cve.getCveId()).getLastModifiedDate(),
+							LocalDateTime publishedDateNVD = LocalDateTime.parse(nvdCVEs.get(cve.getCveId()).getPublishDate(),
 									DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS"));
 							LocalDateTime existingCreatedDate = existingCveAttributes.getCreatedDateAsDate();
-							int timeGapNvd = (int) Duration.between(existingCreatedDate, lastModifiedDateNVD).toHours();
+							int timeGapNvd = (int) Duration.between(existingCreatedDate, publishedDateNVD).toHours();
 
 							if (timeGapNvd < 0) {
 								cve.setTimeGapNvd(0);
@@ -317,6 +279,44 @@ public class CveProcessor {
 					}
 				}
 			}
+
+			// Check if CVE is in MITRE, and make sure the CVE is for the current year. Anything from previous
+			// years are assumed to be in MITRE
+			if (!hashMapNvipCve.get(MITRE_CVE_KEY).contains(cve) && checkAgeOfCVEByYear(cve.getCveId())) {
+				if (existingCves.containsKey(cve.getCveId())) {
+					Vulnerability existingCveAttributes = existingCves.get(cve.getCveId());
+
+					// Was the CVE previously found? If so, was it not in MITRE before, and is it in MITRE now?
+					// Compare original created date with the MITRE published date
+					if (existingCveAttributes.getNvdStatus() == 0 && cve.getNvdStatus() == 1) {
+						try {
+							logger.info("Calculating MITRE Time Gap for {}", cve.getCveId());
+							LocalDateTime publishedDateMITRE = LocalDateTime.parse(nvdCVEs.get(cve.getCveId()).getPublishDate(),
+									DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS"));
+							LocalDateTime existingCreatedDate = existingCveAttributes.getCreatedDateAsDate();
+							int timeGapMitre = (int) Duration.between(existingCreatedDate, publishedDateMITRE).toHours();
+
+							if (timeGapMitre < 0) {
+								cve.setTimeGapMitre(0);
+								logger.info("Calculated Negative Time Gap: {} for CVE: {}, will setting time gap as 0", timeGapMitre, cve.getCveId());
+							} else if (existingCveAttributes.getTimeGapNvd() > 0) {
+								cve.setTimeGapMitre(existingCveAttributes.getTimeGapNvd());
+								logger.info("CVE: {} Already has a MITRE time gap of {}", cve.getCveId(), existingCveAttributes.getTimeGapNvd());
+							} else {
+								cve.setTimeGapMitre(timeGapMitre);
+								logger.info("Calculated Time Gap: {} for CVE: {}", timeGapMitre, cve.getCveId());
+							}
+
+						} catch (Exception e) {
+							logger.error("ERROR: Failed to calculate Time Gap for CVE: {}\n{}", cve.getCveId(), e);
+							e.printStackTrace();
+						}
+					} else {
+						logger.info("CVE: {} is in NVIP but not found in MITRE yet", cve.getCveId());
+					}
+				}
+			}
+
 
 		}
 
@@ -343,12 +343,7 @@ public class CveProcessor {
 
 		int cveYear = Integer.parseInt(cveParts[1]);
 		int currentYear = Calendar.getInstance().get(Calendar.YEAR);
-		boolean calculateGap = (cveYear == currentYear);
 
-		if (!calculateGap) {
-			return false;
-		}
-
-		return true;
+		return (cveYear == currentYear);
 	}
 }

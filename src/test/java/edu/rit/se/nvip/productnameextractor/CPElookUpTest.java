@@ -2,17 +2,17 @@
  * Copyright 2023 Rochester Institute of Technology (RIT). Developed with
  * government support under contract 70RSAT19CB0000020 awarded by the United
  * States Department of Homeland Security.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -22,27 +22,23 @@
  * SOFTWARE.
  */
 package edu.rit.se.nvip.productnameextractor;
-
 import org.junit.Test;
 
 import java.util.List;
 
 import static org.junit.Assert.assertTrue;
-
 /**
  * Unit tests for the CPElookUp class
- * 
+ *
  * @author Igor Khokhlov
  *
  */
 
 public class CPElookUpTest {
 
+	private static final CpeLookUp cpeLookUp = new CpeLookUp();
 	@Test
 	public void legitemateProduct() {
-
-		CpeLookUp cpeLookUp = CpeLookUp.getInstance();
-
 		ProductItem product = new ProductItem("phpMyAdmin");
 		product.addVersion("4.8.4");
 
@@ -64,9 +60,6 @@ public class CPElookUpTest {
 
 	@Test
 	public void legitemateComplexProduct() {
-
-		CpeLookUp cpeLookUp = CpeLookUp.getInstance();
-
 		ProductItem product = new ProductItem("phpMyAdmin.");
 		product.addVersion("before  4.8.4");
 
@@ -88,8 +81,6 @@ public class CPElookUpTest {
 
 	@Test
 	public void legitemateComplexProduct2() {
-
-		CpeLookUp cpeLookUp = CpeLookUp.getInstance();
 
 		ProductItem product = new ProductItem("phpMyAdmin:.");
 		product.addVersion("https://www.openwall.com/lists/oss-security/2012/05/10/6");
@@ -114,9 +105,6 @@ public class CPElookUpTest {
 
 	@Test
 	public void legitemateComplexProduct3() {
-
-		CpeLookUp cpeLookUp = CpeLookUp.getInstance();
-
 		ProductItem product = new ProductItem("the Linux.");
 		product.addVersion("https://www.openwall.com/lists/oss-security/2012/05/10/6");
 
@@ -138,9 +126,6 @@ public class CPElookUpTest {
 
 	@Test
 	public void legitemateComplexProductMultipleVersions() {
-
-		CpeLookUp cpeLookUp = CpeLookUp.getInstance();
-
 		ProductItem product = new ProductItem("phpMyAdmin.");
 		product.addVersion("4.8.0.1");
 		product.addVersion("4.8.4");
@@ -172,9 +157,6 @@ public class CPElookUpTest {
 
 	@Test
 	public void legitemateComplexProductNoVersion() {
-
-		CpeLookUp cpeLookUp = CpeLookUp.getInstance();
-
 		ProductItem product = new ProductItem("Microsoft Internet Explorer. ");
 
 		String expectedResult = "cpe:2.3:a:microsoft:internet_explorer:*:*:*:*:*:*:*:*";
@@ -195,9 +177,6 @@ public class CPElookUpTest {
 
 	@Test
 	public void checkSNverification() {
-
-		CpeLookUp cpeLookUp = CpeLookUp.getInstance();
-
 		String sn1 = "Explorer.";
 		String sn2 = "Linux";
 

@@ -23,25 +23,22 @@
  */
 package edu.rit.se.nvip.mitre;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import edu.rit.se.nvip.crawler.github.GitController;
+import edu.rit.se.nvip.model.MitreVulnerability;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-
-import edu.rit.se.nvip.model.CompositeVulnerability;
-import edu.rit.se.nvip.utils.CsvUtils;
-import edu.rit.se.nvip.utils.GitController;
-import edu.rit.se.nvip.utils.UtilHelper;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
 /**
  * 
@@ -51,27 +48,44 @@ import edu.rit.se.nvip.utils.UtilHelper;
  *
  */
 public class MitreCveController {
-	private final Logger logger = LogManager.getLogger(MitreCveController.class);
+	private static final Logger logger = LogManager.getLogger(MitreCveController.class);
 
-	public MitreCveController() {
-		Map<Integer, Integer> recentCveYearsMap = new HashMap<>();
-		int currentYear = Calendar.getInstance().get(Calendar.YEAR);
-		int lookYearsBack = 5;
-		for (int year = currentYear; year > currentYear - lookYearsBack; year--)
-			recentCveYearsMap.put(year, year);
+	private String mitreGithubUrl;
+	private String localPath;
+
+
+	public static void main(String[] args) {
+		MitreCveController main = new MitreCveController("https://github.com/CVEProject/cvelist", "nvip_data/mitre-cve");
+		HashMap<String, MitreVulnerability> results = main.getMitreCVEsFromGitRepo();
+		logger.info("{} cves found from MITRE", results.size());
+
+		int numReserved = 0;
+
+		for (MitreVulnerability mitreVuln: results.values()) {
+			logger.info(mitreVuln.getStatus());
+			numReserved = mitreVuln.getStatus() == MitreVulnerability.mitreStatus.RESERVED ? numReserved + 1: numReserved;
+		}
+
+		logger.info("Found {} reserved CVEs from MITRE", numReserved);
+	}
+
+	public MitreCveController(String mitreGithubUrl, String localPath) {
+		this.mitreGithubUrl = mitreGithubUrl;
+		this.localPath = localPath;
 	}
 
 	/**
-	 * get Mitre CVEs. Checks if a local git repo exists for Mitre CVEs. If not
+	 * Get Mitre CVEs. Checks if a local git repo exists for Mitre CVEs. If not
 	 * clones the remote Git repo. If a local repo exists then it pulls the latest
 	 * updates if any. Then it recursively loads all json files in the local repo,
 	 * parses them and creates a CSV file at the output path.
 	 */
-	public HashMap<String, CompositeVulnerability> getMitreCVEsFromGitRepo(String localPath, String remotePath, String outputCSVpath) {
+	public HashMap<String, MitreVulnerability> getMitreCVEsFromGitRepo() {
 
-		GitController gitController = new GitController(localPath, remotePath);
+		GitController gitController = new GitController(localPath, mitreGithubUrl);
 		logger.info("Checking local Git CVE repo...");
 
+		// Check if repo is already cloned, if so then just pull the repo for latest changes
 		File f = new File(localPath);
 		boolean pullDir = false;
 		try {
@@ -83,15 +97,15 @@ public class MitreCveController {
 
 		if (pullDir) {
 			if (gitController.pullRepo())
-				logger.info("Pulled git repo at: {} to: {}, now parsing each CVE...", remotePath, localPath);
+				logger.info("Pulled git repo at: {} to: {}, now parsing each CVE...", mitreGithubUrl, localPath);
 			else {
-				logger.error("Could not pull git repo at: {} to: {}", remotePath, localPath);
+				logger.error("Could not pull git repo at: {} to: {}", mitreGithubUrl, localPath);
 			}
 		} else {
 			if (gitController.cloneRepo())
-				logger.info("Cloned git repo at: {} to: {}, now parsing each CVE...", remotePath, localPath);
+				logger.info("Cloned git repo at: {} to: {}, now parsing each CVE...", mitreGithubUrl, localPath);
 			else {
-				logger.error("Could not clone git repo at: {} to: {}", remotePath, localPath);
+				logger.error("Could not clone git repo at: {} to: {}", mitreGithubUrl, localPath);
 			}
 		}
 
@@ -107,23 +121,18 @@ public class MitreCveController {
 		List<String[]> cveData = mitreCVEParser.parseCVEJSONFiles(list);
 		logger.info("Parsed {} JSON files at {}", list.size(), localPath);
 
-		// log CVEs
-		int count = new CsvUtils().writeListToCSV(cveData, outputCSVpath, false);
-		logger.info("Wrote *** {} **** MITRE CVE items to {}", count, outputCSVpath);
-
 		// add all CVEs to a map
-		HashMap<String, CompositeVulnerability> gitHubCveMap = new HashMap<>();
+		HashMap<String, MitreVulnerability> mitreCveMap = new HashMap<>();
 		for (String[] cve : cveData) {
 			String cveId = cve[0];
-			String sourceUrl = remotePath;
-			String date = UtilHelper.longDateFormat.format(new Date());
-			String description = cve[1];
-			CompositeVulnerability vuln = new CompositeVulnerability(0, sourceUrl, cveId, "N/A", date, date, description, null);
-			gitHubCveMap.put(cveId, vuln);
+			String status = cve[1];
+			String publishedDate = cve[2];
+			String lastModifiedDate = cve[3];
+			MitreVulnerability vuln = new MitreVulnerability(cveId, publishedDate, lastModifiedDate, status);
+			mitreCveMap.put(cveId, vuln);
 		}
 
-		return gitHubCveMap;
-
+		return mitreCveMap;
 	}
 
 	/**
@@ -156,8 +165,27 @@ public class MitreCveController {
 			}
 		}
 
-		//logger.info("Parsed " + jsonList.size() + " CVEs in " + folder);
+		logger.info("Parsed " + jsonList.size() + " CVEs in " + folder);
 		return jsonList;
+	}
+
+	/**
+	 * For Deleting the CVE MITRE Reo after it's no longer needed
+	 */
+	public void deleteMitreRepo() {
+		logger.info("Deleting MITRE Repo. This may take some time.....");
+		// Delete repo afterwards
+		try {
+			Path repoDir = Paths.get(localPath);
+			Files.walk(repoDir)
+					.sorted(java.util.Comparator.reverseOrder())
+					.map(Path::toFile)
+					.forEach(File::delete);
+
+		} catch (IOException e) {
+			logger.error("Error deleting MITRE repo @ {}\n{}", localPath, e.getMessage());
+		}
+		logger.info("MITRE Repo successfully deleted");
 	}
 
 }
