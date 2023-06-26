@@ -25,11 +25,9 @@
 import commits.PatchCommit;
 import db.DatabaseHelper;
 import model.CpeGroup;
-import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eclipse.jgit.util.FileUtils;
-import utils.GitController;
 
 import java.io.File;
 import java.io.IOException;
@@ -52,6 +50,10 @@ public class PatchFinder {
 	protected static int cveLimit = 5;
 	protected static int maxThreads = 10;
 	protected static int cvesPerThread = 1;
+	protected static String databaseType = "mysql";
+	protected static String hikariUrl = "jdbc:mysql://localhost:3306/nvip?useSSL=false&allowPublicKeyRetrieval=true";
+	protected static String hikariUser = "root";
+	protected static String hikariPassword = "root";
 	protected static int maxCommits = 1000; // TODO: Find omptimal value once github scraping is done
 	protected static String clonePath = "src/main/resources/patch-repos";
 	protected static String[] addressBases = { "https://github.com/", "https://www.gitlab.com/" };
@@ -98,6 +100,38 @@ public class PatchFinder {
 				logger.info("Setting CLONE_PATH to {}", clonePath);
 			} else throw new Exception();
 		}catch(Exception ignored) {logger.warn("Could not fetch CLONE_PATH from env vars, defaulting to {}", clonePath); }
+
+		try{
+			if(props.containsKey("DB_TYPE")) {
+				databaseType = System.getenv("DB_TYPE");
+				logger.info("Setting DB_TYPE to {}", databaseType);
+			} else throw new Exception();
+		}catch(Exception ignored) {logger.warn("Could not fetch DB_TYPE from env vars, defaulting to {}", databaseType); }
+
+		fetchHikariEnvVars(props);
+	}
+
+	private static void fetchHikariEnvVars(Map<String, String> props) {
+		try {
+			if(props.containsKey("HIKARI_URL")) {
+				hikariUrl = System.getenv("HIKARI_URL");
+				logger.info("Setting HIKARI_URL to {}", hikariUrl);
+			} else throw new Exception();
+		} catch (Exception ignored) { logger.warn("Could not fetch HIKARI_URL from env vars, defaulting to {}", hikariUrl); }
+
+		try {
+			if(props.containsKey("HIKARI_USER")) {
+				hikariUser = System.getenv("HIKARI_USER");
+				logger.info("Setting HIKARI_USER to {}", hikariUser);
+			} else throw new Exception();
+		} catch (Exception ignored) { logger.warn("Could not fetch HIKARI_USER from env vars, defaulting to {}", hikariUser); }
+
+		try {
+			if(props.containsKey("HIKARI_PASSWORD")) {
+				hikariPassword = System.getenv("HIKARI_PASSWORD");
+				logger.info("Setting HIKARI_PASSWORD to {}", hikariPassword);
+			} else throw new Exception();
+		} catch (Exception ignored) { logger.warn("Could not fetch HIKARI_PASSWORD from env vars, defaulting to {}", hikariPassword); }
 	}
 
 	public static void main(String[] args) throws IOException, InterruptedException {
@@ -111,7 +145,7 @@ public class PatchFinder {
 
 		// Init db helper
 		logger.info("Initializing DatabaseHelper and getting affected products from the database...");
-		final DatabaseHelper databaseHelper = DatabaseHelper.getInstance();
+		final DatabaseHelper databaseHelper = new DatabaseHelper(databaseType, hikariUrl, hikariUser, hikariPassword);
 
 		// Init PatchUrlFinder
 		PatchUrlFinder patchURLFinder = new PatchUrlFinder();

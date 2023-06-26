@@ -48,7 +48,6 @@ public class DatabaseHelper {
 	private HikariConfig config = null;
 	private HikariDataSource dataSource;
 	private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
-	final String databaseType;
 
 	private final String selectAffectedProducts = "SELECT cve_id, cpe FROM affectedproduct GROUP BY product_name, affected_product_id ORDER BY cve_id DESC, version ASC;";
 	private final String getVulnIdByCveId = "SELECT vuln_id FROM vulnerability WHERE cve_id = ?";
@@ -56,27 +55,12 @@ public class DatabaseHelper {
 	private final String insertPatchCommitSql = "INSERT INTO patchcommit (source_url_id, commit_url, commit_date, commit_message, uni_diff) VALUES (?, ?, ?, ?, ?);";
 	// Regex101: https://regex101.com/r/9uaTQb/1
 	public static final Pattern CPE_PATTERN = Pattern.compile("cpe:2\\.3:[aho\\*\\-]:([^:]*):([^:]*):([^:]*):.*");
-	private static DatabaseHelper databaseHelper = null;
-
-	/**
-	 * Thread safe singleton implementation
-	 *
-	 * @return
-	 */
-	public static synchronized DatabaseHelper getInstance() {
-		if (databaseHelper == null)
-			databaseHelper = new DatabaseHelper();
-
-		return databaseHelper;
-	}
 
 	/**
 	 * The private constructor sets up HikariCP for connection pooling. Singleton
 	 * DP!
 	 */
-	private DatabaseHelper() {
-		// Get database type from envvars
-		databaseType = System.getenv("DB_TYPE");
+	public DatabaseHelper(String databaseType, String hikariUrl, String hikariUser, String hikariPassword) {
 		logger.info("New NVIP.DatabaseHelper instantiated! It is configured to use " + databaseType + " database!");
 
 		try {
@@ -87,12 +71,12 @@ public class DatabaseHelper {
 		}
 
 		if(config == null){
-			logger.info("Attempting to create HIKARI from ENVVARs");
-			config = createHikariConfigFromEnvironment();
+			logger.info("Attempting to create HIKARI config from provided values");
+			config = createHikariConfig(hikariUrl, hikariUser, hikariPassword);
 		}
 
 		try {
-			if(config == null) throw new IllegalArgumentException();
+			if(config == null) throw new IllegalArgumentException("Failed to create HIKARI config");
 			dataSource = new HikariDataSource(config); // init data source
 		} catch (PoolInitializationException e2) {
 			logger.error("Error initializing data source! Check the value of the database user/password in the environment variables! Current values are: {}", config != null ? config.getDataSourceProperties() : null);
@@ -101,22 +85,23 @@ public class DatabaseHelper {
 		}
 	}
 
-	private HikariConfig createHikariConfigFromEnvironment() {
-
-		String url = System.getenv("HIKARI_URL");
+	private HikariConfig createHikariConfig(String url, String user, String password) {
 		HikariConfig hikariConfig;
 
 		if (url != null){
 			logger.info("Creating HikariConfig with url={}", url);
 			hikariConfig = new HikariConfig();
 			hikariConfig.setJdbcUrl(url);
-			hikariConfig.setUsername(System.getenv("HIKARI_USER"));
-			hikariConfig.setPassword(System.getenv("HIKARI_PASSWORD"));
+			hikariConfig.setUsername(user);
+			hikariConfig.setPassword(password);
+			hikariConfig.addDataSourceProperty("HIKARI_URL", url);
+			hikariConfig.addDataSourceProperty("HIKARI_USER", user);
+			hikariConfig.addDataSourceProperty("HIKARI_PASSWORD", password);
 
-			System.getenv().entrySet().stream()
-					.filter(e -> e.getKey().startsWith("HIKARI_"))
-					.peek(e -> logger.info("Setting {} to HikariConfig", e.getKey()))
-					.forEach(e -> hikariConfig.addDataSourceProperty(e.getKey(), e.getValue()));
+//			System.getenv().entrySet().stream()
+//					.filter(e -> e.getKey().startsWith("HIKARI_"))
+//					.peek(e -> logger.info("Setting {} to HikariConfig", e.getKey()))
+//					.forEach(e -> hikariConfig.addDataSourceProperty(e.getKey(), e.getValue()));
 
 		} else {
 			hikariConfig = null;
