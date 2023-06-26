@@ -71,12 +71,12 @@ public class DatabaseHelper {
 		}
 
 		if(config == null){
-			logger.info("Attempting to create HIKARI from ENVVARs");
+			logger.info("Attempting to create HIKARI config from provided values");
 			config = createHikariConfig(hikariUrl, hikariUser, hikariPassword);
 		}
 
 		try {
-			if(config == null) throw new IllegalArgumentException("Failed to create HIKARI from ENVVARs");
+			if(config == null) throw new IllegalArgumentException("Failed to create HIKARI config");
 			dataSource = new HikariDataSource(config); // init data source
 		} catch (PoolInitializationException e2) {
 			logger.error("Error initializing data source! Check the value of the database user/password in the environment variables! Current values are: {}", config != null ? config.getDataSourceProperties() : null);
