@@ -213,8 +213,8 @@ public class ProductNameExtractorController {
      * @param vulnList list of vulnerabilities
      */
     private static void writeTestResults(List<CompositeVulnerability> vulnList){
-        File testResultsFile = new File("src/main/resources/data/test_results.csv");
-        try{
+        File testResultsFile = new File("nvip_data/data/test_results.csv");
+        try {
             PrintWriter writer = new PrintWriter(testResultsFile);
             // Go through each vulnerability and write it and its affected products to output and the file
             for (CompositeVulnerability vulnerability : vulnList) {
@@ -238,7 +238,7 @@ public class ProductNameExtractorController {
             }
 
             writer.close();
-        }catch(FileNotFoundException e){
+        } catch(FileNotFoundException e){
             logger.warn("Could not find the test results csv file at path {}", testResultsFile.getPath());
         }
 
