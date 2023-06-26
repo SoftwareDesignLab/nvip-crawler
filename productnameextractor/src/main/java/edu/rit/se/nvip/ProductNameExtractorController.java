@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 import edu.rit.se.nvip.db.DatabaseHelper;
 import edu.rit.se.nvip.model.cpe.CpeEntry;
 import edu.rit.se.nvip.model.cpe.CpeGroup;
-import edu.rit.se.nvip.model.cpe.Product;
 import edu.rit.se.nvip.model.cve.AffectedProduct;
 import edu.rit.se.nvip.model.cve.CompositeVulnerability;
 import org.apache.logging.log4j.LogManager;
@@ -19,8 +18,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Controller for the isolated ProductNameExtractor package.
