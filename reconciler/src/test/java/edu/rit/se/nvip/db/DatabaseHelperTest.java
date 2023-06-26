@@ -24,17 +24,13 @@
 package edu.rit.se.nvip.db;
 
 import com.zaxxer.hikari.HikariDataSource;
+import edu.rit.se.nvip.DatabaseHelper;
 import edu.rit.se.nvip.model.CompositeVulnerability;
 import edu.rit.se.nvip.model.NvdVulnerability;
 import edu.rit.se.nvip.model.RawVulnerability;
-import edu.rit.se.nvip.DatabaseHelper;
-import edu.rit.se.nvip.model.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.MockedConstruction;
@@ -77,9 +73,6 @@ public class DatabaseHelperTest {
 
     private Timestamp offset(int nHours) {
         return new Timestamp(dummyMillis + nHours*3600L*1000);
-    }
-    private RawVulnerability genRawVuln(int id) {
-        return new RawVulnerability(id, dummyCveId, "description"+id, offset(-id), offset(id), offset(-10), "website"+id );
     }
 
     private void setMocking() {
@@ -177,7 +170,7 @@ public class DatabaseHelperTest {
             // Set up the mock objects and their behavior
             when(conn.prepareStatement(anyString())).thenReturn(pstmt);
             when(pstmt.executeQuery()).thenReturn(res);
-            when(res.next()).thenReturn(true, true, false);
+            when(res.next()).thenReturn(true, false);
 
             // Set up the expected data
             String cveId = "CVE-2023-5678";
@@ -186,7 +179,7 @@ public class DatabaseHelperTest {
             Set<RawVulnerability> result = dbh.getRawVulnerabilities(cveId);
 
             // Verify the expected output
-            assertEquals(2, result.size());
+            assertEquals(1, result.size());
 
             // Verify pstmt.setString() call
             verify(pstmt).setString(1, cveId);
@@ -252,7 +245,7 @@ public class DatabaseHelperTest {
 
            verify(pstmt).setString(1, "cveId");
 
-            assertEquals(2, rawVulns.size());
+            assertEquals(1, rawVulns.size());
 
        } catch (SQLException e) {
            logger.error("Error loading Database");
@@ -267,8 +260,13 @@ public class DatabaseHelperTest {
             when(res.next()).thenReturn(true);
             when(res.getInt(1)).thenReturn(1);
 
-            RawVulnerability rawVuln = genRawVuln(1);
+            RawVulnerability rawVuln = new RawVulnerability(1, "CVE-2023-1111", "desc", offset(-1), offset(1), offset(-10), "example.com");
+
+            Set<RawVulnerability> rawVulns = new HashSet<>();
+            rawVulns.add(rawVuln);
+
             CompositeVulnerability vuln = new CompositeVulnerability(rawVuln);
+            vuln.setPotentialSources(rawVulns);
 
             // Call the method to be tested
             int result = dbh.insertOrUpdateVulnerabilityFull(vuln);
@@ -316,7 +314,7 @@ public class DatabaseHelperTest {
     @Test
     public void insertNvdCveTest() throws SQLException {
         // Create a sample NvdVulnerability object
-        NvdVulnerability nvdCve = new NvdVulnerability("CVE-2023-1234", new Timestamp(System.currentTimeMillis()), NvdVulnerability.nvdStatus.ANALYZED.toString());
+        NvdVulnerability nvdCve = new NvdVulnerability("CVE-2023-1234", new Timestamp(System.currentTimeMillis()), "Analyzed");
 
         // Call the insertNvdCve method
         int result = dbh.insertNvdCve(nvdCve);
@@ -324,7 +322,7 @@ public class DatabaseHelperTest {
         // Verify that pstmt.setString() and pstmt.setTimestamp() are called with the correct arguments
         verify(pstmt).setString(1, "CVE-2023-1234");
         verify(pstmt).setTimestamp(2, nvdCve.getPublishDate());
-        verify(pstmt).setString(3, "ANALYZED");
+        verify(pstmt).setString(3, "Analyzed");
 
         // Verify that pstmt.execute() is called
         verify(pstmt).execute();

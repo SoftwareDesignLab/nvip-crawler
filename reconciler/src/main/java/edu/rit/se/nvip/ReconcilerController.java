@@ -70,11 +70,11 @@ public class ReconcilerController {
         logger.info("Characterizing and scoring NEW CVEs...");
 
         try {
-            String[] trainingDataInfo = {System.getenv("NVIP_CVE_CHARACTERIZATION_TRAINING_DATA_DIR"), System.getenv("NVIP_CVE_CHARACTERIZATION_TRAINING_DATA")};
+            String[] trainingDataInfo = {"characterization/", "AttackTheater.csv,Context.csv,ImpactMethod.csv,LogicalImpact.csv,Mitigation.csv"};
             logger.info("Setting NVIP_CVE_CHARACTERIZATION_LIMIT to {}", System.getenv("NVIP_CVE_CHARACTERIZATION_LIMIT"));
 
-            CveCharacterizer cveCharacterizer = new CveCharacterizer(trainingDataInfo[0], trainingDataInfo[1], System.getenv("NVIP_CHARACTERIZATION_APPROACH"),
-                    System.getenv("NVIP_CHARACTERIZATION_METHOD"));
+            CveCharacterizer cveCharacterizer = new CveCharacterizer(trainingDataInfo[0], trainingDataInfo[1], "ML",
+                    "Vote");
 
             List<CompositeVulnerability> cveList = new ArrayList<>(crawledVulnerabilityList);
 

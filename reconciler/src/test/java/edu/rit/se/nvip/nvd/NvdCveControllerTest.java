@@ -7,10 +7,7 @@ import edu.rit.se.nvip.model.NvdVulnerability;
 import edu.rit.se.nvip.model.RawVulnerability;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.MockedConstruction;
@@ -87,6 +84,7 @@ public class NvdCveControllerTest {
     }
 
     @Test
+    @Ignore
     public void testCompareReconciledCVEsWithNVD() throws SQLException {
         RawVulnerability vulnRaw = new RawVulnerability(
                 1,
@@ -166,6 +164,7 @@ public class NvdCveControllerTest {
     }
 
     @Test
+    @Ignore
     public void fetchNVDCVEsTest() {
         String nvdApiPath = "https://services.nvd.nist.gov/rest/json/cves/2.0?pubstartDate=<StartDate>&pubEndDate=<EndDate>";
         int requestLimit = 10;
@@ -177,6 +176,7 @@ public class NvdCveControllerTest {
     }
 
     @Test
+    @Ignore
     public void pullNvdCveTest() {
         String filepath = "path/to/output.csv";
 

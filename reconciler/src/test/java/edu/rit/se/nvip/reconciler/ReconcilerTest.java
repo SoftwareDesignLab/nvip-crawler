@@ -101,6 +101,7 @@ ReconcilerTest {
         CompositeVulnerability existing = genVuln();
         Set<RawVulnerability> newRaws = genRawVulns(2, 4);
         CompositeVulnerability reconciled = rec.reconcile(existing, newRaws);
+        reconciled.setPotentialSources(newRaws);
         assertTrue(equivalentBuildStrings("((((1,2),3),4),5)", reconciled.getBuildString()));
         assertEquals(offset(-5), reconciled.getPublishDate());
         assertEquals(offset(5), reconciled.getLastModifiedDate());
@@ -112,6 +113,7 @@ ReconcilerTest {
         CompositeVulnerability existing = null;
         Set<RawVulnerability> newRaws = genRawVulns(2, 4);
         CompositeVulnerability reconciled = rec.reconcile(existing, newRaws);
+        reconciled.setPotentialSources(newRaws);
         assertTrue(equivalentBuildStrings("(4,5)", reconciled.getBuildString()));
         assertEquals(offset(-5), reconciled.getPublishDate());
         assertEquals(offset(5), reconciled.getLastModifiedDate());
@@ -123,6 +125,7 @@ ReconcilerTest {
         CompositeVulnerability existing = genVuln();
         Set<RawVulnerability> newRaws = genRawVulns(4, 4);
         CompositeVulnerability reconciled = rec.reconcile(existing, newRaws);
+        reconciled.setPotentialSources(newRaws);
         assertTrue(equivalentBuildStrings("(((1,2),3),4,5,6,7)", reconciled.getBuildString()));
         assertEquals(offset(-7), reconciled.getPublishDate());
         assertEquals(offset(7), reconciled.getLastModifiedDate());
@@ -134,6 +137,7 @@ ReconcilerTest {
         CompositeVulnerability existing = genVuln();
         Set<RawVulnerability> newRaws = genRawVulns(4, 4);
         CompositeVulnerability reconciled = rec.reconcile(existing, newRaws);
+        reconciled.setPotentialSources(newRaws);
         assertTrue(equivalentBuildStrings("(1,2,3,4,5,6,7)", reconciled.getBuildString()));
         assertEquals(offset(-7), reconciled.getPublishDate());
         assertEquals(offset(7), reconciled.getLastModifiedDate());
@@ -145,6 +149,7 @@ ReconcilerTest {
         CompositeVulnerability existing = null;
         Set<RawVulnerability> newRaws = genRawVulns(4, 4);
         CompositeVulnerability reconciled = rec.reconcile(existing, newRaws);
+        reconciled.setPotentialSources(newRaws);
         assertTrue(equivalentBuildStrings("(4,5,6,7)", reconciled.getBuildString()));
         assertEquals(offset(-7), reconciled.getPublishDate());
         assertEquals(offset(7), reconciled.getLastModifiedDate());

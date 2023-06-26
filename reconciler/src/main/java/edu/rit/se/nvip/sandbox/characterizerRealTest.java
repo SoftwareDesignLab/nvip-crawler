@@ -35,7 +35,7 @@ public class characterizerRealTest {
         CompositeVulnerability compVuln = new CompositeVulnerability(vuln);
         CompositeVulnerability compVuln2 = new CompositeVulnerability(vuln2);
 
-        String[] trainingDataInfo = {System.getenv("NVIP_CVE_CHARACTERIZATION_TRAINING_DATA_DIR"), System.getenv("NVIP_CVE_CHARACTERIZATION_TRAINING_DATA")};
+        String[] trainingDataInfo = {"characterization/", "AttackTheater.csv,Context.csv,ImpactMethod.csv,LogicalImpact.csv,Mitigation.csv"};
         CveCharacterizer characterizer = new CveCharacterizer(trainingDataInfo[0], trainingDataInfo[1], System.getenv("NVIP_CHARACTERIZATION_APPROACH"),
                 System.getenv("NVIP_CHARACTERIZATION_METHOD"));
 
