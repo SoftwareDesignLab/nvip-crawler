@@ -1,7 +1,7 @@
 package edu.rit.se.nvip.nvd;
 
 import com.zaxxer.hikari.HikariDataSource;
-import edu.rit.se.nvip.db.DatabaseHelper;
+import edu.rit.se.nvip.DatabaseHelper;
 import edu.rit.se.nvip.model.CompositeVulnerability;
 import edu.rit.se.nvip.model.NvdVulnerability;
 import edu.rit.se.nvip.model.RawVulnerability;
