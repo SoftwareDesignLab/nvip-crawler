@@ -29,6 +29,7 @@ import edu.rit.se.nvip.model.RawVulnerability;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
+import org.openqa.selenium.WebDriver;
 
 /**
  * 
@@ -38,6 +39,7 @@ import org.jsoup.select.Elements;
  */
 public class GenericCveParser extends AbstractCveParser  {
 	private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
+	private WebDriver driver;
 
 	/**
 	 * Parser strategy interface for Generic Parsing
@@ -46,8 +48,9 @@ public class GenericCveParser extends AbstractCveParser  {
 	 */
 	private ParserStrategy parserStrategy = null;
 	
-	public GenericCveParser(String domainName) {
+	public GenericCveParser(String domainName, WebDriver driver) {
 		sourceDomainName = domainName;
+		this.driver = driver;
 	}
 
 	public GenericCveParser(String domainName, ParserStrategy parserStrategy) {
@@ -62,7 +65,7 @@ public class GenericCveParser extends AbstractCveParser  {
 		// --- check for table
 		Elements cveTables = doc.select("table:contains(CVE), thead:contains(CVE), tbody:contains(CVE)");
 		if (cveTables.size() > 0 && cveTables.size() < 5) // lots of tables means this is most likely a bulletin
-			return new ParseTable(sourceDomainName);
+			return new ParseTable(sourceDomainName, driver);
 		// --- check for list
 		Elements cveLists = doc.select("li:contains(CVE), ul:contains(CVE), ol:contains(CVE), dl:contains(CVE)");
 		if (cveLists.size() > 0)
@@ -70,7 +73,7 @@ public class GenericCveParser extends AbstractCveParser  {
 		// --- check for accordion
 		Elements cveAccordions = doc.select("accordion, bolt-accordion, acc, div[class*=accordion], div[id*=accordion]");
 		if (cveAccordions.size() > 0)
-			return new ParseAccordion(sourceDomainName);
+			return new ParseAccordion(sourceDomainName, driver);
 		// --- check for bulletin
 		Elements cveBulletins = doc.select("div:contains(Bulletin), div:contains(CVE), span:contains(CVE), p:contains(CVE)");
 		if (cveBulletins.size() > 0)

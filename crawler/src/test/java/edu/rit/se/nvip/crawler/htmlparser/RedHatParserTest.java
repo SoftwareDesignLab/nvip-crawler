@@ -30,6 +30,9 @@ import org.junit.BeforeClass;
 import org.junit.AfterClass;
 
 import java.util.List;
+import java.util.ArrayList;
+
+import org.openqa.selenium.WebDriver;
 
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
@@ -38,12 +41,23 @@ import static org.junit.Assert.assertEquals;
  * Test RedHat Parser
  */
 public class RedHatParserTest extends AbstractParserTest {
+    static WebDriver driver;
+
+    @BeforeClass
+    public static void setupWebDriver(){
+        driver = new CveCrawler(new ArrayList<>(), "").getDriver();
+    }
+
+    @AfterClass
+    public static void destroyWebDriver(){
+        if(driver != null) driver.quit();
+    }
 
 	@Test
 	public void testRedHat() {
 		RedHatParser parser = new RedHatParser("redhat");
 
-		String html = parser.grabDynamicHTML("https://access.redhat.com/security/cve/cve-2023-25725");
+		String html = parser.grabDynamicHTML("https://access.redhat.com/security/cve/cve-2023-25725", driver);
 
 		List<RawVulnerability> list = parser.parseWebPage("https://access.redhat.com/security/cve/cve-2023-25725", html);
 
@@ -53,17 +67,7 @@ public class RedHatParserTest extends AbstractParserTest {
 		assertEquals("CVE-2023-25725", sample.getCveId());
 		assertTrue(sample.getDescription().contains("A flaw was found in HAProxy's headers processing that causes HAProxy to drop important headers fields such as Connection, Content-length, Transfer-Encoding,"));
 		assertEquals("2023-02-14 16:20:00", sample.getPublishDate());
-		assertEquals("2023-05-20 05:48:51", sample.getLastModifiedDate());
+		assertEquals("2023-05-30 10:00:11", sample.getLastModifiedDate());
 
 	}
-
-    @BeforeClass
-    public static void setupWebDriver(){
-        if(CveCrawler.driver.toString().contains("(null)")) CveCrawler.driver = CveCrawler.startDynamicWebDriver();
-    }
-
-    @AfterClass
-    public static void destroyWebDriver(){
-        if(CveCrawler.driver != null) CveCrawler.driver.quit();
-    }
 }

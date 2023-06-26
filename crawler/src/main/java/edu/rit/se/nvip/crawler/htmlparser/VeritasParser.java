@@ -29,6 +29,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -94,8 +95,8 @@ public class VeritasParser extends AbstractCveParser {
         // publish date is first date 'Initial Public Release'
         // last update date is last date in revision history list
         // watch out for things like 'End of September 2022'
-        String publishDate = "";
-        String lastModifiedDate = "";
+        String publishDate = LocalDate.now().toString();
+        String lastModifiedDate = LocalDate.now().toString();
         Element revHistoryHeader = doc.select("h3:contains(Revision History)").first();
         if (revHistoryHeader != null) {
             revHistoryHeader = revHistoryHeader.nextElementSibling();

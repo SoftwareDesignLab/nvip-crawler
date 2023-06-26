@@ -30,17 +30,31 @@ import org.junit.BeforeClass;
 import org.junit.AfterClass;
 
 import java.util.List;
+import java.util.ArrayList;
+
+import org.openqa.selenium.WebDriver;
 
 import static junit.framework.TestCase.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class TibcoParserTest extends AbstractParserTest{
+    static WebDriver driver;
+
+    @BeforeClass
+    public static void setupWebDriver(){
+        driver = new CveCrawler(new ArrayList<>(), "").getDriver();
+    }
+
+    @AfterClass
+    public static void destroyWebDriver(){
+        if(driver != null) driver.quit();
+    }
 
     @Test
     public void testTibco() {
         TibcoParser parser = new TibcoParser("tibco");
-        String html = parser.grabDynamicHTML("https://www.tibco.com/support/advisories/2023/02/tibco-security-advisory-february-22-2023-tibco-businessconnect-cve-2022-41567");
+        String html = parser.grabDynamicHTML("https://www.tibco.com/support/advisories/2023/02/tibco-security-advisory-february-22-2023-tibco-businessconnect-cve-2022-41567", driver);
         // String html = safeReadHtml("src/test/resources/test-tibco.html");
         List<RawVulnerability> list = parser.parseWebPage(
                 "https://www.tibco.com/support/advisories/2023/02/tibco-security-advisory-february-22-2023-tibco-businessconnect-cve-2022-41567",
@@ -52,15 +66,5 @@ public class TibcoParserTest extends AbstractParserTest{
         assertTrue(vuln.getDescription().contains("attacker with network access to execute a cross-site scripting"));
         assertFalse(vuln.getDescription().contains("The information on this page is being provided to you on an \"AS IS\" and \"AS-AVAILABLE\" basis"));
         assertEquals("2023-02-22 00:00:00", vuln.getPublishDate());
-    }
-
-    @BeforeClass
-    public static void setupWebDriver(){
-        if(CveCrawler.driver.toString().contains("(null)")) CveCrawler.driver = CveCrawler.startDynamicWebDriver();
-    }
-
-    @AfterClass
-    public static void destroyWebDriver(){
-        if(CveCrawler.driver != null) CveCrawler.driver.quit();
     }
 }

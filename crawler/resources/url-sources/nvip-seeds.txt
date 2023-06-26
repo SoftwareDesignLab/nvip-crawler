@@ -1,5 +1,4 @@
 https://groups.google.com/g/libarchive-announce
-https://github.com/CISecurity/OVALRepo/tree/master/repository/definitions/vulnerability
 https://github.com/DrizzlingSun/Tenda/tree/main/AC18
 https://github.com/GSMcNamara/CVE/blob/main/disclosures/index.md
 https://github.com/Mirantis/security/blob/main/advisories/advisories.md
@@ -252,7 +251,6 @@ https://lldpd.github.io/security.html
 https://lucabarile.github.io/Blog/blog.html
 https://lutrasecurity.com/en/articles
 https://mattermost.com/security-updates
-https://moodle.org/mod/forum/view.php?id=7128
 https://msrc-blog.microsoft.com
 https://msrc.microsoft.com/update-guide/vulnerability
 https://my.f5.com/manage/s

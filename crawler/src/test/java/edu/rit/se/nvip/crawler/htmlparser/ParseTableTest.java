@@ -2,20 +2,27 @@ package edu.rit.se.nvip.crawler.htmlparser;
 
 import edu.rit.se.nvip.crawler.CveCrawler;
 import edu.rit.se.nvip.model.RawVulnerability;
+
 import org.junit.Test;
-import org.junit.BeforeClass;
-import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.After;
 import org.junit.Ignore;
+
 import java.util.List;
+import java.util.ArrayList;
+
+import org.openqa.selenium.WebDriver;
+
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.*;
 
 public class ParseTableTest extends AbstractParserTest {
+    private WebDriver driver;
 
     @Ignore
     @Test
     public void testParseTableQNAP() {
-        ParseTable parser = new ParseTable("https://www.qnap.com/en/security-advisories?ref=security_advisory_details");
+        ParseTable parser = new ParseTable("https://www.qnap.com/en/security-advisories?ref=security_advisory_details", driver);
         List<RawVulnerability> vulnerabilities = parser.parseWebPage("https://www.qnap.com/en/security-advisories?ref=security_advisory_details", null);
 
         assertTrue(vulnerabilities.size() > 190);
@@ -28,20 +35,20 @@ public class ParseTableTest extends AbstractParserTest {
 
     @Test
     public void testParseTableVMWare() {
-        ParseTable parser = new ParseTable("https://www.vmware.com/security/advisories.html");
+        ParseTable parser = new ParseTable("https://www.vmware.com/security/advisories.html", driver);
         List<RawVulnerability> vulnerabilities = parser.parseWebPage("https://www.vmware.com/security/advisories.html", null);
 
         assertTrue(vulnerabilities.size() > 80);
         RawVulnerability vuln = getVulnerability(vulnerabilities, "CVE-2021-22035");
         assertNotNull(vuln);
-        assertTrue(vuln.getPublishDate().equals("2021-12-10 00:00:00") || vuln.getPublishDate().equals("11-10-2021"));
+        assertTrue(vuln.getPublishDate().equals("2021-12-10 00:00:00") || vuln.getPublishDate().equals("2021-11-10 00:00:00"));
         assertTrue(vuln.getDescription().contains("VMware vRealize Log Insight"));
         assertFalse(vuln.getDescription().contains("VMware Aria Operations for"));
     }
 
     @Test
     public void testParseTableNvidia() {
-        ParseTable parser = new ParseTable("https://www.nvidia.com/en-us/security/");
+        ParseTable parser = new ParseTable("https://www.nvidia.com/en-us/security/", driver);
         List<RawVulnerability> vulnerabilities = parser.parseWebPage("https://www.nvidia.com/en-us/security/", null);
 
         assertTrue(vulnerabilities.size() > 400);
@@ -52,13 +59,15 @@ public class ParseTableTest extends AbstractParserTest {
         assertFalse(vuln.getDescription().contains("NVIDIA Shield TV Security Updates for CPU Speculative Side Channel Vulnerabilities"));
     }
 
-    @BeforeClass
-    public static void setupWebDriver(){
-        if(CveCrawler.driver.toString().contains("(null)")) CveCrawler.driver = CveCrawler.startDynamicWebDriver();
+    @Before
+    public void setupWebdriver(){
+        driver = CveCrawler.startDynamicWebDriver();
+        System.out.println("STarting");
     }
 
-    @AfterClass
-    public static void destroyWebDriver(){
-        if(CveCrawler.driver != null) CveCrawler.driver.quit();
+    @After
+    public void destroyWebDriver(){
+        driver.quit();
+        System.out.println("Quiting");
     }
 }

@@ -18,11 +18,11 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.util.*;
 
-import static edu.rit.se.nvip.crawler.CveCrawler.driver;
-
 public class ParseTable extends AbstractCveParser implements ParserStrategy {
 
     private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
+
+    WebDriver driver;
 
     WebDriverWait wait;
 
@@ -33,8 +33,9 @@ public class ParseTable extends AbstractCveParser implements ParserStrategy {
 
     Set<String> allCVEs = new HashSet<>();
 
-    public ParseTable(String sourceDomainName) {
+    public ParseTable(String sourceDomainName, WebDriver driver) {
         this.sourceDomainName = sourceDomainName;
+        this.driver = driver;
         wait = new WebDriverWait(driver, Duration.ofSeconds(5));
         actions = new Actions(driver);
     }
@@ -93,15 +94,17 @@ public class ParseTable extends AbstractCveParser implements ParserStrategy {
             htmlBefore = driver.findElement(By.tagName("tbody")).getAttribute("innerHTML").replace("\n", "").replace("\t", "");
             try {
                 new WebDriverWait(driver, Duration.ofSeconds(5)).until(ExpectedConditions.elementToBeClickable(rowElement));
-                actions.scrollToElement(rowElement).perform();
+                actions.moveToElement(rowElement).perform();
                 actions.click(rowElement).perform();
-            } catch (StaleElementReferenceException | MoveTargetOutOfBoundsException e) {
+            } catch (StaleElementReferenceException | MoveTargetOutOfBoundsException | TimeoutException e) {
                 if (!retryClick(rowElement)) logger.info("Unable to click row for " + cveIDs);
             }
             String htmlAfter = driver.findElement(By.tagName("tbody")).getAttribute("innerHTML").replace("\n", "").replace("\t", "");
             diff = StringUtils.difference(htmlBefore, htmlAfter).replace("\n", "").replace("\t", "");
-        } catch (StaleElementReferenceException | MoveTargetOutOfBoundsException e) {
+        } catch (StaleElementReferenceException | MoveTargetOutOfBoundsException | NoSuchElementException e) {
             // logger.info("Row not found for " + cveIDs);
+        } catch (TimeoutException e){
+            logger.warn("WARNING: Action for {} timed out", sourceUrl);
         }
         String description = "";
         // if we gain new information from clicking, add it onto our html to parse
@@ -174,15 +177,36 @@ public class ParseTable extends AbstractCveParser implements ParserStrategy {
             logger.warn("Next Button found raises ElementNotInteractableException...");
         } catch (StaleElementReferenceException s) {
             logger.warn("Next Button found raises StaleElementReferenceException...");
+        } catch (MoveTargetOutOfBoundsException e){
+            logger.warn("Next Button found raises MoveTargetOutOfBoundsException...");
         }
         return nextPage;
+    }
+
+    private void tryPageGet(String sSourceURL) {
+        int tries = 0;
+        while (tries < 2) {
+            try {
+                driver.get(sSourceURL);
+                break;
+            } catch (TimeoutException e) {
+                logger.info("Retrying page get...");
+                tries++;
+            }
+        }
     }
 
     @Override
     public List<RawVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
         sourceUrl = sSourceURL;
         // get the page
-        driver.get(sSourceURL);
+        tryPageGet(sSourceURL);
+        try{
+            if (driver.getPageSource() == null) return new ArrayList<>();
+        } catch (TimeoutException e) {
+            logger.warn("Unable to get {}", sourceUrl);
+            return new ArrayList<>();
+        }
         // click on any cookie agree button before trying to parse and click on anything else
         clickAcceptCookies();
         List<RawVulnerability> vulnList = new ArrayList<>();
@@ -211,7 +235,11 @@ public class ParseTable extends AbstractCveParser implements ParserStrategy {
             vulnList.addAll(parseTableSource(next));
             next = getNextPage(next);
         }
-
+        try{
+            driver.manage().deleteAllCookies();
+        } catch (TimeoutException e) {
+            logger.warn("Unable to clear cookies for {}", sourceUrl);
+        }
         return vulnList;
     }
 }

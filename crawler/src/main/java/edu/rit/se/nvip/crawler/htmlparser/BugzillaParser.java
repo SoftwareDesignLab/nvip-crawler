@@ -24,18 +24,21 @@
 package edu.rit.se.nvip.crawler.htmlparser;
 
 import edu.rit.se.nvip.model.RawVulnerability;
+import edu.rit.se.nvip.utils.UtilHelper;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-import edu.rit.se.nvip.utils.UtilHelper;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
+import java.time.LocalDate;
 
 /**
  * 
@@ -86,8 +89,8 @@ public class BugzillaParser extends AbstractCveParser {
 			Document document = Jsoup.parse(sCVEContentHTML);
 
 			String description = "";
-			String publishDate = null;
 			String platform = "";
+			String publishDate = LocalDate.now().toString();
 			String lastModifiedDate = UtilHelper.longDateFormat.format(new Date());
 			Elements elements = document.select("title");
 			description = elements.get(0).text() + "\n";

@@ -27,6 +27,7 @@ import edu.rit.se.nvip.crawler.CveCrawler;
 import edu.rit.se.nvip.model.RawVulnerability;
 import org.apache.commons.io.FileUtils;
 import org.junit.BeforeClass;
+import org.junit.AfterClass;
 
 import java.io.IOException;
 import java.io.File;
@@ -69,5 +70,10 @@ public abstract class AbstractParserTest {
             if (vuln.getCveId().equalsIgnoreCase(cveID))
                 return vuln;
         return null;
+    }
+
+    @AfterClass
+    public static void destroyCrawler(){
+        crawler.getDriver().quit();
     }
 }

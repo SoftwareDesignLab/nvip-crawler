@@ -37,12 +37,14 @@ import io.github.bonigarcia.wdm.WebDriverManager;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeDriverService;
 import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.remote.http.ClientConfig;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
 import java.util.regex.Pattern;
+import java.time.Duration;
 
 /**
  *
@@ -60,12 +62,13 @@ public class CveCrawler extends WebCrawler {
 	private final HashMap<String, ArrayList<RawVulnerability>> foundCVEs = new HashMap<>();
 	private final CveParserFactory parserFactory = new CveParserFactory();
 
-	public static WebDriver driver = startDynamicWebDriver();
+	private WebDriver driver;
 
 
 	public CveCrawler(List<String> myCrawlDomains, String outputDir) {
 		this.myCrawlDomains = myCrawlDomains;
 		this.outputDir = outputDir;
+		this.driver = startDynamicWebDriver();
 	}
 
 	public static WebDriver startDynamicWebDriver() {
@@ -76,10 +79,43 @@ public class CveCrawler extends WebCrawler {
 		options.addArguments("--enable-javascript");
 		options.addArguments("--no-sandbox");
 		options.addArguments("--disable-dev-shm-usage");
+		options.addArguments("--disk-cache-size=0");
+		options.addArguments("--disable-gpu");
+		options.addArguments("--disable-extensions");
+		options.addArguments("--disable-web-security");
+		options.addArguments("--disable-application-cache");
+
+		Map<String, Object> timeouts = new HashMap<>();
+		timeouts.put("implicit", 20);
+		timeouts.put("pageLoad", 15000);
+		timeouts.put("script", 60000);
+		options.setCapability("timeouts", timeouts);
 		WebDriverManager.chromedriver().setup();
 		ChromeDriverService chromeDriverService = new ChromeDriverService.Builder().build();
+		ClientConfig config = ClientConfig
+				.defaultConfig()
+				.readTimeout(Duration.ofSeconds(20));
+
 		return new ChromeDriver(chromeDriverService, options);
 	}
+
+	private void tryDiverQuit(){
+		int tries = 0;
+        while (tries < 2) {
+            try {
+                driver.quit();
+                break;
+            } catch (Exception e) {
+                logger.info("Retrying driver quit...");
+                tries++;
+            }
+        }
+	}
+
+	@Override
+	public void onBeforeExit() {
+        tryDiverQuit();
+    }
 
 	/**
 	 * get Cve data from crawler thread
@@ -142,6 +178,7 @@ public class CveCrawler extends WebCrawler {
 				vulnerabilityList = parseWebPage(pageURL, html);
 			} catch (Exception e) {
 				logger.warn("WARNING: Crawler error when parsing {} --> {}", page.getWebURL(), e.toString());
+				e.printStackTrace();
 				updateCrawlerReport("Crawler error when parsing " +  page.getWebURL() +" --> " + e);
 			}
 
@@ -172,7 +209,7 @@ public class CveCrawler extends WebCrawler {
 	 */
 	public List<RawVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
 		// get parser and parse
-		AbstractCveParser parser = parserFactory.createParser(sSourceURL);
+		AbstractCveParser parser = parserFactory.createParser(sSourceURL, driver);
 		return parser.parseWebPage(sSourceURL, sCVEContentHTML);
 	}
 
@@ -188,4 +225,7 @@ public class CveCrawler extends WebCrawler {
 		}
 	}
 
+	public WebDriver getDriver(){
+		return driver;
+	}
 }

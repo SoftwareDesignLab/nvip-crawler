@@ -25,17 +25,22 @@ package edu.rit.se.nvip.crawler.htmlparser;
 
 import edu.rit.se.nvip.model.Product;
 import edu.rit.se.nvip.model.RawVulnerability;
+import edu.rit.se.nvip.utils.UtilHelper;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-import edu.rit.se.nvip.utils.UtilHelper;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.time.LocalDate;
 
 /**
  *
@@ -44,6 +49,7 @@ import java.util.regex.Pattern;
  * Ex: <a href="https://www.tenable.com/security/research/tra-2023-5">Source</a>
  */
 public class TenableSecurityParser extends AbstractCveParser {
+	private static final Logger logger = LogManager.getLogger(TenableSecurityParser.class);
 	
 	public TenableSecurityParser(String domainName) {
 		sourceDomainName = domainName;
@@ -88,6 +94,11 @@ public class TenableSecurityParser extends AbstractCveParser {
 				if (dates.isEmpty()) {
 					continue;
 				}
+				if(dates.size() == 1){
+					releaseDateString = getDate(dates.get(0).text());
+					updateDateString = getDate(dates.get(0).text());
+					continue;
+				}
 				for (Element date : dates) {
 					String dateText = date.text().toLowerCase();
 					if (dateText.contains("release") || dateText.contains("published")) {
@@ -110,6 +121,16 @@ public class TenableSecurityParser extends AbstractCveParser {
 //					products.addAll(getProducts(prodElements));
 				}
 			}
+		}
+
+		if(releaseDateString == null){
+			// logger.warn("WARNING: Release date null for {}", sSourceURL);
+			releaseDateString = LocalDate.now().toString();
+		}
+
+		if(updateDateString == null){
+			// logger.warn("WARNING: Update date is null for {}", sSourceURL);
+			updateDateString = LocalDate.now().toString();
 		}
 
 		for (String cve : uniqueCves) {
@@ -138,7 +159,7 @@ public class TenableSecurityParser extends AbstractCveParser {
 				if (parsed != null) {
 					return UtilHelper.longDateFormat.format(parsed);
 				}
-			} catch (ParseException e) {
+			} catch (ParseException | NullPointerException e) {
 				continue;
 			}
 		}

@@ -10,17 +10,19 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.openqa.selenium.*;
 import org.openqa.selenium.interactions.Actions;
+import org.openqa.selenium.interactions.MoveTargetOutOfBoundsException;
+
 
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import static edu.rit.se.nvip.crawler.CveCrawler.driver;
-
 public class ParseAccordion extends AbstractCveParser implements ParserStrategy {
 
     private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
+
+    WebDriver driver;
 
     // init actions to be able to click around
     Actions actions;
@@ -31,7 +33,8 @@ public class ParseAccordion extends AbstractCveParser implements ParserStrategy 
      * Generic parser accordion strategy
      * @param sourceDomainName - domain name of source
      */
-    public ParseAccordion(String sourceDomainName) {
+    public ParseAccordion(String sourceDomainName, WebDriver driver) {
+        this.driver = driver;
         this.sourceDomainName = sourceDomainName;
         actions = new Actions(driver);
     }
@@ -41,7 +44,7 @@ public class ParseAccordion extends AbstractCveParser implements ParserStrategy 
             WebElement cookiesButton = driver.findElement(By.xpath("//button[text()='Agree' or text()='Accept' or text()='Accept Cookies' or text()='Accept all']"));
             cookiesButton.click();
             logger.info("Accepted Cookies for page " + sourceUrl);
-        } catch (NoSuchElementException e) {
+        } catch (NoSuchElementException | ElementNotInteractableException e) {
             logger.info("No Cookies pop-up found for page " + sourceUrl);
         }
     }
@@ -79,10 +82,29 @@ public class ParseAccordion extends AbstractCveParser implements ParserStrategy 
         return cves;
     }
 
+    private void tryPageGet(String sSourceURL) {
+        int tries = 0;
+        while (tries < 2) {
+            try {
+                driver.get(sSourceURL);
+                break;
+            } catch (TimeoutException e) {
+                logger.info("Retrying page get...");
+                tries++;
+            }
+        }
+    }
+
     @Override
     public List<RawVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
         sourceUrl = sSourceURL;
-        driver.get(sSourceURL);
+        tryPageGet(sSourceURL);
+        try{
+            if (driver.getPageSource() == null) return new ArrayList<>();
+        } catch (TimeoutException e) {
+            logger.warn("Unable to get {}", sourceUrl);
+            return new ArrayList<>();
+        }
         clickAcceptCookies();
         List<RawVulnerability> vulnList = new ArrayList<>();
 
@@ -112,7 +134,7 @@ public class ParseAccordion extends AbstractCveParser implements ParserStrategy 
                     actions.moveToElement(childWebElement).click().perform();
                     String newHtml = driver.getPageSource();
                     diff = StringUtils.difference(originalHtml, newHtml);
-                } catch (NoSuchElementException | ElementNotInteractableException e) {
+                } catch (NoSuchElementException | ElementNotInteractableException | MoveTargetOutOfBoundsException e) {
                     // logger.info("Could not click on accordion child");
                 }
                 if (!diff.equals(""))
@@ -142,6 +164,11 @@ public class ParseAccordion extends AbstractCveParser implements ParserStrategy 
                     vulnList.addAll(parseCVEsFromAccordion(accText.toString()));
                 }
             }
+        }
+        try{
+            driver.manage().deleteAllCookies();
+        } catch (TimeoutException e) {
+            logger.warn("Unable to clear cookies for {}", sourceUrl);
         }
         return vulnList;
     }

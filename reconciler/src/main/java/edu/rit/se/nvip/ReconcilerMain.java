@@ -7,7 +7,7 @@ import java.util.*;
 
 public class ReconcilerMain {
     private static final Logger logger = LogManager.getLogger(ReconcilerMain.class);
-    private static final Map<String, Object> envVars = new HashMap<>();
+    public static final Map<String, Object> envVars = new HashMap<>();
 
     public ReconcilerMain() {
         getEnvVars();
@@ -41,6 +41,8 @@ public class ReconcilerMain {
         String reconcilerType = System.getenv("RECONCILER_TYPE");
         String processorList = System.getenv("PROCESSOR_LIST");
         String knownSourceList = System.getenv("KNOWN_SOURCES"); // TODO this is legacy setup to match existing reconciler implementations, should be re-thought
+        String openaiKey = System.getenv("OPENAI_KEY");
+
 
         addEnvvarListString("filterList", getListFromString(filterList), "SIMPLE",
                 "WARNING: Filter List is not defined in FILTER_LIST, meaning only the SIMPLE filter will be used");
@@ -50,6 +52,8 @@ public class ReconcilerMain {
                 "WARNING: Processor List is not defined in PROCESSOR_LIST, meaning only the SIMPLE processor will be used");
         addEnvvarListString("knownSources", getListFromString(knownSourceList), "",
                 "WARNING: Known Sources is not defined in KNOWN_SOURCES, meaning that no sources will have priority");
+        addEnvvarString("openaiKey", openaiKey, "",
+                "WARNING: OpenAi Key is not defined in OPENAI_KEY");
     }
 
     private void addEnvvarString(String name, String value, String defaultValue, String warning) {
