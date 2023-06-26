@@ -185,7 +185,7 @@ public class ProductNameExtractorController {
      */
     private static ArrayList<CompositeVulnerability> createTestVulnList(){
         ArrayList<CompositeVulnerability> vulnList = new ArrayList<>();
-        String filePath = "src/main/resources/data/test_vulnerabilities.csv";
+        String filePath = "nvip_data/data/test_vulnerabilities.csv";
         try{
             CSVReader reader = new CSVReader(new FileReader(filePath));
             for(String[] line : reader.readAll()){
