@@ -183,7 +183,7 @@ public class PatchFinder {
 			sourceBatches.get(thread).put(cveId, possiblePatchSources.get(cveId));
 			numSourcesAdded++;
 			if (numSourcesAdded % cvesPerThread == 0 && thread < maxThreads) {
-				es.execute(new PatchFinderThread(sourceBatches.get(thread), clonePath, thread));
+				es.execute(new PatchFinderThread(sourceBatches.get(thread), clonePath));
 				thread++;
 			}
 		}
