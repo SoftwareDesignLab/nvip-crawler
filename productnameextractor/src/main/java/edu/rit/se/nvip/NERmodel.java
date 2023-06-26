@@ -139,7 +139,7 @@ public class NERmodel {
 					logger.info("Timing for Sentence detector model loading: " + (endTime - startTime) + "ms.");
 				}
 			} catch (Exception e) {
-				logger.error("Error loading sentence model for product name extraction from {}: {}", sentenceModelPath, e.toString());
+				logger.error("Error loading sentence model for product name extraction from {}:\n{}", sentenceModelPath, e);
 			}
 
 			// Load features Normalizer
