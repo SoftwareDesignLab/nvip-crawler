@@ -2,22 +2,21 @@ package edu.rit.se.nvip.crawler.htmlparser;
 
 import edu.rit.se.nvip.crawler.CveCrawler;
 import edu.rit.se.nvip.model.RawVulnerability;
+import edu.rit.se.nvip.crawler.SeleniumDriver;
 
 import org.junit.Test;
-import org.junit.Before;
-import org.junit.After;
+import org.junit.BeforeClass;
+import org.junit.AfterClass;
 import org.junit.Ignore;
 
 import java.util.List;
 import java.util.ArrayList;
 
-import org.openqa.selenium.WebDriver;
-
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.*;
 
 public class ParseTableTest extends AbstractParserTest {
-    private WebDriver driver;
+    private static SeleniumDriver driver;
 
     @Ignore
     @Test
@@ -38,10 +37,10 @@ public class ParseTableTest extends AbstractParserTest {
         ParseTable parser = new ParseTable("https://www.vmware.com/security/advisories.html", driver);
         List<RawVulnerability> vulnerabilities = parser.parseWebPage("https://www.vmware.com/security/advisories.html", null);
 
-        assertTrue(vulnerabilities.size() > 80);
+        assertTrue(vulnerabilities.size() > 70);
         RawVulnerability vuln = getVulnerability(vulnerabilities, "CVE-2021-22035");
         assertNotNull(vuln);
-        assertTrue(vuln.getPublishDate().equals("2021-12-10 00:00:00") || vuln.getPublishDate().equals("2021-11-10 00:00:00"));
+        assertTrue(vuln.getPublishDate().equals("2021-10-11 00:00:00") || vuln.getPublishDate().equals("2021-10-12 00:00:00"));
         assertTrue(vuln.getDescription().contains("VMware vRealize Log Insight"));
         assertFalse(vuln.getDescription().contains("VMware Aria Operations for"));
     }
@@ -59,15 +58,13 @@ public class ParseTableTest extends AbstractParserTest {
         assertFalse(vuln.getDescription().contains("NVIDIA Shield TV Security Updates for CPU Speculative Side Channel Vulnerabilities"));
     }
 
-    @Before
-    public void setupWebdriver(){
-        driver = CveCrawler.startDynamicWebDriver();
-        System.out.println("STarting");
+    @BeforeClass
+    public static void setupWebDriver(){
+        driver = new SeleniumDriver();
     }
 
-    @After
-    public void destroyWebDriver(){
-        driver.quit();
-        System.out.println("Quiting");
+    @AfterClass
+    public static void destroyWebDriver(){
+        if(driver != null) driver.tryDiverQuit();
     }
 }

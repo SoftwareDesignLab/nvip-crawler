@@ -57,7 +57,7 @@ import java.time.Duration;
 public class SeleniumDriver {
 	private static final int MAX_QUIT_TRIES = 2;
 	private static final int MAX_GET_TRIES = 2;
-	private static final int MAX_ACTION_TRIES = 2;
+	private static final int MAX_ACTION_TRIES = 3;
 
 	private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
 	private WebDriver driver;
@@ -141,7 +141,7 @@ public class SeleniumDriver {
     public WebElement tryFindElement(By findBy){
     	WebElement element = null;
     	try{
-    		new WebDriverWait(driver, Duration.ofSeconds(3))
+    		new WebDriverWait(driver, Duration.ofSeconds(5))
           		.until(driver -> driver.findElement(findBy));
       	} catch (Exception e){
       		logger.warn("Finding element {} raised {}", findBy.toString(), e.toString());
@@ -151,18 +151,37 @@ public class SeleniumDriver {
 
     //TODO Maybe comment out logger statements, maybe break on stale or move ex.
     public boolean tryClickElement(WebElement element, int timeoutDuration){
-    	boolean result = false;
+        boolean result = false;
         int attempts = 0;
         while(attempts < MAX_ACTION_TRIES) {
             try {
-            	new WebDriverWait(driver, Duration.ofSeconds(timeoutDuration))
-            		.until(ExpectedConditions.elementToBeClickable(element));
+                new WebDriverWait(driver, Duration.ofSeconds(timeoutDuration))
+                    .until(ExpectedConditions.elementToBeClickable(element));
                 actions.moveToElement(element).perform();
                 actions.click(element).perform();
                 result = true;
                 break;
             } catch(Exception e) {
-            	logger.warn("Clicking element {} raised {}", element.getAccessibleName(), e.toString());
+                logger.warn("Clicking element {} raised {}", element.getAccessibleName(), e.toString());
+            }
+            attempts++;
+        }
+        return result;
+    }
+    public boolean tryClickElement(By by, int timeoutDuration){
+    	boolean result = false;
+        int attempts = 0;
+        WebElement element = null;
+        while(attempts < MAX_ACTION_TRIES) {
+            try {
+            	element = new WebDriverWait(driver, Duration.ofSeconds(timeoutDuration))
+            		.until(ExpectedConditions.elementToBeClickable(by));
+                actions.moveToElement(element).perform();
+                actions.click(element).perform();
+                result = true;
+                break;
+            } catch(Exception e) {
+            	logger.warn("Clicking element {} raised {}", (element == null ? "" : element.getAccessibleName()), e.getClass().getSimpleName());
             }
             attempts++;
         }

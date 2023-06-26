@@ -24,6 +24,8 @@
 package edu.rit.se.nvip.crawler.htmlparser;
 
 import edu.rit.se.nvip.model.RawVulnerability;
+import edu.rit.se.nvip.crawler.SeleniumDriver;
+
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.jsoup.nodes.Element;
@@ -44,7 +46,6 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.openqa.selenium.WebDriver;
 
 /**
  *
@@ -75,11 +76,11 @@ public abstract class AbstractCveParser {
 	 * @param url
 	 * @return
 	 */
-	protected String grabDynamicHTML(String url, WebDriver driver) {
-		driver.get(url);
+	protected String grabDynamicHTML(String url, SeleniumDriver driver) {
+		String html = driver.tryPageGet(url);
 		if (url.contains("mend.io"))
-			return (String) ((JavascriptExecutor) driver).executeScript("return document.getElementsByTagName('html')[0].innerHTML");
-		return driver.getPageSource();
+			return (String) ((JavascriptExecutor) driver.getDriver()).executeScript("return document.getElementsByTagName('html')[0].innerHTML");
+		return html;
 	}
 
 	/**

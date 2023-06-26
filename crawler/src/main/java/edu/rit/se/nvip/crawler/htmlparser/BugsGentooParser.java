@@ -70,7 +70,7 @@ public class BugsGentooParser extends AbstractCveParser {
 		if (column == null)
 			return vulns;
 		publishDate = column.
-				getElementsByTag("td").get(0).text().substring(0, 20);
+				getElementsByTag("td").get(1).text().substring(0, 20);
 
 		lastModified = column.
 				getElementsByTag("table").get(0).getElementsByTag("tr").get(1).

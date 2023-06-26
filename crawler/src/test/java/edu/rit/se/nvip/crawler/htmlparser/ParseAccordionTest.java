@@ -2,12 +2,11 @@ package edu.rit.se.nvip.crawler.htmlparser;
 
 import edu.rit.se.nvip.crawler.CveCrawler;
 import edu.rit.se.nvip.model.RawVulnerability;
+import edu.rit.se.nvip.crawler.SeleniumDriver;
 
 import org.junit.Test;
 import org.junit.BeforeClass;
 import org.junit.AfterClass;
-
-import org.openqa.selenium.WebDriver;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -16,7 +15,7 @@ import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.*;
 
 public class ParseAccordionTest extends AbstractParserTest{
-    private static WebDriver driver;
+    private static SeleniumDriver driver;
 
     @Test
     public void testParseAccordionNi() {
@@ -72,11 +71,11 @@ public class ParseAccordionTest extends AbstractParserTest{
 
     @BeforeClass
     public static void setupWebDriver(){
-        driver = new CveCrawler(new ArrayList<>(), "").getDriver();
+        driver = new SeleniumDriver();
     }
 
     @AfterClass
     public static void destroyWebDriver(){
-        if(driver != null) driver.quit();
+        if(driver != null) driver.tryDiverQuit();
     }
 }

@@ -157,6 +157,8 @@ public class CveParserFactory {
 			return new EatonParser("eaton");
 		else if (sPageUrl.contains("arista"))
 			return new AristaParser("arista");
+		else if (sPageUrl.contains("nvidia"))
+			return new ParseTable("nvidia", driver);
 
 
 		// sources that you want to ignore

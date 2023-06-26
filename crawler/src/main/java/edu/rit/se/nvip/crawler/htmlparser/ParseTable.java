@@ -126,9 +126,10 @@ public class ParseTable extends AbstractCveParser implements ParserStrategy {
 
     private String getNextPage(String sourceHtml) {
         String nextPage = "";
-        WebElement element = driver.tryFindElement(By.xpath("//*[contains(@class,'next')]"));
-        if(element != null && driver.tryClickElement(element, 5))
+        if(driver.tryClickElement(By.xpath("//*[contains(@class,'next')]"), 5))
             nextPage = StringUtils.difference(sourceHtml, driver.getDriver().getPageSource());
+        else
+            logger.warn("Unable to get next page");
         return nextPage;
     }
 

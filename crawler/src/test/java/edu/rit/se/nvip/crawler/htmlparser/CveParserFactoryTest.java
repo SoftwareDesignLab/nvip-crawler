@@ -25,6 +25,7 @@ package edu.rit.se.nvip.crawler.htmlparser;
 
 import edu.rit.se.nvip.model.RawVulnerability;
 import edu.rit.se.nvip.crawler.CveCrawler;
+import edu.rit.se.nvip.crawler.SeleniumDriver;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -37,22 +38,20 @@ import org.junit.Test;
 import org.junit.BeforeClass;
 import org.junit.AfterClass;
 
-import org.openqa.selenium.WebDriver;
-
 public class CveParserFactoryTest extends AbstractParserTest{
 
-    static WebDriver driver;
+    static SeleniumDriver driver;
     CveParserFactory parserFactory = new CveParserFactory();
     AbstractCveParser parser;
 
     @BeforeClass
     public static void setupWebDriver(){
-        driver = new CveCrawler(new ArrayList<>(), "").getDriver();
+        driver = new SeleniumDriver();
     }
 
     @AfterClass
     public static void destroyWebDriver(){
-        if(driver != null) driver.quit();
+        if(driver != null) driver.tryDiverQuit();
     }
 
     @Test

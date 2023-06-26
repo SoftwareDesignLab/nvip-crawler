@@ -74,6 +74,6 @@ public abstract class AbstractParserTest {
 
     @AfterClass
     public static void destroyCrawler(){
-        crawler.getDriver().quit();
+        crawler.getSeleniumDriver().tryDiverQuit();
     }
 }

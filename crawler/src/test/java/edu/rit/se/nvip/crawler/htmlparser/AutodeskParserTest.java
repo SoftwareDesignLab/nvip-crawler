@@ -25,6 +25,8 @@ package edu.rit.se.nvip.crawler.htmlparser;
 
 import edu.rit.se.nvip.crawler.CveCrawler;
 import edu.rit.se.nvip.model.RawVulnerability;
+import edu.rit.se.nvip.crawler.SeleniumDriver;
+
 import org.junit.Test;
 import org.junit.BeforeClass;
 import org.junit.AfterClass;
@@ -32,12 +34,10 @@ import org.junit.AfterClass;
 import java.util.List;
 import java.util.ArrayList;
 
-import org.openqa.selenium.WebDriver;
-
 import static org.junit.Assert.*;
 
 public class AutodeskParserTest extends AbstractParserTest{
-    static WebDriver driver;
+    static SeleniumDriver driver;
 
     @Test
     public void testAutodesk() {
@@ -73,12 +73,12 @@ public class AutodeskParserTest extends AbstractParserTest{
 
     @BeforeClass
     public static void setupWebDriver(){
-        driver = new CveCrawler(new ArrayList<>(), "").getDriver();
+        driver = new SeleniumDriver();
     }
 
     @AfterClass
     public static void destroyWebDriver(){
-        if(driver != null) driver.quit();
+        if(driver != null) driver.tryDiverQuit();
     }
 
 }

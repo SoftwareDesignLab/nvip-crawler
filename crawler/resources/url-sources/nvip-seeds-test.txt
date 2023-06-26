@@ -1,1 +1,1 @@
-https://jenkins.io/security/advisories
+https://www.nvidia.com/en-us/security
