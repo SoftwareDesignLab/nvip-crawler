@@ -217,9 +217,6 @@ public class ProductNameExtractorController {
      */
     private static void writeTestResults(List<CompositeVulnerability> vulnList){
         File testResultsFile = new File("src/main/resources/data/test_results.csv");
-
-        final Pattern cpePattern = Pattern.compile("cpe:2\\.3:[aho\\*\\-]:([^:]*):([^:]*):([^:]*):.*");
-
         try{
             PrintWriter writer = new PrintWriter(testResultsFile);
             // Go through each vulnerability and write it and its affected products to output and the file
