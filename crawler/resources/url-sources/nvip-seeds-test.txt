@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 https://groups.google.com/g/libarchive-announce
 https://github.com/DrizzlingSun/Tenda/tree/main/AC18
 https://github.com/GSMcNamara/CVE/blob/main/disclosures/index.md
@@ -551,8 +550,6 @@ https://zammad.com/en/advisories
 https://zigrin.com/advisories
 https://zoom.us/trust/security/security-bulletin
 https://zuso.ai/Advisory.html
-=======
 https://advisory.dualvs.com
 https://airbus-seclab.github.io
 https://amperecomputing.com/products/product-security.html
->>>>>>> bcdab6d9b4a42d5ed86d1c78963aea23f3cc9334
