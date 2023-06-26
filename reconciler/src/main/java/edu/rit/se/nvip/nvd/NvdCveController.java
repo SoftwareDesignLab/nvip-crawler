@@ -26,7 +26,7 @@ package edu.rit.se.nvip.nvd;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import edu.rit.se.nvip.db.DatabaseHelper;
+import edu.rit.se.nvip.DatabaseHelper;
 import edu.rit.se.nvip.model.CompositeVulnerability;
 import edu.rit.se.nvip.model.NvdVulnerability;
 import org.apache.commons.io.FileUtils;

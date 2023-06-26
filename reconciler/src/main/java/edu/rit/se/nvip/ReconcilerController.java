@@ -1,7 +1,6 @@
 package edu.rit.se.nvip;
 
 import edu.rit.se.nvip.characterizer.CveCharacterizer;
-import edu.rit.se.nvip.db.DatabaseHelper;
 import edu.rit.se.nvip.filter.Filter;
 import edu.rit.se.nvip.filter.FilterFactory;
 import edu.rit.se.nvip.model.CompositeVulnerability;

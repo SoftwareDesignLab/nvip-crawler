@@ -1,7 +1,7 @@
 package edu.rit.se.nvip.sandbox;
 
 import com.zaxxer.hikari.HikariConfig;
-import edu.rit.se.nvip.db.DatabaseHelper;
+import edu.rit.se.nvip.DatabaseHelper;
 import edu.rit.se.nvip.model.RawVulnerability;
 
 import java.sql.Connection;

@@ -22,7 +22,7 @@ package edu.rit.se.nvip.characterizer; /**
  * SOFTWARE.
  */
 
-import edu.rit.se.nvip.db.DatabaseHelper;
+import edu.rit.se.nvip.DatabaseHelper;
 import edu.rit.se.nvip.model.CompositeVulnerability;
 import edu.rit.se.nvip.model.RawVulnerability;
 import edu.rit.se.nvip.utils.CsvUtils;

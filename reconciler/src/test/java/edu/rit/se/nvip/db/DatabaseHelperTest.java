@@ -24,6 +24,7 @@
 package edu.rit.se.nvip.db;
 
 import com.zaxxer.hikari.HikariDataSource;
+import edu.rit.se.nvip.DatabaseHelper;
 import edu.rit.se.nvip.model.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

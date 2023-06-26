@@ -1,6 +1,5 @@
 package edu.rit.se.nvip;
 
-import edu.rit.se.nvip.db.DatabaseHelper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
