@@ -43,11 +43,13 @@ import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.diff.DiffFormatter;
+import org.eclipse.jgit.diff.Edit;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
+import org.eclipse.jgit.util.io.DisabledOutputStream;
 
 /**
  *	For Scraping repo commits for possible patch commits
@@ -99,18 +101,12 @@ public class PatchCommitScraper {
 								String commitUrl = repository.getConfig().getString("remote", "origin", "url");
 								logger.info("Found patch commit @ {} in repo {}", commitUrl, localDownloadLoc);
 								String unifiedDiff = generateUnifiedDiff(git, commit);
-
-								if (vulnerableCommit != null) { // Added
-									long timeToPatch = calculateTimeToPatch(vulnerableCommit, commit); // Added
-									int linesChanged = countLinesChanged(unifiedDiff); // Added
-
-									PatchCommit patchCommit = new PatchCommit(commitUrl, cveId, commit.getName(),
-											new Date(commit.getCommitTime() * 1000L), commit.getFullMessage(), unifiedDiff);
-									patchCommit.setTimeToPatch(timeToPatch);
-									patchCommit.setLinesChanged(linesChanged);
-
-									patchCommits.add(patchCommit);
-								}
+//								List<String> commitTimeLine = calculateCommitTimeline(repository, startingRevision, commit);
+//								logger.info("Commit timeline: {}", commitTimeLine);
+								int linesChanged = getLinesChanged(repository, commit);
+								logger.info("Lines changed: {}", linesChanged);
+								PatchCommit patchCommit = new PatchCommit(commitUrl, cveId, commit.getName(), new Date(commit.getCommitTime() * 1000L), commit.getFullMessage(), unifiedDiff);
+								patchCommits.add(patchCommit);
 							} else ignoredCounter++;
 						}
 					}
@@ -171,28 +167,90 @@ public class PatchCommitScraper {
 	 * @throws IOException if an error occurs while accessing the repository
 	 */
 	private CanonicalTreeParser getCanonicalTreeParser(Repository repository, ObjectId objectId) throws IOException {
-		try (RevWalk walk = new RevWalk(repository)) {
-			RevCommit commit = walk.parseCommit(objectId);
+		try (RevWalk revWalk = new RevWalk(repository)) {
+			RevCommit commit = revWalk.parseCommit(objectId);
 			ObjectId treeId = commit.getTree().getId();
-			try (ObjectReader reader = repository.newObjectReader()) {
-				return new CanonicalTreeParser(null, reader, treeId);
+			try (ObjectReader objectReader = repository.newObjectReader()) {
+				CanonicalTreeParser treeParser = new CanonicalTreeParser();
+				treeParser.reset(objectReader, treeId);
+				return treeParser;
 			}
 		}
 	}
 
-	private long calculateTimeToPatch(RevCommit vulnerableCommit, RevCommit patchCommit) {
-		return patchCommit.getCommitTime() - vulnerableCommit.getCommitTime();
+	/**
+	 * prepare a timeline of commits between the vulnerable commit, and the patch commit. Keep track of timeline, estimate how long it took to patch, how many lines needed to be change.
+	 * @param repository
+	 * @param startingRevision
+	 * @param patchCommit
+	 * @return
+	 * @throws IOException
+	 * @throws GitAPIException
+	 */
+	private List<String> calculateCommitTimeline(Repository repository, ObjectId startingRevision, RevCommit patchCommit) throws IOException, GitAPIException {
+		List<String> commitTimeline = new ArrayList<>();
+
+		// Get the canonical tree parser for the starting revision
+		CanonicalTreeParser startingTreeParser = getCanonicalTreeParser(repository, startingRevision);
+
+		// Get the canonical tree parser for the patch commit
+		CanonicalTreeParser patchTreeParser = getCanonicalTreeParser(repository, patchCommit);
+
+		// Get the list of diffs between the starting revision and the patch commit
+		try (Git git = new Git(repository)) {
+			List<DiffEntry> diffs = git.diff().setNewTree(patchTreeParser).setOldTree(startingTreeParser).call();
+
+			// Iterate through the diffs and add the commit messages to the timeline
+			for (DiffEntry diff : diffs) {
+				commitTimeline.add(diff.getChangeType().toString() + " " + diff.getNewPath());
+			}
+		}
+
+		return commitTimeline;
 	}
 
-	private int countLinesChanged(String unifiedDiff) {
+	/**
+	 * Get the lines of code changed in a commit.
+	 * @param repository the Git repository
+	 * @param commit the commit
+	 *
+	 * @return the number of lines changed
+	 */
+	private int getLinesChanged(Repository repository, RevCommit commit) {
+		try (Git git = new Git(repository)) {
+			CanonicalTreeParser treeParser = getCanonicalTreeParser(repository, commit);
+			if (treeParser != null) {
+				RevCommit parentCommit = commit.getParents()[0];
+				CanonicalTreeParser parentTreeParser = getCanonicalTreeParser(repository, parentCommit);
+
+				List<DiffEntry> diffs = git.diff()
+						.setNewTree(treeParser)
+						.setOldTree(parentTreeParser)
+						.call();
+
+				int linesChanged = 0;
+				for (DiffEntry diff : diffs) {
+					linesChanged += countLinesChanged(diff, repository);
+				}
+
+				return linesChanged;
+			}
+		} catch (IOException | GitAPIException e) {
+			logger.error("Failed to get lines changed for commit {}", commit.getName(), e);
+		}
+
+		return 0;
+	}
+
+	private int countLinesChanged(DiffEntry diffEntry, Repository repository) throws IOException {
 		int linesChanged = 0;
-
-		for (String line : unifiedDiff.split("\n")) {
-			if (line.startsWith("+") || line.startsWith("-")) {
-				linesChanged++;
+		try (DiffFormatter diffFormatter = new DiffFormatter(DisabledOutputStream.INSTANCE)) {
+			diffFormatter.setRepository(repository);
+			List<Edit> edits = diffFormatter.toFileHeader(diffEntry).toEditList();
+			for (Edit edit : edits) {
+				linesChanged += edit.getEndB() - edit.getBeginB();
 			}
 		}
-
 		return linesChanged;
 	}
 }
