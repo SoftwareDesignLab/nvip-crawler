@@ -36,7 +36,11 @@ import org.nd4j.linalg.dataset.api.preprocessor.serializer.NormalizerSerializer;
 import org.nd4j.linalg.factory.Nd4j;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Random;
@@ -127,10 +131,15 @@ public class NERmodel {
 
 			// Load Apache Open NLP sentence detector model
 			// path to Apache Open NLP sentence model
-			String sentenceModelPath = "nvip_data/nlp/en-sent.bin";
+			String sentenceModelPath = ".\\nvip_data\\nlp\\en-sent.bin";
+
+			Path path = Paths.get(sentenceModelPath);
+			logger.info("Does it exist? {}", Files.exists(path));
 			try {
 				startTime = System.currentTimeMillis();
-				InputStream modelIn = this.getClass().getClassLoader().getResourceAsStream(sentenceModelPath);
+				logger.info("Working Dir === {}", System.getProperty("user.dir"));
+				File binFile = new File(sentenceModelPath);
+				InputStream modelIn = Files.newInputStream(binFile.toPath());
 				SentenceModel sentenceModel = new SentenceModel(modelIn);
 				sentenceDetector = new SentenceDetectorME(sentenceModel);
 				modelIn.close();

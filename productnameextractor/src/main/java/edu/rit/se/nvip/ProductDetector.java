@@ -30,8 +30,10 @@ import opennlp.tools.tokenize.WhitespaceTokenizer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -73,7 +75,8 @@ public class ProductDetector {
 
 			// Load Apache OpenNLP sentence model
 			logger.info("Loading NLP sentence model...");
-			InputStream modelStream = this.getClass().getClassLoader().getResourceAsStream(modelPath);
+			File binFile = new File(modelPath);
+			InputStream modelStream = Files.newInputStream(binFile.toPath());
 			assert modelStream != null;
 			model = new POSModel(modelStream);
 			tagger = new POSTaggerME(model);
