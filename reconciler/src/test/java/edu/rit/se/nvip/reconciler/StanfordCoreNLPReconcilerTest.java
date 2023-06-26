@@ -18,6 +18,13 @@ public class StanfordCoreNLPReconcilerTest {
     private static StanfordCoreNLP pipeline;
     private static StanfordCoreNLPReconciler reconciler;
 
+
+    /*
+
+   Not exactly complete... probably will have to switch to using a model like ApacheOpenNLPReconcilerTest
+
+    */
+
     @BeforeClass
     public static void setUp() {
         pipeline = new StanfordCoreNLP(PropertiesUtils.asProperties(

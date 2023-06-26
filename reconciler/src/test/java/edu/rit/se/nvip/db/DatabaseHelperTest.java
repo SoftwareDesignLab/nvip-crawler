@@ -24,6 +24,9 @@
 package edu.rit.se.nvip.db;
 
 import com.zaxxer.hikari.HikariDataSource;
+import edu.rit.se.nvip.model.CompositeVulnerability;
+import edu.rit.se.nvip.model.NvdVulnerability;
+import edu.rit.se.nvip.model.RawVulnerability;
 import edu.rit.se.nvip.DatabaseHelper;
 import edu.rit.se.nvip.model.*;
 import org.apache.logging.log4j.LogManager;
@@ -35,14 +38,14 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.MockedConstruction;
-import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.mockito.stubbing.Answer;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.lang.reflect.Field;
 import java.sql.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -87,60 +90,6 @@ public class DatabaseHelperTest {
         } catch (SQLException ignored) {}
     }
 
-    /**
-     * Sets up the "database" results to return n rows
-     * @param n Number of rows (number of times next() will return true)
-     */
-    private void setResNextCount(int n) {
-        try {
-            when(res.next()).thenAnswer(new Answer<Boolean>() {
-                private int iterations = n;
-                public Boolean answer(InvocationOnMock invocation) {
-                    return iterations-- > 0;
-                }
-            });
-        } catch (SQLException ignored) {}
-    }
-
-    /**
-     * Helper method for populating the "database" results.
-     * @param getStringArg Name of the column to retrieve from. Used for that column's value as well with a suffix.
-     * @param count Number of results to populate.
-     */
-    private void setResStrings(String getStringArg, int count) {
-        try {
-            when(res.getString(getStringArg)).thenAnswer(new Answer<String>() {
-                private int index = 0;
-
-                public String answer(InvocationOnMock invocation) {
-                    if (index == count) {
-                        return null;
-                    }
-                    return getStringArg + index++;
-                }
-            });
-        } catch (SQLException ignored) {}
-    }
-
-    /**
-     * Helper method for populating the "database" results. Just returns multiples of 1337
-     * @param getIntArg Name of the column to retrieve from.
-     * @param count Number of results to populate.
-     */
-    private void setResInts(String getIntArg, int count) {
-        try {
-            when(res.getInt(getIntArg)).thenAnswer(new Answer<Integer>() {
-                private int index = 0;
-
-                public Integer answer(InvocationOnMock invocation) {
-                    if (index == count) {
-                        return 0;
-                    }
-                    return 1337 * index++;
-                }
-            });
-        } catch (SQLException ignored) {}
-    }
 
     @BeforeClass
     public static void classSetUp() {
