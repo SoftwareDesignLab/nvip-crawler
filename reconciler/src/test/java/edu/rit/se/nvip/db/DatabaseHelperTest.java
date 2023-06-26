@@ -55,11 +55,6 @@ import static org.mockito.Mockito.*;
  */
 @RunWith(MockitoJUnitRunner.class)
 public class DatabaseHelperTest {
-    enum SampleEnum {
-        ENUM_A,
-        ENUM_B,
-        ENUM_C
-    }
     private Logger logger = LogManager.getLogger(getClass().getSimpleName());
 
     private DatabaseHelper dbh;
@@ -88,8 +83,6 @@ public class DatabaseHelperTest {
             when(hds.getConnection()).thenReturn(conn);
             when(conn.prepareStatement(any())).thenReturn(pstmt);
             when(pstmt.executeQuery()).thenReturn(res);
-            when(conn.createStatement()).thenReturn(pstmt);
-            when(pstmt.executeQuery(any())).thenReturn(res);
         } catch (SQLException ignored) {}
     }
 

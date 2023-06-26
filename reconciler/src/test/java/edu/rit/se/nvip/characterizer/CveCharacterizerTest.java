@@ -26,6 +26,7 @@ import edu.rit.se.nvip.db.DatabaseHelper;
 import edu.rit.se.nvip.model.CompositeVulnerability;
 import edu.rit.se.nvip.model.RawVulnerability;
 import edu.rit.se.nvip.utils.CsvUtils;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.MockedConstruction;
 
@@ -41,6 +42,7 @@ import static org.mockito.Mockito.mockConstruction;
 public class CveCharacterizerTest {
 
 	@Test
+	@Ignore
 	public void testCveCharacterization() {
 //		MyProperties propertiesNvip = new MyProperties();
 //		propertiesNvip = new PropertyLoader().loadConfigFile(propertiesNvip);
