@@ -52,7 +52,8 @@ jobs:
       - name: Publish Test Report
         if: success() || failure()
         uses: scacap/action-surefire-report@v1
-        check_name: Backend Test Report
+        with:
+          check_name: Backend Test Report
 
   # Build and test crawler component
   build-test-crawler:
