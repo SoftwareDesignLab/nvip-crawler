@@ -144,13 +144,6 @@ public class DatabaseHelper {
 		// now insert affected releases (referenced products are already in db)
 		databaseHelper.insertAffectedProductsV2(affectedProducts);
 
-		// TODO: Should be in program driver, probably PNEController
-//		// prepare CVE summary table for Web UI
-
-//		logger.info("Preparing CVE summary table for Web UI...");
-//		PrepareDataForWebUi cveDataForWebUi = new PrepareDataForWebUi();
-//		cveDataForWebUi.prepareDataforWebUi();
-
 		databaseHelper.shutdown();
 		return affectedProducts.size();
 	}
