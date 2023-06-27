@@ -215,13 +215,13 @@ public class CrawlerMain {
         addEnvvarString(CrawlerMain.crawlerVars,"outputDir", outputDir, "output/crawlers",
                 "WARNING: Crawler output path not defined in NVIP_OUTPUT_DIR, using default path: output/crawlers");
 
-        addEnvvarString(CrawlerMain.crawlerVars,"seedFileDir", seedFileDir, "resources/url-sources/nvip-seeds.txt",
+        addEnvvarString(CrawlerMain.crawlerVars,"seedFileDir", seedFileDir, "crawler/resources/url-sources/nvip-seeds.txt",
                 "WARNING: Crawler seed file path not defined in NVIP_SEED_URLS, using default path: " + "resources/url-sources/nvip-seeds.txt");
 
-        addEnvvarString(CrawlerMain.crawlerVars,"whitelistFileDir", whitelistFileDir, "resources/url-sources/nvip-whitelist.txt",
+        addEnvvarString(CrawlerMain.crawlerVars,"whitelistFileDir", whitelistFileDir, "crawler/resources/url-sources/nvip-whitelist.txt",
                 "WARNING: Crawler whitelist file path not defined in NVIP_WHITELIST_URLS, using default path: resources/url-sources/nvip-whitelist.txt");
 
-        addEnvvarString(CrawlerMain.crawlerVars,"sourceTypeFileDir", sourceTypeFileDir, "resources/url-sources/nvip-source-types.txt",
+        addEnvvarString(CrawlerMain.crawlerVars,"sourceTypeFileDir", sourceTypeFileDir, "crawler/resources/url-sources/nvip-source-types.txt",
                 "WARNING: Crawler whitelist file path not defined in NVIP_SOURCE_TYPES, using default path: resources/url-sources/nvip-source-types.txt");
 
         addEnvvarBool(CrawlerMain.crawlerVars,"enableGitHub", enableGitHub, false,
