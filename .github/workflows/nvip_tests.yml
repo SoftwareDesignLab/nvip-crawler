@@ -141,7 +141,7 @@ jobs:
       # Grab large files (w2v model) from S3 bucket
       - name: Pull file from S3 bucket
         run: |
-          cd productnameextractor/nvip_data/productnameextraction
+          cd productnameextractor/nvip_data/data
           aws s3 cp s3://binaries-for-crawler/w2v_model_250.bin .
 
       # Might not need this
@@ -180,7 +180,7 @@ jobs:
       # Pull large files so they're in the container
       - name: Pull file from S3 bucket
         run: |
-          cd nvip_data/productnameextraction
+          cd productnameextractor/nvip_data/data
           aws s3 cp s3://binaries-for-crawler/w2v_model_250.bin .  
 
       - name: Login to GitHub Container Registry
@@ -271,7 +271,7 @@ jobs:
       # Pull large files (w2v model) so they're in the container
       - name: Pull file from S3 bucket
         run: |
-          cd productnameextractor/nvip_data/productnameextraction
+          cd productnameextractor/nvip_data/data
           aws s3 cp s3://binaries-for-crawler/w2v_model_250.bin . 
 
       - name: Login to GitHub Container Registry
