@@ -215,14 +215,14 @@ public class CrawlerMain {
         addEnvvarString(CrawlerMain.crawlerVars,"outputDir", outputDir, "output/crawlers",
                 "WARNING: Crawler output path not defined in NVIP_OUTPUT_DIR, using default path: output/crawlers");
 
-        addEnvvarString(CrawlerMain.crawlerVars,"seedFileDir", seedFileDir, "nvip_data/url-sources/nvip-seeds.txt",
-                "WARNING: Crawler seed file path not defined in NVIP_SEED_URLS, using default path: " + "nvip_data/url-sources/nvip-seeds.txt");
+        addEnvvarString(CrawlerMain.crawlerVars,"seedFileDir", seedFileDir, "resources/url-sources/nvip-seeds.txt",
+                "WARNING: Crawler seed file path not defined in NVIP_SEED_URLS, using default path: " + "resources/url-sources/nvip-seeds.txt");
 
-        addEnvvarString(CrawlerMain.crawlerVars,"whitelistFileDir", whitelistFileDir, "nvip_data/url-sources/nvip-whitelist.txt",
-                "WARNING: Crawler whitelist file path not defined in NVIP_WHITELIST_URLS, using default path: nvip_data/url-sources/nvip-whitelist.txt");
+        addEnvvarString(CrawlerMain.crawlerVars,"whitelistFileDir", whitelistFileDir, "resources/url-sources/nvip-whitelist.txt",
+                "WARNING: Crawler whitelist file path not defined in NVIP_WHITELIST_URLS, using default path: resources/url-sources/nvip-whitelist.txt");
 
-        addEnvvarString(CrawlerMain.crawlerVars,"sourceTypeFileDir", sourceTypeFileDir, "nvip_data/url-sources/nvip-source-types.txt",
-                "WARNING: Crawler whitelist file path not defined in NVIP_SOURCE_TYPES, using default path: nvip_data/url-sources/nvip-source-types.txt");
+        addEnvvarString(CrawlerMain.crawlerVars,"sourceTypeFileDir", sourceTypeFileDir, "resources/url-sources/nvip-source-types.txt",
+                "WARNING: Crawler whitelist file path not defined in NVIP_SOURCE_TYPES, using default path: resources/url-sources/nvip-source-types.txt");
 
         addEnvvarBool(CrawlerMain.crawlerVars,"enableGitHub", enableGitHub, false,
                 "WARNING: CVE GitHub Enabler not defined in NVIP_ENABLE_GITHUB, allowing CVE GitHub pull on default");
