@@ -33,7 +33,7 @@ public class ProductNameExtractorController {
     protected static int maxAttemptsPerPage = 2;
     protected static boolean prettyPrint = false;
     protected static boolean testMode = false;
-    private static String productDictPath = "src/main/resources/data/product_dict.json";
+    private static String productDictPath = "nvip_data/data/product_dict.json";
     private static Instant productDictLastCompilationDate;
     private static AffectedProductIdentifier affectedProductIdentifier;
 
