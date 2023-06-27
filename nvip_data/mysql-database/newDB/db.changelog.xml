@@ -60,11 +60,41 @@
 <!--        </addColumn>-->
 <!--    </changeSet>-->
 
-    <changeSet author="dylan" id="modify_uni_diff_column">
-        <dropColumn tableName="patchcommit" columnName="uni_diff"/>
+<!--    <changeSet author="dylan" id="modify_uni_diff_column">-->
+<!--        <dropColumn tableName="patchcommit" columnName="uni_diff"/>-->
+
+<!--        <addColumn tableName="patchcommit">-->
+<!--            <column name="uni_diff" type="TINYTEXT">-->
+<!--                <constraints nullable="false"/>-->
+<!--            </column>-->
+<!--        </addColumn>-->
+<!--    </changeSet>-->
+
+    <changeSet author="richard" id="modify_timeline_column">
+        <dropColumn tableName="patchcommit" columnName="timeline"/>
 
         <addColumn tableName="patchcommit">
-            <column name="uni_diff" type="TINYTEXT">
+            <column name="timeline" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="richard" id="modify_timeToPatch_column">
+        <dropColumn tableName="patchcommit" columnName="timeToPatch"/>
+
+        <addColumn tableName="patchcommit">
+            <column name="timeToPatch" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="richard" id="modify_linesChanged_column">
+        <dropColumn tableName="patchcommit" columnName="linesChanged"/>
+
+        <addColumn tableName="patchcommit">
+            <column name="linesChanged" type="INT">
                 <constraints nullable="false"/>
             </column>
         </addColumn>

@@ -102,12 +102,10 @@ public class PatchCommitScraper {
 								logger.info("Found patch commit @ {} in repo {}", commitUrl, localDownloadLoc);
 								String unifiedDiff = generateUnifiedDiff(git, commit);
 								List<RevCommit> commitTimeline = calculateCommitTimeline(repository, startingRevision, commit);
-								logger.info("Commit timeline: {}", commitTimeline);
 								int linesChanged = getLinesChanged(repository, commit);
 								Long timeToPatch = calculateTimeToPatch(commitTimeline);
 								String formattedTimeToPatch = formatTimeToPatch(timeToPatch);
 								PatchCommit patchCommit = new PatchCommit(commitUrl, cveId, commit.getName(), new Date(commit.getCommitTime() * 1000L), commit.getFullMessage(), unifiedDiff, commitTimeline, formattedTimeToPatch, linesChanged);
-								logger.info("Patch commit: {}", patchCommit);
 								patchCommits.add(patchCommit);
 							} else ignoredCounter++;
 						}
@@ -206,7 +204,7 @@ public class PatchCommitScraper {
 		int commitCount = commitTimeline.size();
 		if (commitCount > 2) {
 			int inBetweenCommits = commitCount - 2; // Number of commits in between first and last
-			int maxDisplayedCommits = 15; // Maximum number of displayed commits (including first and last)
+			int maxDisplayedCommits = 8; // Maximum number of displayed commits (including first and last)
 			int displayedCommits = Math.min(maxDisplayedCommits, inBetweenCommits + 2);
 			int inBetweenLimit = displayedCommits - 2; // Limit of commits in between
 			List<RevCommit> displayedTimeline = new ArrayList<>();

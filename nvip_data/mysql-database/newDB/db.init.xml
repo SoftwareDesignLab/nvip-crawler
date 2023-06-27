@@ -338,6 +338,18 @@
             <column name="commit_message" type="VARCHAR(1000)">
                 <constraints nullable="false"/>
             </column>
+            <column name="uni_diff" type="TINYTEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="timeline" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="timeToPatch" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="linesChanged" type="INT">
+                <constraints nullable="false"/>
+            </column>
         </createTable>
 
         <createIndex
