@@ -86,7 +86,7 @@ public class NERmodel {
 
 		try {
 			// Get models paths
-			String modelsDir = System.getenv("DATA_DIR") + "/" + System.getenv("NAME_EXTRACTOR_DIR") + "/";
+			String modelsDir = System.getenv("DATA_DIR") + "/";
 			String c2vModelConfigPath = modelsDir + System.getenv("CHAR_2_VEC_CONFIG");
 			String c2vModelWeightsPath = modelsDir + System.getenv("CHAR_2_VEC_WEIGHTS");
 			String w2vModelPath = modelsDir + System.getenv("WORD_2_VEC");
