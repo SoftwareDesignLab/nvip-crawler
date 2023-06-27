@@ -31,6 +31,7 @@ import opennlp.tools.tokenize.WhitespaceTokenizer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -207,7 +208,7 @@ public class AffectedProductIdentifier {
 			productNameDetector = new ProductDetector(this.cpeLookUp);
 		} catch (Exception e1) {
 			logger.error("Severe Error! Could not initialize the models for product name/version extraction! Skipping affected product identification step! {}", e1.toString());
-			return null;
+			return new HashMap<>();
 		}
 
 		AtomicInteger numOfProductsMappedToCpe = new AtomicInteger();
