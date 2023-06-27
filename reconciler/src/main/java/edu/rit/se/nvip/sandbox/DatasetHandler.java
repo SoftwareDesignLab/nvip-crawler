@@ -21,7 +21,7 @@ public class DatasetHandler {
         DatasetHandler dh = new DatasetHandler();
 //        dh.jsonToDb();
 //        dh.dbToJson();
-        dh.updateJson("./src/main/java/edu/rit/se/nvip/sandbox/GenericParserOutputFull_6_22_2023.json");
+        dh.updateJson("./src/main/java/edu/rit/se/nvip/sandbox/CrawlerOutputFull_6_22_2023.json");
     }
 
     public DatasetHandler() {
@@ -140,7 +140,6 @@ public class DatasetHandler {
                     sourceTypes.put(args[0].replaceAll("www.", ""), args[1]);
                 } catch (ArrayIndexOutOfBoundsException e) {
                     sourceTypes.put(args[0].replaceAll("www.", ""), "other");
-                    System.out.println(args[0]);
                 }
             }
         } catch (FileNotFoundException e) {
@@ -174,7 +173,6 @@ public class DatasetHandler {
             if (currentSourceType == null) {
                 currentSourceType = "other";
             }
-            System.out.print(currentSource + " " + currentSourceType +"\n");
             JsonObjectBuilder ob = Json.createObjectBuilder();
             ob.add("raw_description_id", jo.getInt("raw_description_id"));
             ob.add("raw_description", jo.getString("raw_description"));
