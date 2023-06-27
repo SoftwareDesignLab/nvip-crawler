@@ -142,7 +142,7 @@ public class DatabaseHelper {
 		databaseHelper.deleteAffectedProducts(affectedProducts);
 
 		// now insert affected releases (referenced products are already in db)
-		databaseHelper.insertAffectedProductsV2(affectedProducts);
+		databaseHelper.insertAffectedProducts(affectedProducts);
 
 		databaseHelper.shutdown();
 		return affectedProducts.size();
@@ -171,11 +171,11 @@ public class DatabaseHelper {
 	}
 
 	/**
-	 * Updates the affected release table with a list of affected releases
+	 * Updates the affected product table with a list of affected products
 	 * 
-	 * @param affectedProducts list of affected release objects
+	 * @param affectedProducts list of affected product objects
 	 */
-	public void insertAffectedProductsV2(List<AffectedProduct> affectedProducts) {
+	public void insertAffectedProducts(List<AffectedProduct> affectedProducts) {
 		logger.info("Inserting {} affected products...", affectedProducts.size());
 		// CPE 2.3 Regex
 		// Regex101: https://regex101.com/r/9uaTQb/1
@@ -218,9 +218,9 @@ public class DatabaseHelper {
 	}
 
 	/**
-	 * Deletes affected releases for given CVEs
+	 * Deletes affected products for given CVEs
 	 * 
-	 * @param affectedProducts list of releases to delete
+	 * @param affectedProducts list of affected products to delete
 	 */
 	public void deleteAffectedProducts(List<AffectedProduct> affectedProducts) {
 		logger.info("Deleting existing affected products in database for {} items..", affectedProducts.size());
