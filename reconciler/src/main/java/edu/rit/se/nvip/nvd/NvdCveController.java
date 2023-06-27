@@ -23,19 +23,13 @@
  */
 package edu.rit.se.nvip.nvd;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import edu.rit.se.nvip.DatabaseHelper;
 import edu.rit.se.nvip.model.CompositeVulnerability;
 import edu.rit.se.nvip.model.NvdVulnerability;
-import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import edu.rit.se.nvip.utils.CsvUtils;
-import edu.rit.se.nvip.utils.UrlUtils;
 
 import java.io.*;
 import java.net.HttpURLConnection;
@@ -290,160 +284,7 @@ public class NvdCveController {
 
 		return NvdCves;
 	}
-	public int pullNvdCve(String filepath) {
-		CsvUtils csvLogger = new CsvUtils(); // create output CSV file and append header
 
-		// delete existing?
-		File file = new File(filepath);
-		boolean deleted = false;
-		if (file.exists())
-			deleted = file.delete();
-		if (!deleted)
-			logger.warn("Failed to delete existing file: {}", filepath);
-		else
-			logger.info("Deleted existing file: {}", filepath);
-
-		logger.info("The output CSV will be at: {}", filepath);
-
-		csvLogger.writeHeaderToCSV(filepath, header, false);
-
-		// Pull yearly CVE data from NVD
-		NvdCveParser myCVEParser = new NvdCveParser(); // init parser
-		int totCount = 0;
-
-		Map<String, Integer> nvdRefUrlHash = new HashMap<>();
-		Map<String, List<String>> nvdCveCpeHashMap = new HashMap<>();
-
-		try {
-			// get all CVEs
-			JsonArray jsonList = pullCVEs();
-			List<String[]> listCVEData = myCVEParser.parseCVEs(jsonList);
-			logger.info("Pulled {} CVEs", listCVEData.size());
-
-			// write annotated descriptions to CSV
-			int count = csvLogger.writeListToCSV(listCVEData, filepath, true);
-			totCount += count;
-			if (count > 0) {
-				logger.info("Wrote {} entries to CSV file: {}", count, filepath);
-			}
-
-			// add references from this json list
-//			nvdRefUrlHash.putAll(myCVEParser.getCveReferences(jsonList));
-
-			// add references from this json list
-//			nvdCveCpeHashMap.putAll(myCVEParser.getCPEs(jsonList));
-		} catch (Exception e) {
-			String url = nvdJsonFeedUrl.replaceAll("<StartDate>", this.startDate).replaceAll("<EndDate>", this.endDate);
-			logger.error("ERROR: Failed to pull NVD CVES for year {}, url: {}\n{}", this.startDate, url, e.getMessage());
-		}
-
-		logger.info("Wrote a total of *** {} *** entries to CSV file: {}", totCount, filepath);
-
-		// process&store references
-		processCVEReferences(nvdRefUrlHash, filepath);
-
-		logCPEInfo(filepath, nvdCveCpeHashMap);
-
-		return totCount;
-	}
-	/**
-	 * Process Nvd reference URLs
-	 *
-	 * @param nvdRefUrlHash
-	 * @param filepath
-	 */
-	private void processCVEReferences(Map<String, Integer> nvdRefUrlHash, String filepath) {
-		UrlUtils urlUtils = new UrlUtils();
-		int count = 0;
-		Map<String, Integer> nvdBaseRefUrlHash = new HashMap<>();
-		List<String> listFullRefUrls = new ArrayList<>();
-		try {
-			for (String sUrl : nvdRefUrlHash.keySet()) {
-				String sBaseUrl = urlUtils.getBaseUrl(sUrl);
-				if (sBaseUrl != null) {
-					listFullRefUrls.add(sUrl);
-					nvdBaseRefUrlHash.put(sBaseUrl, 0);
-				}
-
-				count++;
-				if (count % 10000 == 0)
-					logger.info("Processed {} URLs...", count);
-
-			}
-
-			List<String> listBaseRefUrls = new ArrayList<>();
-			listBaseRefUrls.addAll(nvdBaseRefUrlHash.keySet());
-
-			filepath = filepath.replace(".csv", "");
-			filepath = filepath.substring(0, filepath.lastIndexOf("/")) + "/url-sources/";
-			String sFullReferencePath = filepath + "nvd-cve-full-references.csv";
-			String sBaseReferencePath = filepath + "nvd-cve-base-references.csv";
-			FileUtils.writeLines(new File(sFullReferencePath), listFullRefUrls, false);
-			FileUtils.writeLines(new File(sBaseReferencePath), listBaseRefUrls, false);
-
-			int totInvalid = nvdRefUrlHash.keySet().size() - listFullRefUrls.size();
-			logger.info("\nScraped {} total NVD full-reference URLs.\nThe # of invalid full-references: {}\nThe # of recorded full-references: {}" +
-							"\nTotal # of unique base URLs: {}\nReference URLs are stored at: {} and {}",
-					count, totInvalid, listFullRefUrls.size(), nvdBaseRefUrlHash.keySet().size(), sFullReferencePath, sBaseReferencePath);
-		} catch (IOException e) {
-			logger.error("Error while processing NVD references!\n{}", e.getMessage());
-		}
-	}
-	/**
-	 * get CVEs as JSON object from NVD for <year>
-	 *
-	 * @return list of JSON objects (one json object for each json file in the zip)
-	 */
-	private JsonArray pullCVEs() {
-		String sURL = nvdJsonFeedUrl.replaceAll("<StartDate>", this.startDate).replaceAll("<EndDate>", this.endDate);
-		JsonObject json = new JsonObject();
-		StringBuilder sBuilder= new StringBuilder();;
-
-		try {
-			URL url = new URL(sURL);
-			HttpURLConnection con = (HttpURLConnection) url.openConnection();
-			con.setRequestMethod("GET");
-			BufferedReader reader = new BufferedReader(new InputStreamReader(con.getInputStream()));
-			String inputLine;
-			while ((inputLine = reader.readLine()) != null) {
-				sBuilder.append(inputLine);
-			}
-			reader.close();
-			json = JsonParser.parseString(sBuilder.toString()).getAsJsonObject();
-			con.disconnect();
-		} catch (Exception e) {
-			logger.error("Exception while reading feed from :" + sURL + "\nDetails:" + e);
-		}
-
-		return json.getAsJsonArray("vulnerabilities"); // the list includes a json object for each json file in the zip
-	}
-
-	/**
-	 * log CPE info
-	 *
-	 * @param cpeMap
-	 */
-	private void logCPEInfo(String filepath, Map<String, List<String>> cpeMap) {
-		if (logCPEInfo) {
-			filepath += "-CPE.csv";
-			// new file object
-			File file = new File(filepath);
-
-			try (BufferedWriter bf = new BufferedWriter(new FileWriter(file))) {
-				for (Map.Entry<String, List<String>> entry : cpeMap.entrySet()) {
-					StringBuilder sCpe = new StringBuilder();
-					for (String cpe : entry.getValue()) {
-						sCpe.append(cpe.replace(",", "")).append(" ");
-					}
-					bf.write(entry.getKey() + "," + sCpe);
-					bf.newLine();
-				}
-				bf.flush();
-			} catch (IOException e) {
-				logger.error("ERROR: Failed to log CPE: {}", e.getMessage());
-			}
-		}
-	}
 	public void updateNvdDataTable(String url) {
 		// fetch the CVEs from NVD
 		Set<NvdVulnerability> NvdCves = fetchCvesFromNvd(url.replaceAll("<StartDate>", this.startDate)
