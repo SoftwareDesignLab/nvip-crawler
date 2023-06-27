@@ -30,11 +30,13 @@ import model.CpeEntry;
 import model.CpeGroup;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.eclipse.jgit.revwalk.RevCommit;
 
 import java.sql.*;
 import java.time.Instant;
 import java.sql.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -52,7 +54,7 @@ public class DatabaseHelper {
 	private final String selectAffectedProducts = "SELECT cve_id, cpe FROM affectedproduct GROUP BY product_name, affected_product_id ORDER BY cve_id DESC, version ASC;";
 	private final String getVulnIdByCveId = "SELECT vuln_id FROM vulnerability WHERE cve_id = ?";
 	private final String insertPatchSourceURLSql = "INSERT INTO patchsourceurl (cve_id, source_url) VALUES (?, ?);";
-	private final String insertPatchCommitSql = "INSERT INTO patchcommit (source_url_id, commit_url, commit_date, commit_message, uni_diff) VALUES (?, ?, ?, ?, ?);";
+	private final String insertPatchCommitSql = "INSERT INTO patchcommit (source_url_id, commit_url, commit_date, commit_message, uni_diff, timeline, timeToPatch, linesChanged) VALUES (?, ?, ?, ?, ?, ?, ?, ?);";
 	// Regex101: https://regex101.com/r/9uaTQb/1
 	public static final Pattern CPE_PATTERN = Pattern.compile("cpe:2\\.3:[aho\\*\\-]:([^:]*):([^:]*):([^:]*):.*");
 
@@ -236,7 +238,7 @@ public class DatabaseHelper {
 	 * @param commitDate
 	 * @param commitMessage
 	 */
-	public void insertPatchCommit(int sourceId, String sourceURL, String commitId, java.util.Date commitDate, String commitMessage, String uniDiff) {
+	public void insertPatchCommit(int sourceId, String sourceURL, String commitId, java.util.Date commitDate, String commitMessage, String uniDiff, List<RevCommit> timeLine, String timeToPatch, int linesChanged) {
 
 		try (Connection connection = getConnection();
 			 PreparedStatement pstmt = connection.prepareStatement(insertPatchCommitSql);) {
@@ -246,6 +248,9 @@ public class DatabaseHelper {
 			pstmt.setDate(3, new java.sql.Date(commitDate.getTime()));
 			pstmt.setString(4, commitMessage);
 			pstmt.setString(5, uniDiff);
+			pstmt.setString(6, timeLine.toString());
+			pstmt.setString(7, timeToPatch);
+			pstmt.setInt(8, linesChanged);
 			pstmt.executeUpdate();
 		} catch (Exception e) {
 			logger.error("ERROR: failed to insert patch commit from source {}\n{}", sourceURL, e);

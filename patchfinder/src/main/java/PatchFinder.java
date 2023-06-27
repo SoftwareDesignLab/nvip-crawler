@@ -186,7 +186,7 @@ public class PatchFinder {
 		for (PatchCommit patchCommit : patchCommits) {
 			final int sourceUrlId = databaseHelper.insertPatchSourceURL(patchCommit.getCveId(), patchCommit.getCommitUrl());
 			databaseHelper.insertPatchCommit(sourceUrlId, patchCommit.getCommitUrl(), patchCommit.getCommitId(),
-					patchCommit.getCommitDate(), patchCommit.getCommitMessage(), patchCommit.getUniDiff());
+					patchCommit.getCommitDate(), patchCommit.getCommitMessage(), patchCommit.getUniDiff(), patchCommit.getTimeline(), patchCommit.getTimeToPatch(), patchCommit.getLinesChanged());
 		}
 		logger.info("Successfully inserted {} patch commits into the database in {} seconds",
 				patchCommits.size(),
