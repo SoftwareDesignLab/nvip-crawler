@@ -63,6 +63,10 @@ public abstract class Filter {
     }
 
     protected void updateFilterStatus(RawVulnerability vuln) {
+        // already failed earlier in the pipeline? don't bother filtering any more
+        if (vuln.getFilterStatus() == RawVulnerability.FilterStatus.FAILED) {
+            return;
+        }
         if (passesFilter(vuln)) {
             vuln.setFilterStatus(RawVulnerability.FilterStatus.PASSED);
         } else {
