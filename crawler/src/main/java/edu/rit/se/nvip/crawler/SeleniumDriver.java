@@ -141,10 +141,11 @@ public class SeleniumDriver {
     public WebElement tryFindElement(By findBy){
     	WebElement element = null;
     	try{
-    		new WebDriverWait(driver, Duration.ofSeconds(5))
-          		.until(driver -> driver.findElement(findBy));
+    		element = new WebDriverWait(driver, Duration.ofSeconds(3))
+                .until(driver -> driver.findElement(findBy));
       	} catch (Exception e){
-      		logger.warn("Finding element {} raised {}", findBy.toString(), e.toString());
+      		logger.warn("Finding element {} raised {}", findBy.toString(), e.getClass().getSimpleName());
+            logger.debug(e.toString());
       	}
         return element;
     }
@@ -162,7 +163,8 @@ public class SeleniumDriver {
                 result = true;
                 break;
             } catch(Exception e) {
-                logger.warn("Clicking element {} raised {}", element.getAccessibleName(), e.toString());
+                logger.warn("Clicking element {} raised {}", element.getAccessibleName(), e.getClass().getSimpleName());
+                logger.debug(e.toString());
             }
             attempts++;
         }
@@ -182,6 +184,7 @@ public class SeleniumDriver {
                 break;
             } catch(Exception e) {
             	logger.warn("Clicking element {} raised {}", (element == null ? "" : element.getAccessibleName()), e.getClass().getSimpleName());
+                logger.debug(e.toString());
             }
             attempts++;
         }
