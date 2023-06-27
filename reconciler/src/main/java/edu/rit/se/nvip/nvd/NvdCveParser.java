@@ -23,15 +23,11 @@
  */
 package edu.rit.se.nvip.nvd;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+
+import java.util.*;
 
 /**
  * 
@@ -134,50 +130,6 @@ public class NvdCveParser {
 		}
 
 		return refUrlHash;
-	}
-
-	/**
-	 * get CPEs from CVE list
-	 * 
-	 * @param jsonList
-	 * @return
-	 */
-	public Map<String, List<String>> getCPEs(ArrayList<JsonObject> jsonList) {
-		Map<String, List<String>> cpeMap = new HashMap<>();
-
-		for (JsonObject json : jsonList) {
-			JsonArray items = json.getAsJsonArray("CVE_Items");
-			for (JsonElement item : items) {
-				JsonObject jsonCVE = (JsonObject) item;
-
-				String sCveId = jsonCVE.getAsJsonObject("cve").getAsJsonObject("CVE_data_meta").get("ID").getAsString();
-
-				JsonArray nodes = jsonCVE.getAsJsonObject("configurations").getAsJsonArray("nodes");
-				if (nodes.size() > 0) {
-					List<String> cpeList = new ArrayList<>();
-					JsonArray cpe_matches = nodes.get(0).getAsJsonObject().getAsJsonArray("cpe_match");
-					if (cpe_matches != null) {
-						// pick CPEs
-						for (int i = 0; i < cpe_matches.size(); i++) {
-							try {
-								JsonObject object = cpe_matches.get(i).getAsJsonObject();
-								String vulnerable = object.get("vulnerable").getAsString().trim();
-								String cpe23Uri = object.get("cpe23Uri").getAsString().trim();
-
-								if (vulnerable.equals("true")) {
-									cpeList.add(cpe23Uri);
-								}
-							} catch (Exception ignored) {
-							}
-						}
-
-					}
-					cpeMap.put(sCveId, cpeList);
-				}
-			}
-		}
-
-		return cpeMap;
 	}
 
 }
