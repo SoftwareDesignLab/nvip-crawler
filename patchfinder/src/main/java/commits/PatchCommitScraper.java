@@ -101,13 +101,13 @@ public class PatchCommitScraper {
 								String commitUrl = repository.getConfig().getString("remote", "origin", "url");
 								logger.info("Found patch commit @ {} in repo {}", commitUrl, localDownloadLoc);
 								String unifiedDiff = generateUnifiedDiff(git, commit);
-								List<Long> commitTimeline = calculateCommitTimeline(repository, startingRevision, commit);
-//								logger.info("Commit timeline: {}", commitTimeline);
+								List<RevCommit> commitTimeline = calculateCommitTimeline(repository, startingRevision, commit);
+								logger.info("Commit timeline: {}", commitTimeline);
 								int linesChanged = getLinesChanged(repository, commit);
-//								logger.info("Lines changed: {}", linesChanged);
 								Long timeToPatch = calculateTimeToPatch(commitTimeline);
-//								logger.info("Time to patch: {}", timeToPatch);
-								PatchCommit patchCommit = new PatchCommit(commitUrl, cveId, commit.getName(), new Date(commit.getCommitTime() * 1000L), commit.getFullMessage(), unifiedDiff);
+								String formattedTimeToPatch = formatTimeToPatch(timeToPatch);
+								PatchCommit patchCommit = new PatchCommit(commitUrl, cveId, commit.getName(), new Date(commit.getCommitTime() * 1000L), commit.getFullMessage(), unifiedDiff, commitTimeline, formattedTimeToPatch, linesChanged);
+								logger.info("Patch commit: {}", patchCommit);
 								patchCommits.add(patchCommit);
 							} else ignoredCounter++;
 						}
@@ -189,24 +189,31 @@ public class PatchCommitScraper {
 	 * @throws IOException
 	 * @throws GitAPIException
 	 */
-	private List<Long> calculateCommitTimeline(Repository repository, ObjectId startingRevision, RevCommit commit) throws IOException {
-		List<Long> commitTimeline = new ArrayList<>();
-
+	private List<RevCommit> calculateCommitTimeline(Repository repository, ObjectId startingRevision, RevCommit commit) throws IOException {
+		List<RevCommit> commitTimeline = new ArrayList<>();
 		try (RevWalk walk = new RevWalk(repository)) {
 			RevCommit currentCommit = commit;
-			while (currentCommit != null) {
-				commitTimeline.add(currentCommit.getCommitTime() * 1000L);
+			while (currentCommit != null && !currentCommit.getId().equals(startingRevision)) {
+				commitTimeline.add(currentCommit);
 				if (currentCommit.getParentCount() > 0) {
-					RevCommit parentCommit = walk.parseCommit(currentCommit.getParent(0).getId());
-					if (parentCommit.getId().equals(startingRevision)) {
-						break;
-					} else {
-						currentCommit = parentCommit;
-					}
+					currentCommit = walk.parseCommit(currentCommit.getParent(0).getId());
 				} else {
 					break;
 				}
 			}
+		}
+
+		int commitCount = commitTimeline.size();
+		if (commitCount > 2) {
+			int inBetweenCommits = commitCount - 2; // Number of commits in between first and last
+			int maxDisplayedCommits = 15; // Maximum number of displayed commits (including first and last)
+			int displayedCommits = Math.min(maxDisplayedCommits, inBetweenCommits + 2);
+			int inBetweenLimit = displayedCommits - 2; // Limit of commits in between
+			List<RevCommit> displayedTimeline = new ArrayList<>();
+			displayedTimeline.add(commitTimeline.get(0)); // First commit
+			displayedTimeline.addAll(commitTimeline.subList(1, 1 + inBetweenLimit)); // Commits in between
+			displayedTimeline.add(commitTimeline.get(commitCount - 1)); // Last commit
+			return displayedTimeline;
 		}
 
 		return commitTimeline;
@@ -257,20 +264,38 @@ public class PatchCommitScraper {
 		return linesChanged;
 	}
 
-	private long calculateTimeToPatch(List<Long> commitTimeline) {
+	private long calculateTimeToPatch(List<RevCommit> commitTimeline) {
 		if (commitTimeline.size() <= 1) {
 			// If there are no or only one commit in the timeline, return 0 indicating no patch time
 			return 0;
 		}
 
 		// Calculate the time difference between the initial commit and the patch commit in milliseconds
-		long initialCommitTime = commitTimeline.get(0);
-		long patchCommitTime = commitTimeline.get(commitTimeline.size() - 1);
+		RevCommit initialCommit = commitTimeline.get(0);
+		RevCommit patchCommit = commitTimeline.get(commitTimeline.size() - 1);
+		long initialCommitTime = initialCommit.getCommitTime() * 1000L;
+		long patchCommitTime = patchCommit.getCommitTime() * 1000L;
 		long elapsedMillis = patchCommitTime - initialCommitTime;
 
 		// Convert milliseconds to days and ensure it's a positive value
 		long elapsedDays = Math.abs(elapsedMillis / (1000 * 60 * 60 * 24));
 
 		return elapsedDays;
+	}
+
+	private String formatTimeToPatch(long elapsedHours) {
+		long days = elapsedHours / 24;
+		long hours = elapsedHours % 24;
+
+		StringBuilder formattedTime = new StringBuilder();
+
+		if (days > 0) {
+			formattedTime.append(days).append(" days ");
+		}
+		if (hours > 0) {
+			formattedTime.append(hours).append(" hours");
+		}
+
+		return formattedTime.toString().trim();
 	}
 }

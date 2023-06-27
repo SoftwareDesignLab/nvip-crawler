@@ -42,7 +42,7 @@ public class PatchCommit {
 	private final String commitMessage;
 	private final String uniDiff;
 	private List<RevCommit> timeline;
-	private long timeToPatch;
+	private String timeToPatch;
 	private int linesChanged;
 
 	/**
@@ -55,13 +55,16 @@ public class PatchCommit {
 	 * @param commitMessage the commit message
 	 * @param uniDiff       the unified diff of the commit
 	 */
-	public PatchCommit(String commitURL, String cveId, String commitId, Date commitDate, String commitMessage, String uniDiff) {
+	public PatchCommit(String commitURL, String cveId, String commitId, Date commitDate, String commitMessage, String uniDiff, List<RevCommit> timeline, String timeToPatch, int linesChanged) {
 		this.commitURL = commitURL;
 		this.cveId = cveId;
 		this.commitId = commitId;
 		this.commitDate = commitDate;
 		this.commitMessage = commitMessage;
 		this.uniDiff = uniDiff;
+		this.timeline = timeline;
+		this.timeToPatch = timeToPatch;
+		this.linesChanged = linesChanged;
 	}
 
 	public String getCommitURL() {
@@ -100,11 +103,11 @@ public class PatchCommit {
 		this.timeline = timeline;
 	}
 
-	public long getTimeToPatch() {
+	public String getTimeToPatch() {
 		return timeToPatch;
 	}
 
-	public void setTimeToPatch(long timeToPatch) {
+	public void setTimeToPatch(String timeToPatch) {
 		this.timeToPatch = timeToPatch;
 	}
 

@@ -234,8 +234,11 @@ public class PatchFinderThread implements Runnable {
 							object.text(),
 							new Date(object.attr("commitTime")),
 							object.text(),
-							null // unifiedDiff
-					);
+							null, // unifiedDiff
+							null,
+							null,
+							0
+							);
 
 					patchCommits.add(patchCommit);
 				}
