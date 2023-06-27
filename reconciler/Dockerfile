@@ -21,4 +21,4 @@ COPY --from=builder /home/app/target/reconciler_lib /usr/local/lib/reconciler_li
 COPY --from=builder /home/app/target/reconciler-1.0.jar /usr/local/lib/reconciler-1.0.jar
 
 WORKDIR /usr/local/lib
-ENTRYPOINT ["java", "-cp", "reconciler-1.0.jar:reconciler_lib/*", "edu.rit.se.nvip.sandbox.ReconcilerMain"]
+ENTRYPOINT ["java", "-cp", "reconciler-1.0.jar:reconciler_lib/*", "edu.rit.se.nvip.ReconcilerMain"]
