@@ -5,12 +5,16 @@ import edu.rit.se.nvip.crawler.github.GithubScraper;
 import edu.rit.se.nvip.crawler.github.PyPAGithubScraper;
 import edu.rit.se.nvip.model.RawVulnerability;
 import edu.rit.se.nvip.utils.UtilHelper;
+
+import com.opencsv.CSVWriter;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -90,8 +94,16 @@ public class CrawlerMain {
 
         // Update the source types for the found CVEs and insert new entries into the rawdescriptions table
         updateSourceTypes(crawledCVEs);
-        logger.info("Done! Preparing to insert all raw data found in this run!");
-        crawlerMain.insertRawCVEs(crawledCVEs);
+
+        if(!crawlerTestMode) {
+            logger.info("Done! Preparing to insert all raw data found in this run!");
+            crawlerMain.insertRawCVEs(crawledCVEs);
+        }
+        else {
+            logger.info("Outputting CVEs to a CSV");
+            int linesWritten = cvesToCsv(crawledCVEs);
+            logger.info("Wrote {} lines to {}", linesWritten, (String)crawlerVars.get("testOutputDir")+"/test_output.csv");
+        }
         logger.info("Done!");
 
         // Output results in testmode
@@ -105,6 +117,39 @@ public class CrawlerMain {
                 }
             }
         }
+    }
+
+    private static int cvesToCsv(HashMap<String, ArrayList<RawVulnerability>> crawledCVEs){
+        logger.info("write to csv");
+        int lineCount = 0;
+        CSVWriter writer = null;
+        String filepath = (String) crawlerVars.get("testOutputDir") + "/test_output.csv";
+
+        try {
+            logger.info("Writing to CSV: {}", filepath);
+            FileWriter fileWriter = new FileWriter(filepath, false);
+            writer = new CSVWriter(fileWriter, '\t', CSVWriter.NO_QUOTE_CHARACTER, CSVWriter.NO_ESCAPE_CHARACTER, CSVWriter.DEFAULT_LINE_END);
+
+            String[] columnHeaders = {"CVE ID", "Raw Description", "Created Date", "Published Date", "Last Modified Date", "Source URL", "Source Type"};
+            writer.writeNext(columnHeaders, false);
+
+            for (ArrayList<RawVulnerability> vulnList : crawledCVEs.values()) {
+                for (RawVulnerability vuln : vulnList) {
+                    String desc = vuln.getDescription().replace("\r\n", ". ").replace("\n", ". ").replace("\r", ". ").replace("\t", " ");
+                    String[] data = {vuln.getCveId(), desc, vuln.getCreateDate(), vuln.getPublishDate(), 
+                        vuln.getLastModifiedDate(), vuln.getSourceURL(), vuln.getSourceType()};
+                    writer.writeNext(data, false);
+                    lineCount++;
+                }
+            }
+
+            writer.close();
+        } catch (IOException e) {
+            logger.error("Exception while writing list to CSV file!" + e);
+            return 0;
+        }
+
+        return lineCount;
     }
 
     /**
@@ -211,6 +256,7 @@ public class CrawlerMain {
         String enableReport = System.getenv("NVIP_CRAWLER_REPORT_ENABLE");
         String crawlerNum = System.getenv("NVIP_NUM_OF_CRAWLER");
         String testMode = System.getenv("NVIP_CRAWLER_TEST_MODE");
+        String testOutputDir = System.getenv("NVIP_TEST_OUTPUT_DIR");
 
         addEnvvarString(CrawlerMain.crawlerVars,"outputDir", outputDir, "output/crawlers",
                 "WARNING: Crawler output path not defined in NVIP_OUTPUT_DIR, using default path: output/crawlers");
@@ -248,6 +294,9 @@ public class CrawlerMain {
 
         addEnvvarBool(CrawlerMain.crawlerVars,"testMode", testMode, false,
                 "WARNING: Crawler Test Mode not defined in NVIP_CRAWLER_TEST_MODE, using false as default value");
+
+        addEnvvarString(CrawlerMain.crawlerVars,"testOutputDir", testOutputDir, "output",
+                "WARNING: Crawler test output dir path not defined in NVIP_TEST_OUTPUT_DIR, using default path: output");
     }
 
 
@@ -342,6 +391,7 @@ public class CrawlerMain {
         String crawlerSeeds = (String) crawlerVars.get("seedFileDir");
         String whitelistFileDir = (String) crawlerVars.get("whitelistFileDir");
         String crawlerOutputDir = (String) crawlerVars.get("outputDir");
+        String testOutputDir = (String) crawlerVars.get("testOutputDir");
 
         if (!new File(dataDir).exists()) {
             logger.error("The data dir provided does not exist, check the 'NVIP_DATA_DIR' key in the env.list file, currently configured data dir is {}", dataDir);
@@ -360,6 +410,11 @@ public class CrawlerMain {
 
         if (!new File(crawlerOutputDir).exists()) {
             logger.error("The crawler output dir provided: {} does not exits!", crawlerOutputDir);
+            System.exit(1);
+        }
+
+        if (!new File(testOutputDir).exists()) {
+            logger.error("The crawler output dir provided: {} does not exits!", testOutputDir);
             System.exit(1);
         }
     }
