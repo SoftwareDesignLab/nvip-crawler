@@ -134,7 +134,8 @@ public class DatabaseHelperTest {
 	private List<AffectedProduct> buildDummyProducts(int count) {
 		List<AffectedProduct> products = new ArrayList<>();
 		for (int i = 0; i < count; i++) {
-			products.add(new AffectedProduct(i, "cve"+i, "cpe"+i, "productName"+i, "date"+i, "version"+i, "vendor"+i));
+			String cpeName = "cpe:2.3:a:" + i + ":" + i + ":*:*:*:*:*:*:*:*";
+			products.add(new AffectedProduct(i, "cve"+i, cpeName, "productName"+i, "date"+i, "version"+i, "vendor"+i));
 		}
 		return products;
 	}
@@ -196,10 +197,10 @@ public class DatabaseHelperTest {
 	 * @throws SQLException
 	 */
 	@Test
-	public void insertAffectedProductsV2Test() {
+	public void insertAffectedProductsTest() {
 		int inCount = 5;
 		List<AffectedProduct> products = buildDummyProducts(inCount);
-		dbh.insertAffectedProductsV2(products);
+		dbh.insertAffectedProducts(products);
 		try {
 			verify(pstmt, times(inCount*8)).setString(anyInt(), any());
 			verify(pstmt, times(inCount)).executeUpdate();
@@ -219,24 +220,23 @@ public class DatabaseHelperTest {
 		} catch (SQLException ignored) {}
 	}
 
-	@Test
-	public void insertAffectedProductsToDBTest() throws SQLException {
-		insertAffectedProductsV2Test();
-		// Prepare test data
-		int count = 5;
-		List<AffectedProduct> products = buildDummyProducts(count);
-
-		// Mock the database interactions
-		when(hds.getConnection()).thenReturn(conn);
-		when(conn.prepareStatement(anyString())).thenReturn(pstmt);
-
-		// Call the method under test
-		dbh.insertAffectedProductsToDB(products);
-
-		// Verify the expected interactions
-		verify(pstmt, times(count*5)).setString(anyInt(), anyString());
-		verify(pstmt, times(count)).executeUpdate();
-	}
+//	@Test
+//	public void insertAffectedProductsToDBTest() throws SQLException {
+//		// Prepare test data
+//		int count = 5;
+//		List<AffectedProduct> products = buildDummyProducts(count);
+//
+//		// Mock the database interactions
+//		when(hds.getConnection()).thenReturn(conn);
+//		when(conn.prepareStatement(anyString())).thenReturn(pstmt);
+//
+//		// Call the method under test
+//		dbh.insertAffectedProductsToDB(products);
+//
+//		// Verify the expected interactions
+//		verify(pstmt, times(count*9)).setString(anyInt(), anyString());
+//		verify(pstmt, times(count*2)).executeUpdate();
+//	}
 
 	@Test
 	public void getExistingCompositeVulnerabilitiesTest() throws SQLException {

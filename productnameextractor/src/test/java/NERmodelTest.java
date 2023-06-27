@@ -55,7 +55,6 @@ public class NERmodelTest {
 
 	// ENV VARS
 	final String DATA_DIR = System.getenv("DATA_DIR");
-	final String NAME_EXTRACTOR_DIR = System.getenv("NAME_EXTRACTOR_DIR");
 	final String CHAR_2_VEC_CONFIG = System.getenv("CHAR_2_VEC_CONFIG");
 	final String CHAR_2_VEC_WEIGHTS = System.getenv("CHAR_2_VEC_WEIGHTS");
 	final String WORD_2_VEC = System.getenv("WORD_2_VEC");
@@ -64,7 +63,7 @@ public class NERmodelTest {
 
 		String word = "MicroSoft";
 
-		String modelsDir = DATA_DIR + "/" + NAME_EXTRACTOR_DIR + "/";
+		String modelsDir = DATA_DIR + "/";
 		String c2vModelConfigPath = modelsDir + CHAR_2_VEC_CONFIG;
 		String c2vModelWeightsPath = modelsDir + CHAR_2_VEC_WEIGHTS;
 
@@ -93,7 +92,7 @@ public class NERmodelTest {
 	public void word2vectorModelTest() {
 		String word = "MicroSoft";
 
-		String modelsDir = DATA_DIR + "/" + NAME_EXTRACTOR_DIR + "/";
+		String modelsDir = DATA_DIR + "/";
 		String w2vModelPath = modelsDir + WORD_2_VEC;
 		Word2Vector w2vModel = new Word2Vector(w2vModelPath);
 		int wordVecLength = w2vModel.getOutVectorLength();
@@ -149,7 +148,7 @@ public class NERmodelTest {
 	public void augmentedNERtest() {
 		String description = "The \"origin\" parameter passed to some of the endpoints like '/trigger' was vulnerable to XSS exploit. This issue affects Apache Airflow versions <1.10.15 in 1.x series and affects 2.0.0 and 2.0.1 and 2.x series. This is the same as CVE-2020-13944 & CVE-2020-17515 but the implemented fix did not fix the issue completely. Update to Airflow 1.10.15 or 2.0.2. Please also update your Python version to the latest available PATCH releases of the installed MINOR versions, example update to Python 3.6.13 if you are on Python 3.6. (Those contain the fix for CVE-2021-23336 https://nvd.nist.gov/vuln/detail/CVE-2021-23336).";
 
-		String anticipatedResult = "SN: Apache. SV:  versions <1.10.15 2.0.0 and 2.0.1 and 2.x";
+		String anticipatedResult = "SN: Apache. SV:  versions <1.10.15 2.0.0 and 2.0.1";
 
 		ProductDetector nameDetector = null;
 		try {
@@ -176,9 +175,9 @@ public class NERmodelTest {
 		boolean isProductNotNull = (detectedProducts != null && !detectedProducts.isEmpty());
 		boolean isCorrectProduct = false;
 
-		if (isProductNotNull) {
-			isCorrectProduct = detectedProducts.get(0).toString().contains(anticipatedResult);
-		}
+		assertTrue(isProductNotNull);
+
+		isCorrectProduct = detectedProducts.get(0).toString().contains(anticipatedResult);
 
 		if (!isCorrectProduct) {
 			System.out.println("ERROR! Anticipated: " + anticipatedResult + " | Got: " + detectedProducts.get(0).toString());

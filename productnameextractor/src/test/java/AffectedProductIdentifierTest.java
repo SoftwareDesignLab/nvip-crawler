@@ -49,7 +49,7 @@ public class AffectedProductIdentifierTest {
 	@Test
 	public void affectedProductIdentifierTest() {
 
-		String description = "In Django 1.10.x before 1.10.8 and 1.11.x before 1.11.5, HTML autoescaping was disabled in a portion of the template for the technical 500 debug page. Given the right circumstances, this allowed a cross-site scripting attack. This vulnerability shouldn't affect most production sites since you shouldn't run with \"DEBUG = True\" (which makes this page accessible) in your production settings.";
+		String description = "In Redhat Linux 1.10.x before 1.10.8 and 1.11.x before 1.11.5, HTML autoescaping was disabled in a portion of the template for the technical 500 debug page. Given the right circumstances, this allowed a cross-site scripting attack. This vulnerability shouldn't affect most production sites since you shouldn't run with \"DEBUG = True\" (which makes this page accessible) in your production settings.";
 		List<CompositeVulnerability> vulnList = new ArrayList<>();
 		CompositeVulnerability v = new CompositeVulnerability(0, null, "CVE-2017-12794", "", null, null, description, null);
 		v.setCveReconcileStatus(CompositeVulnerability.CveReconcileStatus.UPDATE);

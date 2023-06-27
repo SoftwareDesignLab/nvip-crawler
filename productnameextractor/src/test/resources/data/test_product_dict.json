@@ -1,1 +1,1138 @@
-{"comptime":"2023-06-25T15:14:55.854560900Z","products":{"Key1":{"vendor":"Vendor1","product":"Product1","groupID":"Vendor1:Product1","commonTitle":"CommonTitle1","versions":{"1.0":{"title":"Title1","version":"1.0","update":"Update1","cpeID":"CpeID1","platform":"Platform1"}}},"Key2":{"vendor":"Vendor2","product":"Product2","groupID":"Vendor2:Product2","commonTitle":"CommonTitle2","versions":{"2.0":{"title":"Title2","version":"2.0","update":"Update2","cpeID":"CpeID2","platform":"Platform2"},"2.1":{"title":"Title2","version":"2.1","update":"Update2","cpeID":"CpeID2","platform":"Platform2"}}},"Key3":{"vendor":"Vendor3","product":"Product3","groupID":"Vendor3:Product3","commonTitle":"CommonTitle3","versions":{"3.0":{"title":"Title3","version":"3.0","update":"Update3","cpeID":"CpeID3","platform":"Platform3"}}}}}
+{
+  "comptime": "2023-06-27T16:10:35.552354500Z",
+  "products": {
+    "redhat:linux" : {
+      "vendor" : "redhat",
+      "product" : "linux",
+      "groupID" : "redhat:linux",
+      "commonTitle" : "linux",
+      "versions" : {
+        "3.0.3" : {
+          "title" : "linux",
+          "version" : "3.0.3",
+          "update" : "",
+          "cpeID" : "D0325D34-8488-4D93-9D27-1230C5B39835",
+          "platform" : ""
+        },
+        "2.6.2" : {
+          "title" : "linux",
+          "version" : "2.6.2",
+          "update" : "",
+          "cpeID" : "7F405739-C295-4A76-93F7-E9F1D81F8C8F",
+          "platform" : ""
+        },
+        "2.0.34" : {
+          "title" : "linux",
+          "version" : "2.0.34",
+          "update" : "",
+          "cpeID" : "83B23AAB-00C4-446E-86DD-0A5B733E31D4",
+          "platform" : ""
+        },
+        "2.4.2" : {
+          "title" : "linux",
+          "version" : "2.4.2",
+          "update" : "",
+          "cpeID" : "AD90628C-EE46-4A59-92BC-1534ED32CE32",
+          "platform" : ""
+        },
+        "-" : {
+          "title" : "linux",
+          "version" : "-",
+          "update" : "",
+          "cpeID" : "26C78D75-EEE5-4BBC-98CC-CF62FC969FA0",
+          "platform" : ""
+        },
+        "6.2e" : {
+          "title" : "linux",
+          "version" : "6.2e",
+          "update" : "",
+          "cpeID" : "0A284536-E39D-444F-AAF6-30916BA17DB9",
+          "platform" : ""
+        },
+        "1.0" : {
+          "title" : "linux",
+          "version" : "1.0",
+          "update" : "",
+          "cpeID" : "F40B3F1B-E7DD-431A-8F25-A58C417ADDC6",
+          "platform" : ""
+        },
+        "1.1" : {
+          "title" : "linux",
+          "version" : "1.1",
+          "update" : "",
+          "cpeID" : "069F447D-5BB0-411D-A7EC-21509E7DB143",
+          "platform" : ""
+        },
+        "2.0" : {
+          "title" : "linux",
+          "version" : "2.0",
+          "update" : "",
+          "cpeID" : "C38EE037-4080-4BE5-8E32-875E1A20403B",
+          "platform" : ""
+        },
+        "2.1" : {
+          "title" : "linux",
+          "version" : "2.1",
+          "update" : "",
+          "cpeID" : "4A368741-A5BF-47D9-9B10-C4E0DB621F85",
+          "platform" : ""
+        },
+        "3.0" : {
+          "title" : "linux",
+          "version" : "3.0",
+          "update" : "",
+          "cpeID" : "04F9DCDC-E902-4471-8420-58F0A99083B5",
+          "platform" : ""
+        },
+        "4.0" : {
+          "title" : "linux",
+          "version" : "4.0",
+          "update" : "",
+          "cpeID" : "15B7A8DE-6BD8-4CEF-90D1-4D0F90A5F206",
+          "platform" : ""
+        },
+        "4.1" : {
+          "title" : "linux",
+          "version" : "4.1",
+          "update" : "",
+          "cpeID" : "036F855F-23CE-4440-9E14-DB159C1A14DA",
+          "platform" : ""
+        },
+        "5.0" : {
+          "title" : "linux",
+          "version" : "5.0",
+          "update" : "",
+          "cpeID" : "3C8F79B1-7009-4CBA-8A29-F5A85B6A11F9",
+          "platform" : ""
+        },
+        "7" : {
+          "title" : "linux",
+          "version" : "7",
+          "update" : "",
+          "cpeID" : "38D6B8CC-B91A-4BE3-8A5D-368DEB889B3D",
+          "platform" : ""
+        },
+        "4.2" : {
+          "title" : "linux",
+          "version" : "4.2",
+          "update" : "",
+          "cpeID" : "DC0D91DF-E9A9-4997-A00F-CA321A1A04BE",
+          "platform" : ""
+        },
+        "5.1" : {
+          "title" : "linux",
+          "version" : "5.1",
+          "update" : "",
+          "cpeID" : "99007A84-1C3E-481D-AF13-04601B71BA22",
+          "platform" : ""
+        },
+        "6.0" : {
+          "title" : "linux",
+          "version" : "6.0",
+          "update" : "",
+          "cpeID" : "3AE25344-C80A-4DF5-B213-3CD69F2A04EB",
+          "platform" : ""
+        },
+        "7.0" : {
+          "title" : "linux",
+          "version" : "7.0",
+          "update" : "",
+          "cpeID" : "85A510C4-D66B-4AEA-876E-ACA639D8F6E4",
+          "platform" : ""
+        },
+        "5.2" : {
+          "title" : "linux",
+          "version" : "5.2",
+          "update" : "",
+          "cpeID" : "F389B297-FBB5-4DCA-BDDA-833C93598C02",
+          "platform" : ""
+        },
+        "6.1" : {
+          "title" : "linux",
+          "version" : "6.1",
+          "update" : "",
+          "cpeID" : "AC222E45-71DF-4C5C-98A7-0F164678DB36",
+          "platform" : ""
+        },
+        "9" : {
+          "title" : "linux",
+          "version" : "9",
+          "update" : "",
+          "cpeID" : "B622FDFF-E09C-45A8-AA88-BAA1B5DCA226",
+          "platform" : ""
+        },
+        "7.1" : {
+          "title" : "linux",
+          "version" : "7.1",
+          "update" : "",
+          "cpeID" : "C764A6A4-DEA2-4E17-9698-BF06747FBADB",
+          "platform" : ""
+        },
+        "8.0" : {
+          "title" : "linux",
+          "version" : "8.0",
+          "update" : "",
+          "cpeID" : "4C844B9F-1313-4F71-A478-A164A0A569B3",
+          "platform" : ""
+        },
+        "6.2" : {
+          "title" : "linux",
+          "version" : "6.2",
+          "update" : "",
+          "cpeID" : "735BCB46-5E46-4702-9519-EB86C19ED2D2",
+          "platform" : ""
+        },
+        "7.2" : {
+          "title" : "linux",
+          "version" : "7.2",
+          "update" : "",
+          "cpeID" : "89F43FAF-CB09-4893-966D-149D98250DF9",
+          "platform" : ""
+        },
+        "9.0" : {
+          "title" : "linux",
+          "version" : "9.0",
+          "update" : "",
+          "cpeID" : "E26A798D-E965-4BF6-963C-7DD0A8494AC3",
+          "platform" : ""
+        },
+        "7.3" : {
+          "title" : "linux",
+          "version" : "7.3",
+          "update" : "",
+          "cpeID" : "E056ADB9-06B6-4A0C-B779-2BF11434B395",
+          "platform" : ""
+        }
+      }
+    },
+    "hikvision:ds-2df5232x-ae3\\)t3\\)_firmware": {
+      "vendor": "hikvision",
+      "product": "ds-2df5232x-ae3\\)t3\\)_firmware",
+      "groupID": "hikvision:ds-2df5232x-ae3\\)t3\\)_firmware",
+      "commonTitle": "ds-2df5232x-ae3\\)t3\\)_firmware",
+      "versions": {
+        "-": {
+          "title": "ds-2df5232x-ae3\\)t3\\)_firmware",
+          "version": "-",
+          "update": "",
+          "cpeID": "CE523225-03B7-4627-AFB0-FBDD58DD2E8D",
+          "platform": ""
+        }
+      }
+    },
+    "gentoo:xnview": {
+      "vendor": "gentoo",
+      "product": "xnview",
+      "groupID": "gentoo:xnview",
+      "commonTitle": "xnview",
+      "versions": {
+        "1.70": {
+          "title": "xnview",
+          "version": "1.70",
+          "update": "",
+          "cpeID": "8DA37A50-70A1-4FD8-9D1F-B545347C9CE5",
+          "platform": ""
+        },
+        "1.92": {
+          "title": "xnview",
+          "version": "1.92",
+          "update": "",
+          "cpeID": "3AEBFC47-F553-417B-A965-DAD22C89C574",
+          "platform": ""
+        },
+        "1.91": {
+          "title": "xnview",
+          "version": "1.91",
+          "update": "",
+          "cpeID": "1E1EBCD3-1EB2-43D8-AEA1-954AEF64FCEB",
+          "platform": ""
+        },
+        "1.90.3": {
+          "title": "xnview",
+          "version": "1.90.3",
+          "update": "",
+          "cpeID": "1066D397-05A1-4424-B2EF-E71FBFC19CD0",
+          "platform": ""
+        },
+        "-": {
+          "title": "xnview",
+          "version": "-",
+          "update": "",
+          "cpeID": "983CA5D9-C5B8-47FD-ACFF-C44E250F63A3",
+          "platform": ""
+        }
+      }
+    },
+    "qualcomm:wcd932_firmware": {
+      "vendor": "qualcomm",
+      "product": "wcd932_firmware",
+      "groupID": "qualcomm:wcd932_firmware",
+      "commonTitle": "wcd932_firmware",
+      "versions": {
+        "-": {
+          "title": "wcd932_firmware",
+          "version": "-",
+          "update": "",
+          "cpeID": "F5019FC5-9867-4A79-91CE-6843ED611A47",
+          "platform": ""
+        }
+      }
+    },
+    "hp:color_laserjet_pro_mfp_m284_7kw74a": {
+      "vendor": "hp",
+      "product": "color_laserjet_pro_mfp_m284_7kw74a",
+      "groupID": "hp:color_laserjet_pro_mfp_m284_7kw74a",
+      "commonTitle": "color_laserjet_pro_mfp_m284_7kw74a",
+      "versions": {
+        "-": {
+          "title": "color_laserjet_pro_mfp_m284_7kw74a",
+          "version": "-",
+          "update": "",
+          "cpeID": "B94F6F59-A42B-4D32-8E86-EF1AFBB30166",
+          "platform": ""
+        }
+      }
+    },
+    "hp:j9623a": {
+      "vendor": "hp",
+      "product": "j9623a",
+      "groupID": "hp:j9623a",
+      "commonTitle": "j9623a",
+      "versions": {
+        "-": {
+          "title": "j9623a",
+          "version": "-",
+          "update": "",
+          "cpeID": "455EF165-C1C0-4932-B0ED-C77C6F00248C",
+          "platform": ""
+        }
+      }
+    },
+    "moxa:awk-1127": {
+      "vendor": "moxa",
+      "product": "awk-1127",
+      "groupID": "moxa:awk-1127",
+      "commonTitle": "awk-1127",
+      "versions": {
+        "-": {
+          "title": "awk-1127",
+          "version": "-",
+          "update": "",
+          "cpeID": "6DC9E356-D254-4113-A2A7-472A133AB68A",
+          "platform": ""
+        }
+      }
+    },
+    "siemens:simatic_s7-200_smart_firmware": {
+      "vendor": "siemens",
+      "product": "simatic_s7-200_smart_firmware",
+      "groupID": "siemens:simatic_s7-200_smart_firmware",
+      "commonTitle": "simatic_s7-200_smart_firmware",
+      "versions": {
+        "2.3": {
+          "title": "simatic_s7-200_smart_firmware",
+          "version": "2.3",
+          "update": "",
+          "cpeID": "1F899289-9F75-42BE-82A1-EDEE5514CA65",
+          "platform": ""
+        },
+        "-": {
+          "title": "simatic_s7-200_smart_firmware",
+          "version": "-",
+          "update": "",
+          "cpeID": "6B522374-AD09-443D-B599-4D1D3B0D3319",
+          "platform": ""
+        }
+      }
+    },
+    "mcafee:policy_auditor": {
+      "vendor": "mcafee",
+      "product": "policy_auditor",
+      "groupID": "mcafee:policy_auditor",
+      "commonTitle": "policy_auditor",
+      "versions": {
+        "5.3.0.167": {
+          "title": "policy_auditor",
+          "version": "5.3.0.167",
+          "update": "",
+          "cpeID": "DC43B295-47C4-4B6A-A777-7A5B54C03A71",
+          "platform": ""
+        },
+        "5.3.0": {
+          "title": "policy_auditor",
+          "version": "5.3.0",
+          "update": "",
+          "cpeID": "769B17C3-7221-4A81-A19B-5DE2229CC95B",
+          "platform": ""
+        },
+        "-": {
+          "title": "policy_auditor",
+          "version": "-",
+          "update": "",
+          "cpeID": "7CD75FF9-2AB1-462C-9684-748F5DAF5F22",
+          "platform": ""
+        },
+        "6.5.1": {
+          "title": "policy_auditor",
+          "version": "6.5.1",
+          "update": "",
+          "cpeID": "F9BCA824-F600-42A5-9F86-E765C400D5EE",
+          "platform": ""
+        }
+      }
+    },
+    "cisco:7940_router": {
+      "vendor": "cisco",
+      "product": "7940_router",
+      "groupID": "cisco:7940_router",
+      "commonTitle": "7940_router",
+      "versions": {
+        "-": {
+          "title": "7940_router",
+          "version": "-",
+          "update": "",
+          "cpeID": "48FAE795-CC6B-488D-A04E-9F8CA4EBDFF3",
+          "platform": ""
+        }
+      }
+    },
+    "sec_project:sec": {
+      "vendor": "sec_project",
+      "product": "sec",
+      "groupID": "sec_project:sec",
+      "commonTitle": "sec",
+      "versions": {
+        "-": {
+          "title": "sec",
+          "version": "-",
+          "update": "",
+          "cpeID": "07EB966E-6393-448C-8681-0F26E29D6C96",
+          "platform": ""
+        }
+      }
+    },
+    "hp:color_laserjet_managed_mfp_e77825_z8z05a": {
+      "vendor": "hp",
+      "product": "color_laserjet_managed_mfp_e77825_z8z05a",
+      "groupID": "hp:color_laserjet_managed_mfp_e77825_z8z05a",
+      "commonTitle": "color_laserjet_managed_mfp_e77825_z8z05a",
+      "versions": {
+        "-": {
+          "title": "color_laserjet_managed_mfp_e77825_z8z05a",
+          "version": "-",
+          "update": "",
+          "cpeID": "B8F8B987-98D7-49F5-A745-793CE32EBA59",
+          "platform": ""
+        }
+      }
+    },
+    "moxa:awk-1121": {
+      "vendor": "moxa",
+      "product": "awk-1121",
+      "groupID": "moxa:awk-1121",
+      "commonTitle": "awk-1121",
+      "versions": {
+        "-": {
+          "title": "awk-1121",
+          "version": "-",
+          "update": "",
+          "cpeID": "3DD576DC-D7A5-43A8-A245-1A10A3461F75",
+          "platform": ""
+        }
+      }
+    },
+    "hp:laserjet_pro_m304_w1a66a_firmware": {
+      "vendor": "hp",
+      "product": "laserjet_pro_m304_w1a66a_firmware",
+      "groupID": "hp:laserjet_pro_m304_w1a66a_firmware",
+      "commonTitle": "laserjet_pro_m304_w1a66a_firmware",
+      "versions": {
+        "-": {
+          "title": "laserjet_pro_m304_w1a66a_firmware",
+          "version": "-",
+          "update": "",
+          "cpeID": "CB3522B5-D07B-4F47-AA18-4C8289D0ED6B",
+          "platform": ""
+        }
+      }
+    },
+    "huawei:x6800_v3_server_firmware": {
+      "vendor": "huawei",
+      "product": "x6800_v3_server_firmware",
+      "groupID": "huawei:x6800_v3_server_firmware",
+      "commonTitle": "x6800_v3_server_firmware",
+      "versions": {
+        "v100r003c00": {
+          "title": "x6800_v3_server_firmware",
+          "version": "v100r003c00",
+          "update": "",
+          "cpeID": "95D5F6EA-F909-4FE0-A637-6338778574B8",
+          "platform": ""
+        }
+      }
+    },
+    "intel:core_i7-11370h_firmware": {
+      "vendor": "intel",
+      "product": "core_i7-11370h_firmware",
+      "groupID": "intel:core_i7-11370h_firmware",
+      "commonTitle": "core_i7-11370h_firmware",
+      "versions": {
+        "-": {
+          "title": "core_i7-11370h_firmware",
+          "version": "-",
+          "update": "",
+          "cpeID": "3DD77714-7F4B-4529-859C-4A1305BF3E18",
+          "platform": ""
+        }
+      }
+    },
+    "libcap_project:libcap": {
+      "vendor": "libcap_project",
+      "product": "libcap",
+      "groupID": "libcap_project:libcap",
+      "commonTitle": "libcap",
+      "versions": {
+        "2.14": {
+          "title": "libcap",
+          "version": "2.14",
+          "update": "",
+          "cpeID": "3DA0BF8B-66C3-4961-B26B-231623AF8222",
+          "platform": ""
+        },
+        "2.13": {
+          "title": "libcap",
+          "version": "2.13",
+          "update": "",
+          "cpeID": "CDC4DB8A-4F5F-445F-8557-6BE0616AA7A4",
+          "platform": ""
+        },
+        "2.12": {
+          "title": "libcap",
+          "version": "2.12",
+          "update": "",
+          "cpeID": "8E472521-346D-4BCA-AE13-D0924FACB76A",
+          "platform": ""
+        },
+        "2.11": {
+          "title": "libcap",
+          "version": "2.11",
+          "update": "",
+          "cpeID": "95396B70-CE85-4CBD-8B32-414AB8E644D6",
+          "platform": ""
+        },
+        "2.10": {
+          "title": "libcap",
+          "version": "2.10",
+          "update": "",
+          "cpeID": "5386C93D-1E60-4693-BC23-5E0664B25D71",
+          "platform": ""
+        },
+        "2.09": {
+          "title": "libcap",
+          "version": "2.09",
+          "update": "",
+          "cpeID": "A5F8687C-CAA7-4FC8-9178-580AEA67A623",
+          "platform": ""
+        },
+        "2.08": {
+          "title": "libcap",
+          "version": "2.08",
+          "update": "",
+          "cpeID": "EE72557A-379A-4D1A-B033-130A18AC039E",
+          "platform": ""
+        },
+        "2.07": {
+          "title": "libcap",
+          "version": "2.07",
+          "update": "",
+          "cpeID": "DB47E7D0-6EF7-4EFC-9A4B-FCE8F2C37A40",
+          "platform": ""
+        },
+        "2.06": {
+          "title": "libcap",
+          "version": "2.06",
+          "update": "",
+          "cpeID": "B88E15A0-0670-42E1-B873-D6F347385360",
+          "platform": ""
+        },
+        "2.05": {
+          "title": "libcap",
+          "version": "2.05",
+          "update": "",
+          "cpeID": "5734C228-CB95-45AA-90C2-3A5DF4C236A2",
+          "platform": ""
+        },
+        "2.04": {
+          "title": "libcap",
+          "version": "2.04",
+          "update": "",
+          "cpeID": "1A8FED3A-35B2-4374-A09C-3A94CFE51480",
+          "platform": ""
+        },
+        "2.26": {
+          "title": "libcap",
+          "version": "2.26",
+          "update": "",
+          "cpeID": "5055BDD0-6060-48E9-9EBD-BC0255843825",
+          "platform": ""
+        },
+        "2.25": {
+          "title": "libcap",
+          "version": "2.25",
+          "update": "",
+          "cpeID": "B19569CF-97B2-4506-8B0D-DBD5DABD4B76",
+          "platform": ""
+        },
+        "2.02": {
+          "title": "libcap",
+          "version": "2.02",
+          "update": "",
+          "cpeID": "EF34BE81-87AB-4204-B3E5-20AAB43660A9",
+          "platform": ""
+        },
+        "2.24": {
+          "title": "libcap",
+          "version": "2.24",
+          "update": "",
+          "cpeID": "7F895C35-ABF4-42F9-8919-2E105D692A86",
+          "platform": ""
+        },
+        "2.01": {
+          "title": "libcap",
+          "version": "2.01",
+          "update": "",
+          "cpeID": "A519A8E7-5963-4B74-AE7E-C088790505AC",
+          "platform": ""
+        },
+        "2.23": {
+          "title": "libcap",
+          "version": "2.23",
+          "update": "",
+          "cpeID": "C05899D1-7DF9-4DCB-8A4E-DB72152FD785",
+          "platform": ""
+        },
+        "2.00": {
+          "title": "libcap",
+          "version": "2.00",
+          "update": "",
+          "cpeID": "3FDB5C5F-9B8B-45CE-9611-18860CD3257B",
+          "platform": ""
+        },
+        "2.22": {
+          "title": "libcap",
+          "version": "2.22",
+          "update": "",
+          "cpeID": "C5373AC8-AD76-440D-9F6F-B3DC149B732C",
+          "platform": ""
+        },
+        "2.21": {
+          "title": "libcap",
+          "version": "2.21",
+          "update": "",
+          "cpeID": "A9D5F4BE-AC50-498D-90A9-BB7747EB6946",
+          "platform": ""
+        },
+        "2.20": {
+          "title": "libcap",
+          "version": "2.20",
+          "update": "",
+          "cpeID": "816AC3B2-E394-4C96-BA6C-FEEAE2248F88",
+          "platform": ""
+        },
+        "2.19": {
+          "title": "libcap",
+          "version": "2.19",
+          "update": "",
+          "cpeID": "97167ACD-F1CF-4A86-9394-902F2B7FEFD2",
+          "platform": ""
+        },
+        "2.18": {
+          "title": "libcap",
+          "version": "2.18",
+          "update": "",
+          "cpeID": "12D1D713-CD21-4319-9292-3233249AE350",
+          "platform": ""
+        },
+        "2.17": {
+          "title": "libcap",
+          "version": "2.17",
+          "update": "",
+          "cpeID": "9D20D655-5E20-4DA2-B913-68070D034732",
+          "platform": ""
+        },
+        "2.16": {
+          "title": "libcap",
+          "version": "2.16",
+          "update": "",
+          "cpeID": "D4023DD2-9C26-4960-B432-5249E58AEE71",
+          "platform": ""
+        },
+        "2.15": {
+          "title": "libcap",
+          "version": "2.15",
+          "update": "",
+          "cpeID": "1A8ACAE4-7215-4A9E-AA84-836D2BB5642E",
+          "platform": ""
+        }
+      }
+    },
+    "siemens:ccmw3025_firmware": {
+      "vendor": "siemens",
+      "product": "ccmw3025_firmware",
+      "groupID": "siemens:ccmw3025_firmware",
+      "commonTitle": "ccmw3025_firmware",
+      "versions": {
+        "-": {
+          "title": "ccmw3025_firmware",
+          "version": "-",
+          "update": "",
+          "cpeID": "63841004-6F09-4B5E-BA69-4E44EC6F2C1F",
+          "platform": ""
+        }
+      }
+    },
+    "peplink:max_br1_classic": {
+      "vendor": "peplink",
+      "product": "max_br1_classic",
+      "groupID": "peplink:max_br1_classic",
+      "commonTitle": "max_br1_classic",
+      "versions": {
+        "hw2-3": {
+          "title": "max_br1_classic",
+          "version": "hw2-3",
+          "update": "",
+          "cpeID": "85141482-7DDB-4D26-AF6F-A6F724C73329",
+          "platform": ""
+        }
+      }
+    },
+    "oracle:banking_loans_servicing": {
+      "vendor": "oracle",
+      "product": "banking_loans_servicing",
+      "groupID": "oracle:banking_loans_servicing",
+      "commonTitle": "banking_loans_servicing",
+      "versions": {
+        "2.12.0": {
+          "title": "banking_loans_servicing",
+          "version": "2.12.0",
+          "update": "",
+          "cpeID": "EFDC92CD-883E-46F1-96F9-3A20DC041823",
+          "platform": ""
+        }
+      }
+    },
+    "wago:852-303": {
+      "vendor": "wago",
+      "product": "852-303",
+      "groupID": "wago:852-303",
+      "commonTitle": "852-303",
+      "versions": {
+        "-": {
+          "title": "852-303",
+          "version": "-",
+          "update": "",
+          "cpeID": "08C2203F-50C7-4D24-841B-7B93651A7B19",
+          "platform": ""
+        }
+      }
+    },
+    "cisco:nexus_5500_firmware": {
+      "vendor": "cisco",
+      "product": "nexus_5500_firmware",
+      "groupID": "cisco:nexus_5500_firmware",
+      "commonTitle": "nexus_5500_firmware",
+      "versions": {
+        "-": {
+          "title": "nexus_5500_firmware",
+          "version": "-",
+          "update": "",
+          "cpeID": "7189ECCD-FC4F-4F39-B23A-0367A9485430",
+          "platform": ""
+        }
+      }
+    },
+    "intel:celeron_n5095_firmware": {
+      "vendor": "intel",
+      "product": "celeron_n5095_firmware",
+      "groupID": "intel:celeron_n5095_firmware",
+      "commonTitle": "celeron_n5095_firmware",
+      "versions": {
+        "-": {
+          "title": "celeron_n5095_firmware",
+          "version": "-",
+          "update": "",
+          "cpeID": "95342902-F326-48B6-B498-0D410DBC40DA",
+          "platform": ""
+        }
+      }
+    },
+    "hp:j9624a": {
+      "vendor": "hp",
+      "product": "j9624a",
+      "groupID": "hp:j9624a",
+      "commonTitle": "j9624a",
+      "versions": {
+        "-": {
+          "title": "j9624a",
+          "version": "-",
+          "update": "",
+          "cpeID": "04C861A6-93DC-4125-8742-1B8748650BF6",
+          "platform": ""
+        }
+      }
+    },
+    "hp:color_laserjet_pro_mfp_m284_7kw73a": {
+      "vendor": "hp",
+      "product": "color_laserjet_pro_mfp_m284_7kw73a",
+      "groupID": "hp:color_laserjet_pro_mfp_m284_7kw73a",
+      "commonTitle": "color_laserjet_pro_mfp_m284_7kw73a",
+      "versions": {
+        "-": {
+          "title": "color_laserjet_pro_mfp_m284_7kw73a",
+          "version": "-",
+          "update": "",
+          "cpeID": "E19D455E-8805-4496-BED1-EE0FDA5E496C",
+          "platform": ""
+        }
+      }
+    },
+    "gnu:automake": {
+      "vendor": "gnu",
+      "product": "automake",
+      "groupID": "gnu:automake",
+      "commonTitle": "automake",
+      "versions": {
+        "1.10.1": {
+          "title": "automake",
+          "version": "1.10.1",
+          "update": "",
+          "cpeID": "6F95ABFC-164F-4A64-988B-CB433A45986C",
+          "platform": ""
+        },
+        "1.9.2": {
+          "title": "automake",
+          "version": "1.9.2",
+          "update": "",
+          "cpeID": "073A6513-290E-4E57-BFCE-16BEE73A2682",
+          "platform": ""
+        },
+        "1.8.3": {
+          "title": "automake",
+          "version": "1.8.3",
+          "update": "",
+          "cpeID": "A48EA799-4771-4DB5-BCD9-EC9FCFDB5AC3",
+          "platform": ""
+        },
+        "1.7.4": {
+          "title": "automake",
+          "version": "1.7.4",
+          "update": "",
+          "cpeID": "F32BA32A-7FB8-4B37-BBD9-1587301FA801",
+          "platform": ""
+        },
+        "1.9.3": {
+          "title": "automake",
+          "version": "1.9.3",
+          "update": "",
+          "cpeID": "86842D7E-D162-4EF9-A92B-AFE2FD820DCE",
+          "platform": ""
+        },
+        "1.8.4": {
+          "title": "automake",
+          "version": "1.8.4",
+          "update": "",
+          "cpeID": "586790A7-77DE-406E-982E-14D7B7AA005D",
+          "platform": ""
+        },
+        "1.7.5": {
+          "title": "automake",
+          "version": "1.7.5",
+          "update": "",
+          "cpeID": "C448B99D-5DA3-4FDF-BF63-83B4C8082133",
+          "platform": ""
+        },
+        "1.9.4": {
+          "title": "automake",
+          "version": "1.9.4",
+          "update": "",
+          "cpeID": "65424826-30A4-43A8-A46C-F330D9665961",
+          "platform": ""
+        },
+        "1.8.5": {
+          "title": "automake",
+          "version": "1.8.5",
+          "update": "",
+          "cpeID": "9182C43D-164B-4411-82D9-05A8481D08E8",
+          "platform": ""
+        },
+        "1.7.6": {
+          "title": "automake",
+          "version": "1.7.6",
+          "update": "",
+          "cpeID": "A7C31437-5025-4602-AD0D-DF473FFA2894",
+          "platform": ""
+        },
+        "1.9.5": {
+          "title": "automake",
+          "version": "1.9.5",
+          "update": "",
+          "cpeID": "F885DD58-68BC-4E5F-BCA1-0B17770C470C",
+          "platform": ""
+        },
+        "1.7.7": {
+          "title": "automake",
+          "version": "1.7.7",
+          "update": "",
+          "cpeID": "04F9BBF8-1312-4C40-9434-17526F744E8A",
+          "platform": ""
+        },
+        "1.9.6": {
+          "title": "automake",
+          "version": "1.9.6",
+          "update": "",
+          "cpeID": "186E1246-8F4F-4B99-A2AF-4F07BACF18E3",
+          "platform": ""
+        },
+        "1.7.8": {
+          "title": "automake",
+          "version": "1.7.8",
+          "update": "",
+          "cpeID": "DCF2E924-D521-41DD-B70B-0334CACFAF07",
+          "platform": ""
+        },
+        "1.7.9": {
+          "title": "automake",
+          "version": "1.7.9",
+          "update": "",
+          "cpeID": "C23AAA65-9C45-401D-9B0E-0F7CB5990E19",
+          "platform": ""
+        },
+        "1.12": {
+          "title": "automake",
+          "version": "1.12",
+          "update": "",
+          "cpeID": "7A742E4C-5819-4A7C-A875-D951849D2DC8",
+          "platform": ""
+        },
+        "1.10": {
+          "title": "automake",
+          "version": "1.10",
+          "update": "",
+          "cpeID": "7A12CE6C-6575-4ECC-BB0A-E8D93BF0B9FB",
+          "platform": ""
+        },
+        "1.0": {
+          "title": "automake",
+          "version": "1.0",
+          "update": "",
+          "cpeID": "37423623-F4C7-42C2-B12A-87B05C89C12B",
+          "platform": ""
+        },
+        "1.6.1": {
+          "title": "automake",
+          "version": "1.6.1",
+          "update": "",
+          "cpeID": "D90251C9-9366-42C1-B6AC-099E26A20A5C",
+          "platform": ""
+        },
+        "1.7.1": {
+          "title": "automake",
+          "version": "1.7.1",
+          "update": "",
+          "cpeID": "D7CFBA33-C2A7-42B7-A1A7-182380B4667F",
+          "platform": ""
+        },
+        "1.6.2": {
+          "title": "automake",
+          "version": "1.6.2",
+          "update": "",
+          "cpeID": "7FAF8E1C-83E5-4F62-B0C1-34A883725031",
+          "platform": ""
+        },
+        "1.2": {
+          "title": "automake",
+          "version": "1.2",
+          "update": "",
+          "cpeID": "E8CAD12C-4005-4018-A8D7-2B236564C2DC",
+          "platform": ""
+        },
+        "1.8.1": {
+          "title": "automake",
+          "version": "1.8.1",
+          "update": "",
+          "cpeID": "F88C6EC6-5203-4F2B-905C-A09968497137",
+          "platform": ""
+        },
+        "1.7.2": {
+          "title": "automake",
+          "version": "1.7.2",
+          "update": "",
+          "cpeID": "B77EA3E1-5614-408F-93E5-BF48BA042958",
+          "platform": ""
+        },
+        "1.6.3": {
+          "title": "automake",
+          "version": "1.6.3",
+          "update": "",
+          "cpeID": "7D204A28-EC12-4407-965C-126E0341936D",
+          "platform": ""
+        },
+        "1.3": {
+          "title": "automake",
+          "version": "1.3",
+          "update": "",
+          "cpeID": "F1ABCC82-4DD3-4C53-99FA-57590DD62C0B",
+          "platform": ""
+        },
+        "1.9.1": {
+          "title": "automake",
+          "version": "1.9.1",
+          "update": "",
+          "cpeID": "D932EB3D-3C6C-46D9-AEC8-C826CAF773FB",
+          "platform": ""
+        },
+        "1.8.2": {
+          "title": "automake",
+          "version": "1.8.2",
+          "update": "",
+          "cpeID": "EDAA4841-B1C5-4E55-B0AE-FB453DC48688",
+          "platform": ""
+        },
+        "1.7.3": {
+          "title": "automake",
+          "version": "1.7.3",
+          "update": "",
+          "cpeID": "C683EF6A-34B8-4D38-9382-8FCE6819C7B4",
+          "platform": ""
+        },
+        "1.4": {
+          "title": "automake",
+          "version": "1.4",
+          "update": "",
+          "cpeID": "521C8CEF-DA47-45D9-AC31-77FB3FC32E8C",
+          "platform": ""
+        },
+        "1.11.5": {
+          "title": "automake",
+          "version": "1.11.5",
+          "update": "",
+          "cpeID": "8E0A7955-E95D-479B-8AF2-8D438DEDC6B7",
+          "platform": ""
+        },
+        "1.5": {
+          "title": "automake",
+          "version": "1.5",
+          "update": "",
+          "cpeID": "0596171E-F971-4D95-BE15-A16DB5B32044",
+          "platform": ""
+        },
+        "1.11.6": {
+          "title": "automake",
+          "version": "1.11.6",
+          "update": "",
+          "cpeID": "64739E49-BDE8-47CE-AC9A-DB410C68C119",
+          "platform": ""
+        },
+        "1.6": {
+          "title": "automake",
+          "version": "1.6",
+          "update": "",
+          "cpeID": "7F2824BB-F448-4FAD-AA83-A03981F03FF9",
+          "platform": ""
+        },
+        "1.7": {
+          "title": "automake",
+          "version": "1.7",
+          "update": "",
+          "cpeID": "6311D153-D212-4F22-9972-642E4CCF83D4",
+          "platform": ""
+        },
+        "1.8": {
+          "title": "automake",
+          "version": "1.8",
+          "update": "",
+          "cpeID": "5739D6A4-BBCF-4EE6-BAB9-573366CE2E12",
+          "platform": ""
+        },
+        "1.11.1": {
+          "title": "automake",
+          "version": "1.11.1",
+          "update": "",
+          "cpeID": "093D0410-6F34-4E69-AF53-E495308C8B4F",
+          "platform": ""
+        },
+        "1.10.2": {
+          "title": "automake",
+          "version": "1.10.2",
+          "update": "",
+          "cpeID": "1DFAD2A3-E667-49C7-B680-EFC57DD4ECDC",
+          "platform": ""
+        },
+        "1.9": {
+          "title": "automake",
+          "version": "1.9",
+          "update": "",
+          "cpeID": "43A11105-EF6A-4CD9-8BF1-EEC81D92617D",
+          "platform": ""
+        },
+        "1.11.2": {
+          "title": "automake",
+          "version": "1.11.2",
+          "update": "",
+          "cpeID": "5C470BF6-B00D-492B-88E2-E5D798F33C5D",
+          "platform": ""
+        },
+        "1.10.3": {
+          "title": "automake",
+          "version": "1.10.3",
+          "update": "",
+          "cpeID": "0143F881-A2D6-47F8-B98B-D9D443802284",
+          "platform": ""
+        },
+        "1.12.1": {
+          "title": "automake",
+          "version": "1.12.1",
+          "update": "",
+          "cpeID": "C49F6CFA-D803-4BA9-93E9-F4BE7EE571A4",
+          "platform": ""
+        },
+        "1.11.3": {
+          "title": "automake",
+          "version": "1.11.3",
+          "update": "",
+          "cpeID": "8919B94F-4A82-4F9E-A706-96023703FC1F",
+          "platform": ""
+        },
+        "1.12.2": {
+          "title": "automake",
+          "version": "1.12.2",
+          "update": "",
+          "cpeID": "40462007-E9F0-4B58-9276-D99AE767E276",
+          "platform": ""
+        },
+        "1.11.4": {
+          "title": "automake",
+          "version": "1.11.4",
+          "update": "",
+          "cpeID": "64B05F76-06B7-43D1-A77C-B7900B944187",
+          "platform": ""
+        }
+      }
+    },
+    "ibm:wsportal": {
+      "vendor": "ibm",
+      "product": "wsportal",
+      "groupID": "ibm:wsportal",
+      "commonTitle": "wsportal",
+      "versions": {
+        "-": {
+          "title": "wsportal",
+          "version": "-",
+          "update": "",
+          "cpeID": "96A47341-E17E-4745-BC0F-553ED63C1EC9",
+          "platform": ""
+        }
+      }
+    }
+  }
+}

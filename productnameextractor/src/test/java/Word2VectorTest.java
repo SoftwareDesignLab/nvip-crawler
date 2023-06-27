@@ -9,7 +9,7 @@ public class Word2VectorTest {
     @BeforeAll
     public static void setUp() {
         // Initialize the Word2Vector instance with the model file path
-        String modelPath = "src/main/resources/data/w2v_model_250.bin";
+        String modelPath = "nvip_data/data/w2v_model_250.bin";
         word2Vector = new Word2Vector(modelPath);
     }
 

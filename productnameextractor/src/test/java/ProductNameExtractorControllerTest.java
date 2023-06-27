@@ -26,7 +26,7 @@ public class ProductNameExtractorControllerTest {
 
     @Test
     public void readProductDictMainTest(){
-        String productDictPath = "src/main/resources/data/product_dict.json";
+        String productDictPath = "nvip_data/data/product_dict.json";
         Map<String, CpeGroup> productDict = null;
         try {
             productDict = ProductNameExtractorController.readProductDict(productDictPath);
@@ -115,7 +115,7 @@ public class ProductNameExtractorControllerTest {
     @Test
     public void testWriteProductDict() throws IOException {
         //test file path
-        String TEST_FILE_PATH = "src/test/resources/data/test_product_dict.json";
+        String TEST_FILE_PATH = "src/test/resources/data/test_product_dict_creation.json";
         // Clean up the test file
         Path path = Paths.get(TEST_FILE_PATH);
         //clear file of changed data
