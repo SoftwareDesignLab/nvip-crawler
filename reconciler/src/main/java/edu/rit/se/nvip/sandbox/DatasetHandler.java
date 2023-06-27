@@ -3,6 +3,7 @@ package edu.rit.se.nvip.sandbox;
 import edu.rit.se.nvip.filter.Filter;
 import edu.rit.se.nvip.filter.FilterFactory;
 import edu.rit.se.nvip.model.RawVulnerability;
+import edu.rit.se.nvip.model.VulnSetWrapper;
 
 import javax.json.*;
 import java.io.*;
@@ -10,6 +11,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.sql.Timestamp;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class DatasetHandler {
     String jsonPathRaw = "./src/main/java/edu/rit/se/nvip/sandbox/filter_dataset.json";
@@ -21,7 +23,8 @@ public class DatasetHandler {
         DatasetHandler dh = new DatasetHandler();
 //        dh.jsonToDb();
 //        dh.dbToJson();
-        dh.updateJson("./src/main/java/edu/rit/se/nvip/sandbox/CrawlerOutputFull_6_22_2023.json");
+//        dh.updateJson("./src/main/java/edu/rit/se/nvip/sandbox/CrawlerOutputFull_6_22_2023.json");
+//        dh.firstSecondWaveFilterMetrics("./src/main/java/edu/rit/se/nvip/sandbox/GenericParserOutputFull_6_22_2023.json");
     }
 
     public DatasetHandler() {
@@ -192,5 +195,91 @@ public class DatasetHandler {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public void firstSecondWaveFilterMetrics(String jsonPath) {
+        JsonArray jArray = null;
+        try (FileReader reader = new FileReader(jsonPath)) {
+            JsonReader jReader = Json.createReader(reader);
+            jArray = jReader.readArray();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return;
+        }
+        Set<RawVulnerability> rawVulns = new HashSet<>();
+        for (int i = 0; i < jArray.size(); i++) {
+            JsonObject jo = jArray.getJsonObject(i);
+            rawVulns.add(new RawVulnerability(
+                    jo.getInt("raw_description_id"),
+                    jo.getString("cve_id"),
+                    jo.getString("raw_description"),
+                    new Timestamp(jo.getJsonNumber("published_date").longValue()),
+                    new Timestamp(jo.getJsonNumber("last_modified_date").longValue()),
+                    new Timestamp(jo.getJsonNumber("created_date").longValue()),
+                    jo.getString("source_url"),
+                    jo.getString("source_type"),
+                    jo.getInt("filter_status")));
+        }
+
+        Set<Filter> filters = new HashSet<>();
+        filters.add(FilterFactory.createFilter(FilterFactory.MULTIPLE_CVE_DESCRIPTION));
+        filters.add(FilterFactory.createFilter(FilterFactory.BLANK_DESCRIPTION));
+        filters.add(FilterFactory.createFilter(FilterFactory.INTEGER_DESCRIPTION));
+        filters.add(FilterFactory.createFilter(FilterFactory.DESCRIPTION_SIZE));
+        filters.add(FilterFactory.createFilter(FilterFactory.CVE_MATCHES_DESCRIPTION));
+
+        //Mimic reconciler controller process
+        VulnSetWrapper wrapper = new VulnSetWrapper(rawVulns);
+        Set<RawVulnerability> firstWaveVulns = wrapper.firstFilterWave();
+        Set<RawVulnerability> secondWaveVulns = wrapper.secondFilterWave();
+        //Calculate metrics for first wave
+        Map<String, Set<RawVulnerability>> equivClasses = new HashMap<>();
+        Set<RawVulnerability> samples = new HashSet<>(); // holds one from each equivalence class
+        for (RawVulnerability rawVuln : firstWaveVulns) {
+            String desc = rawVuln.getDescription();
+            if (!equivClasses.containsKey(desc)) {
+                equivClasses.put(desc, new HashSet<>());
+                samples.add(rawVuln);
+            }
+            equivClasses.get(desc).add(rawVuln);
+        }
+        for (Filter filter : filters) {
+            filter.filterAll(samples);
+        }
+        // update filter statuses in each equiv class to match its sample
+        for (RawVulnerability sample : samples) {
+            for (RawVulnerability rv : equivClasses.get(sample.getDescription())) {
+                rv.setFilterStatus(sample.getFilterStatus());
+            }
+        }
+        int numPassed = firstWaveVulns.stream().filter(v->v.getFilterStatus() == RawVulnerability.FilterStatus.PASSED).collect(Collectors.toSet()).size();
+        System.out.println("Total in json: " + jArray.size());
+        System.out.println("Total in first wave: " + firstWaveVulns.size());
+        System.out.println("Accepted: " + numPassed);
+
+        //Calculate metrics for second
+        Map<String, Set<RawVulnerability>> equivClasses2 = new HashMap<>();
+        Set<RawVulnerability> samples2 = new HashSet<>(); // holds one from each equivalence class
+        for (RawVulnerability rawVuln : secondWaveVulns) {
+            String desc = rawVuln.getDescription();
+            if (!equivClasses2.containsKey(desc)) {
+                equivClasses2.put(desc, new HashSet<>());
+                samples2.add(rawVuln);
+            }
+            equivClasses2.get(desc).add(rawVuln);
+        }
+        for (Filter filter : filters) {
+            filter.filterAll(samples2);
+        }
+        // update filter statuses in each equiv class to match its sample
+        for (RawVulnerability sample : samples2) {
+            for (RawVulnerability rv : equivClasses2.get(sample.getDescription())) {
+                rv.setFilterStatus(sample.getFilterStatus());
+            }
+        }
+        int numPassed2 = secondWaveVulns.stream().filter(v->v.getFilterStatus() == RawVulnerability.FilterStatus.PASSED).collect(Collectors.toSet()).size();
+        System.out.println("Total in json: " + jArray.size());
+        System.out.println("Total in first wave: " + secondWaveVulns.size());
+        System.out.println("Accepted: " + numPassed2);
     }
 }
