@@ -273,7 +273,7 @@ public class AffectedProductIdentifier {
 
 		final BlockingQueue<Runnable> workQueue = new ArrayBlockingQueue<>(vulnList.size());
 
-		final ThreadPoolExecutor e = new ThreadPoolExecutor(
+		final ThreadPoolExecutor executor = new ThreadPoolExecutor(
 				numThreads,
 				numThreads,
 				5,
@@ -281,7 +281,7 @@ public class AffectedProductIdentifier {
 				workQueue
 		);
 
-		e.prestartAllCoreThreads();
+		executor.prestartAllCoreThreads();
 
 		for (CompositeVulnerability vulnerability : vulnList) {
 			try {
@@ -301,18 +301,18 @@ public class AffectedProductIdentifier {
 						totalCVETime,
 						totalCVEtoProcess
 				));
-			} catch (Exception ex) {
-				logger.error("Failed to add {} to the work queue: {}", vulnerability.getCveId(), ex.toString());
+			} catch (Exception e) {
+				logger.error("Failed to add {} to the work queue: {}", vulnerability.getCveId(), e.toString());
 			}
 		}
 
-		e.shutdown();
+		executor.shutdown();
 
 		long secondsWaiting = 0;
 		final int initNumCVEs = workQueue.size();
 		int lastNumCVEs = initNumCVEs;
 		try {
-			while(!e.awaitTermination(15, TimeUnit.SECONDS)) {
+			while(!executor.awaitTermination(15, TimeUnit.SECONDS)) {
 				secondsWaiting += 15L;
 
 				if(secondsWaiting % 60 == 0) {
@@ -334,7 +334,7 @@ public class AffectedProductIdentifier {
 			}
 		} catch (Exception ex) {
 			logger.error("Product extraction failed: {}", ex.toString());
-			List<Runnable> remainingTasks = e.shutdownNow();
+			List<Runnable> remainingTasks = executor.shutdownNow();
 			logger.error("{} tasks not executed", remainingTasks.size());
 		}
 
