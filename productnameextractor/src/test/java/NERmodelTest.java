@@ -66,7 +66,7 @@ public class NERmodelTest {
 
 		String word = "MicroSoft";
 
-		String modelsDir = DATA_DIR + "/";
+		String modelsDir = RESOURCE_DIR + "/" + DATA_DIR + "/";
 		String c2vModelConfigPath = modelsDir + CHAR_2_VEC_CONFIG;
 		String c2vModelWeightsPath = modelsDir + CHAR_2_VEC_WEIGHTS;
 
@@ -94,9 +94,7 @@ public class NERmodelTest {
 	@Test
 	public void word2vectorModelTest() {
 		String word = "MicroSoft";
-
-		String modelsDir = DATA_DIR + "/";
-		String w2vModelPath = modelsDir + WORD_2_VEC;
+		String w2vModelPath = RESOURCE_DIR + "/" + DATA_DIR + "/" + WORD_2_VEC;
 		Word2Vector w2vModel = null;
 		try {
 			w2vModel = new Word2Vector(w2vModelPath);
