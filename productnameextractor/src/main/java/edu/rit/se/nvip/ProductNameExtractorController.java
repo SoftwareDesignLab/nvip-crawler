@@ -203,9 +203,9 @@ public class ProductNameExtractorController {
      */
     private static ArrayList<CompositeVulnerability> createTestVulnList(){
         ArrayList<CompositeVulnerability> vulnList = new ArrayList<>();
-        String filePath = "productnameextractor/nvip_data/data/test_vulnerabilities.csv";
+        File testVulnerabilitiesFile = new File(resourceDir + "/" + dataDir + "/" + "test_vulnerabilities.csv");
         try{
-            CSVReader reader = new CSVReader(new FileReader(filePath));
+            CSVReader reader = new CSVReader(new FileReader(testVulnerabilitiesFile));
             for(String[] line : reader.readAll()){
                 CompositeVulnerability vulnerability = new CompositeVulnerability(
                         Integer.parseInt(line[0]),
@@ -218,7 +218,7 @@ public class ProductNameExtractorController {
             }
             reader.close();
         }catch(FileNotFoundException e){
-            logger.warn("Could not find the test csv file at path {}", filePath);
+            logger.warn("Could not find the test csv file at path {}", testVulnerabilitiesFile.getPath());
         }catch(Exception e){
             logger.warn("Error {} reading the test csv file", e.toString());
         }
@@ -231,7 +231,7 @@ public class ProductNameExtractorController {
      * @param vulnList list of vulnerabilities
      */
     private static void writeTestResults(List<CompositeVulnerability> vulnList){
-        File testResultsFile = new File("nvip_data/data/test_results.csv");
+        File testResultsFile = new File(resourceDir + "/" + dataDir + "/" + "test_results.csv");
         try {
             PrintWriter writer = new PrintWriter(testResultsFile);
             // Go through each vulnerability and write it and its affected products to output and the file
