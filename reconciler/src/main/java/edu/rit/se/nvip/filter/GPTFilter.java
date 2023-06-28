@@ -9,12 +9,6 @@ import java.util.Set;
 
 public class GPTFilter extends AsyncFilter {
     private GPTFilterModel model = new GPTFilterModel();
-
-    //https://platform.openai.com/account/rate-limits
-    private static final double TOKEN_RATE_LIMIT = 90000. / 60;
-    private static final double REQUEST_RATE_LIMIT = 3500. / 60;
-    private static final RateLimiter tokenLimiter = RateLimiter.create(TOKEN_RATE_LIMIT);
-    private static final RateLimiter requestLimiter = RateLimiter.create(REQUEST_RATE_LIMIT);
     private static long tokenTotal = 0;
     private static int processed = 0;
     private static int irregular = 0;
@@ -52,11 +46,5 @@ public class GPTFilter extends AsyncFilter {
             rejected += 1;
         }
         return response;
-    }
-
-    @Override
-    protected void waitForLimiters(RawVulnerability vuln) {
-        tokenLimiter.acquire(model.tokenCount(vuln.getDescription()));
-        requestLimiter.acquire(1);
     }
 }

@@ -35,11 +35,7 @@ public abstract class AsyncFilter extends Filter {
 
         @Override
         public void run() {
-            // respect API rate limits!
-            waitForLimiters(vuln);
             updateFilterStatus(vuln);
         }
     }
-
-    protected abstract void waitForLimiters(RawVulnerability vuln);
 }
