@@ -34,10 +34,7 @@ import org.apache.logging.log4j.Logger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -169,7 +166,7 @@ public class AffectedProductIdentifier {
 					}
 				}
 				if(productList.size() > 0)
-					logger.info("Found {} Affected Product(s) for {}", productList.size(), vulnerability.getCveId());
+					logger.info("Found {} Affected Product(s) for {} in {} seconds", productList.size(), vulnerability.getCveId(), (double) (System.currentTimeMillis() - startCVETime) / 1000);
 			}
 
 		} catch (Exception e) {
@@ -218,54 +215,127 @@ public class AffectedProductIdentifier {
 
 		logger.info("Starting product name extraction process... # CVEs to be processed: {}", totalCVEtoProcess);
 
-		// Create a thread pool with a fixed number of threads
-		ExecutorService executor = Executors.newFixedThreadPool(numThreads);
 
-		// Iterate through the list of vulnerabilities
-		for (int i = 0; i < vulnList.size(); i++) {
-			// Limit to cveLimit
-			if(i >= cveLimit) break;
 
-			CompositeVulnerability vulnerability = vulnList.get(i);
-			// Submit a task to the executor to process each vulnerability
-			executor.submit(() -> processVulnerability(
-					productNameDetector,
-					cpeLookUp,
-					vulnerability,
-					counterOfBadDescriptionCVEs,
-					counterOfSkippedCVEs,
-					counterOfProcessedCVEs,
-					counterOfProcessedNERs,
-					counterOfProcessedCPEs,
-					numOfProductsNotMappedToCPE,
-					numOfProductsMappedToCpe,
-					totalNERTime,
-					totalCPETime,
-					totalCVETime,
-					totalCVEtoProcess
-			));
 
-			if (counterOfProcessedCVEs.get() % 100 == 0 && counterOfProcessedCPEs.get() != totalCVEtoProcess) {
-				double percent = Math.floor(((double) (counterOfProcessedCVEs.get() + counterOfBadDescriptionCVEs.get() + counterOfSkippedCVEs.get()) / totalCVEtoProcess * 100) * 100) / 100;
-				logger.info("Extracted {} affected product(s) for {} out of {} CVEs so far! {} CVEs skipped (not-changed or bad description), {}% done.", numOfProductsMappedToCpe, counterOfProcessedCVEs, totalCVEtoProcess,
-						(counterOfBadDescriptionCVEs.get() + counterOfSkippedCVEs.get()), percent);
+
+//		// Create a thread pool with a fixed number of threads
+//		ExecutorService executor = Executors.newFixedThreadPool(numThreads);
+//
+//		// Iterate through the list of vulnerabilities
+//		for (int i = 0; i < vulnList.size(); i++) {
+//			// Limit to cveLimit
+//			if(i >= cveLimit) break;
+//
+//			CompositeVulnerability vulnerability = vulnList.get(i);
+//			// Submit a task to the executor to process each vulnerability
+//			executor.submit(() -> processVulnerability(
+//					productNameDetector,
+//					cpeLookUp,
+//					vulnerability,
+//					counterOfBadDescriptionCVEs,
+//					counterOfSkippedCVEs,
+//					counterOfProcessedCVEs,
+//					counterOfProcessedNERs,
+//					counterOfProcessedCPEs,
+//					numOfProductsNotMappedToCPE,
+//					numOfProductsMappedToCpe,
+//					totalNERTime,
+//					totalCPETime,
+//					totalCVETime,
+//					totalCVEtoProcess
+//			));
+//
+//			if (counterOfProcessedCVEs.get() % 100 == 0 && counterOfProcessedCPEs.get() != totalCVEtoProcess) {
+//				double percent = Math.floor(((double) (counterOfProcessedCVEs.get() + counterOfBadDescriptionCVEs.get() + counterOfSkippedCVEs.get()) / totalCVEtoProcess * 100) * 100) / 100;
+//				logger.info("Extracted {} affected product(s) for {} out of {} CVEs so far! {} CVEs skipped (not-changed or bad description), {}% done.", numOfProductsMappedToCpe, counterOfProcessedCVEs, totalCVEtoProcess,
+//						(counterOfBadDescriptionCVEs.get() + counterOfSkippedCVEs.get()), percent);
+//			}
+//		}
+//
+//		executor.shutdown();
+//
+//		try {
+//			// Shut down the executor to release resources after all tasks are complete
+//			final int timeout = 30;
+//			final TimeUnit unit = TimeUnit.MINUTES;
+//			if(!executor.awaitTermination(30, TimeUnit.MINUTES)) {
+//				throw new TimeoutException(String.format("Product extraction thread pool runtime exceeded timeout value of %s %s", timeout, unit.toString()));
+//			}
+//			logger.info("Product extraction thread pool completed all jobs, shutting down...");
+//			executor.shutdown();
+//		} catch (Exception e) {
+//			logger.error("Product extraction failed: {}", e.toString());
+//			e.printStackTrace();
+//		}
+
+
+
+		final BlockingQueue<Runnable> workQueue = new ArrayBlockingQueue<>(vulnList.size());
+
+		final ThreadPoolExecutor e = new ThreadPoolExecutor(
+				numThreads,
+				numThreads,
+				5,
+				TimeUnit.MINUTES,
+				workQueue
+		);
+
+		e.prestartAllCoreThreads();
+
+		for (CompositeVulnerability vulnerability : vulnList) {
+			try {
+				workQueue.add(() -> processVulnerability(
+						productNameDetector,
+						cpeLookUp,
+						vulnerability,
+						counterOfBadDescriptionCVEs,
+						counterOfSkippedCVEs,
+						counterOfProcessedCVEs,
+						counterOfProcessedNERs,
+						counterOfProcessedCPEs,
+						numOfProductsNotMappedToCPE,
+						numOfProductsMappedToCpe,
+						totalNERTime,
+						totalCPETime,
+						totalCVETime,
+						totalCVEtoProcess
+				));
+			} catch (Exception ex) {
+				logger.error("Failed to add {} to the work queue: {}", vulnerability.getCveId(), ex.toString());
 			}
 		}
 
-		executor.shutdown();
+		e.shutdown();
 
+		long secondsWaiting = 0;
+		final int initNumCVEs = workQueue.size();
+		int lastNumCVEs = initNumCVEs;
 		try {
-			// Shut down the executor to release resources after all tasks are complete
-			final int timeout = 30;
-			final TimeUnit unit = TimeUnit.MINUTES;
-			if(!executor.awaitTermination(30, TimeUnit.MINUTES)) {
-				throw new TimeoutException(String.format("Product extraction thread pool runtime exceeded timeout value of %s %s", timeout, unit.toString()));
+			while(!e.awaitTermination(15, TimeUnit.SECONDS)) {
+				secondsWaiting += 15L;
+
+				if(secondsWaiting % 60 == 0) {
+					final int currNumCVEs = workQueue.size();
+					final double rate = (double) (lastNumCVEs - currNumCVEs) / 15;
+					final double remainingTime = currNumCVEs / rate;
+					logger.info(
+							"{} out of {} CVEs processed (Avg {} CVEs/second; Est time until completion: {} minutes ({} seconds))...",
+							initNumCVEs - currNumCVEs,
+							initNumCVEs,
+							Math.floor(rate * 100) / 100,
+							Math.floor(remainingTime / 60 * 100) / 100,
+							Math.floor(remainingTime * 100) / 100
+					);
+					lastNumCVEs = currNumCVEs;
+				}
+
+				if((secondsWaiting / 60) > 15) throw new TimeoutException("Timeout reached before all threads completed");
 			}
-			logger.info("Product extraction thread pool completed all jobs, shutting down...");
-			executor.shutdown();
-		} catch (Exception e) {
-			logger.error("Product extraction failed: {}", e.toString());
-			e.printStackTrace();
+		} catch (Exception ex) {
+			logger.error("Product extraction failed: {}", ex.toString());
+			List<Runnable> remainingTasks = e.shutdownNow();
+			logger.error("{} tasks not executed", remainingTasks.size());
 		}
 
 		logger.info("Extracted product(s) for {} out of {} CVEs so far! {} CVEs skipped", counterOfProcessedCVEs, totalCVEtoProcess, counterOfSkippedCVEs);
