@@ -81,17 +81,19 @@ public class NERmodel {
 	/**
 	 * Class constructor
 	 */
-	public NERmodel() {
+	public NERmodel(String modelsDir) {
 		super();
+
 
 		try {
 			// Get models paths
-			String modelsDir = System.getenv("DATA_DIR") + "/";
+//			String modelsDir = System.getenv("DATA_DIR") + "/";
 			String c2vModelConfigPath = modelsDir + System.getenv("CHAR_2_VEC_CONFIG");
 			String c2vModelWeightsPath = modelsDir + System.getenv("CHAR_2_VEC_WEIGHTS");
 			String w2vModelPath = modelsDir + System.getenv("WORD_2_VEC");
 			String nerModelPath = modelsDir + System.getenv("NER_MODEL");
 			String nerNormalizerPath = modelsDir + System.getenv("NER_MODEL_NORMALIZER");
+			String sentenceModelPath = modelsDir + System.getenv("SENTENCE_MODEL");
 
 			long startTime = System.currentTimeMillis();
 			// Load NER model
@@ -130,11 +132,9 @@ public class NERmodel {
 			featureLength = wordVecLength + charVecLength;
 
 			// Load Apache Open NLP sentence detector model
-			// path to Apache Open NLP sentence model
-			String sentenceModelPath = ".\\nvip_data\\nlp\\en-sent.bin";
+			if(!Files.exists(Paths.get(sentenceModelPath)))
+				logger.info("Failed to find specified NER Model path '{}'", sentenceModelPath);
 
-			Path path = Paths.get(sentenceModelPath);
-			logger.info("Does it exist? {}", Files.exists(path));
 			try {
 				startTime = System.currentTimeMillis();
 				logger.info("Working Dir === {}", System.getProperty("user.dir"));

@@ -33,7 +33,8 @@ public class ProductNameExtractorController {
     protected static int maxAttemptsPerPage = 2;
     protected static boolean prettyPrint = false;
     protected static boolean testMode = false;
-    private static String productDictPath = "nvip_data/data/product_dict.json";
+    protected static String productDictName = "product_dict.json";
+    protected static String dataDir = "productnameextractor/nvip_data/data";
     private static Instant productDictLastCompilationDate;
     private static AffectedProductIdentifier affectedProductIdentifier;
 
@@ -119,10 +120,15 @@ public class ProductNameExtractorController {
             } else throw new Exception();
         } catch (Exception ignored) { logger.warn("Could not fetch MAX_ATTEMPTS_PER_PAGE from env vars, defaulting to {}", maxAttemptsPerPage); }
 
-        if(props.containsKey("PRODUCT_DICT_PATH")) {
-            productDictPath = System.getenv("PRODUCT_DICT_PATH");
-            logger.info("Setting PRODUCT_DICT_PATH to {}", productDictPath);
-        } else logger.warn("Could not fetch PRODUCT_DICT_PATH from env vars, defaulting to {}", productDictPath);
+        if(props.containsKey("PRODUCT_DICT_NAME")) {
+            productDictName = System.getenv("PRODUCT_DICT_NAME");
+            logger.info("Setting PRODUCT_DICT_NAME to {}", productDictName);
+        } else logger.warn("Could not fetch PRODUCT_DICT_NAME from env vars, defaulting to {}", productDictName);
+
+        if(props.containsKey("DATA_DIR")) {
+            dataDir = System.getenv("DATA_DIR");
+            logger.info("Setting DATA_DIR to {}", dataDir);
+        } else logger.warn("Could not fetch DATA_DIR from env vars, defaulting to {}", dataDir);
 
         if(props.containsKey("PRETTY_PRINT")) {
             prettyPrint = Boolean.parseBoolean(System.getenv("PRETTY_PRINT"));
@@ -153,7 +159,7 @@ public class ProductNameExtractorController {
 
     private static void updateProductDict(Map<String, CpeGroup> productDict, long timeSinceLastComp) {
         // Check if product dict is stale
-        if(timeSinceLastComp / (60 * 60 * 12) > 0) { // 60sec/min * 60min/hr * 24hrs = 1 day
+        if(timeSinceLastComp / (60 * 60 * 24) > 0) { // 60sec/min * 60min/hr * 24hrs = 1 day
             logger.info("Product dictionary file is stale, fetching data from NVD to refresh it...");
             int insertedCounter = 0;
             int notChangedCounter = 0;
@@ -174,7 +180,7 @@ public class ProductNameExtractorController {
                     notChangedCounter
             );
 
-            writeProductDict(productDict, productDictPath); // Write updated product dict
+            writeProductDict(productDict,  productDictName); // Write updated product dict
         }
     }
 
@@ -284,6 +290,9 @@ public class ProductNameExtractorController {
         // Init CPE dict data storage
         Map<String, CpeGroup> productDict;
 
+        // Build product dict path String
+        final String productDictPath = dataDir + "/" + productDictName;
+
         try {
             // Read in product dict
             productDict = readProductDict(productDictPath);
@@ -292,7 +301,7 @@ public class ProductNameExtractorController {
             final long timeSinceLastComp = Duration.between(productDictLastCompilationDate, Instant.now()).getSeconds();
             logger.info("Successfully read {} products from file '{}' ({} hours old)",
                     productDict.size(),
-                    productDictPath,
+                    productDictName,
                     timeSinceLastComp / 3600 // seconds -> hours
             );
 
@@ -302,7 +311,7 @@ public class ProductNameExtractorController {
             // Load CPE dict into affectedProductIdentifier
             affectedProductIdentifier.loadCPEDict(productDict);
         } catch (Exception e) {
-            logger.error("Failed to load product dict at filepath '{}', querying NVD...: {}", productDictPath, e.toString());
+            logger.error("Failed to load product dict at filepath '{}', querying NVD...: {}", productDictName, e);
             productDict = affectedProductIdentifier.queryCPEDict(maxPages, maxAttemptsPerPage); // Query
             affectedProductIdentifier.loadCPEDict(productDict); // Load into CpeLookup
 
@@ -310,7 +319,7 @@ public class ProductNameExtractorController {
         }
 
         // Run the AffectedProductIdentifier with the cveLimit
-        List<AffectedProduct> affectedProducts = affectedProductIdentifier.identifyAffectedProducts(cveLimit);
+        List<AffectedProduct> affectedProducts = affectedProductIdentifier.identifyAffectedProducts(dataDir, cveLimit);
 
         if(testMode){
             logger.info("Printing test results...");

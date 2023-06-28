@@ -171,6 +171,7 @@ public class AffectedProductIdentifier {
 		} catch (Exception e) {
 			logger.error("Error {} while extracting affected products! Processed: {} out of {} CVEs; CVE: {}", e, counterOfProcessedCVEs.toString(), Integer.toString(totalCVEtoProcess),
 					vulnerability.toString());
+			e.printStackTrace();
 		}
 
 		totalCVETime.addAndGet(System.currentTimeMillis() - startCVETime);
@@ -184,7 +185,7 @@ public class AffectedProductIdentifier {
 	 * @param cveLimit limit of CVEs to drive
 	 * @return a map of products affected by pulled CVEs
 	 */
-	public List<AffectedProduct> identifyAffectedProducts(int cveLimit) {
+	public List<AffectedProduct> identifyAffectedProducts(String dataDir, int cveLimit) {
 		// Set # to process based on cveLimit. If cveLimit is 0, assume no limit.
 		if(cveLimit == 0) cveLimit = Integer.MAX_VALUE;
 		int totalCVEtoProcess = Math.min(vulnList.size(), cveLimit);
@@ -194,7 +195,7 @@ public class AffectedProductIdentifier {
 
 		ProductDetector productNameDetector;
 		try {
-			productNameDetector = new ProductDetector(this.cpeLookUp);
+			productNameDetector = new ProductDetector(this.cpeLookUp, dataDir);
 		} catch (Exception e1) {
 			logger.error("Severe Error! Could not initialize the models for product name/version extraction! Skipping affected product identification step! {}", e1.toString());
 			return null;

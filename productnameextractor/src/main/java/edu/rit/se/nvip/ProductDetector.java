@@ -56,18 +56,20 @@ public class ProductDetector {
 
 	private final POSTaggerME tagger;
 	private final POSModel model;
-	private final String modelPath = "nvip_data/nlp/en-pos-perceptron.bin";
+	private final String modelPath = "nlp/en-pos-perceptron.bin";
 
 	static private final Logger logger = LogManager.getLogger(ProductDetector.class);
 
 	/**
 	 * Class constructor
 	 */
-	public ProductDetector(CpeLookUp cpeLookUp) throws IOException {
+	public ProductDetector(CpeLookUp cpeLookUp, String dataDir) throws IOException {
+		final String binPath = dataDir + "/" + modelPath;
+
 		try {
 			// Load NER model
 			logger.info("Loading NER model...");
-			nerModel = new NERmodel();
+			nerModel = new NERmodel(dataDir + "/");
 
 			// Load CPE dictionary
 			logger.info("Loading CPE dictionary...");
@@ -75,7 +77,7 @@ public class ProductDetector {
 
 			// Load Apache OpenNLP sentence model
 			logger.info("Loading NLP sentence model...");
-			File binFile = new File(modelPath);
+			File binFile = new File(binPath);
 			InputStream modelStream = Files.newInputStream(binFile.toPath());
 			assert modelStream != null;
 			model = new POSModel(modelStream);
@@ -85,7 +87,7 @@ public class ProductDetector {
 			logger.info("Product detector initialization done!");
 		} catch (IOException e) {
 			// Log and rethrow error to stop program execution
-			logger.error("Error while initializing product detector, model path {}, exception detail {}", modelPath, e.toString());
+			logger.error("Error while initializing product detector, model path {}, exception detail {}", binPath, e.toString());
 			throw e;
 		}
 	}
