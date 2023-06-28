@@ -82,7 +82,6 @@ public class AffectedProductIdentifier {
 	 * @param totalNERTime
 	 * @param totalCPETime
 	 * @param totalCVETime
-	 * @param totalCVEtoProcess
 	 */
 	private void processVulnerability(
 			ProductDetector productNameDetector,
@@ -96,8 +95,7 @@ public class AffectedProductIdentifier {
 			AtomicInteger numOfProductsMappedToCpe,
 			AtomicLong totalNERTime,
 			AtomicLong totalCPETime,
-			AtomicLong totalCVETime,
-			int totalCVEtoProcess
+			AtomicLong totalCVETime
 	) {
 		String description = vulnerability.getDescription();
 
@@ -170,7 +168,7 @@ public class AffectedProductIdentifier {
 			}
 
 		} catch (Exception e) {
-			logger.error("Error {} while extracting affected products! Processed: {} out of {} CVEs; CVE: {}", e, counterOfProcessedCVEs.toString(), Integer.toString(totalCVEtoProcess),
+			logger.error("Error {} while extracting affected products! CVE: {}", e,
 					vulnerability.toString());
 			e.printStackTrace();
 		}
@@ -215,77 +213,27 @@ public class AffectedProductIdentifier {
 
 		logger.info("Starting product name extraction process... # CVEs to be processed: {}", totalCVEtoProcess);
 
-
-
-
-
-//		// Create a thread pool with a fixed number of threads
-//		ExecutorService executor = Executors.newFixedThreadPool(numThreads);
-//
-//		// Iterate through the list of vulnerabilities
-//		for (int i = 0; i < vulnList.size(); i++) {
-//			// Limit to cveLimit
-//			if(i >= cveLimit) break;
-//
-//			CompositeVulnerability vulnerability = vulnList.get(i);
-//			// Submit a task to the executor to process each vulnerability
-//			executor.submit(() -> processVulnerability(
-//					productNameDetector,
-//					cpeLookUp,
-//					vulnerability,
-//					counterOfBadDescriptionCVEs,
-//					counterOfSkippedCVEs,
-//					counterOfProcessedCVEs,
-//					counterOfProcessedNERs,
-//					counterOfProcessedCPEs,
-//					numOfProductsNotMappedToCPE,
-//					numOfProductsMappedToCpe,
-//					totalNERTime,
-//					totalCPETime,
-//					totalCVETime,
-//					totalCVEtoProcess
-//			));
-//
-//			if (counterOfProcessedCVEs.get() % 100 == 0 && counterOfProcessedCPEs.get() != totalCVEtoProcess) {
-//				double percent = Math.floor(((double) (counterOfProcessedCVEs.get() + counterOfBadDescriptionCVEs.get() + counterOfSkippedCVEs.get()) / totalCVEtoProcess * 100) * 100) / 100;
-//				logger.info("Extracted {} affected product(s) for {} out of {} CVEs so far! {} CVEs skipped (not-changed or bad description), {}% done.", numOfProductsMappedToCpe, counterOfProcessedCVEs, totalCVEtoProcess,
-//						(counterOfBadDescriptionCVEs.get() + counterOfSkippedCVEs.get()), percent);
-//			}
-//		}
-//
-//		executor.shutdown();
-//
-//		try {
-//			// Shut down the executor to release resources after all tasks are complete
-//			final int timeout = 30;
-//			final TimeUnit unit = TimeUnit.MINUTES;
-//			if(!executor.awaitTermination(30, TimeUnit.MINUTES)) {
-//				throw new TimeoutException(String.format("Product extraction thread pool runtime exceeded timeout value of %s %s", timeout, unit.toString()));
-//			}
-//			logger.info("Product extraction thread pool completed all jobs, shutting down...");
-//			executor.shutdown();
-//		} catch (Exception e) {
-//			logger.error("Product extraction failed: {}", e.toString());
-//			e.printStackTrace();
-//		}
-
-
-
 		final BlockingQueue<Runnable> workQueue = new ArrayBlockingQueue<>(vulnList.size());
 
 		final ThreadPoolExecutor executor = new ThreadPoolExecutor(
 				numThreads,
 				numThreads,
-				5,
-				TimeUnit.MINUTES,
+				15,
+				TimeUnit.SECONDS,
 				workQueue
 		);
 
 		executor.prestartAllCoreThreads();
 
-		for (CompositeVulnerability vulnerability : vulnList) {
+		for (int i = 0; i < vulnList.size(); i++) {
+			CompositeVulnerability vulnerability = vulnList.get(i);
+
+			if(i >= totalCVEtoProcess) {
+				break;
+			}
+
 			try {
-				workQueue.add(() -> processVulnerability(
+				if(!workQueue.offer(() -> processVulnerability(
 						productNameDetector,
 						cpeLookUp,
 						vulnerability,
@@ -298,19 +246,19 @@ public class AffectedProductIdentifier {
 						numOfProductsMappedToCpe,
 						totalNERTime,
 						totalCPETime,
-						totalCVETime,
-						totalCVEtoProcess
-				));
+						totalCVETime
+				))) throw new Exception();
 			} catch (Exception e) {
 				logger.error("Failed to add {} to the work queue: {}", vulnerability.getCveId(), e.toString());
+				totalCVEtoProcess--;
+				counterOfSkippedCVEs.incrementAndGet();
 			}
 		}
 
 		executor.shutdown();
 
 		long secondsWaiting = 0;
-		final int initNumCVEs = workQueue.size();
-		int lastNumCVEs = initNumCVEs;
+		int lastNumCVEs = totalCVEtoProcess;
 		try {
 			while(!executor.awaitTermination(15, TimeUnit.SECONDS)) {
 				secondsWaiting += 15L;
@@ -320,9 +268,9 @@ public class AffectedProductIdentifier {
 					final double rate = (double) (lastNumCVEs - currNumCVEs) / 15;
 					final double remainingTime = currNumCVEs / rate;
 					logger.info(
-							"{} out of {} CVEs processed (Avg {} CVEs/second; Est time until completion: {} minutes ({} seconds))...",
-							initNumCVEs - currNumCVEs,
-							initNumCVEs,
+							"{} out of {} CVEs processed ({} CVEs/second; Est time until completion: {} minutes ({} seconds))...",
+							totalCVEtoProcess - currNumCVEs,
+							totalCVEtoProcess,
 							Math.floor(rate * 100) / 100,
 							Math.floor(remainingTime / 60 * 100) / 100,
 							Math.floor(remainingTime * 100) / 100
@@ -338,11 +286,16 @@ public class AffectedProductIdentifier {
 			logger.error("{} tasks not executed", remainingTasks.size());
 		}
 
-		logger.info("Extracted product(s) for {} out of {} CVEs so far! {} CVEs skipped", counterOfProcessedCVEs, totalCVEtoProcess, counterOfSkippedCVEs);
+		logger.info("Successfully extracted product(s) for {} out of {} CVEs! Skipped {} CVEs", counterOfProcessedCVEs, totalCVEtoProcess, counterOfSkippedCVEs);
 
 		AtomicInteger count = new AtomicInteger();
 		vulnList.stream().map(v -> v.getAffectedProducts().size()).forEach(count::addAndGet);
 		logger.info("Found {} affected products ({} unique excluding versions) from {} CVEs in {} seconds", count, cpeLookUp.getUniqueCPECount(), totalCVEtoProcess, Math.floor(((double) (System.currentTimeMillis() - start) / 1000) * 100) / 100);
+		logger.info("NER Time: {} seconds | CPE Time: {} seconds | CVE Time: {} seconds ",
+				totalNERTime.get() / 1000,
+				totalCPETime.get() / 1000,
+				totalCVETime.get() / 1000
+		);
 
 		List<AffectedProduct> affectedProducts = new ArrayList<>();
 		for (CompositeVulnerability vulnerability : vulnList) {
