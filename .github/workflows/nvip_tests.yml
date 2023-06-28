@@ -156,7 +156,7 @@ jobs:
         run: |
           cd productnameextractor
           mvn dependency:go-offline
-          mvn package
+          mvn package -e -x
 
       - name: Publish Test Report
         if: success() || failure()
