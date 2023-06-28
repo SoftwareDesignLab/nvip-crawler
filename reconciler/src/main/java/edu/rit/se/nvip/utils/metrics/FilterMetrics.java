@@ -7,9 +7,9 @@ import java.util.Map;
 import java.util.Set;
 
 public class FilterMetrics {
-    private List<Set<RawVulnerability>> runs;
+    private List<CrawlerRun> runs;
     public FilterMetrics(String directoryPath) {
-        // todo read in each json from the directory into a set of rawvulns
+        // todo read in each json from the directory into CrawlerRun
     }
     // todo also need versions of all of these with a parser type arg, where only results for that parser are returned
     // todo also need versions of all of these that take a filter setting arg (all, local, individual)
