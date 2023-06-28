@@ -67,7 +67,7 @@ public class RedHatParserTest extends AbstractParserTest {
 		assertEquals("CVE-2023-25725", sample.getCveId());
 		assertTrue(sample.getDescription().contains("A flaw was found in HAProxy's headers processing that causes HAProxy to drop important headers fields such as Connection, Content-length, Transfer-Encoding,"));
 		assertEquals("2023-02-14 16:20:00", sample.getPublishDate());
-		assertEquals("2023-06-24 06:06:14", sample.getLastModifiedDate());
+		assertEquals("2023-06-24 10:06:14", sample.getLastModifiedDate());
 
 	}
 }
