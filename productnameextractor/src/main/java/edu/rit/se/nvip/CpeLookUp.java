@@ -82,7 +82,6 @@ public class CpeLookUp {
 	 * map.values();
 	 */
 	private final static Logger logger = LogManager.getLogger(CpeLookUp.class);
-	private final static VersionManager versionManager = new VersionManager();
 
 	/**
 	 * Class that has CPE groups with matching score and can be sorted
@@ -462,6 +461,9 @@ public class CpeLookUp {
 			String[] versionWords = product.getVersions() // Get product versions
 					.stream().map(String::toLowerCase) // Map each element toLowerCase
 					.toArray(String[]::new); // Return elements in a String[]
+
+			//Instantiate new VersionManager
+			VersionManager versionManager = new VersionManager();
 
 			// Process non-specific versions into enumerated ranges
 			// [ "1.2.2", "through", "1.3", "1.5", "before", "1.8.9" ]
