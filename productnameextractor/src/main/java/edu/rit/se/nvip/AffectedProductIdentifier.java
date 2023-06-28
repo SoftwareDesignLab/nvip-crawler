@@ -161,11 +161,13 @@ public class AffectedProductIdentifier {
 					}
 					// if CPE identified, add it as affected product
 					for (String itemID : productIDs) {
-						logger.info("Found Affected Product for {}: {}", vulnerability.getCveId(), itemID);
+//						logger.info("Found Affected Product for {}: {}", vulnerability.getCveId(), itemID);
 						existingProducts.add(new AffectedProduct(0, vulnerability.getCveId(), itemID, CpeLookUp.getNameFromCPEid(itemID), vulnerability.getPublishDate(), CpeLookUp.getVersionFromCPEid(itemID), CpeLookUp.getVendorFromCPEid(itemID)));
 						numOfProductsMappedToCpe.getAndIncrement();
 					}
 				}
+				if(productList.size() > 0)
+					logger.info("Found {} Affected Product(s) for {}", productList.size(), vulnerability.getCveId());
 			}
 
 		} catch (Exception e) {
@@ -261,6 +263,7 @@ public class AffectedProductIdentifier {
 			executor.shutdown();
 		} catch (Exception e) {
 			logger.error("Product extraction failed: {}", e.toString());
+			e.printStackTrace();
 		}
 
 		logger.info("Extracted product(s) for {} out of {} CVEs so far! {} CVEs skipped", counterOfProcessedCVEs, totalCVEtoProcess, counterOfSkippedCVEs);
