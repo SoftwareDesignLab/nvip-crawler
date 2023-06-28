@@ -54,6 +54,7 @@ public class AffectedProductIdentifier {
 
 	private final List<CompositeVulnerability> vulnList;
 	private final CpeLookUp cpeLookUp;
+	private final int numThreads;
 
 	/**
 	 * Initialize the AffectedProductIdentifier with its own internal CpeLookup
@@ -62,9 +63,10 @@ public class AffectedProductIdentifier {
 	 *
 	 * @param vulnList list of vulnerabilities to use for product identification.
 	 */
-	public AffectedProductIdentifier(List<CompositeVulnerability> vulnList) {
+	public AffectedProductIdentifier(List<CompositeVulnerability> vulnList, int numThreads) {
 		this.vulnList = vulnList;
 		this.cpeLookUp = new CpeLookUp();
+		this.numThreads = numThreads;
 	}
 
 	/**
@@ -215,7 +217,7 @@ public class AffectedProductIdentifier {
 		logger.info("Starting product name extraction process... # CVEs to be processed: {}", totalCVEtoProcess);
 
 		// Create a thread pool with a fixed number of threads
-		ExecutorService executor = Executors.newFixedThreadPool(12);
+		ExecutorService executor = Executors.newFixedThreadPool(numThreads);
 
 		// Iterate through the list of vulnerabilities
 		for (int i = 0; i < vulnList.size(); i++) {

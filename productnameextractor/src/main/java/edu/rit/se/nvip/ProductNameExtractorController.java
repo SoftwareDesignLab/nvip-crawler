@@ -29,6 +29,7 @@ public class ProductNameExtractorController {
     private static final DatabaseHelper databaseHelper = DatabaseHelper.getInstance();
     private static final ObjectMapper OM = new ObjectMapper();
     protected static int cveLimit = 300;
+    protected static int numThreads = 12;
     protected static int maxPages = 10;
     protected static int maxAttemptsPerPage = 2;
     protected static boolean prettyPrint = false;
@@ -107,6 +108,13 @@ public class ProductNameExtractorController {
                 logger.info("Setting CVE_LIMIT to {}", cveLimit);
             } else throw new Exception();
         } catch (Exception ignored) { logger.warn("Could not fetch CVE_LIMIT from env vars, defaulting to {}", cveLimit); }
+
+        try {
+            if(props.containsKey("NUM_THREADS")) {
+                numThreads = Integer.parseInt(System.getenv("NUM_THREADS"));
+                logger.info("Setting NUM_THREADS to {}", numThreads);
+            } else throw new Exception();
+        } catch (Exception ignored) { logger.warn("Could not fetch NUM_THREADS from env vars, defaulting to {}", numThreads); }
 
         try {
             if(props.containsKey("MAX_PAGES")) {
@@ -299,7 +307,7 @@ public class ProductNameExtractorController {
         final long getProdStart = System.currentTimeMillis();
 
         // Init AffectedProductIdentifier
-        ProductNameExtractorController.affectedProductIdentifier = new AffectedProductIdentifier(vulnList);
+        ProductNameExtractorController.affectedProductIdentifier = new AffectedProductIdentifier(vulnList, numThreads);
 
         // Init CPE dict data storage
         Map<String, CpeGroup> productDict;
