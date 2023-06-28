@@ -283,7 +283,11 @@ public class AffectedProductIdentifier {
 
 		executor.prestartAllCoreThreads();
 
-		for (CompositeVulnerability vulnerability : vulnList) {
+		for (int i = 0; i < vulnList.size(); i++) {
+			if(i > totalCVEtoProcess){
+				break;
+			}
+			CompositeVulnerability vulnerability = vulnList.get(i);
 			try {
 				workQueue.add(() -> processVulnerability(
 						productNameDetector,
