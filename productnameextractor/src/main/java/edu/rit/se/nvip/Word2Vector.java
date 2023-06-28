@@ -59,6 +59,7 @@ public class Word2Vector {
 			// TODO Auto-generated catch block
 			Logger logger = LogManager.getLogger(getClass().getSimpleName());
 			logger.error(e);
+			e.printStackTrace();
 		}		
 	}
 	

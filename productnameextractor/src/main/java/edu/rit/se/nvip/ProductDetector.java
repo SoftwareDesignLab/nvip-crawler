@@ -56,20 +56,23 @@ public class ProductDetector {
 
 	private final POSTaggerME tagger;
 	private final POSModel model;
-	private final String modelPath = "nlp/en-pos-perceptron.bin";
-
 	static private final Logger logger = LogManager.getLogger(ProductDetector.class);
 
 	/**
 	 * Class constructor
 	 */
-	public ProductDetector(CpeLookUp cpeLookUp, String dataDir) throws IOException {
-		final String binPath = dataDir + "/" + modelPath;
+	public ProductDetector(CpeLookUp cpeLookUp, String resourceDir, String nlpDir, String dataDir) throws IOException {
+		String binName = System.getenv("PRODUCT_DETECTOR_MODEL");
+		if(binName == null) {
+			binName = "en-pos-perceptron.bin";
+			logger.warn("Could not read PRODUCT_DETECTOR_MODEL from env vars, defaulting to {}", binName);
+		}
+		final String binPath = resourceDir + "/" + dataDir + "/" + nlpDir + "/" + binName;
 
 		try {
 			// Load NER model
 			logger.info("Loading NER model...");
-			nerModel = new NERmodel(dataDir + "/");
+			nerModel = new NERmodel(resourceDir + "/" + dataDir + "/", nlpDir);
 
 			// Load CPE dictionary
 			logger.info("Loading CPE dictionary...");

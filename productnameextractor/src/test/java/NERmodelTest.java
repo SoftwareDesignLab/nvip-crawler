@@ -42,6 +42,9 @@ import static org.junit.Assert.*;
  */
 
 public class NERmodelTest {
+	private static final String RESOURCE_DIR = System.getenv("RESOURCE_DIR");
+	private static final String NLP_DIR = System.getenv("NLP_DIR");
+
 	// Init cpeLookUp
 	private static final CpeLookUp cpeLookUp = new CpeLookUp();
 	static {
@@ -115,7 +118,7 @@ public class NERmodelTest {
 		String testDescription = "The daemon in rsync 3.1.2 and 3.1.3-development before 2017-12-03 does not check for fnamecmp filenames in the daemon_filter_list data structure (in the recv_files function in receiver.c) and also does not apply the sanitize_paths protection mechanism to pathnames found in \"xname follows\" strings (in the read_ndx_and_attrs function in rsync.c) which allows remote attackers to bypass intended access restrictions.";
 
 		long startTime = System.currentTimeMillis();
-		NERmodel nerModel = new NERmodel(DATA_DIR + "/");
+		NERmodel nerModel = new NERmodel(RESOURCE_DIR + "/" + DATA_DIR + "/", NLP_DIR);
 		long endTime = System.currentTimeMillis();
 		System.out.println("Timing for overall NER model initialization: " + Long.toString(endTime-startTime) + "ms.");
 
@@ -152,7 +155,7 @@ public class NERmodelTest {
 
 		ProductDetector nameDetector = null;
 		try {
-			nameDetector = new ProductDetector(cpeLookUp, DATA_DIR);
+			nameDetector = new ProductDetector(cpeLookUp, RESOURCE_DIR, NLP_DIR, DATA_DIR);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}

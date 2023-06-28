@@ -81,7 +81,7 @@ public class NERmodel {
 	/**
 	 * Class constructor
 	 */
-	public NERmodel(String modelsDir) {
+	public NERmodel(String modelsDir, String nlpDir) {
 		super();
 
 
@@ -93,7 +93,7 @@ public class NERmodel {
 			String w2vModelPath = modelsDir + System.getenv("WORD_2_VEC");
 			String nerModelPath = modelsDir + System.getenv("NER_MODEL");
 			String nerNormalizerPath = modelsDir + System.getenv("NER_MODEL_NORMALIZER");
-			String sentenceModelPath = modelsDir + System.getenv("SENTENCE_MODEL");
+			String sentenceModelPath = modelsDir + nlpDir + "/" + System.getenv("SENTENCE_MODEL");
 
 			long startTime = System.currentTimeMillis();
 			// Load NER model

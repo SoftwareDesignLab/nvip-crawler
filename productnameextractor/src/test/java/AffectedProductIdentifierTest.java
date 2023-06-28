@@ -42,6 +42,8 @@ import static org.junit.Assert.assertTrue;
  */
 
 public class AffectedProductIdentifierTest {
+	private final String resourceDir = System.getenv("RESOURCE_DIR");
+	private final String nlpDir = System.getenv("NLP_DIR");
 	private final String dataDir = System.getenv("DATA_DIR");
 
 	/**
@@ -66,7 +68,7 @@ public class AffectedProductIdentifierTest {
 		}
 
 		// Identify releases
-		affectedProductIdentifier.identifyAffectedProducts(dataDir, 100);
+		affectedProductIdentifier.identifyAffectedProducts(resourceDir, nlpDir, dataDir, 100);
 
 		System.out.println(v.getAffectedProducts());
 

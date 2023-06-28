@@ -34,7 +34,9 @@ public class ProductNameExtractorController {
     protected static boolean prettyPrint = false;
     protected static boolean testMode = false;
     protected static String productDictName = "product_dict.json";
-    protected static String dataDir = "productnameextractor/nvip_data/data";
+    protected static String resourceDir = "productnameextractor/nvip_data";
+    protected static String dataDir = "data";
+    protected static String nlpDir = "nlp";
     private static Instant productDictLastCompilationDate;
     private static AffectedProductIdentifier affectedProductIdentifier;
 
@@ -125,10 +127,20 @@ public class ProductNameExtractorController {
             logger.info("Setting PRODUCT_DICT_NAME to {}", productDictName);
         } else logger.warn("Could not fetch PRODUCT_DICT_NAME from env vars, defaulting to {}", productDictName);
 
+        if(props.containsKey("RESOURCE_DIR")) {
+            resourceDir = System.getenv("RESOURCE_DIR");
+            logger.info("Setting RESOURCE_DIR to {}", resourceDir);
+        } else logger.warn("Could not fetch RESOURCE_DIR from env vars, defaulting to {}", resourceDir);
+
         if(props.containsKey("DATA_DIR")) {
             dataDir = System.getenv("DATA_DIR");
             logger.info("Setting DATA_DIR to {}", dataDir);
         } else logger.warn("Could not fetch DATA_DIR from env vars, defaulting to {}", dataDir);
+
+        if(props.containsKey("NLP_DIR")) {
+            nlpDir = System.getenv("NLP_DIR");
+            logger.info("Setting NLP_DIR to {}", nlpDir);
+        } else logger.warn("Could not fetch NLP_DIR from env vars, defaulting to {}", nlpDir);
 
         if(props.containsKey("PRETTY_PRINT")) {
             prettyPrint = Boolean.parseBoolean(System.getenv("PRETTY_PRINT"));
@@ -191,7 +203,7 @@ public class ProductNameExtractorController {
      */
     private static ArrayList<CompositeVulnerability> createTestVulnList(){
         ArrayList<CompositeVulnerability> vulnList = new ArrayList<>();
-        String filePath = "nvip_data/data/test_vulnerabilities.csv";
+        String filePath = "productnameextractor/nvip_data/data/test_vulnerabilities.csv";
         try{
             CSVReader reader = new CSVReader(new FileReader(filePath));
             for(String[] line : reader.readAll()){
@@ -291,7 +303,7 @@ public class ProductNameExtractorController {
         Map<String, CpeGroup> productDict;
 
         // Build product dict path String
-        final String productDictPath = dataDir + "/" + productDictName;
+        final String productDictPath = resourceDir + "/" + dataDir + "/" + productDictName;
 
         try {
             // Read in product dict
@@ -311,7 +323,7 @@ public class ProductNameExtractorController {
             // Load CPE dict into affectedProductIdentifier
             affectedProductIdentifier.loadCPEDict(productDict);
         } catch (Exception e) {
-            logger.error("Failed to load product dict at filepath '{}', querying NVD...: {}", productDictName, e);
+            logger.error("Failed to load product dict at filepath '{}', querying NVD...: {}", productDictPath, e);
             productDict = affectedProductIdentifier.queryCPEDict(maxPages, maxAttemptsPerPage); // Query
             affectedProductIdentifier.loadCPEDict(productDict); // Load into CpeLookup
 
@@ -319,7 +331,7 @@ public class ProductNameExtractorController {
         }
 
         // Run the AffectedProductIdentifier with the cveLimit
-        List<AffectedProduct> affectedProducts = affectedProductIdentifier.identifyAffectedProducts(dataDir, cveLimit);
+        List<AffectedProduct> affectedProducts = affectedProductIdentifier.identifyAffectedProducts(resourceDir, nlpDir, dataDir, cveLimit);
 
         if(testMode){
             logger.info("Printing test results...");

@@ -25,6 +25,8 @@ import static org.mockito.Mockito.when;
  */
 public class ProductDetectorTest {
     private ProductDetector productDetector;
+    private final String resourceDir = System.getenv("RESOURCE_DIR");
+    private final String nlpDir = System.getenv("NLP_DIR");
     private final String dataDir = System.getenv("DATA_DIR");
 
     @Before
@@ -33,7 +35,7 @@ public class ProductDetectorTest {
         CpeLookUp cpeLookUp = new CpeLookUp();
         final Map<String, CpeGroup> productDict = ProductNameExtractorController.readProductDict("src/test/resources/data/test_product_dict.json");
         cpeLookUp.loadProductDict(productDict);
-        productDetector = new ProductDetector(cpeLookUp, dataDir);
+        productDetector = new ProductDetector(cpeLookUp, resourceDir, nlpDir, dataDir);
 
     }
     @Test
