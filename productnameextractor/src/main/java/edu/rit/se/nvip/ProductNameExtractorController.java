@@ -218,7 +218,7 @@ public class ProductNameExtractorController {
             }
             reader.close();
         }catch(FileNotFoundException e){
-            logger.warn("Could not find the test csv file at path {}", testVulnerabilitiesFile.getPath());
+            logger.warn("Could not find the test csv file at path {}", testVulnerabilitiesFile.getAbsolutePath());
         }catch(Exception e){
             logger.warn("Error {} reading the test csv file", e.toString());
         }
@@ -253,11 +253,13 @@ public class ProductNameExtractorController {
                 builder.append("\n\n\n");
                 System.out.println("\n" + builder);
                 writer.write(builder.toString());
+
+                logger.info("Test results have been written to file {}", testResultsFile.getAbsolutePath());
             }
 
             writer.close();
         } catch(FileNotFoundException e){
-            logger.warn("Could not find the test results csv file at path {}", testResultsFile.getPath());
+            logger.warn("Could not find the test results csv file at path {}", testResultsFile.getAbsolutePath());
         }
 
     }
