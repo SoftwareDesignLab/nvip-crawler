@@ -40,7 +40,7 @@ import org.openqa.selenium.TimeoutException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 public class GitHubAdvisoryParser extends AbstractCveParser {
 
@@ -94,17 +94,17 @@ public class GitHubAdvisoryParser extends AbstractCveParser {
             Elements dates = subhead.select("relative-time");
             // non-formatted original dates found in 'title' attribute of our relative-date tags found
             if (dates.size() > 0) {
-                publishDate = dates.get(0).attr("title");
+                publishDate = LocalDateTime.parse(dates.get(0).attr("datetime").substring(0,19)).toString();
                 if (dates.size() > 1)
-                    lastModifiedDate = dates.get(1).attr("title");
+                    lastModifiedDate = LocalDateTime.parse(dates.get(1).attr("datetime").substring(0,19)).toString();
             }
         }
 
         if(publishDate == null){
-            publishDate = LocalDate.now().toString();
+            publishDate = LocalDateTime.now().toString();
         }
         if(lastModifiedDate == null){
-            lastModifiedDate = LocalDate.now().toString();
+            lastModifiedDate = LocalDateTime.now().toString();
         }
 
         vulnList.add(new RawVulnerability(
