@@ -1,13 +1,16 @@
 import edu.rit.se.nvip.Word2Vector;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+
+import java.io.FileNotFoundException;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 public class Word2VectorTest {
     private static Word2Vector word2Vector;
 
     @BeforeAll
-    public static void setUp() {
+    public static void setUp() throws FileNotFoundException {
         // Initialize the Word2Vector instance with the model file path
         String modelPath = "nvip_data/data/w2v_model_250.bin";
         word2Vector = new Word2Vector(modelPath);

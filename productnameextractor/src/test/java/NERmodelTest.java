@@ -97,7 +97,12 @@ public class NERmodelTest {
 
 		String modelsDir = DATA_DIR + "/";
 		String w2vModelPath = modelsDir + WORD_2_VEC;
-		Word2Vector w2vModel = new Word2Vector(w2vModelPath);
+		Word2Vector w2vModel = null;
+		try {
+			w2vModel = new Word2Vector(w2vModelPath);
+		} catch (Exception e) {
+			fail(e.toString());
+		}
 		int wordVecLength = w2vModel.getOutVectorLength();
 
 		long startTime = System.currentTimeMillis();
@@ -118,7 +123,12 @@ public class NERmodelTest {
 		String testDescription = "The daemon in rsync 3.1.2 and 3.1.3-development before 2017-12-03 does not check for fnamecmp filenames in the daemon_filter_list data structure (in the recv_files function in receiver.c) and also does not apply the sanitize_paths protection mechanism to pathnames found in \"xname follows\" strings (in the read_ndx_and_attrs function in rsync.c) which allows remote attackers to bypass intended access restrictions.";
 
 		long startTime = System.currentTimeMillis();
-		NERmodel nerModel = new NERmodel(RESOURCE_DIR + "/" + DATA_DIR + "/", NLP_DIR);
+		NERmodel nerModel = null;
+		try {
+			nerModel = new NERmodel(RESOURCE_DIR + "/" + DATA_DIR + "/", NLP_DIR);
+		} catch (Exception e) {
+			fail(e.toString());
+		}
 		long endTime = System.currentTimeMillis();
 		System.out.println("Timing for overall NER model initialization: " + Long.toString(endTime-startTime) + "ms.");
 

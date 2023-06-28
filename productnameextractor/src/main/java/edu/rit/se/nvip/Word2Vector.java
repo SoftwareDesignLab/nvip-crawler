@@ -47,7 +47,7 @@ public class Word2Vector {
 	 * Class constructor
 	 * @param modelPath String Model file path
 	 */		
-	public Word2Vector(String modelPath) {
+	public Word2Vector(String modelPath) throws FileNotFoundException {
 		super();
 		
 		try {
@@ -59,7 +59,7 @@ public class Word2Vector {
 			// TODO Auto-generated catch block
 			Logger logger = LogManager.getLogger(getClass().getSimpleName());
 			logger.error(e);
-			e.printStackTrace();
+			throw e;
 		}		
 	}
 	

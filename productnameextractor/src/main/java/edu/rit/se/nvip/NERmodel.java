@@ -37,6 +37,7 @@ import org.nd4j.linalg.factory.Nd4j;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -81,13 +82,12 @@ public class NERmodel {
 	/**
 	 * Class constructor
 	 */
-	public NERmodel(String modelsDir, String nlpDir) {
+	public NERmodel(String modelsDir, String nlpDir) throws FileNotFoundException {
 		super();
 
 
 		try {
 			// Get models paths
-//			String modelsDir = System.getenv("DATA_DIR") + "/";
 			String c2vModelConfigPath = modelsDir + System.getenv("CHAR_2_VEC_CONFIG");
 			String c2vModelWeightsPath = modelsDir + System.getenv("CHAR_2_VEC_WEIGHTS");
 			String w2vModelPath = modelsDir + System.getenv("WORD_2_VEC");
@@ -165,7 +165,7 @@ public class NERmodel {
 			}
 		} catch (Exception e) {
 			logger.error("ERROR: Error initializing NERmodel {}", e.toString());
-			e.printStackTrace();
+			throw e;
 		}
 
 	}
