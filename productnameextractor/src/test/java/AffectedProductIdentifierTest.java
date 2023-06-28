@@ -42,6 +42,7 @@ import static org.junit.Assert.assertTrue;
  */
 
 public class AffectedProductIdentifierTest {
+	private final String dataDir = System.getenv("DATA_DIR");
 
 	/**
 	 * Test product name extraction for a simple CVE
@@ -65,7 +66,7 @@ public class AffectedProductIdentifierTest {
 		}
 
 		// Identify releases
-		affectedProductIdentifier.identifyAffectedProducts(100);
+		affectedProductIdentifier.identifyAffectedProducts(dataDir, 100);
 
 		System.out.println(v.getAffectedProducts());
 
