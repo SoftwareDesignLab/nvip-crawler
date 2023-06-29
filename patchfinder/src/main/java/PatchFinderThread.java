@@ -83,7 +83,7 @@ public class PatchFinderThread implements Runnable {
 		}
 
 		// Add found commits to total list after finished
-		PatchFinder.getPatchCommits().addAll(foundPatchCommits);
+		PatchFinder.getPatchCommits().addAll(foundPatchCommits); // TODO: This may be causing race conditions
 
 		final long delta = (System.currentTimeMillis() - totalStart) / 1000;
 		logger.info("Done scraping {} patch commits from CVE(s) {} in {} seconds", foundPatchCommits.size(), cvePatchEntry.keySet(), delta);
@@ -129,12 +129,16 @@ public class PatchFinderThread implements Runnable {
 				}
 				logger.info("Found {} commits on the master branch @ URL '{}'", commitCount, patchSource);
 
+				// Process found repository based on size (commit count on master branch)
+
 				// If commit count is under threshold, scrape commits from url
-				if(commitCount <= PatchFinder.cloneCommitThreshold) {
+				if(commitCount <= PatchFinder.getCloneCommitThreshold())
 					findPatchCommitsFromUrl(foundPatchCommits, cve, patchSource, commitCount);
-				} else { // Otherwise, clone repo to parse commits
+				// If not over limit, clone repo to parse commits
+				else if(commitCount <= PatchFinder.getCloneCommitLimit())
 					findPatchCommitsFromRepo(foundPatchCommits, cve, patchSource);
-				}
+				// Otherwise, handle extra large repo
+				else throw new IllegalArgumentException("REPO SIZE OVER COMMIT_LIMIT, IT WILL NOT BE SCRAPED OR CLONED");
 
 			} else throw new IllegalArgumentException("Received invalid response code " + responseCode);
 

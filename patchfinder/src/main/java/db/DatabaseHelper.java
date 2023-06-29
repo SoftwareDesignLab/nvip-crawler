@@ -214,8 +214,8 @@ public class DatabaseHelper {
 			if (rs.next()) generatedKey = rs.getInt(1);
 			else throw new SQLException("Could not retrieve key of newly created record, it may not have been inserted");
 
-			logger.info("Inserted PatchURL: " + sourceURL);
 			conn.close();
+			logger.info("Inserted PatchURL: " + sourceURL);
 			return generatedKey;
 		} catch (Exception e) {
 			logger.error("ERROR: Failed to insert patch source with sourceURL {} for CVE ID {}\n{}", sourceURL,

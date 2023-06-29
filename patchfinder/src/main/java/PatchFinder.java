@@ -30,11 +30,9 @@ import org.apache.logging.log4j.Logger;
 import org.eclipse.jgit.util.FileUtils;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.*;
 
 /**
@@ -54,9 +52,13 @@ public class PatchFinder {
 	protected static String hikariUrl = "jdbc:mysql://localhost:3306/nvip?useSSL=false&allowPublicKeyRetrieval=true";
 	protected static String hikariUser = "root";
 	protected static String hikariPassword = "root";
-	protected static int cloneCommitThreshold = 1000; // TODO: Find omptimal value once github scraping is done
-	protected static String clonePath = "src/main/resources/patch-repos";
+	protected static int cloneCommitThreshold = 1000; // TODO: Find omptimal value once github scraping is working well
+	protected static int cloneCommitLimit = 50000; // TODO: Find omptimal value once github scraping is working well
+	protected static String clonePath = "patchfinder/src/main/resources/patch-repos";
 	protected static String[] addressBases = { "https://github.com/", "https://www.gitlab.com/" };
+
+	public static int getCloneCommitThreshold() { return cloneCommitThreshold; }
+	public static int getCloneCommitLimit() { return cloneCommitLimit; }
 
 	/**
 	 * Attempts to get all required environment variables from System.getenv() safely, logging
@@ -221,35 +223,40 @@ public class PatchFinder {
 	public static void findPatchesMultiThreaded(Map<String, ArrayList<String>> possiblePatchSources) throws IOException {
 		// Init clone path and clear previously stored repos
 		File dir = new File(clonePath);
+		if(!dir.exists()) throw new FileNotFoundException("Unable to locate clone path for previous run repo deletion");
 		logger.info("Clearing any existing repos @ '{}'", clonePath);
 		try { FileUtils.delete(dir, FileUtils.RECURSIVE); }
 		catch (IOException e) { logger.error("Failed to clear clone dir @ '{}': {}", dir, e); }
 
+		// Determine the actual number of CVEs to be processed
+		final int totalCVEsToProcess = Math.min(possiblePatchSources.size(), cveLimit);
+
 		// If there are less CVEs to process than maxThreads, only create cveLimit number of threads
-		if(cveLimit < maxThreads){
+		if(totalCVEsToProcess < maxThreads){
 			logger.info("Number of CVEs to process {} is less than available threads {}, setting number of available threads to {}", cveLimit, maxThreads, cveLimit);
-			maxThreads = cveLimit;
+			maxThreads = totalCVEsToProcess;
 		}
 
+		// Initialize data structures
 		ArrayList<HashMap<String, ArrayList<String>>> sourceBatches = new ArrayList<>();
-
-		// Initialize patchfinder threads
-		for (int i=0; i < maxThreads; i++) {
-			sourceBatches.add(new HashMap<>());
-		}
-
 		final BlockingQueue<Runnable> workQueue = new ArrayBlockingQueue<>(maxThreads);
-
-		final ThreadPoolExecutor e = new ThreadPoolExecutor(
-				maxThreads / 2,
+		final ThreadPoolExecutor executor = new ThreadPoolExecutor(
+				maxThreads,
 				maxThreads,
 				5,
 				TimeUnit.MINUTES,
 				workQueue
 		);
 
-		e.prestartAllCoreThreads();
+		// Prepare source batches for jobs
+		for (int i=0; i < maxThreads; i++) {
+			sourceBatches.add(new HashMap<>());
+		}
 
+		// Prestart all assigned threads (this is what runs jobs)
+		executor.prestartAllCoreThreads();
+
+		// Add jobs to work queue
 		int numSourcesAdded = 0;
 		int thread = 0;
 		for (String cveId : possiblePatchSources.keySet()) {
@@ -261,44 +268,56 @@ public class PatchFinder {
 			}
 		}
 
-		e.shutdown();
-		try {
-			while(!e.awaitTermination(15, TimeUnit.SECONDS));
-		} catch (InterruptedException ex) {
-			logger.error("Product extraction failed: {}", e);
-		}
+		// Initiate shutdown of executor (waits, but does not hang, for all jobs to complete)
+		executor.shutdown();
 
-//		ExecutorService es = Executors.newFixedThreadPool(maxThreads);
-//		// Divide cves equally amongst all threads, some threads may
-//		// have more sources based on their CVEs provided
-//		int numSourcesAdded = 0;
-//		int thread = 0;
-//		for (String cveId : possiblePatchSources.keySet()) {
-//			sourceBatches.get(thread).put(cveId, possiblePatchSources.get(cveId));
-//			numSourcesAdded++;
-//			if (numSourcesAdded % cvesPerThread == 0 && thread < maxThreads) {
-//				es.execute(new PatchFinderThread(sourceBatches.get(thread), clonePath));
-//				thread++;
-//			}
-//		}
-//
-//		// TODO: Fix multi-threading such that threads that are hanging dont or check if task queue is empty maybe
-//		try {
-//			while(es.awaitTermination(timeout, unit)) {
-//
-//			}
-//			// Shut down the executor to release resources after all tasks are complete
-//			final int timeout = 4;
-//			final TimeUnit unit = TimeUnit.MINUTES;
-//			if(!) {
-//				throw new TimeoutException(String.format("Product extraction thread pool runtime exceeded timeout value of %s %s", timeout, unit.toString()));
-//			}
-//			logger.info("Product extraction thread pool completed all jobs, shutting down...");
-//			es.shutdown();
-//		} catch (Exception e) {
-//			logger.error("Product extraction failed: {}", e.toString());
-//			es.shutdown();
-//		}
+		// Wait loop (waits for jobs to be processed and updates the user on progress)
+		final int timeout = 15;
+		long secondsWaiting = 0;
+		int numCVEsProcessed = 0;
+		int lastNumCVEs = totalCVEsToProcess;
+		try {
+			while(!executor.awaitTermination(timeout, TimeUnit.SECONDS)) {
+				secondsWaiting += timeout;
+
+				// Every minute, log a progress update
+				if(secondsWaiting % 60 == 0) {
+
+					// Determine number of CVEs processed
+					final int currNumCVEs = workQueue.size(); // Current number of remaining CVEs
+					final int deltaNumCVEs = lastNumCVEs - currNumCVEs; // Change in CVEs since last progress update
+
+					// Sum number processed
+					numCVEsProcessed += deltaNumCVEs;
+
+					// Calculate rate, avg rate, and remaining time
+					final double rate = (double) deltaNumCVEs / 60; // CVEs/sec
+					final double avgRate = (double) numCVEsProcessed / secondsWaiting; // CVEs/sec
+					final double remainingAvgTime = currNumCVEs / rate; // CVEs / CVEs/sec = remaining seconds
+
+					// Log stats
+					logger.info(
+							"{} out of {} CVEs processed (SP: {} CVEs/sec | AVG SP: {} CVEs/sec | Est time remaining: {} minutes ({} seconds))...",
+							totalCVEsToProcess - currNumCVEs,
+							totalCVEsToProcess,
+							Math.floor(rate * 100) / 100,
+							Math.floor(avgRate * 100) / 100,
+							Math.floor(remainingAvgTime / 60 * 100) / 100,
+							Math.floor(remainingAvgTime * 100) / 100
+					);
+
+					// Update lastNumCVEs
+					lastNumCVEs = currNumCVEs;
+				}
+
+//				 Timeout for whole process
+				if((secondsWaiting / 60) > 5) throw new TimeoutException("Timeout reached before all threads completed");
+			}
+		} catch (Exception e) {
+			logger.error("Patch finding failed: {}", e.toString());
+			List<Runnable> remainingTasks = executor.shutdownNow();
+			logger.error("{} tasks not executed", remainingTasks.size());
+		}
 	}
 
 }
