@@ -19,6 +19,48 @@ public class FilterMetrics {
     private List<CrawlerRun> runs = new ArrayList<>();
     private static final Logger logger = LogManager.getLogger(FilterMetrics.class.getSimpleName());
 
+    public static class FilterStats {
+        /*
+
+        NEW FILTER STATS CLASS USED IN numFiltered() TO TRACK CERTAIN FILTER STATS
+        CHECKS TO SEE HOW MANY PASSED, HOW MANY FAILED, HOW MANY TOTAL VULNS, HOW MANY TOTAL WERE FILTERED, AND HOW MANY WERE NOT FILTERED
+
+         */
+        private int notFiltered;
+        private int passedFilters;
+        private int failedFilters;
+        private int totalVulns;
+        private int totalFiltered;
+
+        public FilterStats() {
+            this.notFiltered = 0;
+            this.passedFilters = 0;
+            this.failedFilters = 0;
+            this.totalVulns = 0;
+            this.totalFiltered = 0;
+        }
+        public void increaseNotFiltered() {
+            this.notFiltered++;
+        }
+
+        public void increasePassedFilters() {
+            this.passedFilters++;
+        }
+
+        public void increaseFailedFilters() {
+            this.failedFilters++;
+        }
+
+        public void increaseTotalVulns() {
+            this.totalVulns++;
+        }
+
+        public void increaseTotalFiltered() {
+            this.totalFiltered++;
+        }
+
+    }
+
     public FilterMetrics(String directoryPath) {
 
         int runId = 1;
@@ -137,8 +179,37 @@ public class FilterMetrics {
         return null;
     }
 
-    public int[] numFiltered() {
-        return null;
+    public Map<CrawlerRun, FilterStats> numFiltered() {
+
+        Map<CrawlerRun, FilterStats> filteredStats = new HashMap<>(); //Map of runs to its filter stats meaning total number of: notFiltered, passedFilters, failedFilters, totalVulns, totalFiltered
+
+        for (CrawlerRun run : runs){ //for each run
+
+            FilterStats filterStats = new FilterStats(); //create a new stat tracker
+
+            for(RawVulnerability vuln : run.getVulns()){ //for each vuln in the run
+
+                if (vuln.getFilterStatus() == RawVulnerability.FilterStatus.UNEVALUATED || vuln.getFilterStatus() == RawVulnerability.FilterStatus.NEW){ //if it's NEW or UNEVALUATED we consider it not filtered
+                    filterStats.increaseNotFiltered();
+                }
+                else if (vuln.getFilterStatus() == RawVulnerability.FilterStatus.PASSED){ //if it passed then it filtered
+                    filterStats.increasePassedFilters();
+                }
+                else if (vuln.getFilterStatus() == RawVulnerability.FilterStatus.FAILED){ //if it failed then it failed to fully filter
+                    filterStats.increaseFailedFilters();
+                }
+
+                if (vuln.isFiltered()){
+                    filterStats.increaseTotalFiltered(); //total amount filtered at all
+                }
+
+                filterStats.increaseTotalVulns(); //total amount of vulns
+            }
+
+            filteredStats.put(run, filterStats);
+        }
+
+        return filteredStats;
     }
 
     public double[] proportionPassed() {
