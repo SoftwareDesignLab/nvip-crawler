@@ -8,10 +8,14 @@ import edu.rit.se.nvip.utils.UtilHelper;
 
 import com.opencsv.CSVWriter;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -19,6 +23,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
+import java.lang.reflect.Modifier;
 
 public class CrawlerMain {
 
@@ -100,9 +105,10 @@ public class CrawlerMain {
             crawlerMain.insertRawCVEs(crawledCVEs);
         }
         else {
-            logger.info("Outputting CVEs to a CSV");
+            logger.info("Outputting CVEs to a CSV and JSON");
             int linesWritten = cvesToCsv(crawledCVEs);
             logger.info("Wrote {} lines to {}", linesWritten, (String)crawlerVars.get("testOutputDir")+"/test_output.csv");
+            cvesToJson(crawledCVEs);
         }
         logger.info("Done!");
 
@@ -117,6 +123,27 @@ public class CrawlerMain {
                 }
             }
         }
+    }
+
+    private static void cvesToJson(HashMap<String, ArrayList<RawVulnerability>> crawledCVEs){
+        GsonBuilder builder = new GsonBuilder(); 
+        builder.setPrettyPrinting(); 
+        StringBuilder sb = new StringBuilder();
+
+        Gson gson = builder.excludeFieldsWithModifiers(Modifier.FINAL).create();
+        String json = gson.toJson(crawledCVEs);
+        // logger.info(json);
+
+        try{
+            String filepath = (String) crawlerVars.get("testOutputDir") + "/test_output.json";
+            File file = new File(filepath);
+            BufferedWriter output = new BufferedWriter(new FileWriter(file));          
+            output.write(json);
+            output.close();
+        } catch (IOException e) {
+            logger.error("Exception while writing list to JSON file!" + e);
+        }
+
     }
 
     private static int cvesToCsv(HashMap<String, ArrayList<RawVulnerability>> crawledCVEs){
