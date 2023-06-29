@@ -1,7 +1,11 @@
 package edu.rit.se.nvip.metrics;
 
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
 class FilterMetricsTest {
 
+    @Test
+    public void newVulnsPerRunTest(){
+
+    }
 }
