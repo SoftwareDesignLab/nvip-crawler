@@ -41,6 +41,7 @@ public class FilterMetrics {
         }
         public int getPassedFilters(){ return this.passedFilters;}
         public int getTotalFiltered(){ return this.totalFiltered;}
+        public int getTotalVulns(){ return this.totalVulns;}
         public void increaseNotFiltered() {
             this.notFiltered++;
         }
@@ -161,7 +162,7 @@ public class FilterMetrics {
 
             //for each raw vuln that exists in the run
             for(RawVulnerability vuln : run.getVulns()){
-                //if the raw vuln is new: meaning it doesn't exist in any previous run
+                //if the raw vuln is new: meaning it doesn't exist in any previous run and the raw_description_ids are different
                 if(!rawVulns.contains(vuln)){
                     rawVulns.add(vuln); //add the new vuln to the list of rawVulns that exists
                     vulns++; //increase number of new vulns

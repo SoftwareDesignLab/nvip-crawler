@@ -1,9 +1,12 @@
 package edu.rit.se.nvip.metrics;
 
+import edu.rit.se.nvip.utils.metrics.CrawlerRun;
 import edu.rit.se.nvip.utils.metrics.FilterMetrics;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class FilterMetricsTest {
 
@@ -31,7 +34,25 @@ class FilterMetricsTest {
     }
     @Test
     public void newVulnsPerRunTest(){
+        //tests first file that all vulns added are new
+        String path = System.getProperty("user.dir") + "\\src\\test\\resources";
 
+        FilterMetrics filterMetrics = new FilterMetrics(path);
+
+        Map<CrawlerRun, Integer> newVulns = filterMetrics.newVulnsPerRun();
+
+
+        assertEquals(3, newVulns.get(filterMetrics.getRuns().get(0)));
+
+        //tests that vulns don't repeat
+        String path2 = System.getProperty("user.dir") + "\\src\\test\\resources\\multipleJsons";
+
+        FilterMetrics filterMetrics2 = new FilterMetrics(path2);
+
+        Map<CrawlerRun, Integer> newVulns2 = filterMetrics2.newVulnsPerRun();
+
+        assertEquals(3, newVulns2.get(filterMetrics2.getRuns().get(0)));
+        assertEquals(1, newVulns2.get(filterMetrics2.getRuns().get(1)));
     }
 
     @Test
