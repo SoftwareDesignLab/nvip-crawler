@@ -146,13 +146,6 @@ public class DatabaseHelperTest {
 		this.setMocking();
 	}
 
-	@AfterClass
-	public static void tearDown() {
-		DatabaseHelper dbh = new DatabaseHelper(databaseType, hikariUrl, hikariUser, hikariPassword);
-		ReflectionTestUtils.setField(dbh, "databaseHelper", null);
-
-	}
-
 	@Test
 	public void getConnectionTest() {
 		try {

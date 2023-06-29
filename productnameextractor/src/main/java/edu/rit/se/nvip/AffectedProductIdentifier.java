@@ -48,7 +48,6 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class AffectedProductIdentifier {
 	private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
-
 	private final List<CompositeVulnerability> vulnList;
 	private final CpeLookUp cpeLookUp;
 	private final int numThreads;
