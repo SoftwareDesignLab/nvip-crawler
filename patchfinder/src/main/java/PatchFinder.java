@@ -54,7 +54,7 @@ public class PatchFinder {
 	protected static String hikariUrl = "jdbc:mysql://localhost:3306/nvip?useSSL=false&allowPublicKeyRetrieval=true";
 	protected static String hikariUser = "root";
 	protected static String hikariPassword = "root";
-	protected static int maxCommits = 1000; // TODO: Find omptimal value once github scraping is done
+	protected static int cloneCommitThreshold = 1000; // TODO: Find omptimal value once github scraping is done
 	protected static String clonePath = "src/main/resources/patch-repos";
 	protected static String[] addressBases = { "https://github.com/", "https://www.gitlab.com/" };
 
@@ -107,6 +107,13 @@ public class PatchFinder {
 				logger.info("Setting DB_TYPE to {}", databaseType);
 			} else throw new Exception();
 		}catch(Exception ignored) {logger.warn("Could not fetch DB_TYPE from env vars, defaulting to {}", databaseType); }
+
+		try{
+			if(props.containsKey("CLONE_COMMIT_THRESHOLD")) {
+				cloneCommitThreshold = Integer.parseInt(System.getenv("CLONE_COMMIT_THRESHOLD"));
+				logger.info("Setting CLONE_COMMIT_THRESHOLD to {}", cloneCommitThreshold);
+			} else throw new Exception();
+		}catch(Exception ignored) {logger.warn("Could not fetch CLONE_COMMIT_THRESHOLD from env vars, defaulting to {}", cloneCommitThreshold); }
 
 		fetchHikariEnvVars(props);
 	}

@@ -100,11 +100,6 @@ public class DatabaseHelper {
 			hikariConfig.addDataSourceProperty("HIKARI_USER", user);
 			hikariConfig.addDataSourceProperty("HIKARI_PASSWORD", password);
 
-//			System.getenv().entrySet().stream()
-//					.filter(e -> e.getKey().startsWith("HIKARI_"))
-//					.peek(e -> logger.info("Setting {} to HikariConfig", e.getKey()))
-//					.forEach(e -> hikariConfig.addDataSourceProperty(e.getKey(), e.getValue()));
-
 		} else {
 			hikariConfig = null;
 		}
