@@ -36,3 +36,4 @@ pom.xml
 # Git Repos
 nvip_data/pypa-repo/
 exploitfinder/src/main/resources/exploit-repo
+patchfinder/src/main/resources/patch-repos
