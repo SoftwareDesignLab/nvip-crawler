@@ -92,9 +92,9 @@ public class VMWareAdvisoriesParser extends AbstractCveParser {
 						Element next = sibling.nextElementSibling();
 						if (next == null) continue;
 						description = next.text();
-						vulns.add(new RawVulnerability(sSourceURL, currentCVE, publishDate, updatedDate, description));
+						vulns.add(new RawVulnerability(sSourceURL, currentCVE, publishDate, updatedDate, description, getClass().getSimpleName()));
 					} else if (sibling.text().length() > 30) {
-						vulns.add(new RawVulnerability(sSourceURL, currentCVE, publishDate, updatedDate, sibling.text()));
+						vulns.add(new RawVulnerability(sSourceURL, currentCVE, publishDate, updatedDate, sibling.text(), getClass().getSimpleName()));
 					}
 				}
 			}

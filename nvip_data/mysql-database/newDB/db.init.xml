@@ -57,6 +57,9 @@
             <column name="source_type" type="VARCHAR(20)" defaultValue="other">
                 <constraints nullable="false" />
             </column>
+            <column name="parser_type" type="VARCHAR(30)">
+                <constraints nullable="false" />
+            </column>
         </createTable>
 
         <createIndex

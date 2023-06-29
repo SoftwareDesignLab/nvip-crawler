@@ -48,7 +48,7 @@ public class ParseBulletin extends AbstractCveParser implements ParserStrategy {
 
             // create new composite vulnerability
             RawVulnerability vuln = new RawVulnerability(
-                    sSourceURL, cve, cveDate.getRawDate(), lastModifiedDate.getRawDate(), cveText
+                    sSourceURL, cve, cveDate.getRawDate(), lastModifiedDate.getRawDate(), cveText, getClass().getSimpleName()
             );
             // add to list
             vulnList.add(vuln);

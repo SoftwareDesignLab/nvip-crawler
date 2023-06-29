@@ -54,7 +54,7 @@ public class DotCMSParser extends AbstractCveParser {
 
         for (String cve : cves)
             vulnList.add(new RawVulnerability(
-                    sSourceURL, cve, date, date, description
+                    sSourceURL, cve, date, date, description, getClass().getSimpleName()
             ));
 
         return vulnList;

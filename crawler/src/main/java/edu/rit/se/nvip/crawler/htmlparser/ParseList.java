@@ -93,7 +93,7 @@ public class ParseList extends AbstractCveParser implements ParserStrategy {
 
 
             if (cve.equals("") || desc == null || desc.equals("")) continue;
-            RawVulnerability vuln = new RawVulnerability(sSourceURL, cve, publishDate, lastModifiedDate, desc);
+            RawVulnerability vuln = new RawVulnerability(sSourceURL, cve, publishDate, lastModifiedDate, desc, getClass().getSimpleName());
             vulnList.add(vuln);
         }
 
@@ -132,7 +132,7 @@ public class ParseList extends AbstractCveParser implements ParserStrategy {
                     }
 
                     if (!cve.equals("") && !desc.equals("")) {
-                        vuln = new RawVulnerability(sSourceURL, cve, date, lastModifiedDate, desc);
+                        vuln = new RawVulnerability(sSourceURL, cve, date, lastModifiedDate, desc, getClass().getSimpleName());
                         vulnList.add(vuln);
                     }
 

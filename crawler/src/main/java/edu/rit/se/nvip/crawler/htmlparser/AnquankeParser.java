@@ -105,7 +105,7 @@ public class AnquankeParser extends AbstractCveParser {
 			}
 
 			vulnerabilities.add(new RawVulnerability(
-					sSourceURL, cve, date, date, description.toString()
+					sSourceURL, cve, date, date, description.toString(), getClass().getSimpleName()
 			));
 
 		} catch (Exception e) {

@@ -102,7 +102,7 @@ public class AmpereRootParser extends AbstractCveParser {
             // iterative parse each link from table to gain more information
 
             vulnList.add(new RawVulnerability(
-                    sSourceURL, cveId, publishDate, lastUpdated, description
+                    sSourceURL, cveId, publishDate, lastUpdated, description, getClass().getSimpleName()
             ));
         }
 

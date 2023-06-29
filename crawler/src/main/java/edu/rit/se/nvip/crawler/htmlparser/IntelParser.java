@@ -82,7 +82,7 @@ public class IntelParser extends AbstractCveParser {
             String description = next.text();
             description = description.split(": ")[1];
             vulnList.add(new RawVulnerability(
-                    sSourceURL, cveID, publishDate, lastModifiedDate, description
+                    sSourceURL, cveID, publishDate, lastModifiedDate, description, getClass().getSimpleName()
             ));
         }
 
