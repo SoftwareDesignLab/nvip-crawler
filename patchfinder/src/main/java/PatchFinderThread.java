@@ -223,21 +223,29 @@ public class PatchFinderThread implements Runnable {
 				if (matcher.find() || object.text().contains(cveId)) {
 					String commitUrl = object.attr("href");
 					logger.info("Found patch commit @ URL '{}'", commitUrl);
-//					String unifiedDiff = generateUnifiedDiff(git, commit);
 
-					PatchCommit patchCommit = new PatchCommit(
-							commitUrl,
-							cveId,
-							object.text(),
-							new Date(object.attr("commitTime")),
-							object.text(),
-							null, // unifiedDiff
-							null,
-							null,
-							0
-							);
+					try {
+						// Connect to the commit URL and retrieve the unified diff
+						Document commitPage = Jsoup.connect(commitUrl).get();
+						Elements diffElements = commitPage.select("div.file-actions");
+						String unifiedDiff = diffElements.text();
 
-					patchCommits.add(patchCommit);
+						PatchCommit patchCommit = new PatchCommit(
+								commitUrl,
+								cveId,
+								object.text(),
+								new Date(object.attr("commitTime")),
+								object.text(),
+								unifiedDiff, // unifiedDiff
+								null,
+								null,
+								0
+						);
+
+						patchCommits.add(patchCommit);
+					} catch (IOException e) {
+						logger.error("Failed to scrape unified diff from commit URL '{}': {}", commitUrl, e);
+					}
 				}
 			}
 		}
