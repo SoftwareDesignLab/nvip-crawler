@@ -130,8 +130,9 @@ public class SeleniumDriver {
 
         String html = null;
         try{
+            Thread.sleep(1000);
             html = driver.getPageSource();
-        } catch (TimeoutException e) {
+        } catch (TimeoutException | InterruptedException e) {
             logger.warn("Unable to get {}", sSourceURL);
         }
         return html;
