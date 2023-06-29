@@ -27,11 +27,8 @@ import com.zaxxer.hikari.HikariDataSource;
 import edu.rit.se.nvip.db.DatabaseHelper;
 import edu.rit.se.nvip.model.cve.AffectedProduct;
 import edu.rit.se.nvip.model.cve.CompositeVulnerability;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -55,8 +52,10 @@ import static org.mockito.Mockito.*;
  */
 @RunWith(MockitoJUnitRunner.class)
 public class DatabaseHelperTest {
-	private Logger logger = LogManager.getLogger(getClass().getSimpleName());
-
+	protected static String databaseType = "mysql";
+	protected static String hikariUrl = "jdbc:mysql://localhost:3306/nvip?useSSL=false&allowPublicKeyRetrieval=true";
+	protected static String hikariUser = "root";
+	protected static String hikariPassword = "root";
 	private DatabaseHelper dbh;
 	@Mock
 	private HikariDataSource hds;
@@ -140,29 +139,18 @@ public class DatabaseHelperTest {
 		return products;
 	}
 
-	@BeforeClass
-	public static void classSetUp() {
-		// forces a constructor, only want to do once
-		DatabaseHelper.getInstance();
-	}
-
 	@Before
 	public void setUp() {
-		this.dbh = DatabaseHelper.getInstance();
+		this.dbh = new DatabaseHelper(databaseType, hikariUrl, hikariUser, hikariPassword);
 		ReflectionTestUtils.setField(this.dbh, "dataSource", this.hds);
 		this.setMocking();
 	}
 
 	@AfterClass
 	public static void tearDown() {
-		DatabaseHelper dbh = DatabaseHelper.getInstance();
+		DatabaseHelper dbh = new DatabaseHelper(databaseType, hikariUrl, hikariUser, hikariPassword);
 		ReflectionTestUtils.setField(dbh, "databaseHelper", null);
 
-	}
-
-	@Test
-	public void getInstanceTest() {
-		assertNotNull(DatabaseHelper.getInstance());
 	}
 
 	@Test

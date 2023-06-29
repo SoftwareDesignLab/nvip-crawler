@@ -46,33 +46,17 @@ public class DatabaseHelper {
 	private HikariConfig config = null;
 	private HikariDataSource dataSource;
 	private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
-	final String databaseType;
 	private final String getIdFromCpe = "SELECT * FROM affectedproduct where cpe = ?;";
 	private final String selectVulnerabilitySql = "SELECT vulnerability.vuln_id, vulnerability.cve_id, description.description FROM vulnerability JOIN description ON vulnerability.description_id = description.description_id";
 	private final String insertAffectedProductSql = "INSERT INTO affectedproduct (cve_id, cpe, product_name, release_date, version, vendor, purl, swid_tag) VALUES (?, ?, ?, ?, ?, ?, ?, ?);";
 	private final String deleteAffectedProductSql = "DELETE FROM affectedproduct where cve_id = ?;";
-	private static DatabaseHelper databaseHelper = null;
 	private static Map<String, CompositeVulnerability> existingCompositeVulnMap = new HashMap<>();
-
-	/**
-	 * Thread safe singleton implementation
-	 * 
-	 * @return
-	 */
-	public static synchronized DatabaseHelper getInstance() {
-		if (databaseHelper == null)
-			databaseHelper = new DatabaseHelper();
-
-		return databaseHelper;
-	}
 
 	/**
 	 * The private constructor sets up HikariCP for connection pooling. Singleton
 	 * DP!
 	 */
-	private DatabaseHelper() {
-		// Get database type from envvars
-		databaseType = System.getenv("DB_TYPE");
+	public DatabaseHelper(String databaseType, String hikariUrl, String hikariUser, String hikariPassword) {
 		logger.info("New NVIP.DatabaseHelper instantiated! It is configured to use " + databaseType + " database!");
 
 		try {
@@ -83,12 +67,12 @@ public class DatabaseHelper {
 		}
 
 		if(config == null){
-			logger.info("Attempting to create HIKARI from ENVVARs");
-			config = createHikariConfigFromEnvironment();
+			logger.info("Attempting to create HIKARI config from provided values");
+			config = createHikariConfig(hikariUrl, hikariUser, hikariPassword);
 		}
 
 		try {
-			if(config == null) throw new IllegalArgumentException();
+			if(config == null) throw new IllegalArgumentException("Failed to create HIKARI config");
 			dataSource = new HikariDataSource(config); // init data source
 		} catch (PoolInitializationException e2) {
 			logger.error("Error initializing data source! Check the value of the database user/password in the environment variables! Current values are: {}", config != null ? config.getDataSourceProperties() : null);
@@ -97,22 +81,18 @@ public class DatabaseHelper {
 		}
 	}
 
-	private HikariConfig createHikariConfigFromEnvironment() {
-
-		String url = System.getenv("HIKARI_URL");
+	private HikariConfig createHikariConfig(String url, String user, String password) {
 		HikariConfig hikariConfig;
 
 		if (url != null){
 			logger.info("Creating HikariConfig with url={}", url);
 			hikariConfig = new HikariConfig();
 			hikariConfig.setJdbcUrl(url);
-			hikariConfig.setUsername(System.getenv("HIKARI_USER"));
-			hikariConfig.setPassword(System.getenv("HIKARI_PASSWORD"));
-
-			System.getenv().entrySet().stream()
-					.filter(e -> e.getKey().startsWith("HIKARI_"))
-					.peek(e -> logger.info("Setting {} to HikariConfig", e.getKey()))
-					.forEach(e -> hikariConfig.addDataSourceProperty(e.getKey(), e.getValue()));
+			hikariConfig.setUsername(user);
+			hikariConfig.setPassword(password);
+			hikariConfig.addDataSourceProperty("HIKARI_URL", url);
+			hikariConfig.addDataSourceProperty("HIKARI_USER", user);
+			hikariConfig.addDataSourceProperty("HIKARI_PASSWORD", password);
 
 		} else {
 			hikariConfig = null;
@@ -139,12 +119,12 @@ public class DatabaseHelper {
 
 		logger.info("Inserting Affected Products to DB!");
 		// delete existing affected release info in db ( for CVEs in the list)
-		databaseHelper.deleteAffectedProducts(affectedProducts);
+		deleteAffectedProducts(affectedProducts);
 
 		// now insert affected releases (referenced products are already in db)
-		databaseHelper.insertAffectedProducts(affectedProducts);
+		insertAffectedProducts(affectedProducts);
 
-		databaseHelper.shutdown();
+		shutdown();
 		return affectedProducts.size();
 	}
 
