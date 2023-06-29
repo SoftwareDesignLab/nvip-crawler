@@ -39,6 +39,8 @@ public class FilterMetrics {
             this.totalVulns = 0;
             this.totalFiltered = 0;
         }
+        public int getPassedFilters(){ return this.passedFilters;}
+        public int getTotalFiltered(){ return this.totalFiltered;}
         public void increaseNotFiltered() {
             this.notFiltered++;
         }
@@ -74,7 +76,7 @@ public class FilterMetrics {
         for (File file : jsonFiles) { //for each jsonFile
 
             Set<RawVulnerability> rawVulns = processJSONFiles(file);
-            Date date = new Date();
+            Date date = new Date(); //DATE NEEDS TO BE FIXED BASED ON FILE NAME GIVEN
 
             CrawlerRun run = new CrawlerRun(rawVulns, runId, date); //creates new run from json
 
@@ -83,7 +85,6 @@ public class FilterMetrics {
 
 
         }
-        // todo read in each json from the directory into CrawlerRun
     }
     // todo also need versions of all of these with a parser type arg, where only results for that parser are returned
     // todo also need versions of all of these that take a filter setting arg (all, local, individual)
@@ -132,7 +133,8 @@ public class FilterMetrics {
                 String publishedDate = jsonObject.get("published_date").getAsString();
                 String lastModifiedDate = jsonObject.get("last_modified_date").getAsString();
                 String sourceUrl = jsonObject.get("source_url").getAsString();
-                int isGarbage = jsonObject.get("is_garbage").getAsInt();
+                //NOT SURE IF THIS IS NEEDED
+                //int isGarbage = jsonObject.get("is_garbage").getAsInt();
 
 
                 // Create RawVulnerability object
@@ -149,6 +151,9 @@ public class FilterMetrics {
         return rawVulnerabilities;
     }
 
+    public List<CrawlerRun> getRuns(){
+        return this.runs;
+    }
     /*
     Checks to see how many "new" vulnerabilities were found
     Where "new" means that the tuple (CVE_ID, Description, Source_URL) doesn't match any entries from prior runs
@@ -248,7 +253,30 @@ public class FilterMetrics {
         return filteredStats;
     }
 
-    public double[] proportionPassed() {
-        return null;
+    public Map<CrawlerRun, Double> proportionPassed() {
+
+        Map<CrawlerRun, Double> proportions = new HashMap<>(); //map of runs to percentages
+        if (runs == null){ //case for if method is called and runs are not properly initialized
+            logger.error("There are no Crawler Runs found");
+            return null;
+        }
+
+        Map<CrawlerRun, FilterStats> runMap = numFiltered(); //gets filter stats used to get proportions
+
+        for (CrawlerRun run : runMap.keySet()){ // for every run
+
+            FilterStats filterStats = runMap.get(run); //get the filter stats for every run
+
+            if (filterStats.getTotalFiltered() == 0){ //case for if there are no vulnerabilities that were filtered
+                logger.error("Trying to divide by 0 because Total Vulns filtered is 0");
+                return null;
+            }
+
+            double proportion = (double) filterStats.getPassedFilters() / filterStats.getTotalFiltered(); //get the proportion of passed to total vulns
+
+            proportions.put(run, proportion); //map each run to the proportion of passed filtered vulns
+        }
+
+        return proportions;
     }
 }
