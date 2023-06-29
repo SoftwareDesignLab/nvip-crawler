@@ -79,7 +79,7 @@ public class CveCrawlController {
         // Fill in seed URLs
         for (String url: urls) {
             try {
-                //logger.info("ADDING {} to SEEDS", url);
+                logger.info("ADDING {} to SEEDS", url);
                 controller1.addSeed(url);
             } catch (Exception e) {
                 logger.warn("WARNING: Error trying to add {} as a seed URL", url);

@@ -1,23 +1,20 @@
 package edu.rit.se.nvip;
 
-import edu.rit.se.nvip.crawler.CveCrawler;
 import edu.rit.se.nvip.crawler.CveCrawlController;
 import edu.rit.se.nvip.crawler.github.GithubScraper;
 import edu.rit.se.nvip.crawler.github.PyPAGithubScraper;
-import edu.rit.se.nvip.model.NvipSource;
 import edu.rit.se.nvip.model.RawVulnerability;
-import edu.rit.se.nvip.nvd.NvdCveController;
+import edu.rit.se.nvip.utils.UtilHelper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import edu.rit.se.nvip.utils.UtilHelper;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.*;
-import java.net.URL;
 import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.*;
 
 public class CrawlerMain {
 
@@ -103,7 +100,7 @@ public class CrawlerMain {
             for (String cveId: crawledCVEs.keySet()) {
                 logger.info("CVE: {}:\n", cveId);
                 for (RawVulnerability vuln: crawledCVEs.get(cveId)) {
-                    String description = vuln.getDescription().length() > 0 ? vuln.getDescription().substring(0, 100) : vuln.getDescription();
+                    String description = vuln.getDescription().length() > 100 ? vuln.getDescription().substring(0, 100) + "...": vuln.getDescription();
                     logger.info("[{} | {}]\n", vuln.getSourceURL(), description);
                 }
             }
@@ -218,14 +215,14 @@ public class CrawlerMain {
         addEnvvarString(CrawlerMain.crawlerVars,"outputDir", outputDir, "output/crawlers",
                 "WARNING: Crawler output path not defined in NVIP_OUTPUT_DIR, using default path: output/crawlers");
 
-        addEnvvarString(CrawlerMain.crawlerVars,"seedFileDir", seedFileDir, "nvip_data/url-sources/nvip-seeds.txt",
-                "WARNING: Crawler seed file path not defined in NVIP_SEED_URLS, using default path: " + "nvip_data/url-sources/nvip-seeds.txt");
+        addEnvvarString(CrawlerMain.crawlerVars,"seedFileDir", seedFileDir, "crawler/resources/url-sources/nvip-seeds.txt",
+                "WARNING: Crawler seed file path not defined in NVIP_SEED_URLS, using default path: " + "resources/url-sources/nvip-seeds.txt");
 
-        addEnvvarString(CrawlerMain.crawlerVars,"whitelistFileDir", whitelistFileDir, "nvip_data/url-sources/nvip-whitelist.txt",
-                "WARNING: Crawler whitelist file path not defined in NVIP_WHITELIST_URLS, using default path: nvip_data/url-sources/nvip-whitelist.txt");
+        addEnvvarString(CrawlerMain.crawlerVars,"whitelistFileDir", whitelistFileDir, "crawler/resources/url-sources/nvip-whitelist.txt",
+                "WARNING: Crawler whitelist file path not defined in NVIP_WHITELIST_URLS, using default path: resources/url-sources/nvip-whitelist.txt");
 
-        addEnvvarString(CrawlerMain.crawlerVars,"sourceTypeFileDir", sourceTypeFileDir, "nvip_data/url-sources/nvip-source-types.txt",
-                "WARNING: Crawler whitelist file path not defined in NVIP_SOURCE_TYPES, using default path: nvip_data/url-sources/nvip-source-types.txt");
+        addEnvvarString(CrawlerMain.crawlerVars,"sourceTypeFileDir", sourceTypeFileDir, "crawler/resources/url-sources/nvip-source-types.txt",
+                "WARNING: Crawler whitelist file path not defined in NVIP_SOURCE_TYPES, using default path: resources/url-sources/nvip-source-types.txt");
 
         addEnvvarBool(CrawlerMain.crawlerVars,"enableGitHub", enableGitHub, false,
                 "WARNING: CVE GitHub Enabler not defined in NVIP_ENABLE_GITHUB, allowing CVE GitHub pull on default");
