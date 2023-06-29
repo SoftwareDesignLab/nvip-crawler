@@ -18,7 +18,6 @@ import static org.junit.Assert.*;
 public class ParseTableTest extends AbstractParserTest {
     private static SeleniumDriver driver;
 
-    @Ignore
     @Test
     public void testParseTableQNAP() {
         ParseTable parser = new ParseTable("https://www.qnap.com/en/security-advisories?ref=security_advisory_details", driver);
@@ -27,7 +26,7 @@ public class ParseTableTest extends AbstractParserTest {
         assertTrue(vulnerabilities.size() > 190);
         RawVulnerability vuln = getVulnerability(vulnerabilities, "CVE-2023-22809");
         assertNotNull(vuln);
-        assertEquals("2023-04-20 00:00:00", vuln.getPublishDate());
+        assertEquals("2023-06-15 00:00:00", vuln.getPublishDate());
         assertTrue(vuln.getDescription().contains("A vulnerability has been reported in sudo. The vulnerability affects the following QNAP operating system"));
         assertFalse(vuln.getDescription().contains("Multiple vulnerabilities have been reported in OpenSSL. These vulnerabilities affect the following QNAP operating systems: QTS, QuTS hero, QuTScloud, QVP (QVR Pro appliances), QVR, QES"));
     }
