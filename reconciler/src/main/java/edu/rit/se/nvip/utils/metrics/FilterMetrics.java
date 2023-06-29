@@ -22,7 +22,7 @@ public class FilterMetrics {
     public static class FilterStats {
         /*
 
-        NEW FILTER STATS CLASS USED IN numFiltered() TO TRACK CERTAIN FILTER STATS
+        NEW FILTER STATS INNER CLASS USED IN numFiltered() TO TRACK CERTAIN FILTER STATS
         CHECKS TO SEE HOW MANY PASSED, HOW MANY FAILED, HOW MANY TOTAL VULNS, HOW MANY TOTAL WERE FILTERED, AND HOW MANY WERE NOT FILTERED
 
          */
@@ -175,8 +175,44 @@ public class FilterMetrics {
         return runMap;
     }
 
-    public Map<RawVulnerability.SourceType, Integer>[] sourceTypeDistribution() {
-        return null;
+    public List<Map<RawVulnerability.SourceType, Integer>> sourceTypeDistribution() {
+
+        List<Map<RawVulnerability.SourceType, Integer>> typeDistributionMap = new ArrayList<>();
+        for(CrawlerRun run: runs) {
+            Map<RawVulnerability.SourceType, Integer> map = new HashMap<>(); // for every run make a new map
+            int cna = 0; //initialize source variables
+            int sa = 0;
+            int third_party = 0;
+            int bug_bounty = 0;
+            int other = 0;
+            //for each raw vuln that exists in the run
+            for (RawVulnerability vuln : run.getVulns()) {
+                //get the source type and increase the value of that source type
+                if (vuln.getSourceType() == RawVulnerability.SourceType.CNA){
+                    cna++;
+                }else if (vuln.getSourceType() == RawVulnerability.SourceType.SA){
+                    sa++;
+                }else if (vuln.getSourceType() == RawVulnerability.SourceType.THIRD_PARTY) {
+                    third_party++;
+                }else if (vuln.getSourceType() == RawVulnerability.SourceType.BUG_BOUNTY){
+                    bug_bounty++;
+                }else if (vuln.getSourceType() == RawVulnerability.SourceType.OTHER){
+                    other++;
+                }
+            }
+
+            //put the values in the map SourceType, Amount of sources from that type
+            map.put(RawVulnerability.SourceType.CNA, cna);
+            map.put(RawVulnerability.SourceType.SA, sa);
+            map.put(RawVulnerability.SourceType.THIRD_PARTY, third_party);
+            map.put(RawVulnerability.SourceType.BUG_BOUNTY, bug_bounty);
+            map.put(RawVulnerability.SourceType.OTHER, other);
+
+            //add the map to the list of maps (array of maps)
+            typeDistributionMap.add(map);
+        }
+
+        return typeDistributionMap;
     }
 
     public Map<CrawlerRun, FilterStats> numFiltered() {
