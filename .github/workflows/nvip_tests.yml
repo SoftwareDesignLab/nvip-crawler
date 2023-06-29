@@ -6,6 +6,21 @@ on: [push]
 
 env:
   AWS_REGION: 'us-east-1'
+  DB_TYPE: 'mysql'
+  HIKARI_URL: 'jdbc:mysql://localhost:3306/nvip?useSSL=false&allowPublicKeyRetrieval=true'
+  HIKARI_USER: 'root'
+  HIKARI_PASSWORD: 'root'
+  OUTPUT_DIR: 'output'
+  RESOURCE_DIR: 'productnameextractor/nvip_data'
+  DATA_DIR: 'data'
+  NLP_DIR: 'nlp'
+  CHAR_2_VEC_CONFIG: 'c2v_model_config_50.json'
+  CHAR_2_VEC_WEIGHTS: 'c2v_model_weights_50.h5'
+  WORD_2_VEC: 'w2v_model_250.bin'
+  NER_MODEL: 'NERallModel.bin'
+  NER_MODEL_NORMALIZER: 'NERallNorm.bin'
+  SENTENCE_MODEL: 'en-sent.bin'
+  PRODUCT_DETECTOR_MODEL: 'en-pos-perceptron.bin'
 
 jobs:
   # Build Main Project
