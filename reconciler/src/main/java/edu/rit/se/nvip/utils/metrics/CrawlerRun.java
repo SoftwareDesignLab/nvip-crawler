@@ -15,11 +15,6 @@ public class CrawlerRun {
         this.runDate = runDate;
     }
 
-    public int getRunId(){return this.runId;}
-
-    public Date getRunDate(){return this.runDate;}
-
     public Set<RawVulnerability> getVulns(){return this.vulns;}
 
-    // todo maybe some FilterMetrics methods should use CrawlerRun methods ;)
 }
