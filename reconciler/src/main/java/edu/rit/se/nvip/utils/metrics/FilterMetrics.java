@@ -91,18 +91,22 @@ public class FilterMetrics {
 
     //Helper function for getting a list of Json files that were in the directory
     private List<File> findJsonFiles(File directory) {
-        List<File> jsonFiles = new ArrayList<>();//new list of jsons
-        File[] files = directory.listFiles();//gets every file in the directory
+        List<File> jsonFiles = new ArrayList<>();
 
-        if (files != null) { //if the directory isn't empty
-            for (File file : files) {
-                if (file.isFile() && file.getName().toLowerCase().endsWith(".json")) { //if the file is "normal" meaning it isn't a directory and the file ends in .json
-                    jsonFiles.add(file); //add the file to the list
+        if (directory.isDirectory()) {
+            File[] files = directory.listFiles();
+
+            if (files != null) {
+                for (File file : files) {
+                    if (file.isFile() && file.getName().toLowerCase().endsWith(".json")) {
+                        jsonFiles.add(file);
+                    }
                 }
+            } else {
+                logger.error("Directory is empty!");
             }
-        }
-        else{
-            logger.error("Directory is empty!");
+        } else {
+            logger.error("Invalid directory path");
         }
 
         return jsonFiles;
@@ -112,15 +116,8 @@ public class FilterMetrics {
     private static Set<RawVulnerability> processJSONFiles(File jsonFile) {
         Set<RawVulnerability> rawVulnerabilities = new HashSet<>();
 
-
         try (BufferedReader reader = new BufferedReader(new FileReader(jsonFile))) {
-            StringBuilder jsonString = new StringBuilder();
-            String line;
-            while ((line = reader.readLine()) != null) {
-                jsonString.append(line);
-            }
-
-            JsonArray jsonArray = JsonParser.parseString(jsonString.toString()).getAsJsonArray();
+            JsonArray jsonArray = JsonParser.parseReader(reader).getAsJsonArray();
 
             for (JsonElement jsonElement : jsonArray) {
                 JsonObject jsonObject = jsonElement.getAsJsonObject();
@@ -133,9 +130,6 @@ public class FilterMetrics {
                 String publishedDate = jsonObject.get("published_date").getAsString();
                 String lastModifiedDate = jsonObject.get("last_modified_date").getAsString();
                 String sourceUrl = jsonObject.get("source_url").getAsString();
-                //NOT SURE IF THIS IS NEEDED
-                //int isGarbage = jsonObject.get("is_garbage").getAsInt();
-
 
                 // Create RawVulnerability object
                 RawVulnerability rawVuln = new RawVulnerability(rawDescId, cveId, rawDesc, Timestamp.valueOf(publishedDate), Timestamp.valueOf(lastModifiedDate), Timestamp.valueOf(createdDate), sourceUrl);
@@ -146,7 +140,6 @@ public class FilterMetrics {
         } catch (IOException e) {
             logger.error("IO Exception error");
         }
-
 
         return rawVulnerabilities;
     }
