@@ -48,7 +48,6 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class AffectedProductIdentifier {
 	private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
-
 	private final List<CompositeVulnerability> vulnList;
 	private final CpeLookUp cpeLookUp;
 	private final int numThreads;
@@ -88,7 +87,8 @@ public class AffectedProductIdentifier {
 			CpeLookUp cpeLookUp,
 			CompositeVulnerability vulnerability,
 			AtomicInteger counterOfBadDescriptionCVEs,
-			AtomicInteger counterOfSkippedCVEs, AtomicInteger counterOfProcessedCVEs,
+			AtomicInteger counterOfSkippedCVEs,
+			AtomicInteger counterOfProcessedCVEs,
 			AtomicInteger counterOfProcessedNERs,
 			AtomicInteger counterOfProcessedCPEs,
 			AtomicInteger numOfProductsNotMappedToCPE,
@@ -226,7 +226,7 @@ public class AffectedProductIdentifier {
 		executor.prestartAllCoreThreads();
 
 		for (int i = 0; i < vulnList.size(); i++) {
-			if(i > totalCVEtoProcess){
+			if(i >= totalCVEtoProcess){
 				break;
 			}
 			CompositeVulnerability vulnerability = vulnList.get(i);

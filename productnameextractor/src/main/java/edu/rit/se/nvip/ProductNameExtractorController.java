@@ -26,10 +26,13 @@ import java.util.List;
  */
 public class ProductNameExtractorController {
     private static final Logger logger = LogManager.getLogger(ProductNameExtractorController.class);
-    private static final DatabaseHelper databaseHelper = DatabaseHelper.getInstance();
     private static final ObjectMapper OM = new ObjectMapper();
     protected static int cveLimit = 300;
     protected static int numThreads = 12;
+    protected static String databaseType = "mysql";
+    protected static String hikariUrl = "jdbc:mysql://localhost:3306/nvip?useSSL=false&allowPublicKeyRetrieval=true";
+    protected static String hikariUser = "root";
+    protected static String hikariPassword = "root";
     protected static int maxPages = 10;
     protected static int maxAttemptsPerPage = 2;
     protected static boolean prettyPrint = false;
@@ -159,6 +162,35 @@ public class ProductNameExtractorController {
             testMode = Boolean.parseBoolean(System.getenv("TEST_MODE"));
             logger.info("Setting TEST_MODE to {}", testMode);
         } else logger.warn("Could not fetch TEST_MODE from env vars, defaulting to {}", testMode);
+
+        fetchHikariEnvVars(props);
+    }
+
+    /**
+     * Initialize database env vars
+     * @param props map of env vars
+     */
+    private static void fetchHikariEnvVars(Map<String, String> props) {
+        try {
+            if(props.containsKey("HIKARI_URL")) {
+                hikariUrl = System.getenv("HIKARI_URL");
+                logger.info("Setting HIKARI_URL to {}", hikariUrl);
+            } else throw new Exception();
+        } catch (Exception ignored) { logger.warn("Could not fetch HIKARI_URL from env vars, defaulting to {}", hikariUrl); }
+
+        try {
+            if(props.containsKey("HIKARI_USER")) {
+                hikariUser = System.getenv("HIKARI_USER");
+                logger.info("Setting HIKARI_USER to {}", hikariUser);
+            } else throw new Exception();
+        } catch (Exception ignored) { logger.warn("Could not fetch HIKARI_USER from env vars, defaulting to {}", hikariUser); }
+
+        try {
+            if(props.containsKey("HIKARI_PASSWORD")) {
+                hikariPassword = System.getenv("HIKARI_PASSWORD");
+                logger.info("Setting HIKARI_PASSWORD to {}", hikariPassword);
+            } else throw new Exception();
+        } catch (Exception ignored) { logger.warn("Could not fetch HIKARI_PASSWORD from env vars, defaulting to {}", hikariPassword); }
     }
 
     public static void writeProductDict(Map<String, CpeGroup> productDict, String productDictPath) {
@@ -236,6 +268,7 @@ public class ProductNameExtractorController {
 
     /**
      * This method prints the test run results to both console output and a specific results file
+     *
      * @param vulnList list of vulnerabilities
      */
     private static void writeTestResults(List<CompositeVulnerability> vulnList){
@@ -284,6 +317,8 @@ public class ProductNameExtractorController {
 
         // Fetch values for required environment variables
         ProductNameExtractorController.fetchEnvVars();
+
+        DatabaseHelper databaseHelper = new DatabaseHelper(databaseType, hikariUrl, hikariUser, hikariPassword);
 
         logger.info("Pulling existing CVEs from the database...");
         final long getCVEStart = System.currentTimeMillis();

@@ -78,7 +78,7 @@ public class ProductVersion implements Comparable<ProductVersion> {
     }
 
     private boolean isVersion(String version) {
-        if(version.contains(",")) logger.warn("VERSION '{}' CONTAINED UNEXPECTED CHARACTER ','", version);
+        if(version.isEmpty()) return false;
         return VERSION_PATTERN.matcher(version).matches();
     }
 

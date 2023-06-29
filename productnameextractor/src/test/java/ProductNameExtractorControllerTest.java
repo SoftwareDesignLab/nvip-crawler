@@ -25,6 +25,7 @@ import static org.junit.Assert.*;
 public class ProductNameExtractorControllerTest {
 
     @Test
+    @Ignore //CI can't run this test without access to product_dict.json
     public void readProductDictMainTest(){
         String productDictPath = "nvip_data/data/product_dict.json";
         Map<String, CpeGroup> productDict = null;
