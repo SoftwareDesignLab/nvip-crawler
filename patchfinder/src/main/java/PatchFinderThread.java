@@ -23,12 +23,9 @@
  */
 
 import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import commits.PatchCommit;
 import commits.PatchCommitScraper;
@@ -133,7 +130,7 @@ public class PatchFinderThread implements Runnable {
 				logger.info("Found {} commits on the master branch @ URL '{}'", commitCount, patchSource);
 
 				// If commit count is under threshold, scrape commits from url
-				if(commitCount <= PatchFinder.maxCommits) {
+				if(commitCount <= PatchFinder.cloneCommitThreshold) {
 					findPatchCommitsFromUrl(foundPatchCommits, cve, patchSource, commitCount);
 				} else { // Otherwise, clone repo to parse commits
 					findPatchCommitsFromRepo(foundPatchCommits, cve, patchSource);
