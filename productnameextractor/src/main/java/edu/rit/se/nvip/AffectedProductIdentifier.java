@@ -153,7 +153,7 @@ public class AffectedProductIdentifier {
 
 					if (productIDs == null || productIDs.isEmpty()) {
 						numOfProductsNotMappedToCPE.getAndIncrement();
-						logger.warn("The product name ({}) predicted by AI/ML model could not be found in the CPE dictionary!\tCVE-ID: {}", productItem.toString(), vulnerability.getCveId());
+						logger.warn("Could not find the predicted product name '{}'! | CVE-ID: {}", productItem.toString(), vulnerability.getCveId());
 						continue;
 					}
 					// if CPE identified, add it as affected product
@@ -255,28 +255,46 @@ public class AffectedProductIdentifier {
 
 		executor.shutdown();
 
+		final int timeout = 15;
 		long secondsWaiting = 0;
+		int numCVEsProcessed = 0;
 		int lastNumCVEs = totalCVEtoProcess;
 		try {
-			while(!executor.awaitTermination(15, TimeUnit.SECONDS)) {
-				secondsWaiting += 15L;
+			while(!executor.awaitTermination(timeout, TimeUnit.SECONDS)) {
+				secondsWaiting += timeout;
 
+				// Every minute, log a progress update
 				if(secondsWaiting % 60 == 0) {
-					final int currNumCVEs = workQueue.size();
-					final double rate = (double) (lastNumCVEs - currNumCVEs) / 15;
-					final double remainingTime = currNumCVEs / rate;
+
+					// Determine number of CVEs processed
+					final int currNumCVEs = workQueue.size(); // Current number of remaining CVEs
+					final int deltaNumCVEs = lastNumCVEs - currNumCVEs; // Change in CVEs since last progress update
+
+					// Sum number processed
+					numCVEsProcessed += deltaNumCVEs;
+
+					// Calculate rate, avg rate, and remaining time
+					final double rate = (double) deltaNumCVEs / 60; // CVEs/sec
+					final double avgRate = (double) numCVEsProcessed / secondsWaiting; // CVEs/sec
+					final double remainingAvgTime = currNumCVEs / rate; // CVEs / CVEs/sec = remaining seconds
+
+					// Log stats
 					logger.info(
-							"{} out of {} CVEs processed ({} CVEs/second; Est time until completion: {} minutes ({} seconds))...",
+							"{} out of {} CVEs processed (SP: {} CVEs/sec | AVG SP: {} CVEs/sec | Est time remaining: {} minutes ({} seconds))...",
 							totalCVEtoProcess - currNumCVEs,
 							totalCVEtoProcess,
 							Math.floor(rate * 100) / 100,
-							Math.floor(remainingTime / 60 * 100) / 100,
-							Math.floor(remainingTime * 100) / 100
+							avgRate,
+							Math.floor(remainingAvgTime / 60 * 100) / 100,
+							Math.floor(remainingAvgTime * 100) / 100
 					);
+
+					// Update lastNumCVEs
 					lastNumCVEs = currNumCVEs;
 				}
 
-				if((secondsWaiting / 60) > 15) throw new TimeoutException("Timeout reached before all threads completed");
+				// Timeout for whole process
+//				if((secondsWaiting / 60) > 15) throw new TimeoutException("Timeout reached before all threads completed");
 			}
 		} catch (Exception ex) {
 			logger.error("Product extraction failed: {}", ex.toString());
