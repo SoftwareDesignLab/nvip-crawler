@@ -22,6 +22,8 @@
  * SOFTWARE.
  */
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
 import commits.PatchCommit;
 import db.DatabaseHelper;
 import model.CpeGroup;
@@ -31,10 +33,8 @@ import org.eclipse.jgit.util.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.time.Instant;
+import java.util.*;
 import java.util.concurrent.*;
 
 /**
@@ -57,6 +57,7 @@ public class PatchFinder {
 	protected static int cloneCommitThreshold = 1000; // TODO: Find omptimal value once github scraping is done
 	protected static String clonePath = "src/main/resources/patch-repos";
 	protected static String[] addressBases = { "https://github.com/", "https://www.gitlab.com/" };
+	private static final ObjectMapper OM = new ObjectMapper();
 
 	/**
 	 * Attempts to get all required environment variables from System.getenv() safely, logging
@@ -162,7 +163,11 @@ public class PatchFinder {
 		final int affectedProductsCount = affectedProducts.values().stream().map(CpeGroup::getVersionsCount).reduce(0, Integer::sum);
 		logger.info("Successfully got {} CVEs mapped to {} affected products from the database", affectedProducts.size(), affectedProductsCount);
 
-		// Parse patch source urls from affectedProducts
+		// TODO
+		// Attempt to find source urls from pre-written file (ensure file existence/freshness)
+
+		// TODO
+		// Parse patch source urls from any affectedProducts that did not have fresh urls saved to file
 		logger.info("Parsing patch urls from affected product CVEs (limit: {} CVEs)...", cveLimit);
 		final long parseUrlsStart = System.currentTimeMillis();
 		Map<String, ArrayList<String>> possiblePatchURLs = patchURLFinder.parseMassURLs(affectedProducts, cveLimit);
@@ -172,6 +177,10 @@ public class PatchFinder {
 				possiblePatchURLs.size(),
 				(System.currentTimeMillis() - parseUrlsStart) / 1000
 		);
+
+		// TODO
+		// Write found source urls to file
+//		writeSourceUrls(srcUrlPath, possiblePatchURLs);
 
 		// Find patches
 		// Repos will be cloned to patch-repos directory, multi-threaded 6 threads.
@@ -202,6 +211,22 @@ public class PatchFinder {
 
 		final long delta = (System.currentTimeMillis() - totalStart) / 1000;
 		logger.info("Successfully collected {} patch commits from {} affected products in {} seconds", patchCommits.size(), affectedProducts.size(), delta);
+	}
+
+	private static void writeSourceUrls(String srcUrlPath, Map<String, ArrayList<String>> urls) {
+		// Build output data map
+		Map data = new LinkedHashMap<>();
+		data.put("comptime", Instant.now().toString());
+		data.put("urls", urls);
+
+		// Write data to file
+		try {
+			final ObjectWriter w = OM.writerWithDefaultPrettyPrinter();
+			w.writeValue(new File(srcUrlPath), data);
+			logger.info("Successfully wrote {} products to product dict file at filepath '{}'", urls.size(), srcUrlPath);
+		} catch (IOException e) {
+			logger.error("Error writing product dict to filepath '{}': {}", srcUrlPath, e.toString());
+		}
 	}
 
 	/**
