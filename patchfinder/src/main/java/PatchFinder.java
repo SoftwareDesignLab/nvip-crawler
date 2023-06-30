@@ -203,16 +203,26 @@ public class PatchFinder {
 		);
 
 		// Insert patches
+		int failedInserts = 0;
 		logger.info("Starting insertion of {} patch commits into the database...", patchCommits.size());
 		final long insertPatchesStart = System.currentTimeMillis();
 		for (PatchCommit patchCommit : patchCommits) {
 			final int sourceUrlId = databaseHelper.insertPatchSourceURL(patchCommit.getCveId(), patchCommit.getCommitUrl());
-			databaseHelper.insertPatchCommit(sourceUrlId, patchCommit.getCommitUrl(), patchCommit.getCommitId(),
-					patchCommit.getCommitDate(), patchCommit.getCommitMessage(), patchCommit.getUniDiff(), patchCommit.getTimeline(), patchCommit.getTimeToPatch(), patchCommit.getLinesChanged());
+			try {
+				databaseHelper.insertPatchCommit(
+						sourceUrlId, patchCommit.getCommitUrl(), patchCommit.getCommitId(),
+						patchCommit.getCommitDate(), patchCommit.getCommitMessage(), patchCommit.getUniDiff(),
+						patchCommit.getTimeline(), patchCommit.getTimeToPatch(), patchCommit.getLinesChanged()
+				);
+			} catch (IllegalArgumentException e) {
+				failedInserts++;
+			}
 		}
-		logger.info("Successfully inserted {} patch commits into the database in {} seconds",
-				patchCommits.size(),
-				(System.currentTimeMillis() - insertPatchesStart) / 1000
+
+		logger.info("Successfully inserted {} patch commits into the database in {} seconds ({} failed)",
+				patchCommits.size() - failedInserts,
+				(System.currentTimeMillis() - insertPatchesStart) / 1000,
+				failedInserts
 		);
 
 		final long delta = (System.currentTimeMillis() - totalStart) / 1000;

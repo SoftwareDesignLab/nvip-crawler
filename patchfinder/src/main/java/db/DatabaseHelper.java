@@ -233,7 +233,7 @@ public class DatabaseHelper {
 	 * @param commitDate
 	 * @param commitMessage
 	 */
-	public void insertPatchCommit(int sourceId, String sourceURL, String commitId, java.util.Date commitDate, String commitMessage, String uniDiff, List<RevCommit> timeLine, String timeToPatch, int linesChanged) {
+	public void insertPatchCommit(int sourceId, String sourceURL, String commitId, java.util.Date commitDate, String commitMessage, String uniDiff, List<RevCommit> timeLine, String timeToPatch, int linesChanged) throws IllegalArgumentException {
 
 		try (Connection connection = getConnection();
 			 PreparedStatement pstmt = connection.prepareStatement(insertPatchCommitSql);) {
@@ -249,6 +249,7 @@ public class DatabaseHelper {
 			pstmt.executeUpdate();
 		} catch (Exception e) {
 			logger.error("ERROR: failed to insert patch commit from source {}\n{}", sourceURL, e);
+			throw new IllegalArgumentException(e);
 		}
 	}
 }
