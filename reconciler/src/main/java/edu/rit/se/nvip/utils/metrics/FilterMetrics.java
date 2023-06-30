@@ -1,6 +1,5 @@
 package edu.rit.se.nvip.utils.metrics;
 
-import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -118,25 +117,39 @@ public class FilterMetrics {
         Set<RawVulnerability> rawVulnerabilities = new HashSet<>();
 
         try (BufferedReader reader = new BufferedReader(new FileReader(jsonFile))) {
-            JsonArray jsonArray = JsonParser.parseReader(reader).getAsJsonArray();
+            StringBuilder jsonContent = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                jsonContent.append(line);
+            }
 
-            for (JsonElement jsonElement : jsonArray) {
-                JsonObject jsonObject = jsonElement.getAsJsonObject();
+            JsonObject jsonObject = JsonParser.parseString(jsonContent.toString()).getAsJsonObject();
 
-                // Extract values from the JSON object
-                int rawDescId = jsonObject.get("raw_desc_id").getAsInt();
-                String rawDesc = jsonObject.get("raw_desc").getAsString();
-                String cveId = jsonObject.get("cve_id").getAsString();
-                String createdDate = jsonObject.get("created_date").getAsString();
-                String publishedDate = jsonObject.get("published_date").getAsString();
-                String lastModifiedDate = jsonObject.get("last_modified_date").getAsString();
-                String sourceUrl = jsonObject.get("source_url").getAsString();
+            for (String key : jsonObject.keySet()) {
+                JsonElement jsonElement = jsonObject.get(key);
 
-                // Create RawVulnerability object
-                RawVulnerability rawVuln = new RawVulnerability(rawDescId, cveId, rawDesc, Timestamp.valueOf(publishedDate), Timestamp.valueOf(lastModifiedDate), Timestamp.valueOf(createdDate), sourceUrl);
+                if (jsonElement.isJsonArray()) {
+                    // Process the array of objects associated with the key
+                    for (JsonElement element : jsonElement.getAsJsonArray()) {
+                        JsonObject innerObject = element.getAsJsonObject();
 
-                // Add the rawVulnerability object to the set
-                rawVulnerabilities.add(rawVuln);
+                        // Extract values from the JSON object
+                        String sourceURL = innerObject.get("sourceURL").getAsString();
+                        String sourceType = innerObject.get("sourceType").getAsString();
+                        int vulnID = innerObject.get("vulnID").getAsInt();
+                        String cveId = innerObject.get("cveId").getAsString();
+                        String description = innerObject.get("description").getAsString();
+                        String publishedDate = innerObject.get("publishDate").getAsString();
+                        String createdDate = innerObject.get("createDate").getAsString();
+                        String lastModifiedDate = innerObject.get("lastModifiedDate").getAsString();
+
+                        // Create RawVulnerability object
+                        RawVulnerability rawVuln = new RawVulnerability(vulnID, cveId, description, Timestamp.valueOf(publishedDate), Timestamp.valueOf(lastModifiedDate), Timestamp.valueOf(createdDate), sourceURL, sourceType, 1);
+
+                        // Add the rawVulnerability object to the set
+                        rawVulnerabilities.add(rawVuln);
+                    }
+                }
             }
         } catch (IOException e) {
             logger.error("IO Exception error");

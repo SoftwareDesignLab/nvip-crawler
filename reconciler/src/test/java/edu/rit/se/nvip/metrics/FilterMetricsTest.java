@@ -1,9 +1,11 @@
 package edu.rit.se.nvip.metrics;
 
+import edu.rit.se.nvip.model.RawVulnerability;
 import edu.rit.se.nvip.utils.metrics.CrawlerRun;
 import edu.rit.se.nvip.utils.metrics.FilterMetrics;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -27,8 +29,8 @@ class FilterMetricsTest {
 
         //test on directory that has multiple json files
         assertEquals(2, filterMetrics2.getRuns().size()); //should have 2 run
-        assertEquals(3, filterMetrics2.getRuns().get(0).getVulns().size()); //should have 3 vulns on first run
-        assertEquals(2, filterMetrics2.getRuns().get(1).getVulns().size()); //should have 2 vulns on second run
+        assertEquals(3, filterMetrics2.getRuns().get(0).getVulns().size()); //should have 1 vulns on first run ALL BASED ON VULNID in JSON
+        assertEquals(7, filterMetrics2.getRuns().get(1).getVulns().size()); //should have 7 vulns on second run
 
 
     }
@@ -50,7 +52,7 @@ class FilterMetricsTest {
         Map<CrawlerRun, Integer> newVulns2 = filterMetrics2.newVulnsPerRun();
 
         assertEquals(3, newVulns2.get(filterMetrics2.getRuns().get(0)));//should have 3 new vulns
-        assertEquals(1, newVulns2.get(filterMetrics2.getRuns().get(1)));//should have 1 new vuln
+        assertEquals(4, newVulns2.get(filterMetrics2.getRuns().get(1)));//should have 1 new vuln
     }
 
 
@@ -58,6 +60,10 @@ class FilterMetricsTest {
     public void sourceTypeDistributionTest(){
         String path = System.getProperty("user.dir") + "\\src\\test\\resources";
         FilterMetrics filterMetrics = genFilterMetrics(path);
+
+        List<Map<RawVulnerability.SourceType, Integer>> distribution = filterMetrics.sourceTypeDistribution();
+
+
     }
 
 
@@ -80,6 +86,12 @@ class FilterMetricsTest {
     @Test
     public void proportionPassedTest(){
 
+        String path = System.getProperty("user.dir") + "\\src\\test\\resources";
+        FilterMetrics filterMetrics = genFilterMetrics(path);
+
+        Map<CrawlerRun, Double> propMap = filterMetrics.proportionPassed();
+
+        //assertEquals(0, propMap.get(filterMetrics.getRuns().get(0)));
     }
 
 }
