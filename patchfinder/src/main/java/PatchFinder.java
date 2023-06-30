@@ -34,6 +34,8 @@ import org.eclipse.jgit.util.FileUtils;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.Paths;
+import java.time.DateTimeException;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.*;
@@ -58,6 +60,7 @@ public class PatchFinder {
 	protected static int cloneCommitThreshold = 1000; // TODO: Find omptimal value once github scraping is working well
 	protected static int cloneCommitLimit = 50000; // TODO: Find omptimal value once github scraping is working well
 	protected static String clonePath = "patchfinder/src/main/resources/patch-repos";
+	protected static String patchSrcUrlPath = "patchfinder/src/main/resources/possible-sources.json";
 	protected static String[] addressBases = { "https://github.com/", "https://www.gitlab.com/" };
 	private static final ObjectMapper OM = new ObjectMapper();
 
@@ -168,14 +171,13 @@ public class PatchFinder {
 		final int affectedProductsCount = affectedProducts.values().stream().map(CpeGroup::getVersionsCount).reduce(0, Integer::sum);
 		logger.info("Successfully got {} CVEs mapped to {} affected products from the database", affectedProducts.size(), affectedProductsCount);
 
-		// TODO
 		// Attempt to find source urls from pre-written file (ensure file existence/freshness)
+		final Map<String, ArrayList<String>> possiblePatchURLs = readSourceUrls(patchSrcUrlPath);
 
-		// TODO
-		// Parse patch source urls from any affectedProducts that did not have fresh urls saved to file
+		// Parse patch source urls from any affectedProducts that do not have fresh urls read from file
 		logger.info("Parsing patch urls from affected product CVEs (limit: {} CVEs)...", cveLimit);
 		final long parseUrlsStart = System.currentTimeMillis();
-		Map<String, ArrayList<String>> possiblePatchURLs = patchURLFinder.parseMassURLs(affectedProducts, cveLimit);
+		patchURLFinder.parseMassURLs(possiblePatchURLs, affectedProducts, cveLimit);
 		final int urlCount = possiblePatchURLs.values().stream().map(ArrayList::size).reduce(0, Integer::sum);
 		logger.info("Successfully parsed {} patch urls for {} CVEs in {} seconds",
 				urlCount,
@@ -183,9 +185,8 @@ public class PatchFinder {
 				(System.currentTimeMillis() - parseUrlsStart) / 1000
 		);
 
-		// TODO
 		// Write found source urls to file
-//		writeSourceUrls(srcUrlPath, possiblePatchURLs);
+		writeSourceUrls(patchSrcUrlPath, possiblePatchURLs);
 
 		// Find patches
 		// Repos will be cloned to patch-repos directory, multi-threaded 6 threads.
@@ -218,8 +219,57 @@ public class PatchFinder {
 		logger.info("Successfully collected {} patch commits from {} affected products in {} seconds", patchCommits.size(), affectedProducts.size(), delta);
 	}
 
+	// TODO: Implement this
 	@SuppressWarnings({"unchecked", "rawtypes"})
-	private static void writeSourceUrls(String srcUrlPath, Map<String, ArrayList<String>> urls) {
+	public static Map<String, ArrayList<String>> readSourceUrls(String srcUrlPath) throws IOException {
+		return new HashMap<>();
+//		// Read in raw data
+//		final LinkedHashMap<String, ?> rawData = OM.readValue(Paths.get(srcUrlPath).toFile(), LinkedHashMap.class);
+//
+//		// Extract raw product data
+//		final LinkedHashMap<String, LinkedHashMap> rawProductDict = (LinkedHashMap<String, LinkedHashMap>) rawData.get("products");
+//
+//		// Extract compilation time from file, default to 2000 if fails
+//		try {
+//			productDictLastCompilationDate = Instant.parse((String) rawData.get("comptime"));
+//		} catch (DateTimeException e) {
+//			logger.error("Error parsing compilation date from dictionary: {}", e.toString());
+//			productDictLastCompilationDate = Instant.parse("2000-01-01T00:00:00.00Z");
+//		}
+//
+//		// Init CPE dict
+//		final LinkedHashMap<String, CpeGroup> productDict = new LinkedHashMap<>();
+//
+//		// Process into CpeGroups/CpeEntries
+//		for (Map.Entry<String, LinkedHashMap> entry : rawProductDict.entrySet()) {
+//			final String key = entry.getKey();
+//			LinkedHashMap value = entry.getValue();
+//
+//			final String vendor = (String) value.get("vendor");
+//			final String product = (String) value.get("product");
+//			final String commonTitle = (String) value.get("commonTitle");
+//			final LinkedHashMap<String, LinkedHashMap> rawVersions = (LinkedHashMap<String, LinkedHashMap>) value.get("versions");
+//			final HashMap<String, CpeEntry> versions = new HashMap<>();
+//			for (Map.Entry<String, LinkedHashMap> versionEntry : rawVersions.entrySet()) {
+//				final LinkedHashMap versionValue = versionEntry.getValue();
+//				final String title = (String) versionValue.get("title");
+//				final String version = (String) versionValue.get("version");
+//				final String update = (String) versionValue.get("update");
+//				final String cpeID = (String) versionValue.get("cpeID");
+//				final String platform = (String) versionValue.get("platform");
+//				versions.put(version, new CpeEntry(title, version, update, cpeID, platform));
+//			}
+//
+//			// Create and insert CpeGroup into productDict
+//			productDict.put(key, new CpeGroup(vendor, product, commonTitle, versions));
+//		}
+//
+//		// Return filled productDict
+//		return productDict;
+	}
+
+	@SuppressWarnings({"unchecked", "rawtypes"})
+	private static void writeSourceUrls(String patchSrcUrlPath, Map<String, ArrayList<String>> urls) {
 		// Build output data map
 		Map data = new LinkedHashMap<>();
 		data.put("comptime", Instant.now().toString());
@@ -228,10 +278,10 @@ public class PatchFinder {
 		// Write data to file
 		try {
 			final ObjectWriter w = OM.writerWithDefaultPrettyPrinter();
-			w.writeValue(new File(srcUrlPath), data);
-			logger.info("Successfully wrote {} products to product dict file at filepath '{}'", urls.size(), srcUrlPath);
+			w.writeValue(new File(patchSrcUrlPath), data);
+			logger.info("Successfully wrote {} products to product dict file at filepath '{}'", urls.size(), patchSrcUrlPath);
 		} catch (IOException e) {
-			logger.error("Error writing product dict to filepath '{}': {}", srcUrlPath, e.toString());
+			logger.error("Error writing product dict to filepath '{}': {}", patchSrcUrlPath, e.toString());
 		}
 	}
 
