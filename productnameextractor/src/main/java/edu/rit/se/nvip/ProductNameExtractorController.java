@@ -323,16 +323,14 @@ public class ProductNameExtractorController {
         logger.info("Pulling existing CVEs from the database...");
         final long getCVEStart = System.currentTimeMillis();
 
-        // Fetch vulnerability data from the DB
-        final Map<String, CompositeVulnerability> vulnMap = databaseHelper.getExistingCompositeVulnerabilities(0);
-
         // Extract vuln list for the AffectedProductIdentifier - if in test mode, calls createTestVulnList for our vulnList
         final List<CompositeVulnerability> vulnList;
         if(testMode){
             logger.info("Test mode enabled, creating test vulnerability list...");
             vulnList = createTestVulnList();
         }else{
-            vulnList = new ArrayList<>(vulnMap.values());
+            // Fetch vulnerability data from the DB
+            vulnList = databaseHelper.getExistingCompositeVulnerabilities(0);
         }
 
         logger.info("Successfully pulled {} existing CVEs from the database in {} seconds", vulnList.size(), Math.floor(((double) (System.currentTimeMillis() - getCVEStart) / 1000) * 100) / 100);

@@ -50,7 +50,6 @@ public class DatabaseHelper {
 	private final String selectVulnerabilitySql = "SELECT vulnerability.vuln_id, vulnerability.cve_id, description.description FROM vulnerability JOIN description ON vulnerability.description_id = description.description_id";
 	private final String insertAffectedProductSql = "INSERT INTO affectedproduct (cve_id, cpe, product_name, release_date, version, vendor, purl, swid_tag) VALUES (?, ?, ?, ?, ?, ?, ?, ?);";
 	private final String deleteAffectedProductSql = "DELETE FROM affectedproduct where cve_id = ?;";
-	private static Map<String, CompositeVulnerability> existingCompositeVulnMap = new HashMap<>();
 
 	/**
 	 * The private constructor sets up HikariCP for connection pooling. Singleton
@@ -224,46 +223,40 @@ public class DatabaseHelper {
 	 * @param maxVulnerabilities max number of vulnerabilities to get
 	 * @return a map of fetched vulnerabilities
 	 */
-	public Map<String, CompositeVulnerability> getExistingCompositeVulnerabilities(int maxVulnerabilities) {
-		if (existingCompositeVulnMap.size() == 0) {
+	public List<CompositeVulnerability> getExistingCompositeVulnerabilities(int maxVulnerabilities) {
+		ArrayList<CompositeVulnerability> vulnList = new ArrayList<>();
 		synchronized (DatabaseHelper.class) {
-			if (existingCompositeVulnMap.size() == 0) {
-				int vulnId;
-				String cveId, description;
-				existingCompositeVulnMap = new HashMap<>();
-				try (Connection connection = getConnection();) {
-					PreparedStatement pstmt = connection.prepareStatement(selectVulnerabilitySql);
-					ResultSet rs = pstmt.executeQuery();
+			int vulnId;
+			String cveId, description;
+			try (Connection connection = getConnection();) {
+				PreparedStatement pstmt = connection.prepareStatement(selectVulnerabilitySql);
+				ResultSet rs = pstmt.executeQuery();
 
-					int vulnCount = 0;
-					// Iterate over result set until there are no results left or vulnCount >= maxVulnerabilities
-					while (rs.next() && (maxVulnerabilities == 0 || vulnCount < maxVulnerabilities)) {
-						vulnId = rs.getInt("vuln_id");
-						cveId = rs.getString("cve_id");
-						description = rs.getString("description");
+				int vulnCount = 0;
+				// Iterate over result set until there are no results left or vulnCount >= maxVulnerabilities
+				while (rs.next() && (maxVulnerabilities == 0 || vulnCount < maxVulnerabilities)) {
+					vulnId = rs.getInt("vuln_id");
+					cveId = rs.getString("cve_id");
+					description = rs.getString("description");
 
-						CompositeVulnerability existingVulnInfo = new CompositeVulnerability(
-								vulnId,
-								cveId,
-								description,
-								CompositeVulnerability.CveReconcileStatus.UPDATE
-						);
-						existingCompositeVulnMap.put(cveId, existingVulnInfo);
-						vulnCount++;
-					}
-					logger.info("NVIP has loaded {} existing CVE items from DB!", existingCompositeVulnMap.size());
-				} catch (Exception e) {
-					logger.error("Error while getting existing vulnerabilities from DB\nException: {}", e.getMessage());
-					logger.error(
-							"This is a serious error! NVIP will not be able to decide whether to insert or update! Exiting...");
-					System.exit(1);
+					CompositeVulnerability vulnerability = new CompositeVulnerability(
+							vulnId,
+							cveId,
+							description,
+							CompositeVulnerability.CveReconcileStatus.UPDATE
+					);
+					vulnList.add(vulnerability);
+					vulnCount++;
 				}
+				logger.info("NVIP has loaded {} existing CVE items from DB!", vulnList.size());
+			} catch (Exception e) {
+				logger.error("Error while getting existing vulnerabilities from DB\nException: {}", e.getMessage());
+				logger.error(
+						"This is a serious error! NVIP will not be able to decide whether to insert or update! Exiting...");
+				System.exit(1);
 			}
 		}
-	} else {
-		logger.warn("NVIP has loaded {} existing CVE items from memory!", existingCompositeVulnMap.size());
-	}
-		return existingCompositeVulnMap;
+		return vulnList;
 	}
 
 	/**

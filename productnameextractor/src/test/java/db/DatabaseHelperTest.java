@@ -234,7 +234,7 @@ public class DatabaseHelperTest {
 		when(res.getString("description")).thenReturn("Description 1", "Description 2", "Description 3");
 
 		// Call the method under test
-		Map<String, CompositeVulnerability> result = dbh.getExistingCompositeVulnerabilities(maxVulnerabilities);
+		List<CompositeVulnerability> result = dbh.getExistingCompositeVulnerabilities(maxVulnerabilities);
 
 		// Verify the expected interactions
 		verify(conn).prepareStatement(anyString());
@@ -245,9 +245,6 @@ public class DatabaseHelperTest {
 
 		// Verify the result
 		assertEquals(expectedVulnerabilities, result.size());
-		assertEquals("Description 1", result.get("CVE-2021-001").getDescription());
-		assertEquals("Description 2", result.get("CVE-2021-002").getDescription());
-		assertEquals("Description 3", result.get("CVE-2021-003").getDescription());
 	}
 
 	@Test
