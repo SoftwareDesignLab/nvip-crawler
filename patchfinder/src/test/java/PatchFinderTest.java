@@ -37,4 +37,17 @@ public class PatchFinderTest {
             fail("Exception thrown: " + e1.getMessage());
         }
     }
+
+    @Test
+    public void testFetchEnvVars() {
+        PatchFinder.fetchEnvVars();
+
+        // Assert that the properties have been set correctly
+        assertEquals(5, PatchFinder.cveLimit);
+        assertEquals(10, PatchFinder.maxThreads);
+        assertEquals(1, PatchFinder.cvesPerThread);
+        assertEquals("src/main/resources/patch-repos", PatchFinder.clonePath);
+        assertEquals("mysql", PatchFinder.databaseType);
+        assertEquals(1000, PatchFinder.cloneCommitThreshold);
+    }
 }
