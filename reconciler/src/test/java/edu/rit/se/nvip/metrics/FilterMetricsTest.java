@@ -63,6 +63,10 @@ class FilterMetricsTest {
 
         List<Map<RawVulnerability.SourceType, Integer>> distribution = filterMetrics.sourceTypeDistribution();
 
+        Map<RawVulnerability.SourceType, Integer> otherMap = distribution.get(0);
+
+        assertEquals(3, otherMap.get(RawVulnerability.SourceType.OTHER)); //should be 3 OTHERs
+
 
     }
 
@@ -83,6 +87,7 @@ class FilterMetricsTest {
     }
 
 
+    //WAITING FOR UPDATED FILTERS
     @Test
     public void proportionPassedTest(){
 
