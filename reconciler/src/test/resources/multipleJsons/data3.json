@@ -9,15 +9,6 @@
     "source_url": "https://example.com"
   },
   {
-    "raw_desc_id": 456,
-    "raw_desc": "Example raw description 2",
-    "cve_id": "CVE-2023-5678",
-    "created_date": "2023-07-01 00:00:00",
-    "published_date": "2023-07-02 00:00:00",
-    "last_modified_date": "2023-07-03 00:00:00",
-    "source_url": "https://example2.com"
-  },
-  {
     "raw_desc_id": 788,
     "raw_desc": "Example raw description 3",
     "cve_id": "CVE-2023-1111",
