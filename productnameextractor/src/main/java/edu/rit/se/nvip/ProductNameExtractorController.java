@@ -313,7 +313,7 @@ public class ProductNameExtractorController {
      * @param args (unused) program arguments
      */
     public static void main(String[] args) {
-        logger.info("CURRENT PATH -->" + System.getProperty("user.dir"));
+        logger.info("CURRENT PATH --> " + System.getProperty("user.dir"));
 
         // Fetch values for required environment variables
         ProductNameExtractorController.fetchEnvVars();
