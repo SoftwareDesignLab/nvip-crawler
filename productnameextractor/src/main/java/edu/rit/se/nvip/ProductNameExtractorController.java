@@ -209,7 +209,7 @@ public class ProductNameExtractorController {
         }
     }
 
-    private static void updateProductDict(Map<String, CpeGroup> productDict, long timeSinceLastComp) {
+    private static void updateProductDict(Map<String, CpeGroup> productDict, long timeSinceLastComp, String productDictPath) {
         // Check if product dict is stale
         if(timeSinceLastComp / (60 * 60 * 24) > 0) { // 60sec/min * 60min/hr * 24hrs = 1 day
             logger.info("Product dictionary file is stale, fetching data from NVD to refresh it...");
@@ -232,7 +232,7 @@ public class ProductNameExtractorController {
                     notChangedCounter
             );
 
-            writeProductDict(productDict,  productDictName); // Write updated product dict
+            writeProductDict(productDict, productDictPath); // Write updated product dict
         }
     }
 
@@ -323,17 +323,16 @@ public class ProductNameExtractorController {
         logger.info("Pulling existing CVEs from the database...");
         final long getCVEStart = System.currentTimeMillis();
 
-        // Extract vuln list for the AffectedProductIdentifier - if in test mode, calls createTestVulnList for our vulnList
         final List<CompositeVulnerability> vulnList;
         if(testMode){
+            // If in test mode, create manual vulnerability list
             logger.info("Test mode enabled, creating test vulnerability list...");
             vulnList = createTestVulnList();
         }else{
-            // Fetch vulnerability data from the DB
+            // Otherwise, fetch vulnerability data from the DB
             vulnList = databaseHelper.getExistingCompositeVulnerabilities(0);
+            logger.info("Successfully pulled {} existing CVEs from the database in {} seconds", vulnList.size(), Math.floor(((double) (System.currentTimeMillis() - getCVEStart) / 1000) * 100) / 100);
         }
-
-        logger.info("Successfully pulled {} existing CVEs from the database in {} seconds", vulnList.size(), Math.floor(((double) (System.currentTimeMillis() - getCVEStart) / 1000) * 100) / 100);
 
         // This method will find Common Platform Enumerations (CPEs) and store them in the DB
         logger.info("Initializing and starting the AffectedProductIdentifier...");
@@ -361,7 +360,7 @@ public class ProductNameExtractorController {
             );
 
             // Update dict as needed
-            updateProductDict(productDict, timeSinceLastComp);
+            updateProductDict(productDict, timeSinceLastComp, productDictPath);
 
             // Load CPE dict into affectedProductIdentifier
             affectedProductIdentifier.loadCPEDict(productDict);
