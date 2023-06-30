@@ -168,7 +168,7 @@ public class FilterMetrics {
     public Map<CrawlerRun, Integer> newVulnsPerRun() {
 
         Map<CrawlerRun, Integer> runMap = new HashMap<>(); //Map of runs to number of new raw vulns
-        List<RawVulnerability> rawVulns = new ArrayList<>(); //all raw vulns that have been found
+        Set<RawVulnerability> rawVulns = new HashSet<>(); //all raw vulns that have been found
 
         for(CrawlerRun run: runs){
             int vulns = 0; //initializing number of vulns that were found
