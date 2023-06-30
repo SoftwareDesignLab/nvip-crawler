@@ -30,11 +30,24 @@ public class PatchFinderTest {
             assertTrue(new File(PatchFinder.clonePath).exists());
 
             //check the patch commits
-            assertEquals(23, PatchFinder.getPatchCommits().size()/2);
+            assertEquals(23, PatchFinder.getPatchCommits().size());
 
             // Add more assertions based on your requirements
         } catch (IOException e1) {
             fail("Exception thrown: " + e1.getMessage());
         }
+    }
+
+    @Test
+    public void testFetchEnvVars() {
+        PatchFinder.fetchEnvVars();
+
+        // Assert that the properties have been set correctly
+        assertEquals(5, PatchFinder.cveLimit);
+        assertEquals(10, PatchFinder.maxThreads);
+        assertEquals(1, PatchFinder.cvesPerThread);
+        assertEquals("src/main/resources/patch-repos", PatchFinder.clonePath);
+        assertEquals("mysql", PatchFinder.databaseType);
+        assertEquals(1000, PatchFinder.cloneCommitThreshold);
     }
 }
