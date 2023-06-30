@@ -67,6 +67,29 @@ public class CpeLookUp {
 		genericProductNames.add("store");
 		genericProductNames.add("statistics");
 		genericProductNames.add("view");
+		genericProductNames.add("remote");
+		genericProductNames.add("notification");
+		genericProductNames.add("scripting");
+		genericProductNames.add("agent");
+		genericProductNames.add("generator");
+		genericProductNames.add("request");
+		genericProductNames.add("update");
+		genericProductNames.add("network");
+		genericProductNames.add("access");
+		genericProductNames.add("image");
+		genericProductNames.add("business");
+		genericProductNames.add("accessibility");
+		genericProductNames.add("release");
+		genericProductNames.add("mail");
+		genericProductNames.add("mobile");
+		genericProductNames.add("data");
+		genericProductNames.add("service");
+		genericProductNames.add("runtime");
+		genericProductNames.add("date");
+		genericProductNames.add("safety");
+		genericProductNames.add("account");
+		genericProductNames.add("web");
+		genericProductNames.add("driver");
 	}
 
 	/**
