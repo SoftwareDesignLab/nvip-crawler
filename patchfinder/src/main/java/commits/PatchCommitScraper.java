@@ -100,6 +100,10 @@ public class PatchCommitScraper {
 							if (matcher.find() || commit.getFullMessage().contains(cveId)) {
 								String commitUrl = repository.getConfig().getString("remote", "origin", "url");
 								logger.info("Found patch commit @ {} in repo {}", commitUrl, localDownloadLoc);
+
+								//TODO: We want to truncate data that is too large, but cutting a diff off half way thru
+								// is less than ideal, so we need to make sure to truncate after the last diff that does
+								// not run over the size constraint
 								String unifiedDiff = generateUnifiedDiff(git, commit);
 								List<RevCommit> commitTimeline = calculateCommitTimeline(repository, startingRevision, commit);
 								int linesChanged = getLinesChanged(repository, commit);

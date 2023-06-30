@@ -229,15 +229,16 @@ public class PatchFinderThread implements Runnable {
 					logger.info("Found patch commit @ URL '{}'", commitUrl);
 
 					try {
+						//TODO: We want to truncate data that is too large, but cutting a diff off half way thru
+						// is less than ideal, so we need to make sure to truncate after the last diff that does
+						// not run over the size constraint
+
 						// Connect to the commit URL and retrieve the unified diff
 						Document commitPage = Jsoup.connect(commitUrl).get();
 						Elements diffElements = commitPage.select("div.file-actions");
 						List<String> unifiedDiffStrings = diffElements.eachText();
 
 						// Store data up to truncation limit
-						//TODO: We want to truncate data that is too large, but cutting a diff off half way thru
-						// is less than ideal, so we need to make sure to truncate after the last diff that does
-						// not run over the size constraint
 
 
 						PatchCommit patchCommit = new PatchCommit(
