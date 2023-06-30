@@ -83,7 +83,7 @@ public class PatchFinderThread implements Runnable {
 		}
 
 		// Add found commits to total list after finished
-		PatchFinder.getPatchCommits().addAll(foundPatchCommits);
+		PatchFinder.getPatchCommits().addAll(foundPatchCommits); // TODO: This may be causing race conditions
 
 		final long delta = (System.currentTimeMillis() - totalStart) / 1000;
 		logger.info("Done scraping {} patch commits from CVE(s) {} in {} seconds", foundPatchCommits.size(), cvePatchEntry.keySet(), delta);
@@ -129,12 +129,16 @@ public class PatchFinderThread implements Runnable {
 				}
 				logger.info("Found {} commits on the master branch @ URL '{}'", commitCount, patchSource);
 
+				// Process found repository based on size (commit count on master branch)
+
 				// If commit count is under threshold, scrape commits from url
-				if(commitCount <= PatchFinder.cloneCommitThreshold) {
+				if(commitCount <= PatchFinder.getCloneCommitThreshold())
 					findPatchCommitsFromUrl(foundPatchCommits, cve, patchSource, commitCount);
-				} else { // Otherwise, clone repo to parse commits
+				// If not over limit, clone repo to parse commits
+				else if(commitCount <= PatchFinder.getCloneCommitLimit())
 					findPatchCommitsFromRepo(foundPatchCommits, cve, patchSource);
-				}
+				// Otherwise, handle extra large repo
+				else throw new IllegalArgumentException("REPO SIZE OVER COMMIT_LIMIT, IT WILL NOT BE SCRAPED OR CLONED");
 
 			} else throw new IllegalArgumentException("Received invalid response code " + responseCode);
 
@@ -223,21 +227,29 @@ public class PatchFinderThread implements Runnable {
 				if (matcher.find() || object.text().contains(cveId)) {
 					String commitUrl = object.attr("href");
 					logger.info("Found patch commit @ URL '{}'", commitUrl);
-//					String unifiedDiff = generateUnifiedDiff(git, commit);
 
-					PatchCommit patchCommit = new PatchCommit(
-							commitUrl,
-							cveId,
-							object.text(),
-							new Date(object.attr("commitTime")),
-							object.text(),
-							null, // unifiedDiff
-							null,
-							null,
-							0
-							);
+					try {
+						// Connect to the commit URL and retrieve the unified diff
+						Document commitPage = Jsoup.connect(commitUrl).get();
+						Elements diffElements = commitPage.select("div.file-actions");
+						String unifiedDiff = diffElements.text();
 
-					patchCommits.add(patchCommit);
+						PatchCommit patchCommit = new PatchCommit(
+								commitUrl,
+								cveId,
+								object.text(),
+								new Date(object.attr("commitTime")),
+								object.text(),
+								unifiedDiff, // unifiedDiff
+								null,
+								null,
+								0
+						);
+
+						patchCommits.add(patchCommit);
+					} catch (IOException e) {
+						logger.error("Failed to scrape unified diff from commit URL '{}': {}", commitUrl, e);
+					}
 				}
 			}
 		}
