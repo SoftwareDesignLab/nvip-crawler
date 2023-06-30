@@ -33,7 +33,8 @@ public class PatchUrlFinderTest {
         int cveLimit = 5; // Set the desired CVE limit for testing
 
         // Invoke the method being tested
-        Map<String, ArrayList<String>> cveCpeUrls = patchUrlFinder.parseMassURLs(affectedProducts, cveLimit);
+        Map<String, ArrayList<String>> cveCpeUrls = new HashMap<>();
+        patchUrlFinder.parseMassURLs(cveCpeUrls, affectedProducts, cveLimit);
 
         // Perform assertions to check the results
         Assertions.assertNotNull(cveCpeUrls);
