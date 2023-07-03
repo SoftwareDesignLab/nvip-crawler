@@ -100,14 +100,30 @@
 <!--        </addColumn>-->
 <!--    </changeSet>-->
 
-    <changeSet author="dylan" id="modify_uni_diff_column_small">
-        <dropColumn tableName="patchcommit" columnName="uni_diff"/>
+<!--    <changeSet author="dylan" id="modify_uni_diff_column_small">-->
+<!--        <dropColumn tableName="patchcommit" columnName="uni_diff"/>-->
 
-        <addColumn tableName="patchcommit">
-            <column name="uni_diff" type="VARCHAR(500)">
-                <constraints nullable="false"/>
-            </column>
-        </addColumn>
+<!--        <addColumn tableName="patchcommit">-->
+<!--            <column name="uni_diff" type="VARCHAR(500)">-->
+<!--                <constraints nullable="false"/>-->
+<!--            </column>-->
+<!--        </addColumn>-->
+<!--    </changeSet>-->
+
+    <changeSet author="dylan" id="patchsourceurl-cascade-on-delete">
+        <dropForeignKeyConstraint
+                baseTableName="patchsourceurl"
+                baseTableSchemaName="nvip"
+                constraintName="patch_source_cve_id_fk"
+        />
+        <addForeignKeyConstraint
+                baseTableName="patchsourceurl"
+                baseColumnNames="cve_id"
+                referencedTableName="vulnerability"
+                referencedColumnNames="cve_id"
+                constraintName="patch_source_cve_id_fk"
+                onDelete="CASCADE"
+        />
     </changeSet>
 
 </databaseChangeLog>

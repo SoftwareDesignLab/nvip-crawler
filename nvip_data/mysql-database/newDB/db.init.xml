@@ -318,7 +318,9 @@
             baseColumnNames="cve_id"
             referencedTableName="vulnerability"
             referencedColumnNames="cve_id"
-            constraintName="patch_source_cve_id_fk"/>
+            constraintName="patch_source_cve_id_fk"
+            onDelete="CASCADE"
+        />
     </changeSet>
 
     <changeSet author="patchcommit" id="patchcommit">
