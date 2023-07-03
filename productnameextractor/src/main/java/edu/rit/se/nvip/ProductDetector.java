@@ -91,6 +91,7 @@ public class ProductDetector {
 		} catch (IOException e) {
 			// Log and rethrow error to stop program execution
 			logger.error("Error while initializing product detector, model path {}, exception detail {}", binPath, e.toString());
+			logger.warn("Please ensure that your working directory is correct. Current working directory: {}", ProductNameExtractorController.currentDir);
 			throw e;
 		}
 	}

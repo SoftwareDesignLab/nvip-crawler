@@ -85,7 +85,6 @@ public class NERmodel {
 	public NERmodel(String modelsDir, String nlpDir) throws FileNotFoundException {
 		super();
 
-
 		try {
 			// Get models paths
 			String c2vModelConfigPath = modelsDir + System.getenv("CHAR_2_VEC_CONFIG");
@@ -101,6 +100,7 @@ public class NERmodel {
 				model = MultiLayerNetwork.load(new File(nerModelPath), false);
 			} catch (Exception e) {
 				logger.error("Error loading MultiLayerNetwork for product name extraction from path {}: {}", nerModelPath, e.toString());
+				logger.warn("Please ensure that your working directory is correct. Current working directory: {}", ProductNameExtractorController.currentDir);
 			}
 			long endTime = System.currentTimeMillis();
 
@@ -137,7 +137,7 @@ public class NERmodel {
 
 			try {
 				startTime = System.currentTimeMillis();
-				logger.info("Working Dir === {}", System.getProperty("user.dir"));
+				logger.info("Working Dir === {}", ProductNameExtractorController.currentDir);
 				File binFile = new File(sentenceModelPath);
 				InputStream modelIn = Files.newInputStream(binFile.toPath());
 				SentenceModel sentenceModel = new SentenceModel(modelIn);
@@ -165,6 +165,7 @@ public class NERmodel {
 			}
 		} catch (Exception e) {
 			logger.error("ERROR: Error initializing NERmodel {}", e.toString());
+			logger.warn("Please ensure that your working directory is correct. Current working directory: {}", ProductNameExtractorController.currentDir);
 			throw e;
 		}
 

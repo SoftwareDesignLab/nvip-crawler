@@ -59,6 +59,7 @@ public class Word2Vector {
 			// TODO Auto-generated catch block
 			Logger logger = LogManager.getLogger(getClass().getSimpleName());
 			logger.error(e);
+			logger.warn("Please ensure that your working directory is correct. Current working directory: {}", ProductNameExtractorController.currentDir);
 			throw e;
 		}		
 	}

@@ -41,6 +41,7 @@ public class ProductNameExtractorController {
     protected static String resourceDir = "productnameextractor/nvip_data";
     protected static String dataDir = "data";
     protected static String nlpDir = "nlp";
+    protected static String currentDir = System.getProperty("user.dir");
     protected static Instant productDictLastCompilationDate = Instant.parse("2000-01-01T00:00:00.00Z");
     protected static Instant productDictLastRefreshDate = Instant.parse("2000-01-01T00:00:00.00Z");
     private static AffectedProductIdentifier affectedProductIdentifier;
@@ -210,6 +211,7 @@ public class ProductNameExtractorController {
             logger.info("Successfully wrote {} products to product dict file at filepath '{}'", productDict.size(), productDictPath);
         } catch(Exception e){
             logger.error("Error writing product dict to filepath '{}': {}", productDictPath, e.toString());
+            logger.warn("Please ensure that your working directory is correct. Current working directory: {}", currentDir);
         }
     }
 
@@ -278,6 +280,7 @@ public class ProductNameExtractorController {
             reader.close();
         }catch(FileNotFoundException e){
             logger.warn("Could not find the test csv file at path {}", testVulnerabilitiesFile.getAbsolutePath());
+            logger.warn("Please ensure that your working directory is correct. Current working directory: {}", currentDir);
         }catch(Exception e){
             logger.warn("Error {} reading the test csv file", e.toString());
         }
@@ -291,7 +294,7 @@ public class ProductNameExtractorController {
      * @param vulnList list of vulnerabilities
      */
     private static void writeTestResults(List<CompositeVulnerability> vulnList){
-        File testResultsFile = new File(resourceDir + "/" + dataDir + "/" + "test_results.csv");
+        File testResultsFile = new File(resourceDir + "/" + dataDir + "/" + "test_results.txt");
         try {
             PrintWriter writer = new PrintWriter(testResultsFile);
             // Go through each vulnerability and write it and its affected products to output and the file
@@ -319,7 +322,10 @@ public class ProductNameExtractorController {
             logger.info("Test results have been written to file {}", testResultsFile.getAbsolutePath());
 
         } catch(FileNotFoundException e){
-            logger.warn("Could not find the test results csv file at path {}", testResultsFile.getAbsolutePath());
+            logger.warn("Could not find the test results file at path {}", testResultsFile.getAbsolutePath());
+            logger.warn("Please ensure that your working directory is correct. Current working directory: {}", currentDir);
+        }catch(Exception e){
+            logger.warn("Error {} writing the test results file", e.toString());
         }
 
     }
@@ -332,8 +338,7 @@ public class ProductNameExtractorController {
      * @param args (unused) program arguments
      */
     public static void main(String[] args) {
-        //TODO: store path as a static variable and then print out the directory for errors regarding file not found etc
-        logger.info("CURRENT PATH --> " + System.getProperty("user.dir"));
+        logger.info("CURRENT PATH --> " + currentDir);
 
         // Fetch values for required environment variables
         ProductNameExtractorController.fetchEnvVars();
