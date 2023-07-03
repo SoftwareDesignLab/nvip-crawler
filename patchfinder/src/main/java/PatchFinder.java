@@ -41,6 +41,7 @@ import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 /**
  * Main class for collecting CVE Patches within repos that were
@@ -205,6 +206,7 @@ public class PatchFinder {
 
 		// Find patches
 		// Repos will be cloned to patch-repos directory, multi-threaded 6 threads.
+		// TODO: Fix
 		logger.info("Starting patch finder with {} max threads, allowing {} CVE(s) per thread...", maxThreads, cvesPerThread);
 		final long findPatchesStart = System.currentTimeMillis();
 		PatchFinder.findPatchesMultiThreaded(possiblePatchURLs);
@@ -321,7 +323,11 @@ public class PatchFinder {
 		}
 
 		// Determine the actual number of CVEs to be processed
-		final int totalCVEsToProcess = Math.min(Math.min(possiblePatchSources.size(), cveLimit), maxThreads);
+		final int totalCVEsToProcess = Math.min(possiblePatchSources.size(), cveLimit);
+
+		// Determine the total number of possible patch sources to scrape
+		final AtomicInteger totalPatchSources = new AtomicInteger();
+		possiblePatchSources.values().stream().map(ArrayList::size).forEach(totalPatchSources::addAndGet);
 
 		// If there are less CVEs to process than maxThreads, only create cveLimit number of threads
 		if(totalCVEsToProcess < maxThreads){
@@ -331,7 +337,7 @@ public class PatchFinder {
 
 		// Initialize data structures
 		ArrayList<HashMap<String, ArrayList<String>>> sourceBatches = new ArrayList<>();
-		final BlockingQueue<Runnable> workQueue = new ArrayBlockingQueue<>(maxThreads);
+		final BlockingQueue<Runnable> workQueue = new ArrayBlockingQueue<>(totalPatchSources.get());
 		final ThreadPoolExecutor executor = new ThreadPoolExecutor(
 				maxThreads,
 				maxThreads,
@@ -348,18 +354,31 @@ public class PatchFinder {
 		// Prestart all assigned threads (this is what runs jobs)
 		executor.prestartAllCoreThreads();
 
-
-		// TODO: Distribute jobs correctly, preventing race conditions and balancing the load on threads
 		// Add jobs to work queue
-		int numSourcesAdded = 0;
+		final Set<String> CVEsToProcess = possiblePatchSources.keySet();
+
+		// Find # of CVEs per thread (ignoring remainder)
+		final int CVEsPerThread = (int) Math.floor((double) CVEsToProcess.size() / maxThreads);
+
+		// Partition jobs to all threads
+		int i = 0;
 		int thread = 0;
-		for (String cveId : possiblePatchSources.keySet()) {
-			sourceBatches.get(thread).put(cveId, possiblePatchSources.get(cveId));
-			numSourcesAdded++;
-			if (numSourcesAdded % cvesPerThread == 0 && thread < maxThreads) {
-				workQueue.add(new PatchFinderThread(sourceBatches.get(thread), clonePath, 10000));
-				thread++;
+		for (String cveId : CVEsToProcess) {
+			if(i >= cveLimit) {
+				logger.info("Hit defined CVE_LIMIT of {}, skipping {} remaining CVEs...", cveLimit, CVEsToProcess.size() - cveLimit);
+				break;
 			}
+
+//			sourceBatches.get(thread).put(cveId, possiblePatchSources.get(cveId));
+			final HashMap<String, ArrayList<String>> sourceBatch = new HashMap<>();
+			sourceBatch.put(cveId, possiblePatchSources.get(cveId));
+			if(!workQueue.offer(new PatchFinderThread(sourceBatch, clonePath, 10000))) {
+				logger.error("Could not add job '{}' to work queue", cveId);
+			}
+			i++;
+
+			// Iterate thread counter only once per partition
+			if(i % CVEsPerThread == 0) thread++; // TODO: Remainder?
 		}
 
 		// Initiate shutdown of executor (waits, but does not hang, for all jobs to complete)

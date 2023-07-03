@@ -78,7 +78,7 @@ public class PatchUrlFinder {
 
 			// Skip entries that already have values (only if refresh is not needed)
 			if(!refresh && possiblePatchUrls.containsKey(cveId)) {
-				logger.info("Found {} existing & fresh possible sources for CVE {}, skipping url parsing...", cveId);
+				logger.info("Found {} existing & fresh possible sources for CVE {}, skipping url parsing...", possiblePatchUrls.get(cveId).size(), cveId);
 				continue;
 			}
 
