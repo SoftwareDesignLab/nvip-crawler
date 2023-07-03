@@ -1,7 +1,7 @@
 package edu.rit.se.nvip;
 
+import com.rabbitmq.client.*;
 import edu.rit.se.nvip.crawler.CveCrawlController;
-import edu.rit.se.nvip.crawler.github.GithubScraper;
 import edu.rit.se.nvip.crawler.github.PyPAGithubScraper;
 import edu.rit.se.nvip.model.RawVulnerability;
 import edu.rit.se.nvip.utils.UtilHelper;
@@ -88,13 +88,10 @@ public class CrawlerMain {
             }
         }
 
-        // Update the source types for the found CVEs and insert new entries into the rawdescriptions table
-        updateSourceTypes(crawledCVEs);
-        logger.info("Done! Preparing to insert all raw data found in this run!");
-        crawlerMain.insertRawCVEs(crawledCVEs);
-        logger.info("Done!");
+
 
         // Output results in testmode
+        // Store raw data in DB otherwise
         if (crawlerTestMode) {
             logger.info("CVEs Found: {}", crawledCVEs.size());
             for (String cveId: crawledCVEs.keySet()) {
@@ -104,7 +101,268 @@ public class CrawlerMain {
                     logger.info("[{} | {}]\n", vuln.getSourceURL(), description);
                 }
             }
+        } else {
+            // Update the source types for the found CVEs and insert new entries into the rawdescriptions table
+            updateSourceTypes(crawledCVEs);
+            logger.info("Done! Preparing to insert all raw data found in this run!");
+            crawlerMain.insertRawCVEs(crawledCVEs);
+            logger.info("Raw data inserted! Sending message to MQ server to notify Reconciler...");
+            crawlerMain.notifyReconciler();
+            logger.info("Message sent successfully!");
         }
+
+        logger.info("Done!");
+    }
+
+    /**
+     * Prepare Vars for Crawler from envvars
+     * Sets defaults if envvars aren't found
+     */
+    private void prepareCrawlerVars() {
+        String outputDir = System.getenv("NVIP_OUTPUT_DIR");
+        String seedFileDir = System.getenv("NVIP_SEED_URLS");
+        String whitelistFileDir = System.getenv("NVIP_WHITELIST_URLS");
+        String sourceTypeFileDir = System.getenv("NVIP_SOURCE_TYPES");
+        String enableGitHub = System.getenv("NVIP_ENABLE_GITHUB");
+        String crawlerPoliteness = System.getenv("NVIP_CRAWLER_POLITENESS");
+        String maxPages = System.getenv("NVIP_CRAWLER_MAX_PAGES");
+        String depth = System.getenv("NVIP_CRAWLER_DEPTH");
+        String enableReport = System.getenv("NVIP_CRAWLER_REPORT_ENABLE");
+        String crawlerNum = System.getenv("NVIP_NUM_OF_CRAWLER");
+        String testMode = System.getenv("NVIP_CRAWLER_TEST_MODE");
+
+        addEnvvarString(CrawlerMain.crawlerVars,"outputDir", outputDir, "output/crawlers",
+                "WARNING: Crawler output path not defined in NVIP_OUTPUT_DIR, using default path: output/crawlers");
+
+        addEnvvarString(CrawlerMain.crawlerVars,"seedFileDir", seedFileDir, "crawler/resources/url-sources/nvip-seeds.txt",
+                "WARNING: Crawler seed file path not defined in NVIP_SEED_URLS, using default path: " + "resources/url-sources/nvip-seeds.txt");
+
+        addEnvvarString(CrawlerMain.crawlerVars,"whitelistFileDir", whitelistFileDir, "crawler/resources/url-sources/nvip-whitelist.txt",
+                "WARNING: Crawler whitelist file path not defined in NVIP_WHITELIST_URLS, using default path: resources/url-sources/nvip-whitelist.txt");
+
+        addEnvvarString(CrawlerMain.crawlerVars,"sourceTypeFileDir", sourceTypeFileDir, "crawler/resources/url-sources/nvip-source-types.txt",
+                "WARNING: Crawler whitelist file path not defined in NVIP_SOURCE_TYPES, using default path: resources/url-sources/nvip-source-types.txt");
+
+        addEnvvarBool(CrawlerMain.crawlerVars,"enableGitHub", enableGitHub, false,
+                "WARNING: CVE GitHub Enabler not defined in NVIP_ENABLE_GITHUB, allowing CVE GitHub pull on default");
+
+        addEnvvarInt(CrawlerMain.crawlerVars,"crawlerPoliteness", crawlerPoliteness, 3000,
+                "WARNING: Crawler Politeness is not defined, using 3000 as default value");
+
+        addEnvvarInt(CrawlerMain.crawlerVars,"maxPages", maxPages, 3000,
+                "WARNING: Crawler Max Pages not defined in NVIP_CRAWLER_MAX_PAGES, using 3000 as default value");
+
+        addEnvvarInt(CrawlerMain.crawlerVars,"depth", depth, 1,
+                "WARNING: Crawler Depth not defined in NVIP_CRAWLER_DEPTH, using 1 as default value");
+
+        addEnvvarBool(CrawlerMain.crawlerVars,"enableReport", enableReport, true,
+                "WARNING: Crawler Report Enabling not defined in NVIP_CRAWLER_REPORT_ENABLE, allowing report by default");
+
+        addEnvvarInt(CrawlerMain.crawlerVars,"crawlerNum", crawlerNum, 10,
+                "WARNING: Number of Crawlers not defined in NVIP_NUM_OF_CRAWLER, using 10 as default value");
+
+        addEnvvarBool(CrawlerMain.crawlerVars,"testMode", testMode, false,
+                "WARNING: Crawler Test Mode not defined in NVIP_CRAWLER_TEST_MODE, using false as default value");
+    }
+
+
+    /**
+     * Prepare Vars for Data dir from envvars
+     * Sets defaults if envvars aren't found
+     */
+    private void prepareDataVars() {
+        String dataDir = System.getenv("NVIP_DATA_DIR");
+        String refreshNvdList = System.getenv("NVIP_REFRESH_NVD_LIST");
+        String nvdUrl = System.getenv("NVIP_NVD_URL");
+        String reconcilerMethod = System.getenv("NVIP_RECONCILER_METHOD");
+        String mqHost = System.getenv("MQ_HOST");
+        String mqPort = System.getenv("MQ_PORT");
+        String mqQueueName = System.getenv("MQ_QUEUE_NAME");
+
+        addEnvvarString(CrawlerMain.dataVars,"dataDir", dataDir, "nvip_data",
+                "WARNING: Data Directory not defined in NVIP_DATA_DIR, using ./nvip_data as default");
+        addEnvvarBool(CrawlerMain.dataVars, "refreshNvdList", refreshNvdList, true,
+                "WARNING: Refresh NVD List not defined in NVIP_REFRESH_NVD_LIST, setting true for default");
+        addEnvvarString(CrawlerMain.dataVars, "nvdUrl", nvdUrl, "https://services.nvd.nist.gov/rest/json/cves/2.0?pubStartDate=<StartDate>&pubEndDate=<EndDate>",
+                "WARNING: NVD URL is not defined in NVIP_NVD_URL, setting NVD 2.0 API URL as default");
+        addEnvvarString(CrawlerMain.dataVars,"reconcilerMethod", reconcilerMethod, "APACHE_OPEN_NLP",
+                "WARNING: Reconciler Method not defined in NVIP_RECONCILER_METHOD, using APACHE_OPEN_NLP as default");
+
+        addEnvvarString(CrawlerMain.dataVars,"mqHost", mqHost, "localhost",
+                "WARNING: MQ Host not defined in MQ_HOST, using 'localhost' as default");
+        addEnvvarInt(CrawlerMain.dataVars,"mqPort", mqPort, 5762,
+                "WARNING: MQ Port not defined in MQ_PORT, using 5762 as default");
+        addEnvvarString(CrawlerMain.dataVars,"mqQueueName", mqQueueName, "raw_data_queue",
+                "WARNING: MQ Queue Name not defined in MQ_QUEUE_NAME, using 'raw_data_queue' as default");
+
+    }
+
+
+    /**
+     * Add a String to mapping of envvars
+     * @param envvarMap
+     * @param envvarName
+     * @param envvarValue
+     * @param defaultValue
+     * @param warningMessage
+     */
+    private void addEnvvarString(Map<String, Object> envvarMap, String envvarName, String envvarValue,
+                                 String defaultValue, String warningMessage) {
+        if (envvarValue != null && !envvarValue.isEmpty()) {
+            envvarMap.put(envvarName, envvarValue);
+        } else {
+            logger.warn(warningMessage);
+            envvarMap.put(envvarName, defaultValue);
+        }
+    }
+
+    /**
+     * Add Boolean value to mapping of envvars
+     * @param envvarMap
+     * @param envvarName
+     * @param envvarValue
+     * @param defaultValue
+     * @param warningMessage
+     */
+    private void addEnvvarBool(Map<String, Object> envvarMap, String envvarName, String envvarValue,
+                               boolean defaultValue, String warningMessage) {
+        if (envvarValue != null && !envvarValue.isEmpty()) {
+            envvarMap.put(envvarName, Boolean.parseBoolean(envvarValue));
+        } else {
+            logger.warn(warningMessage);
+            envvarMap.put(envvarName, defaultValue);
+        }
+    }
+
+    /**
+     * Add Integer to mapping of envvars
+     * @param envvarMap
+     * @param envvarName
+     * @param envvarValue
+     * @param defaultValue
+     * @param warningMessage
+     */
+    private void addEnvvarInt(Map<String, Object> envvarMap, String envvarName, String envvarValue,
+                              int defaultValue, String warningMessage) {
+        if (envvarValue != null && !envvarValue.isEmpty()) {
+            try {
+                envvarMap.put(envvarName, Integer.parseInt(envvarValue));
+            } catch (NumberFormatException e) {
+                logger.warn("WARNING: Variable: {} = {} is not an integer, using 1 as default value", envvarName
+                        , defaultValue);
+                envvarMap.put(envvarName, defaultValue);
+            }
+        } else {
+            logger.warn(warningMessage);
+            envvarMap.put(envvarName, defaultValue);
+        }
+    }
+
+
+    /**
+     * check required data dirs before run
+     */
+    private void checkDataDirs() {
+        String dataDir = (String) dataVars.get("dataDir");
+        String crawlerSeeds = (String) crawlerVars.get("seedFileDir");
+        String whitelistFileDir = (String) crawlerVars.get("whitelistFileDir");
+        String crawlerOutputDir = (String) crawlerVars.get("outputDir");
+
+        if (!new File(dataDir).exists()) {
+            logger.error("The data dir provided does not exist, check the 'NVIP_DATA_DIR' key in the env.list file, currently configured data dir is {}", dataDir);
+            System.exit(1);
+        }
+
+        if (!new File(crawlerSeeds).exists()) {
+            logger.error("The crawler seeds path provided: {} does not exits!", crawlerSeeds);
+            System.exit(1);
+        }
+
+        if (!new File(whitelistFileDir).exists()) {
+            logger.error("The whitelist domain file path provided: {} does not exits!", whitelistFileDir);
+            System.exit(1);
+        }
+
+        if (!new File(crawlerOutputDir).exists()) {
+            logger.error("The crawler output dir provided: {} does not exits!", crawlerOutputDir);
+            System.exit(1);
+        }
+    }
+
+
+    /**
+     * Prepares sourceURLs for NVIPs crawlers
+     * @return
+     */
+    public List<String> grabSeedURLs() {
+        List<String> urls = new ArrayList<>();
+        try {
+            File seeds = new File((String) crawlerVars.get("seedFileDir"));
+            BufferedReader seedReader = new BufferedReader(new FileReader(seeds));
+            // List<String> seedURLs = new ArrayList<>();
+            logger.info("Loading the following urls: ");
+
+            String url = "";
+            while (url != null) {
+                urls.add(url);
+                url = seedReader.readLine();
+            }
+
+            logger.info("Loaded {} total seed URLs", urls.size());
+
+        } catch (IOException e) {
+            logger.error("Error while starting NVIP: {}", e.toString());
+        }
+        return urls;
+    }
+
+
+    /**
+     * Crawl for CVEs from the following sources
+     * GitHub
+     * CVE Summary Pages
+     * NVIP Source URLs in DB and seeds txt file
+     *
+     *
+     * @return
+     */
+    protected HashMap<String, ArrayList<RawVulnerability>> crawlCVEs() throws Exception {
+        /**
+         * Crawl CVE from CNAs
+         */
+        List<String> urls = grabSeedURLs();
+
+        logger.info("Starting the NVIP crawl process now to look for CVEs at {} locations with {} threads...",
+                urls.size(), crawlerVars.get("crawlerNum"));
+
+        CveCrawlController crawlerController = new CveCrawlController();
+
+        ArrayList<String> whiteList = new ArrayList<>();
+
+        File whiteListFile = new File((String) crawlerVars.get("whitelistFileDir"));
+        Scanner reader = new Scanner(whiteListFile);
+        while (reader.hasNextLine()) {
+            String domain = reader.nextLine();
+            if (domain.length() > 5) {
+                //logger.info("Added {} to whitelist", domain);
+                whiteList.add(domain);
+            }
+        }
+
+        return crawlerController.crawl(urls, whiteList, crawlerVars);
+    }
+
+
+    /**
+     * For getting CVEs from PyPA GitHub
+     * @return
+     */
+    protected HashMap<String, RawVulnerability> getCvesFromPythonGitHub() {
+        // scrape CVEs from PyPA advisory database GitHub Repo
+        PyPAGithubScraper pyPaScraper = new PyPAGithubScraper();
+        HashMap<String, RawVulnerability> cvePyPAGitHub = pyPaScraper.scrapePyPAGithub();
+
+        return cvePyPAGitHub;
     }
 
     /**
@@ -196,271 +454,36 @@ public class CrawlerMain {
     }
 
     /**
-     * Prepare Vars for Crawler from envvars
-     * Sets defaults if envvars aren't found
+     * Function for sending message to RabbitMQ message-queue instance for notifying Reconciler
      */
-    private void prepareCrawlerVars() {
-        String outputDir = System.getenv("NVIP_OUTPUT_DIR");
-        String seedFileDir = System.getenv("NVIP_SEED_URLS");
-        String whitelistFileDir = System.getenv("NVIP_WHITELIST_URLS");
-        String sourceTypeFileDir = System.getenv("NVIP_SOURCE_TYPES");
-        String enableGitHub = System.getenv("NVIP_ENABLE_GITHUB");
-        String crawlerPoliteness = System.getenv("NVIP_CRAWLER_POLITENESS");
-        String maxPages = System.getenv("NVIP_CRAWLER_MAX_PAGES");
-        String depth = System.getenv("NVIP_CRAWLER_DEPTH");
-        String enableReport = System.getenv("NVIP_CRAWLER_REPORT_ENABLE");
-        String crawlerNum = System.getenv("NVIP_NUM_OF_CRAWLER");
-        String testMode = System.getenv("NVIP_CRAWLER_TEST_MODE");
-
-        addEnvvarString(CrawlerMain.crawlerVars,"outputDir", outputDir, "output/crawlers",
-                "WARNING: Crawler output path not defined in NVIP_OUTPUT_DIR, using default path: output/crawlers");
-
-        addEnvvarString(CrawlerMain.crawlerVars,"seedFileDir", seedFileDir, "crawler/resources/url-sources/nvip-seeds.txt",
-                "WARNING: Crawler seed file path not defined in NVIP_SEED_URLS, using default path: " + "resources/url-sources/nvip-seeds.txt");
-
-        addEnvvarString(CrawlerMain.crawlerVars,"whitelistFileDir", whitelistFileDir, "crawler/resources/url-sources/nvip-whitelist.txt",
-                "WARNING: Crawler whitelist file path not defined in NVIP_WHITELIST_URLS, using default path: resources/url-sources/nvip-whitelist.txt");
-
-        addEnvvarString(CrawlerMain.crawlerVars,"sourceTypeFileDir", sourceTypeFileDir, "crawler/resources/url-sources/nvip-source-types.txt",
-                "WARNING: Crawler whitelist file path not defined in NVIP_SOURCE_TYPES, using default path: resources/url-sources/nvip-source-types.txt");
-
-        addEnvvarBool(CrawlerMain.crawlerVars,"enableGitHub", enableGitHub, false,
-                "WARNING: CVE GitHub Enabler not defined in NVIP_ENABLE_GITHUB, allowing CVE GitHub pull on default");
-
-        addEnvvarInt(CrawlerMain.crawlerVars,"crawlerPoliteness", crawlerPoliteness, 3000,
-                "WARNING: Crawler Politeness is not defined, using 3000 as default value",
-                "NVIP_CRAWLER_POLITENESS");
-
-        addEnvvarInt(CrawlerMain.crawlerVars,"maxPages", maxPages, 3000,
-                "WARNING: Crawler Max Pages not defined in NVIP_CRAWLER_MAX_PAGES, using 3000 as default value",
-                "NVIP_CRAWLER_MAX_PAGES");
-
-        addEnvvarInt(CrawlerMain.crawlerVars,"depth", depth, 1,
-                "WARNING: Crawler Depth not defined in NVIP_CRAWLER_DEPTH, using 1 as default value",
-                "NVIP_CRAWLER_DEPTH");
-
-        addEnvvarBool(CrawlerMain.crawlerVars,"enableReport", enableReport, true,
-                "WARNING: Crawler Report Enabling not defined in NVIP_CRAWLER_REPORT_ENABLE, allowing report by default");
-
-        addEnvvarInt(CrawlerMain.crawlerVars,"crawlerNum", crawlerNum, 10,
-                "WARNING: Number of Crawlers not defined in NVIP_NUM_OF_CRAWLER, using 10 as default value",
-                "NVIP_NUM_OF_CRAWLER");
-
-        addEnvvarBool(CrawlerMain.crawlerVars,"testMode", testMode, false,
-                "WARNING: Crawler Test Mode not defined in NVIP_CRAWLER_TEST_MODE, using false as default value");
-    }
-
-
-    /**
-     * Prepare Vars for Data dir from envvars
-     * Sets defaults if envvars aren't found
-     */
-    private void prepareDataVars() {
-        String dataDir = System.getenv("NVIP_DATA_DIR");
-        String refreshNvdList = System.getenv("NVIP_REFRESH_NVD_LIST");
-        String nvdUrl = System.getenv("NVIP_NVD_URL");
-        String reconcilerMethod = System.getenv("NVIP_RECONCILER_METHOD");
-
-        addEnvvarString(CrawlerMain.dataVars,"dataDir", dataDir, "nvip_data",
-                "WARNING: Data Directory not defined in NVIP_DATA_DIR, using ./nvip_data as default");
-        addEnvvarBool(CrawlerMain.dataVars, "refreshNvdList", refreshNvdList, true,
-                "WARNING: Refresh NVD List not defined in NVIP_REFRESH_NVD_LIST, setting true for default");
-        addEnvvarString(CrawlerMain.dataVars, "nvdUrl", nvdUrl, "https://services.nvd.nist.gov/rest/json/cves/2.0?pubStartDate=<StartDate>&pubEndDate=<EndDate>",
-                "WARNING: NVD URL is not defined in NVIP_NVD_URL, setting NVD 2.0 API URL as default");
-        addEnvvarString(CrawlerMain.dataVars,"reconcilerMethod", reconcilerMethod, "APACHE_OPEN_NLP",
-                "WARNING: Reconciler Method not defined in NVIP_RECONCILER_METHOD, using APACHE_OPEN_NLP as default");
-    }
-
-
-    /**
-     * Add a String to mapping of envvars
-     * @param envvarMap
-     * @param envvarName
-     * @param envvarValue
-     * @param defaultValue
-     * @param warningMessage
-     */
-    private void addEnvvarString(Map<String, Object> envvarMap, String envvarName, String envvarValue,
-                                 String defaultValue, String warningMessage) {
-        if (envvarValue != null && !envvarValue.isEmpty()) {
-            envvarMap.put(envvarName, envvarValue);
-        } else {
-            logger.warn(warningMessage);
-            envvarMap.put(envvarName, defaultValue);
-        }
-    }
-
-    /**
-     * Add Boolean value to mapping of envvars
-     * @param envvarMap
-     * @param envvarName
-     * @param envvarValue
-     * @param defaultValue
-     * @param warningMessage
-     */
-    private void addEnvvarBool(Map<String, Object> envvarMap, String envvarName, String envvarValue,
-                               boolean defaultValue, String warningMessage) {
-        if (envvarValue != null && !envvarValue.isEmpty()) {
-            envvarMap.put(envvarName, Boolean.parseBoolean(envvarValue));
-        } else {
-            logger.warn(warningMessage);
-            envvarMap.put(envvarName, defaultValue);
-        }
-    }
-
-    /**
-     * Add Integer to mapping of envvars
-     * @param envvarMap
-     * @param envvarName
-     * @param envvarValue
-     * @param defaultValue
-     * @param warningMessage
-     * @param ennvarName
-     */
-    private void addEnvvarInt(Map<String, Object> envvarMap, String envvarName, String envvarValue,
-                              int defaultValue, String warningMessage, String ennvarName) {
-        if (envvarValue != null && !envvarValue.isEmpty()) {
-            try {
-                envvarMap.put(envvarName, Integer.parseInt(envvarValue));
-            } catch (NumberFormatException e) {
-                logger.warn("WARNING: Variable: {} = {} is not an integer, using 1 as default value", ennvarName
-                        , defaultValue);
-                envvarMap.put(envvarName, defaultValue);
-            }
-        } else {
-            logger.warn(warningMessage);
-            envvarMap.put(envvarName, defaultValue);
-        }
-    }
-
-
-    /**
-     * check required data dirs before run
-     */
-    private void checkDataDirs() {
-        String dataDir = (String) dataVars.get("dataDir");
-        String crawlerSeeds = (String) crawlerVars.get("seedFileDir");
-        String whitelistFileDir = (String) crawlerVars.get("whitelistFileDir");
-        String crawlerOutputDir = (String) crawlerVars.get("outputDir");
-
-        if (!new File(dataDir).exists()) {
-            logger.error("The data dir provided does not exist, check the 'NVIP_DATA_DIR' key in the env.list file, currently configured data dir is {}", dataDir);
-            System.exit(1);
-        }
-
-        if (!new File(crawlerSeeds).exists()) {
-            logger.error("The crawler seeds path provided: {} does not exits!", crawlerSeeds);
-            System.exit(1);
-        }
-
-        if (!new File(whitelistFileDir).exists()) {
-            logger.error("The whitelist domain file path provided: {} does not exits!", whitelistFileDir);
-            System.exit(1);
-        }
-
-        if (!new File(crawlerOutputDir).exists()) {
-            logger.error("The crawler output dir provided: {} does not exits!", crawlerOutputDir);
-            System.exit(1);
-        }
-    }
-
-
-    /**
-     * Prepares sourceURLs for NVIPs crawlers
-     * @return
-     */
-    public List<String> grabSeedURLs() {
-        List<String> urls = new ArrayList<>();
+    private void notifyReconciler() {
         try {
-            File seeds = new File((String) crawlerVars.get("seedFileDir"));
-            BufferedReader seedReader = new BufferedReader(new FileReader(seeds));
-            // List<String> seedURLs = new ArrayList<>();
-            logger.info("Loading the following urls: ");
+            // Create a connection to the RabbitMQ server
+            ConnectionFactory factory = new ConnectionFactory();
+            factory.setHost(dataVars.get("mqHost") + "");
+            factory.setPort((int) dataVars.get("mqPort"));
+            Connection connection = factory.newConnection();
 
-            String url = "";
-            while (url != null) {
-                urls.add(url);
-                url = seedReader.readLine();
+            // Create a channel
+            Channel channel = connection.createChannel();
+
+            // Declare a queue
+            String queueName = dataVars.get("mqQueueName") + "";
+            channel.queueDeclare(queueName, false, false, false, null);
+            System.out.println("Queue '" + queueName + "' created successfully.");
+
+            // Publish messages
+            for (int i = 1; i <= 10; i++) {
+                String message = "Message " + i;
+                channel.basicPublish("", queueName, null, message.getBytes());
+                System.out.println("Published: " + message);
             }
 
-            // logger.info("Loaded {} seed URLS from {}", seedURLs.size(), seeds.getAbsolutePath());
-
-            // for (String seedURL : seedURLs) {
-            //     if (!urls.contains(seedURL))
-            //         urls.add(seedURL);
-            // }
-
-            logger.info("Loaded {} total seed URLs", urls.size());
-
-        } catch (IOException e) {
-            logger.error("Error while starting NVIP: {}", e.toString());
+            // Close the channel and connection
+            channel.close();
+            connection.close();
+        } catch (Exception ex) {
+            ex.printStackTrace();
         }
-        return urls;
     }
-
-
-    /**
-     * Crawl for CVEs from the following sources
-     * GitHub
-     * CVE Summary Pages
-     * NVIP Source URLs in DB and seeds txt file
-     *
-     *
-     * @return
-     */
-    protected HashMap<String, ArrayList<RawVulnerability>> crawlCVEs() throws Exception {
-        /**
-         * Crawl CVE from CNAs
-         */
-        List<String> urls = grabSeedURLs();
-
-        logger.info("Starting the NVIP crawl process now to look for CVEs at {} locations with {} threads...",
-                urls.size(), crawlerVars.get("crawlerNum"));
-
-        CveCrawlController crawlerController = new CveCrawlController();
-
-        ArrayList<String> whiteList = new ArrayList<>();
-
-        File whiteListFile = new File((String) crawlerVars.get("whitelistFileDir"));
-        Scanner reader = new Scanner(whiteListFile);
-        while (reader.hasNextLine()) {
-            String domain = reader.nextLine();
-            if (domain.length() > 5) {
-                //logger.info("Added {} to whitelist", domain);
-                whiteList.add(domain);
-            }
-        }
-
-        return crawlerController.crawl(urls, whiteList, crawlerVars);
-    }
-
-
-    /**
-     * For getting CVEs from PyPA GitHub
-     * @return
-     */
-    protected HashMap<String, RawVulnerability> getCvesFromPythonGitHub() {
-        // scrape CVEs from PyPA advisory database GitHub Repo
-        PyPAGithubScraper pyPaScraper = new PyPAGithubScraper();
-        HashMap<String, RawVulnerability> cvePyPAGitHub = pyPaScraper.scrapePyPAGithub();
-
-        return cvePyPAGitHub;
-    }
-    /**
-     * Grab CVEs from CVE GitHub
-     * @return
-     */
-    protected HashMap<String, RawVulnerability> getCvesFromGitHub() {
-        HashMap<String, RawVulnerability> cveHashMapGithub = new HashMap<>();
-
-        if ((Boolean) crawlerVars.get("enableGitHub")) {
-            logger.info("CVE Github pull enabled, scraping CVe GitHub now!");
-            GithubScraper githubScraper = new GithubScraper();
-            cveHashMapGithub = githubScraper.scrapeGithub();
-        }
-
-        return cveHashMapGithub;
-    }
-
-
 }
