@@ -74,6 +74,14 @@ public class PatchUrlFinderTest {
         // Add more assertions as needed
     }
 
+    //Todo: testLinks
+//    public void testLinks(){
+//
+//    }
 
+    //Todo: testAdvanceParseSearch
+//    public void testAdvanceParseSearch(){
+//
+//    }
 
 }
