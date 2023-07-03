@@ -70,4 +70,18 @@ public class CpeGroupTest {
         // Test that two different CpeGroup instances have different hash codes
         assertNotEquals(group1.hashCode(), group3.hashCode());
     }
+
+    @Test
+    public void testEquals() {
+        // Create two instances of CpeGroup with the same property values
+        CpeGroup group1 = new CpeGroup("Vendor", "Product");
+        group1.addVersion(new CpeEntry("Title", "1.0", "Update1", "cpe-1234", "Platform"));
+
+        CpeGroup group2 = new CpeGroup("Vendor", "Product");
+        group2.addVersion(new CpeEntry("Title", "1.0", "Update1", "cpe-1234", "Platform"));
+
+        // Verify that the two instances are equal
+        assertTrue(group1.equals(group2));
+        assertTrue(group2.equals(group1));
+    }
 }

@@ -30,7 +30,7 @@ public class PatchFinderTest {
             assertTrue(new File(PatchFinder.clonePath).exists());
 
             //check the patch commits
-            assertEquals(23, PatchFinder.getPatchCommits().size()/2);
+            assertEquals(24, PatchFinder.getPatchCommits().size()/2);
 
             // Add more assertions based on your requirements
         } catch (IOException e1) {
