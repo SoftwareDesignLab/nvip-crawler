@@ -338,7 +338,7 @@
             <column name="commit_message" type="VARCHAR(1000)">
                 <constraints nullable="false"/>
             </column>
-            <column name="uni_diff" type="TINYTEXT">
+            <column name="uni_diff" type="VARCHAR(500)">
                 <constraints nullable="false"/>
             </column>
             <column name="timeline" type="TEXT">

@@ -53,6 +53,8 @@ import org.eclipse.jgit.util.io.DisabledOutputStream;
 
 /**
  *	For Scraping repo commits for possible patch commits
+ *
+ * @author Dylan Mulligan
  */
 public class PatchCommitScraper {
 
@@ -60,6 +62,7 @@ public class PatchCommitScraper {
 	private final String localDownloadLoc;
 	private final String repoSource;
 	private RevCommit vulnerableCommit; // Added
+	private static final int UNI_DIFF_LIMIT = 500;
 
 	public PatchCommitScraper(String localDownloadLoc, String repoSource) {
 		this.localDownloadLoc = localDownloadLoc;
@@ -100,11 +103,12 @@ public class PatchCommitScraper {
 							if (matcher.find() || commit.getFullMessage().contains(cveId)) {
 								String commitUrl = repository.getConfig().getString("remote", "origin", "url");
 								logger.info("Found patch commit @ {} in repo {}", commitUrl, localDownloadLoc);
-
-								//TODO: We want to truncate data that is too large, but cutting a diff off half way thru
-								// is less than ideal, so we need to make sure to truncate after the last diff that does
-								// not run over the size constraint
 								String unifiedDiff = generateUnifiedDiff(git, commit);
+								// Truncate unidiff to char limit
+								if(unifiedDiff.length() > UNI_DIFF_LIMIT) {
+									logger.warn("Unified diff was longer than UNI_DIFF_LIMIT ({}), and was truncated", UNI_DIFF_LIMIT);
+									unifiedDiff = unifiedDiff.substring(0, UNI_DIFF_LIMIT);
+								}
 								List<RevCommit> commitTimeline = calculateCommitTimeline(repository, startingRevision, commit);
 								int linesChanged = getLinesChanged(repository, commit);
 								Long timeToPatch = calculateTimeToPatch(commitTimeline);
