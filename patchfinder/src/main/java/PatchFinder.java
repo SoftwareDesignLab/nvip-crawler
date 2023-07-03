@@ -41,7 +41,6 @@ import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 /**
  * Main class for collecting CVE Patches within repos that were
@@ -53,7 +52,7 @@ public class PatchFinder {
 	private static final Logger logger = LogManager.getLogger(PatchFinder.class.getName());
 
 	private static final ArrayList<PatchCommit> patchCommits = new ArrayList<>();
-	protected static int cveLimit = 5;
+	protected static int cveLimit = 10;
 	protected static int maxThreads = 10;
 	protected static int cvesPerThread = 1;
 	protected static String databaseType = "mysql";
@@ -222,18 +221,35 @@ public class PatchFinder {
 		//TODO: Ensure patch commit does not already exist before inserting.
 		// For existing entries, diff, replace, ignore?
 
+		// Get existing sources
+		final Set<String> existingSources = databaseHelper.getExistingSourceUrls();
+
+		// Get existing patch commits
+		final Set<String> existingCommitUrls = databaseHelper.getExistingPatchCommitUrls();
+
 		// Insert patches
 		int failedInserts = 0;
 		logger.info("Starting insertion of {} patch commits into the database...", patchCommits.size());
 		final long insertPatchesStart = System.currentTimeMillis();
 		for (PatchCommit patchCommit : patchCommits) {
-			final int sourceUrlId = databaseHelper.insertPatchSourceURL(patchCommit.getCveId(), patchCommit.getCommitUrl());
+			final String sourceUrl = patchCommit.getCommitUrl();
+			// Insert source
+			final int sourceUrlId = databaseHelper.insertPatchSourceURL(existingSources, patchCommit.getCveId(), sourceUrl);
+
+			// Insert patch commit
 			try {
-				databaseHelper.insertPatchCommit(
-						sourceUrlId, patchCommit.getCommitUrl(), patchCommit.getCommitId(),
-						patchCommit.getCommitDate(), patchCommit.getCommitMessage(), patchCommit.getUniDiff(),
-						patchCommit.getTimeline(), patchCommit.getTimeToPatch(), patchCommit.getLinesChanged()
-				);
+				// Ensure patch commit does not already exist
+				final String commitUrl = patchCommit.getCommitUrl() + "/commit/" + patchCommit.getCommitId();
+				if(!existingCommitUrls.contains(commitUrl)) {
+					databaseHelper.insertPatchCommit(
+							sourceUrlId, commitUrl, patchCommit.getCommitDate(),
+							patchCommit.getCommitMessage(), patchCommit.getUniDiff(),
+							patchCommit.getTimeline(), patchCommit.getTimeToPatch(), patchCommit.getLinesChanged()
+					);
+				} else {
+					logger.warn("Failed to insert patch commit, as it was already found in the db");
+					failedInserts++;
+				}
 			} catch (IllegalArgumentException e) {
 				failedInserts++;
 			}
@@ -404,19 +420,19 @@ public class PatchFinder {
 					numCVEsProcessed += deltaNumCVEs;
 
 					// Calculate rate, avg rate, and remaining time
-					final double rate = (double) deltaNumCVEs / 60; // CVEs/sec
-					final double avgRate = (double) numCVEsProcessed / secondsWaiting; // CVEs/sec
-					final double remainingAvgTime = currNumCVEs / rate; // CVEs / CVEs/sec = remaining seconds
+					final double rate = (double) deltaNumCVEs; // CVEs/min
+					final double avgRate = (double) numCVEsProcessed / ((double) secondsWaiting / 60); // CVEs/sec
+					final double remainingAvgTime = currNumCVEs / rate; // CVEs / CVEs/min = remaining mins
 
 					// Log stats
 					logger.info(
-							"{} out of {} CVEs processed (SP: {} CVEs/sec | AVG SP: {} CVEs/sec | Est time remaining: {} minutes ({} seconds))...",
+							"{} out of {} CVEs processed (SP: {} CVEs/min | AVG SP: {} CVEs/min | Est time remaining: {} minutes ({} seconds))...",
 							totalCVEsToProcess - currNumCVEs,
 							totalCVEsToProcess,
 							Math.floor(rate * 100) / 100,
 							Math.floor(avgRate * 100) / 100,
-							Math.floor(remainingAvgTime / 60 * 100) / 100,
-							Math.floor(remainingAvgTime * 100) / 100
+							Math.floor(remainingAvgTime * 100) / 100,
+							Math.floor(remainingAvgTime * 60 * 100) / 100
 					);
 
 					// Update lastNumCVEs

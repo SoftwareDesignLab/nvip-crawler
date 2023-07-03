@@ -171,7 +171,13 @@ public class PatchFinderThread implements Runnable {
 			else if(commitCount <= PatchFinder.getCloneCommitLimit())
 				findPatchCommitsFromRepo(foundPatchCommits, cve, patchSource);
 			// Otherwise, handle extra large repo
-			else throw new IllegalArgumentException("REPO SIZE OVER COMMIT_LIMIT, IT WILL NOT BE SCRAPED OR CLONED");
+			else
+				throw new IllegalArgumentException(
+						"REPO SIZE OVER COMMIT_LIMIT, IT WILL NOT BE SCRAPED OR CLONED (" +
+						commitCount +
+						" > " +
+						PatchFinder.getCloneCommitLimit() + ")"
+				);
 
 		} catch (Exception e) {
 			logger.error("Failed to find patch from source {} for CVE {}: {}", patchSource, cve, e.toString());

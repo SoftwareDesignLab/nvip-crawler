@@ -33,11 +33,7 @@ import org.apache.logging.log4j.Logger;
 import org.eclipse.jgit.revwalk.RevCommit;
 
 import java.sql.*;
-import java.time.Instant;
-import java.sql.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -51,8 +47,10 @@ public class DatabaseHelper {
 	private HikariDataSource dataSource;
 	private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
 
-	private final String selectAffectedProducts = "SELECT cve_id, cpe FROM affectedproduct GROUP BY product_name, affected_product_id ORDER BY cve_id DESC, version ASC;";
-	private final String getVulnIdByCveId = "SELECT vuln_id FROM vulnerability WHERE cve_id = ?";
+	private final String selectAffectedProductsSql = "SELECT cve_id, cpe FROM affectedproduct GROUP BY product_name, affected_product_id ORDER BY cve_id DESC, version ASC;";
+	private final String getVulnIdByCveIdSql = "SELECT vuln_id FROM vulnerability WHERE cve_id = ?";
+	private final String getExistingSourceUrlsSql = "SELECT source_url FROM patchsourceurl";
+	private final String getExistingPatchCommitsSql = "SELECT commit_url FROM patchcommit";
 	private final String insertPatchSourceURLSql = "INSERT INTO patchsourceurl (cve_id, source_url) VALUES (?, ?);";
 	private final String insertPatchCommitSql = "INSERT INTO patchcommit (source_url_id, commit_url, commit_date, commit_message, uni_diff, timeline, timeToPatch, linesChanged) VALUES (?, ?, ?, ?, ?, ?, ?, ?);";
 	// Regex101: https://regex101.com/r/9uaTQb/1
@@ -126,6 +124,34 @@ public class DatabaseHelper {
 		config = null;
 	}
 
+	public Set<String> getExistingSourceUrls() {
+		final Set<String> urls = new HashSet<>();
+
+		try (Connection connection = getConnection();
+			 PreparedStatement pstmt = connection.prepareStatement(getExistingSourceUrlsSql);) {
+			ResultSet rs = pstmt.executeQuery();
+			while(rs.next()) { urls.add(rs.getString(1)); }
+		} catch (Exception e) {
+			logger.error(e.toString());
+		}
+
+		return urls;
+	}
+
+	public Set<String> getExistingPatchCommitUrls() {
+		final Set<String> urls = new HashSet<>();
+
+		try (Connection connection = getConnection();
+			 PreparedStatement pstmt = connection.prepareStatement(getExistingPatchCommitsSql);) {
+			ResultSet rs = pstmt.executeQuery();
+			while(rs.next()) { urls.add(rs.getString(1)); }
+		} catch (Exception e) {
+			logger.error(e.toString());
+		}
+
+		return urls;
+	}
+
 	/**
 	 * Collects a map of CPEs with their correlated CVE and Vuln ID used for
 	 * collecting patches
@@ -136,7 +162,7 @@ public class DatabaseHelper {
 		Map<String, CpeGroup> affectedProducts = new HashMap<>();
 		// Prepare statement
 		try (Connection conn = getConnection();
-			 PreparedStatement pstmt = conn.prepareStatement(selectAffectedProducts)
+			 PreparedStatement pstmt = conn.prepareStatement(selectAffectedProductsSql)
 		) {
 			// Execute and get result set
 			ResultSet res = pstmt.executeQuery();
@@ -184,7 +210,7 @@ public class DatabaseHelper {
 	public int getVulnIdByCveId(String cveId) {
 		int result = -1;
 		try (Connection connection = getConnection();
-			 PreparedStatement pstmt = connection.prepareStatement(getVulnIdByCveId);) {
+			 PreparedStatement pstmt = connection.prepareStatement(getVulnIdByCveIdSql);) {
 			pstmt.setString(1, cveId);
 			ResultSet rs = pstmt.executeQuery();
 			if (rs.next()) {
@@ -204,24 +230,32 @@ public class DatabaseHelper {
 	 *
 	 * @return
 	 */
-	public int insertPatchSourceURL(String cve_id, String sourceURL) {
-		try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(insertPatchSourceURLSql, Statement.RETURN_GENERATED_KEYS)) {
-			pstmt.setString(1, cve_id);
-			pstmt.setString(2, sourceURL);
-			pstmt.executeUpdate();
-
-			final ResultSet rs = pstmt.getGeneratedKeys();
-			int generatedKey = 0;
-			if (rs.next()) generatedKey = rs.getInt(1);
-			else throw new SQLException("Could not retrieve key of newly created record, it may not have been inserted");
-
-			conn.close();
-			logger.info("Inserted PatchURL: " + sourceURL);
-			return generatedKey;
-		} catch (Exception e) {
-			logger.error("ERROR: Failed to insert patch source with sourceURL {} for CVE ID {}\n{}", sourceURL,
-					cve_id, e.getMessage());
+	public int insertPatchSourceURL(Set<String> existingSourceUrls, String cve_id, String sourceURL) {
+		// Check if source already exists
+		if(existingSourceUrls.contains(sourceURL)) {
+			// TODO: Implement this
+			// Get and return id from db
 			return -1;
+		} else { // Otherwise, insert and return generated id
+			try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(insertPatchSourceURLSql, Statement.RETURN_GENERATED_KEYS)) {
+				pstmt.setString(1, cve_id);
+				pstmt.setString(2, sourceURL);
+				pstmt.executeUpdate();
+
+				final ResultSet rs = pstmt.getGeneratedKeys();
+				int generatedKey = 0;
+				if (rs.next()) generatedKey = rs.getInt(1);
+				else throw new SQLException("Could not retrieve key of newly created record, it may not have been inserted");
+
+				conn.close();
+				logger.info("Inserted PatchURL: " + sourceURL);
+				existingSourceUrls.add(sourceURL);
+				return generatedKey;
+			} catch (Exception e) {
+				logger.error("ERROR: Failed to insert patch source with sourceURL {} for CVE ID {}\n{}", sourceURL,
+						cve_id, e.getMessage());
+				return -1;
+			}
 		}
 	}
 
@@ -229,18 +263,17 @@ public class DatabaseHelper {
 	 * Method for inserting a patch commit into the patchcommit table
 	 *
 	 * @param sourceId
-	 * @param sourceURL
-	 * @param commitId
+	 * @param commitUrl
 	 * @param commitDate
 	 * @param commitMessage
 	 */
-	public void insertPatchCommit(int sourceId, String sourceURL, String commitId, java.util.Date commitDate, String commitMessage, String uniDiff, List<RevCommit> timeLine, String timeToPatch, int linesChanged) throws IllegalArgumentException {
+	public void insertPatchCommit(int sourceId, String commitUrl, java.util.Date commitDate, String commitMessage, String uniDiff, List<RevCommit> timeLine, String timeToPatch, int linesChanged) throws IllegalArgumentException {
 
 		try (Connection connection = getConnection();
 			 PreparedStatement pstmt = connection.prepareStatement(insertPatchCommitSql);) {
 
 			pstmt.setInt(1, sourceId);
-			pstmt.setString(2, sourceURL + "/commit/" + commitId);
+			pstmt.setString(2, commitUrl);
 			pstmt.setDate(3, new java.sql.Date(commitDate.getTime()));
 			pstmt.setString(4, commitMessage);
 
@@ -254,7 +287,7 @@ public class DatabaseHelper {
 			pstmt.setInt(8, linesChanged);
 			pstmt.executeUpdate();
 		} catch (Exception e) {
-			logger.error("ERROR: failed to insert patch commit from source {}\n{}", sourceURL, e);
+			logger.error("ERROR: failed to insert patch commit from source {}\n{}", commitUrl, e);
 			throw new IllegalArgumentException(e);
 		}
 	}
