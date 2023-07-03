@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import commits.PatchCommit;
@@ -39,6 +40,7 @@ import java.time.DateTimeException;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Main class for collecting CVE Patches within repos that were
@@ -60,8 +62,9 @@ public class PatchFinder {
 	protected static int cloneCommitThreshold = 1000; // TODO: Find omptimal value once github scraping is working well
 	protected static int cloneCommitLimit = 50000; // TODO: Find omptimal value once github scraping is working well
 	protected static String clonePath = "patchfinder/src/main/resources/patch-repos";
-	protected static String patchSrcUrlPath = "patchfinder/src/main/resources/possible-sources.json";
+	protected static String patchSrcUrlPath = "patchfinder/src/main/resources/source_dict.json";
 	protected static String[] addressBases = { "https://github.com/", "https://www.gitlab.com/" };
+	protected static Instant urlDictLastCompilationDate = Instant.parse("2000-01-01T00:00:00.00Z");
 	private static final ObjectMapper OM = new ObjectMapper();
 
 	public static int getCloneCommitThreshold() { return cloneCommitThreshold; }
@@ -172,21 +175,33 @@ public class PatchFinder {
 		logger.info("Successfully got {} CVEs mapped to {} affected products from the database", affectedProducts.size(), affectedProductsCount);
 
 		// Attempt to find source urls from pre-written file (ensure file existence/freshness)
-		final Map<String, ArrayList<String>> possiblePatchURLs = readSourceUrls(patchSrcUrlPath);
+		final Map<String, ArrayList<String>> possiblePatchURLs = readSourceDict(patchSrcUrlPath);
+
+		// Log read in data stats
+		int urlCount = possiblePatchURLs.values().stream().map(ArrayList::size).reduce(0, Integer::sum);
+		if(urlCount > 0) {
+			logger.info("Successfully read {} possible patch urls for {} CVEs from file at filepath '{}'",
+					urlCount,
+					possiblePatchURLs.size(),
+					patchSrcUrlPath
+			);
+		}
 
 		// Parse patch source urls from any affectedProducts that do not have fresh urls read from file
 		logger.info("Parsing patch urls from affected product CVEs (limit: {} CVEs)...", cveLimit);
 		final long parseUrlsStart = System.currentTimeMillis();
+
 		patchURLFinder.parseMassURLs(possiblePatchURLs, affectedProducts, cveLimit);
-		final int urlCount = possiblePatchURLs.values().stream().map(ArrayList::size).reduce(0, Integer::sum);
-		logger.info("Successfully parsed {} patch urls for {} CVEs in {} seconds",
+		urlCount = possiblePatchURLs.values().stream().map(ArrayList::size).reduce(0, Integer::sum);
+
+		logger.info("Successfully parsed {} possible patch urls for {} CVEs in {} seconds",
 				urlCount,
 				possiblePatchURLs.size(),
 				(System.currentTimeMillis() - parseUrlsStart) / 1000
 		);
 
 		// Write found source urls to file
-		writeSourceUrls(patchSrcUrlPath, possiblePatchURLs);
+		writeSourceDict(patchSrcUrlPath, possiblePatchURLs);
 
 		// Find patches
 		// Repos will be cloned to patch-repos directory, multi-threaded 6 threads.
@@ -226,60 +241,43 @@ public class PatchFinder {
 		);
 
 		final long delta = (System.currentTimeMillis() - totalStart) / 1000;
-		logger.info("Successfully collected {} patch commits from {} affected products in {} seconds", patchCommits.size(), affectedProducts.size(), delta);
+		logger.info("Successfully collected {} patch commits from {} CVEs in {} seconds",
+				patchCommits.size(),
+				Math.min(cveLimit, affectedProducts.size()),
+				delta
+		);
 	}
 
-	// TODO: Implement this
-	@SuppressWarnings({"unchecked", "rawtypes"})
-	public static Map<String, ArrayList<String>> readSourceUrls(String srcUrlPath) throws IOException {
-		return new HashMap<>();
-//		// Read in raw data
-//		final LinkedHashMap<String, ?> rawData = OM.readValue(Paths.get(srcUrlPath).toFile(), LinkedHashMap.class);
-//
-//		// Extract raw product data
-//		final LinkedHashMap<String, LinkedHashMap> rawProductDict = (LinkedHashMap<String, LinkedHashMap>) rawData.get("products");
-//
-//		// Extract compilation time from file, default to 2000 if fails
-//		try {
-//			productDictLastCompilationDate = Instant.parse((String) rawData.get("comptime"));
-//		} catch (DateTimeException e) {
-//			logger.error("Error parsing compilation date from dictionary: {}", e.toString());
-//			productDictLastCompilationDate = Instant.parse("2000-01-01T00:00:00.00Z");
-//		}
-//
-//		// Init CPE dict
-//		final LinkedHashMap<String, CpeGroup> productDict = new LinkedHashMap<>();
-//
-//		// Process into CpeGroups/CpeEntries
-//		for (Map.Entry<String, LinkedHashMap> entry : rawProductDict.entrySet()) {
-//			final String key = entry.getKey();
-//			LinkedHashMap value = entry.getValue();
-//
-//			final String vendor = (String) value.get("vendor");
-//			final String product = (String) value.get("product");
-//			final String commonTitle = (String) value.get("commonTitle");
-//			final LinkedHashMap<String, LinkedHashMap> rawVersions = (LinkedHashMap<String, LinkedHashMap>) value.get("versions");
-//			final HashMap<String, CpeEntry> versions = new HashMap<>();
-//			for (Map.Entry<String, LinkedHashMap> versionEntry : rawVersions.entrySet()) {
-//				final LinkedHashMap versionValue = versionEntry.getValue();
-//				final String title = (String) versionValue.get("title");
-//				final String version = (String) versionValue.get("version");
-//				final String update = (String) versionValue.get("update");
-//				final String cpeID = (String) versionValue.get("cpeID");
-//				final String platform = (String) versionValue.get("platform");
-//				versions.put(version, new CpeEntry(title, version, update, cpeID, platform));
-//			}
-//
-//			// Create and insert CpeGroup into productDict
-//			productDict.put(key, new CpeGroup(vendor, product, commonTitle, versions));
-//		}
-//
-//		// Return filled productDict
-//		return productDict;
+	@SuppressWarnings({"unchecked"})
+	public static Map<String, ArrayList<String>> readSourceDict(String srcUrlPath) throws IOException {
+		// Read in raw data, and return an empty hashmap if this fails for any reason
+		final LinkedHashMap<String, ?> rawData;
+		try {
+			rawData = OM.readValue(Paths.get(srcUrlPath).toFile(), LinkedHashMap.class);
+		} catch (FileNotFoundException e) {
+			logger.info("Could not find patch source dictionary at filepath '{}'", srcUrlPath);
+			return new HashMap<>();
+		} catch (JsonParseException e) {
+			logger.info("Failed to parse patch source dictionary at filepath '{}': {}", srcUrlPath, e.toString());
+			return new HashMap<>();
+		}
+
+		// Extract source url map
+		final LinkedHashMap<String, ArrayList<String>> sourceDict = (LinkedHashMap<String, ArrayList<String>>) rawData.get("urls");
+
+		// Extract compilation time from file
+		try {
+			urlDictLastCompilationDate = Instant.parse((String) rawData.get("comptime"));
+		} catch (DateTimeException e) {
+			logger.error("Error parsing compilation date from dictionary: {}", e.toString());
+		}
+
+		// Return filled productDict
+		return sourceDict;
 	}
 
 	@SuppressWarnings({"unchecked", "rawtypes"})
-	private static void writeSourceUrls(String patchSrcUrlPath, Map<String, ArrayList<String>> urls) {
+	private static void writeSourceDict(String patchSrcUrlPath, Map<String, ArrayList<String>> urls) {
 		// Build output data map
 		Map data = new LinkedHashMap<>();
 		data.put("comptime", Instant.now().toString());
@@ -409,4 +407,5 @@ public class PatchFinder {
 		}
 	}
 
+	public static Instant getUrlDictLastCompilationDate() { return urlDictLastCompilationDate; }
 }

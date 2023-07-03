@@ -36,6 +36,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -65,18 +67,29 @@ public class PatchUrlFinder {
 	 * @throws InterruptedException
 	 */
 	public void parseMassURLs(Map<String, ArrayList<String>> possiblePatchUrls, Map<String, CpeGroup> affectedProducts, int cveLimit) throws IOException, InterruptedException {
-		Map<String, ArrayList<String>> cveCpeUrls = new HashMap<>();
+		// Determine if refresh is needed
+		final boolean refresh =
+				PatchFinder.getUrlDictLastCompilationDate().until(Instant.now(), ChronoUnit.DAYS) >= 1;
 
 		for (Map.Entry<String, CpeGroup> entry : affectedProducts.entrySet()) {
 			final long entryStart = System.currentTimeMillis();
-			final String cveId = entry.getKey();
+			final String cveId = entry.getKey().trim();
 			final CpeGroup group = entry.getValue();
 
-			// Skip entries that already have values
-			if(possiblePatchUrls.containsKey(cveId)) continue;
+			// Skip entries that already have values (only if refresh is not needed)
+			if(!refresh && possiblePatchUrls.containsKey(cveId)) {
+				logger.info("Found {} existing & fresh possible sources for CVE {}, skipping url parsing...", cveId);
+				continue;
+			}
+
+			// Warn and skip blank entries
+			if(cveId.isEmpty() || group.getVersionsCount() == 0) {
+				logger.warn("Unable to parse URLs for empty affected product");
+				continue;
+			}
 
 			// Break out of loop when limit is reached
-			if (cveLimit != 0 && cveCpeUrls.size() >= cveLimit) {
+			if (cveLimit != 0 && possiblePatchUrls.size() >= cveLimit) {
 				logger.info("CVE limit of {} reached for patchfinder", cveLimit);
 				break;
 			}
@@ -85,12 +98,10 @@ public class PatchUrlFinder {
 			final ArrayList<String> urls = parseURL(group.getVendor(), group.getProduct());
 
 			// Store found urls
-			cveCpeUrls.put(cveId, urls);
+			possiblePatchUrls.put(cveId, urls);
 			long entryDelta = (System.currentTimeMillis() - entryStart) / 1000;
 			logger.info("Found {} potential patch sources for CVE '{}' in {} seconds", urls.size(), cveId, entryDelta);
 		}
-
-		possiblePatchUrls.putAll(cveCpeUrls);
 	}
 
 	/**
