@@ -73,12 +73,20 @@ public class PatchFinderThread implements Runnable {
 	public void run() {
 		final long totalStart = System.currentTimeMillis();
 
-		ArrayList<PatchCommit> foundPatchCommits = new ArrayList<>();
+		final ArrayList<PatchCommit> foundPatchCommits = new ArrayList<>();
+
+		// Order sources by repo size ascending
+		final HashMap<String, ArrayList<Integer>> sourceCountMap = new HashMap<>();
+		cvePatchEntry.forEach((c, v) -> sourceCountMap.put(c, orderSources(cvePatchEntry.get(c))));
+
 		// For each CVE, iterate through the list of possible patch sources and
 		// Clone/Scrape the repo for patch commits (if any)
 		for (String cve : cvePatchEntry.keySet()) {
+			final ArrayList<Integer> counts = sourceCountMap.get(cve);
+			int i = 0;
 			for (String patchSource: cvePatchEntry.get(cve)) {
-				findPatchCommits(foundPatchCommits, cve, patchSource);
+				findPatchCommits(foundPatchCommits, cve, patchSource, counts.get(i));
+				i++;
 			}
 		}
 
@@ -89,12 +97,26 @@ public class PatchFinderThread implements Runnable {
 		logger.info("Done scraping {} patch commits from CVE(s) {} in {} seconds", foundPatchCommits.size(), cvePatchEntry.keySet(), delta);
 	}
 
-	private void findPatchCommits(ArrayList<PatchCommit> foundPatchCommits, String cve, String patchSource) {
+	private ArrayList<Integer> orderSources(ArrayList<String> sources) {
+		// Map commit counts to their respective sources
+		final HashMap<String, Integer> sourceCounts = new HashMap<>(sources.size());
+		sources.forEach(s -> sourceCounts.put(s, getCommitCount(s)));
+
+		// Sort list based on collected counts
+		sources.sort(Comparator.comparingInt(sourceCounts::get));
+
+		// Return counts list
+		final ArrayList<Integer> counts = new ArrayList<>(sourceCounts.values());
+		Collections.sort(counts);
+		return counts;
+	}
+
+	private int getCommitCount(String source) {
 		try {
 			final long connStart = System.nanoTime();
 
 			// Build connection object and execute connection operation
-			final Connection conn = Jsoup.connect(patchSource).timeout((int) this.timeoutMilli);
+			final Connection conn = Jsoup.connect(source).timeout((int) this.timeoutMilli);
 			conn.execute();
 
 			// Get response
@@ -103,44 +125,53 @@ public class PatchFinderThread implements Runnable {
 			// Get response code
 			final int responseCode = response.statusCode();
 
-			// Only allow valid responses
-			if(responseCode >= 200 && responseCode < 300) {
-				// Log connection stats
-				logger.info("Connection to URL '{}' successful. Done in {} ms",
-						patchSource,
-						(int) ((System.nanoTime() - connStart) / 1000000)
-				);
+			// Disallow invalid responses
+			if (responseCode < 200 || responseCode >= 300) {
+				throw new IllegalArgumentException("Received invalid response code " + responseCode);
+			}
 
-				// Get page body as DOM
-				final Document DOM = Jsoup.parse(response.body());
+			// Log connection stats
+			logger.info("Connection to URL '{}' successful. Done in {} ms",
+					source,
+					(int) ((System.nanoTime() - connStart) / 1000000)
+			);
 
-				// Get commit count element
-				final Element commitCountElement = DOM.select("div > div.js-details-container").select("strong").first();
+			// Get page body as DOM
+			final Document DOM = Jsoup.parse(response.body());
 
-				// Throw exception if no elements found
-				if(commitCountElement == null) throw new IllegalArgumentException("Failed to find commit count page element");
+			// Get commit count element
+			final Element commitCountElement = DOM.select("div > div.js-details-container").select("strong").first();
 
-				// Extract commit count value and throw specific exception if this fails
-				final int commitCount;
-				try {
-					commitCount = Integer.parseInt(commitCountElement.text().replace(",", ""));
-				} catch (NumberFormatException ignored) {
-					throw new IOException("Failed to extract commit count from URL " + patchSource);
-				}
-				logger.info("Found {} commits on the master branch @ URL '{}'", commitCount, patchSource);
+			// Throw exception if no elements found
+			if(commitCountElement == null) throw new IllegalArgumentException("Failed to find commit count page element");
 
-				// Process found repository based on size (commit count on master branch)
+			// Extract commit count value and throw specific exception if this fails
+			final int commitCount;
+			try {
+				commitCount = Integer.parseInt(commitCountElement.text().replace(",", ""));
+			} catch (NumberFormatException ignored) {
+				throw new IOException("Failed to extract commit count");
+			}
+			logger.info("Found {} commits on the master branch @ URL '{}'", commitCount, source);
+			return commitCount;
+		} catch (Exception e) {
+			logger.error("Failed to parse commit count from URL '{}': {}", source, e.toString());
+			return 0;
+		}
+	}
 
-				// If commit count is under threshold, scrape commits from url
-				if(commitCount <= PatchFinder.getCloneCommitThreshold())
-					findPatchCommitsFromUrl(foundPatchCommits, cve, patchSource, commitCount);
-				// If not over limit, clone repo to parse commits
-				else if(commitCount <= PatchFinder.getCloneCommitLimit())
-					findPatchCommitsFromRepo(foundPatchCommits, cve, patchSource);
-				// Otherwise, handle extra large repo
-				else throw new IllegalArgumentException("REPO SIZE OVER COMMIT_LIMIT, IT WILL NOT BE SCRAPED OR CLONED");
+	private synchronized void findPatchCommits(ArrayList<PatchCommit> foundPatchCommits, String cve, String patchSource, int commitCount) {
+		try {
+			// Process found repository based on size (commit count on master branch)
 
-			} else throw new IllegalArgumentException("Received invalid response code " + responseCode);
+			// If commit count is under threshold, scrape commits from url
+			if(commitCount <= PatchFinder.getCloneCommitThreshold())
+				findPatchCommitsFromUrl(foundPatchCommits, cve, patchSource, commitCount);
+			// If not over limit, clone repo to parse commits
+			else if(commitCount <= PatchFinder.getCloneCommitLimit())
+				findPatchCommitsFromRepo(foundPatchCommits, cve, patchSource);
+			// Otherwise, handle extra large repo
+			else throw new IllegalArgumentException("REPO SIZE OVER COMMIT_LIMIT, IT WILL NOT BE SCRAPED OR CLONED");
 
 		} catch (Exception e) {
 			logger.error("Failed to find patch from source {} for CVE {}: {}", patchSource, cve, e.toString());

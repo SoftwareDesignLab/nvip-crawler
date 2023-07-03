@@ -82,6 +82,9 @@ public class PatchCommitScraper {
 
 		logger.info("Grabbing Commits List for repo @ {}...", localDownloadLoc);
 
+		final String[] localDownloadParts = localDownloadLoc.split("/");
+		final String localName = localDownloadParts[localDownloadParts.length - 1];
+
 		// Initialize commit list form the repo's .git folder
 		try (final Repository repository = new FileRepositoryBuilder().setGitDir(new File(localDownloadLoc+"/.git")).build()){
 			try(final Git git = new Git(repository)) {
@@ -122,9 +125,9 @@ public class PatchCommitScraper {
 //					logger.info("Ignored {} non-patch commits", ignoredCounter);
 
 					if (patchCommits.isEmpty()) {
-						logger.info("No patches for CVE '{}' found in repo '{}' ", cveId, localDownloadLoc.split("/")[4]);
+						logger.info("No patches for CVE '{}' found in repo '{}' ", cveId, localName);
 					}
-				} else logger.warn("Could not get starting revision from repo '{}'", localDownloadLoc.split("/")[4]);
+				} else logger.warn("Could not get starting revision from repo '{}'", localName);
 			}
 		} catch (IOException | GitAPIException e) {
 			logger.error("ERROR: Failed to scrape repo @ {} for patch commits for CVE {}\n{}", repoSource, cveId, e);

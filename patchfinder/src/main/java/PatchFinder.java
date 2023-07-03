@@ -313,13 +313,15 @@ public class PatchFinder {
 	public static void findPatchesMultiThreaded(Map<String, ArrayList<String>> possiblePatchSources) throws IOException {
 		// Init clone path and clear previously stored repos
 		File dir = new File(clonePath);
-		if(!dir.exists()) throw new FileNotFoundException("Unable to locate clone path for previous run repo deletion");
-		logger.info("Clearing any existing repos @ '{}'", clonePath);
-		try { FileUtils.delete(dir, FileUtils.RECURSIVE); }
-		catch (IOException e) { logger.error("Failed to clear clone dir @ '{}': {}", dir, e); }
+		if(!dir.exists()) logger.warn("Unable to locate clone path for previous run repo deletion");
+		else {
+			logger.info("Clearing any existing repos @ '{}'", clonePath);
+			try { FileUtils.delete(dir, FileUtils.RECURSIVE); }
+			catch (IOException e) { logger.error("Failed to clear clone dir @ '{}': {}", dir, e); }
+		}
 
 		// Determine the actual number of CVEs to be processed
-		final int totalCVEsToProcess = Math.min(possiblePatchSources.size(), cveLimit);
+		final int totalCVEsToProcess = Math.min(Math.min(possiblePatchSources.size(), cveLimit), maxThreads);
 
 		// If there are less CVEs to process than maxThreads, only create cveLimit number of threads
 		if(totalCVEsToProcess < maxThreads){
@@ -346,6 +348,8 @@ public class PatchFinder {
 		// Prestart all assigned threads (this is what runs jobs)
 		executor.prestartAllCoreThreads();
 
+
+		// TODO: Distribute jobs correctly, preventing race conditions and balancing the load on threads
 		// Add jobs to work queue
 		int numSourcesAdded = 0;
 		int thread = 0;
