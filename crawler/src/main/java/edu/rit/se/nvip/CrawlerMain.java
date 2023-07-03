@@ -459,7 +459,7 @@ public class CrawlerMain {
             // Create a connection to the RabbitMQ server and create the channel
             ConnectionFactory factory = new ConnectionFactory();
             factory.setHost(dataVars.get("mqHost") + "");
-            //factory.setPort((int) dataVars.get("mqPort"));
+            factory.setPort((int) dataVars.get("mqPort"));
             Connection connection = factory.newConnection();
             Channel channel = connection.createChannel();
 
