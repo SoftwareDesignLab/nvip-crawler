@@ -79,4 +79,14 @@ public class CpeEntryTest {
 
         assertEquals("CpeEntry [title=" + title + ", cpeID=" + cpeID + "]", cpeEntry.toString());
     }
+
+    @Test
+    public void testHashCode() {
+        // Create two instances of CpeEntry with the same property values
+        CpeEntry obj1 = new CpeEntry("Sample Title", "1.0", "Update1", "cpe-1234", "Sample Platform");
+        CpeEntry obj2 = new CpeEntry("Sample Title", "1.0", "Update1", "cpe-1234", "Sample Platform");
+
+        // Verify that the hash codes of the two instances are equal
+        assertEquals(obj1.hashCode(), obj2.hashCode());
+    }
 }
