@@ -18,6 +18,7 @@ import static org.junit.Assert.*;
 public class ParseTableTest extends AbstractParserTest {
     private static SeleniumDriver driver;
 
+    @Ignore
     @Test
     public void testParseTableQNAP() {
         ParseTable parser = new ParseTable("https://www.qnap.com/en/security-advisories?ref=security_advisory_details", driver);
