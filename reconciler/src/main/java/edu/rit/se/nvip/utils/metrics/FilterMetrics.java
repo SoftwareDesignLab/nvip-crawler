@@ -6,6 +6,9 @@ import com.google.gson.JsonParser;
 import edu.rit.se.nvip.model.RawVulnerability;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -76,9 +79,13 @@ public class FilterMetrics {
         for (File file : jsonFiles) { //for each jsonFile
 
             Set<RawVulnerability> rawVulns = processJSONFiles(file);
-            Date date = new Date(); //DATE NEEDS TO BE FIXED BASED ON FILE NAME GIVEN
+
+
+            Date date = extractDateFromFilename(file.getName()); //gets the date from the file name
+
 
             CrawlerRun run = new CrawlerRun(rawVulns, runId, date); //creates new run from json
+
 
             runs.add(run);
             runId++;
@@ -88,6 +95,19 @@ public class FilterMetrics {
     }
     // todo also need versions of all of these with a parser type arg, where only results for that parser are returned
     // todo also need versions of all of these that take a filter setting arg (all, local, individual)
+
+    public static Date extractDateFromFilename(String filename) {
+        String dateString = filename.substring(filename.lastIndexOf("_") + 1, filename.lastIndexOf(".")); //gets the date portion of the file
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HHmmss.SSSSSS"); //initiates new DataFormat
+
+
+        try {
+            return format.parse(dateString); //returns the new Date
+        } catch (ParseException e) {
+            logger.error("Problem retrieving Date from file");
+            return null;
+        }
+    }
 
     //Helper function for getting a list of Json files that were in the directory
     private List<File> findJsonFiles(File directory) {

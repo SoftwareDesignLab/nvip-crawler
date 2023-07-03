@@ -17,4 +17,6 @@ public class CrawlerRun {
 
     public Set<RawVulnerability> getVulns(){return this.vulns;}
 
+    public Date getDate(){return this.runDate;}
+
 }
