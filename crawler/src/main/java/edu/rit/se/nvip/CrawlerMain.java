@@ -108,9 +108,7 @@ public class CrawlerMain {
             updateSourceTypes(crawledCVEs);
             logger.info("Done! Preparing to insert all raw data found in this run!");
             crawlerMain.insertRawCVEsAndPrepareMessage(crawledCVEs);
-            logger.info("Raw data inserted! Sending message to MQ server to notify Reconciler...");
-            crawlerMain.notifyReconciler(crawledCVEs);
-            logger.info("Message sent successfully!");
+            logger.info("Raw data inserted and Message sent successfully!");
         }
 
         logger.info("Done!");
@@ -461,7 +459,7 @@ public class CrawlerMain {
             // Create a connection to the RabbitMQ server and create the channel
             ConnectionFactory factory = new ConnectionFactory();
             factory.setHost(dataVars.get("mqHost") + "");
-            factory.setPort((int) dataVars.get("mqPort"));
+            //factory.setPort((int) dataVars.get("mqPort"));
             Connection connection = factory.newConnection();
             Channel channel = connection.createChannel();
 
@@ -475,14 +473,8 @@ public class CrawlerMain {
             channel.close();
             connection.close();
         } catch (Exception ex) {
-            ex.printStackTrace();
+            logger.error("ERROR: Failed to send message to MQ server on {} via port {}", dataVars.get("mqHost"),
+                    dataVars.get("mqPort"));
         }
-    }
-
-    /**
-     * Function for sending message to RabbitMQ message-queue instance for notifying Reconciler
-     */
-    private void notifyReconciler(HashMap<String, ArrayList<RawVulnerability>> crawledCVEs) {
-
     }
 }
