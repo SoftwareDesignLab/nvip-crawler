@@ -50,4 +50,11 @@ public class PatchFinderTest {
         assertEquals("mysql", PatchFinder.databaseType);
         assertEquals(1000, PatchFinder.cloneCommitThreshold);
     }
+
+    @Test
+    public void testMain() throws IOException, InterruptedException {
+        String[] args = new String[1];
+        args[0] = "CVE-2023-1001";
+        PatchFinder.main(args);
+    }
 }
