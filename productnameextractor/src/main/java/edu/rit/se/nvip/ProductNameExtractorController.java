@@ -41,8 +41,8 @@ public class ProductNameExtractorController {
     protected static String resourceDir = "productnameextractor/nvip_data";
     protected static String dataDir = "data";
     protected static String nlpDir = "nlp";
-    private static Instant productDictLastCompilationDate;
-    private static Instant productDictLastRefreshDate;
+    protected static Instant productDictLastCompilationDate = Instant.parse("2000-01-01T00:00:00.00Z");
+    protected static Instant productDictLastRefreshDate = Instant.parse("2000-01-01T00:00:00.00Z");
     private static AffectedProductIdentifier affectedProductIdentifier;
 
     /**
@@ -65,8 +65,6 @@ public class ProductNameExtractorController {
             productDictLastRefreshDate = Instant.parse((String) rawData.get("refreshTime"));
         } catch (DateTimeException e) {
             logger.error("Error parsing compilation date from dictionary: {}", e.toString());
-            productDictLastCompilationDate = Instant.parse("2000-01-01T00:00:00.00Z");
-            productDictLastRefreshDate = Instant.parse("2000-01-01T00:00:00.00Z");
         }
 
         // Init CPE dict
@@ -334,6 +332,7 @@ public class ProductNameExtractorController {
      * @param args (unused) program arguments
      */
     public static void main(String[] args) {
+        //TODO: store path as a static variable and then print out the directory for errors regarding file not found etc
         logger.info("CURRENT PATH --> " + System.getProperty("user.dir"));
 
         // Fetch values for required environment variables
