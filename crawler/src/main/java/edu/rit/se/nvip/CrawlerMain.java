@@ -7,6 +7,8 @@ import edu.rit.se.nvip.model.RawVulnerability;
 import edu.rit.se.nvip.utils.UtilHelper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -105,9 +107,9 @@ public class CrawlerMain {
             // Update the source types for the found CVEs and insert new entries into the rawdescriptions table
             updateSourceTypes(crawledCVEs);
             logger.info("Done! Preparing to insert all raw data found in this run!");
-            crawlerMain.insertRawCVEs(crawledCVEs);
+            crawlerMain.insertRawCVEsAndPrepareMessage(crawledCVEs);
             logger.info("Raw data inserted! Sending message to MQ server to notify Reconciler...");
-            crawlerMain.notifyReconciler();
+            crawlerMain.notifyReconciler(crawledCVEs);
             logger.info("Message sent successfully!");
         }
 
@@ -431,10 +433,10 @@ public class CrawlerMain {
      * Iterate through each crawled CVE and add them to the raw descriptions table
      * @param crawledCves
      */
-    private void insertRawCVEs(HashMap<String, ArrayList<RawVulnerability>> crawledCves) {
+    private void insertRawCVEsAndPrepareMessage(HashMap<String, ArrayList<RawVulnerability>> crawledCves) {
         logger.info("Inserting {} CVEs to DB", crawledCves.size());
-
         int insertedCVEs = 0;
+        JSONArray cveArray = new JSONArray();
 
         for (String cveId: crawledCves.keySet()) {
             for (RawVulnerability vuln: crawledCves.get(cveId)) {
@@ -442,48 +444,45 @@ public class CrawlerMain {
                 if (!databaseHelper.checkIfInRawDescriptions(vuln.getCveId(), vuln.getDescription())) {
                     //logger.info("Inserting new raw description for CVE {} into DB" ,cveId);
                     insertedCVEs += databaseHelper.insertRawVulnerability(vuln);
-                    if (!databaseHelper.isCveInJobTrack(vuln.getCveId())) {
-                        databaseHelper.addJobForCVE(vuln.getCveId());
-                    }
+                    cveArray.add(vuln.getCveId());
                 }
             }
         }
 
         logger.info("Inserted {} raw CVE entries in rawdescriptions", insertedCVEs);
+        logger.info("Notifying Reconciler to reconciler {} new raw data entries", insertedCVEs);
 
-    }
+        // Prepare the message and send it to the MQ server for Reconciler to pick up
+        // Sends a JSON object with an array of CVE IDs that require reconciliation
+        JSONObject messageBody = new JSONObject();
+        messageBody.put("cves", cveArray);
 
-    /**
-     * Function for sending message to RabbitMQ message-queue instance for notifying Reconciler
-     */
-    private void notifyReconciler() {
         try {
-            // Create a connection to the RabbitMQ server
+            // Create a connection to the RabbitMQ server and create the channel
             ConnectionFactory factory = new ConnectionFactory();
             factory.setHost(dataVars.get("mqHost") + "");
             factory.setPort((int) dataVars.get("mqPort"));
             Connection connection = factory.newConnection();
-
-            // Create a channel
             Channel channel = connection.createChannel();
 
-            // Declare a queue
+            // Declare a queue and send the message
             String queueName = dataVars.get("mqQueueName") + "";
             channel.queueDeclare(queueName, false, false, false, null);
-            System.out.println("Queue '" + queueName + "' created successfully.");
+            logger.info("Queue '{}' created successfully.", queueName);
+            channel.basicPublish("", queueName, null, messageBody.toJSONString().getBytes());
+            logger.info("Message to Reconciler sent successfully.");
 
-            // Publish messages
-            for (int i = 1; i <= 10; i++) {
-                String message = "Message " + i;
-                channel.basicPublish("", queueName, null, message.getBytes());
-                System.out.println("Published: " + message);
-            }
-
-            // Close the channel and connection
             channel.close();
             connection.close();
         } catch (Exception ex) {
             ex.printStackTrace();
         }
+    }
+
+    /**
+     * Function for sending message to RabbitMQ message-queue instance for notifying Reconciler
+     */
+    private void notifyReconciler(HashMap<String, ArrayList<RawVulnerability>> crawledCVEs) {
+
     }
 }
