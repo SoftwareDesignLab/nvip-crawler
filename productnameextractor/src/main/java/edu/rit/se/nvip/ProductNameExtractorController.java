@@ -42,6 +42,7 @@ public class ProductNameExtractorController {
     protected static String dataDir = "data";
     protected static String nlpDir = "nlp";
     private static Instant productDictLastCompilationDate;
+    private static Instant productDictLastRefreshDate;
     private static AffectedProductIdentifier affectedProductIdentifier;
 
     /**
@@ -60,10 +61,12 @@ public class ProductNameExtractorController {
 
         // Extract compilation time from file, default to 2000 if fails
         try {
-            productDictLastCompilationDate = Instant.parse((String) rawData.get("comptime"));
+            productDictLastCompilationDate = Instant.parse((String) rawData.get("compTime"));
+            productDictLastRefreshDate = Instant.parse((String) rawData.get("refreshTime"));
         } catch (DateTimeException e) {
             logger.error("Error parsing compilation date from dictionary: {}", e.toString());
             productDictLastCompilationDate = Instant.parse("2000-01-01T00:00:00.00Z");
+            productDictLastRefreshDate = Instant.parse("2000-01-01T00:00:00.00Z");
         }
 
         // Init CPE dict
@@ -196,7 +199,10 @@ public class ProductNameExtractorController {
     public static void writeProductDict(Map<String, CpeGroup> productDict, String productDictPath) {
         // Build output data map
         Map data = new LinkedHashMap<>();
-        data.put("comptime", Instant.now().toString());
+
+        // If just refreshing, old comp time is kept. Always update refresh time
+        data.put("compTime", productDictLastCompilationDate.toString());
+        data.put("refreshTime", Instant.now().toString());
         data.put("products", productDict);
 
         // Write data to file
@@ -204,18 +210,33 @@ public class ProductNameExtractorController {
             final ObjectWriter w = prettyPrint ? OM.writerWithDefaultPrettyPrinter() : OM.writer();
             w.writeValue(new File(productDictPath), data);
             logger.info("Successfully wrote {} products to product dict file at filepath '{}'", productDict.size(), productDictPath);
-        } catch (IOException ioe) {
-            logger.error("Error writing product dict to filepath '{}': {}", productDictPath, ioe.toString());
+        } catch(Exception e){
+            logger.error("Error writing product dict to filepath '{}': {}", productDictPath, e.toString());
         }
     }
 
-    private static void updateProductDict(Map<String, CpeGroup> productDict, long timeSinceLastComp, String productDictPath) {
-        // Check if product dict is stale
-        if(timeSinceLastComp / (60 * 60 * 24) > 0) { // 60sec/min * 60min/hr * 24hrs = 1 day
+    private static void updateProductDict(Map<String, CpeGroup> productDict, long timeSinceLastComp, long timeSinceLastRefresh, String productDictPath) {
+        // Check if it has been over a week since a full pull/compilation of the NVD dictionary
+        if(timeSinceLastComp / (60 * 60 * 24) > 7) { // 60sec/min * 60min/hr * 24hrs = 1 day
+            logger.info("Product dictionary file is over a week old, fully querying NVD data with no page limit...");
+
+            // Fully clear product dict and fill it with no page limit query
+            productDict.clear();
+            productDict.putAll(affectedProductIdentifier.queryCPEDict(0, maxAttemptsPerPage));
+
+            // Update last comp date to be used in writeProductDict() function
+            productDictLastCompilationDate = Instant.now();
+
+            logger.info("Successfully pulled entire new dictionary, writing it...");
+            writeProductDict(productDict, productDictPath); // Write entire new product dict
+
+        // If less than a week has gone by but over a day, refresh the product dictionary with a maxPages NVD query
+        } else if (timeSinceLastRefresh / (60 * 60 * 24) > 0){
             logger.info("Product dictionary file is stale, fetching data from NVD to refresh it...");
             int insertedCounter = 0;
             int notChangedCounter = 0;
             int updatedCounter = 0;
+            //TODO: Modify query method to query by recent entries for refresh
             final Map<String, CpeGroup> updatedProductDict = affectedProductIdentifier.queryCPEDict(maxPages, maxAttemptsPerPage); // Query
 
             logger.info("Refreshing product dictionary...");
@@ -232,7 +253,7 @@ public class ProductNameExtractorController {
                     notChangedCounter
             );
 
-            writeProductDict(productDict, productDictPath); // Write updated product dict
+            writeProductDict(productDict, productDictPath); // Write new product dict
         }
     }
 
@@ -294,11 +315,11 @@ public class ProductNameExtractorController {
                 builder.append("\n\n\n");
                 System.out.println("\n" + builder);
                 writer.write(builder.toString());
-
-                logger.info("Test results have been written to file {}", testResultsFile.getAbsolutePath());
             }
-
             writer.close();
+
+            logger.info("Test results have been written to file {}", testResultsFile.getAbsolutePath());
+
         } catch(FileNotFoundException e){
             logger.warn("Could not find the test results csv file at path {}", testResultsFile.getAbsolutePath());
         }
@@ -353,14 +374,16 @@ public class ProductNameExtractorController {
 
             // Calculate time since last compilation
             final long timeSinceLastComp = Duration.between(productDictLastCompilationDate, Instant.now()).getSeconds();
+            final long timeSinceLastRefresh = Duration.between(productDictLastRefreshDate, Instant.now()).getSeconds();
+
             logger.info("Successfully read {} products from file '{}' ({} hours old)",
                     productDict.size(),
                     productDictName,
-                    timeSinceLastComp / 3600 // seconds -> hours
+                    timeSinceLastRefresh / 3600 // seconds -> hours
             );
 
             // Update dict as needed
-            updateProductDict(productDict, timeSinceLastComp, productDictPath);
+            updateProductDict(productDict, timeSinceLastComp, timeSinceLastRefresh, productDictPath);
 
             // Load CPE dict into affectedProductIdentifier
             affectedProductIdentifier.loadCPEDict(productDict);
@@ -368,6 +391,7 @@ public class ProductNameExtractorController {
             logger.error("Failed to load product dict at filepath '{}', querying NVD...: {}", productDictPath, e);
             productDict = affectedProductIdentifier.queryCPEDict(maxPages, maxAttemptsPerPage); // Query
             affectedProductIdentifier.loadCPEDict(productDict); // Load into CpeLookup
+            productDictLastCompilationDate = Instant.now(); // Set last comp date to now
 
             writeProductDict(productDict, productDictPath); // Write product dict
         }
