@@ -217,6 +217,9 @@ public class PatchFinder {
 				(System.currentTimeMillis() - findPatchesStart) / 1000
 		);
 
+		//TODO: Ensure patch commit does not already exist before inserting.
+		// For existing entries, diff, replace, ignore?
+
 		// Insert patches
 		int failedInserts = 0;
 		logger.info("Starting insertion of {} patch commits into the database...", patchCommits.size());
