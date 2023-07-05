@@ -55,7 +55,6 @@ public class DatabaseHelper {
 	private final String insertPatchCommitSql = "INSERT INTO patchcommit (source_url_id, commit_url, commit_date, commit_message, uni_diff, timeline, timeToPatch, linesChanged) VALUES (?, ?, ?, ?, ?, ?, ?, ?);";
 	// Regex101: https://regex101.com/r/9uaTQb/1
 	public static final Pattern CPE_PATTERN = Pattern.compile("cpe:2\\.3:[aho\\*\\-]:([^:]*):([^:]*):([^:]*):.*");
-	protected static final int unifiedDiffMaxLength = 1000;
 
 	/**
 	 * The private constructor sets up HikariCP for connection pooling. Singleton
