@@ -23,37 +23,6 @@ import static org.junit.Assert.*;
  *
  */
 public class ProductNameExtractorControllerTest {
-
-    @Test
-    @Ignore //CI can't run this test without access to product_dict.json
-    public void readProductDictMainTest(){
-        String productDictPath = "nvip_data/data/product_dict.json";
-        Map<String, CpeGroup> productDict = null;
-        try {
-            productDict = ProductNameExtractorController.readProductDict(productDictPath);
-        } catch(IOException e) {
-            fail(e.toString());
-        }
-
-        //Ensure product dict size is greater than 0 and not null
-        assertNotNull(productDict);
-        assertTrue(productDict.size() > 0);
-
-        //Ensure specific properties of an entry are present and correct
-        int expectedVersionsSize = 1;
-        String expectedVendor = "canon";
-        String expectedProduct = "imagerunner_5000i";
-        String specificVersion = "-";
-        String expectedCpeID = "88FD64E8-67E8-415D-A798-4DC26EA8E7B5";
-        CpeGroup group = productDict.get("canon:imagerunner_5000i");
-
-        assertEquals(group.getVersions().size(), expectedVersionsSize);
-        assertEquals(group.getVendor(), expectedVendor);
-        assertEquals(group.getProduct(), expectedProduct);
-        assertEquals(group.getVersions().get(specificVersion).getCpeID(), expectedCpeID);
-
-    }
-
     @Test
     public void readProductDictSmallTest(){
         String productDictPath = "src/test/resources/data/test_product_dict_small.json";
@@ -170,30 +139,6 @@ public class ProductNameExtractorControllerTest {
 
     private Map<String, CpeGroup> readProductDictFromFile(String filePath) throws IOException {
         return ProductNameExtractorController.readProductDict(filePath);
-    }
-
-    @Test
-    @Ignore
-    /**
-     * TODO: the variables in assert aren't public, use getters or something else
-     */
-    public void testFetchEnvVars() {
-        // Set up test data
-        Map<String, String> envVars = new HashMap<>();
-        envVars.put("CVE_LIMIT", "1000");
-        envVars.put("MAX_PAGES", "5");
-        envVars.put("MAX_ATTEMPTS_PER_PAGE", "2");
-        envVars.put("PRETTY_PRINT", "false");
-
-//        // Mock the System.getenv() method
-//        ProductNameExtractorController.fetchEnvVars();
-//
-//        // Assert that the properties are set correctly
-//        assertEquals(1000, ProductNameExtractorController.cveLimit);
-//        assertEquals(5, ProductNameExtractorController.maxPages);
-//        assertEquals(2, ProductNameExtractorController.maxAttemptsPerPage);
-//        assertEquals(false, ProductNameExtractorController.prettyPrint);
-
     }
 
 }

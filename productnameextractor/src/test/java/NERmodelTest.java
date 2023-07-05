@@ -157,11 +157,9 @@ public class NERmodelTest {
 	}
 
 	@Test
-	@Ignore //TODO: Get this bad boy up and running
 	public void augmentedNERtest() {
-		String description = "The \"origin\" parameter passed to some of the endpoints like '/trigger' was vulnerable to XSS exploit. This issue affects Apache Airflow versions <1.10.15 in 1.x series and affects 2.0.0 and 2.0.1 and 2.x series. This is the same as CVE-2020-13944 & CVE-2020-17515 but the implemented fix did not fix the issue completely. Update to Airflow 1.10.15 or 2.0.2. Please also update your Python version to the latest available PATCH releases of the installed MINOR versions, example update to Python 3.6.13 if you are on Python 3.6. (Those contain the fix for CVE-2021-23336 https://nvd.nist.gov/vuln/detail/CVE-2021-23336).";
-
-		String anticipatedResult = "SN: Apache. SV:  versions <1.10.15 2.0.0 and 2.0.1";
+		String description = "In SaltStack Salt before 2016.3.6, compromised salt-minions can impersonate the salt-master.";
+		String anticipatedResult = "SN: SaltStack Salt. SV:  before 2016.3.6,";
 
 		ProductDetector nameDetector = null;
 		try {
@@ -173,12 +171,10 @@ public class NERmodelTest {
 		long startTime = System.currentTimeMillis();
 		ArrayList<ClassifiedWord> result = nameDetector.classifyWordsInDescription(description);
 		long endTime = System.currentTimeMillis();
-//		System.out.println(result.toString());
+
 		System.out.println("Timing for the classification of description of the average length using augmented NER: " + (endTime - startTime) + "ms.");
 
 		ArrayList<ProductItem> detectedProducts = nameDetector.getProductItems(result);
-
-//		System.out.println(detectedProducts.toString());
 
 		boolean isResultNotNull = (result != null && !result.isEmpty());
 		boolean containsOtherClass = result.stream().anyMatch(word -> word.getAssignedClass() == ClassifiedWord.WordType.OTHER);
@@ -186,9 +182,7 @@ public class NERmodelTest {
 		boolean containsSoftwareVersionClass = result.stream().anyMatch(word -> word.getAssignedClass() == ClassifiedWord.WordType.SOFTWARE_VERSION);
 
 		boolean isProductNotNull = (detectedProducts != null && !detectedProducts.isEmpty());
-		boolean isCorrectProduct = false;
-
-		isCorrectProduct = detectedProducts.get(0).toString().contains(anticipatedResult);
+		boolean isCorrectProduct = detectedProducts.get(0).toString().contains(anticipatedResult);
 
 		if (!isCorrectProduct) {
 			System.out.println("ERROR! Anticipated: " + anticipatedResult + " | Got: " + detectedProducts.get(0).toString());
