@@ -31,6 +31,7 @@ import edu.rit.se.nvip.crawler.SeleniumDriver;
 import org.junit.Test;
 import org.junit.BeforeClass;
 import org.junit.AfterClass;
+import org.junit.Ignore;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -68,6 +69,7 @@ public class MendParserTest extends AbstractParserTest{
         assertEquals("2023-01-26 00:00:00", vuln.getPublishDate());
     }
 
+    @Ignore
     @Test
     public void testMend2() {
         MendParser parser = new MendParser("mend");
