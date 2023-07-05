@@ -1,5 +1,6 @@
 package edu.rit.se.nvip;
 
+import edu.rit.se.nvip.utils.ReconcilerEnvVars;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -7,6 +8,9 @@ import java.util.*;
 
 public class ReconcilerMain {
     private static final Logger logger = LogManager.getLogger(ReconcilerMain.class);
+
+    private static final ReconcilerEnvVars reconEnvVars = new ReconcilerEnvVars();
+
     public static final Map<String, Object> envVars = new HashMap<>();
 
     public ReconcilerMain() {
@@ -37,11 +41,11 @@ public class ReconcilerMain {
     }
 
     private void getEnvVars() {
-        String filterList = System.getenv("FILTER_LIST");
-        String reconcilerType = System.getenv("RECONCILER_TYPE");
-        String processorList = System.getenv("PROCESSOR_LIST");
-        String knownSourceList = System.getenv("KNOWN_SOURCES"); // TODO this is legacy setup to match existing reconciler implementations, should be re-thought
-        String openaiKey = System.getenv("OPENAI_KEY");
+        String filterList = reconEnvVars.getFilterList();
+        String reconcilerType = reconEnvVars.getReconcilerType();
+        String processorList = reconEnvVars.getProcessorList();
+        String knownSourceList = reconEnvVars.getKnownSources(); // TODO this is legacy setup to match existing reconciler implementations, should be re-thought
+        String openaiKey = reconEnvVars.getOpenAIKey();
 
 
         addEnvvarListString("filterList", getListFromString(filterList), "SIMPLE",

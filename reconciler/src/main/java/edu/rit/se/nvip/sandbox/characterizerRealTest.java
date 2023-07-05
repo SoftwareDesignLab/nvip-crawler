@@ -3,6 +3,7 @@ package edu.rit.se.nvip.sandbox;
 import edu.rit.se.nvip.characterizer.CveCharacterizer;
 import edu.rit.se.nvip.model.CompositeVulnerability;
 import edu.rit.se.nvip.model.RawVulnerability;
+import edu.rit.se.nvip.utils.ReconcilerEnvVars;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -12,6 +13,8 @@ public class characterizerRealTest {
     private Timestamp offset(int nHours) {
         return new Timestamp(System.currentTimeMillis() + nHours*3600L*1000);
     }
+    
+    private static final ReconcilerEnvVars envVars = new ReconcilerEnvVars();
 
     public static void main(String[] args){
         RawVulnerability vuln = new RawVulnerability(
@@ -35,9 +38,9 @@ public class characterizerRealTest {
         CompositeVulnerability compVuln = new CompositeVulnerability(vuln);
         CompositeVulnerability compVuln2 = new CompositeVulnerability(vuln2);
 
-        String[] trainingDataInfo = {"characterization/", "AttackTheater.csv,Context.csv,ImpactMethod.csv,LogicalImpact.csv,Mitigation.csv"};
-        CveCharacterizer characterizer = new CveCharacterizer(trainingDataInfo[0], trainingDataInfo[1], System.getenv("NVIP_CHARACTERIZATION_APPROACH"),
-                System.getenv("NVIP_CHARACTERIZATION_METHOD"));
+        String[] trainingDataInfo = {envVars.getTrainingDataDir(), envVars.getTrainingData()};
+        CveCharacterizer characterizer = new CveCharacterizer(trainingDataInfo[0], trainingDataInfo[1], envVars.getCharacterizationApproach(),
+                envVars.getCharacterizationMethod());
 
 
         List<CompositeVulnerability> cveList = new ArrayList<>();
@@ -45,7 +48,7 @@ public class characterizerRealTest {
         cveList.add(compVuln2);
 
         characterizer.characterizeCveList(cveList,
-                Integer.parseInt(System.getenv("NVIP_CVE_CHARACTERIZATION_LIMIT")));
+                Integer.parseInt(envVars.getCharacterizationLimit()));
 
         System.out.println(compVuln.getVdoCharacteristic());
         System.out.println(compVuln.getCvssScoreInfo());

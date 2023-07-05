@@ -23,17 +23,21 @@
  */
 package edu.rit.se.nvip.characterizer.classifier;
 
+import edu.rit.se.nvip.utils.ReconcilerEnvVars;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
 public class CveClassifierFactorTest {
+
+    private final ReconcilerEnvVars envVars = new ReconcilerEnvVars();
+
     @Test
     public void testGetCveClassifier() {
 //        MyProperties propertiesNvip = new MyProperties();
 //        propertiesNvip = new PropertyLoader().loadConfigFile(propertiesNvip);
 //        String[] trainingDataInfo = propertiesNvip.getCveCharacterizationTrainingDataInfo();
-        String[] trainingDataInfo = {"characterization/", "AttackTheater.csv,Context.csv,ImpactMethod.csv,LogicalImpact.csv,Mitigation.csv"};
+        String[] trainingDataInfo = {envVars.getTrainingDataDir(), envVars.getTrainingData()};
         String trainingDataPath = trainingDataInfo[0];
         String trainingDataFiles = trainingDataInfo[1];
         String[] trainingDataFileArr = trainingDataFiles.split(",");

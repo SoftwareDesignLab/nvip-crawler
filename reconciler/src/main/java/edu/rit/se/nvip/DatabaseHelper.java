@@ -7,6 +7,7 @@ import edu.rit.se.nvip.model.CompositeDescription;
 import edu.rit.se.nvip.model.CompositeVulnerability;
 import edu.rit.se.nvip.model.NvdVulnerability;
 import edu.rit.se.nvip.model.RawVulnerability;
+import edu.rit.se.nvip.utils.ReconcilerEnvVars;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import java.sql.*;
@@ -41,6 +42,8 @@ public class DatabaseHelper {
 
     private String GET_ALL_NEW_CVES = "SELECT cve_id, published_date, status FROM nvddata order by cve_id desc";
     private final String insertIntoNvdData = "INSERT INTO nvd_data (cve_id, published_date, status) VALUES (?, ?, ?)";
+
+    private static final ReconcilerEnvVars envVars = new ReconcilerEnvVars();
 
     public static synchronized DatabaseHelper getInstance() {
         if (databaseHelper == null) {
@@ -87,15 +90,15 @@ public class DatabaseHelper {
 
     protected static HikariConfig createHikariConfigFromEnvironment() {
 
-        String url = System.getenv("HIKARI_URL");
+        String url = envVars.getHikariURL();
         HikariConfig hikariConfig;
 
         if (url != null){
             logger.info("Creating HikariConfig with url={}", url);
             hikariConfig = new HikariConfig();
             hikariConfig.setJdbcUrl(url);
-            hikariConfig.setUsername(System.getenv("HIKARI_USER"));
-            hikariConfig.setPassword(System.getenv("HIKARI_PASSWORD"));
+            hikariConfig.setUsername(envVars.getHikariUser());
+            hikariConfig.setPassword(envVars.getHikariPassword());
 
             System.getenv().entrySet().stream()
                     .filter(e -> e.getKey().startsWith("HIKARI_"))

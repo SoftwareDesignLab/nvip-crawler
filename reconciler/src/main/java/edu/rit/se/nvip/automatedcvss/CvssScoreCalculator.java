@@ -23,6 +23,7 @@
  */
 package edu.rit.se.nvip.automatedcvss;
 
+import edu.rit.se.nvip.utils.ReconcilerEnvVars;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.python.core.PyList;
@@ -38,7 +39,7 @@ import java.util.Arrays;
  */
 public class CvssScoreCalculator {
 	private Logger logger = LogManager.getLogger(getClass().getSimpleName());
-
+	private final ReconcilerEnvVars envVars = new ReconcilerEnvVars();
 	String pythonPyFile = "evaluateCVSSpartialsv2.0.py"; // new version
 	String pythonMethodName = "get_cvss_for_partial";
 	PyObject pyFunction = null;
@@ -56,7 +57,7 @@ public class CvssScoreCalculator {
 
 		// change the directory and execute the .py script
 		PythonInterpreter myPythonInterpreter = new PythonInterpreter();
-		String workingDir = System.getenv("DATA_DIR") + "/cvss/";
+		String workingDir = envVars.getDataDir() + "/cvss/";
 		logger.info("Importing os for jython...");
 		myPythonInterpreter.exec("import os");
 		logger.info("Changing dir to {} for jython. Current directory is {}", workingDir, System.getProperty("user.dir"));
