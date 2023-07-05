@@ -99,12 +99,21 @@ class FilterMetricsTest {
     @Test
     public void proportionPassedTest(){
 
-        String path = System.getProperty("user.dir") + "\\src\\test\\resources";
+        String path = System.getProperty("user.dir") + "\\src\\test\\resources\\multipleJsons";
         FilterMetrics filterMetrics = genFilterMetrics(path);
+
+        FilterHandler filterHandler = new FilterHandler();
+        for (CrawlerRun run : filterMetrics.getRuns()){ //for each run, run filters on the run's vulns
+            filterHandler.runFilters(run.getVulns());
+        }
 
         Map<CrawlerRun, Double> propMap = filterMetrics.proportionPassed();
 
-        //assertEquals(0, propMap.get(filterMetrics.getRuns().get(0)));
+        CrawlerRun run = filterMetrics.getRuns().get(0);
+        CrawlerRun run2 = filterMetrics.getRuns().get(1);
+
+        assertEquals(((double) 1 /3), propMap.get(run)); //1 of 3 vulns pass filters
+        assertEquals(((double) 4 /7), propMap.get(run2)); //4 of 7 vulns pass filters
     }
 
 }
