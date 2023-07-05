@@ -38,10 +38,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -66,18 +63,20 @@ public class PatchUrlFinder {
 	 * @throws IOException
 	 * @throws InterruptedException
 	 */
-	public void parseMassURLs(Map<String, ArrayList<String>> possiblePatchUrls, Map<String, CpeGroup> affectedProducts, int cveLimit, boolean refresh) throws IOException, InterruptedException {
-		int CVEsProcessed = 0;
+	public void parseMassURLs(Map<String, ArrayList<String>> possiblePatchUrls, Map<String, CpeGroup> affectedProducts, int cveLimit, boolean isStale) throws IOException, InterruptedException {
 		for (Map.Entry<String, CpeGroup> entry : affectedProducts.entrySet()) {
 			final long entryStart = System.currentTimeMillis();
 			final String cveId = entry.getKey().trim();
 			final CpeGroup group = entry.getValue();
 
 			// Skip entries that already have values (only if refresh is not needed)
-			if(!refresh && possiblePatchUrls.containsKey(cveId)) {
-				logger.info("Found {} existing & fresh possible sources for CVE {}, skipping url parsing...", possiblePatchUrls.get(cveId).size(), cveId);
-				continue;
-			}
+			if(!isStale) {
+				if(possiblePatchUrls.containsKey(cveId)) {
+					logger.info("Found {} existing & fresh possible sources for CVE {}, skipping url parsing...", possiblePatchUrls.get(cveId).size(), cveId);
+					continue;
+				}
+			} else if(!possiblePatchUrls.containsKey(cveId))
+				possiblePatchUrls.remove(cveId); // Remove stale entry
 
 			// Warn and skip blank entries
 			if(cveId.isEmpty() || group.getVersionsCount() == 0) {
@@ -86,7 +85,7 @@ public class PatchUrlFinder {
 			}
 
 			// Break out of loop when limit is reached
-			if (cveLimit != 0 && CVEsProcessed >= cveLimit) {
+			if (cveLimit != 0 && possiblePatchUrls.size() >= cveLimit) {
 				logger.info("CVE limit of {} reached for patchfinder", cveLimit);
 				break;
 			}
@@ -97,7 +96,6 @@ public class PatchUrlFinder {
 			// Store found urls
 			possiblePatchUrls.put(cveId, urls);
 			long entryDelta = (System.currentTimeMillis() - entryStart) / 1000;
-			CVEsProcessed++;
 			logger.info("Found {} potential patch sources for CVE '{}' in {} seconds", urls.size(), cveId, entryDelta);
 		}
 	}

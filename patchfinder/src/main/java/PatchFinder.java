@@ -53,7 +53,7 @@ public class PatchFinder {
 	private static final Logger logger = LogManager.getLogger(PatchFinder.class.getName());
 
 	private static final ArrayList<PatchCommit> patchCommits = new ArrayList<>();
-	protected static int cveLimit = 50;
+	protected static int cveLimit = 20;
 	protected static int maxThreads = 10;
 	protected static int cvesPerThread = 1;
 	protected static String databaseType = "mysql";
@@ -193,10 +193,10 @@ public class PatchFinder {
 		final long parseUrlsStart = System.currentTimeMillis();
 
 		// Determine if urls dict needs to be refreshed
-		final boolean refresh = urlDictLastCompilationDate.until(Instant.now(), ChronoUnit.DAYS) >= 1;
+		final boolean isStale = urlDictLastCompilationDate.until(Instant.now(), ChronoUnit.DAYS) >= 1;
 		// TODO: Add offset to avoid repeating the same run?
 		// Parse new urls
-		patchURLFinder.parseMassURLs(possiblePatchURLs, affectedProducts, cveLimit, refresh);
+		patchURLFinder.parseMassURLs(possiblePatchURLs, affectedProducts, cveLimit, isStale);
 		urlCount = possiblePatchURLs.values().stream().map(ArrayList::size).reduce(0, Integer::sum);
 
 		logger.info("Successfully parsed {} possible patch urls for {} CVEs in {} seconds",
@@ -213,6 +213,8 @@ public class PatchFinder {
 		// TODO: Fix cvesPerThread
 		logger.info("Starting patch finder with {} max threads, allowing {} CVE(s) per thread...", maxThreads, cvesPerThread);
 		final long findPatchesStart = System.currentTimeMillis();
+		//TODO: How to handle multiple CVEs mapped to the same repo.
+		// Currently we clone/scrape for each, which is a big waste of time
 		PatchFinder.findPatchesMultiThreaded(possiblePatchURLs);
 
 		// Get found patches from patchfinder
@@ -447,7 +449,7 @@ public class PatchFinder {
 				}
 
 //				 Timeout for whole process
-				if((secondsWaiting / 60) > 5) throw new TimeoutException("Timeout reached before all threads completed");
+//				if((secondsWaiting / 60) > 5) throw new TimeoutException("Timeout reached before all threads completed");
 			}
 		} catch (Exception e) {
 			logger.error("Patch finding failed: {}", e.toString());
