@@ -1,5 +1,7 @@
 {
-  "comptime":"2023-06-13T19:58:32.350096800Z", "products": {
+  "compTime":"2023-06-13T19:58:32.350096800Z",
+  "refreshTime":"2023-06-13T19:58:32.350096800Z",
+  "products": {
     "canon:imagerunner_5000i": {
       "vendor": "canon",
       "product": "imagerunner_5000i",
