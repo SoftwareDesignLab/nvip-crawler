@@ -49,13 +49,12 @@ public class DatabaseHelper {
 
 	private final String selectAffectedProductsSql = "SELECT cve_id, cpe FROM affectedproduct GROUP BY product_name, affected_product_id ORDER BY cve_id DESC, version ASC;";
 	private final String getVulnIdByCveIdSql = "SELECT vuln_id FROM vulnerability WHERE cve_id = ?";
-	private final String getExistingSourceUrlsSql = "SELECT source_url FROM patchsourceurl";
+	private final String getExistingSourceUrlsSql = "SELECT source_url, source_url_id FROM patchsourceurl";
 	private final String getExistingPatchCommitsSql = "SELECT commit_url FROM patchcommit";
 	private final String insertPatchSourceURLSql = "INSERT INTO patchsourceurl (cve_id, source_url) VALUES (?, ?);";
 	private final String insertPatchCommitSql = "INSERT INTO patchcommit (source_url_id, commit_url, commit_date, commit_message, uni_diff, timeline, timeToPatch, linesChanged) VALUES (?, ?, ?, ?, ?, ?, ?, ?);";
 	// Regex101: https://regex101.com/r/9uaTQb/1
 	public static final Pattern CPE_PATTERN = Pattern.compile("cpe:2\\.3:[aho\\*\\-]:([^:]*):([^:]*):([^:]*):.*");
-	protected static final int unifiedDiffMaxLength = 1000;
 
 	/**
 	 * The private constructor sets up HikariCP for connection pooling. Singleton
@@ -124,13 +123,13 @@ public class DatabaseHelper {
 		config = null;
 	}
 
-	public Set<String> getExistingSourceUrls() {
-		final Set<String> urls = new HashSet<>();
+	public Map<String, Integer> getExistingSourceUrls() {
+		final Map<String, Integer> urls = new HashMap<>();
 
 		try (Connection connection = getConnection();
 			 PreparedStatement pstmt = connection.prepareStatement(getExistingSourceUrlsSql);) {
 			ResultSet rs = pstmt.executeQuery();
-			while(rs.next()) { urls.add(rs.getString(1)); }
+			while(rs.next()) { urls.put(rs.getString(1), rs.getInt(2)); }
 		} catch (Exception e) {
 			logger.error(e.toString());
 		}
@@ -226,16 +225,16 @@ public class DatabaseHelper {
 	/**
 	 * Inserts given source URL into the patch source table
 	 *
+	 * @param existingSourceUrls
 	 * @param cve_id
-	 *
+	 * @param sourceURL
 	 * @return
 	 */
-	public int insertPatchSourceURL(Set<String> existingSourceUrls, String cve_id, String sourceURL) {
+	public int insertPatchSourceURL(Map<String, Integer> existingSourceUrls, String cve_id, String sourceURL) {
 		// Check if source already exists
-		if(existingSourceUrls.contains(sourceURL)) {
-			// TODO: Implement this
-			// Get and return id from db
-			return -1;
+		if(existingSourceUrls.containsKey(sourceURL)) {
+			// Get and return id from map
+			return existingSourceUrls.get(sourceURL);
 		} else { // Otherwise, insert and return generated id
 			try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(insertPatchSourceURLSql, Statement.RETURN_GENERATED_KEYS)) {
 				pstmt.setString(1, cve_id);
@@ -249,7 +248,7 @@ public class DatabaseHelper {
 
 				conn.close();
 				logger.info("Inserted PatchURL: " + sourceURL);
-				existingSourceUrls.add(sourceURL);
+				existingSourceUrls.put(sourceURL, generatedKey);
 				return generatedKey;
 			} catch (Exception e) {
 				logger.error("ERROR: Failed to insert patch source with sourceURL {} for CVE ID {}\n{}", sourceURL,
@@ -268,6 +267,7 @@ public class DatabaseHelper {
 	 * @param commitMessage
 	 */
 	public void insertPatchCommit(int sourceId, String commitUrl, java.util.Date commitDate, String commitMessage, String uniDiff, List<RevCommit> timeLine, String timeToPatch, int linesChanged) throws IllegalArgumentException {
+		if(sourceId < 0) throw new IllegalArgumentException("Invalid source id provided, ensure id is non-negative");
 
 		try (Connection connection = getConnection();
 			 PreparedStatement pstmt = connection.prepareStatement(insertPatchCommitSql);) {
@@ -287,7 +287,7 @@ public class DatabaseHelper {
 			pstmt.setInt(8, linesChanged);
 			pstmt.executeUpdate();
 		} catch (Exception e) {
-			logger.error("ERROR: failed to insert patch commit from source {}\n{}", commitUrl, e);
+			logger.error("ERROR: failed to insert patch commit from source {}: {}", commitUrl, e);
 			throw new IllegalArgumentException(e);
 		}
 	}

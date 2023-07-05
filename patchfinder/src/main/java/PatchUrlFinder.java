@@ -66,11 +66,8 @@ public class PatchUrlFinder {
 	 * @throws IOException
 	 * @throws InterruptedException
 	 */
-	public void parseMassURLs(Map<String, ArrayList<String>> possiblePatchUrls, Map<String, CpeGroup> affectedProducts, int cveLimit) throws IOException, InterruptedException {
-		// Determine if refresh is needed
-		final boolean refresh =
-				PatchFinder.getUrlDictLastCompilationDate().until(Instant.now(), ChronoUnit.DAYS) >= 1;
-
+	public void parseMassURLs(Map<String, ArrayList<String>> possiblePatchUrls, Map<String, CpeGroup> affectedProducts, int cveLimit, boolean refresh) throws IOException, InterruptedException {
+		int CVEsProcessed = 0;
 		for (Map.Entry<String, CpeGroup> entry : affectedProducts.entrySet()) {
 			final long entryStart = System.currentTimeMillis();
 			final String cveId = entry.getKey().trim();
@@ -89,7 +86,7 @@ public class PatchUrlFinder {
 			}
 
 			// Break out of loop when limit is reached
-			if (cveLimit != 0 && possiblePatchUrls.size() >= cveLimit) {
+			if (cveLimit != 0 && CVEsProcessed >= cveLimit) {
 				logger.info("CVE limit of {} reached for patchfinder", cveLimit);
 				break;
 			}
@@ -100,6 +97,7 @@ public class PatchUrlFinder {
 			// Store found urls
 			possiblePatchUrls.put(cveId, urls);
 			long entryDelta = (System.currentTimeMillis() - entryStart) / 1000;
+			CVEsProcessed++;
 			logger.info("Found {} potential patch sources for CVE '{}' in {} seconds", urls.size(), cveId, entryDelta);
 		}
 	}
