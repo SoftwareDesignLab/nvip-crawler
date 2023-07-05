@@ -153,7 +153,7 @@ public class AffectedProductIdentifier {
 
 					if (productIDs == null || productIDs.isEmpty()) {
 						numOfProductsNotMappedToCPE.getAndIncrement();
-						logger.warn("Could not find the predicted product name '{}'! | CVE-ID: {}", productItem.toString(), vulnerability.getCveId());
+						logger.warn("Could not match CPEs for the predicted product name '{}'! | CVE-ID: {}", productItem.toString(), vulnerability.getCveId());
 						continue;
 					}
 					// if CPE identified, add it as affected product

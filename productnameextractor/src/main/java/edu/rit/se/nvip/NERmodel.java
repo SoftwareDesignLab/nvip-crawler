@@ -44,6 +44,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.Random;
 
 /**
@@ -59,23 +60,25 @@ import java.util.Random;
 
 public class NERmodel {
 	private final boolean timingOn = false;
-
 	private MultiLayerNetwork model = null; // NER model
 	private Char2vec c2vModel = null; // Char2Vector model
 	private Word2Vector w2vModel = null; // Word2Vector model
 	static public final int numLabelClasses = 3; // Number of classes (SN, SV, O)
 	private int featureLength = 300; // length of the input features vector.
-
 	private int wordVecLength = 250; // Expected length of the word2vector model output. Later will be updated from the actual model
 	private int charVecLength = 50; // Expected length of the char2vector model output. Later will be updated from the actual model
-
 	private static Random rand = new Random(); // Needed in the case when word2vector model doesn't know the word
 
 	public static final String SN = "SN", SV = "SV", OTHER = "O"; // class names
-
 	private SentenceDetector sentenceDetector = null;
-
 	private DataNormalization restoredNormalizer = null; // Feature normalizer
+
+	protected static String char2VecConfig = "c2v_model_config_50.json";
+	protected static String char2VecWeights = "c2v_model_weights_50.h5";
+	protected static String word2Vec = "w2v_model_250.bin";
+	protected static String nerModel = "NERallModel.bin";
+	protected static String nerModelNormalizer = "NERallNorm.bin";
+	protected static String sentenceModel = "en-sent.bin";
 
 	private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
 
@@ -87,12 +90,32 @@ public class NERmodel {
 
 		try {
 			// Get models paths
-			String c2vModelConfigPath = modelsDir + System.getenv("CHAR_2_VEC_CONFIG");
-			String c2vModelWeightsPath = modelsDir + System.getenv("CHAR_2_VEC_WEIGHTS");
-			String w2vModelPath = modelsDir + System.getenv("WORD_2_VEC");
-			String nerModelPath = modelsDir + System.getenv("NER_MODEL");
-			String nerNormalizerPath = modelsDir + System.getenv("NER_MODEL_NORMALIZER");
-			String sentenceModelPath = modelsDir + nlpDir + "/" + System.getenv("SENTENCE_MODEL");
+			final Map<String, String> props = System.getenv();
+
+			if(props.containsKey("CHAR_2_VEC_CONFIG")) char2VecConfig = System.getenv("CHAR_2_VEC_CONFIG");
+			else logger.warn("Could not fetch CHAR_2_VEC_CONFIG from env vars, defaulting to {}", char2VecConfig);
+
+			if(props.containsKey("CHAR_2_VEC_WEIGHTS")) char2VecWeights = System.getenv("CHAR_2_VEC_WEIGHTS");
+			else logger.warn("Could not fetch CHAR_2_VEC_WEIGHTS from env vars, defaulting to {}", char2VecWeights);
+
+			if(props.containsKey("WORD_2_VEC")) word2Vec = System.getenv("WORD_2_VEC");
+			else logger.warn("Could not fetch WORD_2_VEC from env vars, defaulting to {}", word2Vec);
+
+			if(props.containsKey("NER_MODEL")) nerModel = System.getenv("NER_MODEL");
+			else logger.warn("Could not fetch NER_MODEL from env vars, defaulting to {}", nerModel);
+
+			if(props.containsKey("NER_MODEL_NORMALIZER")) nerModelNormalizer = System.getenv("NER_MODEL_NORMALIZER");
+			else logger.warn("Could not fetch NER_MODEL_NORMALIZER from env vars, defaulting to {}", nerModelNormalizer);
+
+			if(props.containsKey("SENTENCE_MODEL")) sentenceModel = System.getenv("SENTENCE_MODEL");
+			else logger.warn("Could not fetch SENTENCE_MODEL from env vars, defaulting to {}", sentenceModel);
+
+			String c2vModelConfigPath = modelsDir + char2VecConfig;
+			String c2vModelWeightsPath = modelsDir + char2VecWeights;
+			String w2vModelPath = modelsDir + word2Vec;
+			String nerModelPath = modelsDir + nerModel;
+			String nerNormalizerPath = modelsDir + nerModelNormalizer;
+			String sentenceModelPath = modelsDir + nlpDir + "/" + sentenceModel;
 
 			long startTime = System.currentTimeMillis();
 			// Load NER model

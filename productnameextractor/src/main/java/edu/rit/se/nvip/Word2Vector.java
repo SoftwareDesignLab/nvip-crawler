@@ -56,9 +56,9 @@ public class Word2Vector {
 			//get expected vector length
 			vectorLength = model.getLayerSize();
 		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
 			Logger logger = LogManager.getLogger(getClass().getSimpleName());
-			logger.error(e);
+			logger.warn("Could not find w2v model at path {}, if running locally please ensure that w2v_model_250.bin has been" +
+					" stored in productnameextractor/nvip_data/data");
 			logger.warn("Please ensure that your working directory is correct. Current working directory: {}", ProductNameExtractorController.currentDir);
 			throw e;
 		}		
