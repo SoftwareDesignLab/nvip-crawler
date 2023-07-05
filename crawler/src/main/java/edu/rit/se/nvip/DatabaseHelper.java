@@ -423,8 +423,8 @@ public class DatabaseHelper {
 		return false;
 	}
 
-	private final String insertRawData = "INSERT INTO rawdescription (raw_description, cve_id, created_date, published_date, last_modified_date, source_url, source_type) " +
-			"VALUES (?, ?, ?, ?, ?, ?, ?)";
+	private final String insertRawData = "INSERT INTO rawdescription (raw_description, cve_id, created_date, published_date, last_modified_date, source_url, source_type, parser_type) " +
+			"VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
 	/**
 	 * for inserting crawled data to rawdescriptions
@@ -442,6 +442,7 @@ public class DatabaseHelper {
 			pstmt.setTimestamp(5, Timestamp.valueOf(vuln.getLastModifiedDateAsDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
 			pstmt.setString(6, vuln.getSourceURL());
 			pstmt.setString(7, vuln.getSourceType());
+			pstmt.setString(8, vuln.getParserType());
 
 			pstmt.execute();
 

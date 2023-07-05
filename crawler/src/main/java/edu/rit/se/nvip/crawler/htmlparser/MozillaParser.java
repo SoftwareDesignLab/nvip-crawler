@@ -77,7 +77,7 @@ public class MozillaParser extends AbstractCveParser {
                 if (descNext != null) description = descNext.text();
             }
             vulnList.add(new RawVulnerability(
-               sSourceURL, cve, date, date, description
+               sSourceURL, cve, date, date, description, getClass().getSimpleName()
             ));
         }
         return vulnList;

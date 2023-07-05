@@ -134,7 +134,7 @@ public class TenableSecurityParser extends AbstractCveParser {
 		}
 
 		for (String cve : uniqueCves) {
-			RawVulnerability vuln = new RawVulnerability(sSourceURL, cve, releaseDateString, updateDateString, desc);
+			RawVulnerability vuln = new RawVulnerability(sSourceURL, cve, releaseDateString, updateDateString, desc, getClass().getSimpleName());
 			vulns.add(vuln);
 		}
 

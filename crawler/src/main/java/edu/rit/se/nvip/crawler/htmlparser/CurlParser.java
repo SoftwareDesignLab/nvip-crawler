@@ -109,7 +109,8 @@ public class CurlParser extends AbstractCveParser {
                     cve,
                     date,
                     date,
-                    descriptionBuilder.toString()
+                    descriptionBuilder.toString(),
+                    getClass().getSimpleName()
             ));
         }
 

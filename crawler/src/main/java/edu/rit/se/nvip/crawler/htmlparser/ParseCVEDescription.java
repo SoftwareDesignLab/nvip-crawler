@@ -68,7 +68,7 @@ public class ParseCVEDescription extends AbstractCveParser implements ParserStra
 
             // save vulnerability
             String dateTimeNow = LocalDate.now().toString();
-            RawVulnerability vuln = new RawVulnerability(sSourceURL, cveId, dateTimeNow, dateTimeNow, sCVEContent);
+            RawVulnerability vuln = new RawVulnerability(sSourceURL, cveId, dateTimeNow, dateTimeNow, sCVEContent, getClass().getSimpleName());
             vulnerabilities.add(vuln);
             return vulnerabilities;
         }
@@ -197,7 +197,7 @@ public class ParseCVEDescription extends AbstractCveParser implements ParserStra
                     if (sentenceContainsValuableInfoForCVE(sbDescription.toString(), cveIDsInSentence.length)) {
                         RawVulnerability vuln;
                         if(!vulnMap.containsKey((String)o)){
-                            vuln = new RawVulnerability(sSourceURL, (String) o, dateTimeNow, dateTimeNow, sbDescription.toString());
+                            vuln = new RawVulnerability(sSourceURL, (String) o, dateTimeNow, dateTimeNow, sbDescription.toString(), getClass().getSimpleName());
                         }
                         else{
                             vuln = vulnMap.get((String)o);
@@ -210,7 +210,7 @@ public class ParseCVEDescription extends AbstractCveParser implements ParserStra
                 if (sentenceContainsValuableInfoForCVE(sbDescription.toString(), 1)) {
                     RawVulnerability vuln;
                     if(!vulnMap.containsKey(cveIDOfCurrentSentence)){
-                        vuln = new RawVulnerability(sSourceURL, cveIDOfCurrentSentence, dateTimeNow, dateTimeNow, sbDescription.toString());
+                        vuln = new RawVulnerability(sSourceURL, cveIDOfCurrentSentence, dateTimeNow, dateTimeNow, sbDescription.toString(), getClass().getSimpleName());
                     }
                     else{
                         vuln = vulnMap.get(cveIDOfCurrentSentence);

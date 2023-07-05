@@ -76,7 +76,7 @@ public class ParseAccordion extends AbstractCveParser implements ParserStrategy 
         if (lastMod == null || lastMod.equals("")) lastMod = rawDate;
         for (String cve : thisAccCVES) {
             RawVulnerability vuln = new RawVulnerability(
-                    sourceUrl, cve, rawDate, lastMod, accordionText);
+                    sourceUrl, cve, rawDate, lastMod, accordionText, getClass().getSimpleName());
             cves.add(vuln);
         }
         return cves;

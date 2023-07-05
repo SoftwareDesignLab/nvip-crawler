@@ -63,7 +63,7 @@ public class RedHatParser extends AbstractCveParser {
             LocalDateTime date = LocalDateTime.parse(publishedDate, publishFormatter);
             publishedDate = date.toString();
 
-            vulnerabilities.add(new RawVulnerability(sSourceURL, cve, publishedDate, lastModifiedDate, description));
+            vulnerabilities.add(new RawVulnerability(sSourceURL, cve, publishedDate, lastModifiedDate, description, getClass().getSimpleName()));
         } catch (Exception e) {
             System.out.println(e);
         }

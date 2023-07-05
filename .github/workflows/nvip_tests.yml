@@ -67,6 +67,8 @@ jobs:
       - name: Publish Test Report
         if: success() || failure()
         uses: scacap/action-surefire-report@v1
+        with:
+          check_name: Backend Test Report
 
   # Build and test crawler component
   build-test-crawler:
@@ -99,6 +101,8 @@ jobs:
       - name: Publish Test Report
         if: success() || failure()
         uses: scacap/action-surefire-report@v1
+        with:
+            check_name: Crawler Test Report
 
   # Build and Test Reconciler Component
   build-test-reconciler:
@@ -131,6 +135,8 @@ jobs:
       - name: Publish Test Report
         if: success() || failure()
         uses: scacap/action-surefire-report@v1
+        with:
+          check_name: Reconciler Test Report
 
   # Build and Test Product Extraction Component
   build-test-product-extractor:
@@ -176,6 +182,8 @@ jobs:
       - name: Publish Test Report
         if: success() || failure()
         uses: scacap/action-surefire-report@v1
+        with:
+            check_name: PNE test Report
 
   # Deploy main backend project to container registry
   deploy-backend:
