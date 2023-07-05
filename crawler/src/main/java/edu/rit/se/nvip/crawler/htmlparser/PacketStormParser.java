@@ -122,7 +122,7 @@ public class PacketStormParser extends AbstractCveParser {
 				publishDate = getDate(sSourceURL, elements);
 
 				for (String cve : uniqueCves)
-					itemVulns.add(new RawVulnerability(sSourceURL, cve, publishDate, lastModifiedDate, description));
+					itemVulns.add(new RawVulnerability(sSourceURL, cve, publishDate, lastModifiedDate, description, getClass().getSimpleName()));
 
 				allVulns.addAll(itemVulns);
 
@@ -211,7 +211,7 @@ public class PacketStormParser extends AbstractCveParser {
 			publishDate = getDate(sSourceURL, dates);
 
 			for (String cve : uniqueCves)
-				vulns.add(new RawVulnerability(sSourceURL, cve, publishDate, lastModifiedDate, description));
+				vulns.add(new RawVulnerability(sSourceURL, cve, publishDate, lastModifiedDate, description, getClass().getSimpleName()));
 
 			/**
 			 * get version from the remaining text

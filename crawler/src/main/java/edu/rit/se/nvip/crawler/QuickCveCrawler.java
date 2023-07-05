@@ -236,7 +236,7 @@ public class QuickCveCrawler {
 
 						String description = "New vulnerability from CNNVD! Details:  " + vuln.toString();
 						// add vuln
-						RawVulnerability vulnComposite = new RawVulnerability(cveURLItem, vuln.getCveId(), dateTimeNow, dateTimeNow, description);
+						RawVulnerability vulnComposite = new RawVulnerability(cveURLItem, vuln.getCveId(), dateTimeNow, dateTimeNow, description, chinaCveParser.getClass().getSimpleName());
 						list.add(vulnComposite);
 						Thread.sleep(r.nextInt(100) + 1000); // random wait
 					} catch (Exception e) {

@@ -83,7 +83,7 @@ public class PyPAGithubScraper {
                     ArrayList<String> cvesInFile = parsedFile.getCves();
                     for (String c : cvesInFile) {
                         vulnMap.put(c, (new RawVulnerability(
-                                "", c, parsedFile.getPublished(), parsedFile.getModified(), parsedFile.getDetails()
+                                "", c, parsedFile.getPublished(), parsedFile.getModified(), parsedFile.getDetails(), "PyPA"
                         )));
                     }
                 }
