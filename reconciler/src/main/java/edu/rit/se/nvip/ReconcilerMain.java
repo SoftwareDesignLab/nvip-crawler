@@ -11,20 +11,11 @@ public class ReconcilerMain {
 
     public static final Map<String, Object> envVars = new HashMap<>();
 
-    public ReconcilerMain() {
-
-        // ReconcilerEnvVars.loadEnvVars() does this go here?
+    public static void main(String[] args) {
         if (!DatabaseHelper.getInstance().testDbConnection()) {
             logger.error("Error in database connection! Please check if the database configured in DB Envvars is up and running!");
             System.exit(1);
         }
-    }
-
-    public static void main(String[] args) {
-
-        ReconcilerEnvVars.loadEnvVars();
-
-        ReconcilerMain rcm = new ReconcilerMain(); // just to instantiate envvars
         // reconcilers still have a Map<String, Integer> knownCveSources, but the old implementation always sets the int to 0.
         // I think the int is supposed to represent a notion of priority, but since the value is never referenced I will continue keeping them 0
         Map<String, Integer> sourceMap = new HashMap<>();

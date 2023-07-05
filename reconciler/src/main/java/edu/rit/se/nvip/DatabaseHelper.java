@@ -87,7 +87,6 @@ public class DatabaseHelper {
     }
 
     protected static HikariConfig createHikariConfigFromEnvironment() {
-        ReconcilerEnvVars.loadEnvVars();
         String url = ReconcilerEnvVars.getHikariURL();
         HikariConfig hikariConfig;
 

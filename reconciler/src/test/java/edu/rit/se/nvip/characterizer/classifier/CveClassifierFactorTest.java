@@ -30,11 +30,9 @@ import static org.junit.Assert.assertEquals;
 
 public class CveClassifierFactorTest {
 
-    private final ReconcilerEnvVars envVars = new ReconcilerEnvVars();
 
     @Test
     public void testGetCveClassifier() {
-        ReconcilerEnvVars.loadEnvVars();
         String[] trainingDataInfo = {ReconcilerEnvVars.getTrainingDataDir(), ReconcilerEnvVars.getTrainingData()};
         String trainingDataPath = trainingDataInfo[0];
         String trainingDataFiles = trainingDataInfo[1];

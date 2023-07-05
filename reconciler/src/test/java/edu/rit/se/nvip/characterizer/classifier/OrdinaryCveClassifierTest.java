@@ -36,7 +36,6 @@ import static org.junit.Assert.assertEquals;
 
 public class OrdinaryCveClassifierTest {
 
-    private final ReconcilerEnvVars envVars = new ReconcilerEnvVars();
     @Test
     public void testResetClassifier() {
         OrdinaryCveClassifier ordinaryCveClassifier = new OrdinaryCveClassifier();
@@ -47,7 +46,6 @@ public class OrdinaryCveClassifierTest {
 
     @Test
     public void testPredictIncorrectNumAttr() {
-        ReconcilerEnvVars.loadEnvVars();
         String[] trainingDataInfo = {ReconcilerEnvVars.getTrainingDataDir(), ReconcilerEnvVars.getTrainingData()};
         String trainingDataPath = trainingDataInfo[0];
         String trainingDataFiles = trainingDataInfo[1];

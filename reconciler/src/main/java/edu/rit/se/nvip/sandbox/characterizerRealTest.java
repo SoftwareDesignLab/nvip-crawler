@@ -16,7 +16,6 @@ public class characterizerRealTest {
 
 
     public static void main(String[] args){
-        ReconcilerEnvVars.loadEnvVars();
         RawVulnerability vuln = new RawVulnerability(
                 1,
                 "CVE-2023-8374",

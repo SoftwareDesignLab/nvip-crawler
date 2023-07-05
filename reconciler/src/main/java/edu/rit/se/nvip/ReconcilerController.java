@@ -36,7 +36,6 @@ public class ReconcilerController {
     }
 
     public void main() {
-        ReconcilerEnvVars.loadEnvVars();
         Set<String> jobs = dbh.getJobs();
         logger.info(jobs.size() + " jobs found for reconciliation");
         Set<CompositeVulnerability> reconciledVulns = new HashSet<>();

@@ -48,10 +48,6 @@ public class CvssScoreCalculator {
 	 * method
 	 */
 	public CvssScoreCalculator() {
-		// load properties file
-//		MyProperties propertiesNvip = new MyProperties();
-//		propertiesNvip = new PropertyLoader().loadConfigFile(propertiesNvip);
-
 		logger.info("Initializing PythonInterpreter for " + pythonMethodName + " in " + pythonPyFile);
 
 		// change the directory and execute the .py script

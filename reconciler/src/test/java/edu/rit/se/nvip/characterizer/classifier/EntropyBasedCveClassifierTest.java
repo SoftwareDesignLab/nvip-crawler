@@ -37,11 +37,8 @@ import static org.junit.Assert.assertEquals;
 
 public class EntropyBasedCveClassifierTest {
 
-    private final ReconcilerEnvVars envVars = new ReconcilerEnvVars();
     @Test
     public void testTrainMLModel() {
-        ReconcilerEnvVars.loadEnvVars();
-
         String[] trainingDataInfo = {ReconcilerEnvVars.getTrainingDataDir(), ReconcilerEnvVars.getTrainingData()};
         String trainingDataPath = trainingDataInfo[0];
         String trainingDataFiles = trainingDataInfo[1];
@@ -60,7 +57,6 @@ public class EntropyBasedCveClassifierTest {
 
     @Test
     public void testPredictIncorrectNumAttributes() {
-        ReconcilerEnvVars.loadEnvVars();
         String[] trainingDataInfo = {ReconcilerEnvVars.getTrainingDataDir(), ReconcilerEnvVars.getTrainingData()};
         String trainingDataPath = trainingDataInfo[0];
         String trainingDataFiles = trainingDataInfo[1];
@@ -80,7 +76,6 @@ public class EntropyBasedCveClassifierTest {
 
     @Test
     public void testPredict() {
-        ReconcilerEnvVars.loadEnvVars();
         String[] trainingDataInfo = {ReconcilerEnvVars.getTrainingDataDir(), ReconcilerEnvVars.getTrainingData()};
         String trainingDataPath = trainingDataInfo[0];
         String trainingDataFiles = trainingDataInfo[1];
