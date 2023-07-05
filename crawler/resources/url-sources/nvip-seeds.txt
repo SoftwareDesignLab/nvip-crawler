@@ -625,3 +625,4 @@ https://zigrin.com/advisories
 https://zoom.us/trust/security/security-bulletin
 https://zuso.ai/Advisory.html
 https://zxsecurity.co.nz/research/advisories/
+https://packetstormsecurity.com/files/date/
