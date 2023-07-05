@@ -92,18 +92,12 @@ public class CpeLookUp {
 		genericProductNames.add("driver");
 	}
 
-	/**
-	 * A hash map of <CPE, Domain>
-	 */
-	private Map<String, CpeGroup> cpeMapFile = null; // CPE items from CPE file
+	//CPE items from CPE file
+	private Map<String, CpeGroup> cpeMapFile = null;
 
 	//HashSet to store how many unique cpe groups are identified
 	private final Set<String> uniqueCPEGroups;
 
-	/**
-	 * hash map of CPE to Product add list of products to database using
-	 * map.values();
-	 */
 	private final static Logger logger = LogManager.getLogger(CpeLookUp.class);
 
 	/**
@@ -160,10 +154,7 @@ public class CpeLookUp {
 		uniqueCPEGroups = new HashSet<>();
 	}
 
-	/**
-	 * Returns the size of our unique CPE Groups that have been identified.
-	 * @return
-	 */
+	// Returns number of unique CPE Groups that have been identified
 	public int getUniqueCPECount(){
 		return uniqueCPEGroups.size();
 	}
@@ -461,7 +452,8 @@ public class CpeLookUp {
 	}
 
 	/**
-	 * Finds IDs of the relevant CPE entries
+	 * Finds CPE IDs of the relevant CPE entries by matching affected versions of the product to versions
+	 * stored in the selected CPE groups
 	 * 
 	 * @param selectedGroups result from the findCPEGroups method
 	 * @param product product to search

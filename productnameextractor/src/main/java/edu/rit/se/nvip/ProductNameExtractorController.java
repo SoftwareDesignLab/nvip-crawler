@@ -195,6 +195,14 @@ public class ProductNameExtractorController {
         } catch (Exception ignored) { logger.warn("Could not fetch HIKARI_PASSWORD from env vars, defaulting to {}", hikariPassword); }
     }
 
+    /**
+     * Function to write the queried CPE dictionary data from NVD to a local json file which
+     * will be read in future runs. Also stores most recent composition time (full re-pull of NVD data)
+     * as well as refresh time (any time the file is changed).
+     *
+     * @param productDict data from NVD CPE Dictionary
+     * @param productDictPath path to the newly created productdict.json file
+     */
     public static void writeProductDict(Map<String, CpeGroup> productDict, String productDictPath) {
         // Build output data map
         Map data = new LinkedHashMap<>();
@@ -215,19 +223,36 @@ public class ProductNameExtractorController {
         }
     }
 
+    /**
+     * Function to take in the current product dictionary data stored in the local productdict.json file
+     * and update it with a fresh NVD CPE Dictionary data query. If the time since the last composition (full pull
+     * of data) is greater than a week, the current data is wiped and a full re-pull from NVD is performed.
+     *
+     * On the other hand, if it has been less than a week since the most recent composition but longer than a day
+     * since the most recent refresh, then var maxPages number of pages of NVD's dictionary are queried and the
+     * current data is updated with the freshly pulled data, logging the changes.
+     *
+     * @param productDict
+     * @param timeSinceLastComp
+     * @param timeSinceLastRefresh
+     * @param productDictPath
+     */
     private static void updateProductDict(Map<String, CpeGroup> productDict, long timeSinceLastComp, long timeSinceLastRefresh, String productDictPath) {
         // Check if it has been over a week since a full pull/compilation of the NVD dictionary
         if(timeSinceLastComp / (60 * 60 * 24) > 7) { // 60sec/min * 60min/hr * 24hrs = 1 day
             logger.info("Product dictionary file is over a week old, fully querying NVD data with no page limit...");
 
             // Fully clear product dict and fill it with no page limit query
+            int oldSize = productDict.size();
             productDict.clear();
             productDict.putAll(affectedProductIdentifier.queryCPEDict(0, maxAttemptsPerPage));
 
-            // Update last comp date to be used in writeProductDict() function
+            // Update last comp date to now
             productDictLastCompilationDate = Instant.now();
 
-            logger.info("Successfully pulled entire new dictionary, writing it...");
+            logger.info("Successfully pulled entire new dictionary with {} more entries, writing it...",
+                    productDict.size() - oldSize);
+
             writeProductDict(productDict, productDictPath); // Write entire new product dict
 
         // If less than a week has gone by but over a day, refresh the product dictionary with a maxPages NVD query
@@ -258,7 +283,8 @@ public class ProductNameExtractorController {
     }
 
     /**
-     * Method to generate a test vulnerability list of 6 CVEs to be run through the product name extractor
+     * Method to generate a test vulnerability list of 6 CVEs to be run through the product name extractor.
+     * Relies on/assumes that test_vulnerabilities.csv has already been created with sample CVEs and can be read.
      *
      * @return vulnList - list of vulnerabilities
      */
@@ -289,7 +315,7 @@ public class ProductNameExtractorController {
     }
 
     /**
-     * This method prints the test run results to both console output and a specific results file
+     * Method to print the test run results to both console output and a specific results file.
      *
      * @param vulnList list of vulnerabilities
      */
