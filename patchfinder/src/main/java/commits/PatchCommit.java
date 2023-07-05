@@ -59,7 +59,7 @@ public class PatchCommit {
 		this.commitURL = commitURL;
 		this.cveId = cveId;
 		this.commitId = commitId;
-		this.commitDate = commitDate;
+		this.commitDate = commitDate; // TODO: Truncating time?
 		this.commitMessage = commitMessage;
 		this.uniDiff = uniDiff;
 		this.timeline = timeline;

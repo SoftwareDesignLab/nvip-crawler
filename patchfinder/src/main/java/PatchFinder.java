@@ -317,7 +317,7 @@ public class PatchFinder {
 		try {
 			final ObjectWriter w = OM.writerWithDefaultPrettyPrinter();
 			w.writeValue(new File(patchSrcUrlPath), data);
-			logger.info("Successfully wrote {} products to product dict file at filepath '{}'", urls.size(), patchSrcUrlPath);
+			logger.info("Successfully wrote {} source urls to source dict file at filepath '{}'", urls.size(), patchSrcUrlPath);
 		} catch (IOException e) {
 			logger.error("Error writing product dict to filepath '{}': {}", patchSrcUrlPath, e.toString());
 		}
