@@ -76,6 +76,7 @@ public class Char2vec {
 			vectorLength = (int) model.layerSize(0);
 		} catch (IOException | UnsupportedKerasConfigurationException | InvalidKerasConfigurationException e) {
 			logger.error(e);
+			logger.warn("Please ensure that your working directory is correct. Current working directory: {}", ProductNameExtractorController.currentDir);
 		}
 	}
 

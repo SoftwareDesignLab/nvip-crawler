@@ -85,8 +85,9 @@ After the build process, the output jar will be located under the "target" direc
 
 ## 4. Create a Configuration to run the Product Name Extractor (IntelliJ)
 
-> **NOTE:** Intellij does not read env.list files automatically, the contents of the patch finder env.list file can be copied directly into the menu shown in the image below. See **Environment Variables** for more information. <img * **src**: Placeholder
-	- Default value:"src/main/resources/docs/configMenu.png">
+> **NOTE:** Intellij does not read env.list files automatically, the contents of the patch finder env.list file can be copied directly into the menu shown in the image below. See **Environment Variables** for more information. 
+> 
+> ![Screenshot](nvip_data/docs/configMenu.png)
 
 
 

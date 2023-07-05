@@ -6,6 +6,21 @@ on: [push]
 
 env:
   AWS_REGION: 'us-east-1'
+  DB_TYPE: 'mysql'
+  HIKARI_URL: 'jdbc:mysql://localhost:3306/nvip?useSSL=false&allowPublicKeyRetrieval=true'
+  HIKARI_USER: 'root'
+  HIKARI_PASSWORD: 'root'
+  OUTPUT_DIR: 'output'
+  RESOURCE_DIR: 'nvip_data'
+  DATA_DIR: 'data'
+  NLP_DIR: 'nlp'
+  CHAR_2_VEC_CONFIG: 'c2v_model_config_50.json'
+  CHAR_2_VEC_WEIGHTS: 'c2v_model_weights_50.h5'
+  WORD_2_VEC: 'w2v_model_250.bin'
+  NER_MODEL: 'NERallModel.bin'
+  NER_MODEL_NORMALIZER: 'NERallNorm.bin'
+  SENTENCE_MODEL: 'en-sent.bin'
+  PRODUCT_DETECTOR_MODEL: 'en-pos-perceptron.bin'
 
 jobs:
   # Build Main Project
@@ -147,7 +162,7 @@ jobs:
       # Grab large files (w2v model) from S3 bucket
       - name: Pull file from S3 bucket
         run: |
-          cd productnameextractor/nvip_data/productnameextraction
+          cd productnameextractor/nvip_data/data
           aws s3 cp s3://binaries-for-crawler/w2v_model_250.bin .
 
       # Might not need this
@@ -162,7 +177,7 @@ jobs:
         run: |
           cd productnameextractor
           mvn dependency:go-offline
-          mvn package
+          mvn package -e
 
       - name: Publish Test Report
         if: success() || failure()
@@ -188,7 +203,7 @@ jobs:
       # Pull large files so they're in the container
       - name: Pull file from S3 bucket
         run: |
-          cd nvip_data/productnameextraction
+          cd productnameextractor/nvip_data/data
           aws s3 cp s3://binaries-for-crawler/w2v_model_250.bin .  
 
       - name: Login to GitHub Container Registry
@@ -279,7 +294,7 @@ jobs:
       # Pull large files (w2v model) so they're in the container
       - name: Pull file from S3 bucket
         run: |
-          cd productnameextractor/nvip_data/productnameextraction
+          cd productnameextractor/nvip_data/data
           aws s3 cp s3://binaries-for-crawler/w2v_model_250.bin . 
 
       - name: Login to GitHub Container Registry
