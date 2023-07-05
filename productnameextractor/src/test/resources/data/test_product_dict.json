@@ -1,5 +1,6 @@
 {
-  "comptime": "2023-06-27T16:10:35.552354500Z",
+  "compTime": "2023-06-27T16:10:35.552354500Z",
+  "refreshTime": "2023-06-27T16:10:35.552354500Z",
   "products": {
     "redhat:linux" : {
       "vendor" : "redhat",
