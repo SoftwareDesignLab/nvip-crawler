@@ -183,6 +183,18 @@ public class ReconcilerEnvVars extends Properties {
         return knownSources;
     }
 
+    /**
+     * Legacy reconcilers use this one. It's unclear what the integer is supposed to be but in the old code it was always set to 0 so that's how I'm leaving it
+     * @return
+     */
+    public static Map<String, Integer> getKnownSourceMap() {
+        Map<String, Integer> out = new HashMap<>();
+        for (String source : knownSources) {
+            out.put(source, 0);
+        }
+        return out;
+    }
+
     public static String getOpenAIKey() {
         return openAIKey;
     }

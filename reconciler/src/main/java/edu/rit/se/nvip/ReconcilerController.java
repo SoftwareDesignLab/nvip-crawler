@@ -23,14 +23,12 @@ public class ReconcilerController {
     private final FilterHandler filterHandler;
     private final List<Processor> processors = new ArrayList<>();
 
-    private static final Map<String, Object> characterizationVars = new HashMap<>();
-
-    public ReconcilerController(List<String> filterTypes, String reconcilerType, List<String> processorTypes, Map<String, Integer> knownCveSources) {
+    public ReconcilerController() {
         this.dbh = DatabaseHelper.getInstance();
-        filterHandler = new FilterHandler(filterTypes);
-        this.reconciler = ReconcilerFactory.createReconciler(reconcilerType);
-        this.reconciler.setKnownCveSources(knownCveSources);
-        for (String processorType : processorTypes) {
+        filterHandler = new FilterHandler(ReconcilerEnvVars.getFilterList());
+        this.reconciler = ReconcilerFactory.createReconciler(ReconcilerEnvVars.getReconcilerType());
+        this.reconciler.setKnownCveSources(ReconcilerEnvVars.getKnownSourceMap());
+        for (String processorType : ReconcilerEnvVars.getProcessorList()) {
             processors.add(ProcessorFactory.createProcessor(processorType));
         }
     }
