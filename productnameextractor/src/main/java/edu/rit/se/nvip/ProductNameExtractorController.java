@@ -239,7 +239,7 @@ public class ProductNameExtractorController {
      */
     private static void updateProductDict(Map<String, CpeGroup> productDict, long timeSinceLastComp, long timeSinceLastRefresh, String productDictPath) {
         // Check if it has been over a week since a full pull/compilation of the NVD dictionary
-        if(timeSinceLastComp + 9000000 / (60 * 60 * 24) > 7) { // 60sec/min * 60min/hr * 24hrs = 1 day
+        if(timeSinceLastComp / (60 * 60 * 24) > 7) { // 60sec/min * 60min/hr * 24hrs = 1 day
             logger.info("Product dictionary file is over a week old, fully querying NVD data with no page limit...");
 
             // Fully clear product dict and fill it with no page limit query
