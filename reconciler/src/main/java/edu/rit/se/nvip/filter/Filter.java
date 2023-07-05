@@ -71,6 +71,7 @@ public abstract class Filter {
             vuln.setFilterStatus(RawVulnerability.FilterStatus.PASSED);
         } else {
             vuln.setFilterStatus(RawVulnerability.FilterStatus.FAILED);
+            logger.error(getClass().getSimpleName());
         }
     }
 }
