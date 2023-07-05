@@ -406,7 +406,7 @@ public class ProductNameExtractorController {
             final long timeSinceLastComp = Duration.between(productDictLastCompilationDate, Instant.now()).getSeconds();
             final long timeSinceLastRefresh = Duration.between(productDictLastRefreshDate, Instant.now()).getSeconds();
 
-            logger.info("Successfully read {} products from file '{}' ({} hours old)",
+            logger.info("Successfully read {} products from file '{}' ({} hour(s) old)",
                     productDict.size(),
                     productDictName,
                     timeSinceLastRefresh / 3600 // seconds -> hours

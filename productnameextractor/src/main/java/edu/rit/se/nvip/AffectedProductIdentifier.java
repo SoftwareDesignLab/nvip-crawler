@@ -91,6 +91,7 @@ public class AffectedProductIdentifier {
 			AtomicInteger counterOfProcessedCVEs,
 			AtomicInteger counterOfProcessedNERs,
 			AtomicInteger counterOfProcessedCPEs,
+			AtomicInteger counterOfFailedCVEs,
 			AtomicInteger numOfProductsNotMappedToCPE,
 			AtomicInteger numOfProductsMappedToCpe,
 			AtomicLong totalNERTime,
@@ -143,6 +144,8 @@ public class AffectedProductIdentifier {
 				counterOfProcessedNERs.getAndIncrement();
 				totalNERTime.addAndGet(nerTime);
 
+				int numProductsFound = 0;
+
 				// map identified products/version to CPE
 				for (ProductItem productItem : productList) {
 					long startCPETime = System.currentTimeMillis();
@@ -156,15 +159,19 @@ public class AffectedProductIdentifier {
 						logger.warn("Could not match CPEs for the predicted product name '{}'! | CVE-ID: {}", productItem.toString(), vulnerability.getCveId());
 						continue;
 					}
+
 					// if CPE identified, add it as affected product
 					for (String itemID : productIDs) {
 //						logger.info("Found Affected Product for {}: {}", vulnerability.getCveId(), itemID);
 						existingProducts.add(new AffectedProduct(0, vulnerability.getCveId(), itemID, CpeLookUp.getNameFromCPEid(itemID), vulnerability.getPublishDate(), CpeLookUp.getVersionFromCPEid(itemID), CpeLookUp.getVendorFromCPEid(itemID)));
 						numOfProductsMappedToCpe.getAndIncrement();
+						numProductsFound++;
 					}
 				}
-				if(productList.size() > 0)
-					logger.info("Found {} Affected Product(s) for {} in {} seconds", productList.size(), vulnerability.getCveId(), (double) (System.currentTimeMillis() - startCVETime) / 1000);
+
+				if(numProductsFound == 0) counterOfFailedCVEs.getAndIncrement();
+
+				logger.info("Found {} Affected Product(s) for {} in {} seconds", numProductsFound, vulnerability.getCveId(), (double) (System.currentTimeMillis() - startCVETime) / 1000);
 			}
 
 		} catch (Exception e) {
@@ -204,6 +211,7 @@ public class AffectedProductIdentifier {
 		AtomicInteger numOfProductsNotMappedToCPE = new AtomicInteger();
 		AtomicInteger counterOfProcessedNERs = new AtomicInteger();
 		AtomicInteger counterOfProcessedCPEs = new AtomicInteger();
+		AtomicInteger counterOfFailedCVEs = new AtomicInteger();
 		AtomicInteger counterOfProcessedCVEs = new AtomicInteger();
 		AtomicInteger counterOfSkippedCVEs = new AtomicInteger();
 		AtomicInteger counterOfBadDescriptionCVEs = new AtomicInteger();
@@ -240,6 +248,7 @@ public class AffectedProductIdentifier {
 						counterOfProcessedCVEs,
 						counterOfProcessedNERs,
 						counterOfProcessedCPEs,
+						counterOfFailedCVEs,
 						numOfProductsNotMappedToCPE,
 						numOfProductsMappedToCpe,
 						totalNERTime,
@@ -302,15 +311,17 @@ public class AffectedProductIdentifier {
 			logger.error("{} tasks not executed", remainingTasks.size());
 		}
 
-		logger.info("Successfully extracted product(s) for {} out of {} CVEs! Skipped {} CVEs", counterOfProcessedCVEs, totalCVEtoProcess, counterOfSkippedCVEs);
+		logger.info("Successfully processed {} out of {} CVEs!", counterOfProcessedCVEs, totalCVEtoProcess);
+		logger.info("Found products for {} CVE(s) | Failed to find products for {} CVE(s) | Skipped {} CVE(s)",
+				counterOfProcessedCVEs.get() - counterOfFailedCVEs.get(), counterOfFailedCVEs, counterOfSkippedCVEs);
 
 		AtomicInteger count = new AtomicInteger();
 		vulnList.stream().map(v -> v.getAffectedProducts().size()).forEach(count::addAndGet);
 		logger.info("Found {} affected products ({} unique excluding versions) from {} CVEs in {} seconds", count, cpeLookUp.getUniqueCPECount(), totalCVEtoProcess, Math.floor(((double) (System.currentTimeMillis() - start) / 1000) * 100) / 100);
 		logger.info("NER Time: {} seconds | CPE Time: {} seconds | CVE Time: {} seconds ",
-				totalNERTime.get() / 1000,
+				totalNERTime.get() / 1000 / numThreads,
 				totalCPETime.get() / 1000,
-				totalCVETime.get() / 1000
+				totalCVETime.get() / 1000 / numThreads
 		);
 
 		List<AffectedProduct> affectedProducts = new ArrayList<>();
