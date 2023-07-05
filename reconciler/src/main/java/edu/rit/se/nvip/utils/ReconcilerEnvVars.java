@@ -1,33 +1,36 @@
 package edu.rit.se.nvip.utils;
 
+import edu.rit.se.nvip.ReconcilerMain;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
 
 public class ReconcilerEnvVars extends Properties {
-    private  String hikariURL;
-    private  String hikariUser;
-    private  String hikariPassword;
-    private  String filterList;
-    private  String reconcilerType;
-    private  String processorList;
-    private  String knownSources;
-    private  String openAIKey;
-    private  String nvipDataDir;
-    private  String trainingDataDir;
-    private  String trainingData;
-    private  String characterizationLimit;
-    private  String characterizationApproach;
-    private  String characterizationMethod;
-    private  String dbType;
-    private  String dataDir;
 
-    public ReconcilerEnvVars(){
-        loadEnvVars();
-    }
+    private static final Logger logger = LogManager.getLogger(ReconcilerMain.class);
+
+    public static String hikariURL;
+    public static  String hikariUser;
+    public static  String hikariPassword;
+    public static  List<String> filterList;
+    public static  String reconcilerType;
+    public static  List<String> processorList;
+    public static  String knownSources;
+    public static  String openAIKey;
+    public static  String nvipDataDir;
+    public static  String trainingDataDir;
+    public static  String trainingData;
+    public static  int characterizationLimit;
+    public static  String characterizationApproach;
+    public static  String characterizationMethod;
+    public static  String dbType;
+    public static  String dataDir;
     // call all the System.getEnvs() and store them in the correct datatypes in  fields
-    public void loadEnvVars() {
+    public static void loadEnvVars() {
         // set default values if one isn't declared
 
         if (System.getenv("HIKARI_URL") == null){
@@ -37,15 +40,15 @@ public class ReconcilerEnvVars extends Properties {
         hikariURL = System.getenv("HIKARI_URL");
         hikariUser = System.getenv("HIKARI_USER");
         hikariPassword = System.getenv("HIKARI_PASSWORD");
-        filterList = System.getenv("FILTER_LIST");
+        filterList = getListFromString(System.getenv("FILTER_LIST"));
         reconcilerType = System.getenv("RECONCILER_TYPE");
-        processorList = System.getenv("PROCESSOR_LIST");
+        processorList = getListFromString(System.getenv("PROCESSOR_LIST"));
         knownSources = System.getenv("KNOWN_SOURCES");
         openAIKey = System.getenv("OPENAI_KEY");
         nvipDataDir = System.getenv("NVIP_DATA_DIR");
         trainingDataDir = System.getenv("NVIP_CVE_CHARACTERIZATION_TRAINING_DATA_DIR");
         trainingData = System.getenv("NVIP_CVE_CHARACTERIZATION_TRAINING_DATA");
-        characterizationLimit = System.getenv("NVIP_CVE_CHARACTERIZATION_LIMIT");
+        characterizationLimit = Integer.parseInt(System.getenv("NVIP_CVE_CHARACTERIZATION_LIMIT"));
         characterizationApproach = System.getenv("NVIP_CHARACTERIZATION_APPROACH");
         characterizationMethod = System.getenv("NVIP_CHARACTERIZATION_METHOD");
         dbType = System.getenv("DB_TYPE");
@@ -54,7 +57,7 @@ public class ReconcilerEnvVars extends Properties {
     }
 
     // in case we don't have environment variables actually set in the system, load them in directly from the env.list file instead
-    public void loadEnvList() {
+    public static void loadEnvList() {
         String filePath = System.getProperty("user.dir") + "\\env.list";
 
         try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
@@ -69,52 +72,52 @@ public class ReconcilerEnvVars extends Properties {
 
                 switch (envName) {
                     case "HIKARI_URL":
-                        hikariURL = envVar;
+                        hikariURL = addEnvvarString("hikariURL", envVar, "mysql://host.docker.internal:3306/nviptest?useSSL=false&allowPublicKeyRetrieval=true");
                         break;
                     case "HIKARI_USER":
-                        hikariUser = envVar;
+                        hikariUser = addEnvvarString("hikariUser", envVar, "root");
                         break;
                     case "HIKARI_PASSWORD":
-                        hikariPassword = envVar;
+                        hikariPassword = addEnvvarString("hikariPassword", envVar, "root");;
                         break;
                     case "FILTER_LIST":
-                        filterList = envVar;
+                        filterList = addEnvvarListString("filterList", getListFromString(envVar), "SIMPLE");
                         break;
                     case "RECONCILER_TYPE":
-                        reconcilerType = envVar;
+                        reconcilerType = addEnvvarString("reconcilerType", envVar, "SIMPLE");;
                         break;
                     case "PROCESSOR_LIST":
-                        processorList = envVar;
+                        processorList = addEnvvarListString("processorList", getListFromString(envVar), "SIMPLE");
                         break;
                     case "KNOWN_SOURCES":
-                        knownSources = envVar;
+                        knownSources = addEnvvarString("knownSources", envVar, "packetstorm,tenable,oval.cisecurity,exploit-db,securityfocus,kb.cert,securitytracker,talosintelligence,gentoo,vmware,bugzilla,seclists,anquanke");;
                         break;
                     case "OPENAI_KEY":
-                        openAIKey = envVar;
+                        openAIKey = addEnvvarString("openAIKey", envVar, "sk-xxxxxxxxxxxxx");;
                         break;
                     case "NVIP_DATA_DIR":
-                        nvipDataDir = envVar;
+                        nvipDataDir = addEnvvarString("nvipDataDir", envVar, "src/main/java/edu/rit/se/nvip");;
                         break;
                     case "NVIP_CVE_CHARACTERIZATION_TRAINING_DATA_DIR":
-                        trainingDataDir = envVar;
+                        trainingDataDir = addEnvvarString("trainingDataDir", envVar, "characterization/");;
                         break;
                     case "NVIP_CVE_CHARACTERIZATION_TRAINING_DATA":
-                        trainingData = envVar;
+                        trainingData = addEnvvarString("trainingData", envVar, "AttackTheater.csv,Context.csv,ImpactMethod.csv,LogicalImpact.csv,Mitigation.csv");;
                         break;
                     case "NVIP_CVE_CHARACTERIZATION_LIMIT":
-                        characterizationLimit = envVar;
+                        characterizationLimit = addEnvvarInt("characterizationLimit", Integer.parseInt(envVar), 5000);;
                         break;
                     case "NVIP_CHARACTERIZATION_APPROACH":
-                        characterizationApproach = envVar;
+                        characterizationApproach = addEnvvarString("characterizationApproach", envVar, "ML");;
                         break;
                     case "NVIP_CHARACTERIZATION_METHOD":
-                        characterizationMethod = envVar;
+                        characterizationMethod = addEnvvarString("characterizationMethod", envVar, "Vote");;
                         break;
                     case "DB_TYPE":
-                        dbType = envVar;
+                        dbType = addEnvvarString("dbType", envVar, "mysql");;
                         break;
                     case "DATA_DIR":
-                        dataDir = envVar;
+                        dataDir = addEnvvarString("dataDir", envVar, "nvip_data");;
                         break;
                 }
             }
@@ -126,67 +129,104 @@ public class ReconcilerEnvVars extends Properties {
     }
 
     //GETTERS FOR EACH ENV VAR
-    public  String getHikariURL() {
+    public static  String getHikariURL() {
         return hikariURL;
     }
 
-    public  String getHikariUser() {
+    public static  String getHikariUser() {
         return hikariUser;
     }
 
-    public  String getHikariPassword() {
+    public static  String getHikariPassword() {
         return hikariPassword;
     }
 
-    public  String getFilterList() {
+    public static  List<String> getFilterList() {
         return filterList;
     }
 
-    public  String getReconcilerType() {
+    public static  String getReconcilerType() {
         return reconcilerType;
     }
 
-    public  String getProcessorList() {
+    public static  List<String> getProcessorList() {
         return processorList;
     }
 
-    public  String getKnownSources() {
+    public static  String getKnownSources() {
         return knownSources;
     }
 
-    public  String getOpenAIKey() {
+    public static  String getOpenAIKey() {
         return openAIKey;
     }
 
-    public  String getNvipDataDir() {
+    public static  String getNvipDataDir() {
         return nvipDataDir;
     }
 
-    public  String getTrainingDataDir() {
+    public static  String getTrainingDataDir() {
         return trainingDataDir;
     }
 
-    public  String getTrainingData() {
+    public static  String getTrainingData() {
         return trainingData;
     }
 
-    public String getCharacterizationLimit() {
+    public static int getCharacterizationLimit() {
         return characterizationLimit;
     }
 
-    public  String getCharacterizationApproach() {
+    public static  String getCharacterizationApproach() {
         return characterizationApproach;
     }
 
-    public  String getCharacterizationMethod() {
+    public static  String getCharacterizationMethod() {
         return characterizationMethod;
     }
 
-    public  String getDbType() {
+    public static  String getDbType() {
         return dbType;
     }
 
-    public  String getDataDir() {
+    public static  String getDataDir() {
         return dataDir;
     }
+
+    private static String addEnvvarString(String name, String value, String defaultValue) {
+        if (value != null && !value.isEmpty()) {
+            return value;
+        }
+        else {
+            logger.warn("No environment variable set for {}, setting as default value", name);
+            return defaultValue;
+        }
+    }
+
+    private static int addEnvvarInt(String name, int value, int defaultValue) {
+        if (value != 0) {
+            return value;
+        }
+        else {
+            logger.warn("No environment variable set for {}, setting as default value", name);
+            return defaultValue;
+        }
+    }
+
+    private static List<String> addEnvvarListString(String name, List<String> value, String defaultValue) {
+        if (value != null && value.size() > 0) {
+            return value;
+        }
+        else {
+            logger.warn("No environment variable set for {}, setting as default value", name);
+            return getListFromString(defaultValue);
+        }
+    }
+    private static List<String> getListFromString(String commaSeparatedList) {
+        // Default to empty list on null value for commaSeparatedList
+        if(commaSeparatedList == null) return new ArrayList<>();
+
+        return Arrays.asList(commaSeparatedList.split(","));
+    }
+
 }

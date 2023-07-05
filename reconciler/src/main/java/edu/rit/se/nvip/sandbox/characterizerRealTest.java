@@ -13,10 +13,10 @@ public class characterizerRealTest {
     private Timestamp offset(int nHours) {
         return new Timestamp(System.currentTimeMillis() + nHours*3600L*1000);
     }
-    
-    private static final ReconcilerEnvVars envVars = new ReconcilerEnvVars();
+
 
     public static void main(String[] args){
+        ReconcilerEnvVars.loadEnvVars();
         RawVulnerability vuln = new RawVulnerability(
                 1,
                 "CVE-2023-8374",
@@ -38,9 +38,9 @@ public class characterizerRealTest {
         CompositeVulnerability compVuln = new CompositeVulnerability(vuln);
         CompositeVulnerability compVuln2 = new CompositeVulnerability(vuln2);
 
-        String[] trainingDataInfo = {envVars.getTrainingDataDir(), envVars.getTrainingData()};
-        CveCharacterizer characterizer = new CveCharacterizer(trainingDataInfo[0], trainingDataInfo[1], envVars.getCharacterizationApproach(),
-                envVars.getCharacterizationMethod());
+        String[] trainingDataInfo = {ReconcilerEnvVars.getTrainingDataDir(), ReconcilerEnvVars.getTrainingData()};
+        CveCharacterizer characterizer = new CveCharacterizer(trainingDataInfo[0], trainingDataInfo[1], ReconcilerEnvVars.getCharacterizationApproach(),
+                ReconcilerEnvVars.getCharacterizationMethod());
 
 
         List<CompositeVulnerability> cveList = new ArrayList<>();
@@ -48,7 +48,7 @@ public class characterizerRealTest {
         cveList.add(compVuln2);
 
         characterizer.characterizeCveList(cveList,
-                Integer.parseInt(envVars.getCharacterizationLimit()));
+                ReconcilerEnvVars.getCharacterizationLimit());
 
         System.out.println(compVuln.getVdoCharacteristic());
         System.out.println(compVuln.getCvssScoreInfo());

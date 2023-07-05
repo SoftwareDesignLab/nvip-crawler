@@ -39,14 +39,13 @@ import java.util.Properties;
 
 public class MyProperties extends Properties {
 	private static final long serialVersionUID = 1L;
-	private static final ReconcilerEnvVars envVars = new ReconcilerEnvVars();
 
 	public File getSeedURLS() {
-		return new File(envVars.getNvipDataDir() + "/" + System.getenv("NVIP_SEED_URLS"));
+		return new File(ReconcilerEnvVars.getNvipDataDir() + "/" + System.getenv("NVIP_SEED_URLS"));
 	}
 
 	public File getWhiteListURLS() {
-		return new File(envVars.getNvipDataDir() + "/" + System.getenv("NVIP_WHITELIST_URLS"));
+		return new File(ReconcilerEnvVars.getNvipDataDir() + "/" + System.getenv("NVIP_WHITELIST_URLS"));
 	}
 
 	public File getSeedURLSprops() {
@@ -74,7 +73,7 @@ public class MyProperties extends Properties {
 	}
 
 	public String getDataDir() {
-		Optional<String> dataDir = Optional.ofNullable(envVars.getNvipDataDir());
+		Optional<String> dataDir = Optional.ofNullable(ReconcilerEnvVars.getNvipDataDir());
 		return dataDir.orElse(this.getProperty("dataDir"));
 	}
 

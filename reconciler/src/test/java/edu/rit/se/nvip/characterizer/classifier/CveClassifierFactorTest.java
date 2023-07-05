@@ -34,10 +34,8 @@ public class CveClassifierFactorTest {
 
     @Test
     public void testGetCveClassifier() {
-//        MyProperties propertiesNvip = new MyProperties();
-//        propertiesNvip = new PropertyLoader().loadConfigFile(propertiesNvip);
-//        String[] trainingDataInfo = propertiesNvip.getCveCharacterizationTrainingDataInfo();
-        String[] trainingDataInfo = {envVars.getTrainingDataDir(), envVars.getTrainingData()};
+        ReconcilerEnvVars.loadEnvVars();
+        String[] trainingDataInfo = {ReconcilerEnvVars.getTrainingDataDir(), ReconcilerEnvVars.getTrainingData()};
         String trainingDataPath = trainingDataInfo[0];
         String trainingDataFiles = trainingDataInfo[1];
         String[] trainingDataFileArr = trainingDataFiles.split(",");

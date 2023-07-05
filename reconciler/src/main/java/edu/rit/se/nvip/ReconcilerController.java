@@ -23,8 +23,6 @@ public class ReconcilerController {
     private final FilterHandler filterHandler;
     private final List<Processor> processors = new ArrayList<>();
 
-    private final ReconcilerEnvVars envVars = new ReconcilerEnvVars();
-
     private static final Map<String, Object> characterizationVars = new HashMap<>();
 
     public ReconcilerController(List<String> filterTypes, String reconcilerType, List<String> processorTypes, Map<String, Integer> knownCveSources) {
@@ -38,6 +36,7 @@ public class ReconcilerController {
     }
 
     public void main() {
+        ReconcilerEnvVars.loadEnvVars();
         Set<String> jobs = dbh.getJobs();
         logger.info(jobs.size() + " jobs found for reconciliation");
         Set<CompositeVulnerability> reconciledVulns = new HashSet<>();
@@ -68,8 +67,8 @@ public class ReconcilerController {
         logger.info("Characterizing and scoring NEW CVEs...");
 
         try {
-            String[] trainingDataInfo = {envVars.getTrainingDataDir(), envVars.getTrainingData()};
-            logger.info("Setting NVIP_CVE_CHARACTERIZATION_LIMIT to {}", envVars.getCharacterizationLimit());
+            String[] trainingDataInfo = {ReconcilerEnvVars.getTrainingDataDir(), ReconcilerEnvVars.getTrainingData()};
+            logger.info("Setting NVIP_CVE_CHARACTERIZATION_LIMIT to {}", ReconcilerEnvVars.getCharacterizationLimit());
 
             CveCharacterizer cveCharacterizer = new CveCharacterizer(trainingDataInfo[0], trainingDataInfo[1], "ML",
                     "Vote");
@@ -77,7 +76,7 @@ public class ReconcilerController {
             List<CompositeVulnerability> cveList = new ArrayList<>(crawledVulnerabilityList);
 
             return cveCharacterizer.characterizeCveList(cveList,
-                   Integer.parseInt(envVars.getCharacterizationLimit()));
+                   ReconcilerEnvVars.getCharacterizationLimit());
         }
         catch (NullPointerException | NumberFormatException e) {
             logger.warn("Could not fetch NVIP_CVE_CHARACTERIZATION_TRAINING_DATA or NVIP_CVE_CHARACTERIZATION_TRAINING_DATA_DIR from env vars");

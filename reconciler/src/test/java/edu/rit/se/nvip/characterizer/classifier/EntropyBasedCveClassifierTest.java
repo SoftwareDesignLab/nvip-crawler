@@ -40,11 +40,9 @@ public class EntropyBasedCveClassifierTest {
     private final ReconcilerEnvVars envVars = new ReconcilerEnvVars();
     @Test
     public void testTrainMLModel() {
-//        MyProperties propertiesNvip = new MyProperties();
-//        propertiesNvip = new PropertyLoader().loadConfigFile(propertiesNvip);
-//        String[] trainingDataInfo = propertiesNvip.getCveCharacterizationTrainingDataInfo();
+        ReconcilerEnvVars.loadEnvVars();
 
-        String[] trainingDataInfo = {envVars.getTrainingDataDir(), envVars.getTrainingData()};
+        String[] trainingDataInfo = {ReconcilerEnvVars.getTrainingDataDir(), ReconcilerEnvVars.getTrainingData()};
         String trainingDataPath = trainingDataInfo[0];
         String trainingDataFiles = trainingDataInfo[1];
         String[] trainingDataFileArr = trainingDataFiles.split(",");
@@ -62,10 +60,8 @@ public class EntropyBasedCveClassifierTest {
 
     @Test
     public void testPredictIncorrectNumAttributes() {
-//        MyProperties propertiesNvip = new MyProperties();
-//        propertiesNvip = new PropertyLoader().loadConfigFile(propertiesNvip);
-//        String[] trainingDataInfo = propertiesNvip.getCveCharacterizationTrainingDataInfo();
-        String[] trainingDataInfo = {envVars.getTrainingDataDir(), envVars.getTrainingData()};
+        ReconcilerEnvVars.loadEnvVars();
+        String[] trainingDataInfo = {ReconcilerEnvVars.getTrainingDataDir(), ReconcilerEnvVars.getTrainingData()};
         String trainingDataPath = trainingDataInfo[0];
         String trainingDataFiles = trainingDataInfo[1];
         String[] trainingDataFileArr = trainingDataFiles.split(",");
@@ -84,10 +80,8 @@ public class EntropyBasedCveClassifierTest {
 
     @Test
     public void testPredict() {
-//        MyProperties propertiesNvip = new MyProperties();
-//        propertiesNvip = new PropertyLoader().loadConfigFile(propertiesNvip);
-//        String[] trainingDataInfo = propertiesNvip.getCveCharacterizationTrainingDataInfo();
-        String[] trainingDataInfo = {envVars.getTrainingDataDir(), envVars.getTrainingData()};
+        ReconcilerEnvVars.loadEnvVars();
+        String[] trainingDataInfo = {ReconcilerEnvVars.getTrainingDataDir(), ReconcilerEnvVars.getTrainingData()};
         String trainingDataPath = trainingDataInfo[0];
         String trainingDataFiles = trainingDataInfo[1];
         String[] trainingDataFileArr = trainingDataFiles.split(",");

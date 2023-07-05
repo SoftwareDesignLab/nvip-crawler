@@ -49,6 +49,7 @@ public class CvssScoreCalculator {
 	 * method
 	 */
 	public CvssScoreCalculator() {
+		ReconcilerEnvVars.loadEnvVars();
 		// load properties file
 //		MyProperties propertiesNvip = new MyProperties();
 //		propertiesNvip = new PropertyLoader().loadConfigFile(propertiesNvip);
@@ -57,7 +58,7 @@ public class CvssScoreCalculator {
 
 		// change the directory and execute the .py script
 		PythonInterpreter myPythonInterpreter = new PythonInterpreter();
-		String workingDir = envVars.getDataDir() + "/cvss/";
+		String workingDir = ReconcilerEnvVars.getDataDir() + "/cvss/";
 		logger.info("Importing os for jython...");
 		myPythonInterpreter.exec("import os");
 		logger.info("Changing dir to {} for jython. Current directory is {}", workingDir, System.getProperty("user.dir"));
