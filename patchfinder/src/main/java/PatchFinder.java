@@ -38,6 +38,7 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.time.DateTimeException;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -52,7 +53,7 @@ public class PatchFinder {
 	private static final Logger logger = LogManager.getLogger(PatchFinder.class.getName());
 
 	private static final ArrayList<PatchCommit> patchCommits = new ArrayList<>();
-	protected static int cveLimit = 10;
+	protected static int cveLimit = 50;
 	protected static int maxThreads = 10;
 	protected static int cvesPerThread = 1;
 	protected static String databaseType = "mysql";
@@ -191,7 +192,11 @@ public class PatchFinder {
 		logger.info("Parsing patch urls from affected product CVEs (limit: {} CVEs)...", cveLimit);
 		final long parseUrlsStart = System.currentTimeMillis();
 
-		patchURLFinder.parseMassURLs(possiblePatchURLs, affectedProducts, cveLimit);
+		// Determine if urls dict needs to be refreshed
+		final boolean refresh = urlDictLastCompilationDate.until(Instant.now(), ChronoUnit.DAYS) >= 1;
+		// TODO: Add offset to avoid repeating the same run?
+		// Parse new urls
+		patchURLFinder.parseMassURLs(possiblePatchURLs, affectedProducts, cveLimit, refresh);
 		urlCount = possiblePatchURLs.values().stream().map(ArrayList::size).reduce(0, Integer::sum);
 
 		logger.info("Successfully parsed {} possible patch urls for {} CVEs in {} seconds",
@@ -229,6 +234,7 @@ public class PatchFinder {
 
 		// Insert patches
 		int failedInserts = 0;
+		int existingInserts = 0;
 		logger.info("Starting insertion of {} patch commits into the database...", patchCommits.size());
 		final long insertPatchesStart = System.currentTimeMillis();
 		for (PatchCommit patchCommit : patchCommits) {
@@ -247,18 +253,19 @@ public class PatchFinder {
 							patchCommit.getTimeline(), patchCommit.getTimeToPatch(), patchCommit.getLinesChanged()
 					);
 				} else {
-					logger.warn("Failed to insert patch commit, as it was already found in the db");
-					failedInserts++;
+//					logger.warn("Failed to insert patch commit, as it was already found in the db");
+					existingInserts++;
 				}
 			} catch (IllegalArgumentException e) {
 				failedInserts++;
 			}
 		}
 
-		logger.info("Successfully inserted {} patch commits into the database in {} seconds ({} failed)",
-				patchCommits.size() - failedInserts,
+		logger.info("Successfully inserted {} patch commits into the database in {} seconds ({} failed {} already existed)",
+				patchCommits.size() - failedInserts - existingInserts,
 				(System.currentTimeMillis() - insertPatchesStart) / 1000,
-				failedInserts
+				failedInserts,
+				existingInserts
 		);
 
 		final long delta = (System.currentTimeMillis() - totalStart) / 1000;
@@ -413,7 +420,7 @@ public class PatchFinder {
 				if(secondsWaiting % 60 == 0) {
 
 					// Determine number of CVEs processed
-					final int currNumCVEs = workQueue.size(); // Current number of remaining CVEs
+					final int currNumCVEs = workQueue.size() + executor.getActiveCount(); // Current number of remaining CVEs
 					final int deltaNumCVEs = lastNumCVEs - currNumCVEs; // Change in CVEs since last progress update
 
 					// Sum number processed
@@ -448,6 +455,4 @@ public class PatchFinder {
 			logger.error("{} tasks not executed", remainingTasks.size());
 		}
 	}
-
-	public static Instant getUrlDictLastCompilationDate() { return urlDictLastCompilationDate; }
 }
