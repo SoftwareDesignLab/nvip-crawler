@@ -15,10 +15,10 @@ public class MessageReceiverRabbit {
         factory.setUsername("guest");
         factory.setPassword("guest");
 
-        // Create a connection to the RabbitMQ server
+        // Create connection to the RabbitMQ server
         Connection connection = factory.newConnection();
 
-        // Create a channel
+        // Create channel
         Channel channel = connection.createChannel();
 
         // Declare the queue
