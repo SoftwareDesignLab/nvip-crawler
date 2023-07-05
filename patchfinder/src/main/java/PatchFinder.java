@@ -205,7 +205,7 @@ public class PatchFinder {
 
 		// Find patches
 		// Repos will be cloned to patch-repos directory, multi-threaded 6 threads.
-		// TODO: Fix
+		// TODO: Fix cvesPerThread
 		logger.info("Starting patch finder with {} max threads, allowing {} CVE(s) per thread...", maxThreads, cvesPerThread);
 		final long findPatchesStart = System.currentTimeMillis();
 		PatchFinder.findPatchesMultiThreaded(possiblePatchURLs);
@@ -222,7 +222,7 @@ public class PatchFinder {
 		// For existing entries, diff, replace, ignore?
 
 		// Get existing sources
-		final Set<String> existingSources = databaseHelper.getExistingSourceUrls();
+		final Map<String, Integer> existingSources = databaseHelper.getExistingSourceUrls();
 
 		// Get existing patch commits
 		final Set<String> existingCommitUrls = databaseHelper.getExistingPatchCommitUrls();

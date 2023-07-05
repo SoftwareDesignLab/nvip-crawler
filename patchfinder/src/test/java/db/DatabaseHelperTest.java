@@ -4,10 +4,7 @@ import model.CpeGroup;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.junit.jupiter.api.*;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -49,7 +46,7 @@ public class DatabaseHelperTest {
     @Test
     public void testInsertPatchSourceURL() {
         String sourceURL = "https://example.com";
-        int sourceId = databaseHelper.insertPatchSourceURL(new HashSet<>(), TEST_CVE_ID, sourceURL);
+        int sourceId = databaseHelper.insertPatchSourceURL(new HashMap<>(), TEST_CVE_ID, sourceURL);
         // Add assertions to verify the correctness of the inserted patch source URL
     }
 
