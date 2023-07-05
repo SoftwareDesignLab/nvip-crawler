@@ -1,7 +1,6 @@
 package edu.rit.se.nvip;
 
 import edu.rit.se.nvip.crawler.CveCrawlController;
-import edu.rit.se.nvip.crawler.github.GithubScraper;
 import edu.rit.se.nvip.crawler.github.PyPAGithubScraper;
 import edu.rit.se.nvip.model.RawVulnerability;
 import edu.rit.se.nvip.utils.UtilHelper;
@@ -450,17 +449,17 @@ public class CrawlerMain {
      * Grab CVEs from CVE GitHub
      * @return
      */
-    protected HashMap<String, RawVulnerability> getCvesFromGitHub() {
-        HashMap<String, RawVulnerability> cveHashMapGithub = new HashMap<>();
+    // protected HashMap<String, RawVulnerability> getCvesFromGitHub() {
+    //     HashMap<String, RawVulnerability> cveHashMapGithub = new HashMap<>();
 
-        if ((Boolean) crawlerVars.get("enableGitHub")) {
-            logger.info("CVE Github pull enabled, scraping CVe GitHub now!");
-            GithubScraper githubScraper = new GithubScraper();
-            cveHashMapGithub = githubScraper.scrapeGithub();
-        }
+    //     if ((Boolean) crawlerVars.get("enableGitHub")) {
+    //         logger.info("CVE Github pull enabled, scraping CVe GitHub now!");
+    //         GithubScraper githubScraper = new GithubScraper();
+    //         cveHashMapGithub = githubScraper.scrapeGithub();
+    //     }
 
-        return cveHashMapGithub;
-    }
+    //     return cveHashMapGithub;
+    // }
 
 
 }
