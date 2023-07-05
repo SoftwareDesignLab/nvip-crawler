@@ -515,7 +515,7 @@ public class CrawlerMain {
         // Sends a JSON object with an array of CVE IDs that require reconciliation
         JSONObject messageBody = new JSONObject();
         messageBody.put("cves", cveArray);
-        
+
         try {
             // Create a connection to the RabbitMQ server and create the channel
             ConnectionFactory factory = new ConnectionFactory();
