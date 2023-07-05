@@ -18,4 +18,17 @@ public class FilterReturn {
         this.numDistinct += other.numDistinct;
         this.numPassed += other.numPassed;
     }
+
+    public int getNumIn() {
+        return numIn;
+    }
+
+    public int getNumDistinct() {
+        return numDistinct;
+    }
+
+    public int getNumPassed() {
+        return numPassed;
+    }
+
 }
