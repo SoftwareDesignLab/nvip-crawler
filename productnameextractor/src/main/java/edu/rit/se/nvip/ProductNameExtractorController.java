@@ -250,7 +250,7 @@ public class ProductNameExtractorController {
             // Update last comp date to now
             productDictLastCompilationDate = Instant.now();
 
-            logger.info("Successfully pulled entire new dictionary with {} more entries, writing it...",
+            logger.info("Successfully pulled entire new dictionary with {} new entries, writing it...",
                     productDict.size() - oldSize);
 
             writeProductDict(productDict, productDictPath); // Write entire new product dict
