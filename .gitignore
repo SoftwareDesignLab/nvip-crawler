@@ -10,6 +10,7 @@ nvip.iml
 /crawler/target/
 /reconciler/target/
 /productnameextractor/target/
+/productnameextractor/nvip_data/data/test_results.csv
 
 # Large files
 /sleepycat-5.0.84.jar

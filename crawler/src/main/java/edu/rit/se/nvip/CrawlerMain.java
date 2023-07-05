@@ -5,18 +5,27 @@ import edu.rit.se.nvip.crawler.CveCrawlController;
 import edu.rit.se.nvip.crawler.github.PyPAGithubScraper;
 import edu.rit.se.nvip.model.RawVulnerability;
 import edu.rit.se.nvip.utils.UtilHelper;
+
+import com.opencsv.CSVWriter;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
+import java.lang.reflect.Modifier;
 
 public class CrawlerMain {
 
@@ -89,8 +98,6 @@ public class CrawlerMain {
                 }
             }
         }
-
-
 
         // Output results in testmode
         // Store raw data in DB otherwise
@@ -365,6 +372,60 @@ public class CrawlerMain {
         return cvePyPAGitHub;
     }
 
+    private static void cvesToJson(HashMap<String, ArrayList<RawVulnerability>> crawledCVEs){
+        GsonBuilder builder = new GsonBuilder(); 
+        builder.setPrettyPrinting(); 
+        StringBuilder sb = new StringBuilder();
+
+        Gson gson = builder.excludeFieldsWithModifiers(Modifier.FINAL).create();
+        String json = gson.toJson(crawledCVEs);
+        // logger.info(json);
+
+        try{
+            String filepath = (String) crawlerVars.get("testOutputDir") + "/test_output.json";
+            File file = new File(filepath);
+            BufferedWriter output = new BufferedWriter(new FileWriter(file));          
+            output.write(json);
+            output.close();
+        } catch (IOException e) {
+            logger.error("Exception while writing list to JSON file!" + e);
+        }
+
+    }
+
+    private static int cvesToCsv(HashMap<String, ArrayList<RawVulnerability>> crawledCVEs){
+        logger.info("write to csv");
+        int lineCount = 0;
+        CSVWriter writer = null;
+        String filepath = (String) crawlerVars.get("testOutputDir") + "/test_output.csv";
+
+        try {
+            logger.info("Writing to CSV: {}", filepath);
+            FileWriter fileWriter = new FileWriter(filepath, false);
+            writer = new CSVWriter(fileWriter, '\t', CSVWriter.NO_QUOTE_CHARACTER, CSVWriter.NO_ESCAPE_CHARACTER, CSVWriter.DEFAULT_LINE_END);
+
+            String[] columnHeaders = {"CVE ID", "Raw Description", "Created Date", "Published Date", "Last Modified Date", "Source URL", "Source Type"};
+            writer.writeNext(columnHeaders, false);
+
+            for (ArrayList<RawVulnerability> vulnList : crawledCVEs.values()) {
+                for (RawVulnerability vuln : vulnList) {
+                    String desc = vuln.getDescription().replace("\r\n", ". ").replace("\n", ". ").replace("\r", ". ").replace("\t", " ");
+                    String[] data = {vuln.getCveId(), desc, vuln.getCreateDate(), vuln.getPublishDate(), 
+                        vuln.getLastModifiedDate(), vuln.getSourceURL(), vuln.getSourceType()};
+                    writer.writeNext(data, false);
+                    lineCount++;
+                }
+            }
+
+            writer.close();
+        } catch (IOException e) {
+            logger.error("Exception while writing list to CSV file!" + e);
+            return 0;
+        }
+
+        return lineCount;
+    }
+
     /**
      * Util method used for mapping source types to each CVE source
      */
@@ -454,7 +515,7 @@ public class CrawlerMain {
         // Sends a JSON object with an array of CVE IDs that require reconciliation
         JSONObject messageBody = new JSONObject();
         messageBody.put("cves", cveArray);
-
+        
         try {
             // Create a connection to the RabbitMQ server and create the channel
             ConnectionFactory factory = new ConnectionFactory();

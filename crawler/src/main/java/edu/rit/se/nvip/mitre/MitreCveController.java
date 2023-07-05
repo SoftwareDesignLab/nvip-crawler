@@ -111,7 +111,7 @@ public class MitreCveController {
 			String sourceUrl = remotePath;
 			String date = UtilHelper.longDateFormat.format(new Date());
 			String description = cve[1];
-			RawVulnerability vuln = new RawVulnerability(sourceUrl, cveId, date, date, description);
+			RawVulnerability vuln = new RawVulnerability(sourceUrl, cveId, date, date, description, mitreCVEParser.getClass().getSimpleName());
 			gitHubCveMap.put(cveId, vuln);
 		}
 

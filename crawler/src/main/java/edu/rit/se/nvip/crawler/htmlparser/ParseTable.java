@@ -1,18 +1,21 @@
 package edu.rit.se.nvip.crawler.htmlparser;
 
 import edu.rit.se.nvip.model.RawVulnerability;
+import edu.rit.se.nvip.crawler.SeleniumDriver;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
-import org.openqa.selenium.*;
-import org.openqa.selenium.NoSuchElementException;
-import org.openqa.selenium.interactions.Actions;
-import org.openqa.selenium.interactions.MoveTargetOutOfBoundsException;
-import org.openqa.selenium.support.ui.ExpectedConditions;
+
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.support.ui.WebDriverWait;
+import org.openqa.selenium.support.ui.ExpectedConditions;
 
 import java.time.Duration;
 import java.time.LocalDate;
@@ -22,50 +25,16 @@ public class ParseTable extends AbstractCveParser implements ParserStrategy {
 
     private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
 
-    WebDriver driver;
-
-    WebDriverWait wait;
-
-    // init actions to be able to click around
-    Actions actions;
+    SeleniumDriver driver;
 
     String sourceUrl = "";
 
     Set<String> allCVEs = new HashSet<>();
 
-    public ParseTable(String sourceDomainName, WebDriver driver) {
+    public ParseTable(String sourceDomainName, SeleniumDriver driver) {
         this.sourceDomainName = sourceDomainName;
         this.driver = driver;
-        wait = new WebDriverWait(driver, Duration.ofSeconds(5));
-        actions = new Actions(driver);
     }
-
-    public void clickAcceptCookies() {
-        try {
-            WebElement cookiesButton = driver.findElement(By.xpath("//button[text()='Agree' or text()='Accept' or text()='Accept Cookies' or text()='Accept all']"));
-            cookiesButton.click();
-            logger.info("Accepted Cookies for page " + sourceUrl);
-        } catch (NoSuchElementException e) {
-            logger.info("No Cookies pop-up found for page " + sourceUrl);
-        }
-    }
-    private boolean retryClick(WebElement element) {
-        boolean result = false;
-        int attempts = 0;
-        while(attempts < 2) {
-            try {
-                actions.scrollToElement(element).perform();
-                actions.click(element).perform();
-                result = true;
-                break;
-            } catch(StaleElementReferenceException e) {
-            }
-            attempts++;
-        }
-        return result;
-    }
-
-
 
     /**
      * Parse row of table into useful vulnerability information
@@ -83,29 +52,22 @@ public class ParseTable extends AbstractCveParser implements ParserStrategy {
         if (cveIDs.isEmpty()) return rowVulns;
 
         // click on row and see if we can grab any more html
-        String diff = "";
+        
+        String xPathContainsCVE = "//tr[td//text()[contains(.,'%s')]]";
+        WebElement rowElement = driver.tryFindElement(By.xpath(String.format(xPathContainsCVE, cveList.get(0))));
+
         String htmlBefore = "";
-        WebElement rowElement;
-        try {
-            String xPathContainsCVE = "//tr[td//text()[contains(.,'%s')]]";
-            rowElement = driver.findElement(By.xpath(String.format(xPathContainsCVE, cveList.get(0))));
-            // logger.info("Found row for " + cveIDs);
-            // try and click element and every child of element
-            htmlBefore = driver.findElement(By.tagName("tbody")).getAttribute("innerHTML").replace("\n", "").replace("\t", "");
-            try {
-                new WebDriverWait(driver, Duration.ofSeconds(5)).until(ExpectedConditions.elementToBeClickable(rowElement));
-                actions.moveToElement(rowElement).perform();
-                actions.click(rowElement).perform();
-            } catch (StaleElementReferenceException | MoveTargetOutOfBoundsException | TimeoutException e) {
-                if (!retryClick(rowElement)) logger.info("Unable to click row for " + cveIDs);
-            }
-            String htmlAfter = driver.findElement(By.tagName("tbody")).getAttribute("innerHTML").replace("\n", "").replace("\t", "");
-            diff = StringUtils.difference(htmlBefore, htmlAfter).replace("\n", "").replace("\t", "");
-        } catch (StaleElementReferenceException | MoveTargetOutOfBoundsException | NoSuchElementException e) {
-            // logger.info("Row not found for " + cveIDs);
-        } catch (TimeoutException e){
-            logger.warn("WARNING: Action for {} timed out", sourceUrl);
+        WebElement htmlBeforeElement = driver.tryFindElement(By.tagName("tbody"));
+        if(htmlBeforeElement != null) htmlBefore = htmlBeforeElement.getAttribute("innerHTML").replace("\n", "").replace("\t", "");
+
+        String htmlAfter = "";
+        if(rowElement != null && driver.tryClickElement(rowElement, 5)){
+            WebElement htmlAfterElement = driver.tryFindElement(By.tagName("tbody"));
+            if(htmlAfterElement != null) htmlAfter = htmlAfterElement.getAttribute("innerHTML").replace("\n", "").replace("\t", "");
         }
+
+        String diff = StringUtils.difference(htmlBefore, htmlAfter).replace("\n", "").replace("\t", "");
+
         String description = "";
         // if we gain new information from clicking, add it onto our html to parse
         if (!diff.equals("")) {
@@ -133,7 +95,7 @@ public class ParseTable extends AbstractCveParser implements ParserStrategy {
         for (String cve : cveList)
             rowVulns.add(
                     new RawVulnerability(
-                            sourceUrl, cve, createdDate, lastModifiedDate, description
+                            sourceUrl, cve, createdDate, lastModifiedDate, description, getClass().getSimpleName()
                     )
             );
         return rowVulns;
@@ -164,55 +126,24 @@ public class ParseTable extends AbstractCveParser implements ParserStrategy {
 
     private String getNextPage(String sourceHtml) {
         String nextPage = "";
-        try {
-            By nextButtonBy = By.xpath("//*[contains(@class,'next')]");
-            WebElement nextButton = wait.until(ExpectedConditions.elementToBeClickable(nextButtonBy));
-            actions.scrollToElement(nextButton).perform();
-            actions.click(nextButton).perform();
-            logger.info("Next button clicked for Table at " + sourceUrl);
-            nextPage = StringUtils.difference(sourceHtml, driver.getPageSource());
-        } catch (NoSuchElementException | TimeoutException e) {
-            // logger.info("No Next button found for Table at " + sourceUrl);
-        } catch (ElementNotInteractableException ei) {
-            logger.warn("Next Button found raises ElementNotInteractableException...");
-        } catch (StaleElementReferenceException s) {
-            logger.warn("Next Button found raises StaleElementReferenceException...");
-        } catch (MoveTargetOutOfBoundsException e){
-            logger.warn("Next Button found raises MoveTargetOutOfBoundsException...");
-        }
+        if(driver.tryClickElement(By.xpath("//*[contains(@class,'next')]"), 5))
+            nextPage = StringUtils.difference(sourceHtml, driver.getDriver().getPageSource());
+        else
+            logger.warn("Unable to get next page");
         return nextPage;
-    }
-
-    private void tryPageGet(String sSourceURL) {
-        int tries = 0;
-        while (tries < 2) {
-            try {
-                driver.get(sSourceURL);
-                break;
-            } catch (TimeoutException e) {
-                logger.info("Retrying page get...");
-                tries++;
-            }
-        }
     }
 
     @Override
     public List<RawVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
         sourceUrl = sSourceURL;
-        // get the page
-        tryPageGet(sSourceURL);
-        try{
-            if (driver.getPageSource() == null) return new ArrayList<>();
-        } catch (TimeoutException e) {
-            logger.warn("Unable to get {}", sourceUrl);
-            return new ArrayList<>();
-        }
-        // click on any cookie agree button before trying to parse and click on anything else
-        clickAcceptCookies();
         List<RawVulnerability> vulnList = new ArrayList<>();
 
-        // assumes the button class contains next text
-        String next = driver.getPageSource();
+        // Get page
+        String next = driver.tryPageGet(sSourceURL);
+        if(next == null) return vulnList;
+
+        driver.clickAcceptCookies();
+
         // we want to see a brand new page that we also have not seen before
         // so if there is a difference, and the difference contains CVE ids that we have not seen before, keep going
         int count = 0;
@@ -221,8 +152,8 @@ public class ParseTable extends AbstractCveParser implements ParserStrategy {
             try {
                 // x path table contains text "CVE-"
                 By cveBy = By.xpath("//*[text()[contains(.,'CVE-')]]");
-                new WebDriverWait(driver, Duration.ofSeconds(5)).until(ExpectedConditions.presenceOfElementLocated(cveBy));
-                next = driver.getPageSource();
+                new WebDriverWait(driver.getDriver(), Duration.ofSeconds(5)).until(ExpectedConditions.presenceOfElementLocated(cveBy));
+                next = driver.getDriver().getPageSource();
             } catch (TimeoutException e) {
                 logger.warn("Timeout waiting for CVE- text to be present");
             }
@@ -235,11 +166,7 @@ public class ParseTable extends AbstractCveParser implements ParserStrategy {
             vulnList.addAll(parseTableSource(next));
             next = getNextPage(next);
         }
-        try{
-            driver.manage().deleteAllCookies();
-        } catch (TimeoutException e) {
-            logger.warn("Unable to clear cookies for {}", sourceUrl);
-        }
+        driver.deleteAllCookies();
         return vulnList;
     }
 }

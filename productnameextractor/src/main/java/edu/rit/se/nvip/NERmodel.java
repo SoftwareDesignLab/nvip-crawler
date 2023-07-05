@@ -36,9 +36,15 @@ import org.nd4j.linalg.dataset.api.preprocessor.serializer.NormalizerSerializer;
 import org.nd4j.linalg.factory.Nd4j;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.Random;
 
 /**
@@ -54,40 +60,62 @@ import java.util.Random;
 
 public class NERmodel {
 	private final boolean timingOn = false;
-
 	private MultiLayerNetwork model = null; // NER model
 	private Char2vec c2vModel = null; // Char2Vector model
 	private Word2Vector w2vModel = null; // Word2Vector model
 	static public final int numLabelClasses = 3; // Number of classes (SN, SV, O)
 	private int featureLength = 300; // length of the input features vector.
-
 	private int wordVecLength = 250; // Expected length of the word2vector model output. Later will be updated from the actual model
 	private int charVecLength = 50; // Expected length of the char2vector model output. Later will be updated from the actual model
-
 	private static Random rand = new Random(); // Needed in the case when word2vector model doesn't know the word
 
 	public static final String SN = "SN", SV = "SV", OTHER = "O"; // class names
-
 	private SentenceDetector sentenceDetector = null;
-
 	private DataNormalization restoredNormalizer = null; // Feature normalizer
+
+	protected static String char2VecConfig = "c2v_model_config_50.json";
+	protected static String char2VecWeights = "c2v_model_weights_50.h5";
+	protected static String word2Vec = "w2v_model_250.bin";
+	protected static String nerModel = "NERallModel.bin";
+	protected static String nerModelNormalizer = "NERallNorm.bin";
+	protected static String sentenceModel = "en-sent.bin";
 
 	private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
 
 	/**
 	 * Class constructor
 	 */
-	public NERmodel() {
+	public NERmodel(String modelsDir, String nlpDir) throws FileNotFoundException {
 		super();
 
 		try {
 			// Get models paths
-			String modelsDir = System.getenv("DATA_DIR") + "/" + System.getenv("NAME_EXTRACTOR_DIR") + "/";
-			String c2vModelConfigPath = modelsDir + System.getenv("CHAR_2_VEC_CONFIG");
-			String c2vModelWeightsPath = modelsDir + System.getenv("CHAR_2_VEC_WEIGHTS");
-			String w2vModelPath = modelsDir + System.getenv("WORD_2_VEC");
-			String nerModelPath = modelsDir + System.getenv("NER_MODEL");
-			String nerNormalizerPath = modelsDir + System.getenv("NER_MODEL_NORMALIZER");
+			final Map<String, String> props = System.getenv();
+
+			if(props.containsKey("CHAR_2_VEC_CONFIG")) char2VecConfig = System.getenv("CHAR_2_VEC_CONFIG");
+			else logger.warn("Could not fetch CHAR_2_VEC_CONFIG from env vars, defaulting to {}", char2VecConfig);
+
+			if(props.containsKey("CHAR_2_VEC_WEIGHTS")) char2VecWeights = System.getenv("CHAR_2_VEC_WEIGHTS");
+			else logger.warn("Could not fetch CHAR_2_VEC_WEIGHTS from env vars, defaulting to {}", char2VecWeights);
+
+			if(props.containsKey("WORD_2_VEC")) word2Vec = System.getenv("WORD_2_VEC");
+			else logger.warn("Could not fetch WORD_2_VEC from env vars, defaulting to {}", word2Vec);
+
+			if(props.containsKey("NER_MODEL")) nerModel = System.getenv("NER_MODEL");
+			else logger.warn("Could not fetch NER_MODEL from env vars, defaulting to {}", nerModel);
+
+			if(props.containsKey("NER_MODEL_NORMALIZER")) nerModelNormalizer = System.getenv("NER_MODEL_NORMALIZER");
+			else logger.warn("Could not fetch NER_MODEL_NORMALIZER from env vars, defaulting to {}", nerModelNormalizer);
+
+			if(props.containsKey("SENTENCE_MODEL")) sentenceModel = System.getenv("SENTENCE_MODEL");
+			else logger.warn("Could not fetch SENTENCE_MODEL from env vars, defaulting to {}", sentenceModel);
+
+			String c2vModelConfigPath = modelsDir + char2VecConfig;
+			String c2vModelWeightsPath = modelsDir + char2VecWeights;
+			String w2vModelPath = modelsDir + word2Vec;
+			String nerModelPath = modelsDir + nerModel;
+			String nerNormalizerPath = modelsDir + nerModelNormalizer;
+			String sentenceModelPath = modelsDir + nlpDir + "/" + sentenceModel;
 
 			long startTime = System.currentTimeMillis();
 			// Load NER model
@@ -95,6 +123,7 @@ public class NERmodel {
 				model = MultiLayerNetwork.load(new File(nerModelPath), false);
 			} catch (Exception e) {
 				logger.error("Error loading MultiLayerNetwork for product name extraction from path {}: {}", nerModelPath, e.toString());
+				logger.warn("Please ensure that your working directory is correct. Current working directory: {}", ProductNameExtractorController.currentDir);
 			}
 			long endTime = System.currentTimeMillis();
 
@@ -126,11 +155,14 @@ public class NERmodel {
 			featureLength = wordVecLength + charVecLength;
 
 			// Load Apache Open NLP sentence detector model
-			// path to Apache Open NLP sentence model
-			String sentenceModelPath = "nlp/en-sent.bin";
+			if(!Files.exists(Paths.get(sentenceModelPath)))
+				logger.info("Failed to find specified NER Model path '{}'", sentenceModelPath);
+
 			try {
 				startTime = System.currentTimeMillis();
-				InputStream modelIn = this.getClass().getClassLoader().getResourceAsStream(sentenceModelPath);
+				logger.info("Working Dir === {}", ProductNameExtractorController.currentDir);
+				File binFile = new File(sentenceModelPath);
+				InputStream modelIn = Files.newInputStream(binFile.toPath());
 				SentenceModel sentenceModel = new SentenceModel(modelIn);
 				sentenceDetector = new SentenceDetectorME(sentenceModel);
 				modelIn.close();
@@ -139,7 +171,7 @@ public class NERmodel {
 					logger.info("Timing for Sentence detector model loading: " + (endTime - startTime) + "ms.");
 				}
 			} catch (Exception e) {
-				logger.error("Error loading sentence model for product name extraction from {}: {}", sentenceModelPath, e.toString());
+				logger.error("Error loading sentence model for product name extraction from {}:\n{}", sentenceModelPath, e);
 			}
 
 			// Load features Normalizer
@@ -156,7 +188,8 @@ public class NERmodel {
 			}
 		} catch (Exception e) {
 			logger.error("ERROR: Error initializing NERmodel {}", e.toString());
-			e.printStackTrace();
+			logger.warn("Please ensure that your working directory is correct. Current working directory: {}", ProductNameExtractorController.currentDir);
+			throw e;
 		}
 
 	}
@@ -249,12 +282,12 @@ public class NERmodel {
 		INDArray featuresDL4J = Nd4j.zeros(1, featureLength, words.length);
 
 		// Convert features into 3D-array acceptable by DL4J model
-		int[] indecies = new int[3];
+		int[] indices = new int[3];
 		for (int i = 0; i < words.length; i++) {
-			indecies[2] = i;
+			indices[2] = i;
 			for (int j = 0; j < featureLength; j++) {
-				indecies[1] = j;
-				featuresDL4J.putScalar(indecies, features[i][j]);
+				indices[1] = j;
+				featuresDL4J.putScalar(indices, features[i][j]);
 			}
 		}
 
@@ -266,11 +299,11 @@ public class NERmodel {
 
 		// Get confidence levels of the model output and create ClassifiedWord objects
 		for (int i = 0; i < words.length; i++) {
-			indecies[2] = i;
+			indices[2] = i;
 			float[] confidences = new float[numLabelClasses];
 			for (int j = 0; j < numLabelClasses; j++) {
-				indecies[1] = j;
-				confidences[j] = out.getFloat(indecies);
+				indices[1] = j;
+				confidences[j] = out.getFloat(indices);
 			}
 			result.add(new ClassifiedWord(words[i], confidences));
 		}

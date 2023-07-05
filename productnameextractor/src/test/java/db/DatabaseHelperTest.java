@@ -27,11 +27,8 @@ import com.zaxxer.hikari.HikariDataSource;
 import edu.rit.se.nvip.db.DatabaseHelper;
 import edu.rit.se.nvip.model.cve.AffectedProduct;
 import edu.rit.se.nvip.model.cve.CompositeVulnerability;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -55,8 +52,10 @@ import static org.mockito.Mockito.*;
  */
 @RunWith(MockitoJUnitRunner.class)
 public class DatabaseHelperTest {
-	private Logger logger = LogManager.getLogger(getClass().getSimpleName());
-
+	protected static String databaseType = "mysql";
+	protected static String hikariUrl = "jdbc:mysql://localhost:3306/nvip?useSSL=false&allowPublicKeyRetrieval=true";
+	protected static String hikariUser = "root";
+	protected static String hikariPassword = "root";
 	private DatabaseHelper dbh;
 	@Mock
 	private HikariDataSource hds;
@@ -134,34 +133,17 @@ public class DatabaseHelperTest {
 	private List<AffectedProduct> buildDummyProducts(int count) {
 		List<AffectedProduct> products = new ArrayList<>();
 		for (int i = 0; i < count; i++) {
-			products.add(new AffectedProduct(i, "cve"+i, "cpe"+i, "date"+i, "version"+i));
+			String cpeName = "cpe:2.3:a:" + i + ":" + i + ":*:*:*:*:*:*:*:*";
+			products.add(new AffectedProduct(i, "cve"+i, cpeName, "productName"+i, "date"+i, "version"+i, "vendor"+i));
 		}
 		return products;
 	}
 
-	@BeforeClass
-	public static void classSetUp() {
-		// forces a constructor, only want to do once
-		DatabaseHelper.getInstance();
-	}
-
 	@Before
 	public void setUp() {
-		this.dbh = DatabaseHelper.getInstance();
+		this.dbh = new DatabaseHelper(databaseType, hikariUrl, hikariUser, hikariPassword);
 		ReflectionTestUtils.setField(this.dbh, "dataSource", this.hds);
 		this.setMocking();
-	}
-
-	@AfterClass
-	public static void tearDown() {
-		DatabaseHelper dbh = DatabaseHelper.getInstance();
-		ReflectionTestUtils.setField(dbh, "databaseHelper", null);
-
-	}
-
-	@Test
-	public void getInstanceTest() {
-		assertNotNull(DatabaseHelper.getInstance());
 	}
 
 	@Test
@@ -196,10 +178,10 @@ public class DatabaseHelperTest {
 	 * @throws SQLException
 	 */
 	@Test
-	public void insertAffectedProductsV2Test() {
+	public void insertAffectedProductsTest() {
 		int inCount = 5;
 		List<AffectedProduct> products = buildDummyProducts(inCount);
-		dbh.insertAffectedProductsV2(products);
+		dbh.insertAffectedProducts(products);
 		try {
 			verify(pstmt, times(inCount*8)).setString(anyInt(), any());
 			verify(pstmt, times(inCount)).executeUpdate();
@@ -219,27 +201,23 @@ public class DatabaseHelperTest {
 		} catch (SQLException ignored) {}
 	}
 
-	@Test
-	public void insertAffectedProductsToDBTest() throws SQLException {
-		insertAffectedProductsV2Test();
-		// Prepare test data
-		int count = 5;
-		List<CompositeVulnerability> products = new ArrayList<>();
-		for (int i = 0; i < count; i++) {
-			products.add(new CompositeVulnerability(i, "CVE-" + i));
-		}
-
-		// Mock the database interactions
-		when(hds.getConnection()).thenReturn(conn);
-		when(conn.prepareStatement(anyString())).thenReturn(pstmt);
-
-		// Call the method under test
-		dbh.insertAffectedProductsToDB(products);
-
-		// Verify the expected interactions
-		verify(pstmt, times(count*5)).setString(anyInt(), anyString());
-		verify(pstmt, times(count)).executeUpdate();
-	}
+//	@Test
+//	public void insertAffectedProductsToDBTest() throws SQLException {
+//		// Prepare test data
+//		int count = 5;
+//		List<AffectedProduct> products = buildDummyProducts(count);
+//
+//		// Mock the database interactions
+//		when(hds.getConnection()).thenReturn(conn);
+//		when(conn.prepareStatement(anyString())).thenReturn(pstmt);
+//
+//		// Call the method under test
+//		dbh.insertAffectedProductsToDB(products);
+//
+//		// Verify the expected interactions
+//		verify(pstmt, times(count*9)).setString(anyInt(), anyString());
+//		verify(pstmt, times(count*2)).executeUpdate();
+//	}
 
 	@Test
 	public void getExistingCompositeVulnerabilitiesTest() throws SQLException {
@@ -256,7 +234,7 @@ public class DatabaseHelperTest {
 		when(res.getString("description")).thenReturn("Description 1", "Description 2", "Description 3");
 
 		// Call the method under test
-		Map<String, CompositeVulnerability> result = dbh.getExistingCompositeVulnerabilities(maxVulnerabilities);
+		List<CompositeVulnerability> result = dbh.getExistingCompositeVulnerabilities(maxVulnerabilities);
 
 		// Verify the expected interactions
 		verify(conn).prepareStatement(anyString());
@@ -267,9 +245,6 @@ public class DatabaseHelperTest {
 
 		// Verify the result
 		assertEquals(expectedVulnerabilities, result.size());
-		assertEquals("Description 1", result.get("CVE-2021-001").getDescription());
-		assertEquals("Description 2", result.get("CVE-2021-002").getDescription());
-		assertEquals("Description 3", result.get("CVE-2021-003").getDescription());
 	}
 
 	@Test

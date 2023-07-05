@@ -67,20 +67,38 @@ public class CpeLookUp {
 		genericProductNames.add("store");
 		genericProductNames.add("statistics");
 		genericProductNames.add("view");
+		genericProductNames.add("remote");
+		genericProductNames.add("notification");
+		genericProductNames.add("scripting");
+		genericProductNames.add("agent");
+		genericProductNames.add("generator");
+		genericProductNames.add("request");
+		genericProductNames.add("update");
+		genericProductNames.add("network");
+		genericProductNames.add("access");
+		genericProductNames.add("image");
+		genericProductNames.add("business");
+		genericProductNames.add("accessibility");
+		genericProductNames.add("release");
+		genericProductNames.add("mail");
+		genericProductNames.add("mobile");
+		genericProductNames.add("data");
+		genericProductNames.add("service");
+		genericProductNames.add("runtime");
+		genericProductNames.add("date");
+		genericProductNames.add("safety");
+		genericProductNames.add("account");
+		genericProductNames.add("web");
+		genericProductNames.add("driver");
 	}
 
-	/**
-	 * A hash map of <CPE, Domain>
-	 */
-	private Map<String, CpeGroup> cpeMapFile = null; // CPE items from CPE file
+	//CPE items from CPE file
+	private Map<String, CpeGroup> cpeMapFile = null;
 
-	/**
-	 * hash map of CPE to Product add list of products to database using
-	 * map.values();
-	 */
-	private final Map<String, Product> productsToBeAddedToDatabase;
+	//HashSet to store how many unique cpe groups are identified
+	private final Set<String> uniqueCPEGroups;
+
 	private final static Logger logger = LogManager.getLogger(CpeLookUp.class);
-	private final static VersionManager versionManager = new VersionManager();
 
 	/**
 	 * Class that has CPE groups with matching score and can be sorted
@@ -133,32 +151,12 @@ public class CpeLookUp {
 	 * Create new instance of CpeLookUp
 	 */
 	public CpeLookUp() {
-		this.productsToBeAddedToDatabase = new HashMap<>();
+		uniqueCPEGroups = new HashSet<>();
 	}
 
-	/**
-	 * @return a map of products marked for database insertion
-	 */
-	public Map<String, Product> getProductsToBeAddedToDatabase() {
-		return this.productsToBeAddedToDatabase;
-	}
-
-	/**
-	 * Adds a given product to the database
-	 * @param p product to be added
-	 */
-	public void addProductToDatabase(Product p) {
-		this.productsToBeAddedToDatabase.put(p.getCpe(), p);
-	}
-
-	/**
-	 * Adds a given list of products to the database
-	 * @param products list of products to be added
-	 */
-	public void addProductsToDatabase(List<Product> products) {
-		for (Product p : products) {
-			addProductToDatabase(p);
-		}
+	// Returns number of unique CPE Groups that have been identified
+	public int getUniqueCPECount(){
+		return uniqueCPEGroups.size();
 	}
 
 	/**
@@ -454,7 +452,8 @@ public class CpeLookUp {
 	}
 
 	/**
-	 * Finds IDs of the relevant CPE entries
+	 * Finds CPE IDs of the relevant CPE entries by matching affected versions of the product to versions
+	 * stored in the selected CPE groups
 	 * 
 	 * @param selectedGroups result from the findCPEGroups method
 	 * @param product product to search
@@ -463,7 +462,6 @@ public class CpeLookUp {
 	private ArrayList<String> getCPEIdsFromGroups(ArrayList<CPEGroupFromMap> selectedGroups, ProductItem product) {
 
 		ArrayList<String> cpeIDs = new ArrayList<>();
-		ArrayList<Product> productsToAdd = new ArrayList<>();
 
 		if (selectedGroups.size() == 0) {
 			return null;
@@ -473,12 +471,14 @@ public class CpeLookUp {
 		if (product.getVersions().size() == 0) {
 			String cpeName = "cpe:2.3:a:" + selectedGroups.get(0).getCpeGroup().getGroupID() + ":*:*:*:*:*:*:*:*";
 			cpeIDs.add(cpeName);
-			productsToAdd.add(new Product(selectedGroups.get(0).getCpeGroup().getCommonTitle(), cpeName));
 		} else {
 			// Get raw version words array
 			String[] versionWords = product.getVersions() // Get product versions
 					.stream().map(String::toLowerCase) // Map each element toLowerCase
 					.toArray(String[]::new); // Return elements in a String[]
+
+			//Instantiate new VersionManager
+			VersionManager versionManager = new VersionManager();
 
 			// Process non-specific versions into enumerated ranges
 			// [ "1.2.2", "through", "1.3", "1.5", "before", "1.8.9" ]
@@ -516,8 +516,7 @@ public class CpeLookUp {
 							matchesCounter++;
 							String cpeName = "cpe:2.3:a:" + group.getGroupID() + ":" + versionKey + ":*:*:*:*:*:*:*";
 							cpeIDs.add(cpeName);
-							addedVersions.add(versionKey);
-							productsToAdd.add(new Product(group.getCommonTitle(), cpeName));
+							uniqueCPEGroups.add(selectedGroup.getCpeGroup().getGroupID() + product.hashCode());
 						}
 					} catch (IllegalArgumentException e) {
 						logger.warn("Error parsing version string '{}': {}", versionKey, e.toString());
@@ -539,8 +538,7 @@ public class CpeLookUp {
 								matchesCounter++;
 								String cpeName = "cpe:2.3:a:" + group.getGroupID() + ":" + versionWord + ":*:*:*:*:*:*:*";
 								cpeIDs.add(cpeName);
-								productsToAdd.add(new Product(group.getCommonTitle(), cpeName));
-								break;
+								uniqueCPEGroups.add(selectedGroup.getCpeGroup().getGroupID() + product.hashCode());
 							}
 						}
 					}
@@ -563,7 +561,7 @@ public class CpeLookUp {
 								matchesCounter++;
 								String cpeName = "cpe:2.3:a:" + group.getGroupID() + ":" + versionWord + ":*:*:*:*:*:*:*";
 								cpeIDs.add(cpeName);
-								productsToAdd.add(new Product(group.getCommonTitle(), cpeName));
+								uniqueCPEGroups.add(selectedGroup.getCpeGroup().getGroupID() + product.hashCode());
 							}
 						} catch (IllegalArgumentException e) {
 							logger.warn("Error parsing version string '{}': {}", versionWord, e.toString());
@@ -576,12 +574,9 @@ public class CpeLookUp {
 			if (cpeIDs.size() == 0) {
 				String cpeID = "cpe:2.3:a:" + selectedGroups.get(0).getCpeGroup().getGroupID() + ":*:*:*:*:*:*:*:*";
 				cpeIDs.add(cpeID);
-				productsToAdd.add(new Product(selectedGroups.get(0).getCpeGroup().getCommonTitle(), cpeID));
+				uniqueCPEGroups.add(selectedGroups.get(0).getCpeGroup().getGroupID() + product.hashCode());
 			}
 		}
-
-		// Add found products
-		addProductsToDatabase(productsToAdd);
 
 		// Return CPEs of found products
 		return cpeIDs;
@@ -640,6 +635,23 @@ public class CpeLookUp {
 		else logger.warn("Could not match CPE String {}", cpeID);
 
 		return version;
+	}
+
+	/**
+	 * Gets the name component of a given CPE ID
+	 *
+	 * @param cpeID CPE ID to search
+	 * @return found name String
+	 */
+	public static String getNameFromCPEid(String cpeID) {
+		String name = null;
+
+		// Match against CPE regex
+		final Matcher m = CPE_PATTERN.matcher(cpeID);
+		if(m.find()) name = m.group(2);
+		else logger.warn("Could not match CPE String {}", cpeID);
+
+		return name;
 	}
 
 	/**

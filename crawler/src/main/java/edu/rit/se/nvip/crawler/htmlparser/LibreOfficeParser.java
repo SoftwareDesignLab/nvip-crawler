@@ -59,7 +59,7 @@ public class LibreOfficeParser extends AbstractCveParser {
         else
             description = doc.text();
         // add to vulns list
-        vulnList.add(new RawVulnerability(sSourceURL, cve, publishDate, lastModifiedDate, description
+        vulnList.add(new RawVulnerability(sSourceURL, cve, publishDate, lastModifiedDate, description, getClass().getSimpleName()
         ));
 
         return vulnList;

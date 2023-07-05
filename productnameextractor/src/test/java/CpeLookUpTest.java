@@ -49,7 +49,7 @@ public class CpeLookUpTest {
 	private static final CpeLookUp cpeLookUp = new CpeLookUp();
 	static {
 		try {
-			final Map<String, CpeGroup> productDict = ProductNameExtractorController.readProductDict("src/test/resources/data/product_dict.json");
+			final Map<String, CpeGroup> productDict = ProductNameExtractorController.readProductDict("src/test/resources/data/test_product_dict.json"); //src/test/resources/data/test_product_dict.json
 			cpeLookUp.loadProductDict(productDict);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
@@ -59,10 +59,10 @@ public class CpeLookUpTest {
 
 	@Test
 	public void legitimateProduct() {
-		ProductItem product = new ProductItem("phpMyAdmin");
-		product.addVersion("4.1.5");
+		ProductItem product = new ProductItem("redhat linux");
+		product.addVersion("6.0");
 
-		String expectedResult = "cpe:2.3:a:phpmyadmin:phpmyadmin:4.1.5:*:*:*:*:*:*:*";
+		String expectedResult = "cpe:2.3:a:redhat:linux:6.0:*:*:*:*:*:*:*";
 
 		List<String> idList = cpeLookUp.getCPEIds(product);
 
@@ -73,11 +73,11 @@ public class CpeLookUpTest {
 
 	@Test
 	public void legitimateComplexProduct() {
-		ProductItem product = new ProductItem("cacheos.");
+		ProductItem product = new ProductItem("banking_loans_servicing");
 		product.addVersion("before");
 		product.addVersion("4.0");
 
-		String expectedResult = "cpe:2.3:a:bluecoat:cacheos:4.0:*:*:*:*:*:*:*";
+		String expectedResult = "cpe:2.3:a:oracle:banking_loans_servicing:2.12.0:*:*:*:*:*:*:*";
 
 		List<String> idList = cpeLookUp.getCPEIds(product);
 
@@ -88,12 +88,12 @@ public class CpeLookUpTest {
 
 	@Test
 	public void legitimateComplexProduct2() {
-		ProductItem product = new ProductItem("phpMyAdmin:.");
+		ProductItem product = new ProductItem("linux:.");
 		product.addVersion("https://www.openwall.com/lists/oss-security/2012/05/10/6");
 		product.addVersion("before");
-		product.addVersion("3.3.4.0");
+		product.addVersion("1.0");
 
-		String expected = "cpe:2.3:a:phpmyadmin:phpmyadmin:3.3.4.0:*:*:*:*:*:*:*";
+		String expected = "cpe:2.3:a:redhat:linux:1.0:*:*:*:*:*:*:*";
 
 		List<String> idList = cpeLookUp.getCPEIds(product);
 
@@ -119,14 +119,14 @@ public class CpeLookUpTest {
 
 	@Test
 	public void legitimateComplexProductMultipleVersions() {
-		ProductItem product = new ProductItem("phpMyAdmin.");
-		product.addVersion("4.8.0.1");
-		product.addVersion("4.8.4");
-		product.addVersion("4.7.9");
+		ProductItem product = new ProductItem("Redhat Linux");
+		product.addVersion("3.0.3");
+		product.addVersion("2.6.2");
+		product.addVersion("2.0.34");
 
-		String expectedResult1 = "cpe:2.3:a:phpmyadmin:phpmyadmin:4.8.0.1:*:*:*:*:*:*:*";
-		String expectedResult2 = "cpe:2.3:a:phpmyadmin:phpmyadmin:4.8.4:*:*:*:*:*:*:*";
-		String expectedResult3 = "cpe:2.3:a:phpmyadmin:phpmyadmin:4.7.9:*:*:*:*:*:*:*";
+		String expectedResult1 = "cpe:2.3:a:redhat:linux:3.0.3:*:*:*:*:*:*:*";
+		String expectedResult2 = "cpe:2.3:a:redhat:linux:2.6.2:*:*:*:*:*:*:*";
+		String expectedResult3 = "cpe:2.3:a:redhat:linux:2.0.34:*:*:*:*:*:*:*";
 
 		List<String> idList = cpeLookUp.getCPEIds(product);
 
@@ -139,9 +139,9 @@ public class CpeLookUpTest {
 
 	@Test
 	public void legitimateComplexProductNoVersion() {
-		ProductItem product = new ProductItem("Canon ImageRunner 5000i");
+		ProductItem product = new ProductItem("gentoo xnview");
 
-		String expectedResult = "cpe:2.3:a:canon:imagerunner:*:*:*:*:*:*:*:*";
+		String expectedResult = "cpe:2.3:a:gentoo:xnview:*:*:*:*:*:*:*:*";
 
 		List<String> idList = cpeLookUp.getCPEIds(product);
 
@@ -152,7 +152,7 @@ public class CpeLookUpTest {
 
 	@Test
 	public void checkSNVerification() {
-		String sn1 = "Explorer.";
+		String sn1 = "XNVIEW.";
 		String sn2 = "Linux";
 
 		List<String> sn1List = cpeLookUp.getCPETitles(sn1);

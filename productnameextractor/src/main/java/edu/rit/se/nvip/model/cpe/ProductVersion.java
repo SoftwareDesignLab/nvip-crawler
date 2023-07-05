@@ -24,6 +24,7 @@ package edu.rit.se.nvip.model.cpe;
  * SOFTWARE.
  */
 
+import edu.rit.se.nvip.VersionManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -37,8 +38,6 @@ import java.util.regex.Pattern;
  */
 public class ProductVersion implements Comparable<ProductVersion> {
     private final int[] versionParts;
-    // Regex101: https://regex101.com/r/cy9Hp3/1
-    private static final Pattern VERSION_PATTERN = Pattern.compile("^((?:[0-9]\\.?)*)$");
     private final static Logger logger = LogManager.getLogger(ProductVersion.class);
 
     //Set of words to be protected from removing characters
@@ -65,7 +64,7 @@ public class ProductVersion implements Comparable<ProductVersion> {
         versionString = formatVersionWord(versionString);
 
         // Ensure provided version is valid
-        if(!isVersion(versionString))
+        if(!VersionManager.isVersion(versionString))
             throw new IllegalArgumentException("Failed to create ProductVersion from String '" + versionString + "'");
 
         // Split version into parts
@@ -75,11 +74,6 @@ public class ProductVersion implements Comparable<ProductVersion> {
             logger.error("Failed to create ProductVersion from String '{}'", versionString);
             throw e;
         }
-    }
-
-    private boolean isVersion(String version) {
-        if(version.contains(",")) logger.warn("VERSION '{}' CONTAINED UNEXPECTED CHARACTER ','", version);
-        return VERSION_PATTERN.matcher(version).matches();
     }
 
     @Override
