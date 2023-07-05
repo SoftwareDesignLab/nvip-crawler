@@ -36,11 +36,9 @@ import java.util.regex.Pattern;
  * @author Paul Vickers
  */
 public class VersionManager {
-    private final HashSet<VersionRange> versionRanges;
     // Regex101: https://regex101.com/r/y88Gsj/1
-
     private final static Pattern VERSION_PATTERN = Pattern.compile("^((?:\\d{1,5}\\.)*\\d{1,5})$");
-
+    private final HashSet<VersionRange> versionRanges;
     public VersionManager() {
         versionRanges = new HashSet<>();
     }
@@ -79,7 +77,7 @@ public class VersionManager {
     /**
      * Function to take in a list of versionWords from a product and configure them
      * into VersionRange objects to be added to versionRanges
-     * <p>
+     *
      * For example, a list of ["before", "1.8.9", "1.9", "9.6+"]
      * would become version ranges [BEFORE 1.8.9, EXACT 1.9, AFTER 9.6]
      *
@@ -307,9 +305,7 @@ public class VersionManager {
      * @return result of test
      */
     public static boolean isVersion(String version) {
-        if (version.length() == 0) {
-            return false;
-        }
+        if (version.isEmpty()) return false;
         return VERSION_PATTERN.matcher(version).matches();
     }
 
@@ -322,9 +318,7 @@ public class VersionManager {
      */
     public void formatVersionWords(String[] versionWords) {
         for (int i = 0; i < versionWords.length; i++) {
-            if (versionWords[i] == null) {
-                continue;
-            }
+            if (versionWords[i] == null) continue;
             versionWords[i] = ProductVersion.formatVersionWord(versionWords[i]);
         }
     }
