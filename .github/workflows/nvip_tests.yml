@@ -11,7 +11,7 @@ env:
   HIKARI_USER: 'root'
   HIKARI_PASSWORD: 'root'
   OUTPUT_DIR: 'output'
-  RESOURCE_DIR: 'nvip_data'
+  RESOURCE_DIR: 'productnameextractor/nvip_data'
   DATA_DIR: 'data'
   NLP_DIR: 'nlp'
   CHAR_2_VEC_CONFIG: 'c2v_model_config_50.json'
