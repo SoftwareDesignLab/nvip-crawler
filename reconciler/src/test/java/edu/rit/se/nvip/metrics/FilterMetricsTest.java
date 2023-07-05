@@ -1,5 +1,6 @@
 package edu.rit.se.nvip.metrics;
 
+import edu.rit.se.nvip.filter.FilterHandler;
 import edu.rit.se.nvip.model.RawVulnerability;
 import edu.rit.se.nvip.utils.metrics.CrawlerRun;
 import edu.rit.se.nvip.utils.metrics.FilterMetrics;
@@ -77,17 +78,24 @@ class FilterMetricsTest {
 
         FilterMetrics filterMetrics = genFilterMetrics(path);
 
-        Map<CrawlerRun, FilterMetrics.FilterStats> filterMap = filterMetrics.numFiltered();
+        FilterHandler filterHandler = new FilterHandler();
+        for (CrawlerRun run : filterMetrics.getRuns()){ //for each run, run filters on the run's vulns
+            filterHandler.runFilters(run.getVulns());
+        }
+
+        Map<CrawlerRun, FilterMetrics.FilterStats> filterMap = filterMetrics.numFiltered(); //get num filtered
 
         CrawlerRun run = filterMetrics.getRuns().get(0);
 
 
         assertEquals(3, filterMap.get(run).getTotalVulns()); //should have 3 total vulns
-        assertEquals(0, filterMap.get(run).getTotalFiltered()); //should have 0 total filtered
+        assertEquals(3, filterMap.get(run).getTotalFiltered()); //should have 3 total filtered
+        assertEquals(1, filterMap.get(run).getPassedFilters()); //one passes all
+        assertEquals(2, filterMap.get(run).getTotalFailed()); //two fail on DescriptionSizeFilter (currently set to < 1000 and the vulns desc are over 1000)
+        assertEquals(0, filterMap.get(run).getTotalNotFiltered()); //0 don't get filtered
+
     }
 
-
-    //WAITING FOR UPDATED FILTERS
     @Test
     public void proportionPassedTest(){
 

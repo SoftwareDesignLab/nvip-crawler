@@ -44,6 +44,9 @@ public class FilterMetrics {
         public int getPassedFilters(){ return this.passedFilters;}
         public int getTotalFiltered(){ return this.totalFiltered;}
         public int getTotalVulns(){ return this.totalVulns;}
+        public int getTotalFailed(){ return this.failedFilters;}
+        public int getTotalNotFiltered(){ return this.notFiltered;}
+
         public void increaseNotFiltered() {
             this.notFiltered++;
         }
