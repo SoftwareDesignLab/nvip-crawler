@@ -229,9 +229,14 @@ public class PatchFinderThread implements Runnable {
 
 	private void findPatchCommitsFromRepo(ArrayList<PatchCommit> foundPatchCommits, String cve, String patchSource) {
 		try {
-			// Clone git repo
-			String localDownloadLoc = clonePath + "/" + cve + "-" + patchSource.substring(patchSource.lastIndexOf("/") + 1);
+			// Split source URI into parts to build local download path string
+			final String[] sourceParts = patchSource.split("/");
+			final int len = sourceParts.length;
 
+			// Add vendor and product name from URI
+			String localDownloadLoc = clonePath + "/" + cve + "-" + sourceParts[len - 2] + "-" + sourceParts[len - 1];
+
+			// Clone git repo
 			GitController gitController = new GitController(
 					localDownloadLoc,
 					patchSource+".git"
