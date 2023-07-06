@@ -58,8 +58,4 @@ public class PatchFinderTest {
         PatchFinder.main(args);
     }
 
-    //todo: ReadSourceDict
-//    public void testReadSourceDict() {
-//
-//    }
 }
