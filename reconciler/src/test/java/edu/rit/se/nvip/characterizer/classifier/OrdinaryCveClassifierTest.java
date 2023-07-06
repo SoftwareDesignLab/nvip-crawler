@@ -23,6 +23,7 @@
  */
 package edu.rit.se.nvip.characterizer.classifier;
 
+import edu.rit.se.nvip.utils.ReconcilerEnvVars;
 import org.junit.Test;
 import weka.classifiers.meta.Vote;
 import weka.classifiers.trees.RandomForest;
@@ -34,6 +35,7 @@ import java.util.ArrayList;
 import static org.junit.Assert.assertEquals;
 
 public class OrdinaryCveClassifierTest {
+
     @Test
     public void testResetClassifier() {
         OrdinaryCveClassifier ordinaryCveClassifier = new OrdinaryCveClassifier();
@@ -44,10 +46,7 @@ public class OrdinaryCveClassifierTest {
 
     @Test
     public void testPredictIncorrectNumAttr() {
-//        MyProperties propertiesNvip = new MyProperties();
-//        propertiesNvip = new PropertyLoader().loadConfigFile(propertiesNvip);
-//        String[] trainingDataInfo = propertiesNvip.getCveCharacterizationTrainingDataInfo();
-        String[] trainingDataInfo = {"characterization/", "AttackTheater.csv,Context.csv,ImpactMethod.csv,LogicalImpact.csv,Mitigation.csv"};
+        String[] trainingDataInfo = {ReconcilerEnvVars.getTrainingDataDir(), ReconcilerEnvVars.getTrainingData()};
         String trainingDataPath = trainingDataInfo[0];
         String trainingDataFiles = trainingDataInfo[1];
         String[] trainingDataFileArr = trainingDataFiles.split(",");

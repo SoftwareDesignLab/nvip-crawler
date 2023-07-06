@@ -1,8 +1,6 @@
 package edu.rit.se.nvip;
 
 import edu.rit.se.nvip.characterizer.CveCharacterizer;
-import edu.rit.se.nvip.filter.Filter;
-import edu.rit.se.nvip.filter.FilterFactory;
 import edu.rit.se.nvip.filter.FilterHandler;
 import edu.rit.se.nvip.filter.FilterReturn;
 import edu.rit.se.nvip.model.CompositeVulnerability;
@@ -12,11 +10,11 @@ import edu.rit.se.nvip.process.Processor;
 import edu.rit.se.nvip.process.ProcessorFactory;
 import edu.rit.se.nvip.reconciler.Reconciler;
 import edu.rit.se.nvip.reconciler.ReconcilerFactory;
+import edu.rit.se.nvip.utils.ReconcilerEnvVars;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class ReconcilerController {
     private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
@@ -25,14 +23,12 @@ public class ReconcilerController {
     private final FilterHandler filterHandler;
     private final List<Processor> processors = new ArrayList<>();
 
-    private static final Map<String, Object> characterizationVars = new HashMap<>();
-
-    public ReconcilerController(List<String> filterTypes, String reconcilerType, List<String> processorTypes, Map<String, Integer> knownCveSources) {
+    public ReconcilerController() {
         this.dbh = DatabaseHelper.getInstance();
-        filterHandler = new FilterHandler(filterTypes);
-        this.reconciler = ReconcilerFactory.createReconciler(reconcilerType);
-        this.reconciler.setKnownCveSources(knownCveSources);
-        for (String processorType : processorTypes) {
+        filterHandler = new FilterHandler(ReconcilerEnvVars.getFilterList());
+        this.reconciler = ReconcilerFactory.createReconciler(ReconcilerEnvVars.getReconcilerType());
+        this.reconciler.setKnownCveSources(ReconcilerEnvVars.getKnownSourceMap());
+        for (String processorType : ReconcilerEnvVars.getProcessorList()) {
             processors.add(ProcessorFactory.createProcessor(processorType));
         }
     }
@@ -64,13 +60,12 @@ public class ReconcilerController {
     }
 
     private List<CompositeVulnerability> characterizeCVEs(Set<CompositeVulnerability> crawledVulnerabilityList) {
-
         // characterize
         logger.info("Characterizing and scoring NEW CVEs...");
 
         try {
-            String[] trainingDataInfo = {"characterization/", "AttackTheater.csv,Context.csv,ImpactMethod.csv,LogicalImpact.csv,Mitigation.csv"};
-            logger.info("Setting NVIP_CVE_CHARACTERIZATION_LIMIT to {}", System.getenv("NVIP_CVE_CHARACTERIZATION_LIMIT"));
+            String[] trainingDataInfo = {ReconcilerEnvVars.getTrainingDataDir(), ReconcilerEnvVars.getTrainingData()};
+            logger.info("Setting NVIP_CVE_CHARACTERIZATION_LIMIT to {}", ReconcilerEnvVars.getCharacterizationLimit());
 
             CveCharacterizer cveCharacterizer = new CveCharacterizer(trainingDataInfo[0], trainingDataInfo[1], "ML",
                     "Vote");
@@ -78,9 +73,11 @@ public class ReconcilerController {
             List<CompositeVulnerability> cveList = new ArrayList<>(crawledVulnerabilityList);
 
             return cveCharacterizer.characterizeCveList(cveList,
-                   Integer.parseInt(System.getenv("NVIP_CVE_CHARACTERIZATION_LIMIT")));
+                   ReconcilerEnvVars.getCharacterizationLimit());
         }
-        catch (NullPointerException | NumberFormatException e) { logger.warn("Could not fetch NVIP_CVE_CHARACTERIZATION_TRAINING_DATA or NVIP_CVE_CHARACTERIZATION_TRAINING_DATA_DIR from env vars, defaulting to {}", System.getenv("NVIP_CVE_CHARACTERIZATION_LIMIT")); }
+        catch (NullPointerException | NumberFormatException e) {
+            logger.warn("Could not fetch NVIP_CVE_CHARACTERIZATION_TRAINING_DATA or NVIP_CVE_CHARACTERIZATION_TRAINING_DATA_DIR from env vars");
+        }
 
 
         return null;
