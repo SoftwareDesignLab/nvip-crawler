@@ -426,26 +426,27 @@ public class PatchFinder {
 				if(secondsWaiting % 60 == 0) {
 
 					// Determine number of CVEs processed
-					final int currNumCVEs = workQueue.size() + executor.getActiveCount(); // Current number of remaining CVEs
+					final int activeJobs = executor.getActiveCount();
+					final int currNumCVEs = workQueue.size() + activeJobs; // Current number of remaining CVEs
 					final int deltaNumCVEs = lastNumCVEs - currNumCVEs; // Change in CVEs since last progress update
 
 					// Sum number processed
 					numCVEsProcessed += deltaNumCVEs;
 
 					// Calculate rate, avg rate, and remaining time
-					final double rate = (double) deltaNumCVEs; // CVEs/min
 					final double avgRate = (double) numCVEsProcessed / ((double) secondsWaiting / 60); // CVEs/sec
-					final double remainingAvgTime = currNumCVEs / rate; // CVEs / CVEs/min = remaining mins
+					final double remainingAvgTime = currNumCVEs / avgRate; // CVEs / CVEs/min = remaining mins
 
 					// Log stats
 					logger.info(
-							"{} out of {} CVEs processed (SP: {} CVEs/min | AVG SP: {} CVEs/min | Est time remaining: {} minutes ({} seconds))...",
+							"{} out of {} CVEs done (SP: {} CVEs/min | AVG SP: {} CVEs/min | Est time remaining: {} minutes ({} seconds) | {} active jobs)...",
 							totalCVEsToProcess - currNumCVEs,
 							totalCVEsToProcess,
-							Math.floor(rate * 100) / 100,
+							Math.floor((double) deltaNumCVEs * 100) / 100,
 							Math.floor(avgRate * 100) / 100,
 							Math.floor(remainingAvgTime * 100) / 100,
-							Math.floor(remainingAvgTime * 60 * 100) / 100
+							Math.floor(remainingAvgTime * 60 * 100) / 100,
+							activeJobs
 					);
 
 					// Update lastNumCVEs
