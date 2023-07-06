@@ -80,7 +80,6 @@ public class FilterMetrics {
             logger.error("Invalid directory path");
             return;
         }
-        applyFilters();
         List<File> jsonFiles = findJsonFiles(directory); //gets the Json files
         for (File file : jsonFiles) { //for each jsonFile
             Set<RawVulnerability> rawVulns = processJSONFiles(file);
@@ -89,6 +88,7 @@ public class FilterMetrics {
             runs.add(run);
             runId++;
         }
+        applyFilters();
     }
 
     /**
