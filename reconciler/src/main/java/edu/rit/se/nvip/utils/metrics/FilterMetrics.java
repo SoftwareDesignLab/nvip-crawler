@@ -3,7 +3,11 @@ package edu.rit.se.nvip.utils.metrics;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import edu.rit.se.nvip.filter.Filter;
+import edu.rit.se.nvip.filter.FilterHandler;
+import edu.rit.se.nvip.filter.FilterReturn;
 import edu.rit.se.nvip.model.RawVulnerability;
+import jdk.internal.util.SystemProps;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import java.text.ParseException;
@@ -19,6 +23,8 @@ import java.util.*;
 
 public class FilterMetrics {
     private List<CrawlerRun> runs = new ArrayList<>();
+    private FilterHandler filterHandler = new FilterHandler();
+    private FilterHandler.FilterScope filterScope = FilterHandler.FilterScope.ALL;
     private static final Logger logger = LogManager.getLogger(FilterMetrics.class.getSimpleName());
 
     public static class FilterStats {
@@ -70,7 +76,6 @@ public class FilterMetrics {
     }
 
     public FilterMetrics(String directoryPath) {
-
         int runId = 1;
         File directory = new File(directoryPath); //grabs the directory from the directoryPath
         if (!directory.isDirectory()) { //checks to make sure the directory exists
@@ -96,8 +101,44 @@ public class FilterMetrics {
 
         }
     }
+
+    /**
+     * Constructor with args for using a custom set of filters
+     * @param directoryPath path of directory containing crawler output jsons
+     * @param handler FilterHandler object with updated custom filters var
+     * @param scope FilterScope for defining scope of filters to use (custom, all, local, remote)
+     */
+    public FilterMetrics(String directoryPath, FilterHandler handler, FilterHandler.FilterScope scope) {
+
+        int runId = 1;
+        File directory = new File(directoryPath); //grabs the directory from the directoryPath
+        if (!directory.isDirectory()) { //checks to make sure the directory exists
+            logger.error("Invalid directory path");
+            return;
+        }
+
+        filterHandler = handler;
+        filterScope = scope;
+
+        List<File> jsonFiles = findJsonFiles(directory); //gets the Json files
+        for (File file : jsonFiles) { //for each jsonFile
+
+            Set<RawVulnerability> rawVulns = processJSONFiles(file);
+
+
+            Date date = extractDateFromFilename(file.getName()); //gets the date from the file name
+
+
+            CrawlerRun run = new CrawlerRun(rawVulns, runId, date); //creates new run from json
+
+
+            runs.add(run);
+            runId++;
+
+
+        }
+    }
     // todo also need versions of all of these with a parser type arg, where only results for that parser are returned
-    // todo also need versions of all of these that take a filter setting arg (all, local, individual)
 
     public static Date extractDateFromFilename(String filename) {
         String dateString = filename.substring(filename.lastIndexOf("_") + 1, filename.lastIndexOf(".")); //gets the date portion of the file
@@ -191,6 +232,7 @@ public class FilterMetrics {
     public Map<CrawlerRun, Integer> newVulnsPerRun() {
 
         Map<CrawlerRun, Integer> runMap = new HashMap<>(); //Map of runs to number of new raw vulns
+        Map<Integer, RawVulnerability> foundVulns = new HashMap<>();
         Set<RawVulnerability> rawVulns = new HashSet<>(); //all raw vulns that have been found
 
         for(CrawlerRun run: runs){
@@ -198,9 +240,9 @@ public class FilterMetrics {
 
             //for each raw vuln that exists in the run
             for(RawVulnerability vuln : run.getVulns()){
-                //if the raw vuln is new: meaning it doesn't exist in any previous run and the raw_description_ids are different
-                if(!rawVulns.contains(vuln)){
-                    rawVulns.add(vuln); //add the new vuln to the list of rawVulns that exists
+                //a raw vuln is new if its id (integer, assigned by database upon crawler insertion) hasn't appeared in a previous run
+                if(!foundVulns.containsKey(vuln.getId())){
+                    foundVulns.put(vuln.getId(), vuln); //add the new vuln to the list of rawVulns that exists
                     vulns++; //increase number of new vulns
                 }
             }
@@ -258,6 +300,8 @@ public class FilterMetrics {
 
             FilterStats filterStats = new FilterStats(); //create a new stat tracker
 
+            applyFilters(run.getVulns()); //apply filters to vulnerabilities
+
             for(RawVulnerability vuln : run.getVulns()){ //for each vuln in the run
 
                 if (vuln.getFilterStatus() == RawVulnerability.FilterStatus.UNEVALUATED || vuln.getFilterStatus() == RawVulnerability.FilterStatus.NEW){ //if it's NEW or UNEVALUATED we consider it not filtered
@@ -308,5 +352,25 @@ public class FilterMetrics {
         }
 
         return proportions;
+    }
+
+    /**
+     * Helper method for setting a new list of custom filters
+     * @param customFilters list of Filters
+     */
+    public void setCustomFilters(List<Filter> customFilters) {
+        filterHandler.setCustomFilters(customFilters);
+    }
+
+    public void setFilterScope(FilterHandler.FilterScope filterScope) {
+        this.filterScope = filterScope;
+    }
+
+    /**
+     * Helper method for applying set of filters to a set of RawVulnerabilities
+     * @param rawVulns set of RawVulnerabilities to be filtered
+     */
+    private void applyFilters(Set<RawVulnerability> rawVulns) {
+        filterHandler.runFilters(rawVulns, filterScope, false);
     }
 }
