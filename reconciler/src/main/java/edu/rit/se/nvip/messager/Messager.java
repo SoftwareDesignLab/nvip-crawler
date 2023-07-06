@@ -23,7 +23,14 @@ public class Messager {
     private ConnectionFactory factory;
 
     public Messager(){
+        this.factory = new ConnectionFactory();
+        factory.setHost("localhost");
+        factory.setUsername("guest");
+        factory.setPassword("guest");
+    }
 
+    public void setFactory(ConnectionFactory factory) {
+        this.factory = factory;
     }
 
     public List<String> waitForCrawlerMessage() throws Exception {
