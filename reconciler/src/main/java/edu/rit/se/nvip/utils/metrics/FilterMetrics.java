@@ -106,7 +106,6 @@ public class FilterMetrics {
         }
         filterHandler = handler;
         filterScope = scope;
-        applyFilters();
         List<File> jsonFiles = findJsonFiles(directory); //gets the Json files
         for (File file : jsonFiles) { //for each jsonFile
             Set<RawVulnerability> rawVulns = processJSONFiles(file);
@@ -115,6 +114,7 @@ public class FilterMetrics {
             runs.add(run);
             runId++;
         }
+        applyFilters();
     }
     // todo also need versions of all of these with a parser type arg, where only results for that parser are returned
 
