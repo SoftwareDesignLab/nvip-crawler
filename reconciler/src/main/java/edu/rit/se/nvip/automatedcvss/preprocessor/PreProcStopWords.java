@@ -77,6 +77,11 @@ public class PreProcStopWords implements PreProcessor {
 		}
 	}
 
+	/**
+	 *
+	 * @param next
+	 * @return
+	 */
 	public PreProcessor setNextPreProcessor(PreProcessor next) {
 		// Integrity checks
 		if (next == null)
@@ -88,6 +93,11 @@ public class PreProcStopWords implements PreProcessor {
 		return this;
 	}
 
+	/**
+	 *
+	 * @param text
+	 * @return
+	 */
 	public List<String> process(String text) {
 		List<String> results = new ArrayList<>();
 

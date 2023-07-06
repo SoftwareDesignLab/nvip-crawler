@@ -119,6 +119,10 @@ public class DatabaseHelper {
         return dataSource.getConnection();
     }
 
+    /**
+     * Tests the database connection
+     * @return
+     */
     public boolean testDbConnection() {
         try {
             Connection conn = dataSource.getConnection();
@@ -133,6 +137,10 @@ public class DatabaseHelper {
         return false;
     }
 
+    /**
+     * Gets jobs
+     * @return
+     */
     public Set<String> getJobs() {
         Set<String> cveIds = new HashSet<>();
         try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(GET_JOBS)) {
@@ -148,6 +156,11 @@ public class DatabaseHelper {
         return cveIds;
     }
 
+    /**
+     * Gets a set of Raw Vulnerabilities
+     * @param cveId
+     * @return
+     */
     public Set<RawVulnerability> getRawVulnerabilities(String cveId) {
         Set<RawVulnerability> rawVulns = new HashSet<>();
         try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(GET_RAW_BY_CVE_ID)) {
@@ -165,6 +178,10 @@ public class DatabaseHelper {
         return rawVulns;
     }
 
+    /**
+     *
+     * @param rejectedRawVulns
+     */
     public void updateFilterStatus(Set<RawVulnerability> rejectedRawVulns) {
         try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(UPDATE_FILTER_STATUS)) {
             for (RawVulnerability vuln : rejectedRawVulns) {

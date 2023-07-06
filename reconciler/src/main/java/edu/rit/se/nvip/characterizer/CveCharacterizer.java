@@ -224,6 +224,11 @@ public class CveCharacterizer {
 		return prediction;
 	}
 
+	/**
+	 * Gets the data from the table as a Hashmap
+	 * @param enums
+	 * @return
+	 */
 	public Map<String, Integer> getTableDataAsHashMap(Enum<?>[] enums) {
 		Map<String, Integer> dataMap = new HashMap<>();
 
@@ -235,6 +240,7 @@ public class CveCharacterizer {
 
 		return dataMap;
 	}
+
 	public Map<String, Integer> getCvssSeverityLabels() {
 		return getTableDataAsHashMap(CVSSSeverity.values());
 	}

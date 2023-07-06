@@ -42,6 +42,11 @@ public class PreProcCodeTermExtractor implements PreProcessor {
 	// Next in the chain of command
 	PreProcessor _next;
 
+	/**
+	 *
+	 * @param content
+	 * @return
+	 */
 	public List<String> process(String content) {
 		List<String> result = new ArrayList<>();
 
@@ -62,6 +67,11 @@ public class PreProcCodeTermExtractor implements PreProcessor {
 		return result;
 	}
 
+	/**
+	 *
+	 * @param next
+	 * @return
+	 */
 	public PreProcessor setNextPreProcessor(PreProcessor next) {
 		// Integrity checks
 		if (next == null) {
