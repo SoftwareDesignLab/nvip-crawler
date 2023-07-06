@@ -82,23 +82,14 @@ public class FilterMetrics {
             logger.error("Invalid directory path");
             return;
         }
-
+        applyFilters();
         List<File> jsonFiles = findJsonFiles(directory); //gets the Json files
         for (File file : jsonFiles) { //for each jsonFile
-
             Set<RawVulnerability> rawVulns = processJSONFiles(file);
-
-
             Date date = extractDateFromFilename(file.getName()); //gets the date from the file name
-
-
             CrawlerRun run = new CrawlerRun(rawVulns, runId, date); //creates new run from json
-
-
             runs.add(run);
             runId++;
-
-
         }
     }
 
@@ -109,33 +100,22 @@ public class FilterMetrics {
      * @param scope FilterScope for defining scope of filters to use (custom, all, local, remote)
      */
     public FilterMetrics(String directoryPath, FilterHandler handler, FilterHandler.FilterScope scope) {
-
         int runId = 1;
         File directory = new File(directoryPath); //grabs the directory from the directoryPath
         if (!directory.isDirectory()) { //checks to make sure the directory exists
             logger.error("Invalid directory path");
             return;
         }
-
         filterHandler = handler;
         filterScope = scope;
-
+        applyFilters();
         List<File> jsonFiles = findJsonFiles(directory); //gets the Json files
         for (File file : jsonFiles) { //for each jsonFile
-
             Set<RawVulnerability> rawVulns = processJSONFiles(file);
-
-
             Date date = extractDateFromFilename(file.getName()); //gets the date from the file name
-
-
             CrawlerRun run = new CrawlerRun(rawVulns, runId, date); //creates new run from json
-
-
             runs.add(run);
             runId++;
-
-
         }
     }
     // todo also need versions of all of these with a parser type arg, where only results for that parser are returned
@@ -230,127 +210,42 @@ public class FilterMetrics {
     Where "new" means that the tuple (CVE_ID, Description, Source_URL) doesn't match any entries from prior runs
      */
     public Map<CrawlerRun, Integer> newVulnsPerRun() {
-
         Map<CrawlerRun, Integer> runMap = new HashMap<>(); //Map of runs to number of new raw vulns
-        Map<Integer, RawVulnerability> foundVulns = new HashMap<>();
-        Set<RawVulnerability> rawVulns = new HashSet<>(); //all raw vulns that have been found
-
+        Set<RawVulnerability> foundVulns = new HashSet<>();
         for(CrawlerRun run: runs){
-            int vulns = 0; //initializing number of vulns that were found
-
-            //for each raw vuln that exists in the run
-            for(RawVulnerability vuln : run.getVulns()){
-                //a raw vuln is new if its id (integer, assigned by database upon crawler insertion) hasn't appeared in a previous run
-                if(!foundVulns.containsKey(vuln.getId())){
-                    foundVulns.put(vuln.getId(), vuln); //add the new vuln to the list of rawVulns that exists
-                    vulns++; //increase number of new vulns
-                }
-            }
-            runMap.put(run, vulns);//add the run and the amount of new vulns that were found to the map
+            runMap.put(run, run.newVulnsPerRun(foundVulns));//add the run and the amount of new vulns that were found to the map
         }
-
         return runMap;
     }
 
     public List<Map<RawVulnerability.SourceType, Integer>> sourceTypeDistribution() {
-
         List<Map<RawVulnerability.SourceType, Integer>> typeDistributionMap = new ArrayList<>();
         for(CrawlerRun run: runs) {
-            Map<RawVulnerability.SourceType, Integer> map = new HashMap<>(); // for every run make a new map
-            int cna = 0; //initialize source variables
-            int sa = 0;
-            int third_party = 0;
-            int bug_bounty = 0;
-            int other = 0;
-            //for each raw vuln that exists in the run
-            for (RawVulnerability vuln : run.getVulns()) {
-                //get the source type and increase the value of that source type
-                if (vuln.getSourceType() == RawVulnerability.SourceType.CNA){
-                    cna++;
-                }else if (vuln.getSourceType() == RawVulnerability.SourceType.SA){
-                    sa++;
-                }else if (vuln.getSourceType() == RawVulnerability.SourceType.THIRD_PARTY) {
-                    third_party++;
-                }else if (vuln.getSourceType() == RawVulnerability.SourceType.BUG_BOUNTY){
-                    bug_bounty++;
-                }else if (vuln.getSourceType() == RawVulnerability.SourceType.OTHER){
-                    other++;
-                }
-            }
-
-            //put the values in the map SourceType, Amount of sources from that type
-            map.put(RawVulnerability.SourceType.CNA, cna);
-            map.put(RawVulnerability.SourceType.SA, sa);
-            map.put(RawVulnerability.SourceType.THIRD_PARTY, third_party);
-            map.put(RawVulnerability.SourceType.BUG_BOUNTY, bug_bounty);
-            map.put(RawVulnerability.SourceType.OTHER, other);
-
-            //add the map to the list of maps (array of maps)
+            Map<RawVulnerability.SourceType, Integer> map = run.sourceTypeDistribution();
             typeDistributionMap.add(map);
         }
-
         return typeDistributionMap;
     }
 
     public Map<CrawlerRun, FilterStats> numFiltered() {
-
         Map<CrawlerRun, FilterStats> filteredStats = new HashMap<>(); //Map of runs to its filter stats meaning total number of: notFiltered, passedFilters, failedFilters, totalVulns, totalFiltered
-
         for (CrawlerRun run : runs){ //for each run
-
-            FilterStats filterStats = new FilterStats(); //create a new stat tracker
-
-            applyFilters(run.getVulns()); //apply filters to vulnerabilities
-
-            for(RawVulnerability vuln : run.getVulns()){ //for each vuln in the run
-
-                if (vuln.getFilterStatus() == RawVulnerability.FilterStatus.UNEVALUATED || vuln.getFilterStatus() == RawVulnerability.FilterStatus.NEW){ //if it's NEW or UNEVALUATED we consider it not filtered
-                    filterStats.increaseNotFiltered();
-                }
-                else if (vuln.getFilterStatus() == RawVulnerability.FilterStatus.PASSED){ //if it passed then it filtered
-                    filterStats.increasePassedFilters();
-                }
-                else if (vuln.getFilterStatus() == RawVulnerability.FilterStatus.FAILED){ //if it failed then it failed to fully filter
-                    filterStats.increaseFailedFilters();
-                }
-
-                if (vuln.isFiltered()){
-                    filterStats.increaseTotalFiltered(); //total amount filtered at all
-                }
-
-                filterStats.increaseTotalVulns(); //total amount of vulns
-            }
-
+            FilterStats filterStats = run.numFiltered();
             filteredStats.put(run, filterStats);
         }
-
         return filteredStats;
     }
 
     public Map<CrawlerRun, Double> proportionPassed() {
-
         Map<CrawlerRun, Double> proportions = new HashMap<>(); //map of runs to percentages
         if (runs == null){ //case for if method is called and runs are not properly initialized
             logger.error("There are no Crawler Runs found");
             return null;
         }
-
         Map<CrawlerRun, FilterStats> runMap = numFiltered(); //gets filter stats used to get proportions
-
         for (CrawlerRun run : runMap.keySet()){ // for every run
-
-            FilterStats filterStats = runMap.get(run); //get the filter stats for every run
-
-            if (filterStats.getTotalFiltered() == 0){ //case for if there are no vulnerabilities that were filtered
-                logger.error("Trying to divide by 0 because Total Vulns filtered is 0");
-                return null;
-            }
-
-            double proportion = (double) filterStats.getPassedFilters() / filterStats.getTotalFiltered(); //get the proportion of passed to total vulns
-
-            proportions.put(run, proportion); //map each run to the proportion of passed filtered vulns
+            proportions.put(run, run.proportionPassed()); //map each run to the proportion of passed filtered vulns
         }
-
         return proportions;
     }
 
@@ -360,17 +255,35 @@ public class FilterMetrics {
      */
     public void setCustomFilters(List<Filter> customFilters) {
         filterHandler.setCustomFilters(customFilters);
-    }
-
-    public void setFilterScope(FilterHandler.FilterScope filterScope) {
-        this.filterScope = filterScope;
+        resetFilterStatus();
+        applyFilters();
     }
 
     /**
-     * Helper method for applying set of filters to a set of RawVulnerabilities
-     * @param rawVulns set of RawVulnerabilities to be filtered
+     * Helper method for setting a new filter scope
+     * @param filterScope new filter scope
      */
-    private void applyFilters(Set<RawVulnerability> rawVulns) {
-        filterHandler.runFilters(rawVulns, filterScope, false);
+    public void setFilterScope(FilterHandler.FilterScope filterScope) {
+        this.filterScope = filterScope;
+        resetFilterStatus();
+        applyFilters();
+    }
+
+    /**
+     * Resets all RawVulnerabilities' filter status to NEW
+     */
+    private void resetFilterStatus() {
+        for (CrawlerRun run: getRuns()) {
+            run.resetFilterStatus();
+        }
+    }
+
+    /**
+     * Helper method for applying set of filters to all sets of RawVulns in current CrawlerRuns
+     */
+    private void applyFilters() {
+        for (CrawlerRun run: getRuns()) {
+            filterHandler.runFilters(run.getVulns(), filterScope, false);
+        }
     }
 }
