@@ -30,7 +30,7 @@ public class PatchFinderTest {
             assertTrue(new File(PatchFinder.clonePath).exists());
 
             //check the patch commits
-            assertEquals(24, PatchFinder.getPatchCommits().size()/2);
+            assertEquals(24, PatchFinder.getPatchCommits().size());
 
             // Add more assertions based on your requirements
         } catch (IOException e1) {
@@ -43,7 +43,7 @@ public class PatchFinderTest {
         PatchFinder.fetchEnvVars();
 
         // Assert that the properties have been set correctly
-        assertEquals(10, PatchFinder.cveLimit);
+        assertEquals(20, PatchFinder.cveLimit);
         assertEquals(10, PatchFinder.maxThreads);
         assertEquals(1, PatchFinder.cvesPerThread);
         assertEquals("src/main/resources/patch-repos", PatchFinder.clonePath);
