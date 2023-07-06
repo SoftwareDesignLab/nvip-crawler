@@ -4,7 +4,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
@@ -22,13 +21,11 @@ public class ReconcilerEnvVars extends Properties {
     private static List<String> processorList;
     private static List<String> knownSources;
     private static String openAIKey;
-    private static String nvipDataDir;
     private static String trainingDataDir;
     private static String trainingData;
     private static int characterizationLimit;
     private static String characterizationApproach;
     private static String characterizationMethod;
-    private static String dbType;
     private static String dataDir;
 
     /**
@@ -101,9 +98,6 @@ public class ReconcilerEnvVars extends Properties {
                 case OPENAI_KEY:
                     openAIKey = addEnvvarString(envName, envVar, "sk-xxxxxxxxxxxxx");
                     break;
-                case NVIP_DATA_DIR:
-                    nvipDataDir = addEnvvarString(envName, envVar, "src/main/java/edu/rit/se/nvip");
-                    break;
                 case NVIP_CVE_CHARACTERIZATION_TRAINING_DATA_DIR:
                     trainingDataDir = addEnvvarString(envName, envVar, "characterization/");
                     break;
@@ -118,9 +112,6 @@ public class ReconcilerEnvVars extends Properties {
                     break;
                 case NVIP_CHARACTERIZATION_METHOD:
                     characterizationMethod = addEnvvarString(envName, envVar, "Vote");
-                    break;
-                case DB_TYPE:
-                    dbType = addEnvvarString(envName, envVar, "mysql");
                     break;
                 case DATA_DIR:
                     dataDir = addEnvvarString(envName, envVar, "nvip_data");
@@ -199,10 +190,6 @@ public class ReconcilerEnvVars extends Properties {
         return openAIKey;
     }
 
-    public static String getNvipDataDir() {
-        return nvipDataDir;
-    }
-
     public static String getTrainingDataDir() {
         return trainingDataDir;
     }
@@ -221,10 +208,6 @@ public class ReconcilerEnvVars extends Properties {
 
     public static String getCharacterizationMethod() {
         return characterizationMethod;
-    }
-
-    public static String getDbType() {
-        return dbType;
     }
 
     public static String getDataDir() {
