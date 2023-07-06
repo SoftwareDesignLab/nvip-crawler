@@ -64,6 +64,7 @@ public class PatchUrlFinder {
 	 * @throws InterruptedException
 	 */
 	public void parseMassURLs(Map<String, ArrayList<String>> possiblePatchUrls, Map<String, CpeGroup> affectedProducts, int cveLimit, boolean isStale) throws IOException, InterruptedException {
+		int cachedUrlCount = 0, foundCount = 0;
 		for (Map.Entry<String, CpeGroup> entry : affectedProducts.entrySet()) {
 			final long entryStart = System.currentTimeMillis();
 			final String cveId = entry.getKey().trim();
@@ -72,7 +73,9 @@ public class PatchUrlFinder {
 			// Skip entries that already have values (only if refresh is not needed)
 			if(!isStale) {
 				if(possiblePatchUrls.containsKey(cveId)) {
-					logger.info("Found {} existing & fresh possible sources for CVE {}, skipping url parsing...", possiblePatchUrls.get(cveId).size(), cveId);
+//					logger.info("Found {} existing & fresh possible sources for CVE {}, skipping url parsing...", possiblePatchUrls.get(cveId).size(), cveId);
+					foundCount += possiblePatchUrls.get(cveId).size();
+					cachedUrlCount++;
 					continue;
 				}
 			} else if(!possiblePatchUrls.containsKey(cveId))
@@ -98,6 +101,7 @@ public class PatchUrlFinder {
 			long entryDelta = (System.currentTimeMillis() - entryStart) / 1000;
 			logger.info("Found {} potential patch sources for CVE '{}' in {} seconds", urls.size(), cveId, entryDelta);
 		}
+		logger.info("Found {} existing & fresh possible sources for {} CVEs, skipping url parsing...", foundCount, cachedUrlCount);
 	}
 
 	/**
