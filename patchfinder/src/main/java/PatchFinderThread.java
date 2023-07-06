@@ -200,30 +200,34 @@ public class PatchFinderThread implements Runnable {
 			final Elements firstPageCommitObjects = getCommitObjects(baseCommitsUrl);
 
 			// Ensure at least one commit was found
-			if(firstPageCommitObjects.size() == 0) throw new IOException("Failed to extract commits from page data");
+			if (firstPageCommitObjects.size() == 0) {
+				throw new IOException("Failed to extract commits from page data");
+			}
 
 			// Extract the head commit SHA for pagination
 			final String[] headCommitParts = firstPageCommitObjects.first().attr("href").split("/");
-			final String headCommitEndpoint = "?after=" + headCommitParts[headCommitParts.length - 1];
+			final String headCommitEndpoint = headCommitParts[headCommitParts.length - 1];
 
 			// Parse first page objects
 			parseCommitObjects(foundPatchCommits, cve, firstPageCommitObjects);
 
-			// Generate list of page urls to query with head commit SHA
+			// Generate list of page URLs to query with head commit SHA
 			final List<String> pageUrls = new ArrayList<>();
-			for (int i = 35; i < numPags * 35; i += 35) pageUrls.add(baseCommitsUrl + headCommitEndpoint + "+" + i);
+			for (int i = 2; i <= numPags; i++) {
+				pageUrls.add(baseCommitsUrl + "?page=" + i + "&after=" + headCommitEndpoint);
+			}
 
 			for (String url : pageUrls) {
-				// Extract commit objects from url
+				// Extract commit objects from URL
 				final Elements commitObjects = getCommitObjects(url);
 
 				// Ensure at least one object was found
-				if(commitObjects.size() == 0) {
-					logger.warn("Failed to find commit objects from url '{}'", url);
+				if (commitObjects.size() == 0) {
+					logger.warn("Failed to find commit objects from URL '{}'", url);
 					continue;
 				}
 
-				// Iterate over found commitObjects, then build and store ParseCommit objects
+				// Iterate over found commit objects, then build and store PatchCommit objects
 				parseCommitObjects(foundPatchCommits, cve, commitObjects);
 			}
 

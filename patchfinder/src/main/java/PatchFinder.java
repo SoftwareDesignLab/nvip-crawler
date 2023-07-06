@@ -194,7 +194,11 @@ public class PatchFinder {
 
 		// Determine if urls dict needs to be refreshed
 		final boolean isStale = urlDictLastCompilationDate.until(Instant.now(), ChronoUnit.DAYS) >= 1;
-		// TODO: Add offset to avoid repeating the same run?
+		final int offset = PatchFinder.getPatchCommits().size();
+		if (!isStale && offset > 0) {
+			logger.info("Skipping patch URL parsing. Use offset to avoid repeating the same run.");
+			return;
+		}
 		// Parse new urls
 		patchURLFinder.parseMassURLs(possiblePatchURLs, affectedProducts, cveLimit, isStale);
 		urlCount = possiblePatchURLs.values().stream().map(ArrayList::size).reduce(0, Integer::sum);
@@ -248,14 +252,14 @@ public class PatchFinder {
 			try {
 				// Ensure patch commit does not already exist
 				final String commitUrl = patchCommit.getCommitUrl() + "/commit/" + patchCommit.getCommitId();
-				if(!existingCommitUrls.contains(commitUrl)) {
+				if (!existingCommitUrls.contains(commitUrl)) {
 					databaseHelper.insertPatchCommit(
 							sourceUrlId, commitUrl, patchCommit.getCommitDate(),
 							patchCommit.getCommitMessage(), patchCommit.getUniDiff(),
 							patchCommit.getTimeline(), patchCommit.getTimeToPatch(), patchCommit.getLinesChanged()
 					);
 				} else {
-//					logger.warn("Failed to insert patch commit, as it was already found in the db");
+					logger.warn("Failed to insert patch commit, as it already exists in the database");
 					existingInserts++;
 				}
 			} catch (IllegalArgumentException e) {
