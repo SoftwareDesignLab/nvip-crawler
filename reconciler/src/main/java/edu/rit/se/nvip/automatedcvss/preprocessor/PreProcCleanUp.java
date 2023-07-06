@@ -48,6 +48,11 @@ public final class PreProcCleanUp implements PreProcessor {
 	public PreProcCleanUp() {
 	}
 
+	/**
+	 *
+	 * @param next
+	 * @return
+	 */
 	public PreProcessor setNextPreProcessor(PreProcessor next) {
 		// Integrity checks
 		if (next == null) {
@@ -58,6 +63,11 @@ public final class PreProcCleanUp implements PreProcessor {
 		return this;
 	}
 
+	/**
+	 *
+	 * @param text
+	 * @return
+	 */
 	public List<String> process(String text) {
 		String initialText = text;
 		List<String> results = new ArrayList<>();

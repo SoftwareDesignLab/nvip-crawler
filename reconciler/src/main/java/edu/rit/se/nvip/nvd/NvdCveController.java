@@ -285,6 +285,10 @@ public class NvdCveController {
 		return NvdCves;
 	}
 
+	/**
+	 * Updates Nvd Data Table based on string URL
+	 * @param url
+	 */
 	public void updateNvdDataTable(String url) {
 		// fetch the CVEs from NVD
 		Set<NvdVulnerability> NvdCves = fetchCvesFromNvd(url.replaceAll("<StartDate>", this.startDate)
