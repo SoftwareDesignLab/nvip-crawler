@@ -200,6 +200,21 @@ jobs:
         with:
             check_name: PNE test Report
 
+      - name: Generate Code Coverage Report
+        run: |
+          cd productnameextractor
+          mvn jacoco:report
+
+      - name: Add Coverage Report to PR
+        id: jacoco
+        uses: madrapps/jacoco-report@v1.3
+        with:
+          paths: ${{ github.workspace }}/productnameextractor/target/site/jacoco/jacoco.xml
+          token: ${{ secrets.GITHUB_TOKEN }}
+          min-coverage-overall: 40
+          min-coverage-changed-files: 60
+          title: Product Extractor Code Coverage Report
+
   # Deploy main backend project to container registry
   deploy-backend:
     runs-on: ubuntu-latest

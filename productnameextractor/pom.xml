@@ -16,6 +16,7 @@
     <!-- Added to enforce the usage of https -->
     <build>
         <plugins>
+
             <plugin>
                 <!--Copy Dependencies into nvip_lib Folder for Docker User-->
                 <artifactId>maven-dependency-plugin</artifactId>
