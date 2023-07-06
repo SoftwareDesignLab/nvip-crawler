@@ -194,7 +194,11 @@ public class PatchFinder {
 
 		// Determine if urls dict needs to be refreshed
 		final boolean isStale = urlDictLastCompilationDate.until(Instant.now(), ChronoUnit.DAYS) >= 1;
-		// TODO: Add offset to avoid repeating the same run?
+		final int offset = PatchFinder.getPatchCommits().size();
+		if (!isStale && offset > 0) {
+			logger.info("Skipping patch URL parsing. Use offset to avoid repeating the same run.");
+			return;
+		}
 		// Parse new urls
 		patchURLFinder.parseMassURLs(possiblePatchURLs, affectedProducts, cveLimit, isStale);
 		urlCount = possiblePatchURLs.values().stream().map(ArrayList::size).reduce(0, Integer::sum);
@@ -248,14 +252,14 @@ public class PatchFinder {
 			try {
 				// Ensure patch commit does not already exist
 				final String commitUrl = patchCommit.getCommitUrl() + "/commit/" + patchCommit.getCommitId();
-				if(!existingCommitUrls.contains(commitUrl)) {
+				if (!existingCommitUrls.contains(commitUrl)) {
 					databaseHelper.insertPatchCommit(
 							sourceUrlId, commitUrl, patchCommit.getCommitDate(),
 							patchCommit.getCommitMessage(), patchCommit.getUniDiff(),
 							patchCommit.getTimeline(), patchCommit.getTimeToPatch(), patchCommit.getLinesChanged()
 					);
 				} else {
-//					logger.warn("Failed to insert patch commit, as it was already found in the db");
+					logger.warn("Failed to insert patch commit, as it already exists in the database");
 					existingInserts++;
 				}
 			} catch (IllegalArgumentException e) {
@@ -422,26 +426,27 @@ public class PatchFinder {
 				if(secondsWaiting % 60 == 0) {
 
 					// Determine number of CVEs processed
-					final int currNumCVEs = workQueue.size() + executor.getActiveCount(); // Current number of remaining CVEs
+					final int activeJobs = executor.getActiveCount();
+					final int currNumCVEs = workQueue.size() + activeJobs; // Current number of remaining CVEs
 					final int deltaNumCVEs = lastNumCVEs - currNumCVEs; // Change in CVEs since last progress update
 
 					// Sum number processed
 					numCVEsProcessed += deltaNumCVEs;
 
 					// Calculate rate, avg rate, and remaining time
-					final double rate = (double) deltaNumCVEs; // CVEs/min
 					final double avgRate = (double) numCVEsProcessed / ((double) secondsWaiting / 60); // CVEs/sec
-					final double remainingAvgTime = currNumCVEs / rate; // CVEs / CVEs/min = remaining mins
+					final double remainingAvgTime = currNumCVEs / avgRate; // CVEs / CVEs/min = remaining mins
 
 					// Log stats
 					logger.info(
-							"{} out of {} CVEs processed (SP: {} CVEs/min | AVG SP: {} CVEs/min | Est time remaining: {} minutes ({} seconds))...",
+							"{} out of {} CVEs done (SP: {} CVEs/min | AVG SP: {} CVEs/min | Est time remaining: {} minutes ({} seconds) | {} active jobs)...",
 							totalCVEsToProcess - currNumCVEs,
 							totalCVEsToProcess,
-							Math.floor(rate * 100) / 100,
+							Math.floor((double) deltaNumCVEs * 100) / 100,
 							Math.floor(avgRate * 100) / 100,
 							Math.floor(remainingAvgTime * 100) / 100,
-							Math.floor(remainingAvgTime * 60 * 100) / 100
+							Math.floor(remainingAvgTime * 60 * 100) / 100,
+							activeJobs
 					);
 
 					// Update lastNumCVEs
