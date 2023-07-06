@@ -113,9 +113,8 @@ public class PatchUrlFinder {
 	 */
 	private ArrayList<String> parseURL(String vendor, String product) throws IOException, InterruptedException {
 		ArrayList<String> newAddresses = new ArrayList<>();
-		
-		// TODO: Fix this
-		// Parse keywords from CPE to create links for github, bitbucket and gitlab
+
+		// Parse keywords from CPE to create links for GitHub, Bitbucket, and GitLab
 		// Also checks if the created URL is already used
 		if (!vendor.equals("*")) {
 			HashSet<String> addresses = initializeAddresses(vendor);
@@ -124,26 +123,26 @@ public class PatchUrlFinder {
 					address += product;
 				}
 
-				// Check the http connections for each URL,
+				// Check the HTTP connections for each URL,
 				// If any successful, add them to the list to be stored
-				newAddresses = testConnection(address);
+				ArrayList<String> connectedAddresses = testConnection(address);
+				newAddresses.addAll(connectedAddresses);
 			}
-
 		} else if (!product.equals("*")) {
 			for (String base : PatchFinder.addressBases) {
 				String address = base + product;
-				newAddresses = testConnection(address);
+				ArrayList<String> connectedAddresses = testConnection(address);
+				newAddresses.addAll(connectedAddresses);
 			}
 		}
 
 		// If no successful URLs, try an advanced search with
-		// GitHub's search feature to double check
+		// GitHub's search feature to double-check
 		if (newAddresses.isEmpty()) {
 			newAddresses = advanceParseSearch(vendor, product);
 		}
 
 		return newAddresses;
-		
 	}
 
 	/**

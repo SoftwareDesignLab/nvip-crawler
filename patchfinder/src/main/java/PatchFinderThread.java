@@ -351,7 +351,6 @@ public class PatchFinderThread implements Runnable {
 			// Get DOM and extract commit message container elements
 			final Document DOM = Jsoup.connect(url).get();
 
-
 			// Extract raw message containers
 			final Elements commitElements = DOM.select("div.TimelineItem").select("li");
 			final Elements messageContainers = commitElements.select("div.js-details-container");
@@ -360,10 +359,6 @@ public class PatchFinderThread implements Runnable {
 			// Iterate over found message containers
 			for (int i = 0, stop = messageContainers.size(); i < stop; i++) {
 				final Element container = messageContainers.get(i);
-
-				//TODO: Include "pre" tagged elements (full commit message descriptions).
-				// Store commit message and commit description separately, using commit message as the
-				// description in the case that there is no description
 
 				// Select message element(s) (will be length 1 a lot)
 				final Elements messageElements = container.select("a").not("a.commit-author,a.avatar");
@@ -376,7 +371,6 @@ public class PatchFinderThread implements Runnable {
 
 				// If not length 1, message is split into multiple parts and must be combined
 				if (messageElements.size() > 1) {
-
 					// Build the full message
 					final String message = String.join("", messageElements
 							.stream().map(me -> {
@@ -388,6 +382,14 @@ public class PatchFinderThread implements Runnable {
 
 					// Set the first element's text to the combined message
 					messageElement.html(message);
+
+					// Store commit description separately
+					final String description = container.select("pre").text();
+					messageElement.attr("commitDescription", description);
+				} else {
+					// Store commit description as the commit message if there is no separate description
+					final String description = container.select("pre").text();
+					messageElement.html(description);
 				}
 
 				// Add element to commit objects
