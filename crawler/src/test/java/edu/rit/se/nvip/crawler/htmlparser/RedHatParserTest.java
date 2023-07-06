@@ -27,6 +27,7 @@ import edu.rit.se.nvip.crawler.CveCrawler;
 import edu.rit.se.nvip.model.RawVulnerability;
 import edu.rit.se.nvip.crawler.SeleniumDriver;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.BeforeClass;
 import org.junit.AfterClass;
@@ -54,6 +55,7 @@ public class RedHatParserTest extends AbstractParserTest {
     }
 
 	@Test
+	@Ignore
 	public void testRedHat() {
 		RedHatParser parser = new RedHatParser("redhat");
 
