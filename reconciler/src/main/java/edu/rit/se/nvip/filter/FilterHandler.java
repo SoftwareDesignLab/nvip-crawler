@@ -8,8 +8,9 @@ import java.util.stream.Collectors;
 public class FilterHandler {
     private final List<Filter> localFilters = new ArrayList<>();
     private final List<Filter> remoteFilters = new ArrayList<>();
+    private List<Filter> customFilters = new ArrayList<>();
     public enum FilterScope {
-        ALL, LOCAL, REMOTE,
+        ALL, CUSTOM, LOCAL, REMOTE
     }
 
     public FilterHandler() {
@@ -33,6 +34,10 @@ public class FilterHandler {
         for (String type : filterTypes) {
             remoteFilters.add(FilterFactory.createFilter(type));
         }
+    }
+
+    public void setCustomFilters(List<Filter> customFilters) {
+        this.customFilters = customFilters;
     }
 
     public FilterReturn runFilters(Set<RawVulnerability> vulns) {
@@ -92,6 +97,8 @@ public class FilterHandler {
             out.addAll(localFilters);
         } else if (scope == FilterScope.REMOTE) {
             out.addAll(remoteFilters);
+        } else if (scope == FilterScope.CUSTOM) {
+            out.addAll(customFilters);
         }
         return out;
     }
