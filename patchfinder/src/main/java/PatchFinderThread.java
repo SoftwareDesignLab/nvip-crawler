@@ -23,6 +23,7 @@
  */
 
 import java.io.IOException;
+import java.text.ParseException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -31,6 +32,8 @@ import commits.PatchCommit;
 import commits.PatchCommitScraper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.revwalk.RevWalk;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -50,6 +53,8 @@ import static org.apache.commons.lang3.time.DateUtils.parseDate;
 public class PatchFinderThread implements Runnable {
 	private final HashMap<String, ArrayList<String>> cvePatchEntry;
 	private final String clonePath;
+
+	private RevWalk walk;
 	private final long timeoutMilli;
 	// Regex101: https://regex101.com/r/YiCdNU/1
 	private final static Pattern commitPattern = Pattern.compile("commit-details-(\\w*)");
@@ -276,6 +281,12 @@ public class PatchFinderThread implements Runnable {
 						Elements diffElements = commitPage.select("div.file-actions");
 						String unifiedDiffString = diffElements.text();
 
+						// Extract the commit timeline, time to patch, and lines changed from the commit page
+						Elements timelineElements = commitPage.select("div.timeline-item");
+						List<String> timelineString = parseTimeline(timelineElements);
+						String timeToPatch = extractTimeToPatch(commitPage);
+						int linesChanged = extractLinesChanged(commitPage);
+						List<RevCommit> timeline = PatchCommit.convertToRevCommits(timelineString, walk);
 						PatchCommit patchCommit = new PatchCommit(
 								commitUrl,
 								cveId,
@@ -283,18 +294,53 @@ public class PatchFinderThread implements Runnable {
 								new Date(object.attr("commitTime")),
 								object.text(),
 								unifiedDiffString, // unifiedDiff
-								null, // TODO: Timeline
-								null, // TODO: Time vuln release->patch
-								0
+								timeline, // timeline
+								timeToPatch, // timeToPatch
+								linesChanged // linesChanged
 						);
 
 						patchCommits.add(patchCommit);
-					} catch (IOException e) {
+					} catch (IOException | ParseException e) {
 						logger.error("Failed to scrape unified diff from commit URL '{}': {}", commitUrl, e);
 					}
 				}
 			}
 		}
+	}
+
+	private List<String> parseTimeline(Elements timelineElements) throws ParseException {
+		List<String> timeline = new ArrayList<>();
+
+		for (Element timelineElement : timelineElements) {
+			String commitHash = timelineElement.text();
+			timeline.add(commitHash);
+		}
+
+		return timeline;
+	}
+
+
+	private String extractTimeToPatch(Document commitPage) {
+		Element timeToPatchElement = commitPage.selectFirst("relative-time[datetime]:not(.commit-author-date)");
+		if (timeToPatchElement != null) {
+			String timeToPatch = timeToPatchElement.attr("datetime");
+			return timeToPatch;
+		}
+		return null;
+	}
+
+	private int extractLinesChanged(Document commitPage) {
+		Element linesChangedElement = commitPage.selectFirst("span.text-mono");
+		if (linesChangedElement != null) {
+			String linesChangedText = linesChangedElement.text();
+			// Extract the integer value from the text
+			try {
+				return Integer.parseInt(linesChangedText.replaceAll("[^0-9]", ""));
+			} catch (NumberFormatException e) {
+				logger.error("Failed to extract lines changed from commit page: {}", e.getMessage());
+			}
+		}
+		return 0;
 	}
 
 	private Elements getCommitObjects(String url) {
