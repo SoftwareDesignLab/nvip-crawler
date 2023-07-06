@@ -1,18 +1,33 @@
 package edu.rit.se.nvip.messager;
 
+import com.rabbitmq.client.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeoutException;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 class MessagerTest {
 
     private ByteArrayOutputStream outputStream;
+    private final static String PNE_QUEUE = "PNE";
+    @Mock
+    ConnectionFactory factoryMock = mock(ConnectionFactory.class);
+    @Mock
+    Connection conn = mock(Connection.class);
+    @Mock
+    Channel channelMock = mock(Channel.class);
+
 
     @BeforeEach
     void setUp() {
@@ -22,30 +37,55 @@ class MessagerTest {
 
     @Test
     void waitForCrawlerMessageTest() throws Exception {
+        //Setup
         Messager messager = new Messager();
-        // Arrange
-        String testMessage = "Test message";
+        messager.setFactory(factoryMock);
         List<String> expectedMessages = new ArrayList<>();
-        expectedMessages.add(testMessage);
+        expectedMessages.add("Test message");
+        expectedMessages.add("Test message2");
 
-        // Redirect System.out to capture the printed output
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        System.setOut(new PrintStream(outputStream));
+        //Mocking
+        when(factoryMock.newConnection()).thenReturn(conn);
+        when(conn.createChannel()).thenReturn(channelMock);
+        when(channelMock.queueDeclare(anyString(), anyBoolean(), anyBoolean(), anyBoolean(), any())).thenReturn(null);
+        doAnswer(invocation -> {
+            Object[] args = invocation.getArguments();
+            DeliverCallback callback = (DeliverCallback) args[2];
+            String jsonMessage = "[\"Test message\", \"Test message2\"]";
+            byte[] body = jsonMessage.getBytes();
+            callback.handle("", new Delivery(null, null, body));
+            return null;
+        }).when(channelMock).basicConsume(anyString(), anyBoolean(), any(DeliverCallback.class), (CancelCallback) any());
 
         // Act
-        new Thread(() -> {
-            try {
-                messager.sendPNEMessage(expectedMessages);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }).start();
-
-        Thread.sleep(100); // Sleep for a short duration to allow the message to be processed
         List<String> receivedMessages = messager.waitForCrawlerMessage();
 
         // Assert
         assertEquals(expectedMessages, receivedMessages);
+
+    }
+
+    @Test
+    void sendPNEMessageTest() throws IOException, TimeoutException {
+        // Setup
+        Messager messager = new Messager();
+        messager.setFactory(factoryMock);
+
+        List<String> ids = Arrays.asList("id1", "id2", "id3");
+
+        when(factoryMock.newConnection()).thenReturn(conn);
+        when(conn.createChannel()).thenReturn(channelMock);
+
+        // Act
+        messager.sendPNEMessage(ids);
+
+        // Assert
+        verify(factoryMock).newConnection();
+        verify(conn).createChannel();
+        verify(channelMock).queueDeclare(eq(PNE_QUEUE), anyBoolean(), anyBoolean(), anyBoolean(), any());
+        verify(channelMock).basicPublish(eq(""), eq(PNE_QUEUE), isNull(), any(byte[].class));
+        verify(channelMock).close();
+        verify(conn).close();
     }
 
     @Test
