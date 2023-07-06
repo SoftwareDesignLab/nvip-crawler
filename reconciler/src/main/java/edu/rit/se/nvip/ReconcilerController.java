@@ -33,8 +33,7 @@ public class ReconcilerController {
         }
     }
 
-    public void main() {
-        Set<String> jobs = dbh.getJobs();
+    public void main(Set<String> jobs) {
         logger.info(jobs.size() + " jobs found for reconciliation");
         Set<CompositeVulnerability> reconciledVulns = new HashSet<>();
         for (String job : jobs) {
@@ -57,6 +56,7 @@ public class ReconcilerController {
             logger.info("Finished job for cveId " + vuln.getCveId());
         }
         logger.info("Upserted {} vulnerabilities", upsertCount);
+        // todo drop a rabbit message to the PNE with a list of new/updated cve ids
     }
 
     private List<CompositeVulnerability> characterizeCVEs(Set<CompositeVulnerability> crawledVulnerabilityList) {

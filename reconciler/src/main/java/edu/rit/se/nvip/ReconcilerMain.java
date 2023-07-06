@@ -16,8 +16,9 @@ public class ReconcilerMain {
             logger.error("Error in database connection! Please check if the database configured in DB Envvars is up and running!");
             System.exit(1);
         }
-
+        // todo switch based on envvar INPUT_MODE to determine whether to use the database ("db") or rabbitmq ("rabbit")
+        // todo wait around for up to envvar RABBIT_TIMEOUT for a rabbit message if the INPUT_MODE says to
         ReconcilerController rc = new ReconcilerController();
-        rc.main();
+        rc.main(null); //todo give it jobs, either from the crawler or from dbh.getJobs()
     }
 }
