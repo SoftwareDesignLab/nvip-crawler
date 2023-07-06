@@ -69,7 +69,6 @@ public class MendParserTest extends AbstractParserTest{
         assertEquals("2023-01-26 00:00:00", vuln.getPublishDate());
     }
 
-    @Ignore
     @Test
     public void testMend2() {
         MendParser parser = new MendParser("mend");
