@@ -275,12 +275,7 @@ public class DatabaseHelper {
 			pstmt.setInt(1, sourceId);
 			pstmt.setString(2, commitUrl);
 			pstmt.setDate(3, new java.sql.Date(commitDate.getTime()));
-			pstmt.setString(4, commitMessage);
-
-			//TODO: We want to truncate data that is too large, but cutting a diff off half way thru
-			// is less than ideal, so we need to make sure to truncate after the last diff that does
-			// not run over the size constraint
-
+			pstmt.setString(4, commitMessage); // TODO: Fix data truncation error
 			pstmt.setString(5, uniDiff);
 			pstmt.setString(6, timeLine.toString());
 			pstmt.setString(7, timeToPatch);
