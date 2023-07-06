@@ -25,13 +25,11 @@ public class ReconcilerEnvVarsTest {
         assertEquals(list, ReconcilerEnvVars.getProcessorList());
         assertEquals(knownSourceList, ReconcilerEnvVars.getKnownSources());
         assertEquals("sk-xxxxxxxxxxxxx", ReconcilerEnvVars.getOpenAIKey());
-        assertEquals("src/main/java/edu/rit/se/nvip", ReconcilerEnvVars.getNvipDataDir());
         assertEquals("characterization/", ReconcilerEnvVars.getTrainingDataDir());
         assertEquals("AttackTheater.csv,Context.csv,ImpactMethod.csv,LogicalImpact.csv,Mitigation.csv", ReconcilerEnvVars.getTrainingData());
         assertEquals(5000, ReconcilerEnvVars.getCharacterizationLimit());
         assertEquals("ML", ReconcilerEnvVars.getCharacterizationApproach());
         assertEquals("Vote", ReconcilerEnvVars.getCharacterizationMethod());
-        assertEquals("mysql", ReconcilerEnvVars.getDbType());
         assertEquals("nvip_data", ReconcilerEnvVars.getDataDir());
     }
 }
