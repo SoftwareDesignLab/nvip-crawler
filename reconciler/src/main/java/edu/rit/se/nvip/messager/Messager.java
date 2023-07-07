@@ -46,7 +46,7 @@ public class Messager {
             DeliverCallback deliverCallback = (consumerTag, delivery) -> {
                 String message = new String(delivery.getBody(), StandardCharsets.UTF_8);
                 List<String> parsedIds = parseIds(message);
-                receivedMessages.addAll(parsedIds);
+                messageQueue.offer(parsedIds);
             };
             channel.basicConsume(RECONCILER_QUEUE, true, deliverCallback, consumerTag -> { });
 
@@ -56,7 +56,7 @@ public class Messager {
             logger.error("Error occurred while sending the Reconciler message to RabbitMQ: {}", e.getMessage());
         }
 
-        return receivedMessages;
+        return null;
     }
 
     public void sendPNEMessage(List<String> ids) {
