@@ -2,6 +2,7 @@ package db;
 
 import model.CpeGroup;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.junit.Before;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.Test;
@@ -20,8 +21,8 @@ public class DatabaseHelperTest {
 
     private static DatabaseHelper databaseHelper;
 
-    @BeforeAll
-    public static void setUp() {
+    @Before
+    public void setUp() {
         databaseHelper = new DatabaseHelper(DATABASE_TYPE, HIKARI_URL, HIKARI_USER, HIKARI_PASSWORD);
     }
 

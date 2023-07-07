@@ -1,7 +1,6 @@
 package utils;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.nio.file.Files;
@@ -15,7 +14,7 @@ public class GitControllerTest {
     private static final String REMOTE_PATH = "https://github.com/apache/airflow.git";
     private GitController gitController;
 
-    @BeforeEach
+    @Before
     public void setup() {
         gitController = new GitController(LOCAL_PATH, REMOTE_PATH);
         gitController.deleteRepo();
@@ -24,11 +23,8 @@ public class GitControllerTest {
 
 
     @Test
-    public void testRepo(){
-        if(Files.exists(Paths.get(LOCAL_PATH))){
-            gitController.deleteRepo();
-            assertFalse(Files.exists(Paths.get(LOCAL_PATH)));
-        }
+    public void testRepo() {
+        assertFalse(Files.exists(Paths.get(LOCAL_PATH)));
         assertTrue(gitController.cloneRepo());
         assertTrue(gitController.pullRepo());
     }
