@@ -2,8 +2,9 @@ package db;
 
 import model.CpeGroup;
 import org.eclipse.jgit.revwalk.RevCommit;
-import org.junit.jupiter.api.*;
-
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.Test;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
