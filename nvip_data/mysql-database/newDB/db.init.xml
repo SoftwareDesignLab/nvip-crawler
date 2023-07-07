@@ -331,7 +331,10 @@
             <column name="source_url_id" type="INT">
                 <constraints nullable="false"/>
             </column>
-            <column name="commit_url" type="TINYTEXT">
+            <column name="cve_id" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="commit_sha" type="TINYTEXT">
                 <constraints nullable="false"/>
             </column>
             <column name="commit_date" type="DATETIME">

@@ -110,18 +110,44 @@
 <!--        </addColumn>-->
 <!--    </changeSet>-->
 
-    <changeSet author="dylan" id="patchsourceurl-cascade-on-delete">
-        <dropForeignKeyConstraint
-                baseTableName="patchsourceurl"
-                baseTableSchemaName="nvip"
-                constraintName="patch_source_cve_id_fk"
-        />
+<!--    <changeSet author="dylan" id="patchsourceurl-cascade-on-delete">-->
+<!--        <dropForeignKeyConstraint-->
+<!--                baseTableName="patchsourceurl"-->
+<!--                baseTableSchemaName="nvip"-->
+<!--                constraintName="patch_source_cve_id_fk"-->
+<!--        />-->
+<!--        <addForeignKeyConstraint-->
+<!--                baseTableName="patchsourceurl"-->
+<!--                baseColumnNames="cve_id"-->
+<!--                referencedTableName="vulnerability"-->
+<!--                referencedColumnNames="cve_id"-->
+<!--                constraintName="patch_source_cve_id_fk"-->
+<!--                onDelete="CASCADE"-->
+<!--        />-->
+<!--    </changeSet>-->
+
+    <changeSet author="dylan" id="patchcommit-commit-sha">
+        <dropColumn tableName="patchcommit" columnName="commit_url"/>
+        <addColumn tableName="patchcommit">
+            <column name="commit_sha" type="TINYTEXT">
+                <constraints nullable="false" />
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="dylan" id="patchcommit-commit-cve-id">
+        <addColumn tableName="patchcommit">
+            <column name="cve_id" type="VARCHAR(20)">
+                <constraints nullable="false" />
+            </column>
+        </addColumn>
+
         <addForeignKeyConstraint
-                baseTableName="patchsourceurl"
+                baseTableName="patchcommit"
                 baseColumnNames="cve_id"
                 referencedTableName="vulnerability"
                 referencedColumnNames="cve_id"
-                constraintName="patch_source_cve_id_fk"
+                constraintName="patch_commit_cve_id_fk"
                 onDelete="CASCADE"
         />
     </changeSet>

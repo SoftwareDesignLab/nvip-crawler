@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import db.DatabaseHelper;
 import model.CpeGroup;
 import org.apache.logging.log4j.LogManager;
@@ -56,6 +57,7 @@ public class PatchUrlFinder {
 
 	// TODO: all old vars, get rid of these
 	private static int advancedSearchCount;
+	private static final ObjectMapper OM = new ObjectMapper();
 
 	/**
 	 * Parse URLs from all CPEs given within the map
@@ -78,8 +80,8 @@ public class PatchUrlFinder {
 					cachedUrlCount++;
 					continue;
 				}
-			} else if(!possiblePatchUrls.containsKey(cveId))
-				possiblePatchUrls.remove(cveId); // Remove stale entry
+			} else possiblePatchUrls.remove(cveId); // Remove stale entry
+
 
 			// Warn and skip blank entries
 			if(cveId.isEmpty() || group.getVersionsCount() == 0) {
@@ -292,6 +294,7 @@ public class PatchUrlFinder {
 	 * @return
 	 * @throws InterruptedException
 	 */
+	@SuppressWarnings({"unchecked", "rawtypes"})
 	private ArrayList<String> advanceParseSearch(String vendor, String product) throws InterruptedException {
 
 		String searchParams = PatchFinder.addressBases[0] + "search?q=";
@@ -313,7 +316,7 @@ public class PatchUrlFinder {
 			try {
 				// Sleep for a minute before performing another advance search if
 				// 10 have already been conducted to avoid HTTP 429 error
-				if (advancedSearchCount >= 10) {
+				if (advancedSearchCount >= 15) {
 					logger.info("Performing Sleep before continuing: 1 minute");
 					Thread.sleep(60000);
 					advancedSearchCount = 0;
@@ -321,17 +324,48 @@ public class PatchUrlFinder {
 
 				advancedSearchCount++;
 				Document searchPage = Jsoup.connect(searchParams + "&type=repositories").get();
-				Elements searchResults = searchPage.select("li.repo-list-item a[href]");
+				final LinkedHashMap searchData =
+						(LinkedHashMap) OM.readValue(
+								searchPage.select("div.application-main").select("script").get(0).html(),
+								LinkedHashMap.class
+						).get("payload");
 
-				for (Element searchResult : searchResults) {
-					if (!searchResult.attr("href").isEmpty()) {
-						String newURL = searchResult.attr("abs:href");
-						String innerText = searchResult.text();
-						if (verifyGitRemote(newURL, innerText, vendor, product)) {
+				final ArrayList<LinkedHashMap> searchResults = (ArrayList<LinkedHashMap>) searchData.get("results");
+
+				String newURL = null;
+				for (LinkedHashMap searchResult : searchResults) {
+					try {
+						final String endpoint = ((String) searchResult.get("hl_name"))
+								.replace("<em>", "")
+								.replace("</em>", "");
+
+						newURL = PatchFinder.addressBases[0] + endpoint;
+
+						final String description = ((String) searchResult.get("hl_trunc_description"))
+								.replace("<em>", "")
+								.replace("</em>", "");
+
+
+						if (verifyGitRemote(newURL, description, vendor, product)) {
 							urls.add(newURL);
 						}
+					} catch (Exception e) {
+						logger.warn("Failed to validate/verify URL {}: {}", newURL, e);
 					}
 				}
+
+				// TODO: Remove when this method is fixed
+//				Elements searchResults = searchPage.select("li.repo-list-item a[href]");
+//
+//				for (Element searchResult : searchResults) {
+//					if (!searchResult.attr("href").isEmpty()) {
+//						String newURL = searchResult.attr("abs:href");
+//						String innerText = searchResult.text();
+//						if (verifyGitRemote(newURL, innerText, vendor, product)) {
+//							urls.add(newURL);
+//						}
+//					}
+//				}
 
 			} catch (IOException e) {
 				logger.error(e.toString());

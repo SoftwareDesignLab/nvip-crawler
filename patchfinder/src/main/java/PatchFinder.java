@@ -42,6 +42,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 /**
  * Main class for collecting CVE Patches within repos that were
@@ -236,7 +237,7 @@ public class PatchFinder {
 		final Map<String, Integer> existingSources = databaseHelper.getExistingSourceUrls();
 
 		// Get existing patch commits
-		final Set<String> existingCommitUrls = databaseHelper.getExistingPatchCommitUrls();
+		final Set<String> existingCommitShas = databaseHelper.getExistingPatchCommitShas();
 
 		// Insert patches
 		int failedInserts = 0;
@@ -251,10 +252,10 @@ public class PatchFinder {
 			// Insert patch commit
 			try {
 				// Ensure patch commit does not already exist
-				final String commitUrl = patchCommit.getCommitUrl() + "/commit/" + patchCommit.getCommitId();
-				if (!existingCommitUrls.contains(commitUrl)) {
+				final String commitSha = patchCommit.getCommitId();
+				if (!existingCommitShas.contains(commitSha)) {
 					databaseHelper.insertPatchCommit(
-							sourceUrlId, commitUrl, patchCommit.getCommitDate(),
+							sourceUrlId, patchCommit.getCveId(), commitSha, patchCommit.getCommitDate(),
 							patchCommit.getCommitMessage(), patchCommit.getUniDiff(),
 							patchCommit.getTimeline(), patchCommit.getTimeToPatch(), patchCommit.getLinesChanged()
 					);
@@ -312,6 +313,7 @@ public class PatchFinder {
 
 	@SuppressWarnings({"unchecked", "rawtypes"})
 	private static void writeSourceDict(String patchSrcUrlPath, Map<String, ArrayList<String>> urls) {
+		final int urlCount = urls.values().stream().map(ArrayList::size).reduce(0, Integer::sum);
 		// Build output data map
 		Map data = new LinkedHashMap<>();
 		data.put("comptime", Instant.now().toString());
@@ -321,7 +323,7 @@ public class PatchFinder {
 		try {
 			final ObjectWriter w = OM.writerWithDefaultPrettyPrinter();
 			w.writeValue(new File(patchSrcUrlPath), data);
-			logger.info("Successfully wrote {} source urls to source dict file at filepath '{}'", urls.size(), patchSrcUrlPath);
+			logger.info("Successfully wrote {} source urls to source dict file at filepath '{}'", urlCount, patchSrcUrlPath);
 		} catch (IOException e) {
 			logger.error("Error writing product dict to filepath '{}': {}", patchSrcUrlPath, e.toString());
 		}
@@ -365,7 +367,7 @@ public class PatchFinder {
 		}
 
 		// Initialize data structures
-		ArrayList<HashMap<String, ArrayList<String>>> sourceBatches = new ArrayList<>();
+//		ArrayList<HashMap<String, ArrayList<String>>> sourceBatches = new ArrayList<>();
 		final BlockingQueue<Runnable> workQueue = new ArrayBlockingQueue<>(totalPatchSources.get());
 		final ThreadPoolExecutor executor = new ThreadPoolExecutor(
 				maxThreads,
@@ -375,23 +377,26 @@ public class PatchFinder {
 				workQueue
 		);
 
-		// Prepare source batches for jobs
-		for (int i=0; i < maxThreads; i++) {
-			sourceBatches.add(new HashMap<>());
-		}
+//		// Prepare source batches for jobs
+//		for (int i=0; i < maxThreads; i++) {
+//			sourceBatches.add(new HashMap<>());
+//		}
 
 		// Prestart all assigned threads (this is what runs jobs)
 		executor.prestartAllCoreThreads();
 
-		// Add jobs to work queue
-		final Set<String> CVEsToProcess = possiblePatchSources.keySet();
+		// Add jobs to work queue (ignore CVEs with no found sources
+		final Set<String> CVEsToProcess = possiblePatchSources.keySet()
+				.stream().filter(
+						k -> possiblePatchSources.get(k).size() > 0).collect(Collectors.toSet()
+				);
 
 		// Find # of CVEs per thread (ignoring remainder)
 		final int CVEsPerThread = (int) Math.floor((double) CVEsToProcess.size() / maxThreads);
 
 		// Partition jobs to all threads
 		int i = 0;
-		int thread = 0;
+//		int thread = 0;
 		for (String cveId : CVEsToProcess) {
 			if(i >= cveLimit) {
 				logger.info("Hit defined CVE_LIMIT of {}, skipping {} remaining CVEs...", cveLimit, CVEsToProcess.size() - cveLimit);
@@ -407,7 +412,7 @@ public class PatchFinder {
 			i++;
 
 			// Iterate thread counter only once per partition
-			if(i % CVEsPerThread == 0) thread++; // TODO: Remainder?
+//			if(i % CVEsPerThread == 0) thread++; // TODO: Remainder?
 		}
 
 		// Initiate shutdown of executor (waits, but does not hang, for all jobs to complete)
