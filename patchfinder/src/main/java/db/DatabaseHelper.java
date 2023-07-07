@@ -271,7 +271,7 @@ public class DatabaseHelper {
 
 		try (Connection connection = getConnection();
 			 PreparedStatement pstmt = connection.prepareStatement(insertPatchCommitSql);
-			 PreparedStatement pstmtExistingCommit = connection.prepareStatement("SELECT * FROM patchcommit WHERE commit_sha = ? LIMIT 1");
+			 PreparedStatement pstmtExistingCommit = connection.prepareStatement("SELECT commit_sha FROM patchcommit WHERE commit_sha = ? LIMIT 1");
 			 PreparedStatement pstmtUpdateCommit = connection.prepareStatement("UPDATE patchcommit SET commit_date = ?, commit_message = ?, uni_diff = ?, timeline = ?, timeToPatch = ?, linesChanged = ? WHERE commit_sha = ?")
 		) {
 			// Check if the commit URL already exists in the database
@@ -280,8 +280,7 @@ public class DatabaseHelper {
 
 			if (existingCommitResult.next()) {
 				// Existing commit found
-				String existingCommitUrl = existingCommitResult.getString("commit_url");
-				logger.warn("Patch commit already exists in the database: {}", existingCommitUrl);
+				logger.warn("Patch commit '{}' already exists in the database", commitSha);
 
 				// Perform the appropriate action for existing entries (diff, replace, ignore)
 				// Here, we are updating the existing commit with the new information
