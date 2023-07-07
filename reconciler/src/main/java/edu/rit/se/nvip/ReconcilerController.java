@@ -71,6 +71,8 @@ public class ReconcilerController {
 
         messager.sendPNEMessage(cves);
 
+        messager.sendPNEFinishMessage();
+
     }
 
     private List<CompositeVulnerability> characterizeCVEs(Set<CompositeVulnerability> crawledVulnerabilityList) {

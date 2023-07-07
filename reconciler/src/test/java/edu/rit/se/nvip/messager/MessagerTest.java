@@ -89,6 +89,28 @@ class MessagerTest {
     }
 
     @Test
+    void sendPNEFinishMessageTest() throws IOException, TimeoutException {
+        // Setup
+        Messager messager = new Messager();
+        messager.setFactory(factoryMock);
+
+
+        when(factoryMock.newConnection()).thenReturn(conn);
+        when(conn.createChannel()).thenReturn(channelMock);
+
+        // Act
+        messager.sendPNEFinishMessage();
+
+        // Assert
+        verify(factoryMock).newConnection();
+        verify(conn).createChannel();
+        verify(channelMock).queueDeclare(eq(PNE_QUEUE), anyBoolean(), anyBoolean(), anyBoolean(), any());
+        verify(channelMock).basicPublish(eq(""), eq(PNE_QUEUE), isNull(), any(byte[].class));
+        verify(channelMock).close();
+        verify(conn).close();
+    }
+
+    @Test
     void parseIdsTest() {
         Messager messager = new Messager();
         String jsonString = "[\"id1\", \"id2\", \"id3\"]";

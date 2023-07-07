@@ -72,6 +72,19 @@ public class Messager {
         }
     }
 
+    public void sendPNEFinishMessage() {
+
+        try (Connection connection = factory.newConnection();
+             Channel channel = connection.createChannel()) {
+            channel.queueDeclare(PNE_QUEUE, false, false, false, null);
+            String message = "FINISHED";
+            channel.basicPublish("", PNE_QUEUE, null, message.getBytes(StandardCharsets.UTF_8));
+
+        } catch (TimeoutException | IOException e) {
+            logger.error("Error occurred while sending the PNE message to RabbitMQ: {}", e.getMessage());
+        }
+    }
+
     public List<String> parseIds(String jsonString) {
 
         List<String> ids = new ArrayList<>();
