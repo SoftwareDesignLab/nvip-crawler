@@ -58,7 +58,7 @@ class MessagerTest {
         }).when(channelMock).basicConsume(anyString(), anyBoolean(), any(DeliverCallback.class), (CancelCallback) any());
 
         // Act
-        List<String> receivedMessages = messager.waitForCrawlerMessage();
+        List<String> receivedMessages = messager.waitForCrawlerMessage(3600);
 
         // Assert
         assertEquals(expectedMessages, receivedMessages);

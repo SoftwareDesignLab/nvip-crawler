@@ -154,9 +154,7 @@ public class ReconcilerEnvVars extends Properties {
     }
 
     //GETTERS FOR EACH ENV VAR
-    public static String getHikariURL() {
-        return hikariURL;
-    }
+    public static String getHikariURL() {return hikariURL;}
 
     public static String getHikariUser() {
         return hikariUser;
@@ -165,7 +163,9 @@ public class ReconcilerEnvVars extends Properties {
     public static String getHikariPassword() {
         return hikariPassword;
     }
+    public static String getInputMode() {return inputMode;}
 
+    public static int getRabbitTimeout() {return rabbitTimeout;}
     public static List<String> getFilterList() {
         return filterList;
     }
