@@ -267,22 +267,50 @@ public class DatabaseHelper {
 	 * @param commitMessage
 	 */
 	public void insertPatchCommit(int sourceId, String commitUrl, java.util.Date commitDate, String commitMessage, String uniDiff, List<RevCommit> timeLine, String timeToPatch, int linesChanged) throws IllegalArgumentException {
-		if(sourceId < 0) throw new IllegalArgumentException("Invalid source id provided, ensure id is non-negative");
+		if (sourceId < 0) throw new IllegalArgumentException("Invalid source id provided, ensure id is non-negative");
 
 		try (Connection connection = getConnection();
-			 PreparedStatement pstmt = connection.prepareStatement(insertPatchCommitSql);) {
+			 PreparedStatement pstmt = connection.prepareStatement(insertPatchCommitSql);
+			 PreparedStatement pstmtExistingCommit = connection.prepareStatement("SELECT * FROM patchcommit WHERE commit_url = ? LIMIT 1");
+			 PreparedStatement pstmtUpdateCommit = connection.prepareStatement("UPDATE patchcommit SET commit_date = ?, commit_message = ?, uni_diff = ?, timeline = ?, timeToPatch = ?, linesChanged = ? WHERE commit_url = ?")
+		) {
+			// Check if the commit URL already exists in the database
+			pstmtExistingCommit.setString(1, commitUrl);
+			ResultSet existingCommitResult = pstmtExistingCommit.executeQuery();
 
-			pstmt.setInt(1, sourceId);
-			pstmt.setString(2, commitUrl);
-			pstmt.setDate(3, new java.sql.Date(commitDate.getTime()));
-			pstmt.setString(4, commitMessage); // TODO: Fix data truncation error
-			pstmt.setString(5, uniDiff);
-			pstmt.setString(6, timeLine.toString());
-			pstmt.setString(7, timeToPatch);
-			pstmt.setInt(8, linesChanged);
-			pstmt.executeUpdate();
+			if (existingCommitResult.next()) {
+				// Existing commit found
+				String existingCommitUrl = existingCommitResult.getString("commit_url");
+				logger.warn("Patch commit already exists in the database: {}", existingCommitUrl);
+
+				// Perform the appropriate action for existing entries (diff, replace, ignore)
+				// Here, we are updating the existing commit with the new information
+				pstmtUpdateCommit.setDate(1, new java.sql.Date(commitDate.getTime()));
+				pstmtUpdateCommit.setString(2, commitMessage);// TODO: Fix data truncation error
+				pstmtUpdateCommit.setString(3, uniDiff);
+				pstmtUpdateCommit.setString(4, timeLine.toString());
+				pstmtUpdateCommit.setString(5, timeToPatch);
+				pstmtUpdateCommit.setInt(6, linesChanged);
+				pstmtUpdateCommit.setString(7, commitUrl);
+				pstmtUpdateCommit.executeUpdate();
+
+				logger.info("Existing patch commit updated: {}", commitUrl);
+			} else {
+				// Insert the new patch commit
+				pstmt.setInt(1, sourceId);
+				pstmt.setString(2, commitUrl);
+				pstmt.setDate(3, new java.sql.Date(commitDate.getTime()));
+				pstmt.setString(4, commitMessage);
+				pstmt.setString(5, uniDiff);
+				pstmt.setString(6, timeLine.toString());
+				pstmt.setString(7, timeToPatch);
+				pstmt.setInt(8, linesChanged);
+				pstmt.executeUpdate();
+
+				logger.info("New patch commit inserted: {}", commitUrl);
+			}
 		} catch (Exception e) {
-			logger.error("ERROR: failed to insert patch commit from source {}: {}", commitUrl, e);
+			logger.error("ERROR: Failed to insert/update patch commit from source {}: {}", commitUrl, e);
 			throw new IllegalArgumentException(e);
 		}
 	}

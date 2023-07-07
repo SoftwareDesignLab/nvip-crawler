@@ -8,6 +8,7 @@ import org.junit.Test;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.platform.commons.function.Try.success;
 
 public class DatabaseHelperTest {
     private static final String DATABASE_TYPE = System.getenv("DB_TYPE");
@@ -41,14 +42,14 @@ public class DatabaseHelperTest {
     @Test
     public void testGetVulnIdByCveId() {
         int vulnId = databaseHelper.getVulnIdByCveId(TEST_CVE_ID);
-        // Add assertions to verify the correctness of the returned vulnId
+        assertTrue(vulnId > 0);
     }
 
     @Test
     public void testInsertPatchSourceURL() {
         String sourceURL = "https://example.com";
         int sourceId = databaseHelper.insertPatchSourceURL(new HashMap<>(), TEST_CVE_ID, sourceURL);
-        // Add assertions to verify the correctness of the inserted patch source URL
+        assertTrue(sourceId > 0);
     }
 
     @Test
@@ -62,8 +63,40 @@ public class DatabaseHelperTest {
         String timeToPatch = "2 days";
         int linesChanged = 2;
 
+        // Insert the patch commit
         databaseHelper.insertPatchCommit(sourceId, sourceURL, commitDate, commitMessage, uniDiff, timeLine, timeToPatch, linesChanged);
-        // Add assertions or verify the insertion in the database
+
+        // Verify the insertion by checking if the commit URL exists in the database
+        Set<String> existingCommitUrls = databaseHelper.getExistingPatchCommitUrls();
+        assertTrue(existingCommitUrls.contains(sourceURL));
     }
+
+    @Test
+    public void testInsertPatchCommitWithDuplicates() {
+        // Prepare test data
+        int sourceId = 1; // Assume a valid source ID
+        String sourceURL = "https://example.com/commit/abcdef123456";
+        java.util.Date commitDate = new java.util.Date();
+        String commitMessage = "Fix vulnerability";
+        String uniDiff = "diff --git a/file1 b/file1\n+++ b/file1\n@@ -1,3 +1,3 @@\n-line1\n-line2\n+line3\n+line4";
+        List<RevCommit> timeLine = new ArrayList<>(); // Assume a valid timeline
+        String timeToPatch = "2 days";
+        int linesChanged = 2;
+
+        // Insert the first patch commit
+        databaseHelper.insertPatchCommit(sourceId, sourceURL, commitDate, commitMessage, uniDiff, timeLine, timeToPatch, linesChanged);
+
+        // Attempt to insert the same patch commit again
+        try {
+            databaseHelper.insertPatchCommit(sourceId, sourceURL, commitDate, commitMessage, uniDiff, timeLine, timeToPatch, linesChanged);
+            success("Expected IllegalArgumentException to be thrown due to duplicate patch commit");
+        } catch (IllegalArgumentException e) {
+            // The exception is expected to be thrown
+            // Add assertions or verify the exception message, if needed
+            String expectedErrorMessage = "Failed to insert patch commit, as it already exists in the database";
+            assertEquals(expectedErrorMessage, e.getMessage());
+        }
+    }
+
 }
 
