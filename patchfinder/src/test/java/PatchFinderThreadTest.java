@@ -1,6 +1,6 @@
 import commits.PatchCommit;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 import org.mockito.Mockito;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;

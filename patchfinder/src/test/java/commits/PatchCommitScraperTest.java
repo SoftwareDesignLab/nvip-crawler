@@ -25,7 +25,7 @@ package commits;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 import utils.GitController;
 
 import java.io.File;
