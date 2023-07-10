@@ -3,6 +3,7 @@ package edu.rit.se.nvip;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import edu.rit.se.nvip.db.DatabaseHelper;
+import edu.rit.se.nvip.messenger.Messenger;
 import edu.rit.se.nvip.model.cpe.CpeEntry;
 import edu.rit.se.nvip.model.cpe.CpeGroup;
 import edu.rit.se.nvip.model.cve.AffectedProduct;
@@ -27,7 +28,8 @@ import java.util.List;
 public class ProductNameExtractorController {
     private static final Logger logger = LogManager.getLogger(ProductNameExtractorController.class);
     private static final ObjectMapper OM = new ObjectMapper();
-    protected static String inputMode = "db";
+    protected static boolean rabbitEnabled = false;
+    protected static int rabbitTimeout = 3600;
     protected static int cveLimit = 300;
     protected static int numThreads = 12;
     protected static String databaseType = "mysql";
@@ -108,10 +110,15 @@ public class ProductNameExtractorController {
         // Fetch ENV_VARS and set all found configurable properties
         final Map<String, String> props = System.getenv();
 
-        if(props.containsKey("INPUT_MODE")) {
-            inputMode = System.getenv("INPUT_MODE");
-            logger.info("Setting INPUT_MODE to {}", inputMode);
-        } else logger.warn("Could not fetch INPUT_MODE from env vars, defaulting to {}", inputMode);
+        if(props.containsKey("RABBIT_ENABLED")) {
+            rabbitEnabled = Boolean.parseBoolean(System.getenv("RABBIT_ENABLED"));
+            logger.info("Setting RABBIT_ENABLED to {}", rabbitEnabled);
+        } else logger.warn("Could not fetch RABBIT_ENABLED from env vars, defaulting to {}", rabbitEnabled);
+
+        if(props.containsKey("RABBIT_TIMEOUT")) {
+            rabbitTimeout = Integer.parseInt(System.getenv("RABBIT_TIMEOUT"));
+            logger.info("Setting RABBIT_TIMEOUT to {}", rabbitTimeout);
+        } else logger.warn("Could not fetch RABBIT_TIMEOUT from env vars, defaulting to {}", rabbitTimeout);
 
         if(props.containsKey("CVE_LIMIT")) {
             cveLimit = Integer.parseInt(System.getenv("CVE_LIMIT"));
@@ -372,14 +379,29 @@ public class ProductNameExtractorController {
         logger.info("Pulling existing CVEs from the database...");
         final long getCVEStart = System.currentTimeMillis();
 
-        final List<CompositeVulnerability> vulnList;
+        List<CompositeVulnerability> vulnList = null;
         if(testMode){
             // If in test mode, create manual vulnerability list
             logger.info("Test mode enabled, creating test vulnerability list...");
             vulnList = createTestVulnList();
-        }else{
-            // Otherwise, fetch vulnerability data from the DB
-            vulnList = databaseHelper.getExistingCompositeVulnerabilities(0);
+
+        }else if (rabbitEnabled){
+            // Otherwise if using rabbitmq, get the list of cve IDs from the reconciler and create vuln list from those
+            try{
+                Messenger messenger = new Messenger();
+                List<String> cveIds = messenger.waitForReconcilerMessage(rabbitTimeout);
+
+                // TODO: write function below
+                vulnList = databaseHelper.getSpecificCompositeVulnerabilities(cveIds);
+
+            }catch(Exception e){
+                logger.error("Failed to get jobs from RabbitMQ, exiting...");
+                System.exit(1);
+            }
+
+        }else {
+            // If not using rabbitmq, fetch all composite vulnerabilities from the db
+            vulnList = databaseHelper.getAllCompositeVulnerabilities(0);
             logger.info("Successfully pulled {} existing CVEs from the database in {} seconds", vulnList.size(), Math.floor(((double) (System.currentTimeMillis() - getCVEStart) / 1000) * 100) / 100);
         }
 

@@ -23,8 +23,10 @@
  */
 package edu.rit.se.nvip.db;
 
+import java.awt.*;
 import java.sql.*;
 import java.util.*;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -223,7 +225,7 @@ public class DatabaseHelper {
 	 * @param maxVulnerabilities max number of vulnerabilities to get
 	 * @return a map of fetched vulnerabilities
 	 */
-	public List<CompositeVulnerability> getExistingCompositeVulnerabilities(int maxVulnerabilities) {
+	public List<CompositeVulnerability> getAllCompositeVulnerabilities(int maxVulnerabilities) {
 		ArrayList<CompositeVulnerability> vulnList = new ArrayList<>();
 		synchronized (DatabaseHelper.class) {
 			int vulnId;
@@ -257,6 +259,10 @@ public class DatabaseHelper {
 			}
 		}
 		return vulnList;
+	}
+
+	public List<CompositeVulnerability> getSpecificCompositeVulnerabilities(List<String> cveIds){
+		return null;
 	}
 
 	/**
