@@ -31,9 +31,7 @@ import opennlp.tools.tokenize.WhitespaceTokenizer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -204,7 +202,7 @@ public class AffectedProductIdentifier {
 			productNameDetector = new ProductDetector(this.cpeLookUp, resourceDir, nlpDir, dataDir);
 		} catch (Exception e1) {
 			logger.error("Severe Error! Could not initialize the models for product name/version extraction! Skipping affected product identification step! {}", e1.toString());
-			return null;
+			return new HashMap<>();
 		}
 
 		AtomicInteger numOfProductsMappedToCpe = new AtomicInteger();
@@ -305,7 +303,7 @@ public class AffectedProductIdentifier {
 				// Timeout for whole process
 //				if((secondsWaiting / 60) > 15) throw new TimeoutException("Timeout reached before all threads completed");
 			}
-		} catch (Exception ex) {
+		} catch (Exception e) {
 			logger.error("Product extraction failed: {}", ex.toString());
 			List<Runnable> remainingTasks = executor.shutdownNow();
 			logger.error("{} tasks not executed", remainingTasks.size());

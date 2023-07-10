@@ -47,9 +47,9 @@ public class DatabaseHelper {
 	private HikariDataSource dataSource;
 	private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
 	private final String getIdFromCpe = "SELECT * FROM affectedproduct where cpe = ?;";
-	private final String selectVulnerabilitySql = "SELECT vulnerability.vuln_id, vulnerability.cve_id, description.description FROM vulnerability JOIN description ON vulnerability.description_id = description.description_id";
+
 	private final String insertAffectedProductSql = "INSERT INTO affectedproduct (cve_id, cpe, product_name, release_date, version, vendor, purl, swid_tag) VALUES (?, ?, ?, ?, ?, ?, ?, ?);";
-	private final String deleteAffectedProductSql = "DELETE FROM affectedproduct where cve_id = ?;";
+	private static Map<String, CompositeVulnerability> existingCompositeVulnMap = new HashMap<>();
 
 	/**
 	 * The private constructor sets up HikariCP for connection pooling. Singleton
@@ -66,12 +66,12 @@ public class DatabaseHelper {
 		}
 
 		if(config == null){
-			logger.info("Attempting to create HIKARI config from provided values");
+			logger.info("Attempting to create HIKARI from ENVVARs");
 			config = createHikariConfig(hikariUrl, hikariUser, hikariPassword);
 		}
 
 		try {
-			if(config == null) throw new IllegalArgumentException("Failed to create HIKARI config");
+			if(config == null) throw new IllegalArgumentException();
 			dataSource = new HikariDataSource(config); // init data source
 		} catch (PoolInitializationException e2) {
 			logger.error("Error initializing data source! Check the value of the database user/password in the environment variables! Current values are: {}", config != null ? config.getDataSourceProperties() : null);
@@ -92,7 +92,6 @@ public class DatabaseHelper {
 			hikariConfig.addDataSourceProperty("HIKARI_URL", url);
 			hikariConfig.addDataSourceProperty("HIKARI_USER", user);
 			hikariConfig.addDataSourceProperty("HIKARI_PASSWORD", password);
-
 		} else {
 			hikariConfig = null;
 		}
@@ -112,19 +111,33 @@ public class DatabaseHelper {
 
 	/**
 	 * Store affected products in DB
-	 * @param affectedProducts
+	 * @param vulnList
 	 */
-	public int insertAffectedProductsToDB(List<AffectedProduct> affectedProducts) {
+	public void insertAffectedProductsToDB(List<CompositeVulnerability> vulnList) {
+
+		// get all identified affected releases
+		List<AffectedProduct> listAllAffectedProducts = new ArrayList<>();
+		for (CompositeVulnerability vulnerability : vulnList) {
+			if (vulnerability.getCveReconcileStatus() == CompositeVulnerability.CveReconcileStatus.DO_NOT_CHANGE)
+				continue; // skip the ones that are not changed!
+			listAllAffectedProducts.addAll(vulnerability.getAffectedProducts());
+		}
 
 		logger.info("Inserting Affected Products to DB!");
 		// delete existing affected release info in db ( for CVEs in the list)
-		deleteAffectedProducts(affectedProducts);
+		this.deleteAffectedProducts(listAllAffectedProducts);
 
 		// now insert affected releases (referenced products are already in db)
-		insertAffectedProducts(affectedProducts);
+		this.insertAffectedProductsV2(listAllAffectedProducts);
 
-		shutdown();
-		return affectedProducts.size();
+		// TODO: Should be in program driver, probably PNEController
+//		// prepare CVE summary table for Web UI
+
+//		logger.info("Preparing CVE summary table for Web UI...");
+//		PrepareDataForWebUi cveDataForWebUi = new PrepareDataForWebUi();
+//		cveDataForWebUi.prepareDataforWebUi();
+
+		this.shutdown();
 	}
 
 	/**
@@ -150,11 +163,11 @@ public class DatabaseHelper {
 	}
 
 	/**
-	 * Updates the affected product table with a list of affected products
+	 * Updates the affected release table with a list of affected releases
 	 * 
-	 * @param affectedProducts list of affected product objects
+	 * @param affectedProducts list of affected release objects
 	 */
-	public void insertAffectedProducts(List<AffectedProduct> affectedProducts) {
+	public void insertAffectedProductsV2(List<AffectedProduct> affectedProducts) {
 		logger.info("Inserting {} affected products...", affectedProducts.size());
 		// CPE 2.3 Regex
 		// Regex101: https://regex101.com/r/9uaTQb/1
@@ -169,25 +182,25 @@ public class DatabaseHelper {
 					// Validate and extract CPE data
 					final String cpe = affectedProduct.getCpe();
 					final Matcher m = cpePattern.matcher(cpe);
-					if(!m.find()){
-						logger.warn("CPE in invalid format {}", cpe);
-						continue;
-					}
+					String productName = "UNKNOWN";
+					if(!m.find()) logger.warn("CPE in invalid format {}", cpe);
+					else productName = m.group(2);
 
 					pstmt.setString(1, affectedProduct.getCveId());
-					pstmt.setString(2, affectedProduct.getCpe());
-					pstmt.setString(3, affectedProduct.getProductName());
+					pstmt.setString(2, cpe);
+					pstmt.setString(3, productName);
 					pstmt.setString(4, affectedProduct.getReleaseDate());
 					pstmt.setString(5, affectedProduct.getVersion());
 					pstmt.setString(6, affectedProduct.getVendor());
-					pstmt.setString(7, affectedProduct.getPURL());
-					pstmt.setString(8, affectedProduct.getSWID());
+					pstmt.setString(7, affectedProduct.getPURL(productName));
+					pstmt.setString(8, affectedProduct.getSWID(productName));
 
 					count += pstmt.executeUpdate();
-
+//					logger.info("Added {} as an affected release for {}", prodId, affectedProduct.getCveId());
 				} catch (Exception e) {
 					logger.error("Could not add affected release for Cve: {} Related Cpe: {}, Error: {}",
 							affectedProduct.getCveId(), affectedProduct.getCpe(), e.toString());
+					//e.printStackTrace();
 				}
 			}
 		} catch (SQLException e) {
@@ -197,12 +210,13 @@ public class DatabaseHelper {
 	}
 
 	/**
-	 * Deletes affected products for given CVEs
+	 * Deletes affected releases for given CVEs
 	 * 
-	 * @param affectedProducts list of affected products to delete
+	 * @param affectedProducts list of releases to delete
 	 */
 	public void deleteAffectedProducts(List<AffectedProduct> affectedProducts) {
 		logger.info("Deleting existing affected products in database for {} items..", affectedProducts.size());
+		String deleteAffectedProductSql = "DELETE FROM affectedproduct where cve_id = ?;";
 		try (Connection conn = getConnection();
 				Statement stmt = conn.createStatement();
 				PreparedStatement pstmt = conn.prepareStatement(deleteAffectedProductSql);) {
@@ -223,40 +237,49 @@ public class DatabaseHelper {
 	 * @param maxVulnerabilities max number of vulnerabilities to get
 	 * @return a map of fetched vulnerabilities
 	 */
-	public List<CompositeVulnerability> getExistingCompositeVulnerabilities(int maxVulnerabilities) {
-		ArrayList<CompositeVulnerability> vulnList = new ArrayList<>();
+	public Map<String, CompositeVulnerability> getExistingCompositeVulnerabilities(int maxVulnerabilities) {
+		if (existingCompositeVulnMap.size() == 0) {
 		synchronized (DatabaseHelper.class) {
-			int vulnId;
-			String cveId, description;
-			try (Connection connection = getConnection();) {
-				PreparedStatement pstmt = connection.prepareStatement(selectVulnerabilitySql);
-				ResultSet rs = pstmt.executeQuery();
+			if (existingCompositeVulnMap.size() == 0) {
+				int vulnId;
+				String cveId, description;
+				existingCompositeVulnMap = new HashMap<>();
+				try (Connection connection = getConnection();) {
 
-				int vulnCount = 0;
-				// Iterate over result set until there are no results left or vulnCount >= maxVulnerabilities
-				while (rs.next() && (maxVulnerabilities == 0 || vulnCount < maxVulnerabilities)) {
-					vulnId = rs.getInt("vuln_id");
-					cveId = rs.getString("cve_id");
-					description = rs.getString("description");
+					String selectSql = "SELECT vulnerability.vuln_id, vulnerability.cve_id, description.description FROM nvip.vulnerability JOIN nvip.description ON vulnerability.description_id = description.description_id";
+					PreparedStatement pstmt = connection.prepareStatement(selectSql);
+					ResultSet rs = pstmt.executeQuery();
 
-					CompositeVulnerability vulnerability = new CompositeVulnerability(
-							vulnId,
-							cveId,
-							description,
-							CompositeVulnerability.CveReconcileStatus.UPDATE
-					);
-					vulnList.add(vulnerability);
-					vulnCount++;
+					int vulnCount = 0;
+					// Iterate over result set until there are no results left or vulnCount >= maxVulnerabilities
+					while (rs.next() && (maxVulnerabilities == 0 || vulnCount < maxVulnerabilities)) {
+						vulnId = rs.getInt("vuln_id");
+						cveId = rs.getString("cve_id");
+						description = rs.getString("description");
+
+						CompositeVulnerability existingVulnInfo = new CompositeVulnerability(
+								vulnId,
+								cveId,
+								description,
+								CompositeVulnerability.CveReconcileStatus.UPDATE
+						);
+						existingCompositeVulnMap.put(cveId, existingVulnInfo);
+						vulnCount++;
+					}
+					logger.info("NVIP has loaded {} existing CVE items from DB!", existingCompositeVulnMap.size());
+				} catch (Exception e) {
+					logger.error("Error while getting existing vulnerabilities from DB\nException: {}", e.getMessage());
+					logger.error(
+							"This is a serious error! NVIP will not be able to decide whether to insert or update! Exiting...");
+					System.exit(1);
 				}
-				logger.info("NVIP has loaded {} existing CVE items from DB!", vulnList.size());
-			} catch (Exception e) {
-				logger.error("Error while getting existing vulnerabilities from DB\nException: {}", e.getMessage());
-				logger.error(
-						"This is a serious error! NVIP will not be able to decide whether to insert or update! Exiting...");
-				System.exit(1);
 			}
 		}
-		return vulnList;
+	} else {
+		logger.warn("NVIP has loaded {} existing CVE items from memory!", existingCompositeVulnMap.size());
+	}
+
+		return existingCompositeVulnMap;
 	}
 
 	/**

@@ -188,7 +188,7 @@ public class CpeLookUp {
 			int attempts = 0;
 
 			// Get raw data
-			LinkedHashMap<String, ?> rawData = getNvdCpeData(index);
+			LinkedHashMap rawData = getNvdCpeData(index);
 
 			// Extract results data
 			int remainingResults = (int) rawData.get("totalResults");

@@ -50,14 +50,106 @@
                 tableName="cvejobtrack"/>
     </changeSet> -->
 
-    <changeSet author="dylan" id="modify_commit_message_column">
-        <dropColumn tableName="patchcommit" columnName="commit_message"/>
+<!--    <changeSet author="dylan" id="modify_commit_message_column">-->
+<!--        <dropColumn tableName="patchcommit" columnName="commit_message"/>-->
 
+<!--        <addColumn tableName="patchcommit">-->
+<!--            <column name="commit_message" type="VARCHAR(1000)">-->
+<!--                <constraints nullable="false"/>-->
+<!--            </column>-->
+<!--        </addColumn>-->
+<!--    </changeSet>-->
+
+<!--    <changeSet author="dylan" id="modify_uni_diff_column">-->
+<!--        <dropColumn tableName="patchcommit" columnName="uni_diff"/>-->
+
+<!--        <addColumn tableName="patchcommit">-->
+<!--            <column name="uni_diff" type="TINYTEXT">-->
+<!--                <constraints nullable="false"/>-->
+<!--            </column>-->
+<!--        </addColumn>-->
+<!--    </changeSet>-->
+
+<!--    <changeSet author="richard" id="modify_timeline_column">-->
+<!--        <dropColumn tableName="patchcommit" columnName="timeline"/>-->
+
+<!--        <addColumn tableName="patchcommit">-->
+<!--            <column name="timeline" type="TEXT">-->
+<!--                <constraints nullable="false"/>-->
+<!--            </column>-->
+<!--        </addColumn>-->
+<!--    </changeSet>-->
+
+<!--    <changeSet author="richard" id="modify_timeToPatch_column">-->
+<!--        <dropColumn tableName="patchcommit" columnName="timeToPatch"/>-->
+
+<!--        <addColumn tableName="patchcommit">-->
+<!--            <column name="timeToPatch" type="VARCHAR(50)">-->
+<!--                <constraints nullable="false"/>-->
+<!--            </column>-->
+<!--        </addColumn>-->
+<!--    </changeSet>-->
+
+<!--    <changeSet author="richard" id="modify_linesChanged_column">-->
+<!--        <dropColumn tableName="patchcommit" columnName="linesChanged"/>-->
+
+<!--        <addColumn tableName="patchcommit">-->
+<!--            <column name="linesChanged" type="INT">-->
+<!--                <constraints nullable="false"/>-->
+<!--            </column>-->
+<!--        </addColumn>-->
+<!--    </changeSet>-->
+
+<!--    <changeSet author="dylan" id="modify_uni_diff_column_small">-->
+<!--        <dropColumn tableName="patchcommit" columnName="uni_diff"/>-->
+
+<!--        <addColumn tableName="patchcommit">-->
+<!--            <column name="uni_diff" type="VARCHAR(500)">-->
+<!--                <constraints nullable="false"/>-->
+<!--            </column>-->
+<!--        </addColumn>-->
+<!--    </changeSet>-->
+
+<!--    <changeSet author="dylan" id="patchsourceurl-cascade-on-delete">-->
+<!--        <dropForeignKeyConstraint-->
+<!--                baseTableName="patchsourceurl"-->
+<!--                baseTableSchemaName="nvip"-->
+<!--                constraintName="patch_source_cve_id_fk"-->
+<!--        />-->
+<!--        <addForeignKeyConstraint-->
+<!--                baseTableName="patchsourceurl"-->
+<!--                baseColumnNames="cve_id"-->
+<!--                referencedTableName="vulnerability"-->
+<!--                referencedColumnNames="cve_id"-->
+<!--                constraintName="patch_source_cve_id_fk"-->
+<!--                onDelete="CASCADE"-->
+<!--        />-->
+<!--    </changeSet>-->
+
+    <changeSet author="dylan" id="patchcommit-commit-sha">
+        <dropColumn tableName="patchcommit" columnName="commit_url"/>
         <addColumn tableName="patchcommit">
-            <column name="commit_message" type="VARCHAR(1000)">
-                <constraints nullable="false"/>
+            <column name="commit_sha" type="TINYTEXT">
+                <constraints nullable="false" />
             </column>
         </addColumn>
+    </changeSet>
+
+    <changeSet author="dylan" id="patchcommit-commit-cve-id">
+        <addColumn tableName="patchcommit">
+            <column name="cve_id" type="VARCHAR(20)">
+                <constraints nullable="false" />
+            </column>
+        </addColumn>
+
+        <addForeignKeyConstraint
+                baseTableName="patchcommit"
+                baseColumnNames="cve_id"
+                referencedTableName="vulnerability"
+                referencedColumnNames="cve_id"
+                constraintName="patch_commit_cve_id_fk"
+                onDelete="CASCADE"
+        />
     </changeSet>
 
 </databaseChangeLog>
