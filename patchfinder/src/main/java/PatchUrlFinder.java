@@ -316,14 +316,20 @@ public class PatchUrlFinder {
 			try {
 				// Sleep for a minute before performing another advance search if
 				// 10 have already been conducted to avoid HTTP 429 error
-				if (advancedSearchCount >= 15) {
+				if (advancedSearchCount >= 10) {
 					logger.info("Performing Sleep before continuing: 1 minute");
 					Thread.sleep(60000);
 					advancedSearchCount = 0;
 				}
 
 				advancedSearchCount++;
-				Document searchPage = Jsoup.connect(searchParams + "&type=repositories").get();
+				Document searchPage = Jsoup.connect(searchParams + "&type=repositories")
+						.header("Accept-Encoding", "gzip, deflate")
+						.userAgent("Mozilla/5.0 (Windows NT 6.1; WOW64; rv:23.0) Gecko/20100101 Firefox/23.0")
+						.maxBodySize(0)
+						.timeout(600000)
+						.get();
+
 				final LinkedHashMap searchData =
 						(LinkedHashMap) OM.readValue(
 								searchPage.select("div.application-main").select("script").get(0).html(),
