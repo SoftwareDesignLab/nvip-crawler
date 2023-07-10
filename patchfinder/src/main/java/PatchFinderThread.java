@@ -196,7 +196,6 @@ public class PatchFinderThread implements Runnable {
 
 		// Query first page and get HEAD commit
 		try {
-			// TODO: Paginate
 			final Elements firstPageCommitObjects = getCommitObjects(baseCommitsUrl);
 
 			// Ensure at least one commit was found
