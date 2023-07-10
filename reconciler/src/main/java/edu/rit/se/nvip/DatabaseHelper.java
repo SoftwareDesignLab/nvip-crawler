@@ -3,10 +3,8 @@ package edu.rit.se.nvip;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import com.zaxxer.hikari.pool.HikariPool;
-import edu.rit.se.nvip.model.CompositeDescription;
-import edu.rit.se.nvip.model.CompositeVulnerability;
-import edu.rit.se.nvip.model.NvdVulnerability;
-import edu.rit.se.nvip.model.RawVulnerability;
+import edu.rit.se.nvip.characterizer.CveCharacterizer;
+import edu.rit.se.nvip.model.*;
 import edu.rit.se.nvip.utils.ReconcilerEnvVars;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -39,9 +37,13 @@ public class DatabaseHelper {
     private static final String INSERT_JT = "INSERT INTO rawdescriptionjt (description_id, raw_description_id) VALUES (?, ?)";
     private static final String INSERT_DESCRIPTION = "INSERT INTO description (description, created_date, gpt_func, cve_id) VALUES (?, ?, ?, ?)";
     private static final String DELETE_JOB = "DELETE FROM cvejobtrack WHERE cve_id = ?";
+    private static String UPDATE_CVSS = "UPDATE cvss SET base_score = ?, impact_score = ? WHERE cve_id = ?";
+    private static String UPDATE_VDO = "UPDATE vdoCharacteristic SET vdo_label = ?, vdo_noun_group = ?, vdo_confidence = ? WHERE cveid = ?";
+
 
     private String GET_ALL_NEW_CVES = "SELECT cve_id, published_date, status FROM nvddata order by cve_id desc";
     private final String insertIntoNvdData = "INSERT INTO nvd_data (cve_id, published_date, status) VALUES (?, ?, ?)";
+
 
     public static synchronized DatabaseHelper getInstance() {
         if (databaseHelper == null) {
@@ -417,5 +419,48 @@ public class DatabaseHelper {
 
         return 0;
     }
+
+    public int updateCVSS(CompositeVulnerability vuln){
+        if (vuln.getReconciliationStatus() == CompositeVulnerability.ReconciliationStatus.NEW){
+            UPDATE_CVSS = "INSERT INTO cvss (base_score, impact_score, cve_id)\n" +
+                    "VALUES (?, ?, ?)";
+        }
+        try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(UPDATE_CVSS)) {
+            for (CvssScore cvss : vuln.getCvssScoreInfo()){
+                pstmt.setString(1, String.valueOf(CveCharacterizer.CVSSSeverity.getCVSSSeverity(cvss.getSeverityId())));
+                pstmt.setString(2, cvss.getImpactScore());
+                pstmt.setString(3, cvss.getCveId());
+
+                pstmt.execute();
+            }
+
+            return 1;
+
+        } catch (SQLException e) {
+            logger.error("ERROR: Failed to update CVSS, {}", e.getMessage());
+        }
+        return 0;
+    }
+
+    public void updateVDO(CompositeVulnerability vuln){
+        if (vuln.getReconciliationStatus() == CompositeVulnerability.ReconciliationStatus.NEW){
+            UPDATE_VDO = "INSERT INTO vdoCharacteristic (vdo_label, vdo_noun_group, vdo_confidence, cve_id)\n" +
+                    "VALUES (?, ?, ?, ?)";
+        }
+        try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(UPDATE_VDO)) {
+            for (VdoCharacteristic vdo : vuln.getVdoCharacteristic()){
+                pstmt.setString(1, String.valueOf(CveCharacterizer.VDOLabel.getVdoLabel(vdo.getVdoLabelId())));
+                pstmt.setString(2, String.valueOf(CveCharacterizer.VDONounGroup.getVdoNounGroup(vdo.getVdoNounGroupId())));
+                pstmt.setDouble(3, vdo.getVdoConfidence());
+                pstmt.setString(4, vdo.getCveId());
+
+                pstmt.execute();
+            }
+        } catch (SQLException e) {
+            logger.error("ERROR: Failed to update VDO, {}", e.getMessage());
+        }
+    }
+//    private static final String UPDATE_CVSS = "UPDATE cvss SET based_score = ?, impact_score = ? WHERE cve_id = ?";
+//    private static final String UPDATE_VDO = "UPDATE vdoCharacteristic SET vdo_label = ?, vdo_noun_group = ?, vdo_confidence = ? WHERE cveid = ?";
 
 }

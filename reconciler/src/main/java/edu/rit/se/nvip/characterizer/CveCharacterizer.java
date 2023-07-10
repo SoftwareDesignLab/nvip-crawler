@@ -47,7 +47,7 @@ import java.util.Map;
  *
  */
 public class CveCharacterizer {
-	private Logger logger = LogManager.getLogger(getClass().getSimpleName());
+	private Logger logger = LogManager.getLogger(CveCharacterizer.class.getSimpleName());
 	private List<AbstractCveClassifier> myClassifierList = new ArrayList<>();
 
 	/**
@@ -72,6 +72,17 @@ public class CveCharacterizer {
 			this.vdoNounGroupId = vdoNounGroupId;
 			this.vdoNounGroupName = vdoNounGroupName;
 			this.vdoNameForUI = vdoNameForUI;
+		}
+		public int getVdoGroupId() {
+			return vdoNounGroupId;
+		}
+		public static VDONounGroup getVdoNounGroup(int vdoNounGroupId){
+			for(VDONounGroup vdo : VDONounGroup.values()){
+				if (vdoNounGroupId == vdo.getVdoGroupId()){
+					return vdo;
+				}
+			}
+			return null;
 		}
 
 	}
@@ -116,11 +127,21 @@ public class CveCharacterizer {
 			this.vdoLabelForUI = vdoLabelForUI;
 			this.vdoNounGroup = vdoNounGroup;
 		}
-
+		public int getVdoLabelId() {
+			return vdoLabelId;
+		}
 		public static Integer getVdoLabelId(String vdoLabelName){
 			for (VDOLabel label : VDOLabel.values()){
 				if (label.vdoLabelName.equals(vdoLabelName)){
 					return label.vdoLabelId;
+				}
+			}
+			return null;
+		}
+		public static VDOLabel getVdoLabel(int vdoLabelId){
+			for(VDOLabel vdo : VDOLabel.values()){
+				if (vdoLabelId == vdo.getVdoLabelId()){
+					return vdo;
 				}
 			}
 			return null;
@@ -144,6 +165,16 @@ public class CveCharacterizer {
 		public int getCvssSeverityId() {
 			return cvssSeverityId;
 		}
+
+		public static CVSSSeverity getCVSSSeverity(int cvssSeverityId){
+			for(CVSSSeverity cvss : CVSSSeverity.values()){
+				if (cvssSeverityId == cvss.getCvssSeverityId()){
+					return cvss;
+				}
+			}
+			return null;
+		}
+
 	}
 	
 	/**
