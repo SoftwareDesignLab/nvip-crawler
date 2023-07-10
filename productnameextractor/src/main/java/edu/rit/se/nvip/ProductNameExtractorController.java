@@ -418,7 +418,7 @@ public class ProductNameExtractorController {
             // Load CPE dict into affectedProductIdentifier
             affectedProductIdentifier.loadCPEDict(productDict);
         } catch (Exception e) {
-            logger.error("Failed to load product dict at filepath '{}', querying NVD...: {}", productDictPath, e);
+            logger.warn("Failed to load product dict at filepath '{}', querying NVD...: {}", productDictPath, e);
             productDict = affectedProductIdentifier.queryCPEDict(maxPages, maxAttemptsPerPage); // Query
             affectedProductIdentifier.loadCPEDict(productDict); // Load into CpeLookup
             productDictLastCompilationDate = Instant.now(); // Set last comp date to now
