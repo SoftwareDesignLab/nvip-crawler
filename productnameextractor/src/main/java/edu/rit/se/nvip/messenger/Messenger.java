@@ -89,7 +89,7 @@ public class Messenger {
         try {
             return OM.readValue(jsonString, ArrayList.class);
         } catch (JsonProcessingException e) {
-            logger.error("Failed to convert list of ids to json string: {}", e.toString());
+            logger.error("Failed to parse list of ids from json string: {}", e.toString());
             return new ArrayList<>();
         }
     }
