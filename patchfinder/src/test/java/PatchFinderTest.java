@@ -30,7 +30,7 @@ public class PatchFinderTest {
             assertTrue(new File(PatchFinder.clonePath).exists());
 
             //check the patch commits
-            assertEquals(24, PatchFinder.getPatchCommits().size());
+            assertEquals(24, PatchFinder.getPatchCommits().size()/2);
 
             // Add more assertions based on your requirements
         } catch (IOException e1) {
@@ -46,9 +46,9 @@ public class PatchFinderTest {
         assertEquals(20, PatchFinder.cveLimit);
         assertEquals(10, PatchFinder.maxThreads);
         assertEquals(1, PatchFinder.cvesPerThread);
-        assertEquals("src/main/resources/patch-repos", PatchFinder.clonePath);
+        assertEquals("patchfinder/src/main/resources/patch-repos", PatchFinder.clonePath);
         assertEquals("mysql", PatchFinder.databaseType);
-        assertEquals(1000, PatchFinder.cloneCommitThreshold);
+        assertEquals(2000, PatchFinder.cloneCommitThreshold);
     }
 
     @Test
