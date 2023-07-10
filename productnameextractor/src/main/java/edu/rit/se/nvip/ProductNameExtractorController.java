@@ -27,6 +27,7 @@ import java.util.List;
 public class ProductNameExtractorController {
     private static final Logger logger = LogManager.getLogger(ProductNameExtractorController.class);
     private static final ObjectMapper OM = new ObjectMapper();
+    protected static String inputMode = "db";
     protected static int cveLimit = 300;
     protected static int numThreads = 12;
     protected static String databaseType = "mysql";
@@ -107,33 +108,30 @@ public class ProductNameExtractorController {
         // Fetch ENV_VARS and set all found configurable properties
         final Map<String, String> props = System.getenv();
 
-        try {
-            if(props.containsKey("CVE_LIMIT")) {
-                cveLimit = Integer.parseInt(System.getenv("CVE_LIMIT"));
-                logger.info("Setting CVE_LIMIT to {}", cveLimit);
-            } else throw new Exception();
-        } catch (Exception ignored) { logger.warn("Could not fetch CVE_LIMIT from env vars, defaulting to {}", cveLimit); }
+        if(props.containsKey("INPUT_MODE")) {
+            inputMode = System.getenv("INPUT_MODE");
+            logger.info("Setting INPUT_MODE to {}", inputMode);
+        } else logger.warn("Could not fetch INPUT_MODE from env vars, defaulting to {}", inputMode);
 
-        try {
-            if(props.containsKey("NUM_THREADS")) {
-                numThreads = Integer.parseInt(System.getenv("NUM_THREADS"));
-                logger.info("Setting NUM_THREADS to {}", numThreads);
-            } else throw new Exception();
-        } catch (Exception ignored) { logger.warn("Could not fetch NUM_THREADS from env vars, defaulting to {}", numThreads); }
+        if(props.containsKey("CVE_LIMIT")) {
+            cveLimit = Integer.parseInt(System.getenv("CVE_LIMIT"));
+            logger.info("Setting CVE_LIMIT to {}", cveLimit);
+        } else logger.warn("Could not fetch CVE_LIMIT from env vars, defaulting to {}", cveLimit);
 
-        try {
-            if(props.containsKey("MAX_PAGES")) {
+        if(props.containsKey("NUM_THREADS")) {
+            numThreads = Integer.parseInt(System.getenv("NUM_THREADS"));
+            logger.info("Setting NUM_THREADS to {}", numThreads);
+        } else logger.warn("Could not fetch NUM_THREADS from env vars, defaulting to {}", numThreads);
+
+        if(props.containsKey("MAX_PAGES")) {
                 maxPages = Integer.parseInt(System.getenv("MAX_PAGES"));
                 logger.info("Setting MAX_PAGES to {}", maxPages);
-            } else throw new Exception();
-        } catch (Exception ignored) { logger.warn("Could not fetch MAX_PAGES from env vars, defaulting to {}", maxPages); }
+        } else logger.warn("Could not fetch MAX_PAGES from env vars, defaulting to {}", maxPages);
 
-        try {
-            if(props.containsKey("MAX_ATTEMPTS_PER_PAGE")) {
-                maxAttemptsPerPage = Integer.parseInt(System.getenv("MAX_ATTEMPTS_PER_PAGE"));
-                logger.info("Setting MAX_ATTEMPTS_PER_PAGE to {}", maxAttemptsPerPage);
-            } else throw new Exception();
-        } catch (Exception ignored) { logger.warn("Could not fetch MAX_ATTEMPTS_PER_PAGE from env vars, defaulting to {}", maxAttemptsPerPage); }
+        if(props.containsKey("MAX_ATTEMPTS_PER_PAGE")) {
+            maxAttemptsPerPage = Integer.parseInt(System.getenv("MAX_ATTEMPTS_PER_PAGE"));
+            logger.info("Setting MAX_ATTEMPTS_PER_PAGE to {}", maxAttemptsPerPage);
+        } else logger.warn("Could not fetch MAX_ATTEMPTS_PER_PAGE from env vars, defaulting to {}", maxAttemptsPerPage);
 
         if(props.containsKey("PRODUCT_DICT_NAME")) {
             productDictName = System.getenv("PRODUCT_DICT_NAME");
