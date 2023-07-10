@@ -16,6 +16,8 @@ public class ReconcilerEnvVars extends Properties {
     private static String hikariURL;
     private static String hikariUser;
     private static String hikariPassword;
+    private static String inputMode;
+    private static int rabbitTimeout;
     private static List<String> filterList;
     private static String reconcilerType;
     private static List<String> processorList;
@@ -83,6 +85,12 @@ public class ReconcilerEnvVars extends Properties {
                 case HIKARI_PASSWORD:
                     hikariPassword = addEnvvarString(envName, envVar, "root");
                     break;
+                case INPUT_MODE:
+                    inputMode = addEnvvarString(envName, envVar, "db");
+                    break;
+                case RABBIT_TIMEOUT:
+                    rabbitTimeout = addEnvvarInt(envName, Integer.parseInt(envVar), 3600);
+                    break;
                 case FILTER_LIST:
                     filterList = addEnvvarListString(envName, getListFromString(envVar), "SIMPLE");
                     break;
@@ -146,9 +154,7 @@ public class ReconcilerEnvVars extends Properties {
     }
 
     //GETTERS FOR EACH ENV VAR
-    public static String getHikariURL() {
-        return hikariURL;
-    }
+    public static String getHikariURL() {return hikariURL;}
 
     public static String getHikariUser() {
         return hikariUser;
@@ -157,7 +163,9 @@ public class ReconcilerEnvVars extends Properties {
     public static String getHikariPassword() {
         return hikariPassword;
     }
+    public static String getInputMode() {return inputMode;}
 
+    public static int getRabbitTimeout() {return rabbitTimeout;}
     public static List<String> getFilterList() {
         return filterList;
     }

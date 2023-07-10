@@ -3,6 +3,7 @@ package edu.rit.se.nvip;
 import edu.rit.se.nvip.characterizer.CveCharacterizer;
 import edu.rit.se.nvip.filter.FilterHandler;
 import edu.rit.se.nvip.filter.FilterReturn;
+import edu.rit.se.nvip.messager.Messager;
 import edu.rit.se.nvip.model.CompositeVulnerability;
 import edu.rit.se.nvip.model.RawVulnerability;
 import edu.rit.se.nvip.model.VulnSetWrapper;
@@ -14,7 +15,10 @@ import edu.rit.se.nvip.utils.ReconcilerEnvVars;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class ReconcilerController {
     private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
@@ -22,6 +26,7 @@ public class ReconcilerController {
     private final Reconciler reconciler;
     private final FilterHandler filterHandler;
     private final List<Processor> processors = new ArrayList<>();
+    private final Messager messager = new Messager();
 
     public ReconcilerController() {
         this.dbh = DatabaseHelper.getInstance();
@@ -33,8 +38,7 @@ public class ReconcilerController {
         }
     }
 
-    public void main() {
-        Set<String> jobs = dbh.getJobs();
+    public void main(Set<String> jobs) {
         logger.info(jobs.size() + " jobs found for reconciliation");
         Set<CompositeVulnerability> reconciledVulns = new HashSet<>();
         for (String job : jobs) {
@@ -57,6 +61,18 @@ public class ReconcilerController {
             logger.info("Finished job for cveId " + vuln.getCveId());
         }
         logger.info("Upserted {} vulnerabilities", upsertCount);
+
+        List<String> cves = new ArrayList<>();
+        for (CompositeVulnerability vuln : reconciledVulns){
+            if (vuln.getReconciliationStatus() == CompositeVulnerability.ReconciliationStatus.NEW || vuln.getReconciliationStatus() == CompositeVulnerability.ReconciliationStatus.UPDATED){
+                cves.add(vuln.getCveId());
+            }
+        }
+
+        messager.sendPNEMessage(cves);
+
+        messager.sendPNEFinishMessage();
+
     }
 
     private List<CompositeVulnerability> characterizeCVEs(Set<CompositeVulnerability> crawledVulnerabilityList) {
