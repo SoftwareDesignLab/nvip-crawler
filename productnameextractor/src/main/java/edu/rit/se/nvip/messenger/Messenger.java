@@ -1,9 +1,8 @@
 package edu.rit.se.nvip.messenger;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParser;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
@@ -22,6 +21,7 @@ public class Messenger {
     private final static String PNE_QUEUE = "reconciler";
     private final static String PATCHFINDER_QUEUE = "patchfinder";
     private static final Logger logger = LogManager.getLogger(DatabaseHelper.class.getSimpleName());
+    private static final ObjectMapper OM = new ObjectMapper();
     private ConnectionFactory factory;
 
     public Messenger(){
@@ -84,21 +84,22 @@ public class Messenger {
         }
     }
 
+    @SuppressWarnings("unchecked")
     public List<String> parseIds(String jsonString) {
-
-        List<String> ids = new ArrayList<>();
-        JsonArray jsonArray = JsonParser.parseString(jsonString).getAsJsonArray();
-
-        for (JsonElement jsonElement : jsonArray) {
-            String id = jsonElement.getAsString();
-            ids.add(id);
+        try {
+            return OM.readValue(jsonString, ArrayList.class);
+        } catch (JsonProcessingException e) {
+            logger.error("Failed to convert list of ids to json string: {}", e.toString());
+            return new ArrayList<>();
         }
-
-        return ids;
     }
 
     private String genJson(List<String> ids) {
-        Gson gson = new Gson();
-        return gson.toJson(ids);
+        try {
+            return OM.writeValueAsString(ids);
+        } catch (JsonProcessingException e) {
+            logger.error("Failed to convert list of ids to json string: {}", e.toString());
+            return "";
+        }
     }
 }
