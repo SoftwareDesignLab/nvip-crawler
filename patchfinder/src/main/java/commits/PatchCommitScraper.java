@@ -64,6 +64,8 @@ public class PatchCommitScraper {
 	private RevCommit vulnerableCommit; // Added
 	private static final int UNI_DIFF_LIMIT = 500;
 
+	private static final int COM_MESSAGE_LIMIT = 1000;
+
 	public PatchCommitScraper(String localDownloadLoc, String repoSource) {
 		this.localDownloadLoc = localDownloadLoc;
 		this.repoSource = repoSource;
@@ -116,7 +118,12 @@ public class PatchCommitScraper {
 								int linesChanged = getLinesChanged(repository, commit);
 								Long timeToPatch = calculateTimeToPatch(commitTimeline);
 								String formattedTimeToPatch = formatTimeToPatch(timeToPatch);
-								PatchCommit patchCommit = new PatchCommit(commitUrl, cveId, commit.getName(), new Date(commit.getCommitTime() * 1000L), commit.getFullMessage(), unifiedDiff, commitTimeline, formattedTimeToPatch, linesChanged);
+								String commitMessage = commit.getFullMessage();
+								if(commitMessage.length() > COM_MESSAGE_LIMIT) {
+									logger.warn("Commit message was longer than COM_MESSAGE_LIMIT ({}), and was truncated", COM_MESSAGE_LIMIT);
+									commitMessage = commitMessage.substring(0, COM_MESSAGE_LIMIT-3) + "...";
+								}
+								PatchCommit patchCommit = new PatchCommit(commitUrl, cveId, commit.getName(), new Date(commit.getCommitTime() * 1000L), commitMessage, unifiedDiff, commitTimeline, formattedTimeToPatch, linesChanged);
 								patchCommits.add(patchCommit);
 							} else ignoredCounter++;
 						}
