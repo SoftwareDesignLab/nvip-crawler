@@ -1,9 +1,7 @@
 package edu.rit.se.nvip.messager;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParser;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
@@ -16,13 +14,17 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public class Messager {
 
-    private final static String RECONCILER_QUEUE = "reconciler";
-    private final static String PNE_QUEUE = "PNE";
+    private final static String RECONCILER_QUEUE = "reconciler"; //likely needs to be updated
+    private final static String PNE_QUEUE = "PNE"; //likely needs to be updated
     private static final Logger logger = LogManager.getLogger(DatabaseHelper.class.getSimpleName());
+    private static final ObjectMapper OM = new ObjectMapper();
     private ConnectionFactory factory;
 
     public Messager(){
@@ -85,21 +87,22 @@ public class Messager {
         }
     }
 
+    @SuppressWarnings("unchecked")
     public List<String> parseIds(String jsonString) {
-
-        List<String> ids = new ArrayList<>();
-        JsonArray jsonArray = JsonParser.parseString(jsonString).getAsJsonArray();
-
-        for (JsonElement jsonElement : jsonArray) {
-            String id = jsonElement.getAsString();
-            ids.add(id);
+        try {
+            return OM.readValue(jsonString, ArrayList.class);
+        } catch (JsonProcessingException e) {
+            logger.error("Failed to parse list of ids from json string: {}", e.toString());
+            return new ArrayList<>();
         }
-
-        return ids;
     }
 
     private String genJson(List<String> ids) {
-        Gson gson = new Gson();
-        return gson.toJson(ids);
+        try {
+            return OM.writeValueAsString(ids);
+        } catch (JsonProcessingException e) {
+            logger.error("Failed to convert list of ids to json string: {}", e.toString());
+            return "";
+        }
     }
 }
