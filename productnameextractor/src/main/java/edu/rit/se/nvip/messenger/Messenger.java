@@ -18,8 +18,8 @@ import java.util.List;
 import java.util.concurrent.*;
 
 public class Messenger {
-    private final static String PNE_QUEUE = "PNE";
-    private final static String PATCHFINDER_QUEUE = "patchfinder";
+    private final static String INPUT_QUEUE = "PNE";
+    private final static String OUTPUT_QUEUE = "patchfinder";
     private static final Logger logger = LogManager.getLogger(DatabaseHelper.class.getSimpleName());
     private static final ObjectMapper OM = new ObjectMapper();
     private ConnectionFactory factory;
@@ -38,7 +38,7 @@ public class Messenger {
     public List<String> waitForReconcilerMessage(int rabbitTimeout) throws Exception {
         try(Connection connection = factory.newConnection();
             Channel channel = connection.createChannel()){
-            channel.queueDeclare(PNE_QUEUE, false, false, false, null);
+            channel.queueDeclare(INPUT_QUEUE, false, false, false, null);
 
             BlockingQueue<List<String>> messageQueue = new ArrayBlockingQueue<>(1);
 
@@ -47,7 +47,7 @@ public class Messenger {
                 List<String> parsedIds = parseIds(message);
                 messageQueue.offer(parsedIds);
             };
-            channel.basicConsume(PNE_QUEUE, true, deliverCallback, consumerTag -> { });
+            channel.basicConsume(INPUT_QUEUE, true, deliverCallback, consumerTag -> { });
 
             return messageQueue.poll(rabbitTimeout, TimeUnit.SECONDS);
 
@@ -62,9 +62,9 @@ public class Messenger {
 
         try (Connection connection = factory.newConnection();
              Channel channel = connection.createChannel()) {
-            channel.queueDeclare(PATCHFINDER_QUEUE, false, false, false, null);
+            channel.queueDeclare(OUTPUT_QUEUE, false, false, false, null);
             String message = genJson(ids);
-            channel.basicPublish("", PATCHFINDER_QUEUE, null, message.getBytes(StandardCharsets.UTF_8));
+            channel.basicPublish("", OUTPUT_QUEUE, null, message.getBytes(StandardCharsets.UTF_8));
 
         } catch (TimeoutException | IOException e) {
             logger.error("Error occurred while sending the PNE message to RabbitMQ: {}", e.getMessage());
@@ -75,9 +75,9 @@ public class Messenger {
 
         try (Connection connection = factory.newConnection();
              Channel channel = connection.createChannel()) {
-            channel.queueDeclare(PATCHFINDER_QUEUE, false, false, false, null);
+            channel.queueDeclare(OUTPUT_QUEUE, false, false, false, null);
             String message = "FINISHED";
-            channel.basicPublish("", PATCHFINDER_QUEUE, null, message.getBytes(StandardCharsets.UTF_8));
+            channel.basicPublish("", OUTPUT_QUEUE, null, message.getBytes(StandardCharsets.UTF_8));
 
         } catch (TimeoutException | IOException e) {
             logger.error("Error occurred while sending the PNE message to RabbitMQ: {}", e.getMessage());
