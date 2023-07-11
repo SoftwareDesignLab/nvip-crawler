@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.*;
 
 public class ReconcilerController {
     private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
@@ -52,24 +53,10 @@ public class ReconcilerController {
 
         characterizeCVEs(reconciledVulns);
 
-        int upsertCount = 0;
-        for (CompositeVulnerability vuln : reconciledVulns) {
-            int status = dbh.insertOrUpdateVulnerabilityFull(vuln);
-            if (status != -1) {
-                upsertCount += status;
-            }
-            logger.info("Finished job for cveId " + vuln.getCveId());
-        }
-        logger.info("Upserted {} vulnerabilities", upsertCount);
-
-        List<String> cves = new ArrayList<>();
         for (CompositeVulnerability vuln : reconciledVulns){
-            if (vuln.getReconciliationStatus() == CompositeVulnerability.ReconciliationStatus.NEW || vuln.getReconciliationStatus() == CompositeVulnerability.ReconciliationStatus.UPDATED){
-                cves.add(vuln.getCveId());
-            }
+            dbh.updateCVSS(vuln);
+            dbh.updateVDO(vuln);
         }
-
-        messager.sendPNEMessage(cves);
 
         messager.sendPNEFinishMessage();
 
@@ -125,7 +112,20 @@ public class ReconcilerController {
         CompositeVulnerability out = reconciler.reconcile(existing, wrapper.toReconcile());
         // link all the rawvulns to the compvuln, regardless of filter/reconciliation status
         // we do this because publish dates and mod dates should be determined by all sources, not just those with good descriptions
+
         out.setPotentialSources(rawVulns);
+
+        dbh.insertOrUpdateVulnerabilityFull(out);
+
+        logger.info("Finished job for cveId " + out.getCveId());
+
+
+        List<String> outList = new ArrayList<>();
+        if (out.getReconciliationStatus() == CompositeVulnerability.ReconciliationStatus.NEW || out.getReconciliationStatus() == CompositeVulnerability.ReconciliationStatus.UPDATED){
+            outList.add(out.getCveId());
+            messager.sendPNEMessage(outList);
+        }
+
         return out;
     }
 

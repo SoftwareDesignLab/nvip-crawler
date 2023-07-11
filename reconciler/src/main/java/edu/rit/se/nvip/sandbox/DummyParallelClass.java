@@ -9,10 +9,9 @@ public class DummyParallelClass {
         DummyParallelClass dummyParallel = new DummyParallelClass();
 
         // Create a set of jobs
-        Set<Integer> jobs = new HashSet<>();
-        jobs.add(1);
-        jobs.add(2);
-        jobs.add(3);
+        Set<String> jobs = new HashSet<>();
+        jobs.add("1");
+        jobs.add("2");
 
         dummyParallel.runJobsInHalfParallel(jobs);
     }
@@ -57,6 +56,6 @@ public class DummyParallelClass {
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
-        System.out.println("step 2 finished for job " + job);
+//        System.out.println("step 2 finished for job " + job);
     }
 }
