@@ -48,7 +48,7 @@ public class DatabaseHelper {
 	private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
 
 	private final String selectAffectedProductsSql = "SELECT cve_id, cpe FROM affectedproduct GROUP BY product_name, affected_product_id ORDER BY cve_id DESC, version ASC;";
-	private final String selectAffectedProductsByIdsSql = "SELECT cve_id, cpe FROM affectedproduct WHERE cve_id IN ? GROUP BY product_name, affected_product_id ORDER BY cve_id DESC, version ASC;";
+	private final String selectAffectedProductsByIdsSql = "SELECT cve_id, cpe FROM affectedproduct WHERE cve_id = ? GROUP BY product_name, affected_product_id ORDER BY cve_id DESC, version ASC;";
 	private final String getVulnIdByCveIdSql = "SELECT vuln_id FROM vulnerability WHERE cve_id IN ?";
 	private final String getExistingSourceUrlsSql = "SELECT source_url, source_url_id FROM patchsourceurl";
 	private final String getExistingPatchCommitsSql = "SELECT commit_sha FROM patchcommit";
@@ -163,48 +163,56 @@ public class DatabaseHelper {
 		// Prepare statement
 		try (Connection conn = getConnection();
 			 PreparedStatement getAll = conn.prepareStatement(selectAffectedProductsSql);
-			 PreparedStatement getByIds = conn.prepareStatement(selectAffectedProductsByIdsSql);
+			 PreparedStatement getById = conn.prepareStatement(selectAffectedProductsByIdsSql);
 		) {
 			// Execute correct statement and get result set
 			ResultSet res = null;
-			if(cveIds == null) res = getAll.executeQuery();
-			else {
-				getByIds.setArray(1, conn.createArrayOf("VARCHAR(20)", new List[]{cveIds}));
-				res = getByIds.executeQuery();
+			if(cveIds == null) {
+				res = getAll.executeQuery();
+				parseAffectedProducts(affectedProducts, res);
 			}
-
-			// Parse results
-			while (res.next()) {
-				// Extract cveId and cpe from result
-				final String cveId = res.getString("cve_id");
-				final String cpe = res.getString("cpe");
-
-				// Extract product name and version from cpe
-				final Matcher m = CPE_PATTERN.matcher(cpe);
-				if(!m.find()) {
-					logger.warn("Invalid cpe '{}' could not be parsed, skipping product", cpe);
-					continue;
-				}
-				final String vendor = m.group(1);
-				final String name = m.group(2);
-				final String version = m.group(3);
-				final CpeEntry entry = new CpeEntry(name, version, cpe);
-
-				// If we already have this cveId stored, add specific version
-				if (affectedProducts.containsKey(cveId)) {
-					affectedProducts.get(cveId).addVersion(entry);
-				} else {
-					final CpeGroup group = new CpeGroup(vendor, name);
-					group.addVersion(entry);
-					affectedProducts.put(cveId, group);
+			else {
+				for (String cveId : cveIds) {
+					getById.setString(1, cveId);
+					res = getById.executeQuery();
+					parseAffectedProducts(affectedProducts, res);
 				}
 			}
 
 		} catch (Exception e) {
-			logger.error("ERROR: Failed to grab CVEs and CPEs from DB:\n{}", e.toString());
+			logger.error("ERROR: Failed to generate affected products map: {}", e.toString());
 		}
 
 		return affectedProducts;
+	}
+
+	private void parseAffectedProducts(Map<String, CpeGroup> affectedProducts, ResultSet res) throws SQLException {
+		// Parse results
+		while (res.next()) {
+			// Extract cveId and cpe from result
+			final String cveId = res.getString("cve_id");
+			final String cpe = res.getString("cpe");
+
+			// Extract product name and version from cpe
+			final Matcher m = CPE_PATTERN.matcher(cpe);
+			if(!m.find()) {
+				logger.warn("Invalid cpe '{}' could not be parsed, skipping product", cpe);
+				continue;
+			}
+			final String vendor = m.group(1);
+			final String name = m.group(2);
+			final String version = m.group(3);
+			final CpeEntry entry = new CpeEntry(name, version, cpe);
+
+			// If we already have this cveId stored, add specific version
+			if (affectedProducts.containsKey(cveId)) {
+				affectedProducts.get(cveId).addVersion(entry);
+			} else {
+				final CpeGroup group = new CpeGroup(vendor, name);
+				group.addVersion(entry);
+				affectedProducts.put(cveId, group);
+			}
+		}
 	}
 
 	/**

@@ -30,7 +30,7 @@ public class PatchFinderMain {
             while(true) {
                 try {
                     // Wait and get jobs
-                    final List<String> jobs = rabbitMQ.waitForProductNameExtractorMessage(10);
+                    final List<String> jobs = rabbitMQ.waitForProductNameExtractorMessage(15);
 
                     // If null is returned, either and error occurred or intentional program quit
                     if(jobs == null) break;

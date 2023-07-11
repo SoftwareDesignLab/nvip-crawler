@@ -179,6 +179,7 @@ public class PatchFinder {
 	public static void run(List<String> cveIds) throws IOException, InterruptedException {
 		// Get affected products via CVE ids
 		final Map<String, CpeGroup> affectedProducts = databaseHelper.getAffectedProducts(cveIds);
+		logger.info("Successfully got affected products for {} CVEs from the database", affectedProducts.size());
 		PatchFinder.run(affectedProducts);
 	}
 
@@ -232,53 +233,59 @@ public class PatchFinder {
 
 		// Get found patches from patchfinder
 		ArrayList<PatchCommit> patchCommits = PatchFinder.getPatchCommits();
-		logger.info("Successfully found {} patch commits from {} patch urls in {} seconds",
-				patchCommits.size(),
-				urlCount,
-				(System.currentTimeMillis() - findPatchesStart) / 1000
-		);
 
-		// Get existing sources
-		final Map<String, Integer> existingSources = databaseHelper.getExistingSourceUrls();
+		// Insert found patch commits (if any)
+		if(patchCommits.size() > 0) {
+			logger.info("Successfully found {} patch commits from {} patch urls in {} seconds",
+					patchCommits.size(),
+					urlCount,
+					(System.currentTimeMillis() - findPatchesStart) / 1000
+			);
 
-		// Get existing patch commits
-		final Set<String> existingCommitShas = databaseHelper.getExistingPatchCommitShas();
+			// Get existing sources
+			final Map<String, Integer> existingSources = databaseHelper.getExistingSourceUrls();
 
-		// Insert patches
-		int failedInserts = 0;
-		int existingInserts = 0;
-		logger.info("Starting insertion of {} patch commits into the database...", patchCommits.size());
-		final long insertPatchesStart = System.currentTimeMillis();
-		for (PatchCommit patchCommit : patchCommits) {
-			final String sourceUrl = patchCommit.getCommitUrl();
-			// Insert source
-			final int sourceUrlId = databaseHelper.insertPatchSourceURL(existingSources, patchCommit.getCveId(), sourceUrl);
+			// Get existing patch commits
+			final Set<String> existingCommitShas = databaseHelper.getExistingPatchCommitShas();
 
-			// Insert patch commit
-			try {
-				// Ensure patch commit does not already exist
-				final String commitSha = patchCommit.getCommitId();
-				if (!existingCommitShas.contains(commitSha)) {
-					databaseHelper.insertPatchCommit(
-							sourceUrlId, patchCommit.getCveId(), commitSha, patchCommit.getCommitDate(),
-							patchCommit.getCommitMessage(), patchCommit.getUniDiff(),
-							patchCommit.getTimeline(), patchCommit.getTimeToPatch(), patchCommit.getLinesChanged()
-					);
-				} else {
-					logger.warn("Failed to insert patch commit, as it already exists in the database");
-					existingInserts++;
+			// Insert patches
+			int failedInserts = 0;
+			int existingInserts = 0;
+			logger.info("Starting insertion of {} patch commits into the database...", patchCommits.size());
+			final long insertPatchesStart = System.currentTimeMillis();
+			for (PatchCommit patchCommit : patchCommits) {
+				final String sourceUrl = patchCommit.getCommitUrl();
+				// Insert source
+				final int sourceUrlId = databaseHelper.insertPatchSourceURL(existingSources, patchCommit.getCveId(), sourceUrl);
+
+				// Insert patch commit
+				try {
+					// Ensure patch commit does not already exist
+					final String commitSha = patchCommit.getCommitId();
+					if (!existingCommitShas.contains(commitSha)) {
+						databaseHelper.insertPatchCommit(
+								sourceUrlId, patchCommit.getCveId(), commitSha, patchCommit.getCommitDate(),
+								patchCommit.getCommitMessage(), patchCommit.getUniDiff(),
+								patchCommit.getTimeline(), patchCommit.getTimeToPatch(), patchCommit.getLinesChanged()
+						);
+					} else {
+						logger.warn("Failed to insert patch commit, as it already exists in the database");
+						existingInserts++;
+					}
+				} catch (IllegalArgumentException e) {
+					failedInserts++;
 				}
-			} catch (IllegalArgumentException e) {
-				failedInserts++;
 			}
-		}
 
-		logger.info("Successfully inserted {} patch commits into the database in {} seconds ({} failed {} already existed)",
-				patchCommits.size() - failedInserts - existingInserts,
-				(System.currentTimeMillis() - insertPatchesStart) / 1000,
-				failedInserts,
-				existingInserts
-		);
+			logger.info("Successfully inserted {} patch commits into the database in {} seconds ({} failed {} already existed)",
+					patchCommits.size() - failedInserts - existingInserts,
+					(System.currentTimeMillis() - insertPatchesStart) / 1000,
+					failedInserts,
+					existingInserts
+			);
+		} else logger.info("No patch commits found"); // Otherwise log failure to find patch
+
+
 
 		final long delta = (System.currentTimeMillis() - totalStart) / 1000;
 		logger.info("Successfully collected {} patch commits from {} CVEs in {} seconds",
@@ -373,27 +380,16 @@ public class PatchFinder {
 		final AtomicInteger totalPatchSources = new AtomicInteger();
 		possiblePatchSources.values().stream().map(ArrayList::size).forEach(totalPatchSources::addAndGet);
 
-		// If there are less CVEs to process than maxThreads, only create cveLimit number of threads
-		if(totalCVEsToProcess < maxThreads){
-			logger.info("Number of CVEs to process {} is less than available threads {}, setting number of available threads to {}", cveLimit, maxThreads, cveLimit);
-			maxThreads = totalCVEsToProcess;
-		}
-
-		// Initialize data structures
-//		ArrayList<HashMap<String, ArrayList<String>>> sourceBatches = new ArrayList<>();
+		// Initialize thread pool executor
+		final int actualThreads = Math.min(maxThreads, totalCVEsToProcess);
 		final BlockingQueue<Runnable> workQueue = new ArrayBlockingQueue<>(totalPatchSources.get());
 		final ThreadPoolExecutor executor = new ThreadPoolExecutor(
-				maxThreads,
-				maxThreads,
+				actualThreads,
+				actualThreads,
 				5,
 				TimeUnit.MINUTES,
 				workQueue
 		);
-
-//		// Prepare source batches for jobs
-//		for (int i=0; i < maxThreads; i++) {
-//			sourceBatches.add(new HashMap<>());
-//		}
 
 		// Prestart all assigned threads (this is what runs jobs)
 		executor.prestartAllCoreThreads();
@@ -409,14 +405,12 @@ public class PatchFinder {
 
 		// Partition jobs to all threads
 		int i = 0;
-//		int thread = 0;
 		for (String cveId : CVEsToProcess) {
 			if(i >= cveLimit) {
 				logger.info("Hit defined CVE_LIMIT of {}, skipping {} remaining CVEs...", cveLimit, CVEsToProcess.size() - cveLimit);
 				break;
 			}
 
-//			sourceBatches.get(thread).put(cveId, possiblePatchSources.get(cveId));
 			final HashMap<String, ArrayList<String>> sourceBatch = new HashMap<>();
 			sourceBatch.put(cveId, possiblePatchSources.get(cveId));
 			if(!workQueue.offer(new PatchFinderThread(sourceBatch, clonePath, 10000))) {

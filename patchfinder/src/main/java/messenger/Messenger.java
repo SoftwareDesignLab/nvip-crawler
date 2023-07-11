@@ -102,6 +102,6 @@ public class Messenger {
 
     public static void main(String[] args) {
         final Messenger m = new Messenger("localhost", "guest", "guest");
-        m.sendDummyMessage(INPUT_QUEUE, "{[CVE-2023-2987]}");
+        m.sendDummyMessage(INPUT_QUEUE, "[\"CVE-2023-2933\", \"CVE-2023-2934\"]");
     }
 }
