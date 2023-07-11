@@ -75,7 +75,6 @@ public class ProductDetector {
 			nerModel = new NERmodel(resourceDir + "/" + dataDir + "/", nlpDir);
 
 			// Load CPE dictionary
-			logger.info("Loading CPE dictionary...");
 			cpeDict = cpeLookUp;
 
 			// Load Apache OpenNLP sentence model

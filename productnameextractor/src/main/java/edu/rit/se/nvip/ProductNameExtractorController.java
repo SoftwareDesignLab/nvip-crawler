@@ -9,6 +9,7 @@ import edu.rit.se.nvip.model.cve.CompositeVulnerability;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.awt.*;
 import java.io.*;
 import java.nio.file.Paths;
 import java.time.DateTimeException;
@@ -25,7 +26,6 @@ import java.util.List;
 public class ProductNameExtractorController {
     private static final Logger logger = LogManager.getLogger(ProductNameExtractorController.class);
     private static final ObjectMapper OM = new ObjectMapper();
-    private static final int cveLimit = ProductNameExtractorEnvVars.getCveLimit();
     private static final int numThreads = ProductNameExtractorEnvVars.getNumThreads();
     private static final int maxPages = ProductNameExtractorEnvVars.getMaxPages();
     private static final int maxAttemptsPerPage = ProductNameExtractorEnvVars.getMaxAttemptsPerPage();
@@ -34,9 +34,44 @@ public class ProductNameExtractorController {
     private static final String resourceDir = ProductNameExtractorEnvVars.getResourceDir();
     private static final String dataDir = ProductNameExtractorEnvVars.getDataDir();
     private static final String nlpDir = ProductNameExtractorEnvVars.getNlpDir();
+    private static final String productDictPath = resourceDir + "/" + dataDir + "/" + productDictName;
     private static Instant productDictLastCompilationDate = Instant.parse("2000-01-01T00:00:00.00Z");
     private static Instant productDictLastRefreshDate = Instant.parse("2000-01-01T00:00:00.00Z");
     private static AffectedProductIdentifier affectedProductIdentifier;
+    private static Map<String, CpeGroup> productDict = null;
+
+    /**
+     * Initialize the AffectedProductIdentifier as well as initialize the
+     * models required to extract product names/versions
+     */
+    public static void initializeAffectedProductIdentifier(){
+        if(affectedProductIdentifier == null){
+            logger.info("Initializing the AffectedProductIdentifier...");
+            affectedProductIdentifier = new AffectedProductIdentifier(numThreads);
+            affectedProductIdentifier.initializeProductDetector(resourceDir, nlpDir, dataDir);
+        }else{
+            logger.info("AffectedProductIdentifier already initialized!");
+        }
+    }
+
+    /**
+     *
+     *
+     * @return CPE product dictionary from NVD
+     * @throws IOException
+     */
+    public static Map<String, CpeGroup> getProductDict() throws IOException {
+        // Ensure dict is loaded
+        if(productDict == null){
+            logger.info("Loading product dictionary...");
+            productDict = readProductDict(productDictPath);
+        }else{
+            logger.info("Product dictionary already loaded!");
+        }
+
+        // Return dict
+        return productDict;
+    }
 
     /**
      * Reads in the CPE dictionary from file at the given path.
@@ -183,16 +218,12 @@ public class ProductNameExtractorController {
      * loading the CPE dictionary, and cross-referencing that information to generate and store
      * return affected products that have been found.
      *
-     * @param vulnList list of vulnerabiltiies
+     * @param vulnList list of vulnerabilities to be processed
      * @return affected products found
      */
     public static List<AffectedProduct> run(List<CompositeVulnerability> vulnList) {
-
-        // This method will find Common Platform Enumerations (CPEs) and store them in the DB
-        logger.info("Initializing and starting the AffectedProductIdentifier...");
-
-        // Init AffectedProductIdentifier
-        ProductNameExtractorController.affectedProductIdentifier = new AffectedProductIdentifier(vulnList, numThreads);
+        // Clears and sets the vulnList within AffectedProductIdentifier to be the new set of vulnerabilities
+        affectedProductIdentifier.setVulnList(vulnList);
 
         // Init CPE dict data storage
         Map<String, CpeGroup> productDict;
@@ -202,7 +233,7 @@ public class ProductNameExtractorController {
 
         try {
             // Read in product dict
-            productDict = readProductDict(productDictPath);
+            productDict = getProductDict();
 
             // Calculate time since last compilation
             final long timeSinceLastComp = Duration.between(productDictLastCompilationDate, Instant.now()).getSeconds();
@@ -228,8 +259,8 @@ public class ProductNameExtractorController {
             writeProductDict(productDict, productDictPath); // Write product dict
         }
 
-        // Run the AffectedProductIdentifier with the cveLimit and return the products found
-        return affectedProductIdentifier.identifyAffectedProducts(resourceDir, nlpDir, dataDir, cveLimit);
+        // Run the AffectedProductIdentifier and return the products found
+        return affectedProductIdentifier.identifyAffectedProducts();
 
     }
 }

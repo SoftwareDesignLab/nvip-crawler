@@ -11,7 +11,6 @@ public class ProductNameExtractorEnvVars {
      * Default values for environment variables
      */
     private static int rabbitPollInterval = 10;
-    private static int cveLimit = 300;
     private static int numThreads = 12;
     private static String databaseType = "mysql";
     private static String hikariUrl = "jdbc:mysql://localhost:3306/nvip?useSSL=false&allowPublicKeyRetrieval=true";
@@ -33,10 +32,6 @@ public class ProductNameExtractorEnvVars {
 
     public static int getRabbitPollInterval() {
         return rabbitPollInterval;
-    }
-
-    public static int getCveLimit() {
-        return cveLimit;
     }
 
     public static int getNumThreads() {
@@ -103,11 +98,6 @@ public class ProductNameExtractorEnvVars {
             rabbitPollInterval = Integer.parseInt(System.getenv("RABBIT_POLL_INTERVAL"));
             logger.info("Setting RABBIT_POLL_INTERVAL to {}", rabbitPollInterval);
         } else logger.warn("Could not fetch RABBIT_POLL_INTERVAL from env vars, defaulting to {}", rabbitPollInterval);
-
-        if(props.containsKey("CVE_LIMIT")) {
-            cveLimit = Integer.parseInt(System.getenv("CVE_LIMIT"));
-            logger.info("Setting CVE_LIMIT to {}", cveLimit);
-        } else logger.warn("Could not fetch CVE_LIMIT from env vars, defaulting to {}", cveLimit);
 
         if(props.containsKey("NUM_THREADS")) {
             numThreads = Integer.parseInt(System.getenv("NUM_THREADS"));

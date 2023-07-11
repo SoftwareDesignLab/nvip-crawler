@@ -118,14 +118,14 @@ public class ProductNameExtractorMain {
      *
      * @param args (unused) program arguments
      *
-     * TODO: Handle rabbitMQ stuff and make it wait/idle correctly
+     * TODO: Make sure that resources are released at some point
      */
     public static void main(String[] args) {
         logger.info("CURRENT PATH --> " + currentDir);
 
         DatabaseHelper databaseHelper = new DatabaseHelper(databaseType, hikariUrl, hikariUser, hikariPassword);
 
-        List<CompositeVulnerability> vulnList = null;
+        List<CompositeVulnerability> vulnList;
         final Messenger rabbitMQ = new Messenger();
 
         if(testMode){
@@ -134,6 +134,7 @@ public class ProductNameExtractorMain {
             vulnList = createTestVulnList();
 
             final long getProdStart = System.currentTimeMillis();
+            ProductNameExtractorController.initializeAffectedProductIdentifier();
             int numAffectedProducts = ProductNameExtractorController.run(vulnList).size();
 
             logger.info("Product Name Extractor found {} affected products in the test run in {} seconds", numAffectedProducts, Math.floor(((double) (System.currentTimeMillis() - getProdStart) / 1000) * 100) / 100);
@@ -143,12 +144,14 @@ public class ProductNameExtractorMain {
 
         }else{
             // Otherwise using rabbitmq, get the list of cve IDs from the reconciler and create vuln list from those
-            //TODO: make models get loaded once and then pne can keep running through
             logger.info("Waiting for jobs from Reconciler...");
             while(true) {
                 try {
+
                     // Get CVE IDs to be processed from reconciler
                     cveIds = rabbitMQ.waitForReconcilerMessage(rabbitPollInterval);
+
+                    ProductNameExtractorController.initializeAffectedProductIdentifier();
 
                     // If no IDs pulled, break
                     if (cveIds == null) break;
@@ -166,6 +169,7 @@ public class ProductNameExtractorMain {
                     logger.info("Sending jobs to patchfinder...");
                     rabbitMQ.sendPatchFinderMessage(cveIds);
                     rabbitMQ.sendPatchFinderFinishMessage();
+                    logger.info("Jobs have been sent!");
 
                 } catch (Exception e) {
                     logger.error("Failed to get jobs from RabbitMQ, exiting program...");

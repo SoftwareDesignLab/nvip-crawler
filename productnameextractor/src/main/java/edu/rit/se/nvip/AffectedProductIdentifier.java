@@ -30,6 +30,7 @@ import opennlp.tools.tokenize.WhitespaceTokenizer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -47,8 +48,9 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class AffectedProductIdentifier {
 	private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
-	private final List<CompositeVulnerability> vulnList;
+	private List<CompositeVulnerability> vulnList;
 	private final CpeLookUp cpeLookUp;
+	private ProductDetector productDetector;
 	private final int numThreads;
 
 	/**
@@ -58,10 +60,24 @@ public class AffectedProductIdentifier {
 	 *
 	 * @param vulnList list of vulnerabilities to use for product identification.
 	 */
-	public AffectedProductIdentifier(List<CompositeVulnerability> vulnList, int numThreads) {
-		this.vulnList = vulnList;
+	public AffectedProductIdentifier(int numThreads) {
+		this.vulnList = new ArrayList<>();
 		this.cpeLookUp = new CpeLookUp();
 		this.numThreads = numThreads;
+	}
+
+	protected void setVulnList(List<CompositeVulnerability> vulnList){
+		if(!this.vulnList.isEmpty()) this.vulnList.clear();
+		this.vulnList = vulnList;
+	}
+
+	public void initializeProductDetector(String resourceDir, String nlpDir, String dataDir){
+		try{
+			productDetector = new ProductDetector(cpeLookUp, resourceDir, nlpDir, dataDir);
+		} catch (IOException e){
+			logger.error("Severe Error! Could not initialize the models for product name/version extraction! Skipping affected product identification step! {}", e.toString());
+			System.exit(1);
+		}
 	}
 
 	/**
@@ -187,24 +203,14 @@ public class AffectedProductIdentifier {
 	 * from the database through processVulnerability, in order to build a map of affected
 	 * products.
 	 *
-	 * @param cveLimit limit of CVEs to drive
 	 * @return a map of products affected by pulled CVEs
 	 */
-	public List<AffectedProduct> identifyAffectedProducts(String resourceDir, String nlpDir, String dataDir, int cveLimit) {
-		// Set # to process based on cveLimit. If cveLimit is 0, assume no limit.
-		if(cveLimit == 0) cveLimit = Integer.MAX_VALUE;
-		int totalCVEtoProcess = Math.min(vulnList.size(), cveLimit);
+	public List<AffectedProduct> identifyAffectedProducts() {
+
+		int totalCVEtoProcess = vulnList.size();
 
 		logger.info("Starting to identify affected products for " + totalCVEtoProcess + " CVEs.");
 		long start = System.currentTimeMillis();
-
-		ProductDetector productNameDetector;
-		try {
-			productNameDetector = new ProductDetector(this.cpeLookUp, resourceDir, nlpDir, dataDir);
-		} catch (Exception e1) {
-			logger.error("Severe Error! Could not initialize the models for product name/version extraction! Skipping affected product identification step! {}", e1.toString());
-			return null;
-		}
 
 		AtomicInteger numOfProductsMappedToCpe = new AtomicInteger();
 		AtomicInteger numOfProductsNotMappedToCPE = new AtomicInteger();
@@ -239,7 +245,7 @@ public class AffectedProductIdentifier {
 			CompositeVulnerability vulnerability = vulnList.get(i);
 			try {
 				if(!workQueue.offer(() -> processVulnerability(
-						productNameDetector,
+						productDetector,
 						cpeLookUp,
 						vulnerability,
 						counterOfBadDescriptionCVEs,
