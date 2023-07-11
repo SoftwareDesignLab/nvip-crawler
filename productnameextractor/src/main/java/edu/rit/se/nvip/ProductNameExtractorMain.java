@@ -20,8 +20,7 @@ public class ProductNameExtractorMain {
     public static final String currentDir = System.getProperty("user.dir");
 
     // Input Mode Variables (determine which CVEs to process)
-    private static final boolean rabbitEnabled = ProductNameExtractorEnvVars.isRabbitEnabled();
-    private static final int rabbitTimeout = ProductNameExtractorEnvVars.getRabbitTimeout();
+    private static final int rabbitPollInterval = ProductNameExtractorEnvVars.getRabbitPollInterval();
     private static final boolean testMode = ProductNameExtractorEnvVars.isTestMode();
     private static List<String> cveIds;
 
@@ -125,34 +124,36 @@ public class ProductNameExtractorMain {
         logger.info("CURRENT PATH --> " + currentDir);
 
         DatabaseHelper databaseHelper = new DatabaseHelper(databaseType, hikariUrl, hikariUser, hikariPassword);
-        final long getCVEStart = System.currentTimeMillis();
 
         List<CompositeVulnerability> vulnList = null;
+        final Messenger rabbitMQ = new Messenger();
+
         if(testMode){
             // If in test mode, create manual vulnerability list
             logger.info("Test mode enabled, creating test vulnerability list...");
             vulnList = createTestVulnList();
 
-        }else if (rabbitEnabled){
-            // Otherwise if using rabbitmq, get the list of cve IDs from the reconciler and create vuln list from those
+        }else{
+            // Otherwise using rabbitmq, get the list of cve IDs from the reconciler and create vuln list from those
             logger.info("Waiting for jobs from Reconciler...");
-            try{
-                Messenger rabbitMQ = new Messenger();
-                cveIds = rabbitMQ.waitForReconcilerMessage(rabbitTimeout);
 
-                // Pull specific cve information from database for each cve ID passed from reconciler
-                vulnList = databaseHelper.getSpecificCompositeVulnerabilities(cveIds);
+            while(true){
+                try {
+                    // Get CVE IDs to be processed from reconciler
+                    cveIds = rabbitMQ.waitForReconcilerMessage(rabbitPollInterval);
 
-            }catch(Exception e){
-                logger.error("Failed to get jobs from RabbitMQ, exiting...");
-                System.exit(1);
+                    // If no IDs pulled, break
+                    if(cveIds == null) break;
+
+                    // Pull specific cve information from database for each CVE ID passed from reconciler
+                    vulnList = databaseHelper.getSpecificCompositeVulnerabilities(cveIds);
+
+                } catch (Exception e) {
+                    logger.error("Failed to get jobs from RabbitMQ, exiting program...");
+                    System.exit(1);
+                }
             }
 
-        }else {
-            // If not using rabbitmq, fetch all composite vulnerabilities from the db
-            logger.info("Pulling existing CVEs from the database...");
-            vulnList = databaseHelper.getAllCompositeVulnerabilities(0);
-            logger.info("Successfully pulled {} existing CVEs from the database in {} seconds", vulnList.size(), Math.floor(((double) (System.currentTimeMillis() - getCVEStart) / 1000) * 100) / 100);
         }
 
         final long getProdStart = System.currentTimeMillis();
@@ -164,12 +165,9 @@ public class ProductNameExtractorMain {
         }else{
             int numAffectedProducts = databaseHelper.insertAffectedProductsToDB(affectedProducts);
             logger.info("Product Name Extractor found and inserted {} affected products to the database in {} seconds", numAffectedProducts, Math.floor(((double) (System.currentTimeMillis() - getProdStart) / 1000) * 100) / 100);
-        }
 
-        // If in rabbit mode, send list of cveIds to Patchfinder
-        if(rabbitEnabled){
+            // Send list of cveIds to Patchfinder
             logger.info("Sending jobs to patchfinder...");
-            Messenger rabbitMQ = new Messenger();
             rabbitMQ.sendPatchFinderMessage(cveIds);
             rabbitMQ.sendPatchFinderFinishMessage();
         }

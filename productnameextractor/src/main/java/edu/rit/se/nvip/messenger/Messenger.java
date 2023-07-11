@@ -21,7 +21,7 @@ public class Messenger {
     private final static String OUTPUT_QUEUE = "patchfinder";
     private static final Logger logger = LogManager.getLogger(DatabaseHelper.class.getSimpleName());
     private static final ObjectMapper OM = new ObjectMapper();
-    private ConnectionFactory factory;
+    private final ConnectionFactory factory;
 
     public Messenger(){
         // Instantiate with default values
@@ -41,31 +41,37 @@ public class Messenger {
         factory.setPassword(password);
     }
 
-    public void setFactory(ConnectionFactory factory) {
-        this.factory = factory;
-    }
+    public List<String> waitForReconcilerMessage(int pollInterval) {
+        // Initialize job list
+        List<String> cveIds = null;
 
-    public List<String> waitForReconcilerMessage(int rabbitTimeout) throws Exception {
-        try(Connection connection = factory.newConnection();
-            Channel channel = connection.createChannel()){
-            channel.queueDeclare(INPUT_QUEUE, false, false, false, null);
+        // Busy-wait loop for jobs
+        while(cveIds == null) {
+            try(Connection connection = factory.newConnection();
+                Channel channel = connection.createChannel()){
 
-            BlockingQueue<List<String>> messageQueue = new ArrayBlockingQueue<>(1);
+                channel.queueDeclare(INPUT_QUEUE, false, false, false, null);
 
-            DeliverCallback deliverCallback = (consumerTag, delivery) -> {
-                String message = new String(delivery.getBody(), StandardCharsets.UTF_8);
-                List<String> parsedIds = parseIds(message);
-                messageQueue.offer(parsedIds);
-            };
-            channel.basicConsume(INPUT_QUEUE, true, deliverCallback, consumerTag -> { });
+                BlockingQueue<List<String>> messageQueue = new ArrayBlockingQueue<>(1);
 
-            return messageQueue.poll(rabbitTimeout, TimeUnit.SECONDS);
+                DeliverCallback deliverCallback = (consumerTag, delivery) -> {
+                    String message = new String(delivery.getBody(), StandardCharsets.UTF_8);
+                    List<String> parsedIds = parseIds(message);
+                    if(parsedIds.size() > 0 && !messageQueue.offer(parsedIds)) logger.error("Job response could not be added to message queue");
+                };
+                channel.basicConsume(INPUT_QUEUE, true, deliverCallback, consumerTag -> { });
 
-        } catch (TimeoutException e) {
-            logger.error("Error occurred while waiting for the reconciler message from RabbitMQ: {}", e.getMessage());
+                logger.info("Polling message queue...");
+                cveIds = messageQueue.poll(pollInterval, TimeUnit.SECONDS);
+                if(cveIds != null) logger.info("Received job with CVE(s) {}", cveIds);
+
+            } catch (TimeoutException | InterruptedException | IOException e) {
+                logger.error("Error occurred while getting jobs from the ProductNameExtractor: {}", e.toString());
+                break;
+            }
         }
 
-        return null;
+        return cveIds;
     }
 
     public void sendPatchFinderMessage(List<String> cveIds) {

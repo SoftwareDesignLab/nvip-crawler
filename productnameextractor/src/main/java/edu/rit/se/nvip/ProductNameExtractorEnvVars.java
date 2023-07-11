@@ -10,8 +10,7 @@ public class ProductNameExtractorEnvVars {
     /**
      * Default values for environment variables
      */
-    private static boolean rabbitEnabled = false;
-    private static int rabbitTimeout = 3600;
+    private static int rabbitPollInterval = 10;
     private static int cveLimit = 300;
     private static int numThreads = 12;
     private static String databaseType = "mysql";
@@ -32,12 +31,8 @@ public class ProductNameExtractorEnvVars {
         fetchEnvVars();
     }
 
-    public static boolean isRabbitEnabled() {
-        return rabbitEnabled;
-    }
-
-    public static int getRabbitTimeout() {
-        return rabbitTimeout;
+    public static int getRabbitPollInterval() {
+        return rabbitPollInterval;
     }
 
     public static int getCveLimit() {
@@ -104,15 +99,10 @@ public class ProductNameExtractorEnvVars {
         // Fetch ENV_VARS and set all found configurable properties
         final Map<String, String> props = System.getenv();
 
-        if(props.containsKey("RABBIT_ENABLED")) {
-            rabbitEnabled = Boolean.parseBoolean(System.getenv("RABBIT_ENABLED"));
-            logger.info("Setting RABBIT_ENABLED to {}", rabbitEnabled);
-        } else logger.warn("Could not fetch RABBIT_ENABLED from env vars, defaulting to {}", rabbitEnabled);
-
-        if(props.containsKey("RABBIT_TIMEOUT")) {
-            rabbitTimeout = Integer.parseInt(System.getenv("RABBIT_TIMEOUT"));
-            logger.info("Setting RABBIT_TIMEOUT to {}", rabbitTimeout);
-        } else logger.warn("Could not fetch RABBIT_TIMEOUT from env vars, defaulting to {}", rabbitTimeout);
+        if(props.containsKey("RABBIT_POLL_INTERVAL")) {
+            rabbitPollInterval = Integer.parseInt(System.getenv("RABBIT_POLL_INTERVAL"));
+            logger.info("Setting RABBIT_POLL_INTERVAL to {}", rabbitPollInterval);
+        } else logger.warn("Could not fetch RABBIT_POLL_INTERVAL from env vars, defaulting to {}", rabbitPollInterval);
 
         if(props.containsKey("CVE_LIMIT")) {
             cveLimit = Integer.parseInt(System.getenv("CVE_LIMIT"));
