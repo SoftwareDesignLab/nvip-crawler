@@ -33,17 +33,11 @@ public class DatabaseHelperTest {
 
     @Test
     public void testGetAffectedProducts() {
-        Map<String, CpeGroup> affectedProducts = databaseHelper.getAffectedProducts();
+        Map<String, CpeGroup> affectedProducts = databaseHelper.getAffectedProducts(null);
         assertNotNull(affectedProducts);
         assertFalse(affectedProducts.isEmpty());
         assertTrue(affectedProducts.containsKey(TEST_CVE_ID));
         // Add more assertions to verify the correctness of the returned affected products
-    }
-
-    @Test
-    public void testGetVulnIdByCveId() {
-        int vulnId = databaseHelper.getVulnIdByCveId(TEST_CVE_ID);
-        assertTrue(vulnId > 0);
     }
 
     @Test

@@ -25,7 +25,7 @@ public class PatchFinderMain {
         // If dev mode, pull directly from db
         if(devMode) {
             // Fetch affectedProducts from db
-            Map<String, CpeGroup> affectedProducts = PatchFinder.getDatabaseHelper().getAffectedProducts();
+            Map<String, CpeGroup> affectedProducts = PatchFinder.getDatabaseHelper().getAffectedProducts(null);
             final int affectedProductsCount = affectedProducts.values().stream().map(CpeGroup::getVersionsCount).reduce(0, Integer::sum);
             logger.info("Successfully got {} CVEs mapped to {} affected products from the database", affectedProducts.size(), affectedProductsCount);
             PatchFinder.run(affectedProducts);

@@ -48,6 +48,7 @@ public class DatabaseHelper {
 	private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
 
 	private final String selectAffectedProductsSql = "SELECT cve_id, cpe FROM affectedproduct GROUP BY product_name, affected_product_id ORDER BY cve_id DESC, version ASC;";
+	private final String selectAffectedProductsByIdsSql = "SELECT cve_id, cpe FROM affectedproduct WHERE cve_id IN ? GROUP BY product_name, affected_product_id ORDER BY cve_id DESC, version ASC;";
 	private final String getVulnIdByCveIdSql = "SELECT vuln_id FROM vulnerability WHERE cve_id IN ?";
 	private final String getExistingSourceUrlsSql = "SELECT source_url, source_url_id FROM patchsourceurl";
 	private final String getExistingPatchCommitsSql = "SELECT commit_sha FROM patchcommit";
@@ -151,38 +152,23 @@ public class DatabaseHelper {
 		return urls;
 	}
 
-	// TODO: Implement DB call and CpeGroup building
-	public Map<String, CpeGroup> getAffectedProducts(List<String> cveIds) {
-//		int result = -1;
-		try (Connection connection = getConnection();
-			 PreparedStatement pstmt = connection.prepareStatement(getVulnIdByCveIdSql);) {
-			pstmt.setArray(1, connection.createArrayOf("STRING", cveIds.toArray()));
-			ResultSet rs = pstmt.executeQuery();
-			if (rs.next()) {
-//				result = rs.getInt("vuln_id");
-			}
-		} catch (Exception e) {
-			logger.error(e.toString());
-		}
-
-//		return result;
-		return null;
-	}
-
 	/**
 	 * Collects a map of CPEs with their correlated CVE and Vuln ID used for
 	 * collecting patches
 	 *
 	 * @return a map of affected products
 	 */
-	public Map<String, CpeGroup> getAffectedProducts() {
+	public Map<String, CpeGroup> getAffectedProducts(List<String> cveIds) {
 		Map<String, CpeGroup> affectedProducts = new HashMap<>();
 		// Prepare statement
 		try (Connection conn = getConnection();
-			 PreparedStatement pstmt = conn.prepareStatement(selectAffectedProductsSql)
+			 PreparedStatement getAll = conn.prepareStatement(selectAffectedProductsSql);
+			 PreparedStatement getByIds = conn.prepareStatement(selectAffectedProductsByIdsSql);
 		) {
-			// Execute and get result set
-			ResultSet res = pstmt.executeQuery();
+			// Execute correct statement and get result set
+			ResultSet res = null;
+			if(cveIds == null) res = getAll.executeQuery();
+			else res = getByIds.executeQuery();
 
 			// Parse results
 			while (res.next()) {
