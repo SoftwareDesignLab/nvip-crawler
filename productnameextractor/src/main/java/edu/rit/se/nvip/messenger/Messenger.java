@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.concurrent.*;
 
 public class Messenger {
-    private final static String PNE_QUEUE = "reconciler";
+    private final static String PNE_QUEUE = "PNE";
     private final static String PATCHFINDER_QUEUE = "patchfinder";
     private static final Logger logger = LogManager.getLogger(DatabaseHelper.class.getSimpleName());
     private static final ObjectMapper OM = new ObjectMapper();
@@ -58,7 +58,7 @@ public class Messenger {
         return null;
     }
 
-    public void sendPatchfinderMessage(List<String> ids) {
+    public void sendPatchFinderMessage(List<String> ids) {
 
         try (Connection connection = factory.newConnection();
              Channel channel = connection.createChannel()) {
@@ -71,7 +71,7 @@ public class Messenger {
         }
     }
 
-    public void sendPatchfinderFinishMessage() {
+    public void sendPatchFinderFinishMessage() {
 
         try (Connection connection = factory.newConnection();
              Channel channel = connection.createChannel()) {
