@@ -42,12 +42,21 @@ public class ReconcilerController {
     public void main(Set<String> jobs) {
         logger.info(jobs.size() + " jobs found for reconciliation");
         Set<CompositeVulnerability> reconciledVulns = new HashSet<>();
+        ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+        List<Future<CompositeVulnerability>> futures = new ArrayList<>();
         for (String job : jobs) {
-            CompositeVulnerability vuln = handleReconcilerJob(job);
-            if (vuln != null) {
-                reconciledVulns.add(vuln);
+            ReconcileTask task = new ReconcileTask(job);
+            Future<CompositeVulnerability> future = executor.submit(task);
+            futures.add(future);
+        }
+        for (Future<CompositeVulnerability> futureVuln : futures) {
+            try {
+                reconciledVulns.add(futureVuln.get());
+            } catch (InterruptedException | ExecutionException e) {
+                throw new RuntimeException(e);
             }
         }
+        messager.sendPNEFinishMessage();
 
         runProcessors(reconciledVulns);
 
@@ -58,8 +67,19 @@ public class ReconcilerController {
             dbh.updateVDO(vuln);
         }
 
-        messager.sendPNEFinishMessage();
 
+    }
+
+    private class ReconcileTask implements Callable<CompositeVulnerability> {
+        private final String job;
+        public ReconcileTask(String job) {
+            this.job = job;
+        }
+
+        @Override
+        public CompositeVulnerability call() throws Exception {
+            return handleReconcilerJob(job);
+        }
     }
 
     private List<CompositeVulnerability> characterizeCVEs(Set<CompositeVulnerability> crawledVulnerabilityList) {
