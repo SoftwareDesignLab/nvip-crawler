@@ -23,6 +23,8 @@ public class PatchFinderTest {
         ThreadPoolExecutor e = Mockito.mock(ThreadPoolExecutor.class);
 
         try {
+            //clear the patch commits
+            PatchFinder.getPatchCommits().clear();
             // Call the method
             PatchFinder.findPatchesMultiThreaded(possiblePatchSources);
 
