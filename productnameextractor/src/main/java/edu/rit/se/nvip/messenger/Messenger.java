@@ -52,7 +52,7 @@ public class Messenger {
             return messageQueue.poll(rabbitTimeout, TimeUnit.SECONDS);
 
         } catch (TimeoutException e) {
-            logger.error("Error occurred while sending the Reconciler message to RabbitMQ: {}", e.getMessage());
+            logger.error("Error occurred while waiting for the reconciler message from RabbitMQ: {}", e.getMessage());
         }
 
         return null;
