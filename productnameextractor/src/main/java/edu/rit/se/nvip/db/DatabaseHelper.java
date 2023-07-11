@@ -23,14 +23,13 @@
  */
 package edu.rit.se.nvip.db;
 
-import java.awt.*;
 import java.sql.*;
 import java.util.*;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import edu.rit.se.nvip.model.cve.AffectedProduct;
+import edu.rit.se.nvip.model.cpe.AffectedProduct;
 import edu.rit.se.nvip.model.cve.CompositeVulnerability;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

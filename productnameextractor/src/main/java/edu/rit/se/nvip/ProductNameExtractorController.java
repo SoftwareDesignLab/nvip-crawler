@@ -2,15 +2,12 @@ package edu.rit.se.nvip;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
-import edu.rit.se.nvip.db.DatabaseHelper;
-import edu.rit.se.nvip.messenger.Messenger;
 import edu.rit.se.nvip.model.cpe.CpeEntry;
 import edu.rit.se.nvip.model.cpe.CpeGroup;
-import edu.rit.se.nvip.model.cve.AffectedProduct;
+import edu.rit.se.nvip.model.cpe.AffectedProduct;
 import edu.rit.se.nvip.model.cve.CompositeVulnerability;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import com.opencsv.CSVReader;
 
 import java.io.*;
 import java.nio.file.Paths;
@@ -28,25 +25,17 @@ import java.util.List;
 public class ProductNameExtractorController {
     private static final Logger logger = LogManager.getLogger(ProductNameExtractorController.class);
     private static final ObjectMapper OM = new ObjectMapper();
-    protected static boolean rabbitEnabled = false;
-    protected static int rabbitTimeout = 3600;
-    protected static int cveLimit = 300;
-    protected static int numThreads = 12;
-    protected static String databaseType = "mysql";
-    protected static String hikariUrl = "jdbc:mysql://localhost:3306/nvip?useSSL=false&allowPublicKeyRetrieval=true";
-    protected static String hikariUser = "root";
-    protected static String hikariPassword = "root";
-    protected static int maxPages = 10;
-    protected static int maxAttemptsPerPage = 2;
-    protected static boolean prettyPrint = false;
-    protected static boolean testMode = false;
-    protected static String productDictName = "product_dict.json";
-    protected static String resourceDir = "productnameextractor/nvip_data";
-    protected static String dataDir = "data";
-    protected static String nlpDir = "nlp";
-    protected static String currentDir = System.getProperty("user.dir");
-    protected static Instant productDictLastCompilationDate = Instant.parse("2000-01-01T00:00:00.00Z");
-    protected static Instant productDictLastRefreshDate = Instant.parse("2000-01-01T00:00:00.00Z");
+    private static final int cveLimit = ProductNameExtractorEnvVars.getCveLimit();
+    private static final int numThreads = ProductNameExtractorEnvVars.getNumThreads();
+    private static final int maxPages = ProductNameExtractorEnvVars.getMaxPages();
+    private static final int maxAttemptsPerPage = ProductNameExtractorEnvVars.getMaxAttemptsPerPage();
+    private static final boolean prettyPrint = ProductNameExtractorEnvVars.isPrettyPrint();
+    private static final String productDictName = ProductNameExtractorEnvVars.getProductDictName();
+    private static final String resourceDir = ProductNameExtractorEnvVars.getResourceDir();
+    private static final String dataDir = ProductNameExtractorEnvVars.getDataDir();
+    private static final String nlpDir = ProductNameExtractorEnvVars.getNlpDir();
+    private static Instant productDictLastCompilationDate = Instant.parse("2000-01-01T00:00:00.00Z");
+    private static Instant productDictLastRefreshDate = Instant.parse("2000-01-01T00:00:00.00Z");
     private static AffectedProductIdentifier affectedProductIdentifier;
 
     /**
@@ -103,104 +92,6 @@ public class ProductNameExtractorController {
     }
 
     /**
-     * Attempts to get all required environment variables from System.getenv() safely, logging
-     * any missing or incorrect variables.
-     */
-    protected static void fetchEnvVars() {
-        // Fetch ENV_VARS and set all found configurable properties
-        final Map<String, String> props = System.getenv();
-
-        if(props.containsKey("RABBIT_ENABLED")) {
-            rabbitEnabled = Boolean.parseBoolean(System.getenv("RABBIT_ENABLED"));
-            logger.info("Setting RABBIT_ENABLED to {}", rabbitEnabled);
-        } else logger.warn("Could not fetch RABBIT_ENABLED from env vars, defaulting to {}", rabbitEnabled);
-
-        if(props.containsKey("RABBIT_TIMEOUT")) {
-            rabbitTimeout = Integer.parseInt(System.getenv("RABBIT_TIMEOUT"));
-            logger.info("Setting RABBIT_TIMEOUT to {}", rabbitTimeout);
-        } else logger.warn("Could not fetch RABBIT_TIMEOUT from env vars, defaulting to {}", rabbitTimeout);
-
-        if(props.containsKey("CVE_LIMIT")) {
-            cveLimit = Integer.parseInt(System.getenv("CVE_LIMIT"));
-            logger.info("Setting CVE_LIMIT to {}", cveLimit);
-        } else logger.warn("Could not fetch CVE_LIMIT from env vars, defaulting to {}", cveLimit);
-
-        if(props.containsKey("NUM_THREADS")) {
-            numThreads = Integer.parseInt(System.getenv("NUM_THREADS"));
-            logger.info("Setting NUM_THREADS to {}", numThreads);
-        } else logger.warn("Could not fetch NUM_THREADS from env vars, defaulting to {}", numThreads);
-
-        if(props.containsKey("MAX_PAGES")) {
-                maxPages = Integer.parseInt(System.getenv("MAX_PAGES"));
-                logger.info("Setting MAX_PAGES to {}", maxPages);
-        } else logger.warn("Could not fetch MAX_PAGES from env vars, defaulting to {}", maxPages);
-
-        if(props.containsKey("MAX_ATTEMPTS_PER_PAGE")) {
-            maxAttemptsPerPage = Integer.parseInt(System.getenv("MAX_ATTEMPTS_PER_PAGE"));
-            logger.info("Setting MAX_ATTEMPTS_PER_PAGE to {}", maxAttemptsPerPage);
-        } else logger.warn("Could not fetch MAX_ATTEMPTS_PER_PAGE from env vars, defaulting to {}", maxAttemptsPerPage);
-
-        if(props.containsKey("PRODUCT_DICT_NAME")) {
-            productDictName = System.getenv("PRODUCT_DICT_NAME");
-            logger.info("Setting PRODUCT_DICT_NAME to {}", productDictName);
-        } else logger.warn("Could not fetch PRODUCT_DICT_NAME from env vars, defaulting to {}", productDictName);
-
-        if(props.containsKey("RESOURCE_DIR")) {
-            resourceDir = System.getenv("RESOURCE_DIR");
-            logger.info("Setting RESOURCE_DIR to {}", resourceDir);
-        } else logger.warn("Could not fetch RESOURCE_DIR from env vars, defaulting to {}", resourceDir);
-
-        if(props.containsKey("DATA_DIR")) {
-            dataDir = System.getenv("DATA_DIR");
-            logger.info("Setting DATA_DIR to {}", dataDir);
-        } else logger.warn("Could not fetch DATA_DIR from env vars, defaulting to {}", dataDir);
-
-        if(props.containsKey("NLP_DIR")) {
-            nlpDir = System.getenv("NLP_DIR");
-            logger.info("Setting NLP_DIR to {}", nlpDir);
-        } else logger.warn("Could not fetch NLP_DIR from env vars, defaulting to {}", nlpDir);
-
-        if(props.containsKey("PRETTY_PRINT")) {
-            prettyPrint = Boolean.parseBoolean(System.getenv("PRETTY_PRINT"));
-            logger.info("Setting PRETTY_PRINT to {}", prettyPrint);
-        } else logger.warn("Could not fetch PRETTY_PRINT from env vars, defaulting to {}", prettyPrint);
-
-        if(props.containsKey("TEST_MODE")) {
-            testMode = Boolean.parseBoolean(System.getenv("TEST_MODE"));
-            logger.info("Setting TEST_MODE to {}", testMode);
-        } else logger.warn("Could not fetch TEST_MODE from env vars, defaulting to {}", testMode);
-
-        fetchHikariEnvVars(props);
-    }
-
-    /**
-     * Initialize database env vars
-     * @param props map of env vars
-     */
-    private static void fetchHikariEnvVars(Map<String, String> props) {
-        try {
-            if(props.containsKey("HIKARI_URL")) {
-                hikariUrl = System.getenv("HIKARI_URL");
-                logger.info("Setting HIKARI_URL to {}", hikariUrl);
-            } else throw new Exception();
-        } catch (Exception ignored) { logger.warn("Could not fetch HIKARI_URL from env vars, defaulting to {}", hikariUrl); }
-
-        try {
-            if(props.containsKey("HIKARI_USER")) {
-                hikariUser = System.getenv("HIKARI_USER");
-                logger.info("Setting HIKARI_USER to {}", hikariUser);
-            } else throw new Exception();
-        } catch (Exception ignored) { logger.warn("Could not fetch HIKARI_USER from env vars, defaulting to {}", hikariUser); }
-
-        try {
-            if(props.containsKey("HIKARI_PASSWORD")) {
-                hikariPassword = System.getenv("HIKARI_PASSWORD");
-                logger.info("Setting HIKARI_PASSWORD to {}", hikariPassword);
-            } else throw new Exception();
-        } catch (Exception ignored) { logger.warn("Could not fetch HIKARI_PASSWORD from env vars, defaulting to {}", hikariPassword); }
-    }
-
-    /**
      * Function to write the queried CPE dictionary data from NVD to a local json file which
      * will be read in future runs. Also stores most recent composition time (full re-pull of NVD data)
      * as well as refresh time (any time the file is changed).
@@ -224,7 +115,7 @@ public class ProductNameExtractorController {
             logger.info("Successfully wrote {} products to product dict file at filepath '{}'", productDict.size(), productDictPath);
         } catch(Exception e){
             logger.error("Error writing product dict to filepath '{}': {}", productDictPath, e.toString());
-            logger.warn("Please ensure that your working directory is correct. Current working directory: {}", currentDir);
+            logger.warn("Please ensure that your working directory is correct. Current working directory: {}", ProductNameExtractorMain.currentDir);
         }
     }
 
@@ -288,126 +179,17 @@ public class ProductNameExtractorController {
     }
 
     /**
-     * Method to generate a test vulnerability list of 6 CVEs to be run through the product name extractor.
-     * Relies on/assumes that test_vulnerabilities.csv has already been created with sample CVEs and can be read.
-     *
-     * @return vulnList - list of vulnerabilities
-     */
-    private static ArrayList<CompositeVulnerability> createTestVulnList(){
-        ArrayList<CompositeVulnerability> vulnList = new ArrayList<>();
-        File testVulnerabilitiesFile = new File(resourceDir + "/" + dataDir + "/" + "test_vulnerabilities.csv");
-        try{
-            CSVReader reader = new CSVReader(new FileReader(testVulnerabilitiesFile));
-            for(String[] line : reader.readAll()){
-                CompositeVulnerability vulnerability = new CompositeVulnerability(
-                        Integer.parseInt(line[0]),
-                        line[1],
-                        line[2],
-                        CompositeVulnerability.CveReconcileStatus.UPDATE
-                );
-
-                vulnList.add(vulnerability);
-            }
-            reader.close();
-        }catch(FileNotFoundException e){
-            logger.warn("Could not find the test csv file at path {}", testVulnerabilitiesFile.getAbsolutePath());
-            logger.warn("Please ensure that your working directory is correct. Current working directory: {}", currentDir);
-        }catch(Exception e){
-            logger.warn("Error {} reading the test csv file", e.toString());
-        }
-
-        return vulnList;
-    }
-
-    /**
-     * Method to print the test run results to both console output and a specific results file.
-     *
-     * @param vulnList list of vulnerabilities
-     */
-    private static void writeTestResults(List<CompositeVulnerability> vulnList){
-        File testResultsFile = new File(resourceDir + "/" + dataDir + "/" + "test_results.txt");
-        try {
-            PrintWriter writer = new PrintWriter(testResultsFile);
-            // Go through each vulnerability and write it and its affected products to output and the file
-            for (CompositeVulnerability vulnerability : vulnList) {
-                if (vulnerability.getCveReconcileStatus() == CompositeVulnerability.CveReconcileStatus.DO_NOT_CHANGE)
-                    continue; // skip the ones that are not changed!
-                List<AffectedProduct> affectedProducts = new ArrayList<>(vulnerability.getAffectedProducts());
-
-                StringBuilder builder = new StringBuilder();
-                builder.append(vulnerability.getVulnID()).append("\t\t\t").append(vulnerability.getCveId()).append("\t\t\t")
-                        .append(vulnerability.getDescription()).append("\n");
-                builder.append("\n");
-
-                for(AffectedProduct affectedProduct : affectedProducts){
-                    builder.append(affectedProduct.getCpe()).append("\t\t\t").append(affectedProduct.getPURL())
-                            .append("\t\t\t").append(affectedProduct.getSWID()).append("\n");
-                }
-
-                builder.append("\n\n\n");
-                System.out.println("\n" + builder);
-                writer.write(builder.toString());
-            }
-            writer.close();
-
-            logger.info("Test results have been written to file {}", testResultsFile.getAbsolutePath());
-
-        } catch(FileNotFoundException e){
-            logger.warn("Could not find the test results file at path {}", testResultsFile.getAbsolutePath());
-            logger.warn("Please ensure that your working directory is correct. Current working directory: {}", currentDir);
-        }catch(Exception e){
-            logger.warn("Error {} writing the test results file", e.toString());
-        }
-
-    }
-
-    /**
-     * Main driver for the ProductNameExtractor, responsible for pulling vulnerabilities from the db,
+     * Main driver for the ProductNameExtractor, responsible for taking in vulnerabilities,
      * loading the CPE dictionary, and cross-referencing that information to generate and store
-     * entries in the affectedproducts table.
+     * return affected products that have been found.
      *
-     * @param args (unused) program arguments
+     * @param vulnList list of vulnerabiltiies
+     * @return affected products found
      */
-    public static void main(String[] args) {
-        logger.info("CURRENT PATH --> " + currentDir);
-
-        // Fetch values for required environment variables
-        ProductNameExtractorController.fetchEnvVars();
-
-        DatabaseHelper databaseHelper = new DatabaseHelper(databaseType, hikariUrl, hikariUser, hikariPassword);
-
-        logger.info("Pulling existing CVEs from the database...");
-        final long getCVEStart = System.currentTimeMillis();
-
-        List<CompositeVulnerability> vulnList = null;
-        if(testMode){
-            // If in test mode, create manual vulnerability list
-            logger.info("Test mode enabled, creating test vulnerability list...");
-            vulnList = createTestVulnList();
-
-        }else if (rabbitEnabled){
-            // Otherwise if using rabbitmq, get the list of cve IDs from the reconciler and create vuln list from those
-            try{
-                Messenger messenger = new Messenger();
-                List<String> cveIds = messenger.waitForReconcilerMessage(rabbitTimeout);
-
-                // Pull specific cve information from database for each cve ID passed from reconciler
-                vulnList = databaseHelper.getSpecificCompositeVulnerabilities(cveIds);
-
-            }catch(Exception e){
-                logger.error("Failed to get jobs from RabbitMQ, exiting...");
-                System.exit(1);
-            }
-
-        }else {
-            // If not using rabbitmq, fetch all composite vulnerabilities from the db
-            vulnList = databaseHelper.getAllCompositeVulnerabilities(0);
-            logger.info("Successfully pulled {} existing CVEs from the database in {} seconds", vulnList.size(), Math.floor(((double) (System.currentTimeMillis() - getCVEStart) / 1000) * 100) / 100);
-        }
+    public static List<AffectedProduct> run(List<CompositeVulnerability> vulnList) {
 
         // This method will find Common Platform Enumerations (CPEs) and store them in the DB
         logger.info("Initializing and starting the AffectedProductIdentifier...");
-        final long getProdStart = System.currentTimeMillis();
 
         // Init AffectedProductIdentifier
         ProductNameExtractorController.affectedProductIdentifier = new AffectedProductIdentifier(vulnList, numThreads);
@@ -446,16 +228,8 @@ public class ProductNameExtractorController {
             writeProductDict(productDict, productDictPath); // Write product dict
         }
 
-        // Run the AffectedProductIdentifier with the cveLimit
-        List<AffectedProduct> affectedProducts = affectedProductIdentifier.identifyAffectedProducts(resourceDir, nlpDir, dataDir, cveLimit);
-
-        if(testMode){
-            logger.info("Printing test results...");
-            writeTestResults(vulnList);
-        }else{
-            int numAffectedProducts = databaseHelper.insertAffectedProductsToDB(affectedProducts);
-            logger.info("AffectedProductIdentifier found and inserted {} affected products to the database in {} seconds", numAffectedProducts, Math.floor(((double) (System.currentTimeMillis() - getProdStart) / 1000) * 100) / 100);
-        }
+        // Run the AffectedProductIdentifier with the cveLimit and return the products found
+        return affectedProductIdentifier.identifyAffectedProducts(resourceDir, nlpDir, dataDir, cveLimit);
 
     }
 }

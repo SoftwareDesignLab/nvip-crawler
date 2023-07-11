@@ -1,6 +1,5 @@
 package edu.rit.se.nvip.messenger;
 
-import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.Channel;
@@ -25,10 +24,21 @@ public class Messenger {
     private ConnectionFactory factory;
 
     public Messenger(){
-        this.factory = new ConnectionFactory();
-        factory.setHost("localhost");
-        factory.setUsername("guest");
-        factory.setPassword("guest");
+        // Instantiate with default values
+        this("localhost", "guest", "guest");
+    }
+
+    /**
+     * Instantiate new RabbitMQ Messenger
+     * @param host hostname
+     * @param username username
+     * @param password password
+     */
+    public Messenger(String host, String username, String password){
+        factory = new ConnectionFactory();
+        factory.setHost(host);
+        factory.setUsername(username);
+        factory.setPassword(password);
     }
 
     public void setFactory(ConnectionFactory factory) {
@@ -58,12 +68,12 @@ public class Messenger {
         return null;
     }
 
-    public void sendPatchFinderMessage(List<String> ids) {
+    public void sendPatchFinderMessage(List<String> cveIds) {
 
         try (Connection connection = factory.newConnection();
              Channel channel = connection.createChannel()) {
             channel.queueDeclare(OUTPUT_QUEUE, false, false, false, null);
-            String message = genJson(ids);
+            String message = genJson(cveIds);
             channel.basicPublish("", OUTPUT_QUEUE, null, message.getBytes(StandardCharsets.UTF_8));
 
         } catch (TimeoutException | IOException e) {
@@ -94,9 +104,9 @@ public class Messenger {
         }
     }
 
-    private String genJson(List<String> ids) {
+    private String genJson(List<String> cveIds) {
         try {
-            return OM.writeValueAsString(ids);
+            return OM.writeValueAsString(cveIds);
         } catch (JsonProcessingException e) {
             logger.error("Failed to convert list of ids to json string: {}", e.toString());
             return "";

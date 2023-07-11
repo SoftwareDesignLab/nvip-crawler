@@ -59,7 +59,7 @@ public class Word2Vector {
 			Logger logger = LogManager.getLogger(getClass().getSimpleName());
 			logger.warn("Could not find w2v model at path {}, if running locally please ensure that w2v_model_250.bin has been" +
 					" stored in productnameextractor/nvip_data/data");
-			logger.warn("Please ensure that your working directory is correct. Current working directory: {}", ProductNameExtractorController.currentDir);
+			logger.warn("Please ensure that your working directory is correct. Current working directory: {}", ProductNameExtractorMain.currentDir);
 			throw e;
 		}		
 	}

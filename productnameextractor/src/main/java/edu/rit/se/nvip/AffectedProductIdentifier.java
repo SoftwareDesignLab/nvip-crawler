@@ -23,9 +23,8 @@ package edu.rit.se.nvip; /**
  */
 
 import edu.rit.se.nvip.model.cpe.CpeGroup;
-import edu.rit.se.nvip.model.cpe.Product;
 import edu.rit.se.nvip.model.cpe.ProductItem;
-import edu.rit.se.nvip.model.cve.AffectedProduct;
+import edu.rit.se.nvip.model.cpe.AffectedProduct;
 import edu.rit.se.nvip.model.cve.CompositeVulnerability;
 import opennlp.tools.tokenize.WhitespaceTokenizer;
 import org.apache.logging.log4j.LogManager;
