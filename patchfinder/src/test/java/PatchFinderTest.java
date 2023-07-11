@@ -31,7 +31,7 @@ public class PatchFinderTest {
             assertTrue(new File(PatchFinder.clonePath).exists());
 
             //check the patch commits
-            assertEquals(24, PatchFinder.getPatchCommits().size()/2);
+            assertEquals(24, PatchFinder.getPatchCommits().size());
 
             // Add more assertions based on your requirements
         } catch (IOException e1) {
@@ -55,6 +55,7 @@ public class PatchFinderTest {
     @Test
     public void testMain() throws IOException, InterruptedException {
         String[] args = new String[]{"CVE-2023-1001"};
+        PatchFinder.init();
         PatchFinder.run(Arrays.asList(args));
     }
 
