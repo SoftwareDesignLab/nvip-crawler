@@ -49,7 +49,8 @@ public class DatabaseHelper {
 	private HikariDataSource dataSource;
 	private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
 	private final String getIdFromCpe = "SELECT * FROM affectedproduct where cpe = ?;";
-	private final String selectVulnerabilitySql = "SELECT vulnerability.vuln_id, vulnerability.cve_id, description.description FROM vulnerability JOIN description ON vulnerability.description_id = description.description_id";
+	private final String selectVulnerabilitySql = "SELECT vulnerability.vuln_id, vulnerability.cve_id, description.description FROM vulnerability JOIN description ON vulnerability.description_id = description.description_id;";
+	private final String selectSpecificVulnerabilitySql = "SELECT vulnerability.vuln_id, description.description FROM vulnerability JOIN description ON vulnerability.description_id = description.description_id WHERE vulnerability.cve_id = ?;";
 	private final String insertAffectedProductSql = "INSERT INTO affectedproduct (cve_id, cpe, product_name, release_date, version, vendor, purl, swid_tag) VALUES (?, ?, ?, ?, ?, ?, ?, ?);";
 	private final String deleteAffectedProductSql = "DELETE FROM affectedproduct where cve_id = ?;";
 
@@ -230,7 +231,7 @@ public class DatabaseHelper {
 		synchronized (DatabaseHelper.class) {
 			int vulnId;
 			String cveId, description;
-			try (Connection connection = getConnection();) {
+			try (Connection connection = getConnection()) {
 				PreparedStatement pstmt = connection.prepareStatement(selectVulnerabilitySql);
 				ResultSet rs = pstmt.executeQuery();
 
@@ -262,7 +263,39 @@ public class DatabaseHelper {
 	}
 
 	public List<CompositeVulnerability> getSpecificCompositeVulnerabilities(List<String> cveIds){
-		return null;
+		ArrayList<CompositeVulnerability> vulnList = new ArrayList<>();
+		synchronized (DatabaseHelper.class) {
+			try (Connection connection = getConnection()) {
+
+				// For each CVE ID in cveIds, query database for info specific to that cve
+				for(String cveId : cveIds){
+					PreparedStatement pstmt = connection.prepareStatement(selectSpecificVulnerabilitySql);
+					pstmt.setString(1, cveId);
+
+					ResultSet rs = pstmt.executeQuery();
+
+					while (rs.next()) {
+						int vulnId = rs.getInt("vuln_id");
+						String description = rs.getString("description");
+
+						CompositeVulnerability vulnerability = new CompositeVulnerability(
+								vulnId,
+								cveId,
+								description,
+								CompositeVulnerability.CveReconcileStatus.UPDATE
+						);
+						vulnList.add(vulnerability);
+					}
+				}
+				logger.info("NVIP has loaded {} existing CVE items from DB!", vulnList.size());
+			} catch (Exception e) {
+				logger.error("Error while getting existing vulnerabilities from DB\nException: {}", e.getMessage());
+				logger.error(
+						"This is a serious error! NVIP will not be able to decide whether to insert or update! Exiting...");
+				System.exit(1);
+			}
+		}
+		return vulnList;
 	}
 
 	/**

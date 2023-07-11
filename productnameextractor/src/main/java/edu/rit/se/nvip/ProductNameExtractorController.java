@@ -391,7 +391,7 @@ public class ProductNameExtractorController {
                 Messenger messenger = new Messenger();
                 List<String> cveIds = messenger.waitForReconcilerMessage(rabbitTimeout);
 
-                // TODO: write function below
+                // Pull specific cve information from database for each cve ID passed from reconciler
                 vulnList = databaseHelper.getSpecificCompositeVulnerabilities(cveIds);
 
             }catch(Exception e){
