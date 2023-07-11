@@ -34,39 +34,38 @@ public class Messenger {
         this.factory = factory;
     }
 
-    public List<String> waitForProductNameExtractorMessage(int rabbitTimeout) throws IOException {
+    public List<String> waitForProductNameExtractorMessage(int pollInterval) throws IOException {
         // Initialize job list
-        List<String> jobIds = null;
+        List<String> cveIds = null;
 
-        try {
-            // Busy-wait loop for jobs
-            while(jobIds == null) {
-                try(Connection connection = factory.newConnection();
-                    Channel channel = connection.createChannel()){
+        // Busy-wait loop for jobs
+        while(cveIds == null) {
+            try(Connection connection = factory.newConnection();
+                Channel channel = connection.createChannel()){
 
-                    channel.queueDeclare(INPUT_QUEUE, false, false, false, null);
+                channel.queueDeclare(INPUT_QUEUE, false, false, false, null);
 
-                    BlockingQueue<List<String>> messageQueue = new ArrayBlockingQueue<>(1);
+                BlockingQueue<List<String>> messageQueue = new ArrayBlockingQueue<>(1);
 
-                    DeliverCallback deliverCallback = (consumerTag, delivery) -> {
-                        String message = new String(delivery.getBody(), StandardCharsets.UTF_8);
-                        List<String> parsedIds = parseIds(message);
-                        if(!messageQueue.offer(parsedIds)) logger.error("Job response could not be added to message queue");
-                    };
-                    channel.basicConsume(INPUT_QUEUE, true, deliverCallback, consumerTag -> { });
+                DeliverCallback deliverCallback = (consumerTag, delivery) -> {
+                    String message = new String(delivery.getBody(), StandardCharsets.UTF_8);
+                    List<String> parsedIds = parseIds(message);
+                    if(parsedIds.size() > 0 && !messageQueue.offer(parsedIds)) logger.error("Job response could not be added to message queue");
+                };
+                channel.basicConsume(INPUT_QUEUE, true, deliverCallback, consumerTag -> { });
 
-                    jobIds = messageQueue.poll(rabbitTimeout, TimeUnit.SECONDS);
+                logger.info("Polling message queue...");
+                cveIds = messageQueue.poll(pollInterval, TimeUnit.SECONDS);
+                if(cveIds != null) logger.info("Received job with CVE(s) {}", cveIds);
 
-                } catch (TimeoutException | InterruptedException e) {
-                    logger.error("Error occurred while getting jobs from the ProductNameExtractor: {}", e.getMessage());
-                }
+            } catch (TimeoutException | InterruptedException | IOException e) {
+                logger.error("Error occurred while getting jobs from the ProductNameExtractor: {}", e.toString());
+                break;
             }
-        } catch (IOException e) {
-            logger.error("Error occurred while waiting for jobs: {}", e.toString());
         }
 
 
-        return null;
+        return cveIds;
     }
 
     @SuppressWarnings("unchecked")
@@ -88,8 +87,21 @@ public class Messenger {
         }
     }
 
+    private void sendDummyMessage(String queue, String message) {
+        try(Connection connection = factory.newConnection();
+            Channel channel = connection.createChannel()){
+
+            channel.queueDeclare(queue, false, false, false, null);
+
+            channel.basicPublish("", queue, null, message.getBytes());
+
+        } catch (IOException | TimeoutException e) {
+            logger.error("Failed to send dummy message: {}", e.toString());
+        }
+    }
+
     public static void main(String[] args) {
         final Messenger m = new Messenger("localhost", "guest", "guest");
-
+        m.sendDummyMessage(INPUT_QUEUE, "{[CVE-2023-2987]}");
     }
 }

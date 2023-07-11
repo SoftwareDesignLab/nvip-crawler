@@ -168,7 +168,10 @@ public class DatabaseHelper {
 			// Execute correct statement and get result set
 			ResultSet res = null;
 			if(cveIds == null) res = getAll.executeQuery();
-			else res = getByIds.executeQuery();
+			else {
+				getByIds.setArray(1, conn.createArrayOf("VARCHAR(20)", new List[]{cveIds}));
+				res = getByIds.executeQuery();
+			}
 
 			// Parse results
 			while (res.next()) {
