@@ -1,21 +1,15 @@
-import commits.PatchCommit;
-import db.DatabaseHelper;
 import messenger.Messenger;
 import model.CpeGroup;
 
 import java.io.IOException;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class PatchFinderMain {
-    private final static boolean devMode = true;
+    private final static boolean devMode = false;
     private final static Logger logger = LogManager.getLogger(PatchFinderMain.class);
     public static void main(String[] args) throws IOException, InterruptedException {
         logger.info("Starting PatchFinder...");
@@ -31,11 +25,12 @@ public class PatchFinderMain {
             PatchFinder.run(affectedProducts);
         } else {
             // Start busy-wait loop
+            logger.info("Starting busy-wait loop for jobs...");
             final Messenger rabbitMQ = new Messenger("localhost", "guest", "guest");
             while(true) {
                 try {
                     // Wait and get jobs
-                    final List<String> jobs = rabbitMQ.waitForProductNameExtractorMessage(60);
+                    final List<String> jobs = rabbitMQ.waitForProductNameExtractorMessage(10);
 
                     // If null is returned, either and error occurred or intentional program quit
                     if(jobs == null) break;
