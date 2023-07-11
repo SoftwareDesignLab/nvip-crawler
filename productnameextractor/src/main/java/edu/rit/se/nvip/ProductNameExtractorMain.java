@@ -118,7 +118,7 @@ public class ProductNameExtractorMain {
      *
      * @param args (unused) program arguments
      *
-     * TODO: Make sure that resources are released at some point
+     * TODO: Make sure that resources are released at some point/create shutdown sequence (database needs to be shutdown as well)
      */
     public static void main(String[] args) {
         logger.info("CURRENT PATH --> " + currentDir);
