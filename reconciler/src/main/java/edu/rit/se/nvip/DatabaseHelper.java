@@ -450,14 +450,16 @@ public class DatabaseHelper {
                 return 0;
         }
         try (Connection conn = getConnection();
-             PreparedStatement updateStatement = conn.prepareStatement(UPDATE_CVSS);
-             PreparedStatement insertStatement = conn.prepareStatement(INSERT_CVSS)) {
-
-            if(isUpdate){
-                populateCVSSUpdate(updateStatement, vuln);
-            }else{
-                populateCVSSInsert(insertStatement, vuln);
+             PreparedStatement upsertStatement = conn.prepareStatement(isUpdate ? UPDATE_CVSS: INSERT_CVSS)) {
+            for (CvssScore cvss : vuln.getCvssScoreInfo()) {
+                if (isUpdate) {
+                    populateCVSSUpdate(upsertStatement, cvss);
+                } else {
+                    populateCVSSInsert(upsertStatement, cvss);
+                }
+                upsertStatement.addBatch();
             }
+            upsertStatement.execute();
 
             return 1;
 
@@ -486,15 +488,16 @@ public class DatabaseHelper {
                 return 0;
         }
         try (Connection conn = getConnection();
-             PreparedStatement updateStatement = conn.prepareStatement(UPDATE_VDO);
-             PreparedStatement insertStatement = conn.prepareStatement(INSERT_VDO)) {
-
-            if(isUpdate){
-                populateVDOUpdate(updateStatement, vuln);
-            }else{
-                populateVDOInsert(insertStatement, vuln);
+             PreparedStatement upsertStatement = conn.prepareStatement(isUpdate ? UPDATE_VDO: INSERT_CVSS)) {
+            for (VdoCharacteristic vdo : vuln.getVdoCharacteristic()) {
+                if (isUpdate) {
+                    populateVDOUpdate(upsertStatement, vdo);
+                } else {
+                    populateVDOInsert(upsertStatement, vdo);
+                }
+                upsertStatement.addBatch();
             }
-
+            upsertStatement.execute();
             return 1;
         } catch (SQLException e) {
             logger.error("ERROR: Failed to update VDO, {}", e.getMessage());
@@ -502,49 +505,31 @@ public class DatabaseHelper {
         return 0;
     }
 
-    private void populateCVSSUpdate(PreparedStatement pstmt, CompositeVulnerability vuln) throws SQLException {
-        for (CvssScore cvss : vuln.getCvssScoreInfo()) {
-            pstmt.setDouble(1, Double.parseDouble(String.valueOf(CveCharacterizer.CVSSSeverity.getCVSSSeverity(cvss.getSeverityId()))));
-            pstmt.setString(2, cvss.getImpactScore());
-            pstmt.setString(3, cvss.getCveId());
-
-            pstmt.addBatch();
-        }
-        pstmt.execute();
+    private void populateCVSSUpdate(PreparedStatement pstmt, CvssScore cvss) throws SQLException {
+        pstmt.setDouble(1, Double.parseDouble(String.valueOf(CveCharacterizer.CVSSSeverity.getCVSSSeverity(cvss.getSeverityId()))));
+        pstmt.setString(2, cvss.getImpactScore());
+        pstmt.setString(3, cvss.getCveId());
     }
-    private void populateCVSSInsert(PreparedStatement pstmt, CompositeVulnerability vuln) throws SQLException {
-        for (CvssScore cvss : vuln.getCvssScoreInfo()) {
-            pstmt.setDouble(1, Double.parseDouble(String.valueOf(CveCharacterizer.CVSSSeverity.getCVSSSeverity(cvss.getSeverityId()))));
-            pstmt.setString(2, cvss.getImpactScore());
-            pstmt.setString(3, cvss.getCveId());
-            pstmt.setTimestamp(4, new Timestamp(System.currentTimeMillis()));
+    private void populateCVSSInsert(PreparedStatement pstmt, CvssScore cvss) throws SQLException {
+        pstmt.setDouble(1, Double.parseDouble(String.valueOf(CveCharacterizer.CVSSSeverity.getCVSSSeverity(cvss.getSeverityId()))));
+        pstmt.setString(2, cvss.getImpactScore());
+        pstmt.setString(3, cvss.getCveId());
+        pstmt.setTimestamp(4, new Timestamp(System.currentTimeMillis()));
 
-            pstmt.addBatch();
-        }
-        pstmt.execute();
     }
 
-    private void populateVDOInsert(PreparedStatement pstmt, CompositeVulnerability vuln) throws SQLException {
-        for (VdoCharacteristic vdo : vuln.getVdoCharacteristic()) {
-            pstmt.setString(1, String.valueOf(CveCharacterizer.VDOLabel.getVdoLabel(vdo.getVdoLabelId())));
-            pstmt.setString(2, String.valueOf(CveCharacterizer.VDONounGroup.getVdoNounGroup(vdo.getVdoNounGroupId())));
-            pstmt.setDouble(3, vdo.getVdoConfidence());
-            pstmt.setString(4, vdo.getCveId());
-            pstmt.setTimestamp(5, new Timestamp(System.currentTimeMillis()));
+    private void populateVDOInsert(PreparedStatement pstmt, VdoCharacteristic vdo) throws SQLException {
+        pstmt.setString(1, String.valueOf(CveCharacterizer.VDOLabel.getVdoLabel(vdo.getVdoLabelId())));
+        pstmt.setString(2, String.valueOf(CveCharacterizer.VDONounGroup.getVdoNounGroup(vdo.getVdoNounGroupId())));
+        pstmt.setDouble(3, vdo.getVdoConfidence());
+        pstmt.setString(4, vdo.getCveId());
+        pstmt.setTimestamp(5, new Timestamp(System.currentTimeMillis()));
 
-            pstmt.addBatch();
-        }
-        pstmt.execute();
     }
-    private void populateVDOUpdate(PreparedStatement pstmt, CompositeVulnerability vuln) throws SQLException {
-        for (VdoCharacteristic vdo : vuln.getVdoCharacteristic()) {
-            pstmt.setString(1, String.valueOf(CveCharacterizer.VDOLabel.getVdoLabel(vdo.getVdoLabelId())));
-            pstmt.setString(2, String.valueOf(CveCharacterizer.VDONounGroup.getVdoNounGroup(vdo.getVdoNounGroupId())));
-            pstmt.setDouble(3, vdo.getVdoConfidence());
-            pstmt.setString(4, vdo.getCveId());
-
-            pstmt.addBatch();
-        }
-        pstmt.execute();
+    private void populateVDOUpdate(PreparedStatement pstmt, VdoCharacteristic vdo) throws SQLException {
+        pstmt.setString(1, String.valueOf(CveCharacterizer.VDOLabel.getVdoLabel(vdo.getVdoLabelId())));
+        pstmt.setString(2, String.valueOf(CveCharacterizer.VDONounGroup.getVdoNounGroup(vdo.getVdoNounGroupId())));
+        pstmt.setDouble(3, vdo.getVdoConfidence());
+        pstmt.setString(4, vdo.getCveId());
     }
 }
