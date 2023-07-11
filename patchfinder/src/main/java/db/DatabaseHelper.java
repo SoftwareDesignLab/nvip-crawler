@@ -48,7 +48,7 @@ public class DatabaseHelper {
 	private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
 
 	private final String selectAffectedProductsSql = "SELECT cve_id, cpe FROM affectedproduct GROUP BY product_name, affected_product_id ORDER BY cve_id DESC, version ASC;";
-	private final String getVulnIdByCveIdSql = "SELECT vuln_id FROM vulnerability WHERE cve_id = ?";
+	private final String getVulnIdByCveIdSql = "SELECT vuln_id FROM vulnerability WHERE cve_id IN ?";
 	private final String getExistingSourceUrlsSql = "SELECT source_url, source_url_id FROM patchsourceurl";
 	private final String getExistingPatchCommitsSql = "SELECT commit_sha FROM patchcommit";
 	private final String insertPatchSourceURLSql = "INSERT INTO patchsourceurl (cve_id, source_url) VALUES (?, ?);";
@@ -151,6 +151,24 @@ public class DatabaseHelper {
 		return urls;
 	}
 
+	// TODO: Implement DB call and CpeGroup building
+	public Map<String, CpeGroup> getAffectedProducts(List<String> cveIds) {
+//		int result = -1;
+		try (Connection connection = getConnection();
+			 PreparedStatement pstmt = connection.prepareStatement(getVulnIdByCveIdSql);) {
+			pstmt.setArray(1, connection.createArrayOf("STRING", cveIds.toArray()));
+			ResultSet rs = pstmt.executeQuery();
+			if (rs.next()) {
+//				result = rs.getInt("vuln_id");
+			}
+		} catch (Exception e) {
+			logger.error(e.toString());
+		}
+
+//		return result;
+		return null;
+	}
+
 	/**
 	 * Collects a map of CPEs with their correlated CVE and Vuln ID used for
 	 * collecting patches
@@ -198,28 +216,6 @@ public class DatabaseHelper {
 		}
 
 		return affectedProducts;
-	}
-
-	/**
-	 * Collects the vulnId for a specific CVE with a given CVE-ID
-	 *
-	 * @param cveId
-	 * @return
-	 */
-	public int getVulnIdByCveId(String cveId) {
-		int result = -1;
-		try (Connection connection = getConnection();
-			 PreparedStatement pstmt = connection.prepareStatement(getVulnIdByCveIdSql);) {
-			pstmt.setString(1, cveId);
-			ResultSet rs = pstmt.executeQuery();
-			if (rs.next()) {
-				result = rs.getInt("vuln_id");
-			}
-		} catch (Exception e) {
-			logger.error(e.toString());
-		}
-
-		return result;
 	}
 
 	/**

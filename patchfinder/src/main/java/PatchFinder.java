@@ -68,9 +68,13 @@ public class PatchFinder {
 	protected static String[] addressBases = { "https://github.com/", "https://www.gitlab.com/" };
 	protected static Instant urlDictLastCompilationDate = Instant.parse("2000-01-01T00:00:00.00Z");
 	private static final ObjectMapper OM = new ObjectMapper();
+	private static DatabaseHelper databaseHelper;
+	private static PatchUrlFinder patchURLFinder;
+	private static Map<String, ArrayList<String>> sourceDict;
 
 	public static int getCloneCommitThreshold() { return cloneCommitThreshold; }
 	public static int getCloneCommitLimit() { return cloneCommitLimit; }
+	public static DatabaseHelper getDatabaseHelper() { return databaseHelper; }
 
 	/**
 	 * Attempts to get all required environment variables from System.getenv() safely, logging
@@ -155,9 +159,8 @@ public class PatchFinder {
 		} catch (Exception ignored) { logger.warn("Could not fetch HIKARI_PASSWORD from env vars, defaulting to {}", hikariPassword); }
 	}
 
-	public static void main(String[] args) throws IOException, InterruptedException {
-		logger.info("Starting PatchFinder...");
-		final long totalStart = System.currentTimeMillis();
+	public static void init() {
+		logger.info("Initializing PatchFinder...");
 
 		// Load env vars
 		logger.info("Fetching needed environment variables...");
@@ -165,24 +168,30 @@ public class PatchFinder {
 		logger.info("Done fetching environment variables");
 
 		// Init db helper
-		logger.info("Initializing DatabaseHelper and getting affected products from the database...");
-		final DatabaseHelper databaseHelper = new DatabaseHelper(databaseType, hikariUrl, hikariUser, hikariPassword);
+		logger.info("Initializing DatabaseHelper...");
+		databaseHelper = new DatabaseHelper(databaseType, hikariUrl, hikariUser, hikariPassword);
 
 		// Init PatchUrlFinder
-		PatchUrlFinder patchURLFinder = new PatchUrlFinder();
+		logger.info("Initializing PatchUrlFinder...");
+		patchURLFinder = new PatchUrlFinder();
+	}
 
-		// Fetch affectedProducts from db
-		Map<String, CpeGroup> affectedProducts = databaseHelper.getAffectedProducts();
-		final int affectedProductsCount = affectedProducts.values().stream().map(CpeGroup::getVersionsCount).reduce(0, Integer::sum);
-		logger.info("Successfully got {} CVEs mapped to {} affected products from the database", affectedProducts.size(), affectedProductsCount);
+	public static void run(List<String> cveIds) throws IOException, InterruptedException {
+		// Get affected products via CVE ids
+		final Map<String, CpeGroup> affectedProducts = databaseHelper.getAffectedProducts(cveIds);
+		PatchFinder.run(affectedProducts);
+	}
+
+	public static void run(Map<String, CpeGroup> affectedProducts) throws IOException, InterruptedException {
+		final long totalStart = System.currentTimeMillis();
 
 		// Attempt to find source urls from pre-written file (ensure file existence/freshness)
-		final Map<String, ArrayList<String>> possiblePatchURLs = readSourceDict(patchSrcUrlPath);
+		final Map<String, ArrayList<String>> possiblePatchURLs = getSourceDict();
 
 		// Log read in data stats
 		int urlCount = possiblePatchURLs.values().stream().map(ArrayList::size).reduce(0, Integer::sum);
 		if(urlCount > 0) {
-			logger.info("Successfully read {} possible patch urls for {} CVEs from file at filepath '{}'",
+			logger.info("Loaded {} possible patch urls for {} CVEs from file at filepath '{}'",
 					urlCount,
 					possiblePatchURLs.size(),
 					patchSrcUrlPath
@@ -195,11 +204,13 @@ public class PatchFinder {
 
 		// Determine if urls dict needs to be refreshed
 		final boolean isStale = urlDictLastCompilationDate.until(Instant.now(), ChronoUnit.DAYS) >= 1;
-		final int offset = PatchFinder.getPatchCommits().size();
-		if (!isStale && offset > 0) {
-			logger.info("Skipping patch URL parsing. Use offset to avoid repeating the same run.");
-			return;
-		}
+
+//		final int offset = PatchFinder.getPatchCommits().size();
+//		if (!isStale) {
+//			logger.info("Skipping patch URL parsing. Use offset to avoid repeating the same run.");
+//			return;
+//		}
+
 		// Parse new urls
 		patchURLFinder.parseMassURLs(possiblePatchURLs, affectedProducts, cveLimit, isStale);
 		urlCount = possiblePatchURLs.values().stream().map(ArrayList::size).reduce(0, Integer::sum);
@@ -215,11 +226,8 @@ public class PatchFinder {
 
 		// Find patches
 		// Repos will be cloned to patch-repos directory, multi-threaded 6 threads.
-		// TODO: Fix cvesPerThread
-		logger.info("Starting patch finder with {} max threads, allowing {} CVE(s) per thread...", maxThreads, cvesPerThread);
+		logger.info("Starting patch finder with {} max threads", maxThreads);
 		final long findPatchesStart = System.currentTimeMillis();
-		//TODO: How to handle multiple CVEs mapped to the same repo.
-		// Currently we clone/scrape for each, which is a big waste of time
 		PatchFinder.findPatchesMultiThreaded(possiblePatchURLs);
 
 		// Get found patches from patchfinder
@@ -229,9 +237,6 @@ public class PatchFinder {
 				urlCount,
 				(System.currentTimeMillis() - findPatchesStart) / 1000
 		);
-
-		//TODO: Ensure patch commit does not already exist before inserting.
-		// For existing entries, diff, replace, ignore?
 
 		// Get existing sources
 		final Map<String, Integer> existingSources = databaseHelper.getExistingSourceUrls();
@@ -281,6 +286,14 @@ public class PatchFinder {
 				Math.min(cveLimit, affectedProducts.size()),
 				delta
 		);
+	}
+
+	private static Map<String, ArrayList<String>> getSourceDict() throws IOException {
+		// Ensure source dict is loaded
+		if(sourceDict == null) sourceDict = readSourceDict(patchSrcUrlPath);
+
+		// Return source dict
+		return sourceDict;
 	}
 
 	@SuppressWarnings({"unchecked"})
@@ -410,9 +423,6 @@ public class PatchFinder {
 				logger.error("Could not add job '{}' to work queue", cveId);
 			}
 			i++;
-
-			// Iterate thread counter only once per partition
-//			if(i % CVEsPerThread == 0) thread++; // TODO: Remainder?
 		}
 
 		// Initiate shutdown of executor (waits, but does not hang, for all jobs to complete)

@@ -4,6 +4,7 @@ import org.mockito.Mockito;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -53,9 +54,8 @@ public class PatchFinderTest {
 
     @Test
     public void testMain() throws IOException, InterruptedException {
-        String[] args = new String[1];
-        args[0] = "CVE-2023-1001";
-        PatchFinder.main(args);
+        String[] args = new String[]{"CVE-2023-1001"};
+        PatchFinder.run(Arrays.asList(args));
     }
 
 }

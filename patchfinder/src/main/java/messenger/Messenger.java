@@ -17,8 +17,8 @@ import java.util.List;
 import java.util.concurrent.*;
 
 public class Messenger {
-    private final static String PNE_QUEUE = "reconciler";
-    private final static String PATCHFINDER_QUEUE = "patchfinder";
+    private final static String INPUT_QUEUE = "patchfinder";
+//    private final static String OUTPUT_QUEUE = "";
     private static final Logger logger = LogManager.getLogger(DatabaseHelper.class.getSimpleName());
     private static final ObjectMapper OM = new ObjectMapper();
     private ConnectionFactory factory;
@@ -34,27 +34,37 @@ public class Messenger {
         this.factory = factory;
     }
 
-    public List<String> waitForProductNameExtractorMessage(int rabbitTimeout) throws Exception {
-        try(Connection connection = factory.newConnection();
-            Channel channel = connection.createChannel()){
+    public List<String> waitForProductNameExtractorMessage(int rabbitTimeout) throws IOException {
+        // Initialize job list
+        List<String> jobIds = null;
 
-            // TODO: Implement this
-//            channel.queueDeclare(PNE_QUEUE, false, false, false, null);
-//
-//            BlockingQueue<List<String>> messageQueue = new ArrayBlockingQueue<>(1);
-//
-//            DeliverCallback deliverCallback = (consumerTag, delivery) -> {
-//                String message = new String(delivery.getBody(), StandardCharsets.UTF_8);
-//                List<String> parsedIds = parseIds(message);
-//                messageQueue.offer(parsedIds);
-//            };
-//            channel.basicConsume(PNE_QUEUE, true, deliverCallback, consumerTag -> { });
-//
-//            return messageQueue.poll(rabbitTimeout, TimeUnit.SECONDS);
+        try {
+            // Busy-wait loop for jobs
+            while(jobIds == null) {
+                try(Connection connection = factory.newConnection();
+                    Channel channel = connection.createChannel()){
 
-        } catch (TimeoutException e) {
-            logger.error("Error occurred while sending the ProductNameExtractor message to RabbitMQ: {}", e.getMessage());
+                    channel.queueDeclare(INPUT_QUEUE, false, false, false, null);
+
+                    BlockingQueue<List<String>> messageQueue = new ArrayBlockingQueue<>(1);
+
+                    DeliverCallback deliverCallback = (consumerTag, delivery) -> {
+                        String message = new String(delivery.getBody(), StandardCharsets.UTF_8);
+                        List<String> parsedIds = parseIds(message);
+                        if(!messageQueue.offer(parsedIds)) logger.error("Job response could not be added to message queue");
+                    };
+                    channel.basicConsume(INPUT_QUEUE, true, deliverCallback, consumerTag -> { });
+
+                    jobIds = messageQueue.poll(rabbitTimeout, TimeUnit.SECONDS);
+
+                } catch (TimeoutException | InterruptedException e) {
+                    logger.error("Error occurred while getting jobs from the ProductNameExtractor: {}", e.getMessage());
+                }
+            }
+        } catch (IOException e) {
+            logger.error("Error occurred while waiting for jobs: {}", e.toString());
         }
+
 
         return null;
     }
@@ -80,5 +90,6 @@ public class Messenger {
 
     public static void main(String[] args) {
         final Messenger m = new Messenger("localhost", "guest", "guest");
+
     }
 }
