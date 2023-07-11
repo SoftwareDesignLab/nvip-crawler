@@ -58,6 +58,8 @@ public class DummyParallelClass {
             // Perform step1 operation and put the result into queue1
             int result = job + 1;
             queue1.put(result);
+            System.out.println("job finished");
+            Thread.sleep(1000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
