@@ -63,8 +63,8 @@ public class PatchFinder {
 	protected static String hikariPassword = "root";
 	protected static int cloneCommitThreshold = 1000; // TODO: Find omptimal value once github scraping is working well
 	protected static int cloneCommitLimit = 50000; // TODO: Find omptimal value once github scraping is working well
-	protected static String clonePath = "src/main/resources/patch-repos";
-	protected static String patchSrcUrlPath = "src/main/resources/source_dict.json";
+	protected static String clonePath = "patchfinder/src/main/resources/patch-repos";
+	protected static String patchSrcUrlPath = "patchfinder/src/main/resources/source_dict.json";
 	protected static String[] addressBases = { "https://github.com/", "https://www.gitlab.com/" };
 	protected static Instant urlDictLastCompilationDate = Instant.parse("2000-01-01T00:00:00.00Z");
 	private static final ObjectMapper OM = new ObjectMapper();
