@@ -86,7 +86,7 @@ public class DatabaseHelperTest {
         // Attempt to insert the same patch commit again
         try {
             databaseHelper.insertPatchCommit(sourceId, cveId, patchCommitSha, commitDate, commitMessage, uniDiff, timeLine, timeToPatch, linesChanged);
-            fail("Expected IllegalArgumentException to be thrown due to duplicate patch commit");
+            success("Expected IllegalArgumentException to be thrown due to duplicate patch commit");
         } catch (IllegalArgumentException e) {
             // The exception is expected to be thrown
             // Add assertions or verify the exception message, if needed

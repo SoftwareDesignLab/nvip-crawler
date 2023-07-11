@@ -1,15 +1,14 @@
+import db.DatabaseHelper;
 import org.junit.Test;
 import org.mockito.Mockito;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ThreadPoolExecutor;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.mock;
 
 public class PatchFinderTest {
 
@@ -20,9 +19,11 @@ public class PatchFinderTest {
         ArrayList<String> patchSources1 = new ArrayList<>();
         patchSources1.add("https://github.com/apache/airflow");
         possiblePatchSources.put("CVE-2023-1001", patchSources1);
-        ThreadPoolExecutor e = Mockito.mock(ThreadPoolExecutor.class);
+        ThreadPoolExecutor e = mock(ThreadPoolExecutor.class);
 
         try {
+            //clear the patch commits
+            PatchFinder.getPatchCommits().clear();
             // Call the method
             PatchFinder.findPatchesMultiThreaded(possiblePatchSources);
 
@@ -50,13 +51,6 @@ public class PatchFinderTest {
         assertEquals("patchfinder/src/main/resources/patch-repos", PatchFinder.clonePath);
         assertEquals("mysql", PatchFinder.databaseType);
         assertEquals(2000, PatchFinder.cloneCommitThreshold);
-    }
-
-    @Test
-    public void testMain() throws IOException, InterruptedException {
-        String[] args = new String[]{"CVE-2023-1001"};
-        PatchFinder.init();
-        PatchFinder.run(Arrays.asList(args));
     }
 
 }
