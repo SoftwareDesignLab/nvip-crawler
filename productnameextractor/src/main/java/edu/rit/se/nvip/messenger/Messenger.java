@@ -118,4 +118,21 @@ public class Messenger {
             return "";
         }
     }
+
+    private void sendDummyMessage(List<String> cveIds) {
+        try (Connection connection = factory.newConnection();
+             Channel channel = connection.createChannel()) {
+            channel.queueDeclare(INPUT_QUEUE, false, false, false, null);
+            String message = genJson(cveIds);
+            channel.basicPublish("", INPUT_QUEUE, null, message.getBytes(StandardCharsets.UTF_8));
+        } catch (IOException | TimeoutException e) {}
+    }
+
+    public static void main(String[] args) {
+        Messenger messenger = new Messenger();
+        List<String> cveIds = new ArrayList<>();
+        cveIds.add("CVE-2019-3965");
+        cveIds.add("CVE-2019-3966");
+        messenger.sendDummyMessage(cveIds);
+    }
 }

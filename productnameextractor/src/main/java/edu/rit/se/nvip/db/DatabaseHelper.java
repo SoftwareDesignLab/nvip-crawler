@@ -125,7 +125,6 @@ public class DatabaseHelper {
 		// now insert affected releases (referenced products are already in db)
 		insertAffectedProducts(affectedProducts);
 
-		shutdown();
 		return affectedProducts.size();
 	}
 

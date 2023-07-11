@@ -133,43 +133,47 @@ public class ProductNameExtractorMain {
             logger.info("Test mode enabled, creating test vulnerability list...");
             vulnList = createTestVulnList();
 
+            final long getProdStart = System.currentTimeMillis();
+            int numAffectedProducts = ProductNameExtractorController.run(vulnList).size();
+
+            logger.info("Product Name Extractor found {} affected products in the test run in {} seconds", numAffectedProducts, Math.floor(((double) (System.currentTimeMillis() - getProdStart) / 1000) * 100) / 100);
+
+            logger.info("Printing test results...");
+            writeTestResults(vulnList);
+
         }else{
             // Otherwise using rabbitmq, get the list of cve IDs from the reconciler and create vuln list from those
+            //TODO: make models get loaded once and then pne can keep running through
             logger.info("Waiting for jobs from Reconciler...");
-
-            while(true){
+            while(true) {
                 try {
                     // Get CVE IDs to be processed from reconciler
                     cveIds = rabbitMQ.waitForReconcilerMessage(rabbitPollInterval);
 
                     // If no IDs pulled, break
-                    if(cveIds == null) break;
+                    if (cveIds == null) break;
 
                     // Pull specific cve information from database for each CVE ID passed from reconciler
                     vulnList = databaseHelper.getSpecificCompositeVulnerabilities(cveIds);
 
+                    final long getProdStart = System.currentTimeMillis();
+                    List<AffectedProduct> affectedProducts = ProductNameExtractorController.run(vulnList);
+
+                    int numAffectedProducts = databaseHelper.insertAffectedProductsToDB(affectedProducts);
+                    logger.info("Product Name Extractor found and inserted {} affected products to the database in {} seconds", numAffectedProducts, Math.floor(((double) (System.currentTimeMillis() - getProdStart) / 1000) * 100) / 100);
+
+                    // Send list of cveIds to Patchfinder
+                    logger.info("Sending jobs to patchfinder...");
+                    rabbitMQ.sendPatchFinderMessage(cveIds);
+                    rabbitMQ.sendPatchFinderFinishMessage();
+
                 } catch (Exception e) {
                     logger.error("Failed to get jobs from RabbitMQ, exiting program...");
+                    databaseHelper.shutdown();
                     System.exit(1);
                 }
             }
 
-        }
-
-        final long getProdStart = System.currentTimeMillis();
-        List<AffectedProduct> affectedProducts = ProductNameExtractorController.run(vulnList);
-
-        if(testMode){
-            logger.info("Printing test results...");
-            writeTestResults(vulnList);
-        }else{
-            int numAffectedProducts = databaseHelper.insertAffectedProductsToDB(affectedProducts);
-            logger.info("Product Name Extractor found and inserted {} affected products to the database in {} seconds", numAffectedProducts, Math.floor(((double) (System.currentTimeMillis() - getProdStart) / 1000) * 100) / 100);
-
-            // Send list of cveIds to Patchfinder
-            logger.info("Sending jobs to patchfinder...");
-            rabbitMQ.sendPatchFinderMessage(cveIds);
-            rabbitMQ.sendPatchFinderFinishMessage();
         }
     }
 }
