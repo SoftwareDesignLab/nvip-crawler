@@ -175,38 +175,47 @@ public class ProductNameExtractorMain {
 
         }else{
             // Otherwise using rabbitmq, get the list of cve IDs from the reconciler and create vuln list from those
-            logger.info("Waiting for jobs from Reconciler...");
             while(true) {
                 try {
                     // Get CVE IDs to be processed from reconciler
                     List<String> cveIds = rabbitMQ.waitForReconcilerMessage(rabbitPollInterval);
 
-                    if (cveIds == null) {
-                        // If no IDs pulled after 5 minutes, release all resources and free up memory
+                    // If TERMINATE message sent, initiate shutdown and exit process
+                    if (cveIds.size() == 1 && cveIds.get(0).equals("TERMINATE")) {
+                        logger.info("TERMINATE message received from the Reconciler, shutting down...");
+                        databaseHelper.shutdown();
+                        System.exit(1);
+
+                    // If FINISHED message sent, jobs are done for now, release resources
+                    } else if (cveIds.size() == 1 && cveIds.get(0).equals("FINISHED")) {
                         //TODO: try to get the AI models to fully be released
-                        logger.info("It has been 5 minutes since any jobs were received from the Reconciler, releasing resources...");
+                        logger.info("FINISHED message received from the Reconciler, releasing resources...");
                         ProductNameExtractorController.releaseResources();
                         System.gc();
-                        continue;
+
+                    // Otherwise, CVE jobs were sent, process them
+                    } else {
+
+                        logger.info("Received job with CVE(s) {}", cveIds);
+
+                        // Pull specific cve information from database for each CVE ID passed from reconciler
+                        vulnList = databaseHelper.getSpecificCompositeVulnerabilities(cveIds);
+
+                        // Initialize everything and get ready to process cveIds
+                        //TODO: make sure that if the product dictionary needs to be updated, the file is updated mid-run instead of when the program terminates
+                        ProductNameExtractorController.initializeController(vulnList);
+
+                        final long getProdStart = System.currentTimeMillis();
+                        List<AffectedProduct> affectedProducts = ProductNameExtractorController.run();
+
+                        databaseHelper.insertAffectedProductsToDB(affectedProducts);
+                        logger.info("Product Name Extractor found and inserted {} affected products to the database in {} seconds", affectedProducts.size(), Math.floor(((double) (System.currentTimeMillis() - getProdStart) / 1000) * 100) / 100);
+
+                        // Send list of cveIds to Patchfinder
+                        logger.info("Sending jobs to patchfinder...");
+                        rabbitMQ.sendPatchFinderMessage(cveIds);
+                        logger.info("Jobs have been sent!\n\n");
                     }
-
-                    // Pull specific cve information from database for each CVE ID passed from reconciler
-                    vulnList = databaseHelper.getSpecificCompositeVulnerabilities(cveIds);
-
-                    // Initialize everything and get ready to process cveIds
-                    //TODO: make sure that if the product dictionary needs to be updated, the file is updated mid-run instead of when the program terminates
-                    ProductNameExtractorController.initializeController(vulnList);
-
-                    final long getProdStart = System.currentTimeMillis();
-                    List<AffectedProduct> affectedProducts = ProductNameExtractorController.run();
-
-                    databaseHelper.insertAffectedProductsToDB(affectedProducts);
-                    logger.info("Product Name Extractor found and inserted {} affected products to the database in {} seconds", affectedProducts.size(), Math.floor(((double) (System.currentTimeMillis() - getProdStart) / 1000) * 100) / 100);
-
-                    // Send list of cveIds to Patchfinder
-                    logger.info("Sending jobs to patchfinder...");
-                    rabbitMQ.sendPatchFinderMessage(cveIds);
-                    logger.info("Jobs have been sent!");
 
                 } catch (Exception e) {
                     logger.error("Failed to get jobs from RabbitMQ, exiting program with error: {}", e.toString());
