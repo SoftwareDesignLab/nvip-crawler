@@ -59,6 +59,7 @@ public class ProductDetector {
 
 	/**
 	 * Class constructor
+	 * TODO: move binName to env var class and have it be a variable either passed in or accessed here in productDetector
 	 */
 	public ProductDetector(CpeLookUp cpeLookUp, String resourceDir, String nlpDir, String dataDir) throws IOException {
 		String binName = System.getenv("PRODUCT_DETECTOR_MODEL");
