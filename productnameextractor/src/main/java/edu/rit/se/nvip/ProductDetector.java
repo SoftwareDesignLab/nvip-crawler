@@ -48,26 +48,22 @@ import java.util.List;
  */
 
 public class ProductDetector {
+	private static final Logger logger = LogManager.getLogger(ProductDetector.class);
+
 	public static final String NNP = "NNP";
 	public static final String IN = "IN";
+	private static final String productDetectorModel = ProductNameExtractorEnvVars.getProductDetectorModel();
 
 	private NERmodel nerModel;
 	private CpeLookUp cpeDict;
 	private POSTaggerME tagger;
 	private POSModel model;
-	static private final Logger logger = LogManager.getLogger(ProductDetector.class);
 
 	/**
 	 * Class constructor
-	 * TODO: move binName to env var class and have it be a variable either passed in or accessed here in productDetector
 	 */
 	public ProductDetector(CpeLookUp cpeLookUp, String resourceDir, String nlpDir, String dataDir) throws IOException {
-		String binName = System.getenv("PRODUCT_DETECTOR_MODEL");
-		if(binName == null) {
-			binName = "en-pos-perceptron.bin";
-			logger.warn("Could not read PRODUCT_DETECTOR_MODEL from env vars, defaulting to {}", binName);
-		}
-		final String binPath = resourceDir + "/" + dataDir + "/" + nlpDir + "/" + binName;
+		final String binPath = resourceDir + "/" + dataDir + "/" + nlpDir + "/" + productDetectorModel;
 
 		try {
 			// Load NER model

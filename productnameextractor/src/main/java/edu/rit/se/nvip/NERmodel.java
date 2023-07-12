@@ -73,12 +73,12 @@ public class NERmodel {
 	private SentenceDetector sentenceDetector = null;
 	private DataNormalization restoredNormalizer = null; // Feature normalizer
 
-	protected static String char2VecConfig = "c2v_model_config_50.json";
-	protected static String char2VecWeights = "c2v_model_weights_50.h5";
-	protected static String word2Vec = "w2v_model_250.bin";
-	protected static String nerModel = "NERallModel.bin";
-	protected static String nerModelNormalizer = "NERallNorm.bin";
-	protected static String sentenceModel = "en-sent.bin";
+	private static final String char2VecConfig = ProductNameExtractorEnvVars.getChar2VecConfig();
+	private static final String char2VecWeights = ProductNameExtractorEnvVars.getChar2VecWeights();
+	private static final String word2Vec = ProductNameExtractorEnvVars.getWord2Vec();
+	private static final String nerModel = ProductNameExtractorEnvVars.getNerModel();
+	private static final String nerModelNormalizer = ProductNameExtractorEnvVars.getNerModelNormalizer();
+	private static final String sentenceModel = ProductNameExtractorEnvVars.getSentenceModel();
 
 	private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
 
@@ -89,27 +89,6 @@ public class NERmodel {
 		super();
 
 		try {
-			// Get models paths
-			final Map<String, String> props = System.getenv();
-
-			if(props.containsKey("CHAR_2_VEC_CONFIG")) char2VecConfig = System.getenv("CHAR_2_VEC_CONFIG");
-			else logger.warn("Could not fetch CHAR_2_VEC_CONFIG from env vars, defaulting to {}", char2VecConfig);
-
-			if(props.containsKey("CHAR_2_VEC_WEIGHTS")) char2VecWeights = System.getenv("CHAR_2_VEC_WEIGHTS");
-			else logger.warn("Could not fetch CHAR_2_VEC_WEIGHTS from env vars, defaulting to {}", char2VecWeights);
-
-			if(props.containsKey("WORD_2_VEC")) word2Vec = System.getenv("WORD_2_VEC");
-			else logger.warn("Could not fetch WORD_2_VEC from env vars, defaulting to {}", word2Vec);
-
-			if(props.containsKey("NER_MODEL")) nerModel = System.getenv("NER_MODEL");
-			else logger.warn("Could not fetch NER_MODEL from env vars, defaulting to {}", nerModel);
-
-			if(props.containsKey("NER_MODEL_NORMALIZER")) nerModelNormalizer = System.getenv("NER_MODEL_NORMALIZER");
-			else logger.warn("Could not fetch NER_MODEL_NORMALIZER from env vars, defaulting to {}", nerModelNormalizer);
-
-			if(props.containsKey("SENTENCE_MODEL")) sentenceModel = System.getenv("SENTENCE_MODEL");
-			else logger.warn("Could not fetch SENTENCE_MODEL from env vars, defaulting to {}", sentenceModel);
-
 			String c2vModelConfigPath = modelsDir + char2VecConfig;
 			String c2vModelWeightsPath = modelsDir + char2VecWeights;
 			String w2vModelPath = modelsDir + word2Vec;

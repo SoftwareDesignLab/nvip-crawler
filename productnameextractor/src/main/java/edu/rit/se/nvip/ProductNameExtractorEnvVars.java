@@ -37,14 +37,11 @@ public class ProductNameExtractorEnvVars {
     private static final Logger logger = LogManager.getLogger(ProductNameExtractorEnvVars.class);
 
     /**
-     * Default values for environment variables
+     * Default values for main environment variables
      */
+
     private static int rabbitPollInterval = 10;
     private static int numThreads = 12;
-    private static String databaseType = "mysql";
-    private static String hikariUrl = "jdbc:mysql://localhost:3306/nvip?useSSL=false&allowPublicKeyRetrieval=true";
-    private static String hikariUser = "root";
-    private static String hikariPassword = "root";
     private static int maxPages = 10;
     private static int maxAttemptsPerPage = 2;
     private static boolean prettyPrint = false;
@@ -54,7 +51,29 @@ public class ProductNameExtractorEnvVars {
     private static String dataDir = "data";
     private static String nlpDir = "nlp";
 
-    public static void initializeEnvVars(){
+    /**
+     * Default values for database environment variables
+     */
+
+    private static String databaseType = "mysql";
+    private static String hikariUrl = "jdbc:mysql://localhost:3306/nvip?useSSL=false&allowPublicKeyRetrieval=true";
+    private static String hikariUser = "root";
+    private static String hikariPassword = "root";
+
+    /**
+     * Default values for model environment variables
+     */
+
+    private static String productDetectorModel = "en-pos-perceptron.bin";
+    private static String char2VecConfig = "c2v_model_config_50.json";
+    private static String char2VecWeights = "c2v_model_weights_50.h5";
+    private static String word2Vec = "w2v_model_250.bin";
+    private static String nerModel = "NERallModel.bin";
+    private static String nerModelNormalizer = "NERallNorm.bin";
+    private static String sentenceModel = "en-sent.bin";
+
+    //Static access to manually load env vars
+    public static void initializeEnvVars() {
         fetchEnvVars();
     }
 
@@ -63,61 +82,47 @@ public class ProductNameExtractorEnvVars {
         fetchEnvVars();
     }
 
-    public static int getRabbitPollInterval() {
-        return rabbitPollInterval;
-    }
+    public static int getRabbitPollInterval() { return rabbitPollInterval; }
 
-    public static int getNumThreads() {
-        return numThreads;
-    }
+    public static int getNumThreads() { return numThreads; }
 
-    public static String getDatabaseType() {
-        return databaseType;
-    }
+    public static String getDatabaseType() { return databaseType; }
 
-    public static String getHikariUrl() {
-        return hikariUrl;
-    }
+    public static String getHikariUrl() { return hikariUrl; }
 
-    public static String getHikariUser() {
-        return hikariUser;
-    }
+    public static String getHikariUser() { return hikariUser; }
 
-    public static String getHikariPassword() {
-        return hikariPassword;
-    }
+    public static String getHikariPassword() { return hikariPassword; }
 
-    public static int getMaxPages() {
-        return maxPages;
-    }
+    public static int getMaxPages() { return maxPages; }
 
-    public static int getMaxAttemptsPerPage() {
-        return maxAttemptsPerPage;
-    }
+    public static int getMaxAttemptsPerPage() { return maxAttemptsPerPage; }
 
-    public static boolean isPrettyPrint() {
-        return prettyPrint;
-    }
+    public static boolean isPrettyPrint() { return prettyPrint; }
 
-    public static boolean isTestMode() {
-        return testMode;
-    }
+    public static boolean isTestMode() { return testMode; }
 
-    public static String getProductDictName() {
-        return productDictName;
-    }
+    public static String getProductDictName() { return productDictName; }
 
-    public static String getResourceDir() {
-        return resourceDir;
-    }
+    public static String getResourceDir() { return resourceDir; }
 
-    public static String getDataDir() {
-        return dataDir;
-    }
+    public static String getDataDir() { return dataDir; }
 
-    public static String getNlpDir() {
-        return nlpDir;
-    }
+    public static String getNlpDir() { return nlpDir; }
+
+    public static String getProductDetectorModel() { return productDetectorModel; }
+
+    public static String getChar2VecConfig() { return char2VecConfig; }
+
+    public static String getChar2VecWeights() { return char2VecWeights; }
+
+    public static String getWord2Vec() { return word2Vec; }
+
+    public static String getNerModel() { return nerModel; }
+
+    public static String getNerModelNormalizer() { return nerModelNormalizer; }
+
+    public static String getSentenceModel() { return sentenceModel; }
 
     /**
      * Attempts to get all required environment variables from System.getenv() safely, logging
@@ -178,6 +183,7 @@ public class ProductNameExtractorEnvVars {
         } else logger.warn("Could not fetch TEST_MODE from env vars, defaulting to {}", testMode);
 
         fetchHikariEnvVars(props);
+        fetchModelEnvVars(props);
     }
 
     /**
@@ -204,6 +210,47 @@ public class ProductNameExtractorEnvVars {
             hikariPassword = System.getenv("HIKARI_PASSWORD");
             logger.info("Setting HIKARI_PASSWORD to {}", hikariPassword);
         } else logger.warn("Could not fetch HIKARI_PASSWORD from env vars, defaulting to {}", hikariPassword);
+    }
+
+    /**
+     * Initialize model env vars
+     * @param props map of env vars
+     */
+    private static void fetchModelEnvVars(Map<String, String> props){
+        if(props.containsKey("PRODUCT_DETECTOR_MODEL")) {
+            productDetectorModel = System.getenv("PRODUCT_DETECTOR_MODEL");
+            logger.info("SETTING PRODUCT_DETECTOR_MODEL to {}", productDetectorModel);
+        } else logger.warn("Could not fetch PRODUCT_DETECTOR_MODEL from env vars, defaulting to {}", productDetectorModel);
+
+        if(props.containsKey("CHAR_2_VEC_CONFIG")) {
+            char2VecConfig = System.getenv("CHAR_2_VEC_CONFIG");
+            logger.info("SETTING CHAR_2_VEC_CONFIG to {}", char2VecConfig);
+        } else logger.warn("Could not fetch CHAR_2_VEC_CONFIG from env vars, defaulting to {}", char2VecConfig);
+
+        if(props.containsKey("CHAR_2_VEC_WEIGHTS")) {
+            char2VecWeights = System.getenv("CHAR_2_VEC_WEIGHTS");
+            logger.info("SETTING CHAR_2_VEC_WEIGHTS to {}", char2VecWeights);
+        } else logger.warn("Could not fetch CHAR_2_VEC_WEIGHTS from env vars, defaulting to {}", char2VecWeights);
+
+        if(props.containsKey("WORD_2_VEC")) {
+            word2Vec = System.getenv("WORD_2_VEC");
+            logger.info("SETTING WORD_2_VEC to {}", word2Vec);
+        } else logger.warn("Could not fetch WORD_2_VEC from env vars, defaulting to {}", word2Vec);
+
+        if(props.containsKey("NER_MODEL")) {
+            nerModel = System.getenv("NER_MODEL");
+            logger.info("SETTING NER_MODEL to {}", nerModel);
+        } else logger.warn("Could not fetch NER_MODEL from env vars, defaulting to {}", nerModel);
+
+        if(props.containsKey("NER_MODEL_NORMALIZER")) {
+            nerModelNormalizer = System.getenv("NER_MODEL_NORMALIZER");
+            logger.info("SETTING NER_MODEL_NORMALIZER to {}", nerModelNormalizer);
+        } else logger.warn("Could not fetch NER_MODEL_NORMALIZER from env vars, defaulting to {}", nerModelNormalizer);
+
+        if(props.containsKey("SENTENCE_MODEL")) {
+            sentenceModel = System.getenv("SENTENCE_MODEL");
+            logger.info("SETTING SENTENCE_MODEL to {}", sentenceModel);
+        } else logger.warn("Could not fetch SENTENCE_MODEL from env vars, defaulting to {}", sentenceModel);
 
     }
 }
