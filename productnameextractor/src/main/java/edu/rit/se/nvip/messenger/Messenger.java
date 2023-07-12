@@ -44,7 +44,7 @@ public class Messenger {
     public List<String> waitForReconcilerMessage(int pollInterval) {
         // Initialize job list
         List<String> cveIds = null;
-
+        logger.info("Waiting for jobs from Reconciler...");
         final long startTime = System.currentTimeMillis();
 
         // Busy-wait loop for jobs
@@ -66,9 +66,9 @@ public class Messenger {
                 logger.info("Polling message queue...");
                 cveIds = messageQueue.poll(pollInterval, TimeUnit.SECONDS);
                 final long elapsedTime = System.currentTimeMillis() - startTime;
-                logger.info("Messenger has been waiting for a message for {} seconds", elapsedTime / 1000);
-                if(cveIds != null) logger.info("Received job with CVE(s) {}", cveIds);
-                else if (elapsedTime / 1000 >= 300) return null;
+                if(elapsedTime / 1000 % 60 == 0){
+                    logger.info("Messenger has been waiting for a message for {} minute(s)", elapsedTime / 1000 / 60);
+                }
 
             } catch (TimeoutException | InterruptedException | IOException e) {
                 logger.error("Error occurred while getting jobs from the ProductNameExtractor: {}", e.toString());
@@ -133,4 +133,13 @@ public class Messenger {
         } catch (IOException | TimeoutException e) {}
     }
 
+    public static void main(String[] args) {
+        Messenger messenger = new Messenger();
+        List<String> cveIds = new ArrayList<>();
+        cveIds.add("CVE-2019-3965");
+        cveIds.add("CVE-2019-3966");
+//        cveIds.add("TERMINATE");
+        messenger.sendDummyMessage(cveIds);
+
+    }
 }

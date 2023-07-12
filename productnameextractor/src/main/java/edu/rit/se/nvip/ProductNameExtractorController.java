@@ -273,7 +273,7 @@ public class ProductNameExtractorController {
             productDict = affectedProductIdentifier.queryCPEDict(maxPages, maxAttemptsPerPage); // Query
             affectedProductIdentifier.loadCPEDict(productDict); // Load into CpeLookup
             productDictLastCompilationDate = Instant.now(); // Set last comp date to now
-            productDictLastRefreshDate = Instant.now(); // Set last comp date to now
+            productDictLastRefreshDate = Instant.now(); // Set last refresh date to now
 
             writeProductDict(productDict, productDictPath); // Write product dict
         }

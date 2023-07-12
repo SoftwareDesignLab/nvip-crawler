@@ -149,7 +149,7 @@ public class ProductNameExtractorMain {
      * Finally takes in the found affected products and inserts them into the database, notifying PatchFinder with jobs.
      *
      * @param args (unused) program arguments
-     *
+     * TODO: make product dict class with all methods, initialize/update it right in main and then pass it to the initializecontroller() method
      */
     public static void main(String[] args) {
         logger.info("CURRENT PATH --> " + currentDir);
