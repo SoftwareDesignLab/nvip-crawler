@@ -88,7 +88,26 @@ public class DatabaseSandbox extends DatabaseHelper {
             System.out.println(ex.toString());
         }
     }
+    public void resetDB() {
+        List<String> queries = Arrays.asList(
+                "DELETE FROM CVSS",
+                "DELETE FROM VDOcharacteristic",
+                "DELETE FROM vulnerability",
+                "DELETE FROM rawdescriptionjt",
+                "DELETE FROM description",
+                "DELETE FROM rawdescription"
+        );
 
+        try (Connection conn = getConnection()) {
+            for (String query : queries) {
+                try (PreparedStatement pstmt = conn.prepareStatement(query)) {
+                    pstmt.executeUpdate();
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
     public LinkedHashMap<RawVulnerability, Integer> getFilterDataset(String quantity, boolean excludeLabeled, boolean exclusivelyLabled) {
         String query = "SELECT * FROM filterdataset";
         if (excludeLabeled) {

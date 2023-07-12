@@ -24,6 +24,9 @@ public class SandboxCrawler {
     private static final DatabaseSandbox dbh = DatabaseSandbox.getInstance();
     private static final String QUEUE_NAME = "CRAWLER_OUT";
 
+    public static void main(String[] args) {
+        main();
+    }
     public static void main() {
         ReconcilerEnvVars.loadFromFile();
         SandboxCrawler sand = new SandboxCrawler();

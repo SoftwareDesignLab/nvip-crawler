@@ -15,10 +15,7 @@ import edu.rit.se.nvip.utils.ReconcilerEnvVars;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.*;
 
 public class ReconcilerController {
@@ -59,7 +56,6 @@ public class ReconcilerController {
                 throw new RuntimeException(e);
             }
         }
-        messager.sendPNEFinishMessage();
 
         runProcessors(reconciledVulns);
 
@@ -69,8 +65,9 @@ public class ReconcilerController {
             dbh.updateCVSS(vuln);
             dbh.updateVDO(vuln);
         }
+        messager.sendPNEFinishMessage();
 
-
+        executor.shutdown();
     }
 
     private class ReconcileTask implements Callable<CompositeVulnerability> {
@@ -85,7 +82,7 @@ public class ReconcilerController {
         }
     }
 
-    private List<CompositeVulnerability> characterizeCVEs(Set<CompositeVulnerability> crawledVulnerabilityList) {
+    private void characterizeCVEs(Set<CompositeVulnerability> crawledVulnerabilityList) {
         // characterize
         logger.info("Characterizing and scoring NEW CVEs...");
 
@@ -98,15 +95,13 @@ public class ReconcilerController {
 
             List<CompositeVulnerability> cveList = new ArrayList<>(crawledVulnerabilityList);
 
-            return cveCharacterizer.characterizeCveList(cveList,
+            cveCharacterizer.characterizeCveList(cveList,
                    ReconcilerEnvVars.getCharacterizationLimit());
         }
         catch (NullPointerException | NumberFormatException e) {
             logger.warn("Could not fetch NVIP_CVE_CHARACTERIZATION_TRAINING_DATA or NVIP_CVE_CHARACTERIZATION_TRAINING_DATA_DIR from env vars");
         }
 
-
-        return null;
     }
 
     private CompositeVulnerability handleReconcilerJob(String cveId) {
@@ -135,9 +130,11 @@ public class ReconcilerController {
         CompositeVulnerability out = reconciler.reconcile(existing, wrapper.toReconcile());
         // link all the rawvulns to the compvuln, regardless of filter/reconciliation status
         // we do this because publish dates and mod dates should be determined by all sources, not just those with good descriptions
-        if(out == null){
+
+        if (out == null){
             return null;
         }
+
         out.setPotentialSources(rawVulns);
 
         dbh.insertOrUpdateVulnerabilityFull(out);
