@@ -226,12 +226,12 @@ public class NERmodel {
 		INDArray featuresDL4J = Nd4j.zeros(1, featureLength, words.length);
 
 		// Convert features into 3D-array acceptable by DL4J model
-		int[] indecies = new int[3];
+		int[] indices = new int[3];
 		for (int i = 0; i < words.length; i++) {
-			indecies[2] = i;
+			indices[2] = i;
 			for (int j = 0; j < featureLength; j++) {
-				indecies[1] = j;
-				featuresDL4J.putScalar(indecies, features[i][j]);
+				indices[1] = j;
+				featuresDL4J.putScalar(indices, features[i][j]);
 			}
 		}
 
@@ -252,12 +252,12 @@ public class NERmodel {
 		int classNum;
 
 		for (int i = 0; i < words.length; i++) {
-			indecies[2] = i;
+			indices[2] = i;
 			maxValue = 0;
 			classNum = 0;
 			for (int j = 0; j < numLabelClasses; j++) {
-				indecies[1] = j;
-				curValue = out.getFloat(indecies);
+				indices[1] = j;
+				curValue = out.getFloat(indices);
 				if (curValue > maxValue) {
 					maxValue = curValue;
 					classNum = j;
