@@ -1,6 +1,6 @@
 package edu.rit.se.nvip;
 
-import edu.rit.se.nvip.messager.Messager;
+import edu.rit.se.nvip.messenger.Messenger;
 import edu.rit.se.nvip.utils.ReconcilerEnvVars;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -29,8 +29,8 @@ public class ReconcilerMain {
                 }
                 break;
             case "rabbit":
-                Messager messager = new Messager();
-                List<String> jobsList = messager.waitForCrawlerMessage(ReconcilerEnvVars.getRabbitTimeout());
+                Messenger messenger = new Messenger();
+                List<String> jobsList = messenger.waitForCrawlerMessage(ReconcilerEnvVars.getRabbitTimeout());
                 if (jobsList == null){
                     logger.error("No Jobs found in rabbit");
                     System.exit(0);

@@ -1,4 +1,4 @@
-package edu.rit.se.nvip.messager;
+package edu.rit.se.nvip.messenger;
 
 import com.rabbitmq.client.*;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-class MessagerTest {
+class MessengerTest {
 
     private ByteArrayOutputStream outputStream;
     private final static String PNE_QUEUE = "PNE";
@@ -38,8 +38,8 @@ class MessagerTest {
     @Test
     void waitForCrawlerMessageTest() throws Exception {
         //Setup
-        Messager messager = new Messager();
-        messager.setFactory(factoryMock);
+        Messenger messenger = new Messenger();
+        messenger.setFactory(factoryMock);
         List<String> expectedMessages = new ArrayList<>();
         expectedMessages.add("Test message");
         expectedMessages.add("Test message2");
@@ -58,7 +58,7 @@ class MessagerTest {
         }).when(channelMock).basicConsume(anyString(), anyBoolean(), any(DeliverCallback.class), (CancelCallback) any());
 
         // Act
-        List<String> receivedMessages = messager.waitForCrawlerMessage(3600);
+        List<String> receivedMessages = messenger.waitForCrawlerMessage(3600);
 
         // Assert
         assertEquals(expectedMessages, receivedMessages);
@@ -68,8 +68,8 @@ class MessagerTest {
     @Test
     void sendPNEMessageTest() throws IOException, TimeoutException {
         // Setup
-        Messager messager = new Messager();
-        messager.setFactory(factoryMock);
+        Messenger messenger = new Messenger();
+        messenger.setFactory(factoryMock);
 
         List<String> ids = Arrays.asList("id1", "id2", "id3");
 
@@ -77,7 +77,7 @@ class MessagerTest {
         when(conn.createChannel()).thenReturn(channelMock);
 
         // Act
-        messager.sendPNEMessage(ids);
+        messenger.sendPNEMessage(ids);
 
         // Assert
         verify(factoryMock).newConnection();
@@ -91,15 +91,15 @@ class MessagerTest {
     @Test
     void sendPNEFinishMessageTest() throws IOException, TimeoutException {
         // Setup
-        Messager messager = new Messager();
-        messager.setFactory(factoryMock);
+        Messenger messenger = new Messenger();
+        messenger.setFactory(factoryMock);
 
 
         when(factoryMock.newConnection()).thenReturn(conn);
         when(conn.createChannel()).thenReturn(channelMock);
 
         // Act
-        messager.sendPNEFinishMessage();
+        messenger.sendPNEFinishMessage();
 
         // Assert
         verify(factoryMock).newConnection();
@@ -112,14 +112,14 @@ class MessagerTest {
 
     @Test
     void parseIdsTest() {
-        Messager messager = new Messager();
+        Messenger messenger = new Messenger();
         String jsonString = "[\"id1\", \"id2\", \"id3\"]";
         List<String> expectedIds = new ArrayList<>();
         expectedIds.add("id1");
         expectedIds.add("id2");
         expectedIds.add("id3");
 
-        List<String> actualIds = messager.parseIds(jsonString);
+        List<String> actualIds = messenger.parseIds(jsonString);
 
         assertEquals(expectedIds, actualIds);
     }
