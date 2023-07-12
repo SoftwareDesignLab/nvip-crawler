@@ -133,11 +133,4 @@ public class Messenger {
         } catch (IOException | TimeoutException e) {}
     }
 
-    public static void main(String[] args) {
-        Messenger messenger = new Messenger();
-        List<String> cveIds = new ArrayList<>();
-        cveIds.add("CVE-2019-3965");
-        cveIds.add("CVE-2019-3966");
-        messenger.sendDummyMessage(cveIds);
-    }
 }
