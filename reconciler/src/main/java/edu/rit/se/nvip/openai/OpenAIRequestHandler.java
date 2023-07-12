@@ -24,7 +24,7 @@ import java.util.concurrent.*;
 public class OpenAIRequestHandler {
     private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
     private final PriorityBlockingQueue<RequestWrapper> requestQueue = new PriorityBlockingQueue<>();
-    private final ExecutorService executor = Executors.newFixedThreadPool(5);
+    private final ExecutorService executor = Executors.newFixedThreadPool(1);
     private static OpenAIRequestHandler handler;
     //https://platform.openai.com/account/rate-limits
     private static final ModelType DEFAULT_CHAT_COMPLETION_MODEL = ModelType.GPT_3_5_TURBO;
@@ -52,6 +52,10 @@ public class OpenAIRequestHandler {
             handler = new OpenAIRequestHandler();
         }
         return handler;
+    }
+
+    public void shutdown() {
+        this.executor.shutdown();
     }
 
     private void handleRequests() {
