@@ -59,7 +59,7 @@ import java.util.Random;
  */
 
 public class NERmodel {
-	private final boolean timingOn = true;
+	private final boolean timingOn = false;
 	private MultiLayerNetwork model = null; // NER model
 	private Char2vec c2vModel; // Char2Vector model
 	private Word2Vector w2vModel; // Word2Vector model
