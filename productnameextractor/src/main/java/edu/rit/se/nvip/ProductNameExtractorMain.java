@@ -55,7 +55,6 @@ public class ProductNameExtractorMain {
     // Input Mode Variables (determine which CVEs to process)
     private static final int rabbitPollInterval = ProductNameExtractorEnvVars.getRabbitPollInterval();
     private static final boolean testMode = ProductNameExtractorEnvVars.isTestMode();
-    private static List<String> cveIds;
 
     // Database Variables
     private static final String databaseType = ProductNameExtractorEnvVars.getDatabaseType();
@@ -182,7 +181,7 @@ public class ProductNameExtractorMain {
                 try {
 
                     // Get CVE IDs to be processed from reconciler
-                    cveIds = rabbitMQ.waitForReconcilerMessage(rabbitPollInterval);
+                    List<String> cveIds = rabbitMQ.waitForReconcilerMessage(rabbitPollInterval);
 
                     if (cveIds == null) {
                         // If no IDs pulled after 5 minutes, release all resources and free up memory
