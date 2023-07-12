@@ -136,6 +136,11 @@ public class PatchFinder {
 		fetchHikariEnvVars(props);
 	}
 
+	/**
+	 * Attempts to get all required database environment variables from the given properties map safely, logging
+	 * any missing or incorrect variables.
+	 * @param props map of environment variables to be fetched from
+	 */
 	private static void fetchHikariEnvVars(Map<String, String> props) {
 		try {
 			if(props.containsKey("HIKARI_URL")) {
@@ -159,6 +164,9 @@ public class PatchFinder {
 		} catch (Exception ignored) { logger.warn("Could not fetch HIKARI_PASSWORD from env vars, defaulting to {}", hikariPassword); }
 	}
 
+	/**
+	 * Initialize the Patchfinder and its subcomponents
+	 */
 	public static void init() {
 		logger.info("Initializing PatchFinder...");
 
@@ -176,6 +184,12 @@ public class PatchFinder {
 		patchURLFinder = new PatchUrlFinder();
 	}
 
+	/**
+	 * Run a list of given jobs through the Patchfinder
+	 * @param cveIds CVEs to get affected products and patches for
+	 * @throws IOException if an IO error occurs while attempting to find patches
+	 * @throws InterruptedException if a thread interrupted error occurs while attempting to find patches
+	 */
 	public static void run(List<String> cveIds) throws IOException, InterruptedException {
 		// Get affected products via CVE ids
 		final Map<String, CpeGroup> affectedProducts = databaseHelper.getAffectedProducts(cveIds);
@@ -183,11 +197,24 @@ public class PatchFinder {
 		PatchFinder.run(affectedProducts);
 	}
 
+	/**
+	 * Find patches for a given map of affected products
+	 * @param affectedProducts map of products to find patches for
+	 * @throws IOException if an IO error occurs while attempting to find patches
+	 * @throws InterruptedException if a thread interrupted error occurs while attempting to find patches
+	 */
 	public static void run(Map<String, CpeGroup> affectedProducts) throws IOException, InterruptedException {
 		final long totalStart = System.currentTimeMillis();
 
 		// Attempt to find source urls from pre-written file (ensure file existence/freshness)
 		final Map<String, ArrayList<String>> possiblePatchURLs = getSourceDict();
+
+		// Filter any sources that are not a current job
+		final Set<String> cachedCVEs = possiblePatchURLs.keySet();
+		final Set<String> newCVEs = affectedProducts.keySet();
+		for (String key : cachedCVEs) {
+			if(!newCVEs.contains(key)) possiblePatchURLs.remove(key);
+		}
 
 		// Log read in data stats
 		int urlCount = possiblePatchURLs.values().stream().map(ArrayList::size).reduce(0, Integer::sum);
@@ -295,6 +322,11 @@ public class PatchFinder {
 		);
 	}
 
+	/**
+	 * Get the source dictionary safely (either load data on demand or get loaded data)
+	 * @return acquired source dictionary
+	 * @throws IOException if an error occurs while attempting to get the source dictionary
+	 */
 	private static Map<String, ArrayList<String>> getSourceDict() throws IOException {
 		// Ensure source dict is loaded
 		if(sourceDict == null) sourceDict = readSourceDict(patchSrcUrlPath);
@@ -303,6 +335,12 @@ public class PatchFinder {
 		return sourceDict;
 	}
 
+	/**
+	 * Reads a source dictionary JSON file at the given path and return the mapped results.
+	 * @param srcUrlPath path to source dictionary
+	 * @return found source map
+	 * @throws IOException if an error occurs while attempting to read the source dictionary
+	 */
 	@SuppressWarnings({"unchecked"})
 	public static Map<String, ArrayList<String>> readSourceDict(String srcUrlPath) throws IOException {
 		// Read in raw data, and return an empty hashmap if this fails for any reason
@@ -331,6 +369,11 @@ public class PatchFinder {
 		return sourceDict;
 	}
 
+	/**
+	 * Write the given dictionary of urls to file at the given path.
+	 * @param patchSrcUrlPath path to write to
+	 * @param urls dictionary to write
+	 */
 	@SuppressWarnings({"unchecked", "rawtypes"})
 	private static void writeSourceDict(String patchSrcUrlPath, Map<String, ArrayList<String>> urls) {
 		final int urlCount = urls.values().stream().map(ArrayList::size).reduce(0, Integer::sum);
@@ -349,19 +392,15 @@ public class PatchFinder {
 		}
 	}
 
-	/**
-	 * Getter for patch commits list
-	 * Used byb threads to add more entries
-	 * @return
-	 */
 	public static ArrayList<PatchCommit> getPatchCommits() {
 		return patchCommits;
 	}
 
 	/**
-	 * Git commit parser that implements multiple threads to increase performance
-	 * @param possiblePatchSources
-	 * @throws IOException
+	 * Git commit parser that implements multiple threads to increase performance. Found patches
+	 * will be stored in the patchCommits member of this class.
+	 * @param possiblePatchSources sources to scrape
+	 * @throws IOException if an error occurs while attempting to find patches
 	 */
 	public static void findPatchesMultiThreaded(Map<String, ArrayList<String>> possiblePatchSources) throws IOException {
 		// Init clone path and clear previously stored repos
