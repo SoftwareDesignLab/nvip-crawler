@@ -25,6 +25,7 @@
 
 import edu.rit.se.nvip.AffectedProductIdentifier;
 import edu.rit.se.nvip.ProductNameExtractorController;
+import edu.rit.se.nvip.ProductNameExtractorEnvVars;
 import edu.rit.se.nvip.model.cve.CompositeVulnerability;
 import edu.rit.se.nvip.model.cpe.CpeGroup;
 import org.junit.Test;
@@ -42,15 +43,17 @@ import static org.junit.Assert.assertTrue;
  */
 
 public class AffectedProductIdentifierTest {
-	private final String resourceDir = System.getenv("RESOURCE_DIR");
-	private final String nlpDir = System.getenv("NLP_DIR");
-	private final String dataDir = System.getenv("DATA_DIR");
 
 	/**
 	 * Test product name extraction for a simple CVE
 	 */
 	@Test
 	public void affectedProductIdentifierTest() {
+		ProductNameExtractorEnvVars.initializeEnvVars();
+
+		String resourceDir = ProductNameExtractorEnvVars.getResourceDir();
+		String nlpDir = ProductNameExtractorEnvVars.getNlpDir();
+		String dataDir = ProductNameExtractorEnvVars.getDataDir();
 
 		String description = "In Redhat Linux 1.10.x before 1.10.8 and 1.11.x before 1.11.5, HTML autoescaping was disabled in a portion of the template for the technical 500 debug page. Given the right circumstances, this allowed a cross-site scripting attack. This vulnerability shouldn't affect most production sites since you shouldn't run with \"DEBUG = True\" (which makes this page accessible) in your production settings.";
 		List<CompositeVulnerability> vulnList = new ArrayList<>();

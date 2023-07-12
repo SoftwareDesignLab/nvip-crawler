@@ -54,6 +54,10 @@ public class ProductNameExtractorEnvVars {
     private static String dataDir = "data";
     private static String nlpDir = "nlp";
 
+    public static void initializeEnvVars(){
+        fetchEnvVars();
+    }
+
     static{
         logger.info("Initializing Environment Variables...");
         fetchEnvVars();
