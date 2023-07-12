@@ -38,9 +38,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * 
- * The DatabaseHelper class is used to insert and update vulnerabilities found
- * from the webcrawler/processor to a sqlite database
+ * The DatabaseHelper class is used to facilitate database interactions for the Patchfinder
+ *
+ * @author Dylan Mulligan
  */
 public class DatabaseHelper {
 	private HikariConfig config = null;
@@ -58,8 +58,13 @@ public class DatabaseHelper {
 	public static final Pattern CPE_PATTERN = Pattern.compile("cpe:2\\.3:[aho\\*\\-]:([^:]*):([^:]*):([^:]*):.*");
 
 	/**
-	 * The private constructor sets up HikariCP for connection pooling. Singleton
-	 * DP!
+	 * Creates a DBH instance given db type, url, username, and password. These values are used to create a config
+	 * for Hikari and load it.
+	 *
+	 * @param databaseType database type identifier (mysql, postgres, etc.)
+	 * @param hikariUrl url to connect to the database
+	 * @param hikariUser database username
+	 * @param hikariPassword database password
 	 */
 	public DatabaseHelper(String databaseType, String hikariUrl, String hikariUser, String hikariPassword) {
 		logger.info("New NVIP.DatabaseHelper instantiated! It is configured to use " + databaseType + " database!");
@@ -86,6 +91,14 @@ public class DatabaseHelper {
 		}
 	}
 
+	/**
+	 * Creates a HikariConfig object from the given values.
+	 *
+	 * @param url url to connect to the database
+	 * @param user database username
+	 * @param password database password
+	 * @return created HikariConfig object
+	 */
 	private HikariConfig createHikariConfig(String url, String user, String password) {
 		HikariConfig hikariConfig;
 
@@ -110,7 +123,7 @@ public class DatabaseHelper {
 	 * Retrieves the connection from the DataSource (HikariCP)
 	 * 
 	 * @return the connection pooling connection
-	 * @throws SQLException
+	 * @throws SQLException if a SQL error occurs
 	 */
 	public Connection getConnection() throws SQLException {
 		return dataSource.getConnection();
@@ -124,6 +137,10 @@ public class DatabaseHelper {
 		config = null;
 	}
 
+	/**
+	 * Gets a map of CVEs -> existing source urls from the database
+	 * @return a map of CVEs -> existing source urls
+	 */
 	public Map<String, Integer> getExistingSourceUrls() {
 		final Map<String, Integer> urls = new HashMap<>();
 
@@ -138,6 +155,10 @@ public class DatabaseHelper {
 		return urls;
 	}
 
+	/**
+	 * Gets a set of existing patch commit SHAs from the database
+	 * @return a set of existing patch commit SHAs
+	 */
 	public Set<String> getExistingPatchCommitShas() {
 		final Set<String> urls = new HashSet<>();
 
@@ -154,8 +175,9 @@ public class DatabaseHelper {
 
 	/**
 	 * Collects a map of CPEs with their correlated CVE and Vuln ID used for
-	 * collecting patches
+	 * collecting patches given a list of CVE ids.
 	 *
+	 * @param cveIds CVEs to get affected products for
 	 * @return a map of affected products
 	 */
 	public Map<String, CpeGroup> getAffectedProducts(List<String> cveIds) {
@@ -186,6 +208,13 @@ public class DatabaseHelper {
 		return affectedProducts;
 	}
 
+	/**
+	 * Parses affected product data from the ResultSet into CpeGroup objects in the affectedProducts map.
+	 *
+	 * @param affectedProducts output map of CVE ids -> products
+	 * @param res result set from database query
+	 * @throws SQLException if a SQL error occurs
+	 */
 	private void parseAffectedProducts(Map<String, CpeGroup> affectedProducts, ResultSet res) throws SQLException {
 		// Parse results
 		while (res.next()) {
@@ -218,10 +247,10 @@ public class DatabaseHelper {
 	/**
 	 * Inserts given source URL into the patch source table
 	 *
-	 * @param existingSourceUrls
-	 * @param cve_id
-	 * @param sourceURL
-	 * @return
+	 * @param existingSourceUrls map of CVE ids -> the id of the source url
+	 * @param cve_id CVE being processed
+	 * @param sourceURL source url to insert
+	 * @return generated primary key (or existing key)
 	 */
 	public int insertPatchSourceURL(Map<String, Integer> existingSourceUrls, String cve_id, String sourceURL) {
 		// Check if source already exists
@@ -254,10 +283,10 @@ public class DatabaseHelper {
 	/**
 	 * Method for inserting a patch commit into the patchcommit table
 	 *
-	 * @param sourceId
-	 * @param commitSha
-	 * @param commitDate
-	 * @param commitMessage
+	 * @param sourceId id of the source url
+	 * @param commitSha commit SHA
+	 * @param commitDate commit date
+	 * @param commitMessage commit message
 	 */
 	public void insertPatchCommit(int sourceId, String cveId, String commitSha, java.util.Date commitDate, String commitMessage, String uniDiff, List<RevCommit> timeLine, String timeToPatch, int linesChanged) throws IllegalArgumentException {
 		if (sourceId < 0) throw new IllegalArgumentException("Invalid source id provided, ensure id is non-negative");
