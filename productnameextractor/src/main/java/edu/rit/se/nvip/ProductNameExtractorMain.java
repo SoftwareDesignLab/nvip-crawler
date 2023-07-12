@@ -150,7 +150,6 @@ public class ProductNameExtractorMain {
      *
      * @param args (unused) program arguments
      *
-     * TODO: Make sure that resources are released at some point/create shutdown sequence (database needs to be shutdown as well)
      */
     public static void main(String[] args) {
         logger.info("CURRENT PATH --> " + currentDir);
@@ -184,6 +183,7 @@ public class ProductNameExtractorMain {
 
                     if (cveIds == null) {
                         // If no IDs pulled after 5 minutes, release all resources and free up memory
+                        //TODO: try to get the AI models to fully be released
                         logger.info("It has been 5 minutes since any jobs were received from the Reconciler, releasing resources...");
                         ProductNameExtractorController.releaseResources();
                         System.gc();
@@ -194,6 +194,7 @@ public class ProductNameExtractorMain {
                     vulnList = databaseHelper.getSpecificCompositeVulnerabilities(cveIds);
 
                     // Initialize everything and get ready to process cveIds
+                    //TODO: make sure that if the product dictionary needs to be updated, the file is updated mid-run instead of when the program terminates
                     ProductNameExtractorController.initializeController(vulnList);
 
                     final long getProdStart = System.currentTimeMillis();
