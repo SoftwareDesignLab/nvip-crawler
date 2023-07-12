@@ -62,11 +62,14 @@ public class PatchFinderThread implements Runnable {
 	private static final Logger logger = LogManager.getLogger(PatchFinder.class.getName());
 
 	/**
-	 * Thread object used for multithreaded patchfinding
-	 * @param cvePatchEntry
+	 * Thread object used for multithreaded patch finding
+	 *
+	 * @param possiblePatchSources map of CVEs to possible patch sources
+	 * @param clonePath path to clone repos to
+	 * @param timeoutMilli milliseconds until timeout // TODO for what
 	 */
-	public PatchFinderThread(HashMap<String, ArrayList<String>> cvePatchEntry, String clonePath, long timeoutMilli) {
-		this.cvePatchEntry = cvePatchEntry;
+	public PatchFinderThread(HashMap<String, ArrayList<String>> possiblePatchSources, String clonePath, long timeoutMilli) {
+		this.cvePatchEntry = possiblePatchSources;
 		this.clonePath = clonePath;
 		this.timeoutMilli = timeoutMilli;
 	}
@@ -102,6 +105,12 @@ public class PatchFinderThread implements Runnable {
 		logger.info("Done scraping {} patch commits from CVE(s) {} in {} seconds", foundPatchCommits.size(), cvePatchEntry.keySet(), delta);
 	}
 
+	/**
+	 * Sort sources by repo size to improve run performance
+	 *
+	 * @param sources sources to sort
+	 * @return list of source counts (1:1 with sorted sources list)
+	 */
 	private ArrayList<Integer> orderSources(ArrayList<String> sources) {
 		// Map commit counts to their respective sources
 		final HashMap<String, Integer> sourceCounts = new HashMap<>(sources.size());
@@ -116,6 +125,12 @@ public class PatchFinderThread implements Runnable {
 		return counts;
 	}
 
+	/**
+	 * Gets the commit count from a given source page
+	 *
+	 * @param source page to scrape
+	 * @return found commit count
+	 */
 	private int getCommitCount(String source) {
 		try {
 			final long connStart = System.nanoTime();
@@ -165,6 +180,14 @@ public class PatchFinderThread implements Runnable {
 		}
 	}
 
+	/**
+	 * Finds patch commits from a given patch source via either cloning or web scraping, based on repo size
+	 *
+	 * @param foundPatchCommits output list of found patch commits
+	 * @param cve cve being analyzed
+	 * @param patchSource patch source being scraped
+	 * @param commitCount number of commits in the patch source
+	 */
 	private synchronized void findPatchCommits(ArrayList<PatchCommit> foundPatchCommits, String cve, String patchSource, int commitCount) {
 		try {
 			// Process found repository based on size (commit count on master branch)
@@ -189,6 +212,14 @@ public class PatchFinderThread implements Runnable {
 		}
 	}
 
+	/**
+	 * Scrapes patch commits from a given url via pagination
+	 *
+	 * @param foundPatchCommits output list of found patch commits
+	 * @param cve cve being analyzed
+	 * @param patchSource patch source being scraped
+	 * @param commitCount number of commits in the patch source
+	 */
 	private void findPatchCommitsFromUrl(ArrayList<PatchCommit> foundPatchCommits, String cve, String patchSource, int commitCount) {
 		// Define page range
 		final int numPags = (int) Math.ceil((double) commitCount / 35);
@@ -235,6 +266,13 @@ public class PatchFinderThread implements Runnable {
 		}
 	}
 
+	/**
+	 * Clones and finds patch commits from a given patch source
+	 *
+	 * @param foundPatchCommits output list of found patch commits
+	 * @param cve cve being analyzed
+	 * @param patchSource patch source being cloned
+	 */
 	private void findPatchCommitsFromRepo(ArrayList<PatchCommit> foundPatchCommits, String cve, String patchSource) {
 		try {
 			// Split source URI into parts to build local download path string
@@ -267,8 +305,7 @@ public class PatchFinderThread implements Runnable {
 		}
 	}
 
-	// TODO: Parse raw data into PatchCommit objects
-	private void parseCommitObjects(List<PatchCommit> patchCommits, String cveId, Elements objects) {
+	private void parseCommitObjects(List<PatchCommit> foundPatchCommits, String cveId, Elements objects) {
 		// Check if the commit message matches any of the regex provided
 		for (Pattern pattern : patchPatterns) {
 			for (Element object : objects) {
@@ -302,7 +339,7 @@ public class PatchFinderThread implements Runnable {
 								linesChanged // linesChanged
 						);
 
-						patchCommits.add(patchCommit);
+						foundPatchCommits.add(patchCommit);
 					} catch (IOException | ParseException e) {
 						logger.error("Failed to scrape unified diff from commit URL '{}': {}", commitUrl, e);
 					}
