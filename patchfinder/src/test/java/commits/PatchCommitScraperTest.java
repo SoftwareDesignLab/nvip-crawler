@@ -23,12 +23,16 @@
  */
 package commits;
 
+import org.junit.Assert;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.Test;
 import utils.GitController;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -61,20 +65,29 @@ public class PatchCommitScraperTest {
         String localDownloadLoc = "test-jgitparser/dash-core-components";
         String repoSource = "https://github.com/plotly/dash-core-components";
 
+        // Create a temporary directory to clone the repository
+        Path tempDir;
+        try {
+            tempDir = Files.createTempDirectory("temp-repo");
+        } catch (IOException e) {
+            fail("Failed to create temporary directory for cloning repository");
+            return;
+        }
+
         // Clone the git repository
-        GitController gitController = new GitController(localDownloadLoc, repoSource + ".git");
+        GitController gitController = new GitController(tempDir.toString(), repoSource + ".git");
         gitController.cloneRepo();
 
         // Create the PatchCommitScraper instance
-        PatchCommitScraper commitScraper = new PatchCommitScraper(localDownloadLoc, repoSource);
+        PatchCommitScraper commitScraper = new PatchCommitScraper(tempDir.toString(), repoSource);
 
         // Call the parseCommits method
         List<PatchCommit> patchCommits = commitScraper.parseCommits(cveId, patchPatterns);
 
         // Assertions
-        Assertions.assertEquals(11, patchCommits.size());
+        Assert.assertEquals(11, patchCommits.size());
         PatchCommit patchCommit = patchCommits.get(0);
-        Assertions.assertEquals(cveId, patchCommit.getCveId());
+        Assert.assertEquals(cveId, patchCommit.getCveId());
 
         // Delete the cloned repository
         gitController.deleteRepo();
