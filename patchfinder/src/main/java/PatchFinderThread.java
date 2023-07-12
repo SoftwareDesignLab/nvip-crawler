@@ -305,13 +305,20 @@ public class PatchFinderThread implements Runnable {
 		}
 	}
 
-	private void parseCommitObjects(List<PatchCommit> foundPatchCommits, String cveId, Elements objects) {
+	/**
+	 * Parses commit objects from the given commit elements into output list
+	 *
+	 * @param foundPatchCommits output list of found patch commits
+	 * @param cve cve being analyzed
+	 * @param commitElements collection of commit elements
+	 */
+	private void parseCommitObjects(List<PatchCommit> foundPatchCommits, String cve, Elements commitElements) {
 		// Check if the commit message matches any of the regex provided
 		for (Pattern pattern : patchPatterns) {
-			for (Element object : objects) {
+			for (Element object : commitElements) {
 				Matcher matcher = pattern.matcher(object.text());
 				// If found the CVE ID is found, add the patch commit to the returned list
-				if (matcher.find() || object.text().contains(cveId)) {
+				if (matcher.find() || object.text().contains(cve)) {
 					String commitUrl = object.attr("href");
 					logger.info("Found patch commit @ URL '{}'", commitUrl);
 
@@ -329,7 +336,7 @@ public class PatchFinderThread implements Runnable {
 						List<RevCommit> timeline = PatchCommit.convertToRevCommits(timelineString, walk);
 						PatchCommit patchCommit = new PatchCommit(
 								commitUrl,
-								cveId,
+								cve,
 								object.text(),
 								new Date(object.attr("commitTime")),
 								object.text(),
@@ -348,6 +355,12 @@ public class PatchFinderThread implements Runnable {
 		}
 	}
 
+	/**
+	 * Parses a "timeline" list of commits from the given timeline elements
+	 * @param timelineElements collection of timeline elements
+	 * @return parsed timeline elements
+	 * @throws ParseException if an error occurs while parsing elements
+	 */
 	private List<String> parseTimeline(Elements timelineElements) throws ParseException {
 		List<String> timeline = new ArrayList<>();
 
@@ -359,7 +372,11 @@ public class PatchFinderThread implements Runnable {
 		return timeline;
 	}
 
-
+	/** // TODO: Is this accurate?
+	 * Extracts the date of the patch commit
+	 * @param commitPage DOM to extract from
+	 * @return extracted time to patch
+	 */
 	private String extractTimeToPatch(Document commitPage) {
 		Element timeToPatchElement = commitPage.selectFirst("relative-time[datetime]:not(.commit-author-date)");
 		if (timeToPatchElement != null) {
@@ -369,6 +386,11 @@ public class PatchFinderThread implements Runnable {
 		return null;
 	}
 
+	/**
+	 * Extracts the number of lines changed from the given document object model
+	 * @param commitPage DOM to extract from
+	 * @return extracted lines changed count
+	 */
 	private int extractLinesChanged(Document commitPage) {
 		Element linesChangedElement = commitPage.selectFirst("span.text-mono");
 		if (linesChangedElement != null) {
@@ -383,6 +405,11 @@ public class PatchFinderThread implements Runnable {
 		return 0;
 	}
 
+	/**
+	 * Scrapes and returns commit elements from a given Github url
+	 * @param url url to scrape
+	 * @return found commit elements
+	 */
 	private Elements getCommitObjects(String url) {
 		// Init output Elements list
 		final Elements commitObjects = new Elements();
