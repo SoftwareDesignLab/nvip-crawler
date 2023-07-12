@@ -121,7 +121,7 @@ public class ProductNameExtractorController {
         try {
             productDictLastCompilationDate = Instant.parse((String) rawData.get("compTime"));
             productDictLastRefreshDate = Instant.parse((String) rawData.get("refreshTime"));
-        } catch (DateTimeException e) {
+        } catch (Exception e) {
             logger.error("Error parsing compilation/refresh date from dictionary: {}", e.toString());
         }
 
@@ -273,6 +273,7 @@ public class ProductNameExtractorController {
             productDict = affectedProductIdentifier.queryCPEDict(maxPages, maxAttemptsPerPage); // Query
             affectedProductIdentifier.loadCPEDict(productDict); // Load into CpeLookup
             productDictLastCompilationDate = Instant.now(); // Set last comp date to now
+            productDictLastRefreshDate = Instant.now(); // Set last comp date to now
 
             writeProductDict(productDict, productDictPath); // Write product dict
         }
