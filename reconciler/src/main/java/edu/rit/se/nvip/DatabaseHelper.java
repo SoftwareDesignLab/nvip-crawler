@@ -488,7 +488,7 @@ public class DatabaseHelper {
                 return 0;
         }
         try (Connection conn = getConnection();
-             PreparedStatement upsertStatement = conn.prepareStatement(isUpdate ? UPDATE_VDO: INSERT_CVSS)) {
+             PreparedStatement upsertStatement = conn.prepareStatement(isUpdate ? UPDATE_VDO: INSERT_VDO)) {
             for (VdoCharacteristic vdo : vuln.getVdoCharacteristic()) {
                 if (isUpdate) {
                     populateVDOUpdate(upsertStatement, vdo);
