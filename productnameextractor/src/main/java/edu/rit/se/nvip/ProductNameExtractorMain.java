@@ -179,7 +179,6 @@ public class ProductNameExtractorMain {
             logger.info("Waiting for jobs from Reconciler...");
             while(true) {
                 try {
-
                     // Get CVE IDs to be processed from reconciler
                     List<String> cveIds = rabbitMQ.waitForReconcilerMessage(rabbitPollInterval);
 
@@ -205,7 +204,6 @@ public class ProductNameExtractorMain {
                     // Send list of cveIds to Patchfinder
                     logger.info("Sending jobs to patchfinder...");
                     rabbitMQ.sendPatchFinderMessage(cveIds);
-                    rabbitMQ.sendPatchFinderFinishMessage();
                     logger.info("Jobs have been sent!");
 
                 } catch (Exception e) {
