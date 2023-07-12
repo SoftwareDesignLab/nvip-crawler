@@ -201,7 +201,7 @@ public class CpeLookUp {
 					// Increment index
 					index += RESULTS_PER_PAGE;
 					// Sleep 2 sec between queries (adjust until we do not get 403 errors)
-					Thread.sleep(2000);
+					Thread.sleep(2500);
 					// Reset attempt count
 					attempts = 0;
 				}
