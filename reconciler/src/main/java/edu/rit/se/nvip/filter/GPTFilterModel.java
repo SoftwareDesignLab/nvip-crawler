@@ -6,6 +6,7 @@ import com.theokanning.openai.completion.chat.ChatCompletionResult;
 import com.theokanning.openai.completion.chat.ChatMessage;
 import edu.rit.se.nvip.openai.OpenAIRequestHandler;
 import edu.rit.se.nvip.openai.RequestWrapper;
+import edu.rit.se.nvip.openai.RequestorIdentity;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -38,12 +39,12 @@ public class GPTFilterModel {
     public boolean callModel(String arg) throws OpenAiInvalidReturnException{
         try {
             ChatCompletionRequest request = formRequest(arg);
-            Future<ChatCompletionResult> futureRes = requestHandler.createChatCompletion(request);
+            Future<ChatCompletionResult> futureRes = requestHandler.createChatCompletion(request, RequestorIdentity.FILTER);
             ChatCompletionResult res = futureRes.get();
             return getAnswer(res);
         } catch (OpenAiHttpException | InterruptedException | ExecutionException ex) {
             logger.error(ex);
-            return true;
+            return true; // need a default answer
         }
     }
 

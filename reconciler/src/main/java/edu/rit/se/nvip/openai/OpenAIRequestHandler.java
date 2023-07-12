@@ -108,9 +108,9 @@ public class OpenAIRequestHandler {
      * @param request the chat completion request in need of handling
      * @return a future object which will be populated when the rate limiters and priority allow
      */
-    public Future<ChatCompletionResult> createChatCompletion(ChatCompletionRequest request) {
+    public Future<ChatCompletionResult> createChatCompletion(ChatCompletionRequest request, RequestorIdentity requestor) {
         CompletableFuture<ChatCompletionResult> future = new CompletableFuture<>();
-        RequestWrapper wrapper = new RequestWrapper(0, request, future);
+        RequestWrapper wrapper = new RequestWrapper(request, future, requestor, 0);
         // drop the request in the queue and tell any concerned threads about it
         synchronized (requestQueue) {
             requestQueue.offer(wrapper);
