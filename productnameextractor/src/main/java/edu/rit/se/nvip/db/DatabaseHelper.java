@@ -116,7 +116,7 @@ public class DatabaseHelper {
 	 * Store affected products in DB
 	 * @param affectedProducts
 	 */
-	public int insertAffectedProductsToDB(List<AffectedProduct> affectedProducts) {
+	public void insertAffectedProductsToDB(List<AffectedProduct> affectedProducts) {
 
 		logger.info("Inserting Affected Products to DB!");
 		// delete existing affected release info in db ( for CVEs in the list)
@@ -124,8 +124,6 @@ public class DatabaseHelper {
 
 		// now insert affected releases (referenced products are already in db)
 		insertAffectedProducts(affectedProducts);
-
-		return affectedProducts.size();
 	}
 
 	/**

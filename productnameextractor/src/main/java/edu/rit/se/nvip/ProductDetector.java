@@ -1,4 +1,5 @@
-package edu.rit.se.nvip; /**
+package edu.rit.se.nvip;
+/**
  * Copyright 2023 Rochester Institute of Technology (RIT). Developed with
  * government support under contract 70RSAT19CB0000020 awarded by the United
  * States Department of Homeland Security.
@@ -50,12 +51,10 @@ public class ProductDetector {
 	public static final String NNP = "NNP";
 	public static final String IN = "IN";
 
-	private final NERmodel nerModel;
-
-	private final CpeLookUp cpeDict;
-
-	private final POSTaggerME tagger;
-	private final POSModel model;
+	private NERmodel nerModel;
+	private CpeLookUp cpeDict;
+	private POSTaggerME tagger;
+	private POSModel model;
 	static private final Logger logger = LogManager.getLogger(ProductDetector.class);
 
 	/**
@@ -93,6 +92,17 @@ public class ProductDetector {
 			logger.warn("Please ensure that your working directory is correct. Current working directory: {}", ProductNameExtractorMain.currentDir);
 			throw e;
 		}
+	}
+
+	protected void unloadModels(){
+		if(nerModel != null){
+			nerModel.unloadModels();
+		}
+		nerModel = null;
+		cpeDict = null;
+		tagger = null;
+		model = null;
+		System.gc();
 	}
 
 	/**

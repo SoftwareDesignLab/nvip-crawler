@@ -59,14 +59,14 @@ import java.util.Random;
  */
 
 public class NERmodel {
-	private final boolean timingOn = false;
+	private final boolean timingOn = true;
 	private MultiLayerNetwork model = null; // NER model
-	private Char2vec c2vModel = null; // Char2Vector model
-	private Word2Vector w2vModel = null; // Word2Vector model
+	private Char2vec c2vModel; // Char2Vector model
+	private Word2Vector w2vModel; // Word2Vector model
 	static public final int numLabelClasses = 3; // Number of classes (SN, SV, O)
-	private int featureLength = 300; // length of the input features vector.
-	private int wordVecLength = 250; // Expected length of the word2vector model output. Later will be updated from the actual model
-	private int charVecLength = 50; // Expected length of the char2vector model output. Later will be updated from the actual model
+	private final int featureLength; // length of the input features vector.
+	private final int wordVecLength; // Expected length of the word2vector model output. Later will be updated from the actual model
+	private final int charVecLength; // Expected length of the char2vector model output. Later will be updated from the actual model
 	private static Random rand = new Random(); // Needed in the case when word2vector model doesn't know the word
 
 	public static final String SN = "SN", SV = "SV", OTHER = "O"; // class names
@@ -192,6 +192,13 @@ public class NERmodel {
 			throw e;
 		}
 
+	}
+
+	protected void unloadModels(){
+		model = null;
+		c2vModel = null;
+		w2vModel = null;
+		System.gc();
 	}
 
 	/**

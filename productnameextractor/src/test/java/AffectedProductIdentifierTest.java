@@ -58,7 +58,7 @@ public class AffectedProductIdentifierTest {
 		v.setCveReconcileStatus(CompositeVulnerability.CveReconcileStatus.UPDATE);
 		vulnList.add(v);
 
-		AffectedProductIdentifier affectedProductIdentifier = new AffectedProductIdentifier(12);
+		AffectedProductIdentifier affectedProductIdentifier = new AffectedProductIdentifier(12, vulnList);
 		// Init cpeLookUp
 		try {
 			final Map<String, CpeGroup> productDict = ProductNameExtractorController.readProductDict("src/test/resources/data/test_product_dict.json");

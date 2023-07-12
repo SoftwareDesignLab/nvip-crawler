@@ -45,6 +45,8 @@ public class Messenger {
         // Initialize job list
         List<String> cveIds = null;
 
+        final long startTime = System.currentTimeMillis();
+
         // Busy-wait loop for jobs
         while(cveIds == null) {
             try(Connection connection = factory.newConnection();
@@ -63,7 +65,10 @@ public class Messenger {
 
                 logger.info("Polling message queue...");
                 cveIds = messageQueue.poll(pollInterval, TimeUnit.SECONDS);
+                final long elapsedTime = System.currentTimeMillis() - startTime;
+                logger.info("Messenger has been waiting for a message for {} seconds", elapsedTime / 1000);
                 if(cveIds != null) logger.info("Received job with CVE(s) {}", cveIds);
+                else if (elapsedTime / 1000 >= 300) return null;
 
             } catch (TimeoutException | InterruptedException | IOException e) {
                 logger.error("Error occurred while getting jobs from the ProductNameExtractor: {}", e.toString());

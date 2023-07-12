@@ -1,5 +1,29 @@
 package edu.rit.se.nvip;
 
+/**
+ * Copyright 2023 Rochester Institute of Technology (RIT). Developed with
+ * government support under contract 70RSAT19CB0000020 awarded by the United
+ * States Department of Homeland Security.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import edu.rit.se.nvip.model.cpe.CpeEntry;
@@ -38,39 +62,46 @@ public class ProductNameExtractorController {
     private static Instant productDictLastCompilationDate = Instant.parse("2000-01-01T00:00:00.00Z");
     private static Instant productDictLastRefreshDate = Instant.parse("2000-01-01T00:00:00.00Z");
     private static AffectedProductIdentifier affectedProductIdentifier;
-    private static Map<String, CpeGroup> productDict = null;
+    private static Map<String, CpeGroup> productDict;
 
     /**
-     * Initialize the AffectedProductIdentifier as well as initialize the
-     * models required to extract product names/versions
+     * Initialize the AffectedProductIdentifier & related models
+     * as well as load the product dictionary. If both have already been loaded,
+     * controller is ready to process CVEs.
      */
-    public static void initializeAffectedProductIdentifier(){
+    public static void initializeController(List<CompositeVulnerability> vulnList){
         if(affectedProductIdentifier == null){
             logger.info("Initializing the AffectedProductIdentifier...");
-            affectedProductIdentifier = new AffectedProductIdentifier(numThreads);
+            affectedProductIdentifier = new AffectedProductIdentifier(numThreads, vulnList);
             affectedProductIdentifier.initializeProductDetector(resourceDir, nlpDir, dataDir);
         }else{
             logger.info("AffectedProductIdentifier already initialized!");
+            affectedProductIdentifier.setVulnList(vulnList);
+        }
+
+        if(productDict == null){
+            try{
+                logger.info("Loading product dictionary...");
+                productDict = readProductDict(productDictPath);
+            } catch (IOException e){
+                logger.error("Error loading product dictionary: {}", e.toString());
+            }
+        }else{
+            logger.info("Product dictionary already loaded!");
         }
     }
 
     /**
-     *
-     *
-     * @return CPE product dictionary from NVD
-     * @throws IOException
+     * Releases the Affected Product Identifier and all of its models
+     * as well as the product dictionary from memory.
      */
-    public static Map<String, CpeGroup> getProductDict() throws IOException {
-        // Ensure dict is loaded
-        if(productDict == null){
-            logger.info("Loading product dictionary...");
-            productDict = readProductDict(productDictPath);
-        }else{
-            logger.info("Product dictionary already loaded!");
+    protected static void releaseResources(){
+        if(affectedProductIdentifier != null){
+            affectedProductIdentifier.releaseResources();
+            affectedProductIdentifier = null;
+            productDict = null;
         }
-
-        // Return dict
-        return productDict;
+        System.gc();
     }
 
     /**
@@ -218,22 +249,10 @@ public class ProductNameExtractorController {
      * loading the CPE dictionary, and cross-referencing that information to generate and store
      * return affected products that have been found.
      *
-     * @param vulnList list of vulnerabilities to be processed
      * @return affected products found
      */
-    public static List<AffectedProduct> run(List<CompositeVulnerability> vulnList) {
-        // Clears and sets the vulnList within AffectedProductIdentifier to be the new set of vulnerabilities
-        affectedProductIdentifier.setVulnList(vulnList);
-
-        // Init CPE dict data storage
-        Map<String, CpeGroup> productDict;
-
-        // Build product dict path String
-        final String productDictPath = resourceDir + "/" + dataDir + "/" + productDictName;
-
+    public static List<AffectedProduct> run() {
         try {
-            // Read in product dict
-            productDict = getProductDict();
 
             // Calculate time since last compilation
             final long timeSinceLastComp = Duration.between(productDictLastCompilationDate, Instant.now()).getSeconds();

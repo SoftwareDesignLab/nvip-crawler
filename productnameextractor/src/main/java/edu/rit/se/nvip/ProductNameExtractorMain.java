@@ -1,5 +1,29 @@
 package edu.rit.se.nvip;
 
+/**
+ * Copyright 2023 Rochester Institute of Technology (RIT). Developed with
+ * government support under contract 70RSAT19CB0000020 awarded by the United
+ * States Department of Homeland Security.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 import com.opencsv.CSVReader;
 import edu.rit.se.nvip.db.DatabaseHelper;
 import edu.rit.se.nvip.messenger.Messenger;
@@ -15,6 +39,15 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Main class for the Product Name Extractor.
+ *
+ * Core functionality is to determine which vulnerabilities will be processed and pass those to the controller.
+ * Also has a test mode (see environment variable TEST_MODE) to perform a quick run-through and ensure everything
+ * is working correctly.
+ *
+ * @author Paul Vickers
+ */
 public class ProductNameExtractorMain {
     private static final Logger logger = LogManager.getLogger(ProductNameExtractorController.class);
     public static final String currentDir = System.getProperty("user.dir");
@@ -134,8 +167,8 @@ public class ProductNameExtractorMain {
             vulnList = createTestVulnList();
 
             final long getProdStart = System.currentTimeMillis();
-            ProductNameExtractorController.initializeAffectedProductIdentifier();
-            int numAffectedProducts = ProductNameExtractorController.run(vulnList).size();
+            ProductNameExtractorController.initializeController(vulnList);
+            int numAffectedProducts = ProductNameExtractorController.run().size();
 
             logger.info("Product Name Extractor found {} affected products in the test run in {} seconds", numAffectedProducts, Math.floor(((double) (System.currentTimeMillis() - getProdStart) / 1000) * 100) / 100);
 
@@ -151,19 +184,24 @@ public class ProductNameExtractorMain {
                     // Get CVE IDs to be processed from reconciler
                     cveIds = rabbitMQ.waitForReconcilerMessage(rabbitPollInterval);
 
-                    ProductNameExtractorController.initializeAffectedProductIdentifier();
-
-                    // If no IDs pulled, break
-                    if (cveIds == null) break;
+                    if (cveIds == null) {
+                        // If no IDs pulled after 5 minutes, release all resources and free up memory
+                        logger.info("It has been 5 minutes since any jobs were received from the Reconciler, releasing resources...");
+                        ProductNameExtractorController.releaseResources();
+                        continue;
+                    }
 
                     // Pull specific cve information from database for each CVE ID passed from reconciler
                     vulnList = databaseHelper.getSpecificCompositeVulnerabilities(cveIds);
 
-                    final long getProdStart = System.currentTimeMillis();
-                    List<AffectedProduct> affectedProducts = ProductNameExtractorController.run(vulnList);
+                    // Initialize everything and get ready to process cveIds
+                    ProductNameExtractorController.initializeController(vulnList);
 
-                    int numAffectedProducts = databaseHelper.insertAffectedProductsToDB(affectedProducts);
-                    logger.info("Product Name Extractor found and inserted {} affected products to the database in {} seconds", numAffectedProducts, Math.floor(((double) (System.currentTimeMillis() - getProdStart) / 1000) * 100) / 100);
+                    final long getProdStart = System.currentTimeMillis();
+                    List<AffectedProduct> affectedProducts = ProductNameExtractorController.run();
+
+                    databaseHelper.insertAffectedProductsToDB(affectedProducts);
+                    logger.info("Product Name Extractor found and inserted {} affected products to the database in {} seconds", affectedProducts.size(), Math.floor(((double) (System.currentTimeMillis() - getProdStart) / 1000) * 100) / 100);
 
                     // Send list of cveIds to Patchfinder
                     logger.info("Sending jobs to patchfinder...");
@@ -172,12 +210,11 @@ public class ProductNameExtractorMain {
                     logger.info("Jobs have been sent!");
 
                 } catch (Exception e) {
-                    logger.error("Failed to get jobs from RabbitMQ, exiting program...");
+                    logger.error("Failed to get jobs from RabbitMQ, exiting program with error: {}", e.toString());
                     databaseHelper.shutdown();
                     System.exit(1);
                 }
             }
-
         }
     }
 }
