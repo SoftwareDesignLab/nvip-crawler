@@ -95,14 +95,10 @@ public class ProductDetector {
 	}
 
 	protected void unloadModels(){
-		if(nerModel != null){
-			nerModel.unloadModels();
-		}
 		nerModel = null;
 		cpeDict = null;
 		tagger = null;
 		model = null;
-		System.gc();
 	}
 
 	/**

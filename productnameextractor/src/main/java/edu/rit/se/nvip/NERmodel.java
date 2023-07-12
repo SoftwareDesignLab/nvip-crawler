@@ -160,7 +160,6 @@ public class NERmodel {
 
 			try {
 				startTime = System.currentTimeMillis();
-				logger.info("Working Dir === {}", ProductNameExtractorMain.currentDir);
 				File binFile = new File(sentenceModelPath);
 				InputStream modelIn = Files.newInputStream(binFile.toPath());
 				SentenceModel sentenceModel = new SentenceModel(modelIn);
@@ -184,7 +183,7 @@ public class NERmodel {
 			}
 			endTime = System.currentTimeMillis();
 			if (timingOn) {
-				logger.info("Timing for Sentence detector model loading: " + Long.toString(endTime - startTime) + "ms.");
+				logger.info("Timing for Normalizer model loading: " + Long.toString(endTime - startTime) + "ms.");
 			}
 		} catch (Exception e) {
 			logger.error("ERROR: Error initializing NERmodel {}", e.toString());
@@ -192,13 +191,6 @@ public class NERmodel {
 			throw e;
 		}
 
-	}
-
-	protected void unloadModels(){
-		model = null;
-		c2vModel = null;
-		w2vModel = null;
-		System.gc();
 	}
 
 	/**

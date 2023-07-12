@@ -101,7 +101,6 @@ public class ProductNameExtractorController {
             affectedProductIdentifier = null;
             productDict = null;
         }
-        System.gc();
     }
 
     /**

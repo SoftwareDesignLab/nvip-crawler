@@ -186,6 +186,7 @@ public class ProductNameExtractorMain {
                         // If no IDs pulled after 5 minutes, release all resources and free up memory
                         logger.info("It has been 5 minutes since any jobs were received from the Reconciler, releasing resources...");
                         ProductNameExtractorController.releaseResources();
+                        System.gc();
                         continue;
                     }
 

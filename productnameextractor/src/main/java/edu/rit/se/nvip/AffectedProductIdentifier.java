@@ -73,7 +73,6 @@ public class AffectedProductIdentifier {
 			productDetector.unloadModels();
 		}
 		productDetector = null;
-		System.gc();
 	}
 
 	/**
