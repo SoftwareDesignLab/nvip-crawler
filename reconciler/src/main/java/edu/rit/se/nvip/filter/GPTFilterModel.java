@@ -5,11 +5,14 @@ import com.theokanning.openai.completion.chat.ChatCompletionRequest;
 import com.theokanning.openai.completion.chat.ChatCompletionResult;
 import com.theokanning.openai.completion.chat.ChatMessage;
 import edu.rit.se.nvip.openai.OpenAIRequestHandler;
+import edu.rit.se.nvip.openai.RequestWrapper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 public class GPTFilterModel {
 
@@ -25,7 +28,7 @@ public class GPTFilterModel {
     private OpenAIRequestHandler requestHandler;
 
     public GPTFilterModel() {
-        requestHandler = new OpenAIRequestHandler();
+        requestHandler = OpenAIRequestHandler.getInstance();
     }
 
     public void setRequestHandler(OpenAIRequestHandler handler) {
@@ -35,9 +38,10 @@ public class GPTFilterModel {
     public boolean callModel(String arg) throws OpenAiInvalidReturnException{
         try {
             ChatCompletionRequest request = formRequest(arg);
-            ChatCompletionResult res = requestHandler.createChatCompletion(request);
+            Future<ChatCompletionResult> futureRes = requestHandler.createChatCompletion(request);
+            ChatCompletionResult res = futureRes.get();
             return getAnswer(res);
-        } catch (OpenAiHttpException ex) {
+        } catch (OpenAiHttpException | InterruptedException | ExecutionException ex) {
             logger.error(ex);
             return true;
         }
