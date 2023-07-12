@@ -51,7 +51,10 @@ public class ReconcilerController {
         }
         for (Future<CompositeVulnerability> futureVuln : futures) {
             try {
-                reconciledVulns.add(futureVuln.get());
+                CompositeVulnerability compVuln = futureVuln.get();
+                if (compVuln != null){
+                    reconciledVulns.add(compVuln);
+                }
             } catch (InterruptedException | ExecutionException e) {
                 throw new RuntimeException(e);
             }
@@ -132,7 +135,9 @@ public class ReconcilerController {
         CompositeVulnerability out = reconciler.reconcile(existing, wrapper.toReconcile());
         // link all the rawvulns to the compvuln, regardless of filter/reconciliation status
         // we do this because publish dates and mod dates should be determined by all sources, not just those with good descriptions
-
+        if(out == null){
+            return null;
+        }
         out.setPotentialSources(rawVulns);
 
         dbh.insertOrUpdateVulnerabilityFull(out);

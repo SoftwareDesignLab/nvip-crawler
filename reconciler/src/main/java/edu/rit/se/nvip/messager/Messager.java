@@ -20,8 +20,8 @@ import java.util.concurrent.*;
 
 public class Messager {
 
-    private final static String RECONCILER_QUEUE = "reconciler";
-    private final static String PNE_QUEUE = "PNE";
+    private final static String RECONCILER_QUEUE = "CRAWLER_OUT";
+    private final static String PNE_QUEUE = "RECONCILER_OUT";
     private static final Logger logger = LogManager.getLogger(DatabaseHelper.class.getSimpleName());
     private ConnectionFactory factory;
 
@@ -36,9 +36,10 @@ public class Messager {
         this.factory = factory;
     }
 
-    public List<String> waitForCrawlerMessage(int rabbitTimeout) throws Exception {
-        try(Connection connection = factory.newConnection();
-            Channel channel = connection.createChannel()){
+    public List<String> waitForCrawlerMessage(int rabbitTimeout) {
+
+        try (Connection connection = factory.newConnection();
+             Channel channel = connection.createChannel()) {
             channel.queueDeclare(RECONCILER_QUEUE, false, false, false, null);
 
             BlockingQueue<List<String>> messageQueue = new ArrayBlockingQueue<>(1);
@@ -48,13 +49,17 @@ public class Messager {
                 List<String> parsedIds = parseIds(message);
                 messageQueue.offer(parsedIds);
             };
-            channel.basicConsume(RECONCILER_QUEUE, true, deliverCallback, consumerTag -> { });
+            channel.basicConsume(RECONCILER_QUEUE, true, deliverCallback, consumerTag -> {
+            });
 
             return messageQueue.poll(rabbitTimeout, TimeUnit.SECONDS);
 
         } catch (TimeoutException e) {
             logger.error("Error occurred while sending the Reconciler message to RabbitMQ: {}", e.getMessage());
+        } catch (IOException | InterruptedException e) {
+            throw new RuntimeException(e);
         }
+
 
         return null;
     }
