@@ -11,6 +11,7 @@ import com.theokanning.openai.completion.chat.ChatMessage;
 import com.theokanning.openai.model.Model;
 import com.theokanning.openai.service.OpenAiService;
 import edu.rit.se.nvip.ReconcilerMain;
+import edu.rit.se.nvip.utils.ReconcilerEnvVars;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -39,7 +40,7 @@ public class OpenAIRequestHandler {
     }
 
     private OpenAIRequestHandler() {
-        service = new OpenAiService((String) ReconcilerMain.envVars.get("openaiKey"));
+        service = new OpenAiService(ReconcilerEnvVars.getOpenAIKey());
         executor.submit(this::handleRequests); // run handleRequests() in the background
     }
 
