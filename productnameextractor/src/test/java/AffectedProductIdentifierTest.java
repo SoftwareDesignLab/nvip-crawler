@@ -59,6 +59,7 @@ public class AffectedProductIdentifierTest {
 		vulnList.add(v);
 
 		AffectedProductIdentifier affectedProductIdentifier = new AffectedProductIdentifier(12, vulnList);
+		affectedProductIdentifier.initializeProductDetector(resourceDir, nlpDir, dataDir);
 		// Init cpeLookUp
 		try {
 			final Map<String, CpeGroup> productDict = ProductNameExtractorController.readProductDict("src/test/resources/data/test_product_dict.json");
