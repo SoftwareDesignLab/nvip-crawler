@@ -1,11 +1,7 @@
 package edu.rit.se.nvip.filter;
 
-import com.google.common.util.concurrent.RateLimiter;
 import edu.rit.se.nvip.model.RawVulnerability;
-import edu.rit.se.nvip.sandbox.DatabaseSandbox;
-
-import java.util.HashSet;
-import java.util.Set;
+import edu.rit.se.nvip.openai.GPTFilterModel;
 
 public class GPTFilter extends AsyncFilter {
     private GPTFilterModel model = new GPTFilterModel();

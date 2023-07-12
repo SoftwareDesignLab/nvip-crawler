@@ -1,12 +1,9 @@
-package edu.rit.se.nvip.filter;
+package edu.rit.se.nvip.openai;
 
 import com.theokanning.openai.OpenAiHttpException;
 import com.theokanning.openai.completion.chat.ChatCompletionRequest;
 import com.theokanning.openai.completion.chat.ChatCompletionResult;
 import com.theokanning.openai.completion.chat.ChatMessage;
-import edu.rit.se.nvip.openai.OpenAIRequestHandler;
-import edu.rit.se.nvip.openai.RequestWrapper;
-import edu.rit.se.nvip.openai.RequestorIdentity;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
