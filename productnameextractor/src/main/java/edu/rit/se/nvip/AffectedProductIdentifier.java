@@ -66,6 +66,9 @@ public class AffectedProductIdentifier {
 		this.numThreads = numThreads;
 	}
 
+	/**
+	 * Releases held resources to free up memory
+	 */
 	protected void releaseResources(){
 		logger.info("Releasing affected product identifier from memory...");
 		vulnList = null;
@@ -87,6 +90,13 @@ public class AffectedProductIdentifier {
 		this.vulnList = vulnList;
 	}
 
+	/**
+	 * Initializes the product detector instance
+	 *
+	 * @param resourceDir local resources directory
+	 * @param nlpDir relative nlp directory (within resources)
+	 * @param dataDir relative data directory (within resources)
+	 */
 	public void initializeProductDetector(String resourceDir, String nlpDir, String dataDir){
 		try{
 			productDetector = new ProductDetector(cpeLookUp, resourceDir, nlpDir, dataDir);
@@ -99,19 +109,20 @@ public class AffectedProductIdentifier {
 	/**
 	 * This method processes a given vulnerability (CVE) and attempts to map it against
 	 * CPEs found in cpeLookUp.
-	 * @param productNameDetector
-	 * @param cpeLookUp
-	 * @param vulnerability
-	 * @param counterOfBadDescriptionCVEs
-	 * @param counterOfSkippedCVEs
-	 * @param counterOfProcessedCVEs
-	 * @param counterOfProcessedNERs
-	 * @param counterOfProcessedCPEs
-	 * @param numOfProductsNotMappedToCPE
-	 * @param numOfProductsMappedToCpe
-	 * @param totalNERTime
-	 * @param totalCPETime
-	 * @param totalCVETime
+	 *
+	 * @param productNameDetector ProductDetector instance
+	 * @param cpeLookUp CpeLookup instance
+	 * @param vulnerability vulnerability being processed
+	 * @param counterOfBadDescriptionCVEs counter of CVEs with bad descriptions
+	 * @param counterOfSkippedCVEs counter of CVEs that have been skipped
+	 * @param counterOfProcessedCVEs counter of CVEs that have been processed
+	 * @param counterOfProcessedNERs counter of NERs that have been processed
+	 * @param counterOfProcessedCPEs counter of CPEs that have been processed
+	 * @param numOfProductsNotMappedToCPE counter of products that have not been mapped to a CPE
+	 * @param numOfProductsMappedToCpe counter of products that have been mapped to a CPE
+	 * @param totalNERTime timer for total time spent processing NERs
+	 * @param totalCPETime timer for total time spent processing CPEs
+	 * @param totalCVETime timer for total time spent processing CVEs
 	 */
 	private void processVulnerability(
 			ProductDetector productNameDetector,
@@ -218,7 +229,7 @@ public class AffectedProductIdentifier {
 	 * from the database through processVulnerability, in order to build a map of affected
 	 * products.
 	 *
-	 * @return a map of products affected by pulled CVEs
+	 * @return list of affected products
 	 */
 	public List<AffectedProduct> identifyAffectedProducts() {
 

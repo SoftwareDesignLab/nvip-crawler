@@ -55,6 +55,8 @@ import java.util.Random;
  * Symposium ({USENIX} Security 19), pp. 869-885. 2019.
  * 
  * @author Igor Khokhlov
+ * @author Dylan Mulligan
+ * @author Paul Vickers
  *
  */
 
