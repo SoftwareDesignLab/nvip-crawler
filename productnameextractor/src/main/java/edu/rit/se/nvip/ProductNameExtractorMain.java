@@ -155,7 +155,9 @@ public class ProductNameExtractorMain {
     public static void main(String[] args) {
         logger.info("CURRENT PATH --> " + currentDir);
 
+        // Initialize Database Helper and Load Product Dictionary
         DatabaseHelper databaseHelper = new DatabaseHelper(databaseType, hikariUrl, hikariUser, hikariPassword);
+        ProductDictionary.initializeProductDict();
 
         List<CompositeVulnerability> vulnList;
         final Messenger rabbitMQ = new Messenger();

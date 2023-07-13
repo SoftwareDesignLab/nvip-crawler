@@ -72,12 +72,13 @@ public class ProductNameExtractorEnvVars {
     private static String nerModelNormalizer = "NERallNorm.bin";
     private static String sentenceModel = "en-sent.bin";
 
-    //Static access to manually load env vars
-    public static void initializeEnvVars() {
-        fetchEnvVars();
+    // Automatically load env vars
+    static{
+        initializeEnvVars();
     }
 
-    static{
+    // Manually load env vars
+    public static void initializeEnvVars() {
         logger.info("Initializing Environment Variables...");
         fetchEnvVars();
     }

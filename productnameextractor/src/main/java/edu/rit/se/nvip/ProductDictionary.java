@@ -36,6 +36,7 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -50,12 +51,14 @@ import java.util.regex.Pattern;
  * @author Dylan Mulligan
  * @author Paul Vickers
  */
+
 public class ProductDictionary {
     private static final Logger logger = LogManager.getLogger(ProductDictionary.class);
 
     /**
      * Dictionary Reading/Storage Vars
      */
+
     private static final ObjectMapper OM = new ObjectMapper();
     private static final boolean prettyPrint = ProductNameExtractorEnvVars.isPrettyPrint();
     private static final String productDictName = ProductNameExtractorEnvVars.getProductDictName();
@@ -68,6 +71,7 @@ public class ProductDictionary {
     /**
      * NVD Querying/Writing Vars
      */
+
     private static final Pattern cpePattern = Pattern.compile("cpe:2\\.3:[aho\\*\\-]:([^:]*):([^:]*):([^:]*):.*");
     private static final String userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36";
     private static final String baseNVDUrl = "https://services.nvd.nist.gov/rest/json/cpes/2.0";
@@ -75,18 +79,38 @@ public class ProductDictionary {
     private static final int maxPages = ProductNameExtractorEnvVars.getMaxPages();
     private static final int maxAttemptsPerPage = ProductNameExtractorEnvVars.getMaxAttemptsPerPage();
 
-    static{
-        initializeProductDict();
-    }
-
+    /**
+     * Initializes the product dictionary.
+     */
     public static void initializeProductDict(){
+        logger.info("Initializing Product Dictionary...");
+
         final String productDictPath = resourceDir + "/" + dataDir + "/" + productDictName;
         try{
+            // Read in existing product dictionary
             productDict = readProductDict(productDictPath);
-        } catch (IOException e) {
-            logger.error("Error loading product dictionary: {}", e.toString());
-        }
 
+            // Calculate time since last compilation
+            final long timeSinceLastComp = Duration.between(productDictLastCompilationDate, Instant.now()).getSeconds();
+            final long timeSinceLastRefresh = Duration.between(productDictLastRefreshDate, Instant.now()).getSeconds();
+
+            logger.info("Successfully read {} products from file '{}' ({} hour(s) old)",
+                    productDict.size(),
+                    productDictName,
+                    timeSinceLastRefresh / 3600 // seconds -> hours
+            );
+
+            // Update dictionary as needed
+            updateProductDict(productDict, timeSinceLastComp, timeSinceLastRefresh, productDictPath);
+
+        } catch (Exception e) {
+            // If error occurs reading current stored dictionary, perform a full query of NVD's CPE Dictionary
+            logger.warn("Failed to load product dictionary at filepath '{}' due to error: {}", productDictPath, e);
+            logger.info("Fully querying NVD data with no page limit...");
+            productDict = queryProductDict(0);
+            productDictLastCompilationDate = Instant.now();
+            writeProductDict(productDict, productDictPath);
+        }
     }
 
     public static Map<String, CpeGroup> getProductDict() {
@@ -212,9 +236,11 @@ public class ProductDictionary {
             int insertedCounter = 0;
             int notChangedCounter = 0;
             int updatedCounter = 0;
-            //TODO: Modify query method to query by recent entries for refresh
-            final Map<String, CpeGroup> updatedProductDict = queryProductDict(maxPages); // Query
 
+            //TODO: Modify query method to query by recent entries for refresh
+            final Map<String, CpeGroup> updatedProductDict = queryProductDict(maxPages);
+
+            // Refresh old dict with new dict and count how many entries are inserted, updated, or unchanged
             logger.info("Refreshing product dictionary...");
             for (Map.Entry<String, CpeGroup> e : updatedProductDict.entrySet()) {
                 final CpeGroup oldValue = productDict.put(e.getKey(), e.getValue());
@@ -264,8 +290,8 @@ public class ProductDictionary {
                     remainingResults -= resultsPerPage;
                     // Increment index
                     index += resultsPerPage;
-                    // Sleep 2 sec between queries (adjust until we do not get 403 errors)
-                    Thread.sleep(2500);
+                    // Sleep 3 sec between queries (adjust until we do not get 403 errors)
+                    Thread.sleep(3000);
                     // Reset attempt count
                     attempts = 0;
                 }

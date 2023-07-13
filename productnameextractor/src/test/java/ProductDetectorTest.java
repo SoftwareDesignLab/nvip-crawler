@@ -1,7 +1,4 @@
-import edu.rit.se.nvip.CpeLookUp;
-import edu.rit.se.nvip.NERmodel;
-import edu.rit.se.nvip.ProductDetector;
-import edu.rit.se.nvip.ProductNameExtractorController;
+import edu.rit.se.nvip.*;
 import edu.rit.se.nvip.model.cpe.ClassifiedWord;
 import edu.rit.se.nvip.model.cpe.CpeGroup;
 import org.junit.Before;
@@ -33,7 +30,7 @@ public class ProductDetectorTest {
     public void setUp() throws IOException {
         // Initialize ProductDetector with a mock CpeLookUp object or a real implementation for testing
         CpeLookUp cpeLookUp = new CpeLookUp();
-        final Map<String, CpeGroup> productDict = ProductNameExtractorController.readProductDict("src/test/resources/data/test_product_dict.json");
+        final Map<String, CpeGroup> productDict = ProductDictionary.readProductDict("src/test/resources/data/test_product_dict.json");
         cpeLookUp.loadProductDict(productDict);
         productDetector = new ProductDetector(cpeLookUp, resourceDir, nlpDir, dataDir);
 

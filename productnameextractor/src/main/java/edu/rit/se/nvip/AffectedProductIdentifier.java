@@ -237,8 +237,6 @@ public class AffectedProductIdentifier {
 		AtomicLong totalCPETime = new AtomicLong();
 		AtomicLong totalCVETime = new AtomicLong();
 
-		logger.info("Starting product name extraction process... # CVEs to be processed: {}", totalCVEtoProcess);
-
 		final BlockingQueue<Runnable> workQueue = new ArrayBlockingQueue<>(vulnList.size());
 
 		final ThreadPoolExecutor executor = new ThreadPoolExecutor(
@@ -369,7 +367,7 @@ public class AffectedProductIdentifier {
 	 *
 	 * @param productDict CPE dictionary to load
 	 */
-	public void loadCPEDict(Map<String, CpeGroup> productDict) {
+	public void loadProductDict(Map<String, CpeGroup> productDict) {
 		this.cpeLookUp.loadProductDict(productDict);
 	}
 }

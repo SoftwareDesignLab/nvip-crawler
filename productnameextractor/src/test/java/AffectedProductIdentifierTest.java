@@ -24,6 +24,7 @@
 
 
 import edu.rit.se.nvip.AffectedProductIdentifier;
+import edu.rit.se.nvip.ProductDictionary;
 import edu.rit.se.nvip.ProductNameExtractorController;
 import edu.rit.se.nvip.ProductNameExtractorEnvVars;
 import edu.rit.se.nvip.model.cve.CompositeVulnerability;
@@ -65,8 +66,8 @@ public class AffectedProductIdentifierTest {
 		affectedProductIdentifier.initializeProductDetector(resourceDir, nlpDir, dataDir);
 		// Init cpeLookUp
 		try {
-			final Map<String, CpeGroup> productDict = ProductNameExtractorController.readProductDict("src/test/resources/data/test_product_dict.json");
-			affectedProductIdentifier.loadCPEDict(productDict);
+			final Map<String, CpeGroup> productDict = ProductDictionary.readProductDict("src/test/resources/data/test_product_dict.json");
+			affectedProductIdentifier.loadProductDict(productDict);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}

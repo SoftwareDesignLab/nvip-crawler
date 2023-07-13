@@ -1,3 +1,4 @@
+import edu.rit.se.nvip.ProductDictionary;
 import edu.rit.se.nvip.ProductNameExtractorController;
 import edu.rit.se.nvip.model.cpe.CpeEntry;
 import edu.rit.se.nvip.model.cpe.CpeGroup;
@@ -28,7 +29,7 @@ public class ProductNameExtractorControllerTest {
         String productDictPath = "src/test/resources/data/test_product_dict_small.json";
         Map<String, CpeGroup> productDict = null;
         try{
-            productDict = ProductNameExtractorController.readProductDict(productDictPath);
+            productDict = ProductDictionary.readProductDict(productDictPath);
         }catch(IOException e){
 
         }
@@ -57,7 +58,7 @@ public class ProductNameExtractorControllerTest {
         String productDictPath = "src/test/resources/data/test_product_dict_large.json";
         Map<String, CpeGroup> productDict = null;
         try{
-            productDict = ProductNameExtractorController.readProductDict(productDictPath);
+            productDict = ProductDictionary.readProductDict(productDictPath);
         }catch(IOException e){
 
         }
@@ -94,7 +95,7 @@ public class ProductNameExtractorControllerTest {
         Map<String, CpeGroup> productDict = createSampleProductDict();
 
         // Write product dictionary to file
-        ProductNameExtractorController.writeProductDict(productDict, TEST_FILE_PATH);
+        ProductDictionary.writeProductDict(productDict, TEST_FILE_PATH);
         //write the contents of the file to the console
         FileReader reader = new FileReader(TEST_FILE_PATH);
         System.out.println("Contents of file: " + reader.read());
@@ -138,7 +139,7 @@ public class ProductNameExtractorControllerTest {
     }
 
     private Map<String, CpeGroup> readProductDictFromFile(String filePath) throws IOException {
-        return ProductNameExtractorController.readProductDict(filePath);
+        return ProductDictionary.readProductDict(filePath);
     }
 
 }

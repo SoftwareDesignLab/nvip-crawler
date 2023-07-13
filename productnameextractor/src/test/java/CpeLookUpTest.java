@@ -23,6 +23,7 @@
  */
 
 import edu.rit.se.nvip.CpeLookUp;
+import edu.rit.se.nvip.ProductDictionary;
 import edu.rit.se.nvip.ProductNameExtractorController;
 import edu.rit.se.nvip.model.cpe.CpeEntry;
 import edu.rit.se.nvip.model.cpe.CpeGroup;
@@ -49,7 +50,7 @@ public class CpeLookUpTest {
 	private static final CpeLookUp cpeLookUp = new CpeLookUp();
 	static {
 		try {
-			final Map<String, CpeGroup> productDict = ProductNameExtractorController.readProductDict("src/test/resources/data/test_product_dict.json"); //src/test/resources/data/test_product_dict.json
+			final Map<String, CpeGroup> productDict = ProductDictionary.readProductDict("src/test/resources/data/test_product_dict.json"); //src/test/resources/data/test_product_dict.json
 			cpeLookUp.loadProductDict(productDict);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
