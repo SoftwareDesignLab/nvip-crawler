@@ -93,7 +93,7 @@ public class CpeLookUp {
 	}
 
 	//CPE items from CPE file
-	private Map<String, CpeGroup> cpeMapFile = null;
+	private Map<String, CpeGroup> productDict = null;
 
 	//HashSet to store how many unique cpe groups are identified
 	private final Set<String> uniqueCPEGroups;
@@ -163,7 +163,7 @@ public class CpeLookUp {
 	 * Loads a CPE dictionary of products from file
 	 */
 	public void loadProductDict(Map<String, CpeGroup> productDict) {
-		this.cpeMapFile = productDict;
+		this.productDict = productDict;
 		logger.info("Successfully loaded CPE dictionary with {} entries", productDict.size());
 	}
 
@@ -396,7 +396,7 @@ public class CpeLookUp {
 		}
 
 		// iterate through all cpe groups
-		for (Map.Entry<String, CpeGroup> entry : cpeMapFile.entrySet()) {
+		for (Map.Entry<String, CpeGroup> entry : productDict.entrySet()) {
 
 			// split titles into array of strings
 			String[] productNameWords = WhitespaceTokenizer.INSTANCE.tokenize(productName);
@@ -608,7 +608,7 @@ public class CpeLookUp {
 
 		ArrayList<String> groupsList = new ArrayList<>();
 
-		for (Map.Entry<String, CpeGroup> entry : cpeMapFile.entrySet()) {
+		for (Map.Entry<String, CpeGroup> entry : productDict.entrySet()) {
 
 			String groupTitle = entry.getValue().getCommonTitle().toLowerCase().replaceAll("[^a-zA-Z0-9 ]", "");
 

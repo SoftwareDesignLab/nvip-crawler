@@ -47,6 +47,7 @@ import java.util.List;
  * is working correctly.
  *
  * @author Paul Vickers
+ * @author Dylan Mulligan
  */
 public class ProductNameExtractorMain {
     private static final Logger logger = LogManager.getLogger(ProductNameExtractorController.class);
