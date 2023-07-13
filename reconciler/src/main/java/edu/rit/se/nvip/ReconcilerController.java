@@ -59,7 +59,9 @@ public class ReconcilerController {
 
         runProcessors(reconciledVulns);
 
-        characterizeCVEs(reconciledVulns);
+        if (ReconcilerEnvVars.getDoCharacterization() > 0) {
+            characterizeCVEs(reconciledVulns);
+        }
 
         for (CompositeVulnerability vuln : reconciledVulns){
             dbh.updateCVSS(vuln);

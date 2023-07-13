@@ -29,6 +29,7 @@ public class ReconcilerEnvVars extends Properties {
     private static String characterizationApproach;
     private static String characterizationMethod;
     private static String dataDir;
+    private static int doCharacterization;
 
     /**
      * Ensures vars are loaded before anybody else uses this class. They can be reloaded by calling any public load method manually
@@ -124,6 +125,8 @@ public class ReconcilerEnvVars extends Properties {
                 case DATA_DIR:
                     dataDir = addEnvvarString(envName, envVar, "nvip_data");
                     break;
+                case DO_CHARACTERIZATION:
+                    doCharacterization = addEnvvarInt(envName, Integer.parseInt(envVar), 0);;
             }
         }
     }
@@ -181,7 +184,7 @@ public class ReconcilerEnvVars extends Properties {
     public static List<String> getKnownSources() {
         return knownSources;
     }
-
+    public static int getDoCharacterization() {return doCharacterization;}
     /**
      * Legacy reconcilers use this one. It's unclear what the integer is supposed to be but in the old code it was always set to 0 so that's how I'm leaving it
      * @return
