@@ -102,7 +102,6 @@ public class GPTFilterModel {
         }
         executor.shutdown();
         boolean res = executor.awaitTermination(10, TimeUnit.SECONDS);
-        System.out.println(res);
         OpenAIRequestHandler.getInstance().shutdown();
     }
 }

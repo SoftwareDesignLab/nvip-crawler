@@ -25,8 +25,8 @@ import java.util.concurrent.*;
 public class OpenAIRequestHandler {
     private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
     private final PriorityBlockingQueue<RequestWrapper> requestQueue = new PriorityBlockingQueue<>();
-    private final ExecutorService mainExecutor = Executors.newFixedThreadPool(1);
-    private final ExecutorService requestExecutor = Executors.newFixedThreadPool(5);
+    private ExecutorService mainExecutor = Executors.newFixedThreadPool(1);
+    private ExecutorService requestExecutor = Executors.newFixedThreadPool(5);
     private static OpenAIRequestHandler handler;
     //https://platform.openai.com/account/rate-limits
     private static final ModelType DEFAULT_CHAT_COMPLETION_MODEL = ModelType.GPT_3_5_TURBO;
@@ -44,14 +44,33 @@ public class OpenAIRequestHandler {
 
     private OpenAIRequestHandler() {
         service = new OpenAiService(ReconcilerEnvVars.getOpenAIKey());
-        handlerThreadFuture = mainExecutor.submit(this::handleRequests);
+        initExecutors();
     }
 
+    /**
+     * shuts down internal executors and threads. Already sent requests will still be fulfilled,
+     */
     public void shutdown() {
         //the handleRequests() thread will probably be waiting on a queue.take()
         handlerThreadFuture.cancel(true); // cancelling the future cancels the task
         mainExecutor.shutdown(); // should go right through
         requestExecutor.shutdown(); // lets the request threads finish execution
+    }
+
+    private void initExecutors() {
+        this.mainExecutor = Executors.newFixedThreadPool(1);
+        this.handlerThreadFuture = this.mainExecutor.submit(this::handleRequests);
+        this.requestExecutor = Executors.newFixedThreadPool(5);
+    }
+
+    /**
+     * makes new executors and starts processing requests again
+     */
+    public void start() {
+        if (!mainExecutor.isShutdown() || !requestExecutor.isShutdown()) {
+            return;
+        }
+        initExecutors();
     }
 
     /**
