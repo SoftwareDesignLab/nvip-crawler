@@ -10,12 +10,18 @@ import db.DatabaseHelper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
 
+/**
+ * Messenger class that handles RabbitMQ interaction
+ *
+ * @author Dylan Mulligan
+ */
 public class Messenger {
     private final static String INPUT_QUEUE = "patchfinder";
 //    private final static String OUTPUT_QUEUE = "";
@@ -23,6 +29,12 @@ public class Messenger {
     private static final ObjectMapper OM = new ObjectMapper();
     private ConnectionFactory factory;
 
+    /**
+     * Initialize the Messenger class with RabbitMQ host, username, and password
+     * @param host RabbitMQ host
+     * @param username RabbitMQ username
+     * @param password RabbitMQ password
+     */
     public Messenger(String host, String username, String password) {
         this.factory = new ConnectionFactory();
         factory.setHost(host);
@@ -34,7 +46,13 @@ public class Messenger {
         this.factory = factory;
     }
 
-    public List<String> waitForProductNameExtractorMessage(int pollInterval) throws IOException {
+    /**
+     * Waits for a message from the PNE for pollInterval seconds, returning null unless a valid job was received
+     *
+     * @param pollInterval time to wait before timing out and returning null
+     * @return null or a list of received CVE ids to find patches for
+     */
+    public List<String> waitForProductNameExtractorMessage(int pollInterval) {
         // Initialize job list
         List<String> cveIds = null;
 
@@ -68,6 +86,11 @@ public class Messenger {
         return cveIds;
     }
 
+    /**
+     * Parse a list of ids from a given json string. (String should be )
+     * @param jsonString a JSON representation of an array of String CVE ids
+     * @return parsed list of ids
+     */
     @SuppressWarnings("unchecked")
     public List<String> parseIds(String jsonString) {
         try {
@@ -78,15 +101,11 @@ public class Messenger {
         }
     }
 
-    private String genJson(List<String> ids) {
-        try {
-            return OM.writeValueAsString(ids);
-        } catch (JsonProcessingException e) {
-            logger.error("Failed to convert list of ids to json string: {}", e.toString());
-            return "";
-        }
-    }
-
+    /**
+     * Testing method for sending RabbitMQ messages
+     * @param queue target queue
+     * @param message message to be sent
+     */
     private void sendDummyMessage(String queue, String message) {
         try(Connection connection = factory.newConnection();
             Channel channel = connection.createChannel()){
@@ -101,7 +120,17 @@ public class Messenger {
     }
 
     public static void main(String[] args) {
-        final Messenger m = new Messenger("localhost", "guest", "guest");
-        m.sendDummyMessage(INPUT_QUEUE, "[\"CVE-2023-2933\", \"CVE-2023-2934\"]");
+//        final Messenger m = new Messenger("localhost", "guest", "guest");
+//        m.sendDummyMessage(INPUT_QUEUE, "[\"CVE-2023-2933\", \"CVE-2023-2934\"]");
+        ObjectMapper OM = new ObjectMapper();
+        try {
+            OM.writerWithDefaultPrettyPrinter().writeValue(new File("patchfinder/target/test.json"), "test1");
+            OM.writerWithDefaultPrettyPrinter().writeValue(new File("patchfinder/target/test.json"), "test2");
+//            OM.writeValue(new File("patchfinder/target/test.json"), "test1");
+//            OM.writeValue(new File("patchfinder/target/test.json"), "test2");
+            Thread.sleep(10000);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }
