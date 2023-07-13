@@ -62,7 +62,7 @@ public class PatchCommitScraperTest {
         Pattern[] patchPatterns = {Pattern.compile("patch")};
 
         // Set up the localDownloadLoc and repoSource
-        String localDownloadLoc = "test-jgitparser/dash-core-components";
+        String localDownloadLoc = "target/testrepo/dash-core-components";
         String repoSource = "https://github.com/plotly/dash-core-components";
 
         // Create a temporary directory to clone the repository
