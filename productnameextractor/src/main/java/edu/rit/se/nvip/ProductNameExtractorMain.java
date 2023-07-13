@@ -75,6 +75,38 @@ public class ProductNameExtractorMain {
     private static AffectedProductIdentifier affectedProductIdentifier;
     private static Map<String, CpeGroup> productDict;
 
+    /**
+     * Initialize the AffectedProductIdentifier & related AI models.
+     * If already loaded in memory, just initializes the new vulnerability list to be processed.
+     */
+    protected static void initializeProductIdentifier(List<CompositeVulnerability> vulnList){
+        // If null, AffectedProductIdentifier needs to be initialized with AI models & product dictionary
+        if(affectedProductIdentifier == null){
+            logger.info("Initializing the AffectedProductIdentifier...");
+            affectedProductIdentifier = new AffectedProductIdentifier(numThreads, vulnList);
+            affectedProductIdentifier.initializeProductDetector(resourceDir, nlpDir, dataDir);
+            productDict = ProductDictionary.getProductDict();
+            affectedProductIdentifier.loadProductDict(productDict);
+
+        // AffectedProductIdentifier already initialized, just need to change the vulnerabilities to be processed
+        }else{
+            logger.info("AffectedProductIdentifier already initialized!");
+            affectedProductIdentifier.setVulnList(vulnList);
+        }
+    }
+
+    /**
+     * Releases the Affected Product Identifier and all of its models
+     * as well as the product dictionary from memory.
+     */
+    protected static void releaseResources(){
+        if(affectedProductIdentifier != null){
+            affectedProductIdentifier.releaseResources();
+            affectedProductIdentifier = null;
+        }
+        productDict = null;
+        System.gc();
+    }
 
     /**
      * Method to generate a test vulnerability list of 6 CVEs to be run through the product name extractor.
