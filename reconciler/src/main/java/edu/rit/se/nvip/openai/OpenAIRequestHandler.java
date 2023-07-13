@@ -25,7 +25,8 @@ import java.util.concurrent.*;
 public class OpenAIRequestHandler {
     private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
     private final PriorityBlockingQueue<RequestWrapper> requestQueue = new PriorityBlockingQueue<>();
-    private final ExecutorService executor = Executors.newFixedThreadPool(1);
+    private final ExecutorService mainExecutor = Executors.newFixedThreadPool(1);
+    private final ExecutorService requestExecutor = Executors.newFixedThreadPool(5);
     private static OpenAIRequestHandler handler;
     //https://platform.openai.com/account/rate-limits
     private static final ModelType DEFAULT_CHAT_COMPLETION_MODEL = ModelType.GPT_3_5_TURBO;
@@ -35,6 +36,7 @@ public class OpenAIRequestHandler {
     private final RateLimiter requestLimiter = RateLimiter.create(REQUEST_RATE_LIMIT);
     private OpenAiService service;
     private int nextPriorityId = 0;
+    private Future<?> handlerThreadFuture; // used to eventually cancel the request thread
 
     static {
         handler = new OpenAIRequestHandler();
@@ -42,7 +44,14 @@ public class OpenAIRequestHandler {
 
     private OpenAIRequestHandler() {
         service = new OpenAiService(ReconcilerEnvVars.getOpenAIKey());
-        executor.submit(this::handleRequests); // run handleRequests() in the background
+        handlerThreadFuture = mainExecutor.submit(this::handleRequests);
+    }
+
+    public void shutdown() {
+        //the handleRequests() thread will probably be waiting on a queue.take()
+        handlerThreadFuture.cancel(true); // cancelling the future cancels the task
+        mainExecutor.shutdown(); // should go right through
+        requestExecutor.shutdown(); // lets the request threads finish execution
     }
 
     /**
@@ -56,10 +65,6 @@ public class OpenAIRequestHandler {
         return handler;
     }
 
-    public void shutdown() {
-        this.executor.shutdownNow();
-    }
-
     private void handleRequests() {
         while (true) {
             RequestWrapper wrapper;
@@ -69,18 +74,18 @@ public class OpenAIRequestHandler {
                 Thread.currentThread().interrupt();
                 return;
             }
-            waitThenCall(wrapper.request, wrapper.futureResult);
+            waitForLimiters(chatCompletionTokenCount(wrapper.request));
+            requestExecutor.submit(() -> sendRequest(wrapper));
         }
     }
 
-    private void waitThenCall(ChatCompletionRequest request, CompletableFuture<ChatCompletionResult> future) {
-        waitForLimiters(chatCompletionTokenCount(request));
+    private void sendRequest(RequestWrapper requestWrapper) {
         try {
-            ChatCompletionResult res = service.createChatCompletion(request);
-            future.complete(res);
+            ChatCompletionResult res = service.createChatCompletion(requestWrapper.request);
+            requestWrapper.futureResult.complete(res);
         } catch (OpenAiHttpException e) {
             Thread.currentThread().interrupt();
-            future.completeExceptionally(e); //todo properly handle this
+            requestWrapper.futureResult.completeExceptionally(e); //todo properly handle this
         }
     }
 
