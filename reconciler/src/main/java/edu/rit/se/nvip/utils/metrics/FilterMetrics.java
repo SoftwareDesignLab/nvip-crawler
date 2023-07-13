@@ -216,11 +216,11 @@ public class FilterMetrics {
         return runMap;
     }
 
-    public List<Map<RawVulnerability.SourceType, Integer>> sourceTypeDistribution() {
-        List<Map<RawVulnerability.SourceType, Integer>> typeDistributionMap = new ArrayList<>();
+    public Map<CrawlerRun, Map<RawVulnerability.SourceType, Integer>> sourceTypeDistribution() {
+        Map<CrawlerRun, Map<RawVulnerability.SourceType, Integer>> typeDistributionMap = new HashMap<>();
         for(CrawlerRun run: runs) {
             Map<RawVulnerability.SourceType, Integer> map = run.sourceTypeDistribution();
-            typeDistributionMap.add(map);
+            typeDistributionMap.put(run, map);
         }
         return typeDistributionMap;
     }
@@ -245,6 +245,10 @@ public class FilterMetrics {
             proportions.put(run, run.proportionPassed()); //map each run to the proportion of passed filtered vulns
         }
         return proportions;
+    }
+
+    public FilterHandler getFilterHandler() {
+        return filterHandler;
     }
 
     /**

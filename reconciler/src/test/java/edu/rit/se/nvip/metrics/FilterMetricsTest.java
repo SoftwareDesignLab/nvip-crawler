@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -62,9 +63,11 @@ class FilterMetricsTest {
         String path = System.getProperty("user.dir") + "\\src\\test\\resources";
         FilterMetrics filterMetrics = genFilterMetrics(path);
 
-        List<Map<RawVulnerability.SourceType, Integer>> distribution = filterMetrics.sourceTypeDistribution();
+        Map<CrawlerRun, Map<RawVulnerability.SourceType, Integer>> distribution = filterMetrics.sourceTypeDistribution();
 
-        Map<RawVulnerability.SourceType, Integer> otherMap = distribution.get(0);
+        List<CrawlerRun> runs = filterMetrics.getRuns();
+
+        Map<RawVulnerability.SourceType, Integer> otherMap = distribution.get(runs.get(0));
 
         assertEquals(3, otherMap.get(RawVulnerability.SourceType.OTHER)); //should be 3 OTHERs
 

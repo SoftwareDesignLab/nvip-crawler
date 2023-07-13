@@ -105,6 +105,10 @@ public class CrawlerRun {
 
     public Date getDate(){return this.runDate;}
 
+    public int getRunId() {
+        return this.runId;
+    }
+
     public void resetFilterStatus() {
         for (RawVulnerability vuln : vulns) {
             vuln.setFilterStatus(RawVulnerability.FilterStatus.NEW);

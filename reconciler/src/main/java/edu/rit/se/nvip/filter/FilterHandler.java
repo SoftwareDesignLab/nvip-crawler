@@ -115,4 +115,8 @@ public class FilterHandler {
         }
         return out;
     }
+
+    public List<Filter> getCustomFilters() {
+        return customFilters;
+    }
 }
