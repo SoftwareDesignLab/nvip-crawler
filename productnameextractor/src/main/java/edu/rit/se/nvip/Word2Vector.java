@@ -25,37 +25,40 @@ package edu.rit.se.nvip; /**
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
-import org.deeplearning4j.models.word2vec.Word2Vec;
+import org.deeplearning4j.models.embeddings.wordvectors.WordVectors;
 
-import java.io.FileNotFoundException;
+import java.io.File;
 
 /**
  * Word2Vector class for words embedding into 1D-vector
  * 
  * @author Igor Khokhlov
+ * @author Dylan Mulligan
+ * @author Paul Vickers
  *
  */
 
 public class Word2Vector {
 	
-	private Word2Vec model;
+	private final WordVectors model;
 
 	// This value is later updated from the loaded model
-	private int vectorLength=0;
+	private final int vectorLength;
 
 	/**
 	 * Class constructor
 	 * @param modelPath String Model file path
 	 */		
-	public Word2Vector(String modelPath) throws FileNotFoundException {
+	public Word2Vector(String modelPath) throws RuntimeException {
 		super();
 		
 		try {
 			//Try to load the model
-			model = WordVectorSerializer.loadFullModel(modelPath);
+			model = WordVectorSerializer.loadStaticModel(new File(modelPath));
+
 			//get expected vector length
-			vectorLength = model.getLayerSize();
-		} catch (FileNotFoundException e) {
+			vectorLength = model.vectorSize();
+		} catch (RuntimeException e) {
 			Logger logger = LogManager.getLogger(getClass().getSimpleName());
 			logger.warn("Could not find w2v model at path {}, if running locally please ensure that w2v_model_250.bin has been" +
 					" stored in productnameextractor/nvip_data/data");
@@ -80,15 +83,10 @@ public class Word2Vector {
 	 * @return array of double values
 	 */	
 	public double[] word2vector(String word) {
-		
-		word=word.toLowerCase();
-				
 		double[] doubleArray = null;
-		
-		try {
-			doubleArray = model.getWordVector(word);
-		} catch (Exception ignored) {
-		}
+
+		try { doubleArray = model.getWordVector(word.toLowerCase()); }
+		catch (Exception ignored) { }
 		
 		return doubleArray;
 	}
