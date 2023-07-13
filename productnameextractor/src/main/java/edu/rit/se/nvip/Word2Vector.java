@@ -39,7 +39,7 @@ import java.io.File;
  */
 
 public class Word2Vector {
-	
+
 	private final WordVectors model;
 
 	// This value is later updated from the loaded model
