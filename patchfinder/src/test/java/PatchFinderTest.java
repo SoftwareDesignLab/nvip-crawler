@@ -58,18 +58,19 @@ public class PatchFinderTest {
     @Test
     public void testRun() {
         // Create a test input map of affected products
-        Map<String, CpeGroup> affectedProducts = new HashMap<>();
-        // Add test data to the affectedProducts map
-        // Create a CpeGroup object
-        CpeGroup cpeGroup = new CpeGroup("apache", "airflow", "airflow", new HashMap<>());
-        affectedProducts.put("CVE-2023-1001", cpeGroup);
+        Map<String, CpeGroup> possiblePatchSources = new HashMap<>();
+        //(String vendor, String product, String commonTitle, HashMap<String, CpeEntry> versions)
+        //1	CVE-2023-1001	cpe:2.3:a:apache:airflow:1.7.0:rc1:*:*:*:*:*:*	2023-06-20 10:00:00	product_name_value	version_value
+        CpeGroup cpeGroup = new CpeGroup("apache", "airflow", "product_name_value", new HashMap<>());
+        possiblePatchSources.put("CVE-2023-1001", cpeGroup);
+
         PatchFinder.init();
         try {
             // Call the run method and assert the expected behavior or outcome
-            PatchFinder.run(affectedProducts);
+            PatchFinder.run(possiblePatchSources, PatchFinder.cveLimit);
 
             // Assert that the affectedProducts map is empty
-            assertEquals(1, affectedProducts.size());
+            assertEquals(1, possiblePatchSources.size());
         } catch (IOException | InterruptedException e) {
             fail("Exception occurred: " + e.getMessage());
         }
