@@ -40,7 +40,6 @@ public class ProductNameExtractorEnvVars {
 
     private static int rabbitPollInterval = 10;
     private static int numThreads = 12;
-    private static int maxPages = 10;
     private static int maxAttemptsPerPage = 2;
     private static boolean prettyPrint = false;
     private static boolean testMode = false;
@@ -91,8 +90,6 @@ public class ProductNameExtractorEnvVars {
 
     public static String getHikariPassword() { return hikariPassword; }
 
-    public static int getMaxPages() { return maxPages; }
-
     public static int getMaxAttemptsPerPage() { return maxAttemptsPerPage; }
 
     public static boolean isPrettyPrint() { return prettyPrint; }
@@ -138,11 +135,6 @@ public class ProductNameExtractorEnvVars {
             numThreads = Integer.parseInt(System.getenv("NUM_THREADS"));
             logger.info("Setting NUM_THREADS to {}", numThreads);
         } else logger.warn("Could not fetch NUM_THREADS from env vars, defaulting to {}", numThreads);
-
-        if(props.containsKey("MAX_PAGES")) {
-            maxPages = Integer.parseInt(System.getenv("MAX_PAGES"));
-            logger.info("Setting MAX_PAGES to {}", maxPages);
-        } else logger.warn("Could not fetch MAX_PAGES from env vars, defaulting to {}", maxPages);
 
         if(props.containsKey("MAX_ATTEMPTS_PER_PAGE")) {
             maxAttemptsPerPage = Integer.parseInt(System.getenv("MAX_ATTEMPTS_PER_PAGE"));
