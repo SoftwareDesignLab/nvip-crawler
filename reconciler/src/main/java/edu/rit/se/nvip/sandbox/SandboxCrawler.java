@@ -33,11 +33,11 @@ public class SandboxCrawler {
         String path = System.getProperty("user.dir") + "\\src\\main\\resources\\mock_crawler_output.json";
         List<RawVulnerability> vulns = sand.readJson(path);
         List<String> ids = new ArrayList<>();
-        for(RawVulnerability vuln : vulns){
-            dbh.insertRawVuln(vuln);
-            ids.add(vuln.getCveId());
+        for(RawVulnerability vuln : vulns){ //for each raw vuln
+            dbh.insertRawVuln(vuln); //put it in the rawdesc table
+            ids.add(vuln.getCveId()); //add it's ID to the list that will be sent to the Reconciler
         }
-        String jsonString = sand.genJson(ids);
+        String jsonString = sand.genJson(ids); //convert that list to a Json
 
         //send rabbit message to sandbox messenger
         try{
@@ -68,11 +68,13 @@ public class SandboxCrawler {
 
 
     }
+    //converts a list of strings to json
     private String genJson(List<String> ids) {
         Gson gson = new Gson();
         return gson.toJson(ids);
     }
 
+    //reads the json file give it's path
     public List<RawVulnerability> readJson(String jsonFile) {
 
         List<RawVulnerability> vulnList = new ArrayList<>();

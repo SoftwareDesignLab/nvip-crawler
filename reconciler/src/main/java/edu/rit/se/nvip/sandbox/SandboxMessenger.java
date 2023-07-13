@@ -16,10 +16,10 @@ public class SandboxMessenger extends Messager {
         SandboxMessenger mess = new SandboxMessenger();
         ReconcilerController recCon = new ReconcilerController();
 
-        List<String> ids = mess.waitForCrawlerMessage(3600);
-        Set<String> setIds = new HashSet<>(ids);
+        List<String> ids = mess.waitForCrawlerMessage(3600); //wait for crawler message
+        Set<String> setIds = new HashSet<>(ids); //convert list to set
 
-        recCon.main(setIds);
+        recCon.main(setIds); //send set to ReconMain
 
 
 

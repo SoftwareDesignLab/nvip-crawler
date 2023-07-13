@@ -5,10 +5,10 @@ import java.sql.SQLException;
 public class RunMessengerMains {
     private static DatabaseSandbox dbh = DatabaseSandbox.getInstance();
     public static void main(String[] args) throws InterruptedException, SQLException {
-        dbh.resetDB();
-        SandboxCrawler.main();
-        SandboxPNE.main();
-        SandboxMessenger.main();
+        dbh.resetDB(); //removes any raw vulns from previous runs
+        SandboxCrawler.main(); //starts the crawler main
+        SandboxPNE.main(); //starts the PNE main
+        SandboxMessenger.main(); //starts the reconciler main
 
     }
 }

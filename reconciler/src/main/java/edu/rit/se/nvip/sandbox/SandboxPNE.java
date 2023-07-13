@@ -18,6 +18,7 @@ public class SandboxPNE {
     }
 
     public static void main() {
+        //ALWAYS WAITS FOR A MESSAGE UNTIL "FINISHED" IS SENT THEN IT ENDS THE RABBIT LISTENER
         try {
             // Create a connection factory and configure it
             ConnectionFactory factory = new ConnectionFactory();
