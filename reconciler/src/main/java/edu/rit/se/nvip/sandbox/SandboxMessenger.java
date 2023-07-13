@@ -1,18 +1,18 @@
 package edu.rit.se.nvip.sandbox;
 
 import edu.rit.se.nvip.ReconcilerController;
-import edu.rit.se.nvip.messager.Messager;
+import edu.rit.se.nvip.messenger.Messenger;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class SandboxMessenger extends Messager {
+public class SandboxMessenger extends Messenger {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         main();
     }
-    public static void main() {
+    public static void main() throws Exception {
         SandboxMessenger mess = new SandboxMessenger();
         ReconcilerController recCon = new ReconcilerController();
 

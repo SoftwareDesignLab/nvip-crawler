@@ -145,7 +145,7 @@ public class ReconcilerController {
         List<String> outList = new ArrayList<>();
         if (out.getReconciliationStatus() == CompositeVulnerability.ReconciliationStatus.NEW || out.getReconciliationStatus() == CompositeVulnerability.ReconciliationStatus.UPDATED){
             outList.add(out.getCveId());
-            messager.sendPNEMessage(outList);
+            messenger.sendPNEMessage(outList);
         }
 
         return out;

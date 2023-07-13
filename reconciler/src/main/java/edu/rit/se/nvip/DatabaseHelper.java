@@ -460,63 +460,6 @@ public class DatabaseHelper {
         }
         return 0;
     }
-
-    /**
-     * updates (or inserts) vdo info of given vuln
-     *
-     * @param vuln
-     * @return
-     */
-    public int updateVDO(CompositeVulnerability vuln) {
-        boolean isUpdate;
-        switch (vuln.getReconciliationStatus()) {
-            case UPDATED:
-                isUpdate = true;
-                break;
-            case NEW:
-                isUpdate = false;
-                break;
-            default:
-                return 0;
-        }
-        try (Connection conn = getConnection();
-             PreparedStatement upsertStatement = conn.prepareStatement(isUpdate ? UPDATE_VDO: INSERT_VDO)) {
-            for (VdoCharacteristic vdo : vuln.getVdoCharacteristic()) {
-                if (isUpdate) {
-                    populateVDOUpdate(upsertStatement, vdo);
-                } else {
-                    populateVDOInsert(upsertStatement, vdo);
-                }
-                upsertStatement.addBatch();
-            }
-            upsertStatement.execute();
-            return 1;
-        } catch (SQLException e) {
-            logger.error("ERROR: Failed to update VDO, {}", e.getMessage());
-        }
-        return 0;
-    }
-
-    private void populateCVSSUpdate(PreparedStatement pstmt, CvssScore cvss) throws SQLException {
-        pstmt.setDouble(1, cvss.getSeverityId());
-        pstmt.setString(2, cvss.getImpactScore());
-        pstmt.setString(3, cvss.getCveId());
-    }
-    private void populateCVSSInsert(PreparedStatement pstmt, CvssScore cvss) throws SQLException {
-        pstmt.setDouble(1, cvss.getSeverityId());
-        pstmt.setString(2, cvss.getImpactScore());
-        pstmt.setString(3, cvss.getCveId());
-        pstmt.setTimestamp(4, new Timestamp(System.currentTimeMillis()));
-
-    }
-
-    private void populateVDOInsert(PreparedStatement pstmt, VdoCharacteristic vdo) throws SQLException {
-        pstmt.setString(1, String.valueOf(CveCharacterizer.VDOLabel.getVdoLabel(vdo.getVdoLabelId())));
-        pstmt.setString(2, String.valueOf(CveCharacterizer.VDONounGroup.getVdoNounGroup(vdo.getVdoNounGroupId())));
-        pstmt.setDouble(3, vdo.getVdoConfidence());
-        pstmt.setString(4, vdo.getCveId());
-        pstmt.setTimestamp(5, new Timestamp(System.currentTimeMillis()));
-    }
     /**
      * updates (or inserts) vdo info of given vuln
      *
