@@ -20,11 +20,11 @@ public abstract class AsyncFilter extends Filter {
             executor.submit(new FilterTask(vuln));
         }
         try {
-            executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+            executor.shutdown();
+            executor.awaitTermination(rawVulns.size() * 60L, TimeUnit.SECONDS); // wait up to a minute per vuln. todo be smarter about this.
         } catch (InterruptedException ex) {
             logger.error(ex);
         }
-        executor.shutdown();
     }
 
     private class FilterTask implements Runnable {
