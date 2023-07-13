@@ -36,9 +36,7 @@ import java.util.Map;
 public class ProductNameExtractorEnvVars {
     private static final Logger logger = LogManager.getLogger(ProductNameExtractorEnvVars.class);
 
-    /**
-     * Default values for main environment variables
-     */
+     // Default values for main environment variables
 
     private static int rabbitPollInterval = 10;
     private static int numThreads = 12;
@@ -51,18 +49,14 @@ public class ProductNameExtractorEnvVars {
     private static String dataDir = "data";
     private static String nlpDir = "nlp";
 
-    /**
-     * Default values for database environment variables
-     */
+    // Default values for database environment variables
 
     private static String databaseType = "mysql";
     private static String hikariUrl = "jdbc:mysql://localhost:3306/nvip?useSSL=false&allowPublicKeyRetrieval=true";
     private static String hikariUser = "root";
     private static String hikariPassword = "root";
 
-    /**
-     * Default values for model environment variables
-     */
+    // Default values for model environment variables
 
     private static String productDetectorModel = "en-pos-perceptron.bin";
     private static String char2VecConfig = "c2v_model_config_50.json";
@@ -82,6 +76,8 @@ public class ProductNameExtractorEnvVars {
         logger.info("Initializing Environment Variables...");
         fetchEnvVars();
     }
+
+    // Getters
 
     public static int getRabbitPollInterval() { return rabbitPollInterval; }
 
@@ -126,7 +122,7 @@ public class ProductNameExtractorEnvVars {
     public static String getSentenceModel() { return sentenceModel; }
 
     /**
-     * Attempts to get all required environment variables from System.getenv() safely, logging
+     * Attempts to fetch all required environment variables from System.getenv() safely, logging
      * any missing or incorrect variables.
      */
     private static void fetchEnvVars() {
@@ -189,6 +185,7 @@ public class ProductNameExtractorEnvVars {
 
     /**
      * Initialize database env vars
+     *
      * @param props map of env vars
      */
     private static void fetchHikariEnvVars(Map<String, String> props) {
@@ -215,6 +212,7 @@ public class ProductNameExtractorEnvVars {
 
     /**
      * Initialize model env vars
+     *
      * @param props map of env vars
      */
     private static void fetchModelEnvVars(Map<String, String> props){

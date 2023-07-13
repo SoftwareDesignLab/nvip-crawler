@@ -76,8 +76,10 @@ public class AffectedProductIdentifier {
 	}
 
 	/**
-	 * Sets the
-	 * @param vulnList
+	 * Sets the list of vulnerabilities to process. If the
+	 * current list is not empty, clears it to process new list.
+	 *
+	 * @param vulnList list of vulnerabilities to use for product identification
 	 */
 	protected void setVulnList(List<CompositeVulnerability> vulnList){
 		if(!this.vulnList.isEmpty()) this.vulnList.clear();
@@ -190,7 +192,6 @@ public class AffectedProductIdentifier {
 
 					// if CPE identified, add it as affected product
 					for (String itemID : productIDs) {
-//						logger.info("Found Affected Product for {}: {}", vulnerability.getCveId(), itemID);
 						existingProducts.add(new AffectedProduct(0, vulnerability.getCveId(), itemID, CpeLookUp.getNameFromCPEid(itemID), vulnerability.getPublishDate(), CpeLookUp.getVersionFromCPEid(itemID), CpeLookUp.getVendorFromCPEid(itemID)));
 						numOfProductsMappedToCpe.getAndIncrement();
 						numProductsFound++;
@@ -317,9 +318,6 @@ public class AffectedProductIdentifier {
 					// Update lastNumCVEs
 					lastNumCVEs = currNumCVEs;
 				}
-
-				// Timeout for whole process
-//				if((secondsWaiting / 60) > 15) throw new TimeoutException("Timeout reached before all threads completed");
 			}
 		} catch (Exception ex) {
 			logger.error("Product extraction failed: {}", ex.toString());
@@ -351,23 +349,11 @@ public class AffectedProductIdentifier {
 	}
 
 	/**
-	 * Instructs the internal instance of cpeLookUp to load the CPE dictionary
-	 * from NVD's CPE API, given maxPages and maxAttemptsPerPage.
-	 *
-	 * @param maxPages limit to number of pages to query from NVD, set to 0 for no limit
-	 * @param maxAttemptsPerPage limit to number of query attempts per page, set to 0 for no limit
-	 * @return a map of loaded CpeGroup objects
-	 */
-	public Map<String, CpeGroup> queryCPEDict(int maxPages, int maxAttemptsPerPage) {
-		return this.cpeLookUp.queryProductDict(maxPages, maxAttemptsPerPage);
-	}
-
-	/**
 	 * Instructs the internal instance of cpeLookUp to load the given CPE dictionary.
 	 *
 	 * @param productDict CPE dictionary to load
 	 */
 	public void loadProductDict(Map<String, CpeGroup> productDict) {
-		this.cpeLookUp.loadProductDict(productDict);
+		cpeLookUp.loadProductDict(productDict);
 	}
 }

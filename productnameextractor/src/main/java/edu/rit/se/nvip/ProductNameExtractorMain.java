@@ -28,6 +28,7 @@ import com.opencsv.CSVReader;
 import edu.rit.se.nvip.db.DatabaseHelper;
 import edu.rit.se.nvip.messenger.Messenger;
 import edu.rit.se.nvip.model.cpe.AffectedProduct;
+import edu.rit.se.nvip.model.cpe.CpeGroup;
 import edu.rit.se.nvip.model.cve.CompositeVulnerability;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -38,6 +39,7 @@ import java.io.FileReader;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Main class for the Product Name Extractor.
@@ -50,7 +52,7 @@ import java.util.List;
  * @author Dylan Mulligan
  */
 public class ProductNameExtractorMain {
-    private static final Logger logger = LogManager.getLogger(ProductNameExtractorController.class);
+    private static final Logger logger = LogManager.getLogger(ProductNameExtractorMain.class);
     public static final String currentDir = System.getProperty("user.dir");
 
     // Input Mode Variables (determine which CVEs to process)
@@ -66,6 +68,12 @@ public class ProductNameExtractorMain {
     // Path Variables
     private static final String resourceDir = ProductNameExtractorEnvVars.getResourceDir();
     private static final String dataDir = ProductNameExtractorEnvVars.getDataDir();
+    private static final String nlpDir = ProductNameExtractorEnvVars.getNlpDir();
+
+    // Variables for AffectedProductIdentifier
+    private static final int numThreads = ProductNameExtractorEnvVars.getNumThreads();
+    private static AffectedProductIdentifier affectedProductIdentifier;
+    private static Map<String, CpeGroup> productDict;
 
 
     /**
@@ -168,8 +176,8 @@ public class ProductNameExtractorMain {
             vulnList = createTestVulnList();
 
             final long getProdStart = System.currentTimeMillis();
-            ProductNameExtractorController.initializeController(vulnList);
-            int numAffectedProducts = ProductNameExtractorController.run().size();
+            initializeProductIdentifier(vulnList);
+            int numAffectedProducts = affectedProductIdentifier.identifyAffectedProducts().size();
 
             logger.info("Product Name Extractor found {} affected products in the test run in {} seconds", numAffectedProducts, Math.floor(((double) (System.currentTimeMillis() - getProdStart) / 1000) * 100) / 100);
 
@@ -193,8 +201,7 @@ public class ProductNameExtractorMain {
                     } else if (cveIds.size() == 1 && cveIds.get(0).equals("FINISHED")) {
                         //TODO: try to get the AI models to fully be released
                         logger.info("FINISHED message received from the Reconciler, releasing resources...");
-                        ProductNameExtractorController.releaseResources();
-                        System.gc();
+                        releaseResources();
 
                     // Otherwise, CVE jobs were sent, process them
                     } else {
@@ -206,10 +213,10 @@ public class ProductNameExtractorMain {
 
                         // Initialize everything and get ready to process cveIds
                         //TODO: make sure that if the product dictionary needs to be updated, the file is updated mid-run instead of when the program terminates
-                        ProductNameExtractorController.initializeController(vulnList);
+                        initializeProductIdentifier(vulnList);
 
                         final long getProdStart = System.currentTimeMillis();
-                        List<AffectedProduct> affectedProducts = ProductNameExtractorController.run();
+                        List<AffectedProduct> affectedProducts = affectedProductIdentifier.identifyAffectedProducts();
 
                         databaseHelper.insertAffectedProductsToDB(affectedProducts);
                         logger.info("Product Name Extractor found and inserted {} affected products to the database in {} seconds", affectedProducts.size(), Math.floor(((double) (System.currentTimeMillis() - getProdStart) / 1000) * 100) / 100);
