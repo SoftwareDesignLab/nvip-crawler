@@ -253,7 +253,7 @@ public class ProductDictionary {
             writeProductDict(productDict, productDictPath); // Write entire new product dict
 
             // If less than a week has gone by but over a day, refresh the product dictionary with new entries from NVD
-        } else if (timeSinceLastRefresh + 90000 / (60 * 60 * 24) > 0){
+        } else if (timeSinceLastRefresh / (60 * 60 * 24) > 0){
             logger.info("Product dictionary file is stale, fetching data from NVD to refresh it...");
             int insertedCounter = 0;
             int notChangedCounter = 0;

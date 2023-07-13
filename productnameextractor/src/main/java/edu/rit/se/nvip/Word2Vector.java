@@ -25,22 +25,20 @@ package edu.rit.se.nvip; /**
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
-import org.deeplearning4j.models.embeddings.wordvectors.WordVectors;
+import org.deeplearning4j.models.word2vec.Word2Vec;
 
-import java.io.File;
+import java.io.FileNotFoundException;
 
 /**
  * Word2Vector class for words embedding into 1D-vector
  * 
  * @author Igor Khokhlov
- * @author Dylan Mulligan
- * @author Paul Vickers
  *
  */
 
 public class Word2Vector {
 
-	private final WordVectors model;
+	private final Word2Vec model;
 
 	// This value is later updated from the loaded model
 	private final int vectorLength;
@@ -49,16 +47,16 @@ public class Word2Vector {
 	 * Class constructor
 	 * @param modelPath String Model file path
 	 */		
-	public Word2Vector(String modelPath) throws RuntimeException {
+	public Word2Vector(String modelPath) throws RuntimeException, FileNotFoundException {
 		super();
 		
 		try {
 			//Try to load the model
-			model = WordVectorSerializer.loadStaticModel(new File(modelPath));
+			model = WordVectorSerializer.loadFullModel(modelPath);
 
 			//get expected vector length
 			vectorLength = model.vectorSize();
-		} catch (RuntimeException e) {
+		} catch (Exception e) {
 			Logger logger = LogManager.getLogger(getClass().getSimpleName());
 			logger.warn("Could not find w2v model at path {}, if running locally please ensure that w2v_model_250.bin has been" +
 					" stored in productnameextractor/nvip_data/data");
