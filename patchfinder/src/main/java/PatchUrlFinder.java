@@ -377,17 +377,23 @@ public class PatchUrlFinder {
 		return urls;
 	}
 
+	// TODO: What is the description param supposed to be filled by?
 	/**
 	 * Method used for verifying Git remote connection to created url via keywords,
 	 * checks if the keywords are included as well before performing connection
-	 * @return
+	 *
+	 * @param repoURL url to the repo to verify
+	 * @param description url description
+	 * @param vendor vendor name
+	 * @param product product name
+	 * @return result of verification
 	 */
-	private boolean verifyGitRemote(String repoURL, String innerText, String vendor, String product) {
+	private boolean verifyGitRemote(String repoURL, String description, String vendor, String product) {
 
 		// Verify if the repo is correlated to the product by checking if the keywords
 		// lie in the inner text of the html link via regex
-		if (Pattern.compile(Pattern.quote(vendor), Pattern.CASE_INSENSITIVE).matcher(innerText).find()
-				|| Pattern.compile(Pattern.quote(product), Pattern.CASE_INSENSITIVE).matcher(innerText)
+		if (Pattern.compile(Pattern.quote(vendor), Pattern.CASE_INSENSITIVE).matcher(description).find()
+				|| Pattern.compile(Pattern.quote(product), Pattern.CASE_INSENSITIVE).matcher(description)
 						.find()) {
 
 			LsRemoteCommand lsCmd = new LsRemoteCommand(null);
