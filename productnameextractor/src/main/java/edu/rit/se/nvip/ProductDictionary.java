@@ -410,14 +410,18 @@ public class ProductDictionary {
         final String url = baseNVDUrl + String.format("?resultsPerPage=%s&startIndex=%s", resultsPerPage, startIndex);
         logger.info("Fetching product list from CPE dictionary at {}", url);
 
-        // Query URL for contents (THIS WILL THROW AN IOException WHEN IT HITS A 403 RESPONSE)
-        final String contents = getContentFromUrl(url);
 
         // Parse contents (if fails, will throw JsonParseException)
         try {
+            // Query URL for contents (THIS WILL THROW AN IOException WHEN IT HITS A 403 RESPONSE)
+            final String contents = getContentFromUrl(url);
             return OM.readValue(contents, LinkedHashMap.class);
         } catch (JsonParseException e) {
-            logger.error("Failed to get NVD CPE Data with error {}", e.toString());
+            logger.error("Failed to parse contents retrieved from url {}: {}", url, e.toString());
+            throw e;
+        } catch (IOException e) {
+            logger.error("Failed to query url due to rate limiting, sleeping for 30sec");
+            try { Thread.sleep(30000); } catch (InterruptedException ignored) { }
             throw e;
         }
     }
@@ -453,7 +457,7 @@ public class ProductDictionary {
             bufferedReader.close();
 
         } catch(InterruptedIOException e) {
-            throw e; // Rethrow
+            throw new IOException(e); // Rethrow as IOException
         } catch (IOException e) {
             logger.error(e.toString());
         }
