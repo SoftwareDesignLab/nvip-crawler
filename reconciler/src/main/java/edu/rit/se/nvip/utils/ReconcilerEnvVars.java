@@ -11,7 +11,7 @@ import java.util.*;
 public class ReconcilerEnvVars extends Properties {
 
     private static final Logger logger = LogManager.getLogger(ReconcilerEnvVars.class);
-    private static final String ENV_LIST_PATH = "env.list";
+    private static final String DEFAULT_ENV_LIST_PATH = "env.list";
     private static final Map<String, String> rawEnvVars = new HashMap<>();
     private static String hikariURL;
     private static String hikariUser;
@@ -35,19 +35,27 @@ public class ReconcilerEnvVars extends Properties {
      * Ensures vars are loaded before anybody else uses this class. They can be reloaded by calling any public load method manually
      */
     static {
-        loadVars();
+        loadVars(DEFAULT_ENV_LIST_PATH);
     }
-
-    public static void loadVars() {
+    public static void loadVars(String path) {
         if (System.getenv(EnvVar.HIKARI_URL.toString()) == null) {
-            clearLoadParse(false, ENV_LIST_PATH);
+            clearLoadParse(false, path);
         } else {
             clearLoadParse(true, "");
         }
     }
-
+    public static void loadVars() {
+        if (System.getenv(EnvVar.HIKARI_URL.toString()) == null) {
+            clearLoadParse(false, DEFAULT_ENV_LIST_PATH);
+        } else {
+            clearLoadParse(true, "");
+        }
+    }
+    public static void loadFromEnv(String path) {
+        clearLoadParse(true, path);
+    }
     public static void loadFromEnv() {
-        clearLoadParse(true, "");
+        clearLoadParse(true, DEFAULT_ENV_LIST_PATH);
     }
 
     public static void loadFromFile(String filePath) {
@@ -55,7 +63,7 @@ public class ReconcilerEnvVars extends Properties {
     }
 
     public static void loadFromFile() {
-        loadFromFile(ENV_LIST_PATH);
+        loadFromFile(DEFAULT_ENV_LIST_PATH);
     }
 
     private static void clearLoadParse(boolean useEnv, String fPath) {
@@ -154,6 +162,10 @@ public class ReconcilerEnvVars extends Properties {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public void setEnvListPath(String path){
+
     }
 
     //GETTERS FOR EACH ENV VAR

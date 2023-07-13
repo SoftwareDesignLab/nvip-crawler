@@ -12,7 +12,8 @@ public class ReconcilerEnvVarsTest {
 
     @Test
     void testGetters() {
-        ReconcilerEnvVars.loadFromFile();
+        String path = System.getProperty("user.dir") + "\\src\\test\\resources\\dummyENV.list";
+        ReconcilerEnvVars.loadFromFile(path);
         List<String> list = new ArrayList<>();
         list.add("SIMPLE");
         String KNOWN_SOURCES = "packetstorm,tenable,oval.cisecurity,exploit-db,securityfocus,kb.cert,securitytracker,talosintelligence,gentoo,vmware,bugzilla,seclists,anquanke";
