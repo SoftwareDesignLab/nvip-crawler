@@ -1,9 +1,7 @@
-package edu.rit.se.nvip.messager;
+package edu.rit.se.nvip.messenger;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParser;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
@@ -16,30 +14,54 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
-public class Messager {
+public class Messenger {
 
-    private final static String RECONCILER_QUEUE = "CRAWLER_OUT";
-    private final static String PNE_QUEUE = "RECONCILER_OUT";
+    private final static String RECONCILER_QUEUE = "CRAWLER_OUT"; //likely needs to be updated
+    private final static String PNE_QUEUE = "RECONCILER_OUT"; //likely needs to be updated
     private static final Logger logger = LogManager.getLogger(DatabaseHelper.class.getSimpleName());
+    private static final ObjectMapper OM = new ObjectMapper();
     private ConnectionFactory factory;
 
-    public Messager(){
-        this.factory = new ConnectionFactory();
-        factory.setHost("localhost");
-        factory.setUsername("guest");
-        factory.setPassword("guest");
+    public Messenger(){
+        // Instantiate with default values
+        this("localhost", "guest", "guest");
     }
 
+    /**
+     * Instantiate new RabbitMQ Messenger
+     * @param host hostname
+     * @param username username
+     * @param password password
+     */
+    public Messenger(String host, String username, String password){
+        factory = new ConnectionFactory();
+        factory.setHost(host);
+        factory.setUsername(username);
+        factory.setPassword(password);
+    }
+
+    /**
+     * Used in tests to set a mock factory
+     * @param factory
+     */
     public void setFactory(ConnectionFactory factory) {
         this.factory = factory;
     }
 
-    public List<String> waitForCrawlerMessage(int rabbitTimeout) {
-
-        try (Connection connection = factory.newConnection();
-             Channel channel = connection.createChannel()) {
+    /**
+     * Waits for message to be sent from Crawler for rabbitTimeout amount of seconds and retrieves it
+     * @param rabbitTimeout
+     * @return
+     * @throws Exception
+     */
+    public List<String> waitForCrawlerMessage(int rabbitTimeout) throws Exception {
+        try(Connection connection = factory.newConnection();
+            Channel channel = connection.createChannel()){
             channel.queueDeclare(RECONCILER_QUEUE, false, false, false, null);
 
             BlockingQueue<List<String>> messageQueue = new ArrayBlockingQueue<>(1);
@@ -49,21 +71,21 @@ public class Messager {
                 List<String> parsedIds = parseIds(message);
                 messageQueue.offer(parsedIds);
             };
-            channel.basicConsume(RECONCILER_QUEUE, true, deliverCallback, consumerTag -> {
-            });
+            channel.basicConsume(RECONCILER_QUEUE, true, deliverCallback, consumerTag -> { });
 
             return messageQueue.poll(rabbitTimeout, TimeUnit.SECONDS);
 
         } catch (TimeoutException e) {
             logger.error("Error occurred while sending the Reconciler message to RabbitMQ: {}", e.getMessage());
-        } catch (IOException | InterruptedException e) {
-            throw new RuntimeException(e);
         }
-
 
         return null;
     }
 
+    /**
+     * Sends the list of Ids to the PNE
+     * @param ids
+     */
     public void sendPNEMessage(List<String> ids) {
 
         try (Connection connection = factory.newConnection();
@@ -77,6 +99,9 @@ public class Messager {
         }
     }
 
+    /**
+     * Sends the "FINISHED" flag so that the PNE knows there are no more Ids being sent
+     */
     public void sendPNEFinishMessage() {
 
         try (Connection connection = factory.newConnection();
@@ -90,21 +115,32 @@ public class Messager {
         }
     }
 
+    /**
+     * Parses ids from JsonString
+     * @param jsonString
+     * @return
+     */
+    @SuppressWarnings("unchecked")
     public List<String> parseIds(String jsonString) {
-
-        List<String> ids = new ArrayList<>();
-        JsonArray jsonArray = JsonParser.parseString(jsonString).getAsJsonArray();
-
-        for (JsonElement jsonElement : jsonArray) {
-            String id = jsonElement.getAsString();
-            ids.add(id);
+        try {
+            return OM.readValue(jsonString, ArrayList.class);
+        } catch (JsonProcessingException e) {
+            logger.error("Failed to parse list of ids from json string: {}", e.toString());
+            return new ArrayList<>();
         }
-
-        return ids;
     }
 
+    /**
+     * generates the json string from the list of strings
+     * @param ids
+     * @return
+     */
     private String genJson(List<String> ids) {
-        Gson gson = new Gson();
-        return gson.toJson(ids);
+        try {
+            return OM.writeValueAsString(ids);
+        } catch (JsonProcessingException e) {
+            logger.error("Failed to convert list of ids to json string: {}", e.toString());
+            return "";
+        }
     }
 }

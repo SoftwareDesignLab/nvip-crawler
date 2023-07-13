@@ -3,7 +3,7 @@ package edu.rit.se.nvip;
 import edu.rit.se.nvip.characterizer.CveCharacterizer;
 import edu.rit.se.nvip.filter.FilterHandler;
 import edu.rit.se.nvip.filter.FilterReturn;
-import edu.rit.se.nvip.messager.Messager;
+import edu.rit.se.nvip.messenger.Messenger;
 import edu.rit.se.nvip.model.CompositeVulnerability;
 import edu.rit.se.nvip.model.RawVulnerability;
 import edu.rit.se.nvip.model.VulnSetWrapper;
@@ -24,7 +24,7 @@ public class ReconcilerController {
     private final Reconciler reconciler;
     private final FilterHandler filterHandler;
     private final List<Processor> processors = new ArrayList<>();
-    private final Messager messager = new Messager();
+    private final Messenger messenger = new Messenger();
 
     public ReconcilerController() {
         this.dbh = DatabaseHelper.getInstance();
@@ -65,7 +65,7 @@ public class ReconcilerController {
             dbh.updateCVSS(vuln);
             dbh.updateVDO(vuln);
         }
-        messager.sendPNEFinishMessage();
+        messenger.sendPNEFinishMessage();
 
         executor.shutdown();
     }
