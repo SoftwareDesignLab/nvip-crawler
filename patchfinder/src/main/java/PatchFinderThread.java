@@ -52,6 +52,7 @@ public class PatchFinderThread implements Runnable {
 	private final HashMap<String, ArrayList<String>> cvePatchEntry;
 	private final String clonePath;
 	private final long timeoutMilli;
+	private RevWalk walk; // TODO: initialize properly
 	private static final Pattern[] patchPatterns = new Pattern[] {Pattern.compile("vulnerability|Vulnerability|vuln|Vuln|VULN[ #]*([0-9]+)")};
 	private static final Logger logger = LogManager.getLogger(PatchFinder.class.getName());
 
