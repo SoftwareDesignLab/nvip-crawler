@@ -292,8 +292,9 @@ public class PatchFinderThread implements Runnable {
 			List<PatchCommit> patchCommits = commitScraper.parseCommits(cve, patchPatterns);
 			foundPatchCommits.addAll(patchCommits);
 
-//					// Delete repo when done
-//					gitController.deleteRepo();
+			// TODO: Fix, as we need to prevent accumulation of repos if possible
+			// Delete repo when done
+//			gitController.deleteRepo();
 		} catch (Exception e) {
 			logger.error("ERROR: Failed to find patch from source {} for CVE {}\n{}", patchSource, cve, e.toString());
 			e.printStackTrace();
@@ -374,8 +375,7 @@ public class PatchFinderThread implements Runnable {
 	private String extractTimeToPatch(Document commitPage) {
 		Element timeToPatchElement = commitPage.selectFirst("relative-time[datetime]:not(.commit-author-date)");
 		if (timeToPatchElement != null) {
-			String timeToPatch = timeToPatchElement.attr("datetime");
-			return timeToPatch;
+			return timeToPatchElement.attr("datetime");
 		}
 		return null;
 	}

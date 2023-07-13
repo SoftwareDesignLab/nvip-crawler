@@ -288,9 +288,7 @@ public class PatchCommitScraper {
 		long elapsedMillis = patchCommitTime - initialCommitTime;
 
 		// Convert milliseconds to days and ensure it's a positive value
-		long elapsedDays = Math.abs(elapsedMillis / (1000 * 60 * 60 * 24));
-
-		return elapsedDays;
+		return Math.abs(elapsedMillis / (1000 * 60 * 60 * 24));
 	}
 
 	private String formatTimeToPatch(long elapsedHours) {

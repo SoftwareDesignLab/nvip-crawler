@@ -41,11 +41,11 @@ public class PatchCommit {
 	private final Date commitDate;
 	private final String commitMessage;
 	private final String uniDiff;
-	private List<RevCommit> timeline;
+	private final List<RevCommit> timeline;
 
 	private List<String> timelineString;
-	private String timeToPatch;
-	private int linesChanged;
+	private final String timeToPatch;
+	private final int linesChanged;
 
 	/**
 	 * Model class for patch commit objects

@@ -56,7 +56,7 @@ public class GitController {
 	 */
 	public boolean pullRepo() {
 		logger.info("Checking for updates for {} repo!...", localPath);
-		try (FileRepository localRepo = new FileRepository(localPath + "/.git");) {
+		try (FileRepository localRepo = new FileRepository(localPath + "/.git")) {
 			try (Git git = new Git(localRepo)) {
 				PullCommand pull = git.pull();
 				pull.call();
@@ -102,8 +102,6 @@ public class GitController {
 			if(git != null) git.close();
 		}
 
-//		// Store successful clone path for deletion
-//		this.clonedPaths.add(localPath);
 		return true;
 	}
 
