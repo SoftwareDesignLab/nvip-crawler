@@ -1,4 +1,6 @@
 import db.DatabaseHelper;
+import model.CpeEntry;
+import model.CpeGroup;
 import org.junit.Test;
 import org.mockito.Mockito;
 
@@ -8,7 +10,7 @@ import java.util.*;
 import java.util.concurrent.ThreadPoolExecutor;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.*;
 
 public class PatchFinderTest {
 
@@ -52,5 +54,26 @@ public class PatchFinderTest {
         assertEquals("mysql", PatchFinder.databaseType);
         assertEquals(2000, PatchFinder.cloneCommitThreshold);
     }
+
+    @Test
+    public void testRun() {
+        // Create a test input map of affected products
+        Map<String, CpeGroup> affectedProducts = new HashMap<>();
+        // Add test data to the affectedProducts map
+        // Create a CpeGroup object
+        CpeGroup cpeGroup = new CpeGroup("apache", "airflow", "airflow", new HashMap<>());
+        affectedProducts.put("CVE-2023-1001", cpeGroup);
+        PatchFinder.init();
+        try {
+            // Call the run method and assert the expected behavior or outcome
+            PatchFinder.run(affectedProducts);
+
+            // Assert that the affectedProducts map is empty
+            assertEquals(1, affectedProducts.size());
+        } catch (IOException | InterruptedException e) {
+            fail("Exception occurred: " + e.getMessage());
+        }
+    }
+
 
 }
