@@ -196,7 +196,6 @@ public class ProductNameExtractorMain {
      * Finally takes in the found affected products and inserts them into the database, notifying PatchFinder with jobs.
      *
      * @param args (unused) program arguments
-     * TODO: make product dict class with all methods, initialize/update it right in main and then pass it to the initializecontroller() method
      */
     public static void main(String[] args) {
         logger.info("CURRENT PATH --> " + currentDir);
@@ -251,7 +250,6 @@ public class ProductNameExtractorMain {
                         vulnList = databaseHelper.getSpecificCompositeVulnerabilities(cveIds);
 
                         // Initialize everything and get ready to process cveIds
-                        //TODO: make sure that if the product dictionary needs to be updated, the file is updated mid-run instead of when the program terminates
                         initializeProductIdentifier(vulnList);
 
                         final long getProdStart = System.currentTimeMillis();
