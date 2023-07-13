@@ -24,7 +24,7 @@ public class ReconcilerTests {
     public static void main(String[] args) {
         dbh.resetDB();
         ReconcilerTests rec = new ReconcilerTests();
-        rec.runReconciler(0, 0, 1, 1, 1, 1);
+        rec.runReconciler(0,0,0,2,1,1);
     }
 
     public void runReconciler(int previouslyPassedHighPrio, int previouslyPassedLowPrio, int numNewHighPrioPassing, int numNewHighPrioFailing, int numNewLowPrioPassing, int numNewLowPrioFailing){
@@ -44,9 +44,10 @@ public class ReconcilerTests {
         }
         Set<String> runSet = new HashSet<>();
         runSet.add("CVE-2023-12345");
-//        //run the crawler
-//        recCon.main(runSet);
-
+        if (!run1.isEmpty()){
+            //run the crawler
+            recCon.main(runSet);
+        }
 
         if (numNewHighPrioPassing > 0){
             newHighPass = genRawVulns(numNewHighPrioPassing, true, false);

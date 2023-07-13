@@ -61,11 +61,11 @@ public class ReconcilerController {
 
         if (ReconcilerEnvVars.getDoCharacterization() > 0) {
             characterizeCVEs(reconciledVulns);
-        }
 
-        for (CompositeVulnerability vuln : reconciledVulns){
-            dbh.updateCVSS(vuln);
-            dbh.updateVDO(vuln);
+            for (CompositeVulnerability vuln : reconciledVulns){
+                dbh.updateCVSS(vuln);
+                dbh.updateVDO(vuln);
+            }
         }
         messenger.sendPNEFinishMessage();
 

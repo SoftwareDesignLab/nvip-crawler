@@ -73,7 +73,7 @@ public class DatabaseSandbox extends DatabaseHelper {
         if (vuln ==  null) {
             return;
         }
-        String query = "INSERT INTO rawdescription (raw_description, created_date, published_date, last_modified_date, source_url, cve_id) VALUES (?, ?, ?, ?, ?, ?)";
+        String query = "INSERT INTO rawdescription (raw_description, created_date, published_date, last_modified_date, source_url, source_type, cve_id) VALUES (?, ?, ?, ?, ?, ?, ?)";
 
 
         try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(query)) {
@@ -82,7 +82,8 @@ public class DatabaseSandbox extends DatabaseHelper {
             pstmt.setTimestamp(3, vuln.getPublishDate());
             pstmt.setTimestamp(4, vuln.getLastModifiedDate());
             pstmt.setString(5, vuln.getSourceUrl());
-            pstmt.setString(6, vuln.getCveId());
+            pstmt.setString(6, vuln.getSourceType().getType());
+            pstmt.setString(7, vuln.getCveId());
             pstmt.executeUpdate();
         } catch (SQLException ex) {
             System.out.println(ex.toString());
