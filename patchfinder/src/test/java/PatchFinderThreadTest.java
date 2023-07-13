@@ -1,21 +1,13 @@
 import commits.PatchCommit;
-import org.junit.jupiter.api.Assertions;
 import org.junit.Test;
 import org.mockito.Mockito;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 public class PatchFinderThreadTest {
 

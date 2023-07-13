@@ -26,10 +26,7 @@ package commits;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
-import org.joda.time.DateTime;
 
-import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -73,66 +70,24 @@ public class PatchCommit {
 		this.linesChanged = linesChanged;
 	}
 
-	public String getCommitURL() {
-		return commitURL;
-	}
+	public String getCommitURL() { return commitURL; }
+	public String getCveId() { return cveId; }
+	public String getCommitId() { return commitId; }
+	public Date getCommitDate() { return commitDate; }
+	public String getCommitUrl() { return commitURL; }
+	public String getCommitMessage() { return commitMessage; }
+	public String getUniDiff() { return uniDiff; }
+	public List<RevCommit> getTimeline() { return timeline; }
+	public List<String> getTimelineString() { return timelineString; }
+	public String getTimeToPatch() { return timeToPatch; }
+	public int getLinesChanged() { return linesChanged; }
 
-	public String getCveId() {
-		return cveId;
-	}
-
-	public String getCommitId() {
-		return commitId;
-	}
-
-	public Date getCommitDate() {
-		return commitDate;
-	}
-
-	public String getCommitUrl() {
-		return commitURL;
-	}
-
-	public String getCommitMessage() {
-		return commitMessage;
-	}
-
-	public String getUniDiff() {
-		return uniDiff;
-	}
-
-	public List<RevCommit> getTimeline() {
-		return timeline;
-	}
-
-	public void setTimeline(List<RevCommit> timeline) {
-		this.timeline = timeline;
-	}
-
-
-	public List<String> getTimelineString() {
-		return timelineString;
-	}
-
-	public void setTimelineString(List<String> timelineString) {
-		this.timelineString = timelineString;
-	}
-	public String getTimeToPatch() {
-		return timeToPatch;
-	}
-
-	public void setTimeToPatch(String timeToPatch) {
-		this.timeToPatch = timeToPatch;
-	}
-
-	public int getLinesChanged() {
-		return linesChanged;
-	}
-
-	public void setLinesChanged(int linesChanged) {
-		this.linesChanged = linesChanged;
-	}
-
+	/**
+	 * Convert a given list of commit strings to a list of RevCommit objects
+	 * @param commitStrings list of strings to convert
+	 * @param revWalk RevWalk instance that converts the Strings
+	 * @return a list of RevCommit objects
+	 */
 	public static List<RevCommit> convertToRevCommits(List<String> commitStrings, RevWalk revWalk) {
 		List<RevCommit> revCommits = new ArrayList<>();
 

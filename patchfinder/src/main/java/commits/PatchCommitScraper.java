@@ -26,14 +26,9 @@ package commits;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.text.DateFormat;
-import java.time.*;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -61,7 +56,6 @@ public class PatchCommitScraper {
 	private static final Logger logger = LogManager.getLogger(PatchCommitScraper.class.getName());
 	private final String localDownloadLoc;
 	private final String repoSource;
-	private RevCommit vulnerableCommit; // Added
 	private static final int UNI_DIFF_LIMIT = 500;
 
 	private static final int COM_MESSAGE_LIMIT = 1000;

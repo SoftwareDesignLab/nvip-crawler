@@ -10,7 +10,7 @@ import java.util.Map;
 public class PatchUrlFinderTest {
 
     @Test
-    public void testParseMassURLs() throws IOException, InterruptedException {
+    public void testParseMassURLs() {
         // Create a test instance of PatchUrlFinder
         PatchUrlFinder patchUrlFinder = new PatchUrlFinder();
 
@@ -50,7 +50,7 @@ public class PatchUrlFinderTest {
     }
 
     @Test
-    public void testSearchForRepos() throws IOException, InterruptedException {
+    public void testSearchForRepos() {
         // Create a test instance of PatchUrlFinder
         PatchUrlFinder patchUrlFinder = new PatchUrlFinder();
 

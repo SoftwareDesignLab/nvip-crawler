@@ -1,8 +1,5 @@
-import db.DatabaseHelper;
-import model.CpeEntry;
 import model.CpeGroup;
 import org.junit.Test;
-import org.mockito.Mockito;
 
 import java.io.File;
 import java.io.IOException;
@@ -23,23 +20,19 @@ public class PatchFinderTest {
         possiblePatchSources.put("CVE-2023-1001", patchSources1);
         ThreadPoolExecutor e = mock(ThreadPoolExecutor.class);
 
-        try {
-            //clear the patch commits
-            PatchFinder.getPatchCommits().clear();
-            // Call the method
-            PatchFinder.findPatchesMultiThreaded(possiblePatchSources);
+        //clear the patch commits
+        PatchFinder.getPatchCommits().clear();
+        // Call the method
+        PatchFinder.findPatchesMultiThreaded(possiblePatchSources);
 
-            // Add assertions here to validate the expected behavior
-            // For example, check if the repos are cleared
-            assertTrue(new File(PatchFinder.clonePath).exists());
+        // Add assertions here to validate the expected behavior
+        // For example, check if the repos are cleared
+        assertTrue(new File(PatchFinder.clonePath).exists());
 
-            //check the patch commits
-            assertEquals(24, PatchFinder.getPatchCommits().size());
+        //check the patch commits
+        assertEquals(24, PatchFinder.getPatchCommits().size());
 
-            // Add more assertions based on your requirements
-        } catch (IOException e1) {
-            fail("Exception thrown: " + e1.getMessage());
-        }
+        // Add more assertions based on your requirements
     }
 
     @Test
@@ -71,7 +64,7 @@ public class PatchFinderTest {
 
             // Assert that the affectedProducts map is empty
             assertEquals(1, possiblePatchSources.size());
-        } catch (IOException | InterruptedException e) {
+        } catch (IOException e) {
             fail("Exception occurred: " + e.getMessage());
         }
     }

@@ -41,8 +41,6 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import utils.GitController;
 
-import static org.apache.commons.lang3.time.DateUtils.parseDate;
-
 /**
  * Runnable thread class for multithreaded patch finder
  *
@@ -53,11 +51,7 @@ import static org.apache.commons.lang3.time.DateUtils.parseDate;
 public class PatchFinderThread implements Runnable {
 	private final HashMap<String, ArrayList<String>> cvePatchEntry;
 	private final String clonePath;
-
-	private RevWalk walk;
 	private final long timeoutMilli;
-	// Regex101: https://regex101.com/r/YiCdNU/1
-	private final static Pattern commitPattern = Pattern.compile("commit-details-(\\w*)");
 	private static final Pattern[] patchPatterns = new Pattern[] {Pattern.compile("vulnerability|Vulnerability|vuln|Vuln|VULN[ #]*([0-9]+)")};
 	private static final Logger logger = LogManager.getLogger(PatchFinder.class.getName());
 
@@ -347,7 +341,7 @@ public class PatchFinderThread implements Runnable {
 						);
 
 						foundPatchCommits.add(patchCommit);
-					} catch (IOException | ParseException e) {
+					} catch (IOException e) {
 						logger.error("Failed to scrape unified diff from commit URL '{}': {}", commitUrl, e);
 					}
 				}
@@ -359,9 +353,8 @@ public class PatchFinderThread implements Runnable {
 	 * Parses a "timeline" list of commits from the given timeline elements
 	 * @param timelineElements collection of timeline elements
 	 * @return parsed timeline elements
-	 * @throws ParseException if an error occurs while parsing elements
 	 */
-	private List<String> parseTimeline(Elements timelineElements) throws ParseException {
+	private List<String> parseTimeline(Elements timelineElements) {
 		List<String> timeline = new ArrayList<>();
 
 		for (Element timelineElement : timelineElements) {

@@ -34,7 +34,7 @@ public class PatchFinderMain {
             logger.info("Successfully got {} CVEs mapped to {} affected products from the database", affectedProducts.size(), affectedProductsCount);
             try {
                 PatchFinder.run(affectedProducts, PatchFinder.cveLimit);
-            } catch (IOException | InterruptedException e) {
+            } catch (IOException e) {
                 logger.error("A fatal error attempting to complete jobs: {}", e.toString());
             }
         } else {
