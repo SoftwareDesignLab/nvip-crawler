@@ -143,7 +143,7 @@ public class DatabaseHelper {
 		final Map<String, Integer> urls = new HashMap<>();
 
 		try (Connection connection = getConnection();
-			 PreparedStatement pstmt = connection.prepareStatement(getExistingSourceUrlsSql);) {
+			 PreparedStatement pstmt = connection.prepareStatement(getExistingSourceUrlsSql)) {
 			ResultSet rs = pstmt.executeQuery();
 			while(rs.next()) { urls.put(rs.getString(1), rs.getInt(2)); }
 		} catch (Exception e) {
@@ -161,7 +161,7 @@ public class DatabaseHelper {
 		final Set<String> urls = new HashSet<>();
 
 		try (Connection connection = getConnection();
-			 PreparedStatement pstmt = connection.prepareStatement(getExistingPatchCommitsSql);) {
+			 PreparedStatement pstmt = connection.prepareStatement(getExistingPatchCommitsSql)) {
 			ResultSet rs = pstmt.executeQuery();
 			while(rs.next()) { urls.add(rs.getString(1)); }
 		} catch (Exception e) {
@@ -183,7 +183,7 @@ public class DatabaseHelper {
 		// Prepare statement
 		try (Connection conn = getConnection();
 			 PreparedStatement getAll = conn.prepareStatement(selectAffectedProductsSql);
-			 PreparedStatement getById = conn.prepareStatement(selectAffectedProductsByIdsSql);
+			 PreparedStatement getById = conn.prepareStatement(selectAffectedProductsByIdsSql)
 		) {
 			// Execute correct statement and get result set
 			ResultSet res = null;

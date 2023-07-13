@@ -62,9 +62,9 @@ public class PatchFinder {
 	protected static String hikariUser = "root";
 	protected static String hikariPassword = "root";
 	protected static int cloneCommitThreshold = 1000; // TODO: Find omptimal value once github scraping is working well
-	protected static int cloneCommitLimit = 50000; // TODO: Find omptimal value once github scraping is working well
+	protected static final int cloneCommitLimit = 50000; // TODO: Find omptimal value once github scraping is working well
 	protected static String clonePath = "patchfinder/src/main/resources/patch-repos";
-	protected static String patchSrcUrlPath = "patchfinder/src/main/resources/source_dict.json";
+	protected static final String patchSrcUrlPath = "patchfinder/src/main/resources/source_dict.json";
 	protected static String[] addressBases = { "https://github.com/", "https://www.gitlab.com/" };
 	protected static Instant urlDictLastCompilationDate = Instant.parse("2000-01-01T00:00:00.00Z");
 	private static final ObjectMapper OM = new ObjectMapper();
@@ -201,9 +201,8 @@ public class PatchFinder {
 	 * Find patches for a given map of affected products
 	 * @param affectedProducts map of products to find patches for
 	 * @throws IOException if an IO error occurs while attempting to find patches
-	 * @throws InterruptedException if a thread interrupted error occurs while attempting to find patches
 	 */
-	public static void run(Map<String, CpeGroup> affectedProducts, int cveLimit) throws IOException, InterruptedException {
+	public static void run(Map<String, CpeGroup> affectedProducts, int cveLimit) throws IOException {
 		final long totalStart = System.currentTimeMillis();
 
 		// Attempt to find source urls from pre-written file (ensure file existence/freshness)
@@ -395,9 +394,8 @@ public class PatchFinder {
 	 * Git commit parser that implements multiple threads to increase performance. Found patches
 	 * will be stored in the patchCommits member of this class.
 	 * @param possiblePatchSources sources to scrape
-	 * @throws IOException if an error occurs while attempting to find patches
 	 */
-	public static void findPatchesMultiThreaded(Map<String, ArrayList<String>> possiblePatchSources) throws IOException {
+	public static void findPatchesMultiThreaded(Map<String, ArrayList<String>> possiblePatchSources) {
 		// Init clone path and clear previously stored repos
 		File dir = new File(clonePath);
 		if(!dir.exists()) logger.warn("Unable to locate clone path for previous run repo deletion");
@@ -433,9 +431,6 @@ public class PatchFinder {
 				.stream().filter(
 						k -> possiblePatchSources.get(k).size() > 0).collect(Collectors.toSet()
 				);
-
-		// Find # of CVEs per thread (ignoring remainder)
-		final int CVEsPerThread = (int) Math.floor((double) CVEsToProcess.size() / maxThreads);
 
 		// Partition jobs to all threads
 		int i = 0;

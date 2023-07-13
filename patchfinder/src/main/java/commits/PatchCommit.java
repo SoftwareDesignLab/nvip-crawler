@@ -26,10 +26,7 @@ package commits;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
-import org.joda.time.DateTime;
 
-import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -71,59 +68,19 @@ public class PatchCommit {
 		this.linesChanged = linesChanged;
 	}
 
-	public String getCommitURL() {
-		return commitURL;
-	}
-
-	public String getCveId() {
-		return cveId;
-	}
-
-	public String getCommitId() {
-		return commitId;
-	}
-
-	public Date getCommitDate() {
-		return commitDate;
-	}
-
-	public String getCommitUrl() {
-		return commitURL;
-	}
-
-	public String getCommitMessage() {
-		return commitMessage;
-	}
-
-	public String getUniDiff() {
-		return uniDiff;
-	}
-
-	public List<String> getTimeline() {
-		return timeline;
-	}
-
-	public void setTimeline(List<String> timeline) {
-		this.timeline = timeline;
-	}
-
-
-
-	public String getTimeToPatch() {
-		return timeToPatch;
-	}
-
-	public void setTimeToPatch(String timeToPatch) {
-		this.timeToPatch = timeToPatch;
-	}
-
-	public int getLinesChanged() {
-		return linesChanged;
-	}
-
-	public void setLinesChanged(int linesChanged) {
-		this.linesChanged = linesChanged;
-	}
+	public String getCommitURL() {return commitURL;}
+	public String getCveId() {return cveId;}
+	public String getCommitId() {return commitId;}
+	public Date getCommitDate() {return commitDate;}
+	public String getCommitUrl() {return commitURL;}
+	public String getCommitMessage() {return commitMessage;}
+	public String getUniDiff() {return uniDiff;}
+	public List<String> getTimeline() {return timeline;}
+	public void setTimeline(List<String> timeline) {this.timeline = timeline;}
+	public String getTimeToPatch() {return timeToPatch;}
+	public void setTimeToPatch(String timeToPatch) {this.timeToPatch = timeToPatch;}
+	public int getLinesChanged() {return linesChanged;}
+	public void setLinesChanged(int linesChanged) {this.linesChanged = linesChanged;}
 
 
 }

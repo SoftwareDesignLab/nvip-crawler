@@ -25,18 +25,15 @@ package commits;
 
 import org.junit.Assert;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.Test;
 import utils.GitController;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 //@RunWith(MockitoJUnitRunner.class)

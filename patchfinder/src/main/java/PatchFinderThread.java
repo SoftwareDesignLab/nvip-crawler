@@ -41,8 +41,6 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import utils.GitController;
 
-import static org.apache.commons.lang3.time.DateUtils.parseDate;
-
 /**
  * Runnable thread class for multithreaded patch finder
  *
@@ -53,11 +51,8 @@ import static org.apache.commons.lang3.time.DateUtils.parseDate;
 public class PatchFinderThread implements Runnable {
 	private final HashMap<String, ArrayList<String>> cvePatchEntry;
 	private final String clonePath;
-
-	private RevWalk walk;
 	private final long timeoutMilli;
-	// Regex101: https://regex101.com/r/YiCdNU/1
-	private final static Pattern commitPattern = Pattern.compile("commit-details-(\\w*)");
+	private RevWalk walk; // TODO: initialize properly
 	private static final Pattern[] patchPatterns = new Pattern[] {Pattern.compile("vulnerability|Vulnerability|vuln|Vuln|VULN[ #]*([0-9]+)")};
 	private static final Logger logger = LogManager.getLogger(PatchFinder.class.getName());
 
@@ -297,8 +292,9 @@ public class PatchFinderThread implements Runnable {
 			List<PatchCommit> patchCommits = commitScraper.parseCommits(cve, patchPatterns);
 			foundPatchCommits.addAll(patchCommits);
 
-//					// Delete repo when done
-//					gitController.deleteRepo();
+			// TODO: Fix, as we need to prevent accumulation of repos if possible
+			// Delete repo when done
+//			gitController.deleteRepo();
 		} catch (Exception e) {
 			logger.error("ERROR: Failed to find patch from source {} for CVE {}\n{}", patchSource, cve, e.toString());
 			e.printStackTrace();
@@ -313,47 +309,46 @@ public class PatchFinderThread implements Runnable {
 	 * @param commitElements collection of commit elements
 	 */
 	private void parseCommitObjects(List<PatchCommit> foundPatchCommits, String cve, Elements commitElements) {
-		for (Element object : commitElements) {
-			Matcher matcher = commitPattern.matcher(object.attr("id"));
-			if (matcher.find()) {
-				String commitHash = matcher.group(1);
-				List<String> commitTimeline = new ArrayList<>(); // Create a new commit timeline list
+		// Check if the commit message matches any of the regex provided
+		for (Pattern pattern : patchPatterns) {
+			for (Element object : commitElements) {
+				Matcher matcher = pattern.matcher(object.text());
+				// If found the CVE ID is found, add the patch commit to the returned list
+				if (matcher.find() || object.text().contains(cve)) {
+					String commitUrl = object.attr("href");
+					logger.info("Found patch commit @ URL '{}'", commitUrl);
 
-				// Check if the commit message matches any of the regex provided
-				for (Pattern pattern : patchPatterns) {
-					if (pattern.matcher(object.text()).find()) {
-						String commitUrl = object.attr("href");
-						logger.info("Found patch commit @ URL '{}'", commitUrl);
+					try {
+						// Connect to the commit URL and retrieve the unified diff
+						Document commitPage = Jsoup.connect(commitUrl).get();
+						Elements diffElements = commitPage.select("div.file-actions");
+						String unifiedDiffString = diffElements.text();
 
-						try {
-							// Connect to the commit URL and retrieve the unified diff
-							Document commitPage = Jsoup.connect(commitUrl).get();
-							Elements diffElements = commitPage.select("div.file-actions");
-							String unifiedDiffString = diffElements.text();
+						// Extract the commit timeline, time to patch, and lines changed from the commit page
+						Elements timelineElements = commitPage.select("div.timeline-item");
+						List<String> timelineString = parseTimeline(timelineElements);
+						String timeToPatch = extractTimeToPatch(commitPage);
+						int linesChanged = extractLinesChanged(commitPage);
+						List<String> commitTimeline = new ArrayList<>(); // Create a new commit timeline list
+						String commitHash = matcher.group(1);
 
-							// Extract the commit timeline, time to patch, and lines changed from the commit page
-							String timeToPatch = extractTimeToPatch(commitPage);
-							int linesChanged = extractLinesChanged(commitPage);
+						commitTimeline.add(commitHash); // Add the current commit hash to the commit timeline
 
-							commitTimeline.add(commitHash); // Add the current commit hash to the commit timeline
+						PatchCommit patchCommit = new PatchCommit(
+								commitUrl,
+								cve,
+								object.text(),
+								new Date(object.attr("commitTime")),
+								object.text(),
+								unifiedDiffString, // unifiedDiff
+								commitTimeline, // timeline
+								timeToPatch, // timeToPatch
+								linesChanged // linesChanged
+						);
 
-							PatchCommit patchCommit = new PatchCommit(
-									commitUrl,
-									cve,
-									object.text(),
-									new Date(object.attr("commitTime")),
-									object.text(),
-									unifiedDiffString,
-									commitTimeline, // Pass the commit timeline
-									timeToPatch,
-									linesChanged
-							);
-
-							foundPatchCommits.add(patchCommit);
-						} catch (IOException e) {
-							logger.error("Failed to scrape unified diff from commit URL '{}': {}", commitUrl, e);
-						}
-						break; // No need to check other patterns if a match is found
+						foundPatchCommits.add(patchCommit);
+					} catch (IOException e) {
+						logger.error("Failed to scrape unified diff from commit URL '{}': {}", commitUrl, e);
 					}
 				}
 			}
@@ -364,9 +359,8 @@ public class PatchFinderThread implements Runnable {
 	 * Parses a "timeline" list of commits from the given timeline elements
 	 * @param timelineElements collection of timeline elements
 	 * @return parsed timeline elements
-	 * @throws ParseException if an error occurs while parsing elements
 	 */
-	private List<String> parseTimeline(Elements timelineElements) throws ParseException {
+	private List<String> parseTimeline(Elements timelineElements) {
 		List<String> timeline = new ArrayList<>();
 
 		for (Element timelineElement : timelineElements) {
@@ -385,8 +379,7 @@ public class PatchFinderThread implements Runnable {
 	private String extractTimeToPatch(Document commitPage) {
 		Element timeToPatchElement = commitPage.selectFirst("relative-time[datetime]:not(.commit-author-date)");
 		if (timeToPatchElement != null) {
-			String timeToPatch = timeToPatchElement.attr("datetime");
-			return timeToPatch;
+			return timeToPatchElement.attr("datetime");
 		}
 		return null;
 	}

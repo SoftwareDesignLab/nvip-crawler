@@ -1,18 +1,11 @@
 import db.DatabaseHelper;
 import messenger.Messenger;
 import model.CpeGroup;
-import org.apache.logging.log4j.Logger;
-import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
-import java.io.IOException;
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
-import java.util.Arrays;
+import org.junit.Test;
+
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -23,7 +16,7 @@ public class PatchFinderMainTest {
 
    //write tests for main method
    @Test
-   public void testMain() throws IOException, InterruptedException {
+   public void testMain() {
        String[] args = new String[]{"CVE-2023-1001"};
        // Clear the patch commits
        PatchFinder.getPatchCommits().clear();
@@ -63,7 +56,5 @@ public class PatchFinderMainTest {
 
        // Assert that no patch commits were collected
        assertEquals(0, PatchFinder.getPatchCommits().size());
-
    }
-
 }

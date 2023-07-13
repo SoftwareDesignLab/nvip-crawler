@@ -24,10 +24,7 @@
 package utils;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
 
-import commits.PatchCommitScraper;
 import org.eclipse.jgit.util.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -43,8 +40,8 @@ import org.eclipse.jgit.lib.StoredConfig;
 public class GitController {
 	private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
 
-	private String localPath;
-	private String remotePath;
+	private final String localPath;
+	private final String remotePath;
 
 	public GitController(String localPath, String remotePath) {
 		super();
@@ -59,7 +56,7 @@ public class GitController {
 	 */
 	public boolean pullRepo() {
 		logger.info("Checking for updates for {} repo!...", localPath);
-		try (FileRepository localRepo = new FileRepository(localPath + "/.git");) {
+		try (FileRepository localRepo = new FileRepository(localPath + "/.git")) {
 			try (Git git = new Git(localRepo)) {
 				PullCommand pull = git.pull();
 				pull.call();
@@ -105,8 +102,6 @@ public class GitController {
 			if(git != null) git.close();
 		}
 
-//		// Store successful clone path for deletion
-//		this.clonedPaths.add(localPath);
 		return true;
 	}
 
