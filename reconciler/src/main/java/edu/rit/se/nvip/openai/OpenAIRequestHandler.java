@@ -34,6 +34,7 @@ public class OpenAIRequestHandler {
     private final RateLimiter tokenLimiter = RateLimiter.create(TOKEN_RATE_LIMIT);
     private final RateLimiter requestLimiter = RateLimiter.create(REQUEST_RATE_LIMIT);
     private OpenAiService service;
+    private int nextPriorityId = 0;
 
     static {
         handler = new OpenAIRequestHandler();
@@ -56,19 +57,17 @@ public class OpenAIRequestHandler {
     }
 
     public void shutdown() {
-        this.executor.shutdown();
+        this.executor.shutdownNow();
     }
 
     private void handleRequests() {
         while (true) {
             RequestWrapper wrapper;
-            synchronized (requestQueue) {
-                try {
-                    wrapper = requestQueue.take();
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    return;
-                }
+            try {
+                wrapper = requestQueue.take();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return;
             }
             waitThenCall(wrapper.request, wrapper.futureResult);
         }
@@ -77,7 +76,8 @@ public class OpenAIRequestHandler {
     private void waitThenCall(ChatCompletionRequest request, CompletableFuture<ChatCompletionResult> future) {
         waitForLimiters(chatCompletionTokenCount(request));
         try {
-            future.complete(service.createChatCompletion(request));
+            ChatCompletionResult res = service.createChatCompletion(request);
+            future.complete(res);
         } catch (OpenAiHttpException e) {
             Thread.currentThread().interrupt();
             future.completeExceptionally(e); //todo properly handle this
@@ -115,12 +115,9 @@ public class OpenAIRequestHandler {
      */
     public Future<ChatCompletionResult> createChatCompletion(ChatCompletionRequest request, RequestorIdentity requestor) {
         CompletableFuture<ChatCompletionResult> future = new CompletableFuture<>();
-        RequestWrapper wrapper = new RequestWrapper(request, future, requestor, 0);
+        RequestWrapper wrapper = new RequestWrapper(request, future, requestor, nextPriorityId++);
         // drop the request in the queue and tell any concerned threads about it
-        synchronized (requestQueue) {
-            requestQueue.offer(wrapper);
-            requestQueue.notifyAll();
-        }
+        requestQueue.put(wrapper);
         return future;
     }
 

@@ -9,8 +9,8 @@ import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
+import java.util.Map;
+import java.util.concurrent.*;
 
 public class GPTFilterModel {
 
@@ -83,5 +83,26 @@ public class GPTFilterModel {
         public OpenAiException(String errorMessage) {
             super(errorMessage);
         }
+    }
+
+    public static void main(String[] args) throws OpenAiInvalidReturnException, InterruptedException {
+        GPTFilterModel model = new GPTFilterModel();
+        ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+        int a = 0;
+        for (int i = 0; i < 5; i++) {
+            int finalI = i;
+            executor.submit(() -> {
+                try {
+                    boolean result = model.callModel("testing # " + finalI);
+                    System.out.println("trial # " + finalI + " evaluated as " + result);
+                } catch (OpenAiInvalidReturnException e) {
+                    System.out.println(e.toString());
+                }
+            });
+        }
+        executor.shutdown();
+        boolean res = executor.awaitTermination(10, TimeUnit.SECONDS);
+        System.out.println(res);
+        OpenAIRequestHandler.getInstance().shutdown();
     }
 }
