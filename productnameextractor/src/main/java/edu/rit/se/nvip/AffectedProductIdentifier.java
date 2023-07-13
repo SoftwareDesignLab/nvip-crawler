@@ -67,6 +67,7 @@ public class AffectedProductIdentifier {
 	}
 
 	protected void releaseResources(){
+		logger.info("Releasing affected product identifier from memory...");
 		vulnList = null;
 		cpeLookUp = null;
 		if(productDetector != null){

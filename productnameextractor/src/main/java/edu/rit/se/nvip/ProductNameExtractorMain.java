@@ -104,7 +104,13 @@ public class ProductNameExtractorMain {
             affectedProductIdentifier.releaseResources();
             affectedProductIdentifier = null;
         }
-        productDict = null;
+
+        if(productDict!= null){
+            ProductDictionary.unloadProductDict();
+            productDict = null;
+        }
+
+        logger.info("All resources have been released!\n\n");
         System.gc();
     }
 
@@ -220,6 +226,7 @@ public class ProductNameExtractorMain {
             // Otherwise using rabbitmq, get the list of cve IDs from the reconciler and create vuln list from those
             while(true) {
                 try {
+
                     // Get CVE IDs to be processed from reconciler
                     List<String> cveIds = rabbitMQ.waitForReconcilerMessage(rabbitPollInterval);
 

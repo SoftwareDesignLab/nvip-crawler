@@ -55,9 +55,7 @@ import java.util.regex.Pattern;
 public class ProductDictionary {
     private static final Logger logger = LogManager.getLogger(ProductDictionary.class);
 
-    /**
-     * Dictionary Reading/Storage Vars
-     */
+     // Dictionary Reading/Storage Vars
 
     private static final ObjectMapper OM = new ObjectMapper();
     private static final boolean prettyPrint = ProductNameExtractorEnvVars.isPrettyPrint();
@@ -68,9 +66,7 @@ public class ProductDictionary {
     private static Instant productDictLastCompilationDate = Instant.parse("2000-01-01T00:00:00.00Z");
     private static Instant productDictLastRefreshDate = Instant.parse("2000-01-01T00:00:00.00Z");
 
-    /**
-     * NVD Querying/Writing Vars
-     */
+     // NVD Querying/Writing Vars
 
     private static final Pattern cpePattern = Pattern.compile("cpe:2\\.3:[aho\\*\\-]:([^:]*):([^:]*):([^:]*):.*");
     private static final String userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36";
@@ -79,8 +75,35 @@ public class ProductDictionary {
     private static final int maxPages = ProductNameExtractorEnvVars.getMaxPages();
     private static final int maxAttemptsPerPage = ProductNameExtractorEnvVars.getMaxAttemptsPerPage();
 
+
+    // Getter for product dict
+    public static Map<String, CpeGroup> getProductDict() {
+        if(productDict == null){
+            initializeProductDict();
+        }
+        return productDict;
+    }
+
+    /**
+     * Unloads product dictionary from memory, resets the dates
+     */
+    public static void unloadProductDict(){
+        logger.info("Releasing product dictionary from memory...");
+        if(productDict != null){
+            productDict = null;
+            productDictLastCompilationDate = Instant.parse("2000-01-01T00:00:00.00Z");
+            productDictLastRefreshDate = Instant.parse("2000-01-01T00:00:00.00Z");
+        }
+    }
+
     /**
      * Initializes the product dictionary.
+     *
+     * Attempts to read from stored product_dict.json file at productDictPath,
+     * if it cannot be found then an entire new dictionary file is pulled from NVD & created.
+     *
+     * If it is found, then the time since last full pull/refresh is calculated and updateProductDict()
+     * is called to see if it is necessary to either do a full pull or refresh the dict.
      */
     public static void initializeProductDict(){
         logger.info("Initializing Product Dictionary...");
@@ -111,10 +134,6 @@ public class ProductDictionary {
             productDictLastCompilationDate = Instant.now();
             writeProductDict(productDict, productDictPath);
         }
-    }
-
-    public static Map<String, CpeGroup> getProductDict() {
-        return productDict;
     }
 
     /**
