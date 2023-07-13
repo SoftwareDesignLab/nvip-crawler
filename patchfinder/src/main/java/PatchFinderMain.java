@@ -14,7 +14,7 @@ import org.apache.logging.log4j.Logger;
  * @author Dylan Mulligan
  */
 public class PatchFinderMain {
-    private final static boolean devMode = false;
+    private final static boolean devMode = true;
     private final static Logger logger = LogManager.getLogger(PatchFinderMain.class);
 
     /**

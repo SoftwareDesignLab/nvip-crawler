@@ -278,6 +278,7 @@ public class PatchFinder {
 				final String sourceUrl = patchCommit.getCommitUrl();
 				// Insert source
 				final int sourceUrlId = databaseHelper.insertPatchSourceURL(existingSources, patchCommit.getCveId(), sourceUrl);
+				//convert the timeline to a string
 
 				// Insert patch commit
 				try {

@@ -313,42 +313,47 @@ public class PatchFinderThread implements Runnable {
 	 * @param commitElements collection of commit elements
 	 */
 	private void parseCommitObjects(List<PatchCommit> foundPatchCommits, String cve, Elements commitElements) {
-		// Check if the commit message matches any of the regex provided
-		for (Pattern pattern : patchPatterns) {
-			for (Element object : commitElements) {
-				Matcher matcher = pattern.matcher(object.text());
-				// If found the CVE ID is found, add the patch commit to the returned list
-				if (matcher.find() || object.text().contains(cve)) {
-					String commitUrl = object.attr("href");
-					logger.info("Found patch commit @ URL '{}'", commitUrl);
+		for (Element object : commitElements) {
+			Matcher matcher = commitPattern.matcher(object.attr("id"));
+			if (matcher.find()) {
+				String commitHash = matcher.group(1);
+				List<String> commitTimeline = new ArrayList<>(); // Create a new commit timeline list
 
-					try {
-						// Connect to the commit URL and retrieve the unified diff
-						Document commitPage = Jsoup.connect(commitUrl).get();
-						Elements diffElements = commitPage.select("div.file-actions");
-						String unifiedDiffString = diffElements.text();
+				// Check if the commit message matches any of the regex provided
+				for (Pattern pattern : patchPatterns) {
+					if (pattern.matcher(object.text()).find()) {
+						String commitUrl = object.attr("href");
+						logger.info("Found patch commit @ URL '{}'", commitUrl);
 
-						// Extract the commit timeline, time to patch, and lines changed from the commit page
-						Elements timelineElements = commitPage.select("div.timeline-item");
-						List<String> timelineString = parseTimeline(timelineElements);
-						String timeToPatch = extractTimeToPatch(commitPage);
-						int linesChanged = extractLinesChanged(commitPage);
-						List<RevCommit> timeline = PatchCommit.convertToRevCommits(timelineString, walk);
-						PatchCommit patchCommit = new PatchCommit(
-								commitUrl,
-								cve,
-								object.text(),
-								new Date(object.attr("commitTime")),
-								object.text(),
-								unifiedDiffString, // unifiedDiff
-								timeline, // timeline
-								timeToPatch, // timeToPatch
-								linesChanged // linesChanged
-						);
+						try {
+							// Connect to the commit URL and retrieve the unified diff
+							Document commitPage = Jsoup.connect(commitUrl).get();
+							Elements diffElements = commitPage.select("div.file-actions");
+							String unifiedDiffString = diffElements.text();
 
-						foundPatchCommits.add(patchCommit);
-					} catch (IOException | ParseException e) {
-						logger.error("Failed to scrape unified diff from commit URL '{}': {}", commitUrl, e);
+							// Extract the commit timeline, time to patch, and lines changed from the commit page
+							String timeToPatch = extractTimeToPatch(commitPage);
+							int linesChanged = extractLinesChanged(commitPage);
+
+							commitTimeline.add(commitHash); // Add the current commit hash to the commit timeline
+
+							PatchCommit patchCommit = new PatchCommit(
+									commitUrl,
+									cve,
+									object.text(),
+									new Date(object.attr("commitTime")),
+									object.text(),
+									unifiedDiffString,
+									commitTimeline, // Pass the commit timeline
+									timeToPatch,
+									linesChanged
+							);
+
+							foundPatchCommits.add(patchCommit);
+						} catch (IOException e) {
+							logger.error("Failed to scrape unified diff from commit URL '{}': {}", commitUrl, e);
+						}
+						break; // No need to check other patterns if a match is found
 					}
 				}
 			}

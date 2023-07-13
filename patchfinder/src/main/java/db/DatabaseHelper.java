@@ -30,7 +30,6 @@ import model.CpeEntry;
 import model.CpeGroup;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.eclipse.jgit.revwalk.RevCommit;
 
 import java.sql.*;
 import java.util.*;
@@ -287,12 +286,12 @@ public class DatabaseHelper {
 	 * @param commitDate commit date
 	 * @param commitMessage commit message
 	 * @param uniDiff unified diff String
-	 * @param timeLine timeline list of RevCommit objects
+	 * @param timeLine timeline list of String objects
 	 * @param timeToPatch time from CVE release -> patch release
 	 * @param linesChanged number of lines changed
 	 * @throws IllegalArgumentException if given source id is invalid (sourceId < 0)
 	 */
-	public void insertPatchCommit(int sourceId, String cveId, String commitSha, java.util.Date commitDate, String commitMessage, String uniDiff, List<RevCommit> timeLine, String timeToPatch, int linesChanged) throws IllegalArgumentException {
+	public void insertPatchCommit(int sourceId, String cveId, String commitSha, java.util.Date commitDate, String commitMessage, String uniDiff, List<String> timeLine, String timeToPatch, int linesChanged) throws IllegalArgumentException {
 		if (sourceId < 0) throw new IllegalArgumentException("Invalid source id provided, ensure id is non-negative");
 
 		try (Connection connection = getConnection();

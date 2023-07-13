@@ -43,7 +43,7 @@ public class PatchCommitTest {
         Date commitDate = new Date();
         String commitMessage = "Fix a security vulnerability";
         String uniDiff = "diff --git a/file.txt b/file.txt";
-        List<RevCommit> timeline = new ArrayList<>();
+        List<String> timeline = new ArrayList<>();
         String timeToPatch = "5 days";
         int linesChanged = 10;
 
