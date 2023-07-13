@@ -9,7 +9,6 @@ import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.*;
 
 public class GPTFilterModel {
@@ -75,12 +74,6 @@ public class GPTFilterModel {
 
     public static class OpenAiInvalidReturnException extends Exception {
         public OpenAiInvalidReturnException(String errorMessage) {
-            super(errorMessage);
-        }
-    }
-
-    public static class OpenAiException extends Exception {
-        public OpenAiException(String errorMessage) {
             super(errorMessage);
         }
     }
