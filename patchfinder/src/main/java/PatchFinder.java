@@ -194,7 +194,7 @@ public class PatchFinder {
 		// Get affected products via CVE ids
 		final Map<String, CpeGroup> affectedProducts = databaseHelper.getAffectedProducts(cveIds);
 		logger.info("Successfully got affected products for {} CVEs from the database", affectedProducts.size());
-		PatchFinder.run(affectedProducts);
+		PatchFinder.run(affectedProducts, 0);
 	}
 
 	/**
@@ -203,7 +203,7 @@ public class PatchFinder {
 	 * @throws IOException if an IO error occurs while attempting to find patches
 	 * @throws InterruptedException if a thread interrupted error occurs while attempting to find patches
 	 */
-	public static void run(Map<String, CpeGroup> affectedProducts) throws IOException, InterruptedException {
+	public static void run(Map<String, CpeGroup> affectedProducts, int cveLimit) throws IOException, InterruptedException {
 		final long totalStart = System.currentTimeMillis();
 
 		// Attempt to find source urls from pre-written file (ensure file existence/freshness)
@@ -233,14 +233,8 @@ public class PatchFinder {
 		// Determine if urls dict needs to be refreshed
 		final boolean isStale = urlDictLastCompilationDate.until(Instant.now(), ChronoUnit.DAYS) >= 1;
 
-//		final int offset = PatchFinder.getPatchCommits().size();
-//		if (!isStale) {
-//			logger.info("Skipping patch URL parsing. Use offset to avoid repeating the same run.");
-//			return;
-//		}
-
 		// Parse new urls
-		patchURLFinder.parseMassURLs(possiblePatchURLs, affectedProducts, cveLimit, isStale);
+		patchURLFinder.parsePatchURLs(possiblePatchURLs, affectedProducts, cveLimit, isStale);
 		urlCount = possiblePatchURLs.values().stream().map(ArrayList::size).reduce(0, Integer::sum);
 
 		logger.info("Successfully parsed {} possible patch urls for {} CVEs in {} seconds",
@@ -500,9 +494,6 @@ public class PatchFinder {
 					// Update lastNumCVEs
 					lastNumCVEs = currNumCVEs;
 				}
-
-//				 Timeout for whole process
-//				if((secondsWaiting / 60) > 5) throw new TimeoutException("Timeout reached before all threads completed");
 			}
 		} catch (Exception e) {
 			logger.error("Patch finding failed: {}", e.toString());

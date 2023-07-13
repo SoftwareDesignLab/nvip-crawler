@@ -33,7 +33,7 @@ public class PatchFinderMain {
             final int affectedProductsCount = affectedProducts.values().stream().map(CpeGroup::getVersionsCount).reduce(0, Integer::sum);
             logger.info("Successfully got {} CVEs mapped to {} affected products from the database", affectedProducts.size(), affectedProductsCount);
             try {
-                PatchFinder.run(affectedProducts);
+                PatchFinder.run(affectedProducts, PatchFinder.cveLimit);
             } catch (IOException | InterruptedException e) {
                 logger.error("A fatal error attempting to complete jobs: {}", e.toString());
             }
