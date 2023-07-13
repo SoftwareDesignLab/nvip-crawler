@@ -49,7 +49,6 @@ public class DatabaseHelper {
 
 	private final String selectAffectedProductsSql = "SELECT cve_id, cpe FROM affectedproduct GROUP BY product_name, affected_product_id ORDER BY cve_id DESC, version ASC;";
 	private final String selectAffectedProductsByIdsSql = "SELECT cve_id, cpe FROM affectedproduct WHERE cve_id = ? GROUP BY product_name, affected_product_id ORDER BY cve_id DESC, version ASC;";
-	private final String getVulnIdByCveIdSql = "SELECT vuln_id FROM vulnerability WHERE cve_id IN ?";
 	private final String getExistingSourceUrlsSql = "SELECT source_url, source_url_id FROM patchsourceurl";
 	private final String getExistingPatchCommitsSql = "SELECT commit_sha FROM patchcommit";
 	private final String insertPatchSourceURLSql = "INSERT INTO patchsourceurl (cve_id, source_url) VALUES (?, ?);";
@@ -287,6 +286,11 @@ public class DatabaseHelper {
 	 * @param commitSha commit SHA
 	 * @param commitDate commit date
 	 * @param commitMessage commit message
+	 * @param uniDiff unified diff String
+	 * @param timeLine timeline list of RevCommit objects
+	 * @param timeToPatch time from CVE release -> patch release
+	 * @param linesChanged number of lines changed
+	 * @throws IllegalArgumentException if given source id is invalid (sourceId < 0)
 	 */
 	public void insertPatchCommit(int sourceId, String cveId, String commitSha, java.util.Date commitDate, String commitMessage, String uniDiff, List<RevCommit> timeLine, String timeToPatch, int linesChanged) throws IllegalArgumentException {
 		if (sourceId < 0) throw new IllegalArgumentException("Invalid source id provided, ensure id is non-negative");

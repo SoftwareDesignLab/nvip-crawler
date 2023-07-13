@@ -23,7 +23,6 @@
  */
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import db.DatabaseHelper;
 import model.CpeGroup;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -37,35 +36,28 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 
 /**
- * Start patch finder for a given repository list (as .csv)
- *
- * Responsible for finding possible patch source URLs
+ * Responsible for finding possible patch source URLs for the PatchFinder
  *
  * @author Dylan Mulligan
  */
 public class PatchUrlFinder {
-
 	private static final Logger logger = LogManager.getLogger(PatchUrlFinder.class.getName());
-
-	// TODO: all old vars, get rid of these
 	private static int advancedSearchCount;
 	private static final ObjectMapper OM = new ObjectMapper();
 
 	/**
-	 * Parse URLs from all CPEs given within the map
-	 * @param affectedProducts
-	 * @throws IOException
-	 * @throws InterruptedException
+	 * Parses possible patch URLs from all CPEs in the given affectedProducts map
+	 * @param possiblePatchUrls map of CVEs -> a list of possible patch urls (output list, initially not empty)
+	 * @param affectedProducts map of CVEs -> CPEs to parse source urls for
+	 * @param cveLimit maximum number of CVEs to process
+	 * @param isStale boolean representation of the quality of existing data in possiblePatchUrls
 	 */
-	public void parseMassURLs(Map<String, ArrayList<String>> possiblePatchUrls, Map<String, CpeGroup> affectedProducts, int cveLimit, boolean isStale) throws IOException, InterruptedException {
+	public void parsePatchURLs(Map<String, ArrayList<String>> possiblePatchUrls, Map<String, CpeGroup> affectedProducts, int cveLimit, boolean isStale) {
 		int cachedUrlCount = 0, foundCount = 0;
 		for (Map.Entry<String, CpeGroup> entry : affectedProducts.entrySet()) {
 			final long entryStart = System.currentTimeMillis();
@@ -95,13 +87,17 @@ public class PatchUrlFinder {
 				break;
 			}
 
-			// Find urls
-			final ArrayList<String> urls = parseURL(group.getVendor(), group.getProduct());
+			try {
+				// Find urls
+				final ArrayList<String> urls = parseURL(group.getVendor(), group.getProduct());
 
-			// Store found urls
-			possiblePatchUrls.put(cveId, urls);
-			long entryDelta = (System.currentTimeMillis() - entryStart) / 1000;
-			logger.info("Found {} potential patch sources for CVE '{}' in {} seconds", urls.size(), cveId, entryDelta);
+				// Store found urls
+				possiblePatchUrls.put(cveId, urls);
+				long entryDelta = (System.currentTimeMillis() - entryStart) / 1000;
+				logger.info("Found {} potential patch sources for CVE '{}' in {} seconds", urls.size(), cveId, entryDelta);
+			} catch (IOException e) {
+				logger.error("Failed to parse urls from product {}: {}", group.getProduct(), e);
+			}
 		}
 		logger.info("Found {} existing & fresh possible sources for {} CVEs, skipping url parsing...", foundCount, cachedUrlCount);
 	}
@@ -110,10 +106,11 @@ public class PatchUrlFinder {
 	 * Parses URL with github.com base and cpe keywords tests connection and inserts
 	 * into DB if so.
 	 *
-	 * @throws IOException
-	 * @throws InterruptedException
+	 * @param product product name
+	 * @param vendor vendor name
+	 * @throws IOException if an IO error occurs while testing the url connection
 	 */
-	private ArrayList<String> parseURL(String vendor, String product) throws IOException, InterruptedException {
+	private ArrayList<String> parseURL(String vendor, String product) throws IOException {
 		ArrayList<String> newAddresses = new ArrayList<>();
 
 		// Parse keywords from CPE to create links for GitHub, Bitbucket, and GitLab
@@ -165,9 +162,9 @@ public class PatchUrlFinder {
 	 * for correct repo via github company page (Assuming the link directs to it for
 	 * now)
 	 * 
-	 * @param address
-	 * @return
-	 * @throws IOException
+	 * @param address address to test
+	 * @return a list of valid addresses
+	 * @throws IOException if an error occurs during the testing of the given address
 	 */
 	private ArrayList<String> testConnection(String address) throws IOException {
 
@@ -221,10 +218,8 @@ public class PatchUrlFinder {
 	 * Searches for all links within a companies github page to find the correct
 	 * repo the cpe is correlated to. Uses keywords from cpe to validate and checks
 	 * for git remote connection with found links
-	 * 
-	 * Uses jSoup framework
 	 *
-	 * @param newURL
+	 * @param newURL url to search
 	 */
 	private ArrayList<String> searchForRepos(String newURL) {
 		logger.info("Grabbing repos from github user page...");
@@ -267,8 +262,9 @@ public class PatchUrlFinder {
 	/**
 	 * Method to loop through given repo links and verify git connection, returns
 	 * list of all successful links
-	 * 
-	 * @return
+	 *
+	 * @param repoLinks collection of page elements containing link data
+	 * @return list of valid links only
 	 */
 	private ArrayList<String> testLinks(Elements repoLinks) {
 		ArrayList<String> urls = new ArrayList<>();
@@ -291,11 +287,12 @@ public class PatchUrlFinder {
 	 * Performs an advanced search for the repo link(s) for a CPE using the Github
 	 * search feature
 	 *
-	 * @return
-	 * @throws InterruptedException
+	 * @param product product name
+	 * @param vendor vendor name
+	 * @return a list of found links
 	 */
 	@SuppressWarnings({"unchecked", "rawtypes"})
-	private ArrayList<String> advanceParseSearch(String vendor, String product) throws InterruptedException {
+	private ArrayList<String> advanceParseSearch(String vendor, String product) {
 
 		String searchParams = PatchFinder.addressBases[0] + "search?q=";
 		ArrayList<String> urls = new ArrayList<>();
@@ -373,24 +370,30 @@ public class PatchUrlFinder {
 //					}
 //				}
 
-			} catch (IOException e) {
+			} catch (IOException | InterruptedException e) {
 				logger.error(e.toString());
 			}
 
 		return urls;
 	}
 
+	// TODO: What is the description param supposed to be filled by?
 	/**
 	 * Method used for verifying Git remote connection to created url via keywords,
 	 * checks if the keywords are included as well before performing connection
-	 * @return
+	 *
+	 * @param repoURL url to the repo to verify
+	 * @param description url description
+	 * @param vendor vendor name
+	 * @param product product name
+	 * @return result of verification
 	 */
-	private boolean verifyGitRemote(String repoURL, String innerText, String vendor, String product) {
+	private boolean verifyGitRemote(String repoURL, String description, String vendor, String product) {
 
 		// Verify if the repo is correlated to the product by checking if the keywords
 		// lie in the inner text of the html link via regex
-		if (Pattern.compile(Pattern.quote(vendor), Pattern.CASE_INSENSITIVE).matcher(innerText).find()
-				|| Pattern.compile(Pattern.quote(product), Pattern.CASE_INSENSITIVE).matcher(innerText)
+		if (Pattern.compile(Pattern.quote(vendor), Pattern.CASE_INSENSITIVE).matcher(description).find()
+				|| Pattern.compile(Pattern.quote(product), Pattern.CASE_INSENSITIVE).matcher(description)
 						.find()) {
 
 			LsRemoteCommand lsCmd = new LsRemoteCommand(null);
