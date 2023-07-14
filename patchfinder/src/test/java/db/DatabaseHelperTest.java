@@ -54,7 +54,7 @@ public class DatabaseHelperTest {
         java.util.Date commitDate = new java.util.Date();
         String commitMessage = "Fix vulnerability";
         String uniDiff = "diff --git a/file1 b/file1\n+++ b/file1\n@@ -1,3 +1,3 @@\n-line1\n-line2\n+line3\n+line4";
-        List<RevCommit> timeLine = new ArrayList<>(); // Assume a valid timeline
+        List<String> timeLine = new ArrayList<>(); // Assume a valid timeline
         String timeToPatch = "2 days";
         int linesChanged = 2;
 
@@ -75,7 +75,7 @@ public class DatabaseHelperTest {
         java.util.Date commitDate = new java.util.Date();
         String commitMessage = "Fix vulnerability";
         String uniDiff = "diff --git a/file1 b/file1\n+++ b/file1\n@@ -1,3 +1,3 @@\n-line1\n-line2\n+line3\n+line4";
-        List<RevCommit> timeLine = new ArrayList<>(); // Assume a valid timeline
+        List<String> timeLine = new ArrayList<>(); // Assume a valid timeline
         String timeToPatch = "2 days";
         int linesChanged = 2;
 
