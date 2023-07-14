@@ -92,8 +92,8 @@ public class ReconcilerController {
             String[] trainingDataInfo = {ReconcilerEnvVars.getTrainingDataDir(), ReconcilerEnvVars.getTrainingData()};
             logger.info("Setting NVIP_CVE_CHARACTERIZATION_LIMIT to {}", ReconcilerEnvVars.getCharacterizationLimit());
 
-            CveCharacterizer cveCharacterizer = new CveCharacterizer(trainingDataInfo[0], trainingDataInfo[1], "ML",
-                    "Vote");
+            CveCharacterizer cveCharacterizer = new CveCharacterizer(trainingDataInfo[0], trainingDataInfo[1], ReconcilerEnvVars.getCharacterizationApproach(),
+                    ReconcilerEnvVars.getCharacterizationMethod());
 
             List<CompositeVulnerability> cveList = new ArrayList<>(crawledVulnerabilityList);
 
