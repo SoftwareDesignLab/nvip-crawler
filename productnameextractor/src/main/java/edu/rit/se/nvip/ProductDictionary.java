@@ -310,7 +310,7 @@ public class ProductDictionary {
                     // Increment index
                     index += resultsPerPage;
                     // Sleep 3 sec between queries (adjust until we do not get 403 errors)
-                    Thread.sleep(3000);
+                    Thread.sleep(4000);
                     // Reset attempt count
                     attempts = 0;
                 }
@@ -402,7 +402,7 @@ public class ProductDictionary {
                     Thread.sleep(10000);
                     throw e;
                 } catch (Exception e) {
-                    logger.error("Error loading CPE dictionary page {}/{}, Attempt {}/{}: {}", (index / resultsPerPage) + 1, totalPages, attempts + 1, maxAttemptsPerPage, e.toString());
+                    logger.error("Error loading CPE dictionary page {}/{}, Attempt {}/{}: {}", (index / resultsPerPage) + 1, totalPages, attempts + 1, maxAttemptsPerPage, e.getMessage());
                     attempts++;
                 }
             }
