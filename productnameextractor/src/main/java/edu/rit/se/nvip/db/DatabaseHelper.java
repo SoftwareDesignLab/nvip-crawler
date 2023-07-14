@@ -294,6 +294,49 @@ public class DatabaseHelper {
 		return vulnList;
 	}
 
+	// TODO: Move to API class
+	public List<CompositeVulnerability> getVulnsByCpe(String cpe) {
+		final String selectVulnerabilityByCpeSql =
+		"SELECT vulnerability.vuln_id, vulnerability.cve_id, description.description, vulnerability.published_date, vulnerability.last_modified_date FROM nvip.vulnerability " +
+		"JOIN nvip.description ON vulnerability.description_id = description.description_id " +
+		"JOIN nvip.affectedproduct ON vulnerability.cve_id = affectedproduct.cve_id " +
+		"WHERE affectedproduct.cve_id = ?";
+		ArrayList<CompositeVulnerability> vulnList = new ArrayList<>();
+		synchronized (DatabaseHelper.class) {
+			try (Connection connection = getConnection()) {
+				// Prepare SQL statement
+				PreparedStatement pstmt = connection.prepareStatement(selectVulnerabilityByCpeSql);
+				pstmt.setString(1, cpe);
+
+				// Get result set and iterate
+				ResultSet rs = pstmt.executeQuery();
+				while (rs.next()) {
+					// Extract values
+					final int vulnId = rs.getInt(0);
+					final String cveId = rs.getString(1);
+					final String description = rs.getString(2);
+
+					// Build vuln object
+					CompositeVulnerability vulnerability = new CompositeVulnerability(
+							vulnId,
+							cveId,
+							description,
+							CompositeVulnerability.CveReconcileStatus.DO_NOT_CHANGE
+					);
+
+					// Store object in output list
+					vulnList.add(vulnerability);
+				}
+				logger.info("NVIP has loaded {} existing CVE items from DB!", vulnList.size());
+			} catch (Exception e) {
+				logger.error("Error while getting existing vulnerabilities from DB: {}", e.toString());
+			}
+		}
+
+		// Return generated list of objects
+		return vulnList;
+	}
+
 	/**
 	 * Shut down connection pool.
 	 */
