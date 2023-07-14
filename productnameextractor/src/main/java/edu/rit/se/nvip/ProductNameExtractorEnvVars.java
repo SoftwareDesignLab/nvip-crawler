@@ -36,7 +36,7 @@ import java.util.Map;
 public class ProductNameExtractorEnvVars {
     private static final Logger logger = LogManager.getLogger(ProductNameExtractorEnvVars.class);
 
-     // Default values for main environment variables
+    // Default values for main environment variables
 
     private static int rabbitPollInterval = 10;
     private static int numThreads = 12;

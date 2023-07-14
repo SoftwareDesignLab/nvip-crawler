@@ -22,7 +22,6 @@
  * SOFTWARE.
  */
 
-
 import edu.rit.se.nvip.AffectedProductIdentifier;
 import edu.rit.se.nvip.ProductDictionary;
 import edu.rit.se.nvip.ProductNameExtractorEnvVars;
