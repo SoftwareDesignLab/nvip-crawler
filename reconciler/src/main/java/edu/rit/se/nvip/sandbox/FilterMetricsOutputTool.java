@@ -7,10 +7,13 @@ import edu.rit.se.nvip.model.RawVulnerability;
 import edu.rit.se.nvip.utils.metrics.CrawlerRun;
 import edu.rit.se.nvip.utils.metrics.FilterMetrics;
 
-import javax.json.Json;
-import javax.json.JsonObject;
-import javax.json.JsonObjectBuilder;
+import javax.json.*;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.text.DecimalFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -22,6 +25,7 @@ public class FilterMetricsOutputTool {
     private Map<CrawlerRun, Double> proportionPassed;
     private Map<CrawlerRun, Integer> newVulnsPerRun;
     private static final DecimalFormat df = new DecimalFormat("0.00");
+    private static final DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy_MM_dd HH_mm_ss");
 
     public FilterMetricsOutputTool(FilterMetrics filterMetrics) {
         this.currentFilterMetrics = filterMetrics;
@@ -59,7 +63,7 @@ public class FilterMetricsOutputTool {
         return sb.toString();
     }
 
-    public void buildAllMetrics() {
+    public JsonObject buildAllMetrics() {
         JsonObjectBuilder builder = Json.createObjectBuilder();
         builder.add("Total Crawler Runs", currentFilterMetrics.getRuns().size());
         JsonObjectBuilder filters = Json.createObjectBuilder();
@@ -76,13 +80,16 @@ public class FilterMetricsOutputTool {
             joRun.add("Total Vulns Filtered", numFiltered.get(currentRun).getTotalFiltered());
             joRun.add("Total Vulns Pass Filters", numFiltered.get(currentRun).getPassedFilters());
             joRun.add("Proportion Passed", df.format(proportionPassed.get(currentRun)));
+            joRun.add("New Vulns", newVulnsPerRun.get(currentRun));
             Map<RawVulnerability.SourceType, Integer> sourceMap = sourceDist.get(currentRun);
             JsonObjectBuilder joSource = Json.createObjectBuilder();
             for (RawVulnerability.SourceType currentSource: sourceMap.keySet()) {
                 joSource.add(currentSource.getType(), sourceMap.get(currentSource));
             }
             joRun.add("Source Distribution", joSource);
+            builder.add("Run " + currentRun.getRunId(), joRun);
         }
+        return builder.build();
     }
 
     public void setCurrentFilterMetrics(FilterMetrics filterMetrics) {
@@ -103,9 +110,16 @@ public class FilterMetricsOutputTool {
 
         FilterHandler filterHandler = new FilterHandler();
         filterHandler.setCustomFilters(customFilters);
-        FilterMetrics filterMetrics = new FilterMetrics("./src/test/resources/multipleJsons", filterHandler, FilterHandler.FilterScope.CUSTOM);
+        FilterMetrics filterMetrics = new FilterMetrics("./src/test/resources", filterHandler, FilterHandler.FilterScope.CUSTOM);
         FilterMetricsOutputTool fmot = new FilterMetricsOutputTool(filterMetrics);
-        System.out.println(fmot.getAllMetricsString());
+        JsonObject jo = fmot.buildAllMetrics();
+        LocalDateTime now = LocalDateTime.now();
+        try (FileWriter writer = new FileWriter("./src/main/java/edu/rit/se/nvip/sandbox/jsons/FilterMetricsOutput" + dtf.format(now) + ".json")) {
+            writer.write(jo.toString());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+//        System.out.println(fmot.getAllMetricsString());
         //Create filtermetrics obj with list of all filters
         //Create output tool
     }
