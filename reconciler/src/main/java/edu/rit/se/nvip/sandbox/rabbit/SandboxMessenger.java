@@ -1,4 +1,4 @@
-package edu.rit.se.nvip.sandbox;
+package edu.rit.se.nvip.sandbox.rabbit;
 
 import edu.rit.se.nvip.ReconcilerController;
 import edu.rit.se.nvip.messenger.Messenger;

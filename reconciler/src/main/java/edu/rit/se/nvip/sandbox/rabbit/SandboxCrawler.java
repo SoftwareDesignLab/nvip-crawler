@@ -1,4 +1,4 @@
-package edu.rit.se.nvip.sandbox;
+package edu.rit.se.nvip.sandbox.rabbit;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
@@ -8,6 +8,7 @@ import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
 import edu.rit.se.nvip.model.RawVulnerability;
+import edu.rit.se.nvip.sandbox.DatabaseSandbox;
 import edu.rit.se.nvip.utils.ReconcilerEnvVars;
 
 import java.io.BufferedReader;

@@ -1,4 +1,4 @@
-package edu.rit.se.nvip.sandbox;
+package edu.rit.se.nvip.sandbox.rabbit;
 
 import com.rabbitmq.client.*;
 
