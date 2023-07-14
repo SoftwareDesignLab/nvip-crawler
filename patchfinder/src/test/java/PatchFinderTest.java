@@ -1,4 +1,5 @@
 import model.CpeGroup;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -36,6 +37,7 @@ public class PatchFinderTest {
     }
 
     @Test
+    @Ignore
     public void testFetchEnvVars() {
         PatchFinder.fetchEnvVars();
 

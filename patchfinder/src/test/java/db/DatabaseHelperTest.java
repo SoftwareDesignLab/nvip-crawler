@@ -11,9 +11,9 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.platform.commons.function.Try.success;
 
 public class DatabaseHelperTest {
-    private static final String DATABASE_TYPE = System.getenv("DB_TYPE");
-    private static final String HIKARI_URL = System.getenv("HIKARI_URL");
-    private static final String HIKARI_USER = System.getenv("HIKARI_USER");
+    private static final String DATABASE_TYPE = "mysql";
+    private static final String HIKARI_URL = "jdbc:mysql://localhost:3306/nvip?useSSL=false&allowPublicKeyRetrieval=true";
+    private static final String HIKARI_USER = "root";
     private static final String HIKARI_PASSWORD = System.getenv("HIKARI_PASSWORD");
     private static final String TEST_CVE_ID = "CVE-2023-1001";
 
