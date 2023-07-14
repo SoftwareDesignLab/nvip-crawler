@@ -27,6 +27,8 @@ import edu.rit.se.nvip.model.CompositeVulnerability;
 import edu.rit.se.nvip.model.RawVulnerability;
 import edu.rit.se.nvip.utils.CsvUtils;
 import edu.rit.se.nvip.utils.ReconcilerEnvVars;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 import org.mockito.MockedConstruction;
 
@@ -58,6 +60,8 @@ public class CveCharacterizerTest {
 		try(MockedConstruction<DatabaseHelper> mock = mockConstruction(DatabaseHelper.class)){
 			//String csvPath = "src/test/resources/test-composite-vuln-list.csv";
 			String csvPath = System.getProperty("user.dir") + "\\src\\main\\resources\\cvedata\\mitre-cve.csv";
+			Logger logger = LogManager.getLogger(getClass().getSimpleName());
+			logger.info(System.getProperty("user.dir"));
 			CsvUtils utils = new CsvUtils();
 			List<String[]> data = utils.getDataFromCsv(csvPath);
 			List<String[]> testData = new LinkedList<>();
