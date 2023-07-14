@@ -13,7 +13,6 @@ import java.io.IOException;
 import java.text.DecimalFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeFormatterBuilder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -92,7 +91,7 @@ public class FilterMetricsOutputTool {
         return builder.build();
     }
 
-    public void setCurrentFilterMetrics(FilterMetrics filterMetrics) {
+    public void updateCurrentFilterMetrics(FilterMetrics filterMetrics) {
         this.currentFilterMetrics = filterMetrics;
         this.sourceDist = filterMetrics.sourceTypeDistribution();
         this.numFiltered = filterMetrics.numFiltered();
