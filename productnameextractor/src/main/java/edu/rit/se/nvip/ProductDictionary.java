@@ -72,7 +72,6 @@ public class ProductDictionary {
     private static final String userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36";
     private static final String baseNVDUrl = "https://services.nvd.nist.gov/rest/json/cpes/2.0";
     private static final int resultsPerPage = 10000; // Cannot query more than 10000 per page
-    private static final int maxPages = ProductNameExtractorEnvVars.getMaxPages();
     private static final int maxAttemptsPerPage = ProductNameExtractorEnvVars.getMaxAttemptsPerPage();
 
 
@@ -130,7 +129,9 @@ public class ProductDictionary {
             // If error occurs reading current stored dictionary, perform a full query of NVD's CPE Dictionary
             logger.warn("Failed to load product dictionary at filepath '{}' due to error: {}", productDictPath, e);
             logger.info("Fully querying NVD data with no page limit...");
-            productDict = queryProductDict(0);
+
+            // Not refreshing, doing a full pull, pass in false
+            productDict = queryProductDict(false);
             productDictLastCompilationDate = Instant.now();
             writeProductDict(productDict, productDictPath);
         }
@@ -223,7 +224,7 @@ public class ProductDictionary {
      * of data) is greater than a week, the current data is wiped and a full re-pull from NVD is performed.
      *
      * On the other hand, if it has been less than a week since the most recent composition but longer than a day
-     * since the most recent refresh, then var maxPages number of pages of NVD's dictionary are queried and the
+     * since the most recent refresh, then only NVD's recently updated entries are queried and the
      * current data is updated with the freshly pulled data, logging the changes.
      *
      * @param productDict
@@ -239,7 +240,9 @@ public class ProductDictionary {
             // Fully clear product dict and fill it with no page limit query
             int oldSize = productDict.size();
             productDict.clear();
-            productDict.putAll(queryProductDict(0));
+
+            // Not refreshing, doing a full pull, pass in false
+            productDict.putAll(queryProductDict(false));
 
             // Update last comp date to now
             productDictLastCompilationDate = Instant.now();
@@ -249,15 +252,15 @@ public class ProductDictionary {
 
             writeProductDict(productDict, productDictPath); // Write entire new product dict
 
-            // If less than a week has gone by but over a day, refresh the product dictionary with a maxPages NVD query
+            // If less than a week has gone by but over a day, refresh the product dictionary with new entries from NVD
         } else if (timeSinceLastRefresh / (60 * 60 * 24) > 0){
             logger.info("Product dictionary file is stale, fetching data from NVD to refresh it...");
             int insertedCounter = 0;
             int notChangedCounter = 0;
             int updatedCounter = 0;
 
-            //TODO: Modify query method to query by recent entries for refresh
-            final Map<String, CpeGroup> updatedProductDict = queryProductDict(maxPages);
+            // Refreshing, pass in true
+            final Map<String, CpeGroup> updatedProductDict = queryProductDict(true);
 
             // Refresh old dict with new dict and count how many entries are inserted, updated, or unchanged
             logger.info("Refreshing product dictionary...");
@@ -281,12 +284,11 @@ public class ProductDictionary {
     /**
      * Compiles a CPE dictionary of products from querying NVD's CPE API
      *
+     * @param isRefresh whether we are refreshing or doing a full pull
      * @return a map of loaded CpeGroup objects
      */
     @SuppressWarnings({"unchecked", "rawtypes"})
-    private static Map<String, CpeGroup> queryProductDict(int maxPages) {
-        // If maxPages is set to 0, no limit on pages
-        if(maxPages == 0) maxPages = Integer.MAX_VALUE;
+    private static Map<String, CpeGroup> queryProductDict(boolean isRefresh) {
 
         // Init cpeMapFile
         final HashMap<String, CpeGroup> productDict = new HashMap<>();
@@ -296,8 +298,10 @@ public class ProductDictionary {
             int index = 0;
             int attempts = 0;
 
+            LinkedHashMap<String, ?> rawData;
             // Get raw data
-            LinkedHashMap<String, ?> rawData = getNvdCpeData(index);
+            if(isRefresh) rawData = getNvdCpeData(index, true);
+            else rawData = getNvdCpeData(index, false);
 
             // Extract results data
             int remainingResults = (int) rawData.get("totalResults");
@@ -318,7 +322,7 @@ public class ProductDictionary {
                     // Skip first query, as it was already done in order to get the totalResults number
                     if(index > 0) {
                         // Query next page
-                        rawData = getNvdCpeData(index);
+                        rawData = getNvdCpeData(index, isRefresh);
                     }
 
                     // Extract product data
@@ -392,10 +396,6 @@ public class ProductDictionary {
                     attempts = 0;
 
                     logger.info("Successfully loaded CPE dictionary page {}/{}", page, totalPages);
-                    if(page >= maxPages) {
-                        logger.warn("MAX_PAGES reached, the remaining {} pages will not be queried", totalPages - maxPages);
-                        break;
-                    }
                 }
                 // This block catches rate limiting errors, sleeps, then rethrows the error
                 catch (InterruptedIOException e) {
@@ -424,9 +424,21 @@ public class ProductDictionary {
      * @throws IOException if an exception occurs while attempting to retrieve the page contents
      */
     @SuppressWarnings("unchecked")
-    private static LinkedHashMap<String, ?> getNvdCpeData(int startIndex) throws JsonParseException, IOException {
-        // Pagination parameter addition
-        final String url = baseNVDUrl + String.format("?resultsPerPage=%s&startIndex=%s", resultsPerPage, startIndex);
+    private static LinkedHashMap<String, ?> getNvdCpeData(int startIndex, boolean isRefresh) throws JsonParseException, IOException {
+
+        final String url;
+
+        // If refreshing, include lastModStartDate and lastModEndDate in the URL
+        if(isRefresh){
+            String lastModStartDate = productDictLastRefreshDate.toString();
+            String lastModEndDate = Instant.now().toString();
+            url = baseNVDUrl + String.format("?resultsPerPage=%s&startIndex=%s&lastModStartDate=%s&lastModEndDate=%s",
+                    resultsPerPage, startIndex, lastModStartDate, lastModEndDate);
+            System.out.println("URL: " + url);
+
+        // Otherwise, querying the entire thing at specified index/results per page
+        } else url = baseNVDUrl + String.format("?resultsPerPage=%s&startIndex=%s", resultsPerPage, startIndex);
+
         logger.info("Fetching product list from CPE dictionary at {}", url);
 
 
