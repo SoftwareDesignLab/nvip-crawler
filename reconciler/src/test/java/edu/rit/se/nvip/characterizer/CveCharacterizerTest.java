@@ -63,10 +63,7 @@ public class CveCharacterizerTest {
 		try(MockedConstruction<DatabaseHelper> mock = mockConstruction(DatabaseHelper.class)){
 			//String csvPath = "src/test/resources/test-composite-vuln-list.csv";
 			//String csvPath = System.getProperty("user.dir") + "\\src\\main\\resources\\cvedata\\mitre-cve.csv";
-                        String csvPath = Paths.get("src","test","resources", "cvedata", "mitre-cve.csv").toAbsolutePath().toString();
-                        Logger logger = LogManager.getLogger(getClass().getSimpleName());
-			logger.info(System.getProperty("user.dir"));
-                        logger.info(new File(Paths.get("src","test","resources", "cvedata", "mitre-cve.csv").toUri()).exists());
+			String csvPath = Paths.get("src","test","resources", "cvedata", "mitre-cve.csv").toAbsolutePath().toString();
 
 			CsvUtils utils = new CsvUtils();
 			List<String[]> data = utils.getDataFromCsv(csvPath);
