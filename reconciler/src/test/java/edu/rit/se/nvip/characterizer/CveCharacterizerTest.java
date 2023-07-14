@@ -1,4 +1,5 @@
-package edu.rit.se.nvip.characterizer; /**
+package edu.rit.se.nvip.characterizer; 
+/**
  * Copyright 2023 Rochester Institute of Technology (RIT). Developed with
  * government support under contract 70RSAT19CB0000020 awarded by the United
  * States Department of Homeland Security.
@@ -36,6 +37,8 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.nio.file.Paths;
+import java.io.File;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -59,7 +62,12 @@ public class CveCharacterizerTest {
 		assertTrue(prediction.size() > 0);
 		try(MockedConstruction<DatabaseHelper> mock = mockConstruction(DatabaseHelper.class)){
 			//String csvPath = "src/test/resources/test-composite-vuln-list.csv";
-			String csvPath = System.getProperty("user.dir") + "\\src\\main\\resources\\cvedata\\mitre-cve.csv";
+			//String csvPath = System.getProperty("user.dir") + "\\src\\main\\resources\\cvedata\\mitre-cve.csv";
+                        String csvPath = Paths.get("src","test","resources", "cvedata", "mitre-cve.csv").toAbsolutePath().toString();
+                        Logger logger = LogManager.getLogger(getClass().getSimpleName());
+			logger.info(System.getProperty("user.dir"));
+                        logger.info(new File(Paths.get("src","test","resources", "cvedata", "mitre-cve.csv").toUri()).exists());
+
 			CsvUtils utils = new CsvUtils();
 			List<String[]> data = utils.getDataFromCsv(csvPath);
 			List<String[]> testData = new LinkedList<>();
