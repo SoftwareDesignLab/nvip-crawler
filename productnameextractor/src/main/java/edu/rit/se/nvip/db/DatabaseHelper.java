@@ -315,11 +315,17 @@ public class DatabaseHelper {
 					final int vulnId = rs.getInt(0);
 					final String cveId = rs.getString(1);
 					final String description = rs.getString(2);
+					final String publishDate = rs.getString(3);
+					final String lastModifiedDate = rs.getString(4);
 
 					// Build vuln object
 					CompositeVulnerability vulnerability = new CompositeVulnerability(
 							vulnId,
+							"",
 							cveId,
+							"",
+							publishDate,
+							lastModifiedDate,
 							description,
 							CompositeVulnerability.CveReconcileStatus.DO_NOT_CHANGE
 					);
