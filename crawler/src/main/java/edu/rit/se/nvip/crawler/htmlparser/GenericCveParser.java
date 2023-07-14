@@ -22,14 +22,18 @@
  * SOFTWARE.
  */
 package edu.rit.se.nvip.crawler.htmlparser;
-import java.util.List;
+
+import edu.rit.se.nvip.model.RawVulnerability;
+import edu.rit.se.nvip.crawler.SeleniumDriver;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import edu.rit.se.nvip.model.RawVulnerability;
+
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
-import org.openqa.selenium.WebDriver;
+
+import java.util.List;
 
 /**
  * 
@@ -39,7 +43,7 @@ import org.openqa.selenium.WebDriver;
  */
 public class GenericCveParser extends AbstractCveParser  {
 	private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
-	private WebDriver driver;
+	private SeleniumDriver driver;
 
 	/**
 	 * Parser strategy interface for Generic Parsing
@@ -48,7 +52,7 @@ public class GenericCveParser extends AbstractCveParser  {
 	 */
 	private ParserStrategy parserStrategy = null;
 	
-	public GenericCveParser(String domainName, WebDriver driver) {
+	public GenericCveParser(String domainName, SeleniumDriver driver) {
 		sourceDomainName = domainName;
 		this.driver = driver;
 	}

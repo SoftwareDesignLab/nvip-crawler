@@ -8,8 +8,8 @@ public class Char2vecTest {
 
     @BeforeEach
     public void setUp() {
-        String modelConfigPath = "src/main/resources/data/c2v_model_config.json";
-        String modelWeightsPath = "src/main/resources/data/c2v_model_weights_50.h5";
+        String modelConfigPath = "nvip_data/data/c2v_model_config_50.json";
+        String modelWeightsPath = "nvip_data/data/c2v_model_weights_50.h5";
         char2vec = new Char2vec(modelConfigPath, modelWeightsPath);
     }
 

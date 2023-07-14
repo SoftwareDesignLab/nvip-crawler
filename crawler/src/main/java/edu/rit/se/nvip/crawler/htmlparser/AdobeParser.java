@@ -93,7 +93,7 @@ public class AdobeParser extends AbstractCveParser {
 
         for (String cve : cves)
             vulnList.add(new RawVulnerability(
-                    sSourceURL, cve, publishDate, lastModifiedDate, description
+                    sSourceURL, cve, publishDate, lastModifiedDate, description, getClass().getSimpleName()
             ));
 
         return vulnList;

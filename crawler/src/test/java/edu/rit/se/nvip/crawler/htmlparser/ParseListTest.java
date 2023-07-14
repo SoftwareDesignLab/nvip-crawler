@@ -58,7 +58,7 @@ public class ParseListTest extends AbstractParserTest {
         assertTrue(list.size() > 190);
         RawVulnerability vuln = getVulnerability(list, "CVE-2023-0465");
         assertNotNull(vuln);
-        assertEquals("23 March 2023", vuln.getPublishDate());
+        assertEquals("2023-03-23 00:00:00", vuln.getPublishDate());
         assertTrue(vuln.getDescription().contains("Applications that use a non-default option when verifying certificates may be vulnerable "));
     }
 }

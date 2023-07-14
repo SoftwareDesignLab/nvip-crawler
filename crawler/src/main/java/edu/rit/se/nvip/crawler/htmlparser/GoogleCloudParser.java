@@ -99,7 +99,7 @@ public class GoogleCloudParser extends AbstractCveParser {
                     }
 
                     for (String cve: cves) {
-                        vulns.add(new RawVulnerability(sSourceURL, cve, publishedDate, lastModifiedDate, description));
+                        vulns.add(new RawVulnerability(sSourceURL, cve, publishedDate, lastModifiedDate, description, getClass().getSimpleName()));
                     }
                     cves = new ArrayList<>();
                     description = "";

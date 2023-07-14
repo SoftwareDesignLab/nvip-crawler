@@ -30,6 +30,7 @@ import edu.rit.se.nvip.*;
 import edu.rit.se.nvip.model.cpe.ClassifiedWord;
 import edu.rit.se.nvip.model.cpe.CpeGroup;
 import edu.rit.se.nvip.model.cpe.ProductItem;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -42,11 +43,14 @@ import static org.junit.Assert.*;
  */
 
 public class NERmodelTest {
+	private static final String RESOURCE_DIR = System.getenv("RESOURCE_DIR");
+	private static final String NLP_DIR = System.getenv("NLP_DIR");
+
 	// Init cpeLookUp
 	private static final CpeLookUp cpeLookUp = new CpeLookUp();
 	static {
 		try {
-			final Map<String, CpeGroup> productDict = ProductNameExtractorController.readProductDict("src/test/resources/data/product_dict.json");
+			final Map<String, CpeGroup> productDict = ProductNameExtractorController.readProductDict("src/test/resources/data/test_product_dict.json");
 			cpeLookUp.loadProductDict(productDict);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
@@ -55,7 +59,6 @@ public class NERmodelTest {
 
 	// ENV VARS
 	final String DATA_DIR = System.getenv("DATA_DIR");
-	final String NAME_EXTRACTOR_DIR = System.getenv("NAME_EXTRACTOR_DIR");
 	final String CHAR_2_VEC_CONFIG = System.getenv("CHAR_2_VEC_CONFIG");
 	final String CHAR_2_VEC_WEIGHTS = System.getenv("CHAR_2_VEC_WEIGHTS");
 	final String WORD_2_VEC = System.getenv("WORD_2_VEC");
@@ -64,7 +67,7 @@ public class NERmodelTest {
 
 		String word = "MicroSoft";
 
-		String modelsDir = DATA_DIR + "/" + NAME_EXTRACTOR_DIR + "/";
+		String modelsDir = RESOURCE_DIR + "/" + DATA_DIR + "/";
 		String c2vModelConfigPath = modelsDir + CHAR_2_VEC_CONFIG;
 		String c2vModelWeightsPath = modelsDir + CHAR_2_VEC_WEIGHTS;
 
@@ -92,10 +95,13 @@ public class NERmodelTest {
 	@Test
 	public void word2vectorModelTest() {
 		String word = "MicroSoft";
-
-		String modelsDir = DATA_DIR + "/" + NAME_EXTRACTOR_DIR + "/";
-		String w2vModelPath = modelsDir + WORD_2_VEC;
-		Word2Vector w2vModel = new Word2Vector(w2vModelPath);
+		String w2vModelPath = RESOURCE_DIR + "/" + DATA_DIR + "/" + WORD_2_VEC;
+		Word2Vector w2vModel = null;
+		try {
+			w2vModel = new Word2Vector(w2vModelPath);
+		} catch (Exception e) {
+			fail(e.toString());
+		}
 		int wordVecLength = w2vModel.getOutVectorLength();
 
 		long startTime = System.currentTimeMillis();
@@ -116,7 +122,12 @@ public class NERmodelTest {
 		String testDescription = "The daemon in rsync 3.1.2 and 3.1.3-development before 2017-12-03 does not check for fnamecmp filenames in the daemon_filter_list data structure (in the recv_files function in receiver.c) and also does not apply the sanitize_paths protection mechanism to pathnames found in \"xname follows\" strings (in the read_ndx_and_attrs function in rsync.c) which allows remote attackers to bypass intended access restrictions.";
 
 		long startTime = System.currentTimeMillis();
-		NERmodel nerModel = new NERmodel();
+		NERmodel nerModel = null;
+		try {
+			nerModel = new NERmodel(RESOURCE_DIR + "/" + DATA_DIR + "/", NLP_DIR);
+		} catch (Exception e) {
+			fail(e.toString());
+		}
 		long endTime = System.currentTimeMillis();
 		System.out.println("Timing for overall NER model initialization: " + Long.toString(endTime-startTime) + "ms.");
 
@@ -147,13 +158,12 @@ public class NERmodelTest {
 
 	@Test
 	public void augmentedNERtest() {
-		String description = "The \"origin\" parameter passed to some of the endpoints like '/trigger' was vulnerable to XSS exploit. This issue affects Apache Airflow versions <1.10.15 in 1.x series and affects 2.0.0 and 2.0.1 and 2.x series. This is the same as CVE-2020-13944 & CVE-2020-17515 but the implemented fix did not fix the issue completely. Update to Airflow 1.10.15 or 2.0.2. Please also update your Python version to the latest available PATCH releases of the installed MINOR versions, example update to Python 3.6.13 if you are on Python 3.6. (Those contain the fix for CVE-2021-23336 https://nvd.nist.gov/vuln/detail/CVE-2021-23336).";
-
-		String anticipatedResult = "SN: Apache. SV:  versions <1.10.15";
+		String description = "In SaltStack Salt before 2016.3.6, compromised salt-minions can impersonate the salt-master.";
+		String anticipatedResult = "SN: SaltStack Salt. SV:  before 2016.3.6,";
 
 		ProductDetector nameDetector = null;
 		try {
-			nameDetector = new ProductDetector(cpeLookUp);
+			nameDetector = new ProductDetector(cpeLookUp, RESOURCE_DIR, NLP_DIR, DATA_DIR);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -161,12 +171,10 @@ public class NERmodelTest {
 		long startTime = System.currentTimeMillis();
 		ArrayList<ClassifiedWord> result = nameDetector.classifyWordsInDescription(description);
 		long endTime = System.currentTimeMillis();
-//		System.out.println(result.toString());
+
 		System.out.println("Timing for the classification of description of the average length using augmented NER: " + (endTime - startTime) + "ms.");
 
 		ArrayList<ProductItem> detectedProducts = nameDetector.getProductItems(result);
-
-//		System.out.println(detectedProducts.toString());
 
 		boolean isResultNotNull = (result != null && !result.isEmpty());
 		boolean containsOtherClass = result.stream().anyMatch(word -> word.getAssignedClass() == ClassifiedWord.WordType.OTHER);
@@ -174,11 +182,7 @@ public class NERmodelTest {
 		boolean containsSoftwareVersionClass = result.stream().anyMatch(word -> word.getAssignedClass() == ClassifiedWord.WordType.SOFTWARE_VERSION);
 
 		boolean isProductNotNull = (detectedProducts != null && !detectedProducts.isEmpty());
-		boolean isCorrectProduct = false;
-
-		if (isProductNotNull) {
-			isCorrectProduct = detectedProducts.get(0).toString().contains(anticipatedResult);
-		}
+		boolean isCorrectProduct = detectedProducts.get(0).toString().contains(anticipatedResult);
 
 		if (!isCorrectProduct) {
 			System.out.println("ERROR! Anticipated: " + anticipatedResult + " | Got: " + detectedProducts.get(0).toString());

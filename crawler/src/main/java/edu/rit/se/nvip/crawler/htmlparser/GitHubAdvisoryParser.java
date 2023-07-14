@@ -24,6 +24,7 @@
 package edu.rit.se.nvip.crawler.htmlparser;
 
 import edu.rit.se.nvip.model.RawVulnerability;
+import edu.rit.se.nvip.crawler.SeleniumDriver;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -45,44 +46,23 @@ public class GitHubAdvisoryParser extends AbstractCveParser {
 
     private static final Logger logger = LogManager.getLogger(RawVulnerability.class);
 
-    private WebDriver driver;
+    private SeleniumDriver driver;
 
     /**
      * Parse advisories listed to github.com/advisories
      * @param domainName - github domain
      */
-    public GitHubAdvisoryParser(String domainName, WebDriver driver) { 
+    public GitHubAdvisoryParser(String domainName, SeleniumDriver driver) { 
         sourceDomainName = domainName;
         this.driver = driver;
     }
 
-    private void tryPageGet(String sSourceURL) {
-        int tries = 0;
-        while (tries < 2) {
-            try {
-                driver.get(sSourceURL);
-                break;
-            } catch (TimeoutException e) {
-                logger.info("Retrying page get...");
-                tries++;
-            }
-        }
-    }
-
     @Override
     public List<RawVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
-        // get the page
-        tryPageGet(sSourceURL);
-        try{
-            if (driver.getPageSource() == null) return new ArrayList<>();
-        } catch (TimeoutException e) {
-            logger.warn("Unable to get {}", sSourceURL);
-            return new ArrayList<>();
-        }
-        // click on any cookie agree button before trying to parse and click on anything else
         List<RawVulnerability> vulnList = new ArrayList<>();
 
-        String html = driver.getPageSource();
+        String html = driver.tryPageGet(sSourceURL);
+        if(html == null) return vulnList;
 
         Document doc = Jsoup.parse(html);
 
@@ -128,7 +108,7 @@ public class GitHubAdvisoryParser extends AbstractCveParser {
         }
 
         vulnList.add(new RawVulnerability(
-           sSourceURL, cveId, publishDate, lastModifiedDate, description.toString()
+           sSourceURL, cveId, publishDate, lastModifiedDate, description.toString(), getClass().getSimpleName()
         ));
 
         return vulnList;

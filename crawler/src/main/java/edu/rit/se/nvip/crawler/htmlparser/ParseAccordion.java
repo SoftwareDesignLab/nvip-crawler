@@ -1,17 +1,19 @@
 package edu.rit.se.nvip.crawler.htmlparser;
 
 import edu.rit.se.nvip.model.RawVulnerability;
+import edu.rit.se.nvip.crawler.SeleniumDriver;
+
 import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-import org.openqa.selenium.*;
-import org.openqa.selenium.interactions.Actions;
-import org.openqa.selenium.interactions.MoveTargetOutOfBoundsException;
 
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebElement;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -22,10 +24,7 @@ public class ParseAccordion extends AbstractCveParser implements ParserStrategy 
 
     private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
 
-    WebDriver driver;
-
-    // init actions to be able to click around
-    Actions actions;
+    SeleniumDriver driver;
 
     String sourceUrl = "";
 
@@ -33,20 +32,9 @@ public class ParseAccordion extends AbstractCveParser implements ParserStrategy 
      * Generic parser accordion strategy
      * @param sourceDomainName - domain name of source
      */
-    public ParseAccordion(String sourceDomainName, WebDriver driver) {
+    public ParseAccordion(String sourceDomainName, SeleniumDriver driver) {
         this.driver = driver;
         this.sourceDomainName = sourceDomainName;
-        actions = new Actions(driver);
-    }
-
-    public void clickAcceptCookies() {
-        try {
-            WebElement cookiesButton = driver.findElement(By.xpath("//button[text()='Agree' or text()='Accept' or text()='Accept Cookies' or text()='Accept all']"));
-            cookiesButton.click();
-            logger.info("Accepted Cookies for page " + sourceUrl);
-        } catch (NoSuchElementException | ElementNotInteractableException e) {
-            logger.info("No Cookies pop-up found for page " + sourceUrl);
-        }
     }
 
     /**
@@ -76,42 +64,24 @@ public class ParseAccordion extends AbstractCveParser implements ParserStrategy 
         if (lastMod == null || lastMod.equals("")) lastMod = rawDate;
         for (String cve : thisAccCVES) {
             RawVulnerability vuln = new RawVulnerability(
-                    sourceUrl, cve, rawDate, lastMod, accordionText);
+                    sourceUrl, cve, rawDate, lastMod, accordionText, getClass().getSimpleName());
             cves.add(vuln);
         }
         return cves;
     }
 
-    private void tryPageGet(String sSourceURL) {
-        int tries = 0;
-        while (tries < 2) {
-            try {
-                driver.get(sSourceURL);
-                break;
-            } catch (TimeoutException e) {
-                logger.info("Retrying page get...");
-                tries++;
-            }
-        }
-    }
-
     @Override
     public List<RawVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
         sourceUrl = sSourceURL;
-        tryPageGet(sSourceURL);
-        try{
-            if (driver.getPageSource() == null) return new ArrayList<>();
-        } catch (TimeoutException e) {
-            logger.warn("Unable to get {}", sourceUrl);
-            return new ArrayList<>();
-        }
-        clickAcceptCookies();
         List<RawVulnerability> vulnList = new ArrayList<>();
 
+        String originalHtml = driver.tryPageGet(sSourceURL);
+        if(originalHtml == null) return vulnList;
+
+        driver.clickAcceptCookies();
 
         // search for class name containing "accordion"
         // parse and grab accordion root
-        String originalHtml = driver.getPageSource();
         Document doc = Jsoup.parse(originalHtml);
         Elements accordions = doc.select("accordion, bolt-accordion, acc, div[class*=accordion], div[id*=accordion]");
         // make sure we are only looking at root accordions
@@ -128,15 +98,14 @@ public class ParseAccordion extends AbstractCveParser implements ParserStrategy 
             for (Element child : accordionChildren) {
                 StringBuilder childText = new StringBuilder(child.text());
                 String diff = "";
+
                 // try and click on child to see if we can gain any more CVE info from it
-                try {
-                    WebElement childWebElement = driver.findElement(By.xpath(jsoupToXpath(child)));
-                    actions.moveToElement(childWebElement).click().perform();
-                    String newHtml = driver.getPageSource();
+                WebElement childWebElement = driver.tryFindElement(By.xpath(jsoupToXpath(child)));
+                if(childWebElement != null && driver.tryClickElement(childWebElement, 5)) {
+                    String newHtml = driver.getDriver().getPageSource();
                     diff = StringUtils.difference(originalHtml, newHtml);
-                } catch (NoSuchElementException | ElementNotInteractableException | MoveTargetOutOfBoundsException e) {
-                    // logger.info("Could not click on accordion child");
                 }
+
                 if (!diff.equals(""))
                     childText.append(diff, 0, 200);
                 vulnList.addAll(parseCVEsFromAccordion(childText.toString()));
@@ -165,11 +134,7 @@ public class ParseAccordion extends AbstractCveParser implements ParserStrategy 
                 }
             }
         }
-        try{
-            driver.manage().deleteAllCookies();
-        } catch (TimeoutException e) {
-            logger.warn("Unable to clear cookies for {}", sourceUrl);
-        }
+        driver.deleteAllCookies();
         return vulnList;
     }
 }

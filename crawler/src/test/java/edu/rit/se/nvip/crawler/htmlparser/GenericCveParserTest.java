@@ -26,7 +26,10 @@ package edu.rit.se.nvip.crawler.htmlparser;
 import edu.rit.se.nvip.crawler.CveCrawler;
 import edu.rit.se.nvip.model.RawVulnerability;
 import edu.rit.se.nvip.model.Vulnerability;
+import edu.rit.se.nvip.crawler.SeleniumDriver;
+
 import org.apache.commons.io.IOUtils;
+
 import org.junit.Test;
 import org.junit.BeforeClass;
 import org.junit.AfterClass;
@@ -37,23 +40,21 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.ArrayList;
 
-import org.openqa.selenium.WebDriver;
-
 import static org.junit.Assert.*;
 
 public class GenericCveParserTest extends AbstractParserTest {
 	static GenericCveParser parser;
-	static WebDriver driver;
+	static SeleniumDriver driver;
 
 	@BeforeClass
     public static void setupWebDriver(){
-        driver = new CveCrawler(new ArrayList<>(), "").getDriver();
+        driver = new SeleniumDriver();
         parser = new GenericCveParser("nat_available", driver);
     }
 
     @AfterClass
     public static void destroyWebDriver(){
-        if(driver != null) driver.quit();
+        if(driver != null) driver.tryDiverQuit();
     }
 	
 	@Test

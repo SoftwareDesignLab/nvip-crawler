@@ -89,7 +89,7 @@ public class AsustorParser extends AbstractCveParser {
             String description = descriptions.get(cve);
             if(description != null){
                 RawVulnerability vuln = new RawVulnerability(
-                        sSourceURL, cve, publishDate, lastUpdatedDate, description
+                        sSourceURL, cve, publishDate, lastUpdatedDate, description, getClass().getSimpleName()
                 );
                 vulnList.add(vuln);
             }

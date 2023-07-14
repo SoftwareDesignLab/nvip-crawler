@@ -25,12 +25,15 @@ import java.util.*;
  */
 public class ProductNameExtractorController {
     private static final Logger logger = LogManager.getLogger(ProductNameExtractorController.class);
-    private static final DatabaseHelper databaseHelper = DatabaseHelper.getInstance();
     private static final ObjectMapper OM = new ObjectMapper();
     protected static int cveLimit = 300;
     protected static int maxPages = 10;
     protected static int maxAttemptsPerPage = 2;
     protected static boolean prettyPrint = false;
+    protected static String databaseType = "mysql";
+    protected static String hikariUrl = "jdbc:mysql://localhost:3306/nvip?useSSL=false&allowPublicKeyRetrieval=true";
+    protected static String hikariUser = "root";
+    protected static String hikariPassword = "root";
     private static String productDictPath = "src/test/resources/data/product_dict.json";
     private static Instant productDictLastCompilationDate;
     private static AffectedProductIdentifier affectedProductIdentifier;
@@ -126,6 +129,31 @@ public class ProductNameExtractorController {
             prettyPrint = Boolean.parseBoolean(System.getenv("PRETTY_PRINT"));
             logger.info("Setting PRETTY_PRINT to {}", prettyPrint);
         } else logger.warn("Could not fetch PRETTY_PRINT from env vars, defaulting to {}", prettyPrint);
+
+        fetchHikariEnvVars(props);
+    }
+
+    private static void fetchHikariEnvVars(Map<String, String> props) {
+        try {
+            if(props.containsKey("HIKARI_URL")) {
+                hikariUrl = System.getenv("HIKARI_URL");
+                logger.info("Setting HIKARI_URL to {}", hikariUrl);
+            } else throw new Exception();
+        } catch (Exception ignored) { logger.warn("Could not fetch HIKARI_URL from env vars, defaulting to {}", hikariUrl); }
+
+        try {
+            if(props.containsKey("HIKARI_USER")) {
+                hikariUser = System.getenv("HIKARI_USER");
+                logger.info("Setting HIKARI_USER to {}", hikariUser);
+            } else throw new Exception();
+        } catch (Exception ignored) { logger.warn("Could not fetch HIKARI_USER from env vars, defaulting to {}", hikariUser); }
+
+        try {
+            if(props.containsKey("HIKARI_PASSWORD")) {
+                hikariPassword = System.getenv("HIKARI_PASSWORD");
+                logger.info("Setting HIKARI_PASSWORD to {}", hikariPassword);
+            } else throw new Exception();
+        } catch (Exception ignored) { logger.warn("Could not fetch HIKARI_PASSWORD from env vars, defaulting to {}", hikariPassword); }
     }
 
     public static void writeProductDict(Map<String, CpeGroup> productDict, String productDictPath) {
@@ -182,11 +210,14 @@ public class ProductNameExtractorController {
         // Fetch values for required environment variables
         ProductNameExtractorController.fetchEnvVars();
 
+        // Init database helper
+        final DatabaseHelper dbh = new DatabaseHelper(databaseType, hikariUrl, hikariUser, hikariPassword);
+
         logger.info("Pulling existing CVEs from the database...");
         final long getCVEStart = System.currentTimeMillis();
 
         // Fetch vulnerability data from the DB
-        final Map<String, CompositeVulnerability> vulnMap = databaseHelper.getExistingCompositeVulnerabilities(0);
+        final Map<String, CompositeVulnerability> vulnMap = dbh.getExistingCompositeVulnerabilities(0);
 
         // Extract vuln list for the AffectedProductIdentifier
         final List<CompositeVulnerability> vulnerabilities = new ArrayList<>(vulnMap.values());
@@ -231,7 +262,7 @@ public class ProductNameExtractorController {
         // Run the AffectedProductIdentifier with the fetched vuln list
         final Map<String, Product> productMap = affectedProductIdentifier.identifyAffectedProducts(cveLimit);
 
-        databaseHelper.insertAffectedProductsToDB(vulnerabilities);
+        dbh.insertAffectedProductsToDB(vulnerabilities);
 
         logger.info("AffectedProductIdentifier found {} affected products in {} seconds", productMap.size(), Math.floor(((double) (System.currentTimeMillis() - getProdStart) / 1000) * 100) / 100);
     }

@@ -63,7 +63,7 @@ public class MendParser extends AbstractCveParser {
         Elements descEl = dateAndDesc.select("p");
         String description = dateAndDesc.select("p").get(0).text();
 
-        vulnList.add(new RawVulnerability(sSourceURL, cveId, publishedDate, publishedDate, description));
+        vulnList.add(new RawVulnerability(sSourceURL, cveId, publishedDate, publishedDate, description, getClass().getSimpleName()));
 
         return vulnList;
     }

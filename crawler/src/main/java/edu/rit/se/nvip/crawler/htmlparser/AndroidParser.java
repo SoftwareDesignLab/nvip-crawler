@@ -123,7 +123,7 @@ public class AndroidParser extends AbstractCveParser {
                 }
                 if (cveId.equals("")) continue;
                 vulnList.add(new RawVulnerability(
-                        sSourceURL, cveId, publishedDate, lastModifiedDate, usefulDesc.toString()
+                        sSourceURL, cveId, publishedDate, lastModifiedDate, usefulDesc.toString(), getClass().getSimpleName()
                 ));
             }
         }

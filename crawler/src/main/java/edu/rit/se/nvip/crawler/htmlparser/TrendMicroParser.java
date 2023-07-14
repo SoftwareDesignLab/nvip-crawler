@@ -76,7 +76,7 @@ public class TrendMicroParser extends AbstractCveParser {
                 Element descTD = cveTD.nextElementSibling();
                 if (descTD == null) continue;
                 String description = descTD.text();
-                vulnList.add(new RawVulnerability(sSourceURL, cveId, date, date, description
+                vulnList.add(new RawVulnerability(sSourceURL, cveId, date, date, description, getClass().getSimpleName()
                 ));
             }
         }

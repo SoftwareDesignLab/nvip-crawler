@@ -97,7 +97,7 @@ public class AcronisParser extends AbstractCveParser {
             lastModifiedDate = publishDate;
 
         for (String cve : cves)
-            vulnList.add(new RawVulnerability(sSourceURL, cve, publishDate, lastModifiedDate, description));
+            vulnList.add(new RawVulnerability(sSourceURL, cve, publishDate, lastModifiedDate, description, getClass().getSimpleName()));
 
         return vulnList;
     }

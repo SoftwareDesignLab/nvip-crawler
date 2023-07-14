@@ -38,24 +38,6 @@ public class AffectedProductTest {
         Assertions.assertNotEquals(product, null);
     }
 
-    @Test
-    public void testGetPURL_WithUnknownProductName() {
-        // Create an AffectedProduct object with an unknown productname
-        AffectedProduct product = new AffectedProduct("cpe:2.3:a:vulnerable_product:1.0", "2023-01-01", "1.0");
-
-        // Assert that getPURL returns null
-        Assertions.assertNull(product.getPURL("UNKNOWN"));
-    }
-
-    @Test
-    public void testGetSWID_WithUnknownProductName() {
-        // Create an AffectedProduct object with an unknown product name
-        AffectedProduct product = new AffectedProduct("cpe:2.3:a:vulnerable_product:1.0", "2023-01-01", "1.0");
-
-        // Assert that getSWID returns null
-        Assertions.assertNull(product.getSWID("UNKNOWN"));
-    }
-
     @org.junit.Test
     public void swidGenerationVersionTest(){
         String expectedSWID = "<SoftwareIdentity xmlns=\"http://standards.iso.org/iso/19770/-2/2015/schema.xsd\" " +
@@ -73,9 +55,9 @@ public class AffectedProductTest {
         String vendor = "ExampleVendor";
         String version = "1.0.0";
 
-        AffectedProduct product = new AffectedProduct(1, "", "", "", version, vendor);
+        AffectedProduct product = new AffectedProduct(1, "", "", productName, "", version, vendor);
 
-        assertEquals(expectedSWID, product.getSWID(productName));
+        assertEquals(expectedSWID, product.getSWID());
     }
 
     @org.junit.Test
@@ -95,49 +77,30 @@ public class AffectedProductTest {
         String vendor = "ExampleVendor";
         String version = "";
 
-        AffectedProduct product = new AffectedProduct(1, "", "", "", version, vendor);
+        AffectedProduct product = new AffectedProduct(1, "", "", productName, "", version, vendor);
 
-        assertEquals(expectedSWID, product.getSWID(productName));
-    }
-
-    @org.junit.Test
-    public void swidGenerationProductUNKNOWN(){
-
-        String productName = "UNKNOWN";
-        String vendor = "ExampleVendor";
-        String version = "1.0.0";
-
-        AffectedProduct product = new AffectedProduct(1, "", "", "", version, vendor);
-
-        assertNull(product.getSWID(productName));
+        assertEquals(expectedSWID, product.getSWID());
     }
 
     //cveId, cpe, releaseDate are all empty string because they are not used for PURL Generation
     @org.junit.Test
     public void purlGenerationWOVersionTest(){
         String productName = "android";
-        AffectedProduct product = new AffectedProduct(1, "", "", "", "", "google");
+        AffectedProduct product = new AffectedProduct(1, "", "", productName, "", "", "google");
 
         String expected = "pkg:google/android";
 
-        assertEquals(expected,product.getPURL(productName));
+        assertEquals(expected,product.getPURL());
     }
 
     @org.junit.Test
     public void purlGenerationVersionTest(){
         String productName = "security";
-        AffectedProduct product = new AffectedProduct(1, "", "", "", "1.6.2", "gentoo");
+        AffectedProduct product = new AffectedProduct(1, "", "", productName, "", "1.6.2", "gentoo");
 
         String expected = "pkg:gentoo/security@1.6.2";
 
-        assertEquals(expected,product.getPURL(productName));
+        assertEquals(expected,product.getPURL());
     }
-
-    @org.junit.Test
-    public void purlGenerationProductUNKNOWN(){
-        String productName = "UNKNOWN";
-        AffectedProduct product = new AffectedProduct(1, "", "", "", "1.6.2", "gentoo");
-
-        assertNull(product.getPURL(productName));
-    }
+    
 }

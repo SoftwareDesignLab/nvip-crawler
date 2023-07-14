@@ -39,6 +39,7 @@ import java.io.File;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.Random;
 
 /**
@@ -80,85 +81,100 @@ public class NERmodel {
 	public NERmodel() {
 		super();
 
+		final Map<String, String> vars = System.getenv();
+		// Get models path values from ENV VARS
+		final String dataDir = vars.get("DATA_DIR");
+		final String nameExtractorDir = vars.get("NAME_EXTRACTOR_DIR");
+		final String char2VecConfig = vars.get("CHAR_2_VEC_CONFIG");
+		final String char2VecWeights = vars.get("CHAR_2_VEC_WEIGHTS");
+		final String word2Vec = vars.get("WORD_2_VEC");
+		final String nerModel = vars.get("NER_MODEL");
+		final String nerModelNormalizer = vars.get("NER_MODEL_NORMALIZER");
+
+		// Ensure all values were found
+		if(
+				dataDir == null ||
+						nameExtractorDir == null ||
+						char2VecConfig == null ||
+						char2VecWeights == null ||
+						word2Vec == null ||
+						nerModel == null ||
+						nerModelNormalizer == null
+		) throw new IllegalArgumentException("Could not initialize NER Model: Missing 1 or more required env vars");
+
+		// Build path Strings
+		String modelsDir = dataDir + "/" + nameExtractorDir + "/";
+		String c2vModelConfigPath = modelsDir + char2VecConfig;
+		String c2vModelWeightsPath = modelsDir + char2VecWeights;
+		String w2vModelPath = modelsDir + word2Vec;
+		String nerModelPath = modelsDir + nerModel;
+		String nerNormalizerPath = modelsDir + nerModelNormalizer;
+
+		// Load NER model
+		long startTime = System.currentTimeMillis();
 		try {
-			// Get models paths
-			String modelsDir = System.getenv("DATA_DIR") + "/" + System.getenv("NAME_EXTRACTOR_DIR") + "/";
-			String c2vModelConfigPath = modelsDir + System.getenv("CHAR_2_VEC_CONFIG");
-			String c2vModelWeightsPath = modelsDir + System.getenv("CHAR_2_VEC_WEIGHTS");
-			String w2vModelPath = modelsDir + System.getenv("WORD_2_VEC");
-			String nerModelPath = modelsDir + System.getenv("NER_MODEL");
-			String nerNormalizerPath = modelsDir + System.getenv("NER_MODEL_NORMALIZER");
-
-			long startTime = System.currentTimeMillis();
-			// Load NER model
-			try {
-				model = MultiLayerNetwork.load(new File(nerModelPath), false);
-			} catch (Exception e) {
-				logger.error("Error loading MultiLayerNetwork for product name extraction from path {}: {}", nerModelPath, e.toString());
-			}
-			long endTime = System.currentTimeMillis();
-
-			if (timingOn) {
-				logger.info("Timing for NER model loading: " + (endTime - startTime) + "ms.");
-			}
-
-			// Load Char2vec model
-			startTime = System.currentTimeMillis();
-			c2vModel = new Char2vec(c2vModelConfigPath, c2vModelWeightsPath);
-			endTime = System.currentTimeMillis();
-			charVecLength = c2vModel.getOutVectorLength();
-
-			if (timingOn) {
-				logger.info("Timing for Char2Vector model initializing: " + (endTime - startTime) + "ms.");
-			}
-
-			// Load Word2Vector model
-			startTime = System.currentTimeMillis();
-			w2vModel = new Word2Vector(w2vModelPath);
-			endTime = System.currentTimeMillis();
-			wordVecLength = w2vModel.getOutVectorLength();
-
-			if (timingOn) {
-				logger.info("Timing for Word2Vector model initializing: " + (endTime - startTime) + "ms.");
-			}
-
-			rand = new Random();
-			featureLength = wordVecLength + charVecLength;
-
-			// Load Apache Open NLP sentence detector model
-			// path to Apache Open NLP sentence model
-			String sentenceModelPath = "nlp/en-sent.bin";
-			try {
-				startTime = System.currentTimeMillis();
-				InputStream modelIn = this.getClass().getClassLoader().getResourceAsStream(sentenceModelPath);
-				SentenceModel sentenceModel = new SentenceModel(modelIn);
-				sentenceDetector = new SentenceDetectorME(sentenceModel);
-				modelIn.close();
-				endTime = System.currentTimeMillis();
-				if (timingOn) {
-					logger.info("Timing for Sentence detector model loading: " + (endTime - startTime) + "ms.");
-				}
-			} catch (Exception e) {
-				logger.error("Error loading sentence model for product name extraction from {}: {}", sentenceModelPath, e.toString());
-			}
-
-			// Load features Normalizer
-			startTime = System.currentTimeMillis();
-			NormalizerSerializer loader = NormalizerSerializer.getDefault();
-			try {
-				restoredNormalizer = loader.restore(new File(nerNormalizerPath));
-			} catch (Exception e) {
-				logger.error("Error while restoring normalizer from {}: {}", nerNormalizerPath, e.toString());
-			}
-			endTime = System.currentTimeMillis();
-			if (timingOn) {
-				logger.info("Timing for Sentence detector model loading: " + Long.toString(endTime - startTime) + "ms.");
-			}
+			model = MultiLayerNetwork.load(new File(nerModelPath), false);
 		} catch (Exception e) {
-			logger.error("ERROR: Error initializing NERmodel {}", e.toString());
-			e.printStackTrace();
+			logger.error("Error loading MultiLayerNetwork for product name extraction from path {}: {}", nerModelPath, e.toString());
+		}
+		long endTime = System.currentTimeMillis();
+
+		if (timingOn) {
+			logger.info("Timing for NER model loading: " + (endTime - startTime) + "ms.");
 		}
 
+		// Load Char2vec model
+		startTime = System.currentTimeMillis();
+		c2vModel = new Char2vec(c2vModelConfigPath, c2vModelWeightsPath);
+		endTime = System.currentTimeMillis();
+		charVecLength = c2vModel.getOutVectorLength();
+
+		if (timingOn) {
+			logger.info("Timing for Char2Vector model initializing: " + (endTime - startTime) + "ms.");
+		}
+
+		// Load Word2Vector model
+		startTime = System.currentTimeMillis();
+		w2vModel = new Word2Vector(w2vModelPath);
+		endTime = System.currentTimeMillis();
+		wordVecLength = w2vModel.getOutVectorLength();
+
+		if (timingOn) {
+			logger.info("Timing for Word2Vector model initializing: " + (endTime - startTime) + "ms.");
+		}
+
+		rand = new Random();
+		featureLength = wordVecLength + charVecLength;
+
+		// Load Apache Open NLP sentence detector model
+		// path to Apache Open NLP sentence model
+		String sentenceModelPath = "nlp/en-sent.bin";
+		try {
+			startTime = System.currentTimeMillis();
+			InputStream modelIn = this.getClass().getClassLoader().getResourceAsStream(sentenceModelPath);
+			SentenceModel sentenceModel = new SentenceModel(modelIn);
+			sentenceDetector = new SentenceDetectorME(sentenceModel);
+			modelIn.close();
+			endTime = System.currentTimeMillis();
+			if (timingOn) {
+				logger.info("Timing for Sentence detector model loading: " + (endTime - startTime) + "ms.");
+			}
+		} catch (Exception e) {
+			logger.error("Error loading sentence model for product name extraction from {}: {}", sentenceModelPath, e.toString());
+		}
+
+		// Load features Normalizer
+		startTime = System.currentTimeMillis();
+		NormalizerSerializer loader = NormalizerSerializer.getDefault();
+		try {
+			restoredNormalizer = loader.restore(new File(nerNormalizerPath));
+		} catch (Exception e) {
+			logger.error("Error while restoring normalizer from {}: {}", nerNormalizerPath, e.toString());
+		}
+		endTime = System.currentTimeMillis();
+		if (timingOn) {
+			logger.info("Timing for Sentence detector model loading: " + Long.toString(endTime - startTime) + "ms.");
+		}
 	}
 
 	/**

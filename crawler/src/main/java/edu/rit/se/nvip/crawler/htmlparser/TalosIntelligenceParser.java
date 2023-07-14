@@ -147,7 +147,7 @@ public class TalosIntelligenceParser extends AbstractCveParser {
 			}
 			if (description.toString().equals("")) return vulnerabilities;
 			for (String cveId : uniqueCves)
-				vulnerabilities.add(new RawVulnerability(sSourceURL, cveId, publishDate, lastModifiedDate, description.toString()));
+				vulnerabilities.add(new RawVulnerability(sSourceURL, cveId, publishDate, lastModifiedDate, description.toString(), getClass().getSimpleName()));
 		} catch (Exception e) {
 			logger.error("An error occurred while parsing TalosIntelligence URL: " + sSourceURL);
 		}
