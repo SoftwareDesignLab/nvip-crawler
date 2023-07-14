@@ -64,7 +64,7 @@ public class ProductDetectorTest {
 
         String productResult = "[The: OTHER, software: OTHER, version: OTHER, is: OTHER, vulnerable: OTHER, before: SOFTWARE_VERSION, 2.1.0: SOFTWARE_VERSION]";
 
-        assertTrue(productResult.contains( productDetector.classifyWordsInDescription(words).toString()));
+        assertTrue(productResult.contains(productDetector.classifyWordsInDescription(words).toString()));
         assertEquals(nerResult, nerModel.classifyComplex(words));
 
     }
