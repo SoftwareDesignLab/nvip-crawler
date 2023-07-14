@@ -161,45 +161,4 @@ public class CpeLookUpTest {
 		assertNotEquals("sn2List was empty", sn2List.size(), 0);
 	}
 
-//	@Test
-	// TODO: fix this
-//	public void queryProductDictTest() {
-//		int maxPages = 2;
-//		int maxAttemptsPerPage = 3;
-//		// Call the method to load the product dictionary
-//		Map<String, CpeGroup> loadedDict = cpeLookUp.queryProductDict(maxPages, maxAttemptsPerPage);
-//
-//		// Assert that the loaded dictionary is not null
-//		Assertions.assertNotNull(loadedDict);
-//
-//		// Assert that the loaded dictionary is not empty
-//		Assertions.assertFalse(loadedDict.isEmpty());
-//
-//		// Retrieve a CpeGroup by key
-//		String key = "canon:imagerunner_5000i";
-//		CpeGroup cpeGroup = loadedDict.get(key);
-//		System.out.println(cpeGroup);
-//		// Assert that the CpeGroup is not null
-//		Assertions.assertNotNull(cpeGroup);
-//
-//		// Assert that the CpeGroup has versions
-//		Assertions.assertTrue(cpeGroup.getVersions().size() > 0);
-//
-//		// Assert that a specific version exists in the CpeGroup
-//		Assertions.assertTrue(cpeGroup.getVersions().containsKey("-"));
-//
-//		// Retrieve a specific CpeEntry from the CpeGroup
-//		CpeEntry cpeEntry = cpeGroup.getVersions().get("-");
-//
-//		// Assert that the CpeEntry is not null
-//		Assertions.assertNotNull(cpeEntry);
-//
-//		// Assert specific properties of the CpeEntry
-//		Assertions.assertEquals("imagerunner_5000i", cpeEntry.getTitle());
-//		Assertions.assertEquals("-", cpeEntry.getVersion());
-//		Assertions.assertEquals("88FD64E8-67E8-415D-A798-4DC26EA8E7B5", cpeEntry.getCpeID());
-//
-//		// Perform similar assertions for other keys, CpeGroups, and CpeEntries in the loaded dictionary
-//	}
-
 }
