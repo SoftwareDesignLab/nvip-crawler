@@ -18,13 +18,17 @@ import static org.mockito.Mockito.when;
  * Class to test ProductDetectorTest
  *
  * @author Dylan Mulligan
+ * @author Paul Vickers
  *
  */
 public class ProductDetectorTest {
+    static{
+        ProductNameExtractorEnvVars.initializeEnvVars();
+    }
     private ProductDetector productDetector;
-    private final String resourceDir = System.getenv("RESOURCE_DIR");
-    private final String nlpDir = System.getenv("NLP_DIR");
-    private final String dataDir = System.getenv("DATA_DIR");
+    private static final String resourceDir = ProductNameExtractorEnvVars.getResourceDir();
+    private static final String nlpDir = ProductNameExtractorEnvVars.getNlpDir();
+    private static final String dataDir = ProductNameExtractorEnvVars.getDataDir();
 
     @Before
     public void setUp() throws IOException {
@@ -66,7 +70,7 @@ public class ProductDetectorTest {
     }
 
     @Test
-    public void testGetProductItemsWithDescriptionWords() {
+    public void getProductItemsWithDescriptionWordsTest() {
         // Create a sample array of classified words
         ClassifiedWord word1 = new ClassifiedWord("Microsoft", new float[]{1.0f, 1.0f, 1.0f, 1.0f, 1.0f});
         ClassifiedWord word2 = new ClassifiedWord("Office", new float[]{1.0f, 1.0f, 1.0f, 1.0f, 1.0f});
