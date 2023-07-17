@@ -11,8 +11,14 @@ RUN mvn package -Dmaven.test.skip=true
 ### Run Stage
 FROM openjdk:11-jre-slim
 
+VOLUME /usr/local/lib/nvip_data
+ADD nvip_data /usr/local/lib/nvip_data
+
+VOLUME /usr/local/lib/characterization
+ADD characterization /usr/local/lib/characterization
+
 COPY --from=builder /home/app/target/reconciler_lib /usr/local/lib/reconciler_lib
 COPY --from=builder /home/app/target/reconciler-1.0.jar /usr/local/lib/reconciler-1.0.jar
 
-WORKDIR /usr/local/lib/
+WORKDIR /usr/local/lib
 ENTRYPOINT ["java", "-cp", "reconciler-1.0.jar:reconciler_lib/*", "edu.rit.se.nvip.ReconcilerMain"]

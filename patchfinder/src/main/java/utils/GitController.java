@@ -24,7 +24,10 @@
 package utils;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
+import commits.PatchCommitScraper;
 import org.eclipse.jgit.util.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -80,7 +83,8 @@ public class GitController {
 		Git git = null;
 		File localFileDir;
 		try {
-			logger.info("{} repository does not exist! Cloning repo now, this will take some time, please wait!...", localPath);
+			final String[] pathParts = localPath.split("/");
+			logger.info("{} repository does not exist! Cloning repo now, this will take some time...", pathParts[pathParts.length - 1]);
 			localFileDir = new File(localPath);
 			CloneCommand cloneCommand = Git.cloneRepository();
 			cloneCommand.setURI(remotePath);
@@ -100,6 +104,9 @@ public class GitController {
 		} finally {
 			if(git != null) git.close();
 		}
+
+//		// Store successful clone path for deletion
+//		this.clonedPaths.add(localPath);
 		return true;
 	}
 
@@ -107,13 +114,18 @@ public class GitController {
 	 * For deleting the repo at the assigned location
 	 */
 	public void deleteRepo() {
-		logger.info("Deleting local repo @ {}", localPath);
+		logger.info("Deleting local repo '{}'...", localPath);
 		try { // TODO: Throwing AccessDeniedExceptions
 			FileUtils.delete(new File(localPath), FileUtils.RECURSIVE);
-			logger.info("Successfully deleted repo @ {}", localPath);
+			logger.info("Successfully deleted repo '{}'", localPath);
 		} catch (Exception e) {
-			logger.error("ERROR: Failed to delete repo @ {}\n{}", localPath, e);
+			logger.error("ERROR: Failed to delete repo '{}': {}", localPath, e);
 		}
+	}
+
+	public static void main(String[] args) {
+		final GitController git = new GitController("", "");
+		git.deleteRepo();
 	}
 
 }

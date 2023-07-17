@@ -12,56 +12,30 @@ import java.util.concurrent.*;
 public abstract class AsyncFilter extends Filter {
 
     @Override
-    public Set<RawVulnerability> filterAll(Set<RawVulnerability> rawVulns) {
+    public void filterAll(Set<RawVulnerability> rawVulns) {
         Set<RawVulnerability> rejects = new HashSet<>();
         // set up threads
         ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-        Set<Future<FilterTaskReturn>> futures = new HashSet<>();
         for (RawVulnerability vuln : rawVulns) {
-            Future<FilterTaskReturn> future = executor.submit(new FilterTask(vuln));
-            futures.add(future);
+            executor.submit(new FilterTask(vuln));
         }
-        // poll the futures and handle the rejects
-        for (Future<FilterTaskReturn> future : futures) {
-            try {
-                FilterTaskReturn threadOutput = future.get();
-                if (!threadOutput.passes) {
-                    rawVulns.remove(threadOutput.vulnInput);
-                    rejects.add(threadOutput.vulnInput);
-                }
-            } catch (InterruptedException | ExecutionException e) {
-                logger.error("Error while polling future");
-                logger.error(e);
-            }
+        try {
+            executor.shutdown();
+            executor.awaitTermination(rawVulns.size() * 60L, TimeUnit.SECONDS); // wait up to a minute per vuln. todo be smarter about this.
+        } catch (InterruptedException ex) {
+            logger.error(ex);
         }
-        executor.shutdown();
-        return rejects;
     }
 
-    private class FilterTask implements Callable<FilterTaskReturn> {
+    private class FilterTask implements Runnable {
         private final RawVulnerability vuln;
         public FilterTask(RawVulnerability vuln) {
             this.vuln = vuln;
         }
 
         @Override
-        public FilterTaskReturn call() {
-            // respect API rate limits!
-            waitForLimiters(vuln);
-            return new FilterTaskReturn(vuln, passesFilter(vuln));
+        public void run() {
+            updateFilterStatus(vuln);
         }
-    }
-
-    private static class FilterTaskReturn {
-        public RawVulnerability vulnInput;
-        public boolean passes;
-        FilterTaskReturn(RawVulnerability vulnInput, boolean passes) {
-            this.vulnInput = vulnInput;
-            this.passes = passes;
-        }
-    }
-
-    protected void waitForLimiters(RawVulnerability vuln) {
-        return;
     }
 }

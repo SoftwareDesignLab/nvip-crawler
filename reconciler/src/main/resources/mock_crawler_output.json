@@ -1,0 +1,107 @@
+{
+  "CVE-2022-34192": [
+    {
+      "nvdSearchResult": "",
+      "mitreSearchResult": "",
+      "nvipNote": "",
+      "sourceURL": "http://www.jenkins.io/security/advisory/2022-06-22/",
+      "cveReconcileStatus": "DO_NOT_CHANGE",
+      "sourceType": "other",
+      "vulnID": 0,
+      "cveId": "CVE-2022-34192",
+      "description": "Multiple plugins do not escape the name and description of the parameter types they provide:This results in stored cross-site scripting (XSS) vulnerabilities exploitable by attackers with Item/Configure permission.Exploitation of these vulnerabilities requires that parameters are listed on another page, like the \"Build With Parameters\" and \"Parameters\" pages provided by Jenkins (core), and that those pages are not hardened to prevent exploitation. Jenkins (core) has prevented exploitation of vulnerabilities of this kind on the \"Build With Parameters\" and \"Parameters\" pages since 2.44 and LTS 2.32.2 as part of the SECURITY-353 / CVE-2017-2601 fix. Additionally, several plugins have previously been updated to list parameters in a way that prevents exploitation by default, see SECURITY-2617 in the 2022-04-12 security advisory for a list.The following plugins have been updated to escape the name and description of the parameter types they provide in the versions specified:As of publication of this advisory, there is no fix available for the following plugins:Learn why we announce this.",
+      "publishDate": "2022-06-22 00:00:00",
+      "createDate": "2023-06-29 15:55:33",
+      "lastModifiedDate": "2022-06-22 00:00:00",
+      "statusNvd": 0,
+      "statusMitre": 0,
+      "timeGapNvd": 0,
+      "timeGapMitre": 0,
+      "foundNewDescriptionForReservedCve": false
+    }
+  ],
+  "CVE-2019-16566": [
+    {
+      "nvdSearchResult": "",
+      "mitreSearchResult": "",
+      "nvipNote": "",
+      "sourceURL": "http://www.jenkins.io/security/advisory/2019-12-17/",
+      "cveReconcileStatus": "DO_NOT_CHANGE",
+      "sourceType": "other",
+      "vulnID": 1,
+      "cveId": "CVE-2019-16566",
+      "description": "Team Concert Plugin 1.3.0 and earlier does not perform permission checks on a method implementing form validation. This allows users with Overall/Read access to Jenkins to connect to an attacker-specified URL using attacker-specified credentials IDs obtained through another method, capturing credentials stored in Jenkins.Additionally, the form validation method does not require POST requests, resulting in a CSRF vulnerability.As of publication of this advisory, there is no fix.",
+      "publishDate": "2019-12-17 00:00:00",
+      "createDate": "2023-06-29 15:56:43",
+      "lastModifiedDate": "2019-12-17 00:00:00",
+      "statusNvd": 0,
+      "statusMitre": 0,
+      "timeGapNvd": 0,
+      "timeGapMitre": 0,
+      "foundNewDescriptionForReservedCve": false
+    }
+  ],
+  "CVE-2022-34191": [
+    {
+      "nvdSearchResult": "",
+      "mitreSearchResult": "",
+      "nvipNote": "",
+      "sourceURL": "http://www.jenkins.io/security/advisory/2022-06-22/",
+      "cveReconcileStatus": "DO_NOT_CHANGE",
+      "sourceType": "other",
+      "vulnID": 2,
+      "cveId": "CVE-2022-34191",
+      "description": "Multiple plugins do not escape the name and description of the parameter types they provide:This results in stored cross-site scripting (XSS) vulnerabilities exploitable by attackers with Item/Configure permission.Exploitation of these vulnerabilities requires that parameters are listed on another page, like the \"Build With Parameters\" and \"Parameters\" pages provided by Jenkins (core), and that those pages are not hardened to prevent exploitation. Jenkins (core) has prevented exploitation of vulnerabilities of this kind on the \"Build With Parameters\" and \"Parameters\" pages since 2.44 and LTS 2.32.2 as part of the SECURITY-353 / CVE-2017-2601 fix. Additionally, several plugins have previously been updated to list parameters in a way that prevents exploitation by default, see SECURITY-2617 in the 2022-04-12 security advisory for a list.The following plugins have been updated to escape the name and description of the parameter types they provide in the versions specified:As of publication of this advisory, there is no fix available for the following plugins:Learn why we announce this.",
+      "publishDate": "2022-06-22 00:00:00",
+      "createDate": "2023-06-29 15:55:33",
+      "lastModifiedDate": "2022-06-22 00:00:00",
+      "statusNvd": 0,
+      "statusMitre": 0,
+      "timeGapNvd": 0,
+      "timeGapMitre": 0,
+      "foundNewDescriptionForReservedCve": false
+    }
+  ],
+  "CVE-2019-16567": [
+    {
+      "nvdSearchResult": "",
+      "mitreSearchResult": "",
+      "nvipNote": "",
+      "sourceURL": "http://www.jenkins.io/security/advisory/2019-12-17/",
+      "cveReconcileStatus": "DO_NOT_CHANGE",
+      "sourceType": "other",
+      "vulnID": 3,
+      "cveId": "CVE-2019-16567",
+      "description": "Team Concert Plugin 1.3.0 and earlier provides a list of applicable credential IDs to allow users configuring the plugin to select the one to use.This functionality does not correctly check permissions, allowing any user with Overall/Read permission to get a list of valid credentials IDs. Those can be used as part of an attack to capture the credentials using another vulnerability.As of publication of this advisory, there is no fix.",
+      "publishDate": "2019-12-17 00:00:00",
+      "createDate": "2023-06-29 15:56:43",
+      "lastModifiedDate": "2019-12-17 00:00:00",
+      "statusNvd": 0,
+      "statusMitre": 0,
+      "timeGapNvd": 0,
+      "timeGapMitre": 0,
+      "foundNewDescriptionForReservedCve": false
+    }
+  ],
+  "CVE-2022-34194": [
+    {
+      "nvdSearchResult": "",
+      "mitreSearchResult": "",
+      "nvipNote": "",
+      "sourceURL": "http://www.jenkins.io/security/advisory/2022-06-22/",
+      "cveReconcileStatus": "DO_NOT_CHANGE",
+      "sourceType": "other",
+      "vulnID": 4,
+      "cveId": "CVE-2022-34194",
+      "description": "Multiple plugins do not escape the name and description of the parameter types they provide:This results in stored cross-site scripting (XSS) vulnerabilities exploitable by attackers with Item/Configure permission.Exploitation of these vulnerabilities requires that parameters are listed on another page, like the \"Build With Parameters\" and \"Parameters\" pages provided by Jenkins (core), and that those pages are not hardened to prevent exploitation. Jenkins (core) has prevented exploitation of vulnerabilities of this kind on the \"Build With Parameters\" and \"Parameters\" pages since 2.44 and LTS 2.32.2 as part of the SECURITY-353 / CVE-2017-2601 fix. Additionally, several plugins have previously been updated to list parameters in a way that prevents exploitation by default, see SECURITY-2617 in the 2022-04-12 security advisory for a list.The following plugins have been updated to escape the name and description of the parameter types they provide in the versions specified:As of publication of this advisory, there is no fix available for the following plugins:Learn why we announce this.",
+      "publishDate": "2022-06-22 00:00:00",
+      "createDate": "2023-06-29 15:55:33",
+      "lastModifiedDate": "2022-06-22 00:00:00",
+      "statusNvd": 0,
+      "statusMitre": 0,
+      "timeGapNvd": 0,
+      "timeGapMitre": 0,
+      "foundNewDescriptionForReservedCve": false
+    }
+  ]
+}

@@ -44,6 +44,24 @@
 	<build>
 		<plugins>
 			<plugin>
+				<!-- Liquibase -->
+				<groupId>org.liquibase</groupId>
+				<artifactId>liquibase-maven-plugin</artifactId>
+				<version>4.23.0</version>
+				<configuration>
+					<propertyFile>nvip_data/mysql-database/newDB/liquibase.properties</propertyFile>
+					<!-- turn off prompt for non-local db since this does run in headless environments -->
+					<promptOnNonLocalDatabase>false</promptOnNonLocalDatabase>
+				</configuration>
+				<dependencies>
+					<dependency>
+						<groupId>com.mysql</groupId>
+						<artifactId>mysql-connector-j</artifactId>
+						<version>8.0.33</version>
+					</dependency>
+				</dependencies>
+			</plugin>
+			<plugin>
 				<!--Copy Dependencies into nvip_lib Folder for Docker User-->
 				<artifactId>maven-dependency-plugin</artifactId>
 				<executions>

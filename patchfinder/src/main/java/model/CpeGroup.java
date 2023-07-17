@@ -92,19 +92,12 @@ public class CpeGroup {
 		}
 	}
 
-	public HashMap<String, CpeEntry> getVersions() {
-		return versions;
-	}
+	public HashMap<String, CpeEntry> getVersions() { return versions; }
 
-	public String getVendor() {
-		return vendor;
-	}
-	public String getProduct() {
-		return product;
-	}
-	public String getGroupID() {
-		return groupID;
-	}
+	public String getVendor() { return vendor; }
+	public String getProduct() { return product; }
+	public String getGroupID() { return groupID; }
+	public int getVersionsCount() { return this.versions.size(); }
 
 	@Override
 	public int hashCode() {
