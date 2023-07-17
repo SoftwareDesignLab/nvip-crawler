@@ -96,9 +96,9 @@ jobs:
 
       - name: Initialize DB
         env:
-          LIQUIBASE_URL=${{ env.HIKARI_URL }}
-          LIQUIBASE_USER=${{ env.HIKARI_USER }}
-          LIQUIBASE_PASS=${{ env.HIKARI_PASSWORD }}
+          LIQUIBASE_URL: ${{ env.HIKARI_URL }}
+          LIQUIBASE_USER: ${{ env.HIKARI_USER }}
+          LIQUIBASE_PASS: ${{ env.HIKARI_PASSWORD }}
         run: |
           mvn liquibase:update
 
@@ -186,9 +186,9 @@ jobs:
 
       - name: Initialize DB
         env:
-          LIQUIBASE_URL=${{ env.HIKARI_URL }}
-          LIQUIBASE_USER=${{ env.HIKARI_USER }}
-          LIQUIBASE_PASS=${{ env.HIKARI_PASSWORD }}
+          LIQUIBASE_URL: ${{ env.HIKARI_URL }}
+          LIQUIBASE_USER: ${{ env.HIKARI_USER }}
+          LIQUIBASE_PASS: ${{ env.HIKARI_PASSWORD }}
         run: |
           mvn liquibase:update
 
@@ -236,9 +236,9 @@ jobs:
 
       - name: Initialize DB
         env:
-          LIQUIBASE_URL=${{ env.HIKARI_URL }}
-          LIQUIBASE_USER=${{ env.HIKARI_USER }}
-          LIQUIBASE_PASS=${{ env.HIKARI_PASSWORD }}
+          LIQUIBASE_URL: ${{ env.HIKARI_URL }}
+          LIQUIBASE_USER: ${{ env.HIKARI_USER }}
+          LIQUIBASE_PASS: ${{ env.HIKARI_PASSWORD }}
         run: |
           mvn liquibase:update
 
