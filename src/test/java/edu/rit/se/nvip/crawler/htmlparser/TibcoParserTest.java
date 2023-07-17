@@ -23,11 +23,9 @@
  */
 package edu.rit.se.nvip.crawler.htmlparser;
 
-import edu.rit.se.nvip.crawler.CveCrawler;
+import edu.rit.se.nvip.crawler.QuickCveCrawler;
 import edu.rit.se.nvip.model.CompositeVulnerability;
 import org.junit.Test;
-import org.junit.BeforeClass;
-import org.junit.AfterClass;
 
 import java.util.List;
 
@@ -38,10 +36,9 @@ public class TibcoParserTest extends AbstractParserTest{
 
     @Test
     public void testTibco() {
-        TibcoParser parser = new TibcoParser("tibco");
-        String html = parser.grabDynamicHTML("https://www.tibco.com/support/advisories/2023/02/tibco-security-advisory-february-22-2023-tibco-businessconnect-cve-2022-41567");
+        String html = QuickCveCrawler.getContentFromDynamicPage("https://www.tibco.com/support/advisories/2023/02/tibco-security-advisory-february-22-2023-tibco-businessconnect-cve-2022-41567", null);
         // String html = safeReadHtml("src/test/resources/test-tibco.html");
-        List<CompositeVulnerability> list = parser.parseWebPage(
+        List<CompositeVulnerability> list = crawler.parseWebPage(
                 "https://www.tibco.com/support/advisories/2023/02/tibco-security-advisory-february-22-2023-tibco-businessconnect-cve-2022-41567",
                 html
         );
@@ -53,13 +50,4 @@ public class TibcoParserTest extends AbstractParserTest{
         assertEquals("February 22, 2023", vuln.getPublishDate());
     }
 
-    @BeforeClass
-    public static void setupWebDriver(){
-        if(CveCrawler.driver.toString().contains("(null)")) CveCrawler.driver = CveCrawler.startDynamicWebDriver();
-    }
-
-    @AfterClass
-    public static void destroyWebDriver(){
-        if(CveCrawler.driver != null) CveCrawler.driver.quit();
-    }
 }

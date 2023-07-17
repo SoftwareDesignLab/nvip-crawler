@@ -24,16 +24,32 @@
 package edu.rit.se.nvip.crawler.htmlparser;
 
 import edu.rit.se.nvip.model.CompositeVulnerability;
+import edu.rit.se.nvip.utils.UtilHelper;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
+import io.github.bonigarcia.wdm.WebDriverManager;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.chrome.ChromeDriverService;
+import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeDriverService;
+import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.remote.CapabilityType;
+import org.python.util.Generic;
 
 import java.io.*;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.DateFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -43,8 +59,6 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import static edu.rit.se.nvip.crawler.CveCrawler.driver;
 
 /**
  *
@@ -67,11 +81,20 @@ public abstract class AbstractCveParser {
 
 	protected String sourceDomainName = null;
 
-
+	protected static volatile WebDriver driver = null;
 
 	public abstract List<CompositeVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML);
 
-
+	public static WebDriver startDynamicWebDriver() {
+		System.setProperty("webdriver.chrome.silentOutput", "true");
+		ChromeOptions options = new ChromeOptions();
+		options.addArguments("--headless","--user-agent=Mozilla/5.0");
+		options.addArguments("--remote-allow-origins=*");
+		options.addArguments("--enable-javascript");
+		WebDriverManager.chromedriver().setup();
+		ChromeDriverService chromeDriverService = new ChromeDriverService.Builder().build();
+		return new ChromeDriver(chromeDriverService, options);
+	}
 
 	/**
 	 * Get Dynamic HTML with Selenium
@@ -80,6 +103,11 @@ public abstract class AbstractCveParser {
 	 * @return
 	 */
 	protected String grabDynamicHTML(String url) {
+
+		// null in unit tests for now
+		if (driver == null)
+			driver = startDynamicWebDriver();
+		while(driver == null) {} // wait for driver to be initialized
 		driver.get(url);
 		if (url.contains("mend.io"))
 			return (String) ((JavascriptExecutor) driver).executeScript("return document.getElementsByTagName('html')[0].innerHTML");

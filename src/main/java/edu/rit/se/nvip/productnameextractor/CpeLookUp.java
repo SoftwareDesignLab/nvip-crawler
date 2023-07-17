@@ -92,7 +92,7 @@ public class CpeLookUp {
 		return cpeLookUp;
 	}
 
-	CpeLookUp() {
+	private CpeLookUp() {
 		productsToBeAddedToDatabase = new HashMap<>();
 		loadProductFile();
 	}

@@ -32,6 +32,7 @@ import org.jsoup.select.Elements;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 public class AtlassianParser extends AbstractCveParser {
 
@@ -83,7 +84,7 @@ public class AtlassianParser extends AbstractCveParser {
             Element header = headers.get(i);
             StringBuilder description = new StringBuilder();
             Element next = header.nextElementSibling();
-            while (next != null && !next.tagName().contains("h")) {
+            while (!Objects.requireNonNull(next).tagName().contains("h")) {
                 description.append(next.text());
                 next = next.nextElementSibling();
             }
@@ -152,7 +153,7 @@ public class AtlassianParser extends AbstractCveParser {
             Element summary = doc.select("h1:contains(Summary of ), h2:contains(Summary of ), h3:contains(Summary of )").get(0);
             StringBuilder description = new StringBuilder();
             Element next = summary.nextElementSibling();
-            while (next != null && !next.tagName().contains("h")) {
+            while (!Objects.requireNonNull(next).tagName().contains("h")) {
                 description.append(next.text());
                 next = next.nextElementSibling();
             }

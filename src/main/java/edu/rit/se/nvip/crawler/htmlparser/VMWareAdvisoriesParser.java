@@ -84,13 +84,11 @@ public class VMWareAdvisoriesParser extends AbstractCveParser  {
 
 					currentCVE = cveId.trim();
 					Element sibling = heading.nextElementSibling();
-					if (sibling == null) continue;
-					if (sibling.text().equals("Description")) {
-						Element next = sibling.nextElementSibling();
-						if (next == null) continue;
-						description = next.text();
+
+					if (Objects.requireNonNull(sibling).text().equals("Description")) {
+						description = Objects.requireNonNull(sibling.nextElementSibling()).text();
 						vulns.add(new CompositeVulnerability(0, sSourceURL, currentCVE, null, publishDate, updatedDate, description, sourceDomainName));
-					} else if (sibling.text().length() > 30) {
+					} else if (Objects.requireNonNull(sibling).text().length() > 30) {
 						vulns.add(new CompositeVulnerability(0, sSourceURL, currentCVE, null, publishDate, updatedDate, sibling.text(), sourceDomainName));
 					}
 				}

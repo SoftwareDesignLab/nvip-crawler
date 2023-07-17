@@ -28,9 +28,9 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class MicrosoftParser extends AbstractCveParser {
 
@@ -49,31 +49,21 @@ public class MicrosoftParser extends AbstractCveParser {
 
         // extract CVE ID from top of page above "Security Vulnerability"
         Element cve = doc.select("span.css-242:contains(CVE)").first();
-        if (cve == null) return vulnList;
-        String cveId = cve.text();
+        String cveId = Objects.requireNonNull(cve).text();
 
         // extract released and last updated dates
-        String publishDate = LocalDate.now().toString();
-        String lastModifiedDate = publishDate;
         Element dates = doc.select("p:contains(Released)").first();
-        if (dates != null) {
-            String[] dateSplit = dates.text().split("Last updated: ");
-            publishDate = dateSplit[0].trim();
-            lastModifiedDate = dateSplit[1];
-            publishDate = publishDate.split(": ")[1].trim();
-        }
+        String[] dateSplit = Objects.requireNonNull(dates).text().split("Last updated: ");
+        String publishDate = dateSplit[0].trim();
+        String lastModifiedDate = dateSplit[1];
+        publishDate = publishDate.split(": ")[1].trim();
 
         // lack of a description on these pages
         // instead title + FAQ will be extracted
-        // if lack of both this most likely isn't a CVE page, return...
         Element titleEl = doc.select("h1.ms-fontWeight-semibold").first();
-        if (titleEl == null) return vulnList;
-        String title = titleEl.text();
+        String title = Objects.requireNonNull(titleEl).text();
         Element faqTitle = doc.select("h2:contains(FAQ)").first();
-        if (faqTitle == null) return vulnList;
-        Element faqNext = faqTitle.nextElementSibling();
-        if (faqNext == null) return vulnList;
-        String faq = faqNext.text();
+        String faq = Objects.requireNonNull(Objects.requireNonNull(faqTitle).nextElementSibling()).text();
 
         vulnList.add(new CompositeVulnerability(
            0, sSourceURL, cveId, null, publishDate, lastModifiedDate, title + faq, sourceDomainName

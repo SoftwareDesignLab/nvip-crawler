@@ -31,6 +31,7 @@ import org.jsoup.select.Elements;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Web Parser for Bosch Security Advisory Boards

@@ -29,6 +29,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class TibcoParser extends AbstractCveParser {
 
@@ -48,8 +49,7 @@ public class TibcoParser extends AbstractCveParser {
 
         // get dates from "Original release date:" and "Last revised"
         Element para = doc.select("p:contains(Original release)").first();
-        if (para == null) return vulnList;
-        String html = para.html();
+        String html = Objects.requireNonNull(para).html();
         String[] lines = html.split("<br>");
         String publishDate = lines[0].split("date: ")[1].trim();
         // if "Last revised" is "---" or empty, use the date from "original release"
@@ -67,16 +67,9 @@ public class TibcoParser extends AbstractCveParser {
         String description;
         Element descHeader = doc.select("h4:contains(Description)").first();
         if (descHeader == null) description = "";
-        else {
-            Element descNext = descHeader.nextElementSibling();
-            if (descNext == null) description = "";
-            else {
-                descNext = descNext.nextElementSibling();
-                if (descNext == null) description = "";
-                else description = descNext.text();
-            }
-        }
-        if (description.equals("")) return vulnList;
+        else description = Objects.requireNonNull(
+                Objects.requireNonNull(
+                        descHeader.nextElementSibling()).nextElementSibling()).text();
 
         vulnList.add(new CompositeVulnerability(
                 0, sSourceURL, cveId, null, publishDate, lastModifiedDate, description, sourceDomainName

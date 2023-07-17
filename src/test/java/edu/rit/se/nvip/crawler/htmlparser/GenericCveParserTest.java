@@ -23,13 +23,10 @@
  */
 package edu.rit.se.nvip.crawler.htmlparser;
 
-import edu.rit.se.nvip.crawler.CveCrawler;
 import edu.rit.se.nvip.model.CompositeVulnerability;
 import edu.rit.se.nvip.model.Vulnerability;
 import org.apache.commons.io.IOUtils;
 import org.junit.Test;
-import org.junit.BeforeClass;
-import org.junit.AfterClass;
 
 import java.io.IOException;
 import java.net.URL;
@@ -39,6 +36,7 @@ import java.util.List;
 import static org.junit.Assert.*;
 
 public class GenericCveParserTest extends AbstractParserTest {
+
 	GenericCveParser parser = new GenericCveParser("nat_available");
 	
 	@Test
@@ -77,29 +75,13 @@ public class GenericCveParserTest extends AbstractParserTest {
 	@Test
 	public void testChooseParserStrategy() {
 		String tableHtml = safeReadHtml("src/test/resources/test-choose-table.html");
-		ParserStrategy parserTable = parser.chooseParserStrategy(tableHtml);
-		assertTrue(parserTable instanceof ParseTable);
-
+		assertTrue(parser.chooseParserStrategy(tableHtml) instanceof ParseTable);
 		String listHtml = safeReadHtml("src/test/resources/test-generic_list_parser-naver.html");
-		ParserStrategy parserList = parser.chooseParserStrategy(listHtml);
-		assertTrue(parserList instanceof ParseList);
-
+		assertTrue(parser.chooseParserStrategy(listHtml) instanceof ParseList);
 		String bulletinHtml = safeReadHtml("src/test/resources/test-android-bulletin.html");
-		ParserStrategy parserBulletin = parser.chooseParserStrategy(bulletinHtml);
-		assertTrue(parserBulletin instanceof ParseBulletin);
-
+		assertTrue(parser.chooseParserStrategy(bulletinHtml) instanceof ParseBulletin);
 		String accordionHtml = safeReadHtml("src/test/resources/test-choose-accordion.html");
-		ParserStrategy parserAccordion = parser.chooseParserStrategy(accordionHtml);
-		assertTrue(parserAccordion instanceof ParseAccordion);
+		assertTrue(parser.chooseParserStrategy(accordionHtml) instanceof ParseAccordion);
 	}
 
-	@BeforeClass
-    public static void setupWebDriver(){
-        if(CveCrawler.driver.toString().contains("(null)")) CveCrawler.driver = CveCrawler.startDynamicWebDriver();
-    }
-    
-    @AfterClass
-    public static void destroyWebDriver(){
-        if(CveCrawler.driver != null) CveCrawler.driver.quit();
-    }
 }

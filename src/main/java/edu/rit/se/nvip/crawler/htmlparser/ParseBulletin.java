@@ -31,7 +31,7 @@ public class ParseBulletin extends AbstractCveParser implements ParserStrategy {
             // if not found, skip
             if (cveIndex == -1) continue;
             // grab text around it
-            String cveText = docText.substring(Math.max(cveIndex - SUBSTRING_BOUNDS, 0), Math.min(cveIndex + SUBSTRING_BOUNDS, docText.length()));
+            String cveText = docText.substring(cveIndex - SUBSTRING_BOUNDS, cveIndex + SUBSTRING_BOUNDS);
             GenericDate cveDate = extractDate(cveText);
             GenericDate lastModifiedDate = extractLastModifiedDate(cveText);
             if (cveDate.getRawDate() == null) {

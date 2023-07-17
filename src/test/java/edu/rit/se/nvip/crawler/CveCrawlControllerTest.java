@@ -5,7 +5,6 @@ import edu.rit.se.nvip.utils.MyProperties;
 import edu.rit.se.nvip.utils.PropertyLoader;
 import edu.uci.ics.crawler4j.crawler.CrawlController;
 import edu.uci.ics.crawler4j.robotstxt.RobotstxtConfig;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -18,7 +17,6 @@ import static org.junit.Assert.assertTrue;
 public class CveCrawlControllerTest {
 
     @Test
-    @Ignore
     public void CveCrawlControllerTest() throws Exception {
         List<String> urls = new ArrayList<>();
         urls.add("https://www.jenkins.io/security/advisory/2023-03-21/");

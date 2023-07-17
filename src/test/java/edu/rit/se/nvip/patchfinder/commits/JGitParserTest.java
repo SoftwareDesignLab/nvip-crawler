@@ -23,11 +23,14 @@
  */
 package edu.rit.se.nvip.patchfinder.commits;
 
+import edu.rit.se.nvip.patchfinder.JGitCVEPatchDownloader;
+import org.eclipse.jgit.util.FileUtils;
 import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.util.FileUtils;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;

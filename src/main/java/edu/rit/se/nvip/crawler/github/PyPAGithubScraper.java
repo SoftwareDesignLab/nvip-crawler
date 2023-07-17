@@ -23,12 +23,14 @@
  */
 package edu.rit.se.nvip.crawler.github;
 import edu.rit.se.nvip.model.CompositeVulnerability;
+import edu.rit.se.nvip.utils.GitController;
 import edu.rit.se.nvip.utils.MyProperties;
 import edu.rit.se.nvip.utils.PropertyLoader;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eclipse.jgit.util.FileUtils;
 
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
