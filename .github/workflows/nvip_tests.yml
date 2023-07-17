@@ -95,21 +95,12 @@ jobs:
         #   mysql -e 'source nvip_data/mysql-database/CreateAndInitializeDb.sql' -uroot -proot
 
       - name: Initialize DB
-        uses: liquibase-github-actions/update@v4.23.0
-        with:
-          changelogFile: "nvip_data/mysql-database/newDB/db.init.xml"
-
-          # The JDBC database connection URL
-          # string
-          # Required
-          url: ${{ env.HIKARI_URL }}
-
-          # The JDBC driver class
-          # string
-          # Optional
-          #driver: ""
-          password: ${{ env.HIKARI_PASSWORD }}
-          username: ${{ env.HIKARI_USER }}
+        env:
+          LIQUIBASE_URL=${{ env.HIKARI_URL }}
+          LIQUIBASE_USER=${{ env.HIKARI_USER }}
+          LIQUIBASE_PASS=${{ env.HIKARI_PASSWORD }}
+        run: |
+          mvn liquibase:update
 
       - name: Test and Build Crawler with Maven
         run: |
@@ -194,21 +185,12 @@ jobs:
         #   mysql -e 'source nvip_data/mysql-database/CreateAndInitializeDb.sql' -uroot -proot
 
       - name: Initialize DB
-        uses: liquibase-github-actions/update@v4.23.0
-        with:
-          changelogFile: "nvip_data/mysql-database/newDB/db.init.xml"
-
-          # The JDBC database connection URL
-          # string
-          # Required
-          url: ${{ env.HIKARI_URL }}
-
-          # The JDBC driver class
-          # string
-          # Optional
-          #driver: ""
-          password: ${{ env.HIKARI_PASSWORD }}
-          username: ${{ env.HIKARI_USER }}
+        env:
+          LIQUIBASE_URL=${{ env.HIKARI_URL }}
+          LIQUIBASE_USER=${{ env.HIKARI_USER }}
+          LIQUIBASE_PASS=${{ env.HIKARI_PASSWORD }}
+        run: |
+          mvn liquibase:update
 
       - name: Test and Build Product Extractor with Maven
         run: |
@@ -253,21 +235,12 @@ jobs:
         #   mysql -e 'source nvip_data/mysql-database/CreateAndInitializeDb.sql' -uroot -proot
 
       - name: Initialize DB
-        uses: liquibase-github-actions/update@v4.23.0
-        with:
-          changelogFile: "nvip_data/mysql-database/newDB/db.init.xml"
-
-          # The JDBC database connection URL
-          # string
-          # Required
-          url: ${{ env.HIKARI_URL }}
-
-          # The JDBC driver class
-          # string
-          # Optional
-          #driver: ""
-          password: ${{ env.HIKARI_PASSWORD }}
-          username: ${{ env.HIKARI_USER }}
+        env:
+          LIQUIBASE_URL=${{ env.HIKARI_URL }}
+          LIQUIBASE_USER=${{ env.HIKARI_USER }}
+          LIQUIBASE_PASS=${{ env.HIKARI_PASSWORD }}
+        run: |
+          mvn liquibase:update
 
       - name: Publish Test Report
         if: success() || failure()
