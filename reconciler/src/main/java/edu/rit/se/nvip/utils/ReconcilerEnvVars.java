@@ -143,6 +143,7 @@ public class ReconcilerEnvVars extends Properties {
         for (EnvVar name : EnvVar.values()) {
             rawEnvVars.put(name.toString(), System.getenv(name.toString()));
         }
+
     }
 
     // in case we don't have environment variables actually set in the system, load them in directly from the env.list file instead
