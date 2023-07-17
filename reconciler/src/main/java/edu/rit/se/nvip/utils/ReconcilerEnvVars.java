@@ -38,7 +38,7 @@ public class ReconcilerEnvVars extends Properties {
         loadVars(DEFAULT_ENV_LIST_PATH);
     }
     public static void loadVars(String path) {
-        if (System.getenv(EnvVar.HIKARI_URL.toString()) == null) {
+        if (System.getenv(EnvVar.FILTER_LIST.toString()) == null) {
             clearLoadParse(false, path);
         } else {
             clearLoadParse(true, "");
