@@ -240,6 +240,7 @@ jobs:
           LIQUIBASE_USER: ${{ env.HIKARI_USER }}
           LIQUIBASE_PASS: ${{ env.HIKARI_PASSWORD }}
         run: |
+          mysql -e 'CREATE DATABASE nvip;' -u${{ env.HIKARI_USER }} -p${{ env.HIKARI_PASSWORD }} 
           mvn liquibase:update
 
       - name: Publish Test Report
