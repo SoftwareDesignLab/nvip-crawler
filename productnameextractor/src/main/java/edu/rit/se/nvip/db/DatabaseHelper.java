@@ -283,7 +283,7 @@ public class DatabaseHelper {
 						vulnList.add(vulnerability);
 					}
 				}
-				logger.info("NVIP has loaded {} existing CVE items from DB!", vulnList.size());
+				logger.info("NVIP has loaded {} existing CVE items from DB! {} CVE items were nonexistent in the DB", vulnList.size(), cveIds.size() - vulnList.size());
 			} catch (Exception e) {
 				logger.error("Error while getting existing vulnerabilities from DB\nException: {}", e.getMessage());
 				logger.error(

@@ -49,8 +49,8 @@ import java.util.Map;
  * and then insert those affected products into the database.
  *
  * By default, the ProductNameExtractor will wait idly for jobs to process from the NVIP Reconciler
- * via RabbitMQ. Once these jobs are finished, then the CVE list of all the CVEs which affected products
- * were mapped to will be passed to the NVIP Patchfinder.
+ * via RabbitMQ. Once these jobs are finished and inserted into the database, the CVE list of all
+ * the CVEs which affected products were mapped to will be passed to the NVIP Patchfinder.
  *
  * Also has a test mode (see environment variable TEST_MODE) to perform a quick run-through and ensure everything
  * is working correctly. This requires a test_vulnerabilities.csv file be stored in the data directory.
@@ -267,6 +267,7 @@ public class ProductNameExtractorMain {
                         final long getProdStart = System.currentTimeMillis();
                         List<AffectedProduct> affectedProducts = affectedProductIdentifier.identifyAffectedProducts();
 
+                        // Insert the affected products found into the database
                         databaseHelper.insertAffectedProductsToDB(affectedProducts);
                         logger.info("Product Name Extractor found and inserted {} affected products to the database in {} seconds", affectedProducts.size(), Math.floor(((double) (System.currentTimeMillis() - getProdStart) / 1000) * 100) / 100);
 
