@@ -252,14 +252,14 @@ public class ProductDictionary {
 
             writeProductDict(productDict, productDictPath); // Write entire new product dict
 
-            // If less than a week has gone by but over a day, refresh the product dictionary with new entries from NVD
+        // If less than a week has gone by but over a day, refresh the product dictionary with new entries from NVD
         } else if (timeSinceLastRefresh / (60 * 60 * 24) > 0){
             logger.info("Product dictionary file is stale, fetching data from NVD to refresh it...");
             int insertedCounter = 0;
             int notChangedCounter = 0;
             int updatedCounter = 0;
 
-            // Refreshing, pass in true
+            // Refreshing, pass in true and perform a query pulling only changed entries from the most recent refresh to now
             final Map<String, CpeGroup> updatedProductDict = queryProductDict(true);
 
             // Refresh old dict with new dict and count how many entries are inserted, updated, or unchanged
@@ -428,13 +428,12 @@ public class ProductDictionary {
 
         final String url;
 
-        // If refreshing, include lastModStartDate and lastModEndDate in the URL
+        // If refreshing, include lastModStartDate and lastModEndDate in the URL to only pull changes from most recent refresh til now
         if(isRefresh){
             String lastModStartDate = productDictLastRefreshDate.toString();
             String lastModEndDate = Instant.now().toString();
             url = baseNVDUrl + String.format("?resultsPerPage=%s&startIndex=%s&lastModStartDate=%s&lastModEndDate=%s",
                     resultsPerPage, startIndex, lastModStartDate, lastModEndDate);
-            System.out.println("URL: " + url);
 
         // Otherwise, querying the entire thing at specified index/results per page
         } else url = baseNVDUrl + String.format("?resultsPerPage=%s&startIndex=%s", resultsPerPage, startIndex);

@@ -40,10 +40,11 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * DetectProducts class implements Expert System to extract Software Names and
+ * ProductDetector class implements Expert System to extract Software Names and
  * Software Versions from CVE descriptions
  * 
  * @author Igor Khokhlov
+ * @author Paul Vickers (Editor)
  *
  */
 
@@ -91,6 +92,9 @@ public class ProductDetector {
 		}
 	}
 
+	/**
+	 * Releases the models to free up memory
+	 */
 	protected void unloadModels(){
 		nerModel = null;
 		cpeDict = null;

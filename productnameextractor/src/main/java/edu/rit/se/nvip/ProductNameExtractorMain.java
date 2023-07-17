@@ -42,11 +42,18 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Main class for the Product Name Extractor.
+ * Main class and driver for the NVIP Product Name Extractor.
  *
- * Core functionality is to determine which vulnerabilities will be processed and pass those to the controller.
+ * Core functionality is to determine which vulnerabilities will be processed, use the
+ * AffectedProductIdentifier to derive affected products from those vulnerabilities,
+ * and then insert those affected products into the database.
+ *
+ * By default, the ProductNameExtractor will wait idly for jobs to process from the NVIP Reconciler
+ * via RabbitMQ. Once these jobs are finished, then the CVE list of all the CVEs which affected products
+ * were mapped to will be passed to the NVIP Patchfinder.
+ *
  * Also has a test mode (see environment variable TEST_MODE) to perform a quick run-through and ensure everything
- * is working correctly.
+ * is working correctly. This requires a test_vulnerabilities.csv file be stored in the data directory.
  *
  * @author Paul Vickers
  * @author Dylan Mulligan
@@ -78,6 +85,8 @@ public class ProductNameExtractorMain {
     /**
      * Initialize the AffectedProductIdentifier & related AI models.
      * If already loaded in memory, just initializes the new vulnerability list to be processed.
+     *
+     * @param vulnList List of vulnerabilities to be processed
      */
     protected static void initializeProductIdentifier(List<CompositeVulnerability> vulnList){
         // If null, AffectedProductIdentifier needs to be initialized with AI models & product dictionary
@@ -208,12 +217,14 @@ public class ProductNameExtractorMain {
         final Messenger rabbitMQ = new Messenger();
 
         if(testMode){
+
             // If in test mode, create manual vulnerability list
             logger.info("Test mode enabled, creating test vulnerability list...");
             vulnList = createTestVulnList();
 
-            final long getProdStart = System.currentTimeMillis();
             initializeProductIdentifier(vulnList);
+
+            final long getProdStart = System.currentTimeMillis();
             int numAffectedProducts = affectedProductIdentifier.identifyAffectedProducts().size();
 
             logger.info("Product Name Extractor found {} affected products in the test run in {} seconds", numAffectedProducts, Math.floor(((double) (System.currentTimeMillis() - getProdStart) / 1000) * 100) / 100);
@@ -229,19 +240,19 @@ public class ProductNameExtractorMain {
                     // Get CVE IDs to be processed from reconciler
                     List<String> cveIds = rabbitMQ.waitForReconcilerMessage(rabbitPollInterval);
 
-                    // If TERMINATE message sent, initiate shutdown and exit process
+                    // If 'TERMINATE' message sent, initiate shutdown and exit process
                     if (cveIds.size() == 1 && cveIds.get(0).equals("TERMINATE")) {
                         logger.info("TERMINATE message received from the Reconciler, shutting down...");
                         databaseHelper.shutdown();
                         System.exit(1);
 
-                    // If FINISHED message sent, jobs are done for now, release resources
+                    // If 'FINISHED' message sent, jobs are done for now, release resources
                     } else if (cveIds.size() == 1 && cveIds.get(0).equals("FINISHED")) {
                         //TODO: try to get the AI models to fully be released
                         logger.info("FINISHED message received from the Reconciler, releasing resources...");
                         releaseResources();
 
-                    // Otherwise, CVE jobs were sent, process them
+                    // Otherwise, CVE jobs were received, process them
                     } else {
 
                         logger.info("Received job with CVE(s) {}", cveIds);
@@ -249,14 +260,21 @@ public class ProductNameExtractorMain {
                         // Pull specific cve information from database for each CVE ID passed from reconciler
                         vulnList = databaseHelper.getSpecificCompositeVulnerabilities(cveIds);
 
-                        // Initialize everything and get ready to process cveIds
+                        // Initialize the affectedProductIdentifier and get ready to process cveIds
                         initializeProductIdentifier(vulnList);
 
+                        // Identify affected products from the CVEs
                         final long getProdStart = System.currentTimeMillis();
                         List<AffectedProduct> affectedProducts = affectedProductIdentifier.identifyAffectedProducts();
 
                         databaseHelper.insertAffectedProductsToDB(affectedProducts);
                         logger.info("Product Name Extractor found and inserted {} affected products to the database in {} seconds", affectedProducts.size(), Math.floor(((double) (System.currentTimeMillis() - getProdStart) / 1000) * 100) / 100);
+
+                        // Clear cveIds, extract only the cveIds for which affected products were found to be sent to the Patchfinder
+                        cveIds.clear();
+                        for(AffectedProduct affectedProduct: affectedProducts){
+                            if(!cveIds.contains(affectedProduct.getCveId())) cveIds.add(affectedProduct.getCveId());
+                        }
 
                         // Send list of cveIds to Patchfinder
                         logger.info("Sending jobs to patchfinder...");
