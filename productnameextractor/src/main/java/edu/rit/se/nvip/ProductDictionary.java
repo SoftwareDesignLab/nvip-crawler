@@ -390,8 +390,8 @@ public class ProductDictionary {
                     remainingResults -= resultsPerPage;
                     // Increment index
                     index += resultsPerPage;
-                    // Sleep 2.5 sec between queries (adjust until we do not get 403 errors)
-                    Thread.sleep(2500);
+                    // Sleep 6 sec between queries (NVD Recommended)
+                    Thread.sleep(6000);
                     // Reset attempt count
                     attempts = 0;
 
