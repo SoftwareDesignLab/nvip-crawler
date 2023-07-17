@@ -111,9 +111,20 @@ public class FilterMetricsOutputTool {
         filterHandler.setCustomFilters(customFilters);
         FilterMetrics filterMetrics = new FilterMetrics("./src/test/resources", filterHandler, FilterHandler.FilterScope.CUSTOM);
         FilterMetricsOutputTool fmot = new FilterMetricsOutputTool(filterMetrics);
+
+        //Create complete object builder
+        JsonObjectBuilder joBuilder = Json.createObjectBuilder();
+
+        //Build object with MULTIPLE_CVE_DESCRIPTION filter
+        customFilters.clear();
+
+        customFilters.add(FilterFactory.createFilter(FilterFactory.MULTIPLE_CVE_DESCRIPTION));
+        filterMetrics.setCustomFilters(customFilters);
+        fmot.updateCurrentFilterMetrics(filterMetrics);
+
         JsonObject jo = fmot.buildAllMetrics();
         LocalDateTime now = LocalDateTime.now();
-        try (FileWriter writer = new FileWriter("./src/main/java/edu/rit/se/nvip/sandbox/jsons/FilterMetricsOutput" + dtf.format(now) + ".json")) {
+        try (FileWriter writer = new FileWriter("./src/main/java/edu/rit/se/nvip/sandbox/jsons/FilterMetricsOutput_" + dtf.format(now) + ".json")) {
             writer.write(jo.toString());
         } catch (IOException e) {
             e.printStackTrace();
