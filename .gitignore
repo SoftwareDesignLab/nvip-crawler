@@ -3,7 +3,7 @@ logs
 **/.settings
 *.log
 *.csv
-nvip.iml
+*.iml
 
 # Class outputs
 /target/
