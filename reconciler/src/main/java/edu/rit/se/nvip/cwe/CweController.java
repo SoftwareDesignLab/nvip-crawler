@@ -26,7 +26,7 @@ public class CweController {
     public static void main(String[] args) {
         CweController cwe = new CweController();
         cwe.getCWEsFromWeb();
-        List<String> CWEs = cwe.readFile(PATH);
+        List<CWE> CWEs = cwe.readFile(PATH);
         System.out.println(CWEs.size());
 
         //send CWEs to openAI
@@ -101,8 +101,8 @@ public class CweController {
         zipInputStream.close();
     }
 
-    private List<String> readFile(String filePath) {
-        List<String> cweList = new ArrayList<>();
+    private List<CWE> readFile(String filePath) {
+        List<CWE> cweList = new ArrayList<>();
         try {
             // Load the XML file
             File xmlFile = new File(filePath);
@@ -120,11 +120,41 @@ public class CweController {
             NodeList weaknessNodes = root.getElementsByTagName("Weakness");
             for (int i = 0; i < weaknessNodes.getLength(); i++) {
                 Element weaknessElement = (Element) weaknessNodes.item(i);
+                int id = Integer.parseInt(weaknessElement.getAttribute("ID"));
                 String name = weaknessElement.getAttribute("Name");
-                if(!name.contains("DEPRECATED:")){
-                    System.out.println(name);
-                    cweList.add(name);
+                String extendedDesc = "";
+
+                // Extract Extended_Description content
+                NodeList extendedDescNodes = weaknessElement.getElementsByTagName("Extended_Description");
+                if (extendedDescNodes.getLength() > 0) {
+                    Element extendedDescElement = (Element) extendedDescNodes.item(0);
+                    extendedDesc = extendedDescElement.getTextContent();
                 }
+
+                // Create CWE object and add it to the list
+                if (!name.contains("DEPRECATED:")) {
+                    CWE cwe = new CWE(id, name, extendedDesc);
+
+                    // Process children
+                    NodeList relatedWeaknessNodes = weaknessElement.getElementsByTagName("Related_Weakness");
+                    for (int j = 0; j < relatedWeaknessNodes.getLength(); j++) {
+                        Element relatedWeaknessElement = (Element) relatedWeaknessNodes.item(j);
+                        String nature = relatedWeaknessElement.getAttribute("Nature");
+                        if (nature.equals("ChildOf")) {
+                            int childCweId = Integer.parseInt(relatedWeaknessElement.getAttribute("CWE_ID"));
+                            cwe.addParentId(childCweId);
+                        }
+                    }
+
+                    cweList.add(cwe);
+                }
+            }
+            for (CWE cwe : cweList){
+                cwe.generateFamily(cweList);
+            }
+            for (CWE cwe : cweList){
+                System.out.println(cwe.getId());
+                System.out.println(cwe.getChildren().size());
             }
         } catch (Exception e) {
             e.printStackTrace();
