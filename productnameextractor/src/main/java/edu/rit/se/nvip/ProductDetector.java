@@ -1,4 +1,5 @@
-package edu.rit.se.nvip; /**
+package edu.rit.se.nvip;
+/**
  * Copyright 2023 Rochester Institute of Technology (RIT). Developed with
  * government support under contract 70RSAT19CB0000020 awarded by the United
  * States Department of Homeland Security.
@@ -39,35 +40,31 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * DetectProducts class implements Expert System to extract Software Names and
+ * ProductDetector class implements Expert System to extract Software Names and
  * Software Versions from CVE descriptions
  * 
  * @author Igor Khokhlov
+ * @author Paul Vickers (Editor)
  *
  */
 
 public class ProductDetector {
+	private static final Logger logger = LogManager.getLogger(ProductDetector.class);
+
 	public static final String NNP = "NNP";
 	public static final String IN = "IN";
+	private static final String productDetectorModel = ProductNameExtractorEnvVars.getProductDetectorModel();
 
-	private final NERmodel nerModel;
-
-	private final CpeLookUp cpeDict;
-
-	private final POSTaggerME tagger;
-	private final POSModel model;
-	static private final Logger logger = LogManager.getLogger(ProductDetector.class);
+	private NERmodel nerModel;
+	private CpeLookUp cpeDict;
+	private POSTaggerME tagger;
+	private POSModel model;
 
 	/**
 	 * Class constructor
 	 */
 	public ProductDetector(CpeLookUp cpeLookUp, String resourceDir, String nlpDir, String dataDir) throws IOException {
-		String binName = System.getenv("PRODUCT_DETECTOR_MODEL");
-		if(binName == null) {
-			binName = "en-pos-perceptron.bin";
-			logger.warn("Could not read PRODUCT_DETECTOR_MODEL from env vars, defaulting to {}", binName);
-		}
-		final String binPath = resourceDir + "/" + dataDir + "/" + nlpDir + "/" + binName;
+		final String binPath = resourceDir + "/" + dataDir + "/" + nlpDir + "/" + productDetectorModel;
 
 		try {
 			// Load NER model
@@ -75,7 +72,6 @@ public class ProductDetector {
 			nerModel = new NERmodel(resourceDir + "/" + dataDir + "/", nlpDir);
 
 			// Load CPE dictionary
-			logger.info("Loading CPE dictionary...");
 			cpeDict = cpeLookUp;
 
 			// Load Apache OpenNLP sentence model
@@ -91,9 +87,19 @@ public class ProductDetector {
 		} catch (IOException e) {
 			// Log and rethrow error to stop program execution
 			logger.error("Error while initializing product detector, model path {}, exception detail {}", binPath, e.toString());
-			logger.warn("Please ensure that your working directory is correct. Current working directory: {}", ProductNameExtractorController.currentDir);
+			logger.warn("Please ensure that your working directory is correct. Current working directory: {}", ProductNameExtractorMain.currentDir);
 			throw e;
 		}
+	}
+
+	/**
+	 * Releases the models to free up memory
+	 */
+	protected void unloadModels(){
+		nerModel = null;
+		cpeDict = null;
+		tagger = null;
+		model = null;
 	}
 
 	/**

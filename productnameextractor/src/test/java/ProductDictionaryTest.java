@@ -1,9 +1,34 @@
-import edu.rit.se.nvip.ProductNameExtractorController;
+/**
+ * Copyright 2023 Rochester Institute of Technology (RIT). Developed with
+ * government support under contract 70RSAT19CB0000020 awarded by the United
+ * States Department of Homeland Security.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+import edu.rit.se.nvip.ProductDictionary;
 import edu.rit.se.nvip.model.cpe.CpeEntry;
 import edu.rit.se.nvip.model.cpe.CpeGroup;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.FileReader;
 import java.io.IOException;
@@ -14,21 +39,22 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import static org.junit.Assert.*;
-
 /**
- * Class to test ProductNameExtractorController
+ * Product Dictionary Class Tests
  *
+ * @author Paul Vickers
+ * @author Richard Sawh
  * @author Dylan Mulligan
  *
  */
-public class ProductNameExtractorControllerTest {
+
+public class ProductDictionaryTest {
     @Test
     public void readProductDictSmallTest(){
         String productDictPath = "src/test/resources/data/test_product_dict_small.json";
         Map<String, CpeGroup> productDict = null;
         try{
-            productDict = ProductNameExtractorController.readProductDict(productDictPath);
+            productDict = ProductDictionary.readProductDict(productDictPath);
         }catch(IOException e){
 
         }
@@ -57,7 +83,7 @@ public class ProductNameExtractorControllerTest {
         String productDictPath = "src/test/resources/data/test_product_dict_large.json";
         Map<String, CpeGroup> productDict = null;
         try{
-            productDict = ProductNameExtractorController.readProductDict(productDictPath);
+            productDict = ProductDictionary.readProductDict(productDictPath);
         }catch(IOException e){
 
         }
@@ -94,7 +120,7 @@ public class ProductNameExtractorControllerTest {
         Map<String, CpeGroup> productDict = createSampleProductDict();
 
         // Write product dictionary to file
-        ProductNameExtractorController.writeProductDict(productDict, TEST_FILE_PATH);
+        ProductDictionary.writeProductDict(productDict, TEST_FILE_PATH);
         //write the contents of the file to the console
         FileReader reader = new FileReader(TEST_FILE_PATH);
         System.out.println("Contents of file: " + reader.read());
@@ -102,7 +128,7 @@ public class ProductNameExtractorControllerTest {
         Map<String, CpeGroup> readProductDict = readProductDictFromFile(TEST_FILE_PATH);
 
         // Assertions to verify the data integrity
-        Assertions.assertEquals(productDict.size(), readProductDict.size(), "Number of products should match");
+        assertEquals(productDict.size(), readProductDict.size(), "Number of products should match");
 
         for (Map.Entry<String, CpeGroup> entry : productDict.entrySet()) {
             String key = entry.getKey();
@@ -138,7 +164,6 @@ public class ProductNameExtractorControllerTest {
     }
 
     private Map<String, CpeGroup> readProductDictFromFile(String filePath) throws IOException {
-        return ProductNameExtractorController.readProductDict(filePath);
+        return ProductDictionary.readProductDict(filePath);
     }
-
 }

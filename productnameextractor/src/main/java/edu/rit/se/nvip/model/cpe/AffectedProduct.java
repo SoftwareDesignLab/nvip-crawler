@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package edu.rit.se.nvip.model.cve;
+package edu.rit.se.nvip.model.cpe;
 
 /**
  * 
@@ -37,7 +37,7 @@ public class AffectedProduct {
 	private String releaseDate;
 	private String version;
 	private String vendor;
-	private String pURL;
+	private String purl;
 	private String swid;
 
 	public AffectedProduct(int id, String cveId, String cpe, String releaseDate, String version) {
@@ -71,7 +71,7 @@ public class AffectedProduct {
 		this.releaseDate = a.releaseDate;
 		this.version = a.version;
 		this.vendor = a.vendor;
-		this.pURL = a.pURL;
+		this.purl = a.purl;
 		this.swid = a.swid;
 	}
 
@@ -108,7 +108,7 @@ public class AffectedProduct {
 
 	//Returns pURL. If productName is unknown, sets value to NULL.
 	public String getPURL(){
-		return pURL;
+		return purl;
 	}
 
 	//Returns swid. If productName is unknown, sets value to NULL.
@@ -141,7 +141,7 @@ public class AffectedProduct {
 		if(!version.equals("*") && !version.equals("")){
 			purlBuilder.append("@").append(version);
 		}
-		pURL = purlBuilder.toString();
+		purl = purlBuilder.toString();
 	}
 
 	/**

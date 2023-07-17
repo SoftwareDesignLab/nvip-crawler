@@ -37,29 +37,30 @@ import java.io.FileNotFoundException;
  */
 
 public class Word2Vector {
-	
-	private Word2Vec model;
+
+	private final Word2Vec model;
 
 	// This value is later updated from the loaded model
-	private int vectorLength=0;
+	private final int vectorLength;
 
 	/**
 	 * Class constructor
 	 * @param modelPath String Model file path
 	 */		
-	public Word2Vector(String modelPath) throws FileNotFoundException {
+	public Word2Vector(String modelPath) throws RuntimeException, FileNotFoundException {
 		super();
 		
 		try {
 			//Try to load the model
 			model = WordVectorSerializer.loadFullModel(modelPath);
+
 			//get expected vector length
-			vectorLength = model.getLayerSize();
-		} catch (FileNotFoundException e) {
+			vectorLength = model.vectorSize();
+		} catch (Exception e) {
 			Logger logger = LogManager.getLogger(getClass().getSimpleName());
 			logger.warn("Could not find w2v model at path {}, if running locally please ensure that w2v_model_250.bin has been" +
-					" stored in productnameextractor/nvip_data/data");
-			logger.warn("Please ensure that your working directory is correct. Current working directory: {}", ProductNameExtractorController.currentDir);
+					" stored in productnameextractor/nvip_data/data", modelPath);
+			logger.warn("Please ensure that your working directory is correct. Current working directory: {}", ProductNameExtractorMain.currentDir);
 			throw e;
 		}		
 	}
@@ -80,15 +81,10 @@ public class Word2Vector {
 	 * @return array of double values
 	 */	
 	public double[] word2vector(String word) {
-		
-		word=word.toLowerCase();
-				
 		double[] doubleArray = null;
-		
-		try {
-			doubleArray = model.getWordVector(word);
-		} catch (Exception ignored) {
-		}
+
+		try { doubleArray = model.getWordVector(word.toLowerCase()); }
+		catch (Exception ignored) { }
 		
 		return doubleArray;
 	}
