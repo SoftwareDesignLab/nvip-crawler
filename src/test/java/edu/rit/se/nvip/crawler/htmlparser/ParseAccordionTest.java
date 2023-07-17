@@ -1,7 +1,10 @@
 package edu.rit.se.nvip.crawler.htmlparser;
 
+import edu.rit.se.nvip.crawler.CveCrawler;
 import edu.rit.se.nvip.model.CompositeVulnerability;
 import org.junit.Test;
+import org.junit.BeforeClass;
+import org.junit.AfterClass;
 
 import java.util.List;
 
@@ -62,4 +65,13 @@ public class ParseAccordionTest extends AbstractParserTest{
         assertFalse(vuln.getDescription().contains("ASUS has released the new BIOS version 303 for the ASUS ZenBook Pro Duo 15 OLED (UX582LR) laptop, which includes important security updates"));
     }
 
+    @BeforeClass
+    public static void setupWebDriver(){
+        if(CveCrawler.driver.toString().contains("(null)")) CveCrawler.driver = CveCrawler.startDynamicWebDriver();
+    }
+
+    @AfterClass
+    public static void destroyWebDriver(){
+        if(CveCrawler.driver != null) CveCrawler.driver.quit();
+    }
 }

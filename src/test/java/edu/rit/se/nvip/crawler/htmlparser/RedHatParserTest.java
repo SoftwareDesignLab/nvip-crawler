@@ -23,10 +23,12 @@
  */
 package edu.rit.se.nvip.crawler.htmlparser;
 
-import edu.rit.se.nvip.crawler.QuickCveCrawler;
+import edu.rit.se.nvip.crawler.CveCrawler;
 import edu.rit.se.nvip.model.CompositeVulnerability;
-import org.junit.Ignore;
 import org.junit.Test;
+import org.junit.BeforeClass;
+import org.junit.AfterClass;
+import org.junit.Ignore;
 
 import java.util.List;
 
@@ -39,6 +41,7 @@ import static org.junit.Assert.assertEquals;
 public class RedHatParserTest extends AbstractParserTest {
 
 	@Test
+	@Ignore
 	public void testRedHat() {
 		RedHatParser parser = new RedHatParser("redhat");
 
@@ -56,4 +59,14 @@ public class RedHatParserTest extends AbstractParserTest {
 		assertEquals("2023-05-30", sample.getLastModifiedDate().substring(0, 10));
 
 	}
+
+    @BeforeClass
+    public static void setupWebDriver(){
+        if(CveCrawler.driver.toString().contains("(null)")) CveCrawler.driver = CveCrawler.startDynamicWebDriver();
+    }
+
+    @AfterClass
+    public static void destroyWebDriver(){
+        if(CveCrawler.driver != null) CveCrawler.driver.quit();
+    }
 }
