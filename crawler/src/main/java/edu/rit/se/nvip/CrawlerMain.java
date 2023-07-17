@@ -104,12 +104,10 @@ public class CrawlerMain {
             logger.info("Done! Preparing to insert all raw data found in this run!");
             crawlerMain.insertRawCVEs(crawledCVEs);
         }
-        else {
-            logger.info("Outputting CVEs to a CSV and JSON");
-            int linesWritten = cvesToCsv(crawledCVEs);
-            logger.info("Wrote {} lines to {}", linesWritten, (String)crawlerVars.get("testOutputDir")+"/test_output.csv");
-            cvesToJson(crawledCVEs);
-        }
+        logger.info("Outputting CVEs to a CSV and JSON");
+        int linesWritten = cvesToCsv(crawledCVEs);
+        logger.info("Wrote {} lines to {}", linesWritten, (String)crawlerVars.get("testOutputDir")+"/test_output.csv");
+        cvesToJson(crawledCVEs);
         logger.info("Done!");
 
         // Output results in testmode
@@ -147,7 +145,6 @@ public class CrawlerMain {
     }
 
     private static int cvesToCsv(HashMap<String, ArrayList<RawVulnerability>> crawledCVEs){
-        logger.info("write to csv");
         int lineCount = 0;
         CSVWriter writer = null;
         String filepath = (String) crawlerVars.get("testOutputDir") + "/test_output.csv";
