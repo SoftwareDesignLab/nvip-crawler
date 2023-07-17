@@ -401,6 +401,8 @@ public class ProductDictionary {
                 catch (InterruptedIOException e) {
                     Thread.sleep(10000);
                     throw e;
+                } catch(IOException e) {
+                    attempts++;
                 } catch (Exception e) {
                     logger.error("Error loading CPE dictionary page {}/{}, Attempt {}/{}: {}", (index / resultsPerPage) + 1, totalPages, attempts + 1, maxAttemptsPerPage, e.getMessage());
                     attempts++;
