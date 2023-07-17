@@ -100,7 +100,8 @@ jobs:
           LIQUIBASE_USER: ${{ env.HIKARI_USER }}
           LIQUIBASE_PASS: ${{ env.HIKARI_PASSWORD }}
         run: |
-          mvn liquibase:update
+          mysql -e 'CREATE DATABASE nvip;' -u${{ env.HIKARI_USER }} -p${{ env.HIKARI_PASSWORD }} 
+          mvn liquibase:update --no-transfer-progress
 
       - name: Test and Build Crawler with Maven
         run: |
@@ -132,9 +133,15 @@ jobs:
       - name: Prepare MySQL Test DB
         run: |
           sudo /etc/init.d/mysql start
-          mysql -e 'CREATE DATABASE nvip;' -uroot -proot
-          mysql -e 'SHOW DATABASES;' -uroot -proot
-          mysql -e 'source nvip_data/mysql-database/CreateAndInitializeDb.sql' -uroot -proot
+
+      - name: Initialize DB
+        env:
+          LIQUIBASE_URL: ${{ env.HIKARI_URL }}
+          LIQUIBASE_USER: ${{ env.HIKARI_USER }}
+          LIQUIBASE_PASS: ${{ env.HIKARI_PASSWORD }}
+        run: |
+          mysql -e 'CREATE DATABASE nvip;' -u${{ env.HIKARI_USER }} -p${{ env.HIKARI_PASSWORD }} 
+          mvn liquibase:update --no-transfer-progress
 
       - name: Test and Build Reconciler with Maven
         run: |
@@ -190,7 +197,8 @@ jobs:
           LIQUIBASE_USER: ${{ env.HIKARI_USER }}
           LIQUIBASE_PASS: ${{ env.HIKARI_PASSWORD }}
         run: |
-          mvn liquibase:update
+          mysql -e 'CREATE DATABASE nvip;' -u${{ env.HIKARI_USER }} -p${{ env.HIKARI_PASSWORD }} 
+          mvn liquibase:update --no-transfer-progress
 
       - name: Test and Build Product Extractor with Maven
         run: |
@@ -241,7 +249,7 @@ jobs:
           LIQUIBASE_PASS: ${{ env.HIKARI_PASSWORD }}
         run: |
           mysql -e 'CREATE DATABASE nvip;' -u${{ env.HIKARI_USER }} -p${{ env.HIKARI_PASSWORD }} 
-          mvn liquibase:update
+          mvn liquibase:update --no-transfer-progress
 
       - name: Publish Test Report
         if: success() || failure()
