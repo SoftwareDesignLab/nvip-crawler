@@ -33,12 +33,14 @@ jobs:
         with:
           lfs: 'true'
 
-      - name: Set up dependencies
-        uses: actions/setup-java@v3
+      - uses: actions/setup-java@v3.10.0
         with:
           java-version: '17'
           distribution: 'temurin'
           cache: 'maven'
+
+      - name: Set up dependencies
+        run: mvn dependency:resolve
 
       # Setup MySQL DB for tests that require connection (Might not need this)
       - name: Initialize Database
