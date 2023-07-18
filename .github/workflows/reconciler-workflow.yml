@@ -2,7 +2,16 @@
 
 name: Reconciler Workflow
 
-on: [push]
+on:
+  pull_request:
+    branches:
+      - main
+      - dev
+  push:
+    branches:
+      - main
+      - dev
+      - 'cicd/**'
 
 env:
   AWS_REGION: 'us-east-1'

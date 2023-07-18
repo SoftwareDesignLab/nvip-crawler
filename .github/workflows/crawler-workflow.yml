@@ -2,7 +2,16 @@
 
 name: Crawler Workflow
 
-on: [push]
+on:
+  pull_request:
+    branches:
+      - main
+      - dev
+  push:
+    branches:
+      - main
+      - dev
+      - 'cicd/**'
 
 env:
   AWS_REGION: 'us-east-1'
@@ -27,7 +36,6 @@ jobs:
   # Build and Test Crawler Component
   build-test-crawler:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v3
         with:
@@ -56,11 +64,11 @@ jobs:
         run: |
           mvn liquibase:update
 
-      - name: Test and Build Crawler with Maven
+      - name: Test Crawler
         run: |
           cd crawler
           mvn dependency:go-offline
-          mvn package
+          mvn test
 
       - name: Publish Test Report
         if: success() || failure()
