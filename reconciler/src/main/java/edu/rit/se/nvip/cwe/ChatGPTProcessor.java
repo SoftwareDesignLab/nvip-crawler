@@ -92,8 +92,11 @@ public class ChatGPTProcessor {
 
     public Set<CWE> assignCWEs(CompositeVulnerability vuln) {
 
-        CWE.CWEForest forest = new CWE.CWEForest(); // builds the forest
-        Set<CWE.CWETree> trees = whichMatchHelper(forest.getTrees(), vuln);
+        CWEForest forest = new CWEForest(); // builds the forest
+        for (CWETree tree : forest.getTrees()) {
+            logger.info(tree.maxChildren());
+        }
+        Set<CWETree> trees = whichMatchHelper(forest.getTrees(), vuln);
         Set<CWE> out = new HashSet<>();
         for (CWE.CWETree tree : trees) {
             out.add(tree.getRoot());
