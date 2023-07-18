@@ -7,6 +7,7 @@ import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.DeliverCallback;
 import edu.rit.se.nvip.DatabaseHelper;
+import edu.rit.se.nvip.utils.ReconcilerEnvVars;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -29,7 +30,7 @@ public class Messenger {
 
     public Messenger(){
         // Instantiate with default values
-        this("localhost", "guest", "guest");
+        this(ReconcilerEnvVars.getRabbitHost(), ReconcilerEnvVars.getRabbitUsername(), ReconcilerEnvVars.getRabbitPassword());
     }
 
     /**
@@ -60,6 +61,7 @@ public class Messenger {
      * @throws Exception
      */
     public List<String> waitForCrawlerMessage(int rabbitTimeout) throws Exception {
+        logger.info("Waiting for jobs from Crawler...");
         try(Connection connection = factory.newConnection();
             Channel channel = connection.createChannel()){
             channel.queueDeclare(RECONCILER_QUEUE, false, false, false, null);

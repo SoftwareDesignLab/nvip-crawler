@@ -30,6 +30,9 @@ public class ReconcilerEnvVars extends Properties {
     private static String characterizationMethod;
     private static String dataDir;
     private static int doCharacterization;
+    private static String rabbitHost;
+    private static String rabbitUsername;
+    private static String rabbitPassword;
 
     /**
      * Ensures vars are loaded before anybody else uses this class. They can be reloaded by calling any public load method manually
@@ -134,7 +137,17 @@ public class ReconcilerEnvVars extends Properties {
                     dataDir = addEnvvarString(envName, envVar, "nvip_data");
                     break;
                 case DO_CHARACTERIZATION:
-                    doCharacterization = addEnvvarInt(envName, Integer.parseInt(envVar), 0);;
+                    doCharacterization = addEnvvarInt(envName, Integer.parseInt(envVar), 0);
+                    break;
+                case RABBIT_HOST:
+                    rabbitHost = addEnvvarString(envName, envVar, "localhost");
+                    break;
+                case RABBIT_USERNAME:
+                    rabbitUsername = addEnvvarString(envName, envVar, "guest");
+                    break;
+                case RABBIT_PASSWORD:
+                    rabbitPassword = addEnvvarString(envName, envVar, "guest");
+                    break;
             }
         }
     }
@@ -237,6 +250,16 @@ public class ReconcilerEnvVars extends Properties {
     public static String getDataDir() {
         return dataDir;
     }
+    public static String getRabbitHost() {
+        return rabbitHost;
+    }
+    public static String getRabbitUsername() {
+        return rabbitUsername;
+    }
+    public static String getRabbitPassword() {
+        return rabbitPassword;
+    }
+
 
     private static String addEnvvarString(String name, String value, String defaultValue) {
         if (value != null && !value.isEmpty()) {
