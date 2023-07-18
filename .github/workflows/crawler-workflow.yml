@@ -7,6 +7,7 @@ on: [push]
 env:
   AWS_REGION: 'us-east-1'
   DB_TYPE: 'mysql'
+  DB_NAME: 'nvip'
   HIKARI_URL: 'jdbc:mysql://localhost:3306/nvip?useSSL=false&allowPublicKeyRetrieval=true'
   HIKARI_USER: 'root'
   HIKARI_PASSWORD: 'root'
@@ -26,35 +27,32 @@ jobs:
   # Build and Test Crawler Component
   build-test-crawler:
     runs-on: ubuntu-latest
+
     steps:
-      - name: checkout
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
         with:
           lfs: 'true'
 
-      - name: Set up JDK 17
+      - name: Set up dependencies
         uses: actions/setup-java@v3
         with:
           java-version: '17'
           distribution: 'temurin'
+          cache: maven
 
       # Setup MySQL DB for tests that require connection (Might not need this)
-      - name: Start MySQL Service
-        run: sudo /etc/init.d/mysql start
-        # run: |
-        #   sudo /etc/init.d/mysql start
-        #   mysql -e 'CREATE DATABASE nvip;' -uroot -proot
-        #   mysql -e 'SHOW DATABASES;' -uroot -proot
-        #   mysql -e 'source nvip_data/mysql-database/CreateAndInitializeDb.sql' -uroot -proot
-
-      - name: Initialize DB
+      - name: Initialize Database
         env:
           LIQUIBASE_URL: ${{ env.HIKARI_URL }}
           LIQUIBASE_USER: ${{ env.HIKARI_USER }}
           LIQUIBASE_PASS: ${{ env.HIKARI_PASSWORD }}
         run: |
-          mysql -e 'CREATE DATABASE nvip;' -u${{ env.HIKARI_USER }} -p${{ env.HIKARI_PASSWORD }} 
-          mvn liquibase:update --no-transfer-progress
+          sudo /etc/init.d/mysql start
+          mysql -e 'CREATE DATABASE ${{ env.DB_NAME }};' -u${{ env.HIKARI_USER }} -p${{ env.HIKARI_PASSWORD }}
+
+      - name: Run Liquibase Update
+        run: |
+          mvn liquibase:update
 
       - name: Test and Build Crawler with Maven
         run: |
@@ -75,13 +73,6 @@ jobs:
     if: ${{ success() && github.ref == 'refs/heads/dev' }}
     steps:
       - uses: actions/checkout@v3
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v2
