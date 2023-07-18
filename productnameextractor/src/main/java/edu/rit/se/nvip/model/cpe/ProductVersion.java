@@ -65,7 +65,7 @@ public class ProductVersion implements Comparable<ProductVersion> {
      * Handles cases with bad format such as "1.2," or "v1.2"
      *
      * @param versionString string representation of a version
-     * @throws IllegalArgumentException
+     * @throws IllegalArgumentException for incorrectly formatted version strings
      */
     public ProductVersion(String versionString) throws IllegalArgumentException {
 
