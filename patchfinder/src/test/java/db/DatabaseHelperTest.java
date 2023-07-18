@@ -3,7 +3,6 @@ package db;
 import model.CpeGroup;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.junit.Before;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.Test;
 import java.util.*;
@@ -12,9 +11,9 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.platform.commons.function.Try.success;
 
 public class DatabaseHelperTest {
-    private static final String DATABASE_TYPE = System.getenv("DB_TYPE");
-    private static final String HIKARI_URL = System.getenv("HIKARI_URL");
-    private static final String HIKARI_USER = System.getenv("HIKARI_USER");
+    private static final String DATABASE_TYPE = "mysql";
+    private static final String HIKARI_URL = "jdbc:mysql://localhost:3306/nvip?useSSL=false&allowPublicKeyRetrieval=true";
+    private static final String HIKARI_USER = "root";
     private static final String HIKARI_PASSWORD = System.getenv("HIKARI_PASSWORD");
     private static final String TEST_CVE_ID = "CVE-2023-1001";
 
@@ -33,17 +32,11 @@ public class DatabaseHelperTest {
 
     @Test
     public void testGetAffectedProducts() {
-        Map<String, CpeGroup> affectedProducts = databaseHelper.getAffectedProducts();
+        Map<String, CpeGroup> affectedProducts = databaseHelper.getAffectedProducts(null);
         assertNotNull(affectedProducts);
         assertFalse(affectedProducts.isEmpty());
         assertTrue(affectedProducts.containsKey(TEST_CVE_ID));
         // Add more assertions to verify the correctness of the returned affected products
-    }
-
-    @Test
-    public void testGetVulnIdByCveId() {
-        int vulnId = databaseHelper.getVulnIdByCveId(TEST_CVE_ID);
-        assertTrue(vulnId > 0);
     }
 
     @Test
@@ -61,7 +54,7 @@ public class DatabaseHelperTest {
         java.util.Date commitDate = new java.util.Date();
         String commitMessage = "Fix vulnerability";
         String uniDiff = "diff --git a/file1 b/file1\n+++ b/file1\n@@ -1,3 +1,3 @@\n-line1\n-line2\n+line3\n+line4";
-        List<RevCommit> timeLine = new ArrayList<>(); // Assume a valid timeline
+        List<String> timeLine = new ArrayList<>(); // Assume a valid timeline
         String timeToPatch = "2 days";
         int linesChanged = 2;
 
@@ -82,7 +75,7 @@ public class DatabaseHelperTest {
         java.util.Date commitDate = new java.util.Date();
         String commitMessage = "Fix vulnerability";
         String uniDiff = "diff --git a/file1 b/file1\n+++ b/file1\n@@ -1,3 +1,3 @@\n-line1\n-line2\n+line3\n+line4";
-        List<RevCommit> timeLine = new ArrayList<>(); // Assume a valid timeline
+        List<String> timeLine = new ArrayList<>(); // Assume a valid timeline
         String timeToPatch = "2 days";
         int linesChanged = 2;
 

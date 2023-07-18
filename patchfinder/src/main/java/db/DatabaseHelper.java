@@ -30,7 +30,6 @@ import model.CpeEntry;
 import model.CpeGroup;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.eclipse.jgit.revwalk.RevCommit;
 
 import java.sql.*;
 import java.util.*;
@@ -38,9 +37,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * 
- * The DatabaseHelper class is used to insert and update vulnerabilities found
- * from the webcrawler/processor to a sqlite database
+ * The DatabaseHelper class is used to facilitate database interactions for the Patchfinder
+ *
+ * @author Dylan Mulligan
  */
 public class DatabaseHelper {
 	private HikariConfig config = null;
@@ -48,7 +47,7 @@ public class DatabaseHelper {
 	private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
 
 	private final String selectAffectedProductsSql = "SELECT cve_id, cpe FROM affectedproduct GROUP BY product_name, affected_product_id ORDER BY cve_id DESC, version ASC;";
-	private final String getVulnIdByCveIdSql = "SELECT vuln_id FROM vulnerability WHERE cve_id = ?";
+	private final String selectAffectedProductsByIdsSql = "SELECT cve_id, cpe FROM affectedproduct WHERE cve_id = ? GROUP BY product_name, affected_product_id ORDER BY cve_id DESC, version ASC;";
 	private final String getExistingSourceUrlsSql = "SELECT source_url, source_url_id FROM patchsourceurl";
 	private final String getExistingPatchCommitsSql = "SELECT commit_sha FROM patchcommit";
 	private final String insertPatchSourceURLSql = "INSERT INTO patchsourceurl (cve_id, source_url) VALUES (?, ?);";
@@ -57,8 +56,13 @@ public class DatabaseHelper {
 	public static final Pattern CPE_PATTERN = Pattern.compile("cpe:2\\.3:[aho\\*\\-]:([^:]*):([^:]*):([^:]*):.*");
 
 	/**
-	 * The private constructor sets up HikariCP for connection pooling. Singleton
-	 * DP!
+	 * Creates a DBH instance given db type, url, username, and password. These values are used to create a config
+	 * for Hikari and load it.
+	 *
+	 * @param databaseType database type identifier (mysql, postgres, etc.)
+	 * @param hikariUrl url to connect to the database
+	 * @param hikariUser database username
+	 * @param hikariPassword database password
 	 */
 	public DatabaseHelper(String databaseType, String hikariUrl, String hikariUser, String hikariPassword) {
 		logger.info("New NVIP.DatabaseHelper instantiated! It is configured to use " + databaseType + " database!");
@@ -85,6 +89,14 @@ public class DatabaseHelper {
 		}
 	}
 
+	/**
+	 * Creates a HikariConfig object from the given values.
+	 *
+	 * @param url url to connect to the database
+	 * @param user database username
+	 * @param password database password
+	 * @return created HikariConfig object
+	 */
 	private HikariConfig createHikariConfig(String url, String user, String password) {
 		HikariConfig hikariConfig;
 
@@ -109,7 +121,7 @@ public class DatabaseHelper {
 	 * Retrieves the connection from the DataSource (HikariCP)
 	 * 
 	 * @return the connection pooling connection
-	 * @throws SQLException
+	 * @throws SQLException if a SQL error occurs
 	 */
 	public Connection getConnection() throws SQLException {
 		return dataSource.getConnection();
@@ -123,11 +135,15 @@ public class DatabaseHelper {
 		config = null;
 	}
 
+	/**
+	 * Gets a map of CVEs -> existing source urls from the database
+	 * @return a map of CVEs -> existing source urls
+	 */
 	public Map<String, Integer> getExistingSourceUrls() {
 		final Map<String, Integer> urls = new HashMap<>();
 
 		try (Connection connection = getConnection();
-			 PreparedStatement pstmt = connection.prepareStatement(getExistingSourceUrlsSql);) {
+			 PreparedStatement pstmt = connection.prepareStatement(getExistingSourceUrlsSql)) {
 			ResultSet rs = pstmt.executeQuery();
 			while(rs.next()) { urls.put(rs.getString(1), rs.getInt(2)); }
 		} catch (Exception e) {
@@ -137,11 +153,15 @@ public class DatabaseHelper {
 		return urls;
 	}
 
+	/**
+	 * Gets a set of existing patch commit SHAs from the database
+	 * @return a set of existing patch commit SHAs
+	 */
 	public Set<String> getExistingPatchCommitShas() {
 		final Set<String> urls = new HashSet<>();
 
 		try (Connection connection = getConnection();
-			 PreparedStatement pstmt = connection.prepareStatement(getExistingPatchCommitsSql);) {
+			 PreparedStatement pstmt = connection.prepareStatement(getExistingPatchCommitsSql)) {
 			ResultSet rs = pstmt.executeQuery();
 			while(rs.next()) { urls.add(rs.getString(1)); }
 		} catch (Exception e) {
@@ -153,82 +173,82 @@ public class DatabaseHelper {
 
 	/**
 	 * Collects a map of CPEs with their correlated CVE and Vuln ID used for
-	 * collecting patches
+	 * collecting patches given a list of CVE ids.
 	 *
+	 * @param cveIds CVEs to get affected products for
 	 * @return a map of affected products
 	 */
-	public Map<String, CpeGroup> getAffectedProducts() {
+	public Map<String, CpeGroup> getAffectedProducts(List<String> cveIds) {
 		Map<String, CpeGroup> affectedProducts = new HashMap<>();
 		// Prepare statement
 		try (Connection conn = getConnection();
-			 PreparedStatement pstmt = conn.prepareStatement(selectAffectedProductsSql)
+			 PreparedStatement getAll = conn.prepareStatement(selectAffectedProductsSql);
+			 PreparedStatement getById = conn.prepareStatement(selectAffectedProductsByIdsSql)
 		) {
-			// Execute and get result set
-			ResultSet res = pstmt.executeQuery();
-
-			// Parse results
-			while (res.next()) {
-				// Extract cveId and cpe from result
-				final String cveId = res.getString("cve_id");
-				final String cpe = res.getString("cpe");
-
-				// Extract product name and version from cpe
-				final Matcher m = CPE_PATTERN.matcher(cpe);
-				if(!m.find()) {
-					logger.warn("Invalid cpe '{}' could not be parsed, skipping product", cpe);
-					continue;
-				}
-				final String vendor = m.group(1);
-				final String name = m.group(2);
-				final String version = m.group(3);
-				final CpeEntry entry = new CpeEntry(name, version, cpe);
-
-				// If we already have this cveId stored, add specific version
-				if (affectedProducts.containsKey(cveId)) {
-					affectedProducts.get(cveId).addVersion(entry);
-				} else {
-					final CpeGroup group = new CpeGroup(vendor, name);
-					group.addVersion(entry);
-					affectedProducts.put(cveId, group);
+			// Execute correct statement and get result set
+			ResultSet res = null;
+			if(cveIds == null) {
+				res = getAll.executeQuery();
+				parseAffectedProducts(affectedProducts, res);
+			}
+			else {
+				for (String cveId : cveIds) {
+					getById.setString(1, cveId);
+					res = getById.executeQuery();
+					parseAffectedProducts(affectedProducts, res);
 				}
 			}
 
 		} catch (Exception e) {
-			logger.error("ERROR: Failed to grab CVEs and CPEs from DB:\n{}", e.toString());
+			logger.error("ERROR: Failed to generate affected products map: {}", e.toString());
 		}
 
 		return affectedProducts;
 	}
 
 	/**
-	 * Collects the vulnId for a specific CVE with a given CVE-ID
+	 * Parses affected product data from the ResultSet into CpeGroup objects in the affectedProducts map.
 	 *
-	 * @param cveId
-	 * @return
+	 * @param affectedProducts output map of CVE ids -> products
+	 * @param res result set from database query
+	 * @throws SQLException if a SQL error occurs
 	 */
-	public int getVulnIdByCveId(String cveId) {
-		int result = -1;
-		try (Connection connection = getConnection();
-			 PreparedStatement pstmt = connection.prepareStatement(getVulnIdByCveIdSql);) {
-			pstmt.setString(1, cveId);
-			ResultSet rs = pstmt.executeQuery();
-			if (rs.next()) {
-				result = rs.getInt("vuln_id");
-			}
-		} catch (Exception e) {
-			logger.error(e.toString());
-		}
+	private void parseAffectedProducts(Map<String, CpeGroup> affectedProducts, ResultSet res) throws SQLException {
+		// Parse results
+		while (res.next()) {
+			// Extract cveId and cpe from result
+			final String cveId = res.getString("cve_id");
+			final String cpe = res.getString("cpe");
 
-		return result;
+			// Extract product name and version from cpe
+			final Matcher m = CPE_PATTERN.matcher(cpe);
+			if(!m.find()) {
+				logger.warn("Invalid cpe '{}' could not be parsed, skipping product", cpe);
+				continue;
+			}
+			final String vendor = m.group(1);
+			final String name = m.group(2);
+			final String version = m.group(3);
+			final CpeEntry entry = new CpeEntry(name, version, cpe);
+
+			// If we already have this cveId stored, add specific version
+			if (affectedProducts.containsKey(cveId)) {
+				affectedProducts.get(cveId).addVersion(entry);
+			} else {
+				final CpeGroup group = new CpeGroup(vendor, name);
+				group.addVersion(entry);
+				affectedProducts.put(cveId, group);
+			}
+		}
 	}
 
 	/**
 	 * Inserts given source URL into the patch source table
 	 *
-	 * @param existingSourceUrls
-	 * @param cve_id
-	 * @param sourceURL
-	 * @return
+	 * @param existingSourceUrls map of CVE ids -> the id of the source url
+	 * @param cve_id CVE being processed
+	 * @param sourceURL source url to insert
+	 * @return generated primary key (or existing key)
 	 */
 	public int insertPatchSourceURL(Map<String, Integer> existingSourceUrls, String cve_id, String sourceURL) {
 		// Check if source already exists
@@ -261,12 +281,17 @@ public class DatabaseHelper {
 	/**
 	 * Method for inserting a patch commit into the patchcommit table
 	 *
-	 * @param sourceId
-	 * @param commitSha
-	 * @param commitDate
-	 * @param commitMessage
+	 * @param sourceId id of the source url
+	 * @param commitSha commit SHA
+	 * @param commitDate commit date
+	 * @param commitMessage commit message
+	 * @param uniDiff unified diff String
+	 * @param timeLine timeline list of String objects
+	 * @param timeToPatch time from CVE release -> patch release
+	 * @param linesChanged number of lines changed
+	 * @throws IllegalArgumentException if given source id is invalid (sourceId < 0)
 	 */
-	public void insertPatchCommit(int sourceId, String cveId, String commitSha, java.util.Date commitDate, String commitMessage, String uniDiff, List<RevCommit> timeLine, String timeToPatch, int linesChanged) throws IllegalArgumentException {
+	public void insertPatchCommit(int sourceId, String cveId, String commitSha, java.util.Date commitDate, String commitMessage, String uniDiff, List<String> timeLine, String timeToPatch, int linesChanged) throws IllegalArgumentException {
 		if (sourceId < 0) throw new IllegalArgumentException("Invalid source id provided, ensure id is non-negative");
 
 		try (Connection connection = getConnection();

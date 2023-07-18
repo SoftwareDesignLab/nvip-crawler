@@ -10,7 +10,7 @@ import java.util.Map;
 public class PatchUrlFinderTest {
 
     @Test
-    public void testParseMassURLs() throws IOException, InterruptedException {
+    public void testParseMassURLs() {
         // Create a test instance of PatchUrlFinder
         PatchUrlFinder patchUrlFinder = new PatchUrlFinder();
 
@@ -42,7 +42,7 @@ public class PatchUrlFinderTest {
 
         // Invoke the method being tested
         Map<String, ArrayList<String>> cveCpeUrls = new HashMap<>();
-        patchUrlFinder.parseMassURLs(cveCpeUrls, affectedProducts, cveLimit, true);
+        patchUrlFinder.parsePatchURLs(cveCpeUrls, affectedProducts, cveLimit, true);
 
         // Perform assertions to check the results
         Assertions.assertNotNull(cveCpeUrls);
@@ -50,7 +50,7 @@ public class PatchUrlFinderTest {
     }
 
     @Test
-    public void testSearchForRepos() throws IOException, InterruptedException {
+    public void testSearchForRepos() {
         // Create a test instance of PatchUrlFinder
         PatchUrlFinder patchUrlFinder = new PatchUrlFinder();
 
@@ -83,7 +83,7 @@ public class PatchUrlFinderTest {
 
         // Invoke the method being tested
         Map<String, ArrayList<String>> cveCpeUrls = new HashMap<>();
-        patchUrlFinder.parseMassURLs(cveCpeUrls, affectedProducts, cveLimit, true);
+        patchUrlFinder.parsePatchURLs(cveCpeUrls, affectedProducts, cveLimit, true);
 
         // Perform assertions to check the results
         Assertions.assertNotNull(cveCpeUrls);

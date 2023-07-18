@@ -62,15 +62,19 @@ public class PatchFinder {
 	protected static String hikariUser = "root";
 	protected static String hikariPassword = "root";
 	protected static int cloneCommitThreshold = 1000; // TODO: Find omptimal value once github scraping is working well
-	protected static int cloneCommitLimit = 50000; // TODO: Find omptimal value once github scraping is working well
-	protected static String clonePath = "src/main/resources/patch-repos";
-	protected static String patchSrcUrlPath = "src/main/resources/source_dict.json";
+	protected static final int cloneCommitLimit = 50000; // TODO: Find omptimal value once github scraping is working well
+	protected static String clonePath = "patchfinder/src/main/resources/patch-repos";
+	protected static final String patchSrcUrlPath = "patchfinder/src/main/resources/source_dict.json";
 	protected static String[] addressBases = { "https://github.com/", "https://www.gitlab.com/" };
 	protected static Instant urlDictLastCompilationDate = Instant.parse("2000-01-01T00:00:00.00Z");
 	private static final ObjectMapper OM = new ObjectMapper();
+	private static DatabaseHelper databaseHelper;
+	private static PatchUrlFinder patchURLFinder;
+	private static Map<String, ArrayList<String>> sourceDict;
 
 	public static int getCloneCommitThreshold() { return cloneCommitThreshold; }
 	public static int getCloneCommitLimit() { return cloneCommitLimit; }
+	public static DatabaseHelper getDatabaseHelper() { return databaseHelper; }
 
 	/**
 	 * Attempts to get all required environment variables from System.getenv() safely, logging
@@ -132,6 +136,11 @@ public class PatchFinder {
 		fetchHikariEnvVars(props);
 	}
 
+	/**
+	 * Attempts to get all required database environment variables from the given properties map safely, logging
+	 * any missing or incorrect variables.
+	 * @param props map of environment variables to be fetched from
+	 */
 	private static void fetchHikariEnvVars(Map<String, String> props) {
 		try {
 			if(props.containsKey("HIKARI_URL")) {
@@ -155,9 +164,11 @@ public class PatchFinder {
 		} catch (Exception ignored) { logger.warn("Could not fetch HIKARI_PASSWORD from env vars, defaulting to {}", hikariPassword); }
 	}
 
-	public static void main(String[] args) throws IOException, InterruptedException {
-		logger.info("Starting PatchFinder...");
-		final long totalStart = System.currentTimeMillis();
+	/**
+	 * Initialize the Patchfinder and its subcomponents
+	 */
+	public static void init() {
+		logger.info("Initializing PatchFinder...");
 
 		// Load env vars
 		logger.info("Fetching needed environment variables...");
@@ -165,24 +176,49 @@ public class PatchFinder {
 		logger.info("Done fetching environment variables");
 
 		// Init db helper
-		logger.info("Initializing DatabaseHelper and getting affected products from the database...");
-		final DatabaseHelper databaseHelper = new DatabaseHelper(databaseType, hikariUrl, hikariUser, hikariPassword);
+		logger.info("Initializing DatabaseHelper...");
+		databaseHelper = new DatabaseHelper(databaseType, hikariUrl, hikariUser, hikariPassword);
 
 		// Init PatchUrlFinder
-		PatchUrlFinder patchURLFinder = new PatchUrlFinder();
+		logger.info("Initializing PatchUrlFinder...");
+		patchURLFinder = new PatchUrlFinder();
+	}
 
-		// Fetch affectedProducts from db
-		Map<String, CpeGroup> affectedProducts = databaseHelper.getAffectedProducts();
-		final int affectedProductsCount = affectedProducts.values().stream().map(CpeGroup::getVersionsCount).reduce(0, Integer::sum);
-		logger.info("Successfully got {} CVEs mapped to {} affected products from the database", affectedProducts.size(), affectedProductsCount);
+	/**
+	 * Run a list of given jobs through the Patchfinder
+	 * @param cveIds CVEs to get affected products and patches for
+	 * @throws IOException if an IO error occurs while attempting to find patches
+	 * @throws InterruptedException if a thread interrupted error occurs while attempting to find patches
+	 */
+	public static void run(List<String> cveIds) throws IOException, InterruptedException {
+		// Get affected products via CVE ids
+		final Map<String, CpeGroup> affectedProducts = databaseHelper.getAffectedProducts(cveIds);
+		logger.info("Successfully got affected products for {} CVEs from the database", affectedProducts.size());
+		PatchFinder.run(affectedProducts, 0);
+	}
+
+	/**
+	 * Find patches for a given map of affected products
+	 * @param affectedProducts map of products to find patches for
+	 * @throws IOException if an IO error occurs while attempting to find patches
+	 */
+	public static void run(Map<String, CpeGroup> affectedProducts, int cveLimit) throws IOException {
+		final long totalStart = System.currentTimeMillis();
 
 		// Attempt to find source urls from pre-written file (ensure file existence/freshness)
-		final Map<String, ArrayList<String>> possiblePatchURLs = readSourceDict(patchSrcUrlPath);
+		final Map<String, ArrayList<String>> possiblePatchURLs = getSourceDict();
+
+		// Filter any sources that are not a current job
+		final Set<String> cachedCVEs = possiblePatchURLs.keySet();
+		final Set<String> newCVEs = affectedProducts.keySet();
+		for (String key : cachedCVEs) {
+			if(!newCVEs.contains(key)) possiblePatchURLs.remove(key);
+		}
 
 		// Log read in data stats
 		int urlCount = possiblePatchURLs.values().stream().map(ArrayList::size).reduce(0, Integer::sum);
 		if(urlCount > 0) {
-			logger.info("Successfully read {} possible patch urls for {} CVEs from file at filepath '{}'",
+			logger.info("Loaded {} possible patch urls for {} CVEs from file at filepath '{}'",
 					urlCount,
 					possiblePatchURLs.size(),
 					patchSrcUrlPath
@@ -195,13 +231,9 @@ public class PatchFinder {
 
 		// Determine if urls dict needs to be refreshed
 		final boolean isStale = urlDictLastCompilationDate.until(Instant.now(), ChronoUnit.DAYS) >= 1;
-		final int offset = PatchFinder.getPatchCommits().size();
-		if (!isStale && offset > 0) {
-			logger.info("Skipping patch URL parsing. Use offset to avoid repeating the same run.");
-			return;
-		}
+
 		// Parse new urls
-		patchURLFinder.parseMassURLs(possiblePatchURLs, affectedProducts, cveLimit, isStale);
+		patchURLFinder.parsePatchURLs(possiblePatchURLs, affectedProducts, cveLimit, isStale);
 		urlCount = possiblePatchURLs.values().stream().map(ArrayList::size).reduce(0, Integer::sum);
 
 		logger.info("Successfully parsed {} possible patch urls for {} CVEs in {} seconds",
@@ -215,65 +247,66 @@ public class PatchFinder {
 
 		// Find patches
 		// Repos will be cloned to patch-repos directory, multi-threaded 6 threads.
-		// TODO: Fix cvesPerThread
-		logger.info("Starting patch finder with {} max threads, allowing {} CVE(s) per thread...", maxThreads, cvesPerThread);
+		logger.info("Starting patch finder with {} max threads", maxThreads);
 		final long findPatchesStart = System.currentTimeMillis();
-		//TODO: How to handle multiple CVEs mapped to the same repo.
-		// Currently we clone/scrape for each, which is a big waste of time
 		PatchFinder.findPatchesMultiThreaded(possiblePatchURLs);
 
 		// Get found patches from patchfinder
 		ArrayList<PatchCommit> patchCommits = PatchFinder.getPatchCommits();
-		logger.info("Successfully found {} patch commits from {} patch urls in {} seconds",
-				patchCommits.size(),
-				urlCount,
-				(System.currentTimeMillis() - findPatchesStart) / 1000
-		);
 
-		//TODO: Ensure patch commit does not already exist before inserting.
-		// For existing entries, diff, replace, ignore?
+		// Insert found patch commits (if any)
+		if(patchCommits.size() > 0) {
+			logger.info("Successfully found {} patch commits from {} patch urls in {} seconds",
+					patchCommits.size(),
+					urlCount,
+					(System.currentTimeMillis() - findPatchesStart) / 1000
+			);
 
-		// Get existing sources
-		final Map<String, Integer> existingSources = databaseHelper.getExistingSourceUrls();
+			// Get existing sources
+			final Map<String, Integer> existingSources = databaseHelper.getExistingSourceUrls();
 
-		// Get existing patch commits
-		final Set<String> existingCommitShas = databaseHelper.getExistingPatchCommitShas();
+			// Get existing patch commits
+			final Set<String> existingCommitShas = databaseHelper.getExistingPatchCommitShas();
 
-		// Insert patches
-		int failedInserts = 0;
-		int existingInserts = 0;
-		logger.info("Starting insertion of {} patch commits into the database...", patchCommits.size());
-		final long insertPatchesStart = System.currentTimeMillis();
-		for (PatchCommit patchCommit : patchCommits) {
-			final String sourceUrl = patchCommit.getCommitUrl();
-			// Insert source
-			final int sourceUrlId = databaseHelper.insertPatchSourceURL(existingSources, patchCommit.getCveId(), sourceUrl);
+			// Insert patches
+			int failedInserts = 0;
+			int existingInserts = 0;
+			logger.info("Starting insertion of {} patch commits into the database...", patchCommits.size());
+			final long insertPatchesStart = System.currentTimeMillis();
+			for (PatchCommit patchCommit : patchCommits) {
+				final String sourceUrl = patchCommit.getCommitUrl();
+				// Insert source
+				final int sourceUrlId = databaseHelper.insertPatchSourceURL(existingSources, patchCommit.getCveId(), sourceUrl);
+				//convert the timeline to a string
 
-			// Insert patch commit
-			try {
-				// Ensure patch commit does not already exist
-				final String commitSha = patchCommit.getCommitId();
-				if (!existingCommitShas.contains(commitSha)) {
-					databaseHelper.insertPatchCommit(
-							sourceUrlId, patchCommit.getCveId(), commitSha, patchCommit.getCommitDate(),
-							patchCommit.getCommitMessage(), patchCommit.getUniDiff(),
-							patchCommit.getTimeline(), patchCommit.getTimeToPatch(), patchCommit.getLinesChanged()
-					);
-				} else {
-					logger.warn("Failed to insert patch commit, as it already exists in the database");
-					existingInserts++;
+				// Insert patch commit
+				try {
+					// Ensure patch commit does not already exist
+					final String commitSha = patchCommit.getCommitId();
+					if (!existingCommitShas.contains(commitSha)) {
+						databaseHelper.insertPatchCommit(
+								sourceUrlId, patchCommit.getCveId(), commitSha, patchCommit.getCommitDate(),
+								patchCommit.getCommitMessage(), patchCommit.getUniDiff(),
+								patchCommit.getTimeline(), patchCommit.getTimeToPatch(), patchCommit.getLinesChanged()
+						);
+					} else {
+						logger.warn("Failed to insert patch commit, as it already exists in the database");
+						existingInserts++;
+					}
+				} catch (IllegalArgumentException e) {
+					failedInserts++;
 				}
-			} catch (IllegalArgumentException e) {
-				failedInserts++;
 			}
-		}
 
-		logger.info("Successfully inserted {} patch commits into the database in {} seconds ({} failed {} already existed)",
-				patchCommits.size() - failedInserts - existingInserts,
-				(System.currentTimeMillis() - insertPatchesStart) / 1000,
-				failedInserts,
-				existingInserts
-		);
+			logger.info("Successfully inserted {} patch commits into the database in {} seconds ({} failed {} already existed)",
+					patchCommits.size() - failedInserts - existingInserts,
+					(System.currentTimeMillis() - insertPatchesStart) / 1000,
+					failedInserts,
+					existingInserts
+			);
+		} else logger.info("No patch commits found"); // Otherwise log failure to find patch
+
+
 
 		final long delta = (System.currentTimeMillis() - totalStart) / 1000;
 		logger.info("Successfully collected {} patch commits from {} CVEs in {} seconds",
@@ -283,6 +316,25 @@ public class PatchFinder {
 		);
 	}
 
+	/**
+	 * Get the source dictionary safely (either load data on demand or get loaded data)
+	 * @return acquired source dictionary
+	 * @throws IOException if an error occurs while attempting to get the source dictionary
+	 */
+	private static Map<String, ArrayList<String>> getSourceDict() throws IOException {
+		// Ensure source dict is loaded
+		if(sourceDict == null) sourceDict = readSourceDict(patchSrcUrlPath);
+
+		// Return source dict
+		return sourceDict;
+	}
+
+	/**
+	 * Reads a source dictionary JSON file at the given path and return the mapped results.
+	 * @param srcUrlPath path to source dictionary
+	 * @return found source map
+	 * @throws IOException if an error occurs while attempting to read the source dictionary
+	 */
 	@SuppressWarnings({"unchecked"})
 	public static Map<String, ArrayList<String>> readSourceDict(String srcUrlPath) throws IOException {
 		// Read in raw data, and return an empty hashmap if this fails for any reason
@@ -311,6 +363,11 @@ public class PatchFinder {
 		return sourceDict;
 	}
 
+	/**
+	 * Write the given dictionary of urls to file at the given path.
+	 * @param patchSrcUrlPath path to write to
+	 * @param urls dictionary to write
+	 */
 	@SuppressWarnings({"unchecked", "rawtypes"})
 	private static void writeSourceDict(String patchSrcUrlPath, Map<String, ArrayList<String>> urls) {
 		final int urlCount = urls.values().stream().map(ArrayList::size).reduce(0, Integer::sum);
@@ -329,21 +386,16 @@ public class PatchFinder {
 		}
 	}
 
-	/**
-	 * Getter for patch commits list
-	 * Used byb threads to add more entries
-	 * @return
-	 */
 	public static ArrayList<PatchCommit> getPatchCommits() {
 		return patchCommits;
 	}
 
 	/**
-	 * Git commit parser that implements multiple threads to increase performance
-	 * @param possiblePatchSources
-	 * @throws IOException
+	 * Git commit parser that implements multiple threads to increase performance. Found patches
+	 * will be stored in the patchCommits member of this class.
+	 * @param possiblePatchSources sources to scrape
 	 */
-	public static void findPatchesMultiThreaded(Map<String, ArrayList<String>> possiblePatchSources) throws IOException {
+	public static void findPatchesMultiThreaded(Map<String, ArrayList<String>> possiblePatchSources) {
 		// Init clone path and clear previously stored repos
 		File dir = new File(clonePath);
 		if(!dir.exists()) logger.warn("Unable to locate clone path for previous run repo deletion");
@@ -360,27 +412,16 @@ public class PatchFinder {
 		final AtomicInteger totalPatchSources = new AtomicInteger();
 		possiblePatchSources.values().stream().map(ArrayList::size).forEach(totalPatchSources::addAndGet);
 
-		// If there are less CVEs to process than maxThreads, only create cveLimit number of threads
-		if(totalCVEsToProcess < maxThreads){
-			logger.info("Number of CVEs to process {} is less than available threads {}, setting number of available threads to {}", cveLimit, maxThreads, cveLimit);
-			maxThreads = totalCVEsToProcess;
-		}
-
-		// Initialize data structures
-//		ArrayList<HashMap<String, ArrayList<String>>> sourceBatches = new ArrayList<>();
+		// Initialize thread pool executor
+		final int actualThreads = Math.min(maxThreads, totalCVEsToProcess);
 		final BlockingQueue<Runnable> workQueue = new ArrayBlockingQueue<>(totalPatchSources.get());
 		final ThreadPoolExecutor executor = new ThreadPoolExecutor(
-				maxThreads,
-				maxThreads,
+				actualThreads,
+				actualThreads,
 				5,
 				TimeUnit.MINUTES,
 				workQueue
 		);
-
-//		// Prepare source batches for jobs
-//		for (int i=0; i < maxThreads; i++) {
-//			sourceBatches.add(new HashMap<>());
-//		}
 
 		// Prestart all assigned threads (this is what runs jobs)
 		executor.prestartAllCoreThreads();
@@ -391,28 +432,20 @@ public class PatchFinder {
 						k -> possiblePatchSources.get(k).size() > 0).collect(Collectors.toSet()
 				);
 
-		// Find # of CVEs per thread (ignoring remainder)
-		final int CVEsPerThread = (int) Math.floor((double) CVEsToProcess.size() / maxThreads);
-
 		// Partition jobs to all threads
 		int i = 0;
-//		int thread = 0;
 		for (String cveId : CVEsToProcess) {
 			if(i >= cveLimit) {
 				logger.info("Hit defined CVE_LIMIT of {}, skipping {} remaining CVEs...", cveLimit, CVEsToProcess.size() - cveLimit);
 				break;
 			}
 
-//			sourceBatches.get(thread).put(cveId, possiblePatchSources.get(cveId));
 			final HashMap<String, ArrayList<String>> sourceBatch = new HashMap<>();
 			sourceBatch.put(cveId, possiblePatchSources.get(cveId));
 			if(!workQueue.offer(new PatchFinderThread(sourceBatch, clonePath, 10000))) {
 				logger.error("Could not add job '{}' to work queue", cveId);
 			}
 			i++;
-
-			// Iterate thread counter only once per partition
-//			if(i % CVEsPerThread == 0) thread++; // TODO: Remainder?
 		}
 
 		// Initiate shutdown of executor (waits, but does not hang, for all jobs to complete)
@@ -457,9 +490,6 @@ public class PatchFinder {
 					// Update lastNumCVEs
 					lastNumCVEs = currNumCVEs;
 				}
-
-//				 Timeout for whole process
-//				if((secondsWaiting / 60) > 5) throw new TimeoutException("Timeout reached before all threads completed");
 			}
 		} catch (Exception e) {
 			logger.error("Patch finding failed: {}", e.toString());

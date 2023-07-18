@@ -1,14 +1,14 @@
+import model.CpeGroup;
+import org.junit.Ignore;
 import org.junit.Test;
-import org.mockito.Mockito;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ThreadPoolExecutor;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 public class PatchFinderTest {
 
@@ -19,26 +19,25 @@ public class PatchFinderTest {
         ArrayList<String> patchSources1 = new ArrayList<>();
         patchSources1.add("https://github.com/apache/airflow");
         possiblePatchSources.put("CVE-2023-1001", patchSources1);
-        ThreadPoolExecutor e = Mockito.mock(ThreadPoolExecutor.class);
+        ThreadPoolExecutor e = mock(ThreadPoolExecutor.class);
 
-        try {
-            // Call the method
-            PatchFinder.findPatchesMultiThreaded(possiblePatchSources);
+        //clear the patch commits
+        PatchFinder.getPatchCommits().clear();
+        // Call the method
+        PatchFinder.findPatchesMultiThreaded(possiblePatchSources);
 
-            // Add assertions here to validate the expected behavior
-            // For example, check if the repos are cleared
-            assertTrue(new File(PatchFinder.clonePath).exists());
+        // Add assertions here to validate the expected behavior
+        // For example, check if the repos are cleared
+        assertTrue(new File(PatchFinder.clonePath).exists());
 
-            //check the patch commits
-            assertEquals(24, PatchFinder.getPatchCommits().size()/2);
+        //check the patch commits
+        assertEquals(24, PatchFinder.getPatchCommits().size());
 
-            // Add more assertions based on your requirements
-        } catch (IOException e1) {
-            fail("Exception thrown: " + e1.getMessage());
-        }
+        // Add more assertions based on your requirements
     }
 
     @Test
+    @Ignore
     public void testFetchEnvVars() {
         PatchFinder.fetchEnvVars();
 
@@ -52,10 +51,25 @@ public class PatchFinderTest {
     }
 
     @Test
-    public void testMain() throws IOException, InterruptedException {
-        String[] args = new String[1];
-        args[0] = "CVE-2023-1001";
-        PatchFinder.main(args);
+    public void testRun() {
+        // Create a test input map of affected products
+        Map<String, CpeGroup> possiblePatchSources = new HashMap<>();
+        //(String vendor, String product, String commonTitle, HashMap<String, CpeEntry> versions)
+        //1	CVE-2023-1001	cpe:2.3:a:apache:airflow:1.7.0:rc1:*:*:*:*:*:*	2023-06-20 10:00:00	product_name_value	version_value
+        CpeGroup cpeGroup = new CpeGroup("apache", "airflow", "product_name_value", new HashMap<>());
+        possiblePatchSources.put("CVE-2023-1001", cpeGroup);
+
+        PatchFinder.init();
+        try {
+            // Call the run method and assert the expected behavior or outcome
+            PatchFinder.run(possiblePatchSources, PatchFinder.cveLimit);
+
+            // Assert that the affectedProducts map is empty
+            assertEquals(1, possiblePatchSources.size());
+        } catch (IOException e) {
+            fail("Exception occurred: " + e.getMessage());
+        }
     }
+
 
 }

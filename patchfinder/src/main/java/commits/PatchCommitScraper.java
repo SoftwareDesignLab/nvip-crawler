@@ -26,14 +26,9 @@ package commits;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.text.DateFormat;
-import java.time.*;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -61,7 +56,6 @@ public class PatchCommitScraper {
 	private static final Logger logger = LogManager.getLogger(PatchCommitScraper.class.getName());
 	private final String localDownloadLoc;
 	private final String repoSource;
-	private RevCommit vulnerableCommit; // Added
 	private static final int UNI_DIFF_LIMIT = 500;
 
 	private static final int COM_MESSAGE_LIMIT = 1000;
@@ -114,9 +108,10 @@ public class PatchCommitScraper {
 									logger.warn("Unified diff was longer than UNI_DIFF_LIMIT ({}), and was truncated", UNI_DIFF_LIMIT);
 									unifiedDiff = unifiedDiff.substring(0, UNI_DIFF_LIMIT);
 								}
-								List<RevCommit> commitTimeline = calculateCommitTimeline(repository, startingRevision, commit);
+								List<String> commitTimeline = calculateCommitTimeline(repository, startingRevision, commit);
 								int linesChanged = getLinesChanged(repository, commit);
-								Long timeToPatch = calculateTimeToPatch(commitTimeline);
+								List<RevCommit> commitList = calculateCommitTimelineElapsed(repository, startingRevision, commit);
+								Long timeToPatch = calculateTimeToPatch(commitList);
 								String formattedTimeToPatch = formatTimeToPatch(timeToPatch);
 								String commitMessage = commit.getFullMessage();
 								if(commitMessage.length() > COM_MESSAGE_LIMIT) {
@@ -205,7 +200,46 @@ public class PatchCommitScraper {
 	 * @throws IOException
 	 * @throws GitAPIException
 	 */
-	private List<RevCommit> calculateCommitTimeline(Repository repository, ObjectId startingRevision, RevCommit commit) throws IOException {
+	private List<String> calculateCommitTimeline(Repository repository, ObjectId startingRevision, RevCommit commit) throws IOException {
+		List<String> commitTimeline = new ArrayList<>();
+
+		try (RevWalk walk = new RevWalk(repository)) {
+			RevCommit currentCommit = commit;
+			while (currentCommit != null && !currentCommit.getId().equals(startingRevision)) {
+				commitTimeline.add(0, currentCommit.getId().abbreviate(7).name()); // Prepend commit hash
+				if (currentCommit.getParentCount() > 0) {
+					currentCommit = walk.parseCommit(currentCommit.getParent(0).getId());
+				} else {
+					break;
+				}
+			}
+		}
+
+		int commitCount = commitTimeline.size();
+		if (commitCount > 2) {
+			int displayedCommits = Math.min(commitCount, 11); // Maximum number of displayed commits (including first and last)
+			List<String> displayedTimeline = new ArrayList<>();
+
+			// Add first commit
+			displayedTimeline.add(commitTimeline.get(0));
+
+			// Add 9 commits in between (if available)
+			int inBetweenCommits = displayedCommits - 2;
+			for (int i = 1; i <= inBetweenCommits; i++) {
+				displayedTimeline.add(commitTimeline.get(i));
+			}
+
+			// Add last commit
+			displayedTimeline.add(commitTimeline.get(commitCount - 1));
+
+			return displayedTimeline;
+		}
+
+		return commitTimeline;
+	}
+
+
+	private List<RevCommit> calculateCommitTimelineElapsed(Repository repository, ObjectId startingRevision, RevCommit commit) throws IOException {
 		List<RevCommit> commitTimeline = new ArrayList<>();
 		try (RevWalk walk = new RevWalk(repository)) {
 			RevCommit currentCommit = commit;
@@ -294,9 +328,7 @@ public class PatchCommitScraper {
 		long elapsedMillis = patchCommitTime - initialCommitTime;
 
 		// Convert milliseconds to days and ensure it's a positive value
-		long elapsedDays = Math.abs(elapsedMillis / (1000 * 60 * 60 * 24));
-
-		return elapsedDays;
+		return Math.abs(elapsedMillis / (1000 * 60 * 60 * 24));
 	}
 
 	private String formatTimeToPatch(long elapsedHours) {
