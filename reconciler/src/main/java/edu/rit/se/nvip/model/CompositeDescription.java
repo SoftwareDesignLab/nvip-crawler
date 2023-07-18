@@ -84,6 +84,9 @@ public class CompositeDescription {
     }
 
     public String getBuildString() {
+        if (descriptionTree == null) {
+            return "";
+        }
         return this.descriptionTree.toString();
     }
 
@@ -101,10 +104,23 @@ public class CompositeDescription {
         setCreateDateCurrent();
     }
 
+    public void reset() {
+        this.sources.clear();
+        this.description = "";
+        this.descriptionTree = null;
+        setCreateDateCurrent();
+    }
+
     public Set<RawVulnerability> getSources() {
         return this.sources;
     }
 
+    public boolean usesHighPrio() {
+        for (RawVulnerability vuln : sources) {
+            if (vuln.isHighPriority()) return true;
+        }
+        return false;
+    }
 
     /**
      * Models the build tree for a description.

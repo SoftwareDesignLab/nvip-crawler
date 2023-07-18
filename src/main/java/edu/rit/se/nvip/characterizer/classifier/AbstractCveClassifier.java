@@ -163,7 +163,7 @@ public abstract class AbstractCveClassifier {
 	/**
 	 * increment true positive count for this label! Counts array: TP,FP,TN,FN
 	 * 
-	 * @param label
+	 * @param trueLabel
 	 * @param map
 	 * @return
 	 */
@@ -185,7 +185,7 @@ public abstract class AbstractCveClassifier {
 	/**
 	 * increment false positive count for this label! Counts array: TP,FP,TN,FN
 	 * 
-	 * @param label
+	 * @param trueLabel
 	 * @param map
 	 * @return
 	 */
@@ -210,7 +210,7 @@ public abstract class AbstractCveClassifier {
 	 * 
 	 * Counts array: TP,FP,TN,FN
 	 * 
-	 * @param map
+	 * @param labelCountMap
 	 * @return
 	 */
 	protected double[] getAvgMetrics(HashMap<String, int[]> labelCountMap, HashMap<String, Integer> labelClassCountMap) {

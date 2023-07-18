@@ -1,7 +1,4 @@
-import edu.rit.se.nvip.CpeLookUp;
-import edu.rit.se.nvip.NERmodel;
-import edu.rit.se.nvip.ProductDetector;
-import edu.rit.se.nvip.ProductNameExtractorController;
+import edu.rit.se.nvip.*;
 import edu.rit.se.nvip.model.cpe.ClassifiedWord;
 import edu.rit.se.nvip.model.cpe.CpeGroup;
 import org.junit.Before;
@@ -21,19 +18,23 @@ import static org.mockito.Mockito.when;
  * Class to test ProductDetectorTest
  *
  * @author Dylan Mulligan
+ * @author Paul Vickers
  *
  */
 public class ProductDetectorTest {
+    static{
+        ProductNameExtractorEnvVars.initializeEnvVars();
+    }
     private ProductDetector productDetector;
-    private final String resourceDir = System.getenv("RESOURCE_DIR");
-    private final String nlpDir = System.getenv("NLP_DIR");
-    private final String dataDir = System.getenv("DATA_DIR");
+    private static final String resourceDir = ProductNameExtractorEnvVars.getResourceDir();
+    private static final String nlpDir = ProductNameExtractorEnvVars.getNlpDir();
+    private static final String dataDir = ProductNameExtractorEnvVars.getDataDir();
 
     @Before
     public void setUp() throws IOException {
         // Initialize ProductDetector with a mock CpeLookUp object or a real implementation for testing
         CpeLookUp cpeLookUp = new CpeLookUp();
-        final Map<String, CpeGroup> productDict = ProductNameExtractorController.readProductDict("src/test/resources/data/test_product_dict.json");
+        final Map<String, CpeGroup> productDict = ProductDictionary.readProductDict("src/test/resources/data/test_product_dict.json");
         cpeLookUp.loadProductDict(productDict);
         productDetector = new ProductDetector(cpeLookUp, resourceDir, nlpDir, dataDir);
 
@@ -63,13 +64,13 @@ public class ProductDetectorTest {
 
         String productResult = "[The: OTHER, software: OTHER, version: OTHER, is: OTHER, vulnerable: OTHER, before: SOFTWARE_VERSION, 2.1.0: SOFTWARE_VERSION]";
 
-        assertTrue(productResult.contains( productDetector.classifyWordsInDescription(words).toString()));
+        assertTrue(productResult.contains(productDetector.classifyWordsInDescription(words).toString()));
         assertEquals(nerResult, nerModel.classifyComplex(words));
 
     }
 
     @Test
-    public void testGetProductItemsWithDescriptionWords() {
+    public void getProductItemsWithDescriptionWordsTest() {
         // Create a sample array of classified words
         ClassifiedWord word1 = new ClassifiedWord("Microsoft", new float[]{1.0f, 1.0f, 1.0f, 1.0f, 1.0f});
         ClassifiedWord word2 = new ClassifiedWord("Office", new float[]{1.0f, 1.0f, 1.0f, 1.0f, 1.0f});

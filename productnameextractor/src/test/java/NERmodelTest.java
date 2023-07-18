@@ -39,29 +39,23 @@ import static org.junit.Assert.*;
  * Unit tests for the NERmodel and DetectProduct classes
  *
  * @author Igor Khokhlov
+ * @author Paul Vickers
  *
  */
 
 public class NERmodelTest {
-	private static final String RESOURCE_DIR = System.getenv("RESOURCE_DIR");
-	private static final String NLP_DIR = System.getenv("NLP_DIR");
 
-	// Init cpeLookUp
-	private static final CpeLookUp cpeLookUp = new CpeLookUp();
-	static {
-		try {
-			final Map<String, CpeGroup> productDict = ProductNameExtractorController.readProductDict("src/test/resources/data/test_product_dict.json");
-			cpeLookUp.loadProductDict(productDict);
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
+	// Statically load environment variables
+	static{
+		ProductNameExtractorEnvVars.initializeEnvVars();
 	}
+	private static final String RESOURCE_DIR = ProductNameExtractorEnvVars.getResourceDir();
+	private static final String NLP_DIR = ProductNameExtractorEnvVars.getNlpDir();
+	private static final String DATA_DIR = ProductNameExtractorEnvVars.getDataDir();
+	private static final String CHAR_2_VEC_CONFIG = ProductNameExtractorEnvVars.getChar2VecConfig();
+	private static final String CHAR_2_VEC_WEIGHTS = ProductNameExtractorEnvVars.getChar2VecWeights();
+	private static final String WORD_2_VEC = ProductNameExtractorEnvVars.getWord2Vec();
 
-	// ENV VARS
-	final String DATA_DIR = System.getenv("DATA_DIR");
-	final String CHAR_2_VEC_CONFIG = System.getenv("CHAR_2_VEC_CONFIG");
-	final String CHAR_2_VEC_WEIGHTS = System.getenv("CHAR_2_VEC_WEIGHTS");
-	final String WORD_2_VEC = System.getenv("WORD_2_VEC");
 	@Test
 	public void char2vectorModelTest() {
 
@@ -158,12 +152,12 @@ public class NERmodelTest {
 
 	@Test
 	public void augmentedNERtest() {
-		String description = "In SaltStack Salt before 2016.3.6, compromised salt-minions can impersonate the salt-master.";
-		String anticipatedResult = "SN: SaltStack Salt. SV:  before 2016.3.6,";
+		String description = "There is a DoS vulnerability in Pillow before 6.2.2 caused by FpxImagePlugin.py calling the range function on an unvalidated 32-bit integer if the number of bands is large. On Windows running 32-bit Python, this results in an OverflowError or MemoryError due to the 2 GB limit. However, on Linux running 64-bit Python this results in the process being terminated by the OOM killer.\n";
+		String anticipatedResult = "SN: Pillow. SV:  before 6.2.2";
 
-		ProductDetector nameDetector = null;
+		ProductDetector nameDetector;
 		try {
-			nameDetector = new ProductDetector(cpeLookUp, RESOURCE_DIR, NLP_DIR, DATA_DIR);
+			nameDetector = new ProductDetector(null, RESOURCE_DIR, NLP_DIR, DATA_DIR);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}

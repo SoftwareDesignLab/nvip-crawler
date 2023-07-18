@@ -23,15 +23,17 @@ package edu.rit.se.nvip; /**
  */
 
 import edu.rit.se.nvip.model.cpe.CpeGroup;
-import edu.rit.se.nvip.model.cpe.Product;
 import edu.rit.se.nvip.model.cpe.ProductItem;
-import edu.rit.se.nvip.model.cve.AffectedProduct;
+import edu.rit.se.nvip.model.cpe.AffectedProduct;
 import edu.rit.se.nvip.model.cve.CompositeVulnerability;
 import opennlp.tools.tokenize.WhitespaceTokenizer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.*;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -46,8 +48,9 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class AffectedProductIdentifier {
 	private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
-	private final List<CompositeVulnerability> vulnList;
-	private final CpeLookUp cpeLookUp;
+	private List<CompositeVulnerability> vulnList;
+	private CpeLookUp cpeLookUp;
+	private ProductDetector productDetector;
 	private final int numThreads;
 
 	/**
@@ -57,28 +60,69 @@ public class AffectedProductIdentifier {
 	 *
 	 * @param vulnList list of vulnerabilities to use for product identification.
 	 */
-	public AffectedProductIdentifier(List<CompositeVulnerability> vulnList, int numThreads) {
+	public AffectedProductIdentifier(int numThreads, List<CompositeVulnerability> vulnList) {
 		this.vulnList = vulnList;
 		this.cpeLookUp = new CpeLookUp();
 		this.numThreads = numThreads;
 	}
 
 	/**
+	 * Releases held resources to free up memory
+	 */
+	protected void releaseResources(){
+		logger.info("Releasing affected product identifier from memory...");
+		vulnList = null;
+		cpeLookUp = null;
+		if(productDetector != null){
+			productDetector.unloadModels();
+		}
+		productDetector = null;
+	}
+
+	/**
+	 * Sets the list of vulnerabilities to process. If the
+	 * current list is not empty, clears it to process new list.
+	 *
+	 * @param vulnList list of vulnerabilities to use for product identification
+	 */
+	protected void setVulnList(List<CompositeVulnerability> vulnList){
+		if(!this.vulnList.isEmpty()) this.vulnList.clear();
+		this.vulnList = vulnList;
+	}
+
+	/**
+	 * Initializes the product detector instance
+	 *
+	 * @param resourceDir local resources directory
+	 * @param nlpDir relative nlp directory (within resources)
+	 * @param dataDir relative data directory (within resources)
+	 */
+	public void initializeProductDetector(String resourceDir, String nlpDir, String dataDir){
+		try{
+			productDetector = new ProductDetector(cpeLookUp, resourceDir, nlpDir, dataDir);
+		} catch (IOException e){
+			logger.error("Severe Error! Could not initialize the models for product name/version extraction! Skipping affected product identification step! {}", e.toString());
+			System.exit(1);
+		}
+	}
+
+	/**
 	 * This method processes a given vulnerability (CVE) and attempts to map it against
 	 * CPEs found in cpeLookUp.
-	 * @param productNameDetector
-	 * @param cpeLookUp
-	 * @param vulnerability
-	 * @param counterOfBadDescriptionCVEs
-	 * @param counterOfSkippedCVEs
-	 * @param counterOfProcessedCVEs
-	 * @param counterOfProcessedNERs
-	 * @param counterOfProcessedCPEs
-	 * @param numOfProductsNotMappedToCPE
-	 * @param numOfProductsMappedToCpe
-	 * @param totalNERTime
-	 * @param totalCPETime
-	 * @param totalCVETime
+	 *
+	 * @param productNameDetector ProductDetector instance
+	 * @param cpeLookUp CpeLookup instance
+	 * @param vulnerability vulnerability being processed
+	 * @param counterOfBadDescriptionCVEs counter of CVEs with bad descriptions
+	 * @param counterOfSkippedCVEs counter of CVEs that have been skipped
+	 * @param counterOfProcessedCVEs counter of CVEs that have been processed
+	 * @param counterOfProcessedNERs counter of NERs that have been processed
+	 * @param counterOfProcessedCPEs counter of CPEs that have been processed
+	 * @param numOfProductsNotMappedToCPE counter of products that have not been mapped to a CPE
+	 * @param numOfProductsMappedToCpe counter of products that have been mapped to a CPE
+	 * @param totalNERTime timer for total time spent processing NERs
+	 * @param totalCPETime timer for total time spent processing CPEs
+	 * @param totalCVETime timer for total time spent processing CVEs
 	 */
 	private void processVulnerability(
 			ProductDetector productNameDetector,
@@ -160,7 +204,6 @@ public class AffectedProductIdentifier {
 
 					// if CPE identified, add it as affected product
 					for (String itemID : productIDs) {
-//						logger.info("Found Affected Product for {}: {}", vulnerability.getCveId(), itemID);
 						existingProducts.add(new AffectedProduct(0, vulnerability.getCveId(), itemID, CpeLookUp.getNameFromCPEid(itemID), vulnerability.getPublishDate(), CpeLookUp.getVersionFromCPEid(itemID), CpeLookUp.getVendorFromCPEid(itemID)));
 						numOfProductsMappedToCpe.getAndIncrement();
 						numProductsFound++;
@@ -186,24 +229,14 @@ public class AffectedProductIdentifier {
 	 * from the database through processVulnerability, in order to build a map of affected
 	 * products.
 	 *
-	 * @param cveLimit limit of CVEs to drive
-	 * @return a map of products affected by pulled CVEs
+	 * @return list of affected products
 	 */
-	public List<AffectedProduct> identifyAffectedProducts(String resourceDir, String nlpDir, String dataDir, int cveLimit) {
-		// Set # to process based on cveLimit. If cveLimit is 0, assume no limit.
-		if(cveLimit == 0) cveLimit = Integer.MAX_VALUE;
-		int totalCVEtoProcess = Math.min(vulnList.size(), cveLimit);
+	public List<AffectedProduct> identifyAffectedProducts() {
+
+		int totalCVEtoProcess = vulnList.size();
 
 		logger.info("Starting to identify affected products for " + totalCVEtoProcess + " CVEs.");
 		long start = System.currentTimeMillis();
-
-		ProductDetector productNameDetector;
-		try {
-			productNameDetector = new ProductDetector(this.cpeLookUp, resourceDir, nlpDir, dataDir);
-		} catch (Exception e1) {
-			logger.error("Severe Error! Could not initialize the models for product name/version extraction! Skipping affected product identification step! {}", e1.toString());
-			return new HashMap<>();
-		}
 
 		AtomicInteger numOfProductsMappedToCpe = new AtomicInteger();
 		AtomicInteger numOfProductsNotMappedToCPE = new AtomicInteger();
@@ -216,8 +249,6 @@ public class AffectedProductIdentifier {
 		AtomicLong totalNERTime = new AtomicLong();
 		AtomicLong totalCPETime = new AtomicLong();
 		AtomicLong totalCVETime = new AtomicLong();
-
-		logger.info("Starting product name extraction process... # CVEs to be processed: {}", totalCVEtoProcess);
 
 		final BlockingQueue<Runnable> workQueue = new ArrayBlockingQueue<>(vulnList.size());
 
@@ -238,7 +269,7 @@ public class AffectedProductIdentifier {
 			CompositeVulnerability vulnerability = vulnList.get(i);
 			try {
 				if(!workQueue.offer(() -> processVulnerability(
-						productNameDetector,
+						productDetector,
 						cpeLookUp,
 						vulnerability,
 						counterOfBadDescriptionCVEs,
@@ -299,11 +330,8 @@ public class AffectedProductIdentifier {
 					// Update lastNumCVEs
 					lastNumCVEs = currNumCVEs;
 				}
-
-				// Timeout for whole process
-//				if((secondsWaiting / 60) > 15) throw new TimeoutException("Timeout reached before all threads completed");
 			}
-		} catch (Exception e) {
+		} catch (Exception ex) {
 			logger.error("Product extraction failed: {}", ex.toString());
 			List<Runnable> remainingTasks = executor.shutdownNow();
 			logger.error("{} tasks not executed", remainingTasks.size());
@@ -333,23 +361,11 @@ public class AffectedProductIdentifier {
 	}
 
 	/**
-	 * Instructs the internal instance of cpeLookUp to load the CPE dictionary
-	 * from NVD's CPE API, given maxPages and maxAttemptsPerPage.
-	 *
-	 * @param maxPages limit to number of pages to query from NVD, set to 0 for no limit
-	 * @param maxAttemptsPerPage limit to number of query attempts per page, set to 0 for no limit
-	 * @return a map of loaded CpeGroup objects
-	 */
-	public Map<String, CpeGroup> queryCPEDict(int maxPages, int maxAttemptsPerPage) {
-		return this.cpeLookUp.queryProductDict(maxPages, maxAttemptsPerPage);
-	}
-
-	/**
 	 * Instructs the internal instance of cpeLookUp to load the given CPE dictionary.
 	 *
 	 * @param productDict CPE dictionary to load
 	 */
-	public void loadCPEDict(Map<String, CpeGroup> productDict) {
-		this.cpeLookUp.loadProductDict(productDict);
+	public void loadProductDict(Map<String, CpeGroup> productDict) {
+		cpeLookUp.loadProductDict(productDict);
 	}
 }

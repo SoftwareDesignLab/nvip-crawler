@@ -25,13 +25,9 @@ package db;
 
 import com.zaxxer.hikari.HikariDataSource;
 import edu.rit.se.nvip.db.DatabaseHelper;
-import edu.rit.se.nvip.model.cve.AffectedProduct;
+import edu.rit.se.nvip.model.cpe.AffectedProduct;
 import edu.rit.se.nvip.model.cve.CompositeVulnerability;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -55,8 +51,10 @@ import static org.mockito.Mockito.*;
  */
 @RunWith(MockitoJUnitRunner.class)
 public class DatabaseHelperTest {
-	private Logger logger = LogManager.getLogger(getClass().getSimpleName());
-
+	protected static String databaseType = "mysql";
+	protected static String hikariUrl = "jdbc:mysql://localhost:3306/nvip?useSSL=false&allowPublicKeyRetrieval=true";
+	protected static String hikariUser = "root";
+	protected static String hikariPassword = "root";
 	private DatabaseHelper dbh;
 	@Mock
 	private HikariDataSource hds;
@@ -77,7 +75,7 @@ public class DatabaseHelperTest {
 	}
 
 	/**
-	 * Sets up the "databse" results to return n rows
+	 * Sets up the "database" results to return n rows
 	 * @param n Number of rows (number of times next() will return true)
 	 */
 	private void setResNextCount(int n) {
@@ -91,78 +89,20 @@ public class DatabaseHelperTest {
 		} catch (SQLException ignored) {}
 	}
 
-	/**
-	 * Helper method for populating the "database" results.
-	 * @param getStringArg Name of the column to retrieve from. Used for that column's value as well with a suffix.
-	 * @param count Number of results to populate.
-	 */
-	private void setResStrings(String getStringArg, int count) {
-		try {
-			when(res.getString(getStringArg)).thenAnswer(new Answer<String>() {
-				private int index = 0;
-
-				public String answer(InvocationOnMock invocation) {
-					if (index == count) {
-						return null;
-					}
-					return getStringArg + index++;
-				}
-			});
-		} catch (SQLException ignored) {}
-	}
-
-	/**
-	 * Helper method for populating the "database" results. Just returns multiples of 1337
-	 * @param getIntArg Name of the column to retrieve from.
-	 * @param count Number of results to populate.
-	 */
-	private void setResInts(String getIntArg, int count) {
-		try {
-			when(res.getInt(getIntArg)).thenAnswer(new Answer<Integer>() {
-				private int index = 0;
-
-				public Integer answer(InvocationOnMock invocation) {
-					if (index == count) {
-						return 0;
-					}
-					return 1337 * index++;
-				}
-			});
-		} catch (SQLException ignored) {}
-	}
-
 	private List<AffectedProduct> buildDummyProducts(int count) {
 		List<AffectedProduct> products = new ArrayList<>();
 		for (int i = 0; i < count; i++) {
-			products.add(new AffectedProduct(i, "cve"+i, "cpe"+i, "date"+i, "version"+i));
+			String cpeName = "cpe:2.3:a:" + i + ":" + i + ":*:*:*:*:*:*:*:*";
+			products.add(new AffectedProduct(i, "cve"+i, cpeName, "productName"+i, "date"+i, "version"+i, "vendor"+i));
 		}
 		return products;
 	}
 
-
-	// TODO: Fix these tests
-	@BeforeClass
-	public static void classSetUp() {
-		// forces a constructor, only want to do once
-//		DatabaseHelper.getInstance();
-	}
-
 	@Before
 	public void setUp() {
-//		this.dbh = DatabaseHelper.getInstance();
+		this.dbh = new DatabaseHelper(databaseType, hikariUrl, hikariUser, hikariPassword);
 		ReflectionTestUtils.setField(this.dbh, "dataSource", this.hds);
 		this.setMocking();
-	}
-
-	@AfterClass
-	public static void tearDown() {
-//		DatabaseHelper dbh = DatabaseHelper.getInstance();
-//		ReflectionTestUtils.setField(dbh, "databaseHelper", null);
-	}
-
-	@Test
-	public void getInstanceTest() {
-//		assertNotNull(DatabaseHelper.getInstance());
 	}
 
 	@Test
@@ -197,10 +137,10 @@ public class DatabaseHelperTest {
 	 * @throws SQLException
 	 */
 	@Test
-	public void insertAffectedProductsV2Test() {
+	public void insertAffectedProductsTest() {
 		int inCount = 5;
 		List<AffectedProduct> products = buildDummyProducts(inCount);
-		dbh.insertAffectedProductsV2(products);
+		dbh.insertAffectedProducts(products);
 		try {
 			verify(pstmt, times(inCount*8)).setString(anyInt(), any());
 			verify(pstmt, times(inCount)).executeUpdate();
@@ -221,29 +161,7 @@ public class DatabaseHelperTest {
 	}
 
 	@Test
-	public void insertAffectedProductsToDBTest() throws SQLException {
-		insertAffectedProductsV2Test();
-		// Prepare test data
-		int count = 5;
-		List<CompositeVulnerability> products = new ArrayList<>();
-		for (int i = 0; i < count; i++) {
-			products.add(new CompositeVulnerability(i, "CVE-" + i));
-		}
-
-		// Mock the database interactions
-		when(hds.getConnection()).thenReturn(conn);
-		when(conn.prepareStatement(anyString())).thenReturn(pstmt);
-
-		// Call the method under test
-		dbh.insertAffectedProductsToDB(products);
-
-		// Verify the expected interactions
-		verify(pstmt, times(count*5)).setString(anyInt(), anyString());
-		verify(pstmt, times(count)).executeUpdate();
-	}
-
-	@Test
-	public void getExistingCompositeVulnerabilitiesTest() throws SQLException {
+	public void getAllCompositeVulnerabilitiesTest() throws SQLException {
 		// Prepare test data
 		int maxVulnerabilities = 5;
 		int expectedVulnerabilities = 3;
@@ -257,7 +175,7 @@ public class DatabaseHelperTest {
 		when(res.getString("description")).thenReturn("Description 1", "Description 2", "Description 3");
 
 		// Call the method under test
-		Map<String, CompositeVulnerability> result = dbh.getExistingCompositeVulnerabilities(maxVulnerabilities);
+		List<CompositeVulnerability> result = dbh.getAllCompositeVulnerabilities(maxVulnerabilities);
 
 		// Verify the expected interactions
 		verify(conn).prepareStatement(anyString());
@@ -268,9 +186,42 @@ public class DatabaseHelperTest {
 
 		// Verify the result
 		assertEquals(expectedVulnerabilities, result.size());
-		assertEquals("Description 1", result.get("CVE-2021-001").getDescription());
-		assertEquals("Description 2", result.get("CVE-2021-002").getDescription());
-		assertEquals("Description 3", result.get("CVE-2021-003").getDescription());
+	}
+
+	@Test
+	public void getSpecificCompositeVulnerabilitiesTest() throws SQLException{
+		List<String> cveIds = new ArrayList<>();
+
+		String cveId1 = "CVE-2021-20105";
+		String description1 = "Machform prior to version 16 is vulnerable to an open redirect in Safari_init.php due to an improperly sanitized 'ref' parameter.";
+
+		String cveId2 = "CVE-2016-4361";
+		String description2 = "HPE LoadRunner 11.52 through patch 3, 12.00 through patch 1, 12.01 through patch 3, 12.02 through patch 2, and 12.50 through patch 3 and Performance Center 11.52 through patch 3, 12.00 through patch 1, 12.01 through patch 3, 12.20 through patch 2, and 12.50 through patch 1 allow remote attackers to cause a denial of service via unspecified vectors.";
+
+		String cveId3 = "CVE-2019-3915";
+		String description3 = "Authentication Bypass by Capture-replay vulnerability in Verizon Fios Quantum Gateway (G1100) firmware version 02.01.00.05 allows an unauthenticated attacker with adjacent network access to intercept and replay login requests to gain access to the administrative web interface.";
+
+		cveIds.add(cveId1);
+		cveIds.add(cveId2);
+		cveIds.add(cveId3);
+
+		// Mock the database interactions
+		when(conn.prepareStatement(anyString())).thenReturn(pstmt);
+		when(pstmt.executeQuery()).thenReturn(res);
+		when(res.next()).thenReturn(true, true, true, false);
+		when(res.getInt("vuln_id")).thenReturn(1, 2, 3);
+		when(res.getString("description")).thenReturn(description1, description2, description3);
+
+		List<CompositeVulnerability> vulnList = dbh.getSpecificCompositeVulnerabilities(cveIds);
+		assertEquals(vulnList.size(), cveIds.size());
+
+		CompositeVulnerability vuln1 = vulnList.get(0);
+		CompositeVulnerability vuln2 = vulnList.get(1);
+		CompositeVulnerability vuln3 = vulnList.get(2);
+
+		assertEquals(vuln1.getDescription(), description1);
+		assertEquals(vuln2.getDescription(), description2);
+		assertEquals(vuln3.getDescription(), description3);
 	}
 
 	@Test
