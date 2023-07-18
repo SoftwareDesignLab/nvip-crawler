@@ -1,6 +1,6 @@
 # CI for NVIP
 
-name: Java CI
+name: Crawler Workflow
 
 on: [push]
 
