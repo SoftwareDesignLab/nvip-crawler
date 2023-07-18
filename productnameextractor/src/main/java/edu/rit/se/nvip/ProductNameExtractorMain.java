@@ -94,13 +94,12 @@ public class ProductNameExtractorMain {
 
         // If null, AffectedProductIdentifier needs to be initialized with AI models & product dictionary
         if(affectedProductIdentifier == null){
-            productDict = ProductDictionary.getProductDict();
-
             logger.info("Initializing the AffectedProductIdentifier...");
-            affectedProductIdentifier = new AffectedProductIdentifier(numThreads);
-            affectedProductIdentifier.setVulnList(vulnList);
-            affectedProductIdentifier.loadProductDict(productDict);
+            affectedProductIdentifier = new AffectedProductIdentifier(numThreads, vulnList);
             affectedProductIdentifier.initializeProductDetector(resourceDir, nlpDir, dataDir);
+
+            productDict = ProductDictionary.getProductDict();
+            affectedProductIdentifier.loadProductDict(productDict);
 
         // AffectedProductIdentifier already initialized, just need to change the vulnerabilities to be processed
         }else{

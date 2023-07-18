@@ -59,8 +59,7 @@ public class AffectedProductIdentifierTest {
 		CompositeVulnerability v = new CompositeVulnerability(0, null, "CVE-2017-12794", "", null, null, description, CompositeVulnerability.CveReconcileStatus.UPDATE);
 		vulnList.add(v);
 
-		AffectedProductIdentifier affectedProductIdentifier = new AffectedProductIdentifier(12);
-		affectedProductIdentifier.setVulnList(vulnList);
+		AffectedProductIdentifier affectedProductIdentifier = new AffectedProductIdentifier(12, vulnList);
 		affectedProductIdentifier.initializeProductDetector(resourceDir, nlpDir, dataDir);
 		// Init cpeLookUp
 		try {
