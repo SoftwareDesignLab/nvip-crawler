@@ -1,6 +1,8 @@
 package edu.rit.se.nvip.cwe;
 
 import edu.rit.se.nvip.characterizer.CveCharacterizer;
+import edu.rit.se.nvip.model.CompositeVulnerability;
+import edu.rit.se.nvip.model.RawVulnerability;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.w3c.dom.Document;
@@ -12,8 +14,9 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.*;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.ArrayList;
-import java.util.List;
+import java.sql.Timestamp;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -26,12 +29,21 @@ public class CweController {
     public static void main(String[] args) {
         CweController cwe = new CweController();
         cwe.getCWEsFromWeb();
-        List<CWE> CWEs = cwe.readFile(PATH);
-        System.out.println(CWEs.size());
+        Set<CWE> CWEs = cwe.readFile(PATH);
 
-        //send CWEs to openAI
-
-        //ask openAI to match CWEs with CVEs
+        ChatGPTProcessor gpt = new ChatGPTProcessor();
+        RawVulnerability rawVuln = new RawVulnerability(1, "cve-1",
+                "A vulnerability has been identified in Cerberus DMS (All versions), Desigo CC (All versions), Desigo CC Compact (All versions), " +
+                        "SIMATIC WinCC OA V3.16 (All versions in default configuration), SIMATIC WinCC OA V3.17 (All versions in non-default configuration), " +
+                        "SIMATIC WinCC OA V3.18 (All versions in non-default configuration). Affected applications use client-side only authentication, when neither server-side " +
+                        "authentication (SSA) nor Kerberos authentication is enabled. In this configuration, attackers could impersonate other users or exploit the client-server " +
+                        "protocol without being authenticated.",
+                new Timestamp(System.currentTimeMillis()),
+                new Timestamp(System.currentTimeMillis()),
+                new Timestamp(System.currentTimeMillis()),
+                "www.example.com");
+        CompositeVulnerability vuln = new CompositeVulnerability(rawVuln);
+        gpt.assignCWEs(vuln);
 
     }
 
@@ -101,8 +113,8 @@ public class CweController {
         zipInputStream.close();
     }
 
-    private List<CWE> readFile(String filePath) {
-        List<CWE> cweList = new ArrayList<>();
+    private Set<CWE> readFile(String filePath) {
+        Set<CWE> cweList = new HashSet<>();
         try {
             // Load the XML file
             File xmlFile = new File(filePath);
@@ -152,10 +164,7 @@ public class CweController {
             for (CWE cwe : cweList){
                 cwe.generateFamily(cweList);
             }
-            for (CWE cwe : cweList){
-                System.out.println(cwe.getId());
-                System.out.println(cwe.getChildren().size());
-            }
+
         } catch (Exception e) {
             e.printStackTrace();
         }
