@@ -1,4 +1,6 @@
-package edu.rit.se.nvip.model.cpe; /**
+package edu.rit.se.nvip.model.cpe;
+
+/**
  * Copyright 2023 Rochester Institute of Technology (RIT). Developed with
  * government support under contract 70RSAT19CB0000020 awarded by the United
  * States Department of Homeland Security.
@@ -24,11 +26,15 @@ package edu.rit.se.nvip.model.cpe; /**
 
 /**
  * ClassifiedWord class for results of words classification in the CVE description into "Software Name", "Software Version", and "Others"
- * 0 - SOFTWARE_NAME
- * 1 - SOFTWARE_VERSION
- * 2 - OTHER
+ *
+ * Enumeration WordType
+ *
+ * SOFTWARE_NAME
+ * SOFTWARE_VERSION
+ * OTHER
  * 
  * @author Igor Khokhlov
+ * @author Paul Vickers
  *
  */
 

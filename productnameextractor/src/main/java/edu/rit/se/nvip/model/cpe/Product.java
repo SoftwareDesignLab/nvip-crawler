@@ -1,3 +1,5 @@
+package edu.rit.se.nvip.model.cpe;
+
 /**
  * Copyright 2023 Rochester Institute of Technology (RIT). Developed with
  * government support under contract 70RSAT19CB0000020 awarded by the United
@@ -21,8 +23,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package edu.rit.se.nvip.model.cpe;
-
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;

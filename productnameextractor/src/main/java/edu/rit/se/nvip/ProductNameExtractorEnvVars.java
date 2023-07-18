@@ -40,7 +40,6 @@ public class ProductNameExtractorEnvVars {
 
     // Default values for main environment variables
 
-    private static int rabbitPollInterval = 10;
     private static int numThreads = 12;
     private static String resourceDir = "productnameextractor/nvip_data";
     private static String dataDir = "data";
@@ -70,8 +69,9 @@ public class ProductNameExtractorEnvVars {
     private static String nerModelNormalizer = "NERallNorm.bin";
     private static String sentenceModel = "en-sent.bin";
 
-    // Default values for rabbit environment variables
+    // Default values for RabbitMQ environment variables
 
+    private static int rabbitPollInterval = 10;
     private static String rabbitHost = "localhost";
     private static String rabbitUsername = "guest";
     private static String rabbitPassword = "guest";

@@ -57,10 +57,19 @@ public class ProductVersion implements Comparable<ProductVersion> {
         protectedWords.add("later");
     }
 
+    /**
+     * Constructor for ProductVersion. Takes in a string such as "1.2" and turns it into an array of parts,
+     * separating into [1, 2]. This allows the versionParts to be parsed to compare ProductVersion objects
+     * to each other.
+     *
+     * Handles cases with bad format such as "1.2," or "v1.2"
+     *
+     * @param versionString string representation of a version
+     * @throws IllegalArgumentException for incorrectly formatted version strings
+     */
     public ProductVersion(String versionString) throws IllegalArgumentException {
 
-        //Change versionString into acceptable form. Allows for 1.3.2_4 to work
-        //Does not affect group versions, database will still insert 1.3.2_4
+        //Change versionString into acceptable form
         versionString = formatVersionWord(versionString);
 
         // Ensure provided version is valid
@@ -123,7 +132,7 @@ public class ProductVersion implements Comparable<ProductVersion> {
         versionWord = versionWord.replace("h","");
         versionWord = versionWord.replace("_", ".");
         versionWord = versionWord.replace("p","");
-        versionWord = versionWord.replace("l",".");
+        versionWord = versionWord.replace("l","");
         versionWord = versionWord.replace("t","");
         versionWord = versionWord.replace("f","");
         versionWord = versionWord.replace("o","");

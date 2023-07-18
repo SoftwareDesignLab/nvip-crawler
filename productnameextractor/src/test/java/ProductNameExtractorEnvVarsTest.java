@@ -46,9 +46,8 @@ public class ProductNameExtractorEnvVarsTest {
         ProductNameExtractorEnvVars.initializeEnvVars();
 
         // Default values for main environment variables
-        assertEquals(10, ProductNameExtractorEnvVars.getRabbitPollInterval());
         assertEquals(12, ProductNameExtractorEnvVars.getNumThreads());
-        assertEquals(2, ProductNameExtractorEnvVars.getMaxAttemptsPerPage());
+        assertEquals(5, ProductNameExtractorEnvVars.getMaxAttemptsPerPage());
         assertFalse(ProductNameExtractorEnvVars.isPrettyPrint());
         assertFalse(ProductNameExtractorEnvVars.isTestMode());
         assertEquals("nvip_data", ProductNameExtractorEnvVars.getResourceDir());
@@ -69,6 +68,12 @@ public class ProductNameExtractorEnvVarsTest {
         assertEquals("NERallModel.bin", ProductNameExtractorEnvVars.getNerModel());
         assertEquals("NERallNorm.bin", ProductNameExtractorEnvVars.getNerModelNormalizer());
         assertEquals("en-sent.bin", ProductNameExtractorEnvVars.getSentenceModel());
+
+        // Default values for RabbitMQ environment variables
+        assertEquals(10, ProductNameExtractorEnvVars.getRabbitPollInterval());
+        assertEquals("localhost", ProductNameExtractorEnvVars.getRabbitHost());
+        assertEquals("guest", ProductNameExtractorEnvVars.getRabbitUsername());
+        assertEquals("guest", ProductNameExtractorEnvVars.getRabbitPassword());
 
     }
 }
