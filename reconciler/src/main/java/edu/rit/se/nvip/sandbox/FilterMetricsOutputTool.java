@@ -35,33 +35,6 @@ public class FilterMetricsOutputTool {
 
     }
 
-    public String getAllMetricsString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("Total Runs," + currentFilterMetrics.getRuns().size() + "\n");
-        sb.append("Filters Used,");
-        for (Filter currentFilter: currentFilterMetrics.getFilterHandler().getCustomFilters()) {
-            sb.append(currentFilter.getClass().getSimpleName() + ",");
-        }
-        sb.replace(sb.length()-1, sb.length(), "\n");
-        int sourceIndex = 0;
-        for (Map<RawVulnerability.SourceType, Integer> currentRun: sourceDist.values()) {
-            sb.append("Current Run," + sourceIndex + "\n");
-            sourceIndex++;
-            for (RawVulnerability.SourceType currentSource: currentRun.keySet()) {
-                sb.append("Current Source," + currentSource + ",Count," + currentRun.get(currentSource) +",");
-            }
-            sb.append("\n");
-        }
-        sb.append("\n");
-        for (CrawlerRun currentRun: numFiltered.keySet()) {
-            sb.append("Current Run Date," + currentRun.getDate() +
-                    "\nNumTotalFiltered," + numFiltered.get(currentRun).getTotalFiltered() +
-                    ",NumPassedFilters," + numFiltered.get(currentRun).getPassedFilters() +
-                    ",Proportion Passed," + df.format(proportionPassed.get(currentRun)) + "\n");
-        }
-        return sb.toString();
-    }
-
     public JsonObject buildAllMetrics() {
         JsonObjectBuilder builder = Json.createObjectBuilder();
         builder.add("Total Crawler Runs", currentFilterMetrics.getRuns().size());
