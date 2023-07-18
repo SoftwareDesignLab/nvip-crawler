@@ -53,16 +53,18 @@ import java.util.Map;
  * the CVEs which affected products were mapped to will be passed to the NVIP Patchfinder.
  *
  * Also has a test mode (see environment variable TEST_MODE) to perform a quick run-through and ensure everything
- * is working correctly. This requires a test_vulnerabilities.csv file be stored in the data directory.
+ * is working correctly. This requires a 'test_vulnerabilities.csv' file be stored in the data directory.
  *
  * @author Paul Vickers
  * @author Dylan Mulligan
+ *
  */
+
 public class ProductNameExtractorMain {
     private static final Logger logger = LogManager.getLogger(ProductNameExtractorMain.class);
     public static final String currentDir = System.getProperty("user.dir");
 
-    // Input Mode Variables (determine which CVEs to process)
+    // Input Mode Variables (determine which CVEs to process - RabbitMQ jobs or manually created CVEs for Test Mode)
     private static final int rabbitPollInterval = ProductNameExtractorEnvVars.getRabbitPollInterval();
     private static final boolean testMode = ProductNameExtractorEnvVars.isTestMode();
 
@@ -91,11 +93,13 @@ public class ProductNameExtractorMain {
     protected static void initializeProductIdentifier(List<CompositeVulnerability> vulnList){
         // If null, AffectedProductIdentifier needs to be initialized with AI models & product dictionary
         if(affectedProductIdentifier == null){
-            logger.info("Initializing the AffectedProductIdentifier...");
-            affectedProductIdentifier = new AffectedProductIdentifier(numThreads, vulnList);
-            affectedProductIdentifier.initializeProductDetector(resourceDir, nlpDir, dataDir);
             productDict = ProductDictionary.getProductDict();
+
+            logger.info("Initializing the AffectedProductIdentifier...");
+            affectedProductIdentifier = new AffectedProductIdentifier(numThreads);
+            affectedProductIdentifier.setVulnList(vulnList);
             affectedProductIdentifier.loadProductDict(productDict);
+            affectedProductIdentifier.initializeProductDetector(resourceDir, nlpDir, dataDir);
 
         // AffectedProductIdentifier already initialized, just need to change the vulnerabilities to be processed
         }else{
@@ -106,7 +110,7 @@ public class ProductNameExtractorMain {
 
     /**
      * Releases the Affected Product Identifier and all of its models
-     * as well as the product dictionary from memory.
+     * as well as the product dictionary from memory. Forces garbage collection.
      */
     protected static void releaseResources(){
         if(affectedProductIdentifier != null){
@@ -114,7 +118,7 @@ public class ProductNameExtractorMain {
             affectedProductIdentifier = null;
         }
 
-        if(productDict!= null){
+        if(productDict != null){
             ProductDictionary.unloadProductDict();
             productDict = null;
         }
@@ -166,8 +170,6 @@ public class ProductNameExtractorMain {
             PrintWriter writer = new PrintWriter(testResultsFile);
             // Go through each vulnerability and write it and its affected products to output and the file
             for (CompositeVulnerability vulnerability : vulnList) {
-                if (vulnerability.getCveReconcileStatus() == CompositeVulnerability.CveReconcileStatus.DO_NOT_CHANGE)
-                    continue; // skip the ones that are not changed!
                 List<AffectedProduct> affectedProducts = new ArrayList<>(vulnerability.getAffectedProducts());
 
                 StringBuilder builder = new StringBuilder();
@@ -200,16 +202,20 @@ public class ProductNameExtractorMain {
     /**
      * Main method for the Product Name Extractor
      *
-     * Determines which vulnerabilities to process within the Product Name Extractor and handles RabbitMQ pipeline.
-     * Then starts the ProductNameExtractorController with said vulnerabilities to process.
-     * Finally takes in the found affected products and inserts them into the database, notifying PatchFinder with jobs.
+     * Determines which vulnerabilities to process within the Product Name Extractor
+     * whether that be via RabbitMQ job pipeline or test mode and extracts affected products
+     * from them, inserting those into the database. Then sends jobs to the NVIP Patchfinder.
+     *
+     * By default, the program will wait idly until jobs are received from the NVIP Reconciler
+     * or a 'TERMINATE' message is received which will close the program.
      *
      * @param args (unused) program arguments
+     *
      */
     public static void main(String[] args) {
         logger.info("CURRENT PATH --> " + currentDir);
 
-        // Initialize Database Helper and Load Product Dictionary
+        // Initialize Database Helper and Product Dictionary
         DatabaseHelper databaseHelper = new DatabaseHelper(databaseType, hikariUrl, hikariUser, hikariPassword);
         ProductDictionary.initializeProductDict();
 
@@ -224,6 +230,7 @@ public class ProductNameExtractorMain {
 
             initializeProductIdentifier(vulnList);
 
+            // Process vulnerabilities
             final long getProdStart = System.currentTimeMillis();
             int numAffectedProducts = affectedProductIdentifier.identifyAffectedProducts().size();
 
@@ -233,14 +240,14 @@ public class ProductNameExtractorMain {
             writeTestResults(vulnList);
 
         }else{
-            // Otherwise using rabbitmq, get the list of cve IDs from the reconciler and create vuln list from those
+            // Otherwise using RabbitMQ, get the list of cve IDs from the reconciler and create vuln list from those
             while(true) {
                 try {
 
                     // Get CVE IDs to be processed from reconciler
                     List<String> cveIds = rabbitMQ.waitForReconcilerMessage(rabbitPollInterval);
 
-                    // If 'TERMINATE' message sent, initiate shutdown and exit process
+                    // If 'TERMINATE' message sent, initiate shutdown sequence and exit process
                     if (cveIds.size() == 1 && cveIds.get(0).equals("TERMINATE")) {
                         logger.info("TERMINATE message received from the Reconciler, shutting down...");
                         databaseHelper.shutdown();
@@ -248,13 +255,11 @@ public class ProductNameExtractorMain {
 
                     // If 'FINISHED' message sent, jobs are done for now, release resources
                     } else if (cveIds.size() == 1 && cveIds.get(0).equals("FINISHED")) {
-                        //TODO: try to get the AI models to fully be released
                         logger.info("FINISHED message received from the Reconciler, releasing resources...");
                         releaseResources();
 
                     // Otherwise, CVE jobs were received, process them
                     } else {
-
                         logger.info("Received job with CVE(s) {}", cveIds);
 
                         // Pull specific cve information from database for each CVE ID passed from reconciler

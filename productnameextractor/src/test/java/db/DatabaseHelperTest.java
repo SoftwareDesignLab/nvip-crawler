@@ -114,23 +114,6 @@ public class DatabaseHelperTest {
 		}
 	}
 
-	@Test
-	public void getProdIdFromCpeTest() {
-		int outId = 1337;
-		String cpe = "cpe";
-
-		try {
-			setResNextCount(1);
-			when(res.getInt("product_id")).thenReturn(outId);
-			int prodId = dbh.getProdIdFromCpe(cpe);
-			verify(pstmt).setString(1, cpe);
-			assertEquals(outId, prodId);
-
-			setResNextCount(0);
-			assertEquals(-1, dbh.getProdIdFromCpe(cpe));
-		} catch (SQLException ignored) {}
-	}
-
 	/**
 	 * Tests the insertAffectedProducts method. In this case since there are 5 products,
 	 * there should be 8 psmt.setStrings() so 8x5=40

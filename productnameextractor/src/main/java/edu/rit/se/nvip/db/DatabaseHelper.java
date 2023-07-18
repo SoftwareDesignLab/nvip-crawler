@@ -1,18 +1,20 @@
+package edu.rit.se.nvip.db;
+
 /**
  * Copyright 2023 Rochester Institute of Technology (RIT). Developed with
  * government support under contract 70RSAT19CB0000020 awarded by the United
  * States Department of Homeland Security.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -21,7 +23,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package edu.rit.se.nvip.db;
 
 import java.sql.*;
 import java.util.*;
@@ -39,23 +40,26 @@ import com.zaxxer.hikari.HikariDataSource;
 import com.zaxxer.hikari.pool.HikariPool.PoolInitializationException;
 
 /**
- * 
- * The DatabaseHelper class is used to insert and update vulnerabilities found
- * from the webcrawler/processor to a sqlite database
+ *
+ * The DatabaseHelper class specific to the Product Name Extractor is
+ * used to pull existing vulnerabilities, delete existing affected product data,
+ * and insert new affected product data.
+ *
+ * @author Paul Vickers
+ * @author Dylan Mulligan
+ *
  */
 public class DatabaseHelper {
-	private HikariConfig config = null;
+	private HikariConfig config;
 	private HikariDataSource dataSource;
 	private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
-	private final String getIdFromCpe = "SELECT * FROM affectedproduct where cpe = ?;";
 	private final String selectVulnerabilitySql = "SELECT vulnerability.vuln_id, vulnerability.cve_id, description.description FROM vulnerability JOIN description ON vulnerability.description_id = description.description_id;";
 	private final String selectSpecificVulnerabilitySql = "SELECT vulnerability.vuln_id, description.description FROM vulnerability JOIN description ON vulnerability.description_id = description.description_id WHERE vulnerability.cve_id = ?;";
 	private final String insertAffectedProductSql = "INSERT INTO affectedproduct (cve_id, cpe, product_name, release_date, version, vendor, purl, swid_tag) VALUES (?, ?, ?, ?, ?, ?, ?, ?);";
 	private final String deleteAffectedProductSql = "DELETE FROM affectedproduct where cve_id = ?;";
 
 	/**
-	 * The private constructor sets up HikariCP for connection pooling. Singleton
-	 * DP!
+	 * Constructor for DatabaseHelper. Initializes the HikariDataSource connection to the database to be used.
 	 */
 	public DatabaseHelper(String databaseType, String hikariUrl, String hikariUser, String hikariPassword) {
 		logger.info("New NVIP.DatabaseHelper instantiated! It is configured to use " + databaseType + " database!");
@@ -82,6 +86,15 @@ public class DatabaseHelper {
 		}
 	}
 
+	/**
+	 * Creates and returns a HikariConfig object (to connect to the database).
+	 *
+	 * @param url database connection url
+	 * @param user database username
+	 * @param password database password
+	 *
+	 * @return HikariConfig object created using parameters
+	 */
 	private HikariConfig createHikariConfig(String url, String user, String password) {
 		HikariConfig hikariConfig;
 
@@ -103,7 +116,7 @@ public class DatabaseHelper {
 	}
 
 	/**
-	 * Retrieves the connection from the DataSource (HikariCP)
+	 * Retrieves the connection from the DataSource (HikariCP).
 	 * 
 	 * @return the connection pooling connection
 	 * @throws SQLException
@@ -113,48 +126,29 @@ public class DatabaseHelper {
 	}
 
 	/**
-	 * Store affected products in DB
-	 * @param affectedProducts
+	 * Insert affected products into the database. First deletes existing data
+	 * in the database for the affected products in the list, then inserts the new data.
+	 *
+	 * @param affectedProducts list of affected products to be inserted
 	 */
 	public void insertAffectedProductsToDB(List<AffectedProduct> affectedProducts) {
-
 		logger.info("Inserting Affected Products to DB!");
-		// delete existing affected release info in db ( for CVEs in the list)
+
+		// Delete existing affected product data for those in list
 		deleteAffectedProducts(affectedProducts);
 
-		// now insert affected releases (referenced products are already in db)
+		// Insert affected products
 		insertAffectedProducts(affectedProducts);
 	}
 
 	/**
-	 * Gets a product ID from database based on CPE
+	 * Updates the affected product table with a list of affected products.
 	 *
-	 * @param cpe CPE string of product
-	 * @return product ID if product exists in database, -1 otherwise
-	 */
-	public int getProdIdFromCpe(String cpe) {
-		int result;
-		try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(getIdFromCpe);) {
-			pstmt.setString(1, cpe);
-			ResultSet res = pstmt.executeQuery();
-			if (res.next())
-				result = res.getInt("product_id");
-			else
-				result = -1;
-		} catch (SQLException e) {
-			logger.error(e.getMessage());
-			result = -2;
-		}
-		return result;
-	}
-
-	/**
-	 * Updates the affected product table with a list of affected products
-	 * 
-	 * @param affectedProducts list of affected product objects
+	 * @param affectedProducts list of affected products
 	 */
 	public void insertAffectedProducts(List<AffectedProduct> affectedProducts) {
 		logger.info("Inserting {} affected products...", affectedProducts.size());
+
 		// CPE 2.3 Regex
 		// Regex101: https://regex101.com/r/9uaTQb/1
 		final Pattern cpePattern = Pattern.compile("cpe:2\\.3:[aho\\*\\-]:([^:]*):([^:]*):([^:]*):.*");
@@ -196,7 +190,7 @@ public class DatabaseHelper {
 	}
 
 	/**
-	 * Deletes affected products for given CVEs
+	 * Deletes affected products for given CVEs.
 	 * 
 	 * @param affectedProducts list of affected products to delete
 	 */
@@ -216,11 +210,11 @@ public class DatabaseHelper {
 	}
 
 	/**
-	 * Gets list of vulnerabilities from the database, formatting them into CompositeVulnerability objects,
-	 * and limiting the return to maxVulnerabilities size.
+	 * Gets list of vulnerabilities from the database, formats them into CompositeVulnerability objects,
+	 * and limits the returned list to maxVulnerabilities size.
 	 *
 	 * @param maxVulnerabilities max number of vulnerabilities to get
-	 * @return a map of fetched vulnerabilities
+	 * @return list of fetched vulnerabilities
 	 */
 	public List<CompositeVulnerability> getAllCompositeVulnerabilities(int maxVulnerabilities) {
 		ArrayList<CompositeVulnerability> vulnList = new ArrayList<>();
@@ -247,17 +241,24 @@ public class DatabaseHelper {
 					vulnList.add(vulnerability);
 					vulnCount++;
 				}
-				logger.info("NVIP has loaded {} existing CVE items from DB!", vulnList.size());
+				logger.info("Successfully loaded {} existing CVE items from DB!", vulnList.size());
 			} catch (Exception e) {
 				logger.error("Error while getting existing vulnerabilities from DB\nException: {}", e.getMessage());
-				logger.error(
-						"This is a serious error! NVIP will not be able to decide whether to insert or update! Exiting...");
+				logger.error("This is a serious error! Product Name Extraction will not be able to proceed! Exiting...");
 				System.exit(1);
 			}
 		}
+
 		return vulnList;
 	}
 
+	/**
+	 * Gets list of specific vulnerabilities by their CVE IDs from the database,
+	 * formats them into CompositeVulnerability objects, and returns the list.
+	 *
+	 * @param cveIds list of CVEs to be pulled from database
+	 * @return list of fetched vulnerabilities
+	 */
 	public List<CompositeVulnerability> getSpecificCompositeVulnerabilities(List<String> cveIds){
 		ArrayList<CompositeVulnerability> vulnList = new ArrayList<>();
 		synchronized (DatabaseHelper.class) {
@@ -283,14 +284,14 @@ public class DatabaseHelper {
 						vulnList.add(vulnerability);
 					}
 				}
-				logger.info("NVIP has loaded {} existing CVE items from DB! {} CVE items were nonexistent in the DB", vulnList.size(), cveIds.size() - vulnList.size());
+				logger.info("Successfully loaded {} existing CVE items from DB! {} CVE items were not found in the DB", vulnList.size(), cveIds.size() - vulnList.size());
 			} catch (Exception e) {
 				logger.error("Error while getting existing vulnerabilities from DB\nException: {}", e.getMessage());
-				logger.error(
-						"This is a serious error! NVIP will not be able to decide whether to insert or update! Exiting...");
+				logger.error("This is a serious error! Product Name Extraction will not be able to proceed! Exiting...");
 				System.exit(1);
 			}
 		}
+
 		return vulnList;
 	}
 

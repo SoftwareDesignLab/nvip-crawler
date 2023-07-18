@@ -45,12 +45,15 @@ import java.util.concurrent.atomic.AtomicLong;
  *
  * @author axoeec
  * @author Dylan Mulligan
+ * @author Paul Vickers
+ *
  */
+
 public class AffectedProductIdentifier {
 	private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
-	private List<CompositeVulnerability> vulnList;
-	private CpeLookUp cpeLookUp;
 	private ProductDetector productDetector;
+	private CpeLookUp cpeLookUp;
+	private List<CompositeVulnerability> vulnList;
 	private final int numThreads;
 
 	/**
@@ -60,8 +63,7 @@ public class AffectedProductIdentifier {
 	 *
 	 * @param vulnList list of vulnerabilities to use for product identification.
 	 */
-	public AffectedProductIdentifier(int numThreads, List<CompositeVulnerability> vulnList) {
-		this.vulnList = vulnList;
+	public AffectedProductIdentifier(int numThreads) {
 		this.cpeLookUp = new CpeLookUp();
 		this.numThreads = numThreads;
 	}
@@ -85,7 +87,7 @@ public class AffectedProductIdentifier {
 	 *
 	 * @param vulnList list of vulnerabilities to use for product identification
 	 */
-	protected void setVulnList(List<CompositeVulnerability> vulnList){
+	public void setVulnList(List<CompositeVulnerability> vulnList){
 		if(!this.vulnList.isEmpty()) this.vulnList.clear();
 		this.vulnList = vulnList;
 	}
