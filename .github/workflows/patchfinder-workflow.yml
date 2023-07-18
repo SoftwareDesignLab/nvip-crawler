@@ -2,7 +2,16 @@
 
 name: Patchfinder Workflow
 
-on: [push]
+on:
+  pull_request:
+    branches:
+      - main
+      - dev
+  push:
+    branches:
+      - main
+      - dev
+      - 'cicd/**'
 
 env:
   AWS_REGION: 'us-east-1'
@@ -36,6 +45,7 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
+          cache: 'maven'
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -61,6 +71,12 @@ jobs:
         run: |
           mysql -e 'CREATE DATABASE nvip;' -u${{ env.HIKARI_USER }} -p${{ env.HIKARI_PASSWORD }} 
           mvn liquibase:update --no-transfer-progress
+
+      - name: Test and Build Product Extractor with Maven
+        run: |
+          cd patchfinder
+          mvn dependency:go-offline
+          mvn package
 
       - name: Publish Test Report
         if: success() || failure()
