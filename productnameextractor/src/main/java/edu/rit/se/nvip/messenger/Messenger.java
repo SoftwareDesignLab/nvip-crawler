@@ -18,8 +18,8 @@ import java.util.List;
 import java.util.concurrent.*;
 
 public class Messenger {
-    private final static String INPUT_QUEUE = "PNE";
-    private final static String OUTPUT_QUEUE = "patchfinder";
+    private final static String INPUT_QUEUE = "RECONCILER_OUT";
+    private final static String OUTPUT_QUEUE = "PNE_OUT";
     private static final Logger logger = LogManager.getLogger(DatabaseHelper.class.getSimpleName());
     private static final ObjectMapper OM = new ObjectMapper();
     private final ConnectionFactory factory;
@@ -63,8 +63,14 @@ public class Messenger {
 
                 DeliverCallback deliverCallback = (consumerTag, delivery) -> {
                     String message = new String(delivery.getBody(), StandardCharsets.UTF_8);
-                    List<String> parsedIds = parseIds(message);
-                    if(parsedIds.size() > 0 && !messageQueue.offer(parsedIds)) logger.error("Job response could not be added to message queue");
+
+                    if(message.equals("FINISHED")) {
+                        // TODO: Call unload
+                    } else {
+                        List<String> parsedIds = parseIds(message);
+                        if(parsedIds.size() > 0 && !messageQueue.offer(parsedIds)) logger.error("Job response could not be added to message queue");
+                    }
+
                 };
                 channel.basicConsume(INPUT_QUEUE, true, deliverCallback, consumerTag -> { });
 
@@ -141,8 +147,7 @@ public class Messenger {
     public static void main(String[] args) {
         Messenger messenger = new Messenger();
         List<String> cveIds = new ArrayList<>();
-        cveIds.add("CVE-2019-3965");
-        cveIds.add("CVE-2019-3966");
+        cveIds.add("CVE-2020-28468");
 //        cveIds.add("TERMINATE");
         messenger.sendDummyMessage("CRAWLER_OUT", cveIds);
 

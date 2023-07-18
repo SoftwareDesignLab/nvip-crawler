@@ -69,6 +69,9 @@ public class ProductNameExtractorEnvVars {
     private static String nerModel = "NERallModel.bin";
     private static String nerModelNormalizer = "NERallNorm.bin";
     private static String sentenceModel = "en-sent.bin";
+
+    // Default values for rabbit environment variables
+
     private static String rabbitHost = "localhost";
     private static String rabbitUsername = "guest";
     private static String rabbitPassword = "guest";

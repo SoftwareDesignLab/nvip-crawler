@@ -497,12 +497,12 @@ public class DatabaseHelper {
     }
 
     private void populateCVSSUpdate(PreparedStatement pstmt, CvssScore cvss) throws SQLException {
-        pstmt.setDouble(1, Double.parseDouble(String.valueOf(CveCharacterizer.CVSSSeverity.getCVSSSeverity(cvss.getSeverityId()))));
+        pstmt.setDouble(1, cvss.getSeverityId());
         pstmt.setString(2, cvss.getImpactScore());
         pstmt.setString(3, cvss.getCveId());
     }
     private void populateCVSSInsert(PreparedStatement pstmt, CvssScore cvss) throws SQLException {
-        pstmt.setDouble(1, Double.parseDouble(String.valueOf(CveCharacterizer.CVSSSeverity.getCVSSSeverity(cvss.getSeverityId()))));
+        pstmt.setDouble(1, cvss.getSeverityId());
         pstmt.setString(2, cvss.getImpactScore());
         pstmt.setString(3, cvss.getCveId());
         pstmt.setTimestamp(4, new Timestamp(System.currentTimeMillis()));
