@@ -36,15 +36,12 @@ import org.nd4j.linalg.dataset.api.preprocessor.serializer.NormalizerSerializer;
 import org.nd4j.linalg.factory.Nd4j;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Map;
 import java.util.Random;
 
 /**
@@ -61,6 +58,7 @@ import java.util.Random;
  */
 
 public class NERmodel {
+	private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
 	private final boolean timingOn = false;
 	private MultiLayerNetwork model = null; // NER model
 	private Char2vec c2vModel; // Char2Vector model
@@ -75,15 +73,6 @@ public class NERmodel {
 	private SentenceDetector sentenceDetector = null;
 	private DataNormalization restoredNormalizer = null; // Feature normalizer
 
-	private static final String char2VecConfig = ProductNameExtractorEnvVars.getChar2VecConfig();
-	private static final String char2VecWeights = ProductNameExtractorEnvVars.getChar2VecWeights();
-	private static final String word2Vec = ProductNameExtractorEnvVars.getWord2Vec();
-	private static final String nerModel = ProductNameExtractorEnvVars.getNerModel();
-	private static final String nerModelNormalizer = ProductNameExtractorEnvVars.getNerModelNormalizer();
-	private static final String sentenceModel = ProductNameExtractorEnvVars.getSentenceModel();
-
-	private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
-
 	/**
 	 * Class constructor
 	 */
@@ -91,12 +80,12 @@ public class NERmodel {
 		super();
 
 		try {
-			String c2vModelConfigPath = modelsDir + char2VecConfig;
-			String c2vModelWeightsPath = modelsDir + char2VecWeights;
-			String w2vModelPath = modelsDir + word2Vec;
-			String nerModelPath = modelsDir + nerModel;
-			String nerNormalizerPath = modelsDir + nerModelNormalizer;
-			String sentenceModelPath = modelsDir + nlpDir + "/" + sentenceModel;
+			String c2vModelConfigPath = modelsDir + ProductNameExtractorEnvVars.getChar2VecConfig();
+			String c2vModelWeightsPath = modelsDir + ProductNameExtractorEnvVars.getChar2VecWeights();
+			String w2vModelPath = modelsDir + ProductNameExtractorEnvVars.getWord2Vec();
+			String nerModelPath = modelsDir + ProductNameExtractorEnvVars.getNerModel();
+			String nerNormalizerPath = modelsDir + ProductNameExtractorEnvVars.getNerModelNormalizer();
+			String sentenceModelPath = modelsDir + nlpDir + "/" + ProductNameExtractorEnvVars.getSentenceModel();
 
 			long startTime = System.currentTimeMillis();
 			// Load NER model

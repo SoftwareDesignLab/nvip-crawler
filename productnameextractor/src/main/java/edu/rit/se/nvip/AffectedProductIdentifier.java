@@ -58,14 +58,14 @@ public class AffectedProductIdentifier {
 
 	/**
 	 * Initialize the AffectedProductIdentifier with its own internal CpeLookup
-	 * instance and a provided list of vulnerabilities to use for product
-	 * identification.
+	 * instance and a provided list of vulnerabilities to process for product identification
 	 *
-	 * @param vulnList list of vulnerabilities to use for product identification.
+	 * @param vulnList list of vulnerabilities to process for product identification.
 	 */
-	public AffectedProductIdentifier(int numThreads) {
+	public AffectedProductIdentifier(int numThreads, List<CompositeVulnerability> vulnList) {
 		this.cpeLookUp = new CpeLookUp();
 		this.numThreads = numThreads;
+		this.vulnList = vulnList;
 	}
 
 	/**

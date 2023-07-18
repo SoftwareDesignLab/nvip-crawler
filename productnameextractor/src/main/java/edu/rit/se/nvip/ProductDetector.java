@@ -44,17 +44,14 @@ import java.util.List;
  * Software Versions from CVE descriptions
  * 
  * @author Igor Khokhlov
- * @author Paul Vickers (Editor)
+ * @author Dylan Mulligan
+ * @author Paul Vickers
  *
  */
 
 public class ProductDetector {
 	private static final Logger logger = LogManager.getLogger(ProductDetector.class);
-
 	public static final String NNP = "NNP";
-	public static final String IN = "IN";
-	private static final String productDetectorModel = ProductNameExtractorEnvVars.getProductDetectorModel();
-
 	private NERmodel nerModel;
 	private CpeLookUp cpeDict;
 	private POSTaggerME tagger;
@@ -64,7 +61,7 @@ public class ProductDetector {
 	 * Class constructor
 	 */
 	public ProductDetector(CpeLookUp cpeLookUp, String resourceDir, String nlpDir, String dataDir) throws IOException {
-		final String binPath = resourceDir + "/" + dataDir + "/" + nlpDir + "/" + productDetectorModel;
+		final String binPath = resourceDir + "/" + dataDir + "/" + nlpDir + "/" + ProductNameExtractorEnvVars.getProductDetectorModel();;
 
 		try {
 			// Load NER model
