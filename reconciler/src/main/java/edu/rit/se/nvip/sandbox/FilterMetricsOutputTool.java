@@ -66,6 +66,9 @@ public class FilterMetricsOutputTool {
         JsonObjectBuilder builder = Json.createObjectBuilder();
         builder.add("Total Crawler Runs", currentFilterMetrics.getRuns().size());
         JsonObjectBuilder filters = Json.createObjectBuilder();
+        int totalVulns = 0;
+        int totalFiltered = 0;
+        int totalPassed = 0;
         int filterIndex = 0;
         for (Filter currentFilter: currentFilterMetrics.getFilterHandler().getCustomFilters()) {
             filters.add(filterIndex+"", currentFilter.getClass().getSimpleName());
@@ -75,9 +78,12 @@ public class FilterMetricsOutputTool {
         for (CrawlerRun currentRun: currentFilterMetrics.getRuns()) {
             JsonObjectBuilder joRun = Json.createObjectBuilder();
             joRun.add("Crawled Date", currentRun.getDate().toString());
-            joRun.add("Total Vulns", numFiltered.get(currentRun).getTotalVulns());
-            joRun.add("Total Vulns Filtered", numFiltered.get(currentRun).getTotalFiltered());
-            joRun.add("Total Vulns Pass Filters", numFiltered.get(currentRun).getPassedFilters());
+            joRun.add("Vulns", numFiltered.get(currentRun).getTotalVulns());
+            totalVulns += numFiltered.get(currentRun).getTotalVulns();
+            joRun.add("Vulns Filtered", numFiltered.get(currentRun).getTotalFiltered());
+            totalFiltered += numFiltered.get(currentRun).getTotalFiltered();
+            joRun.add("Vulns Pass Filters", numFiltered.get(currentRun).getPassedFilters());
+            totalPassed += numFiltered.get(currentRun).getPassedFilters();
             joRun.add("Proportion Passed", df.format(proportionPassed.get(currentRun)));
             joRun.add("New Vulns", newVulnsPerRun.get(currentRun));
             Map<RawVulnerability.SourceType, Integer> sourceMap = sourceDist.get(currentRun);
@@ -88,6 +94,9 @@ public class FilterMetricsOutputTool {
             joRun.add("Source Distribution", joSource);
             builder.add("Run " + currentRun.getRunId(), joRun);
         }
+        builder.add("Total Vulns", totalVulns);
+        builder.add("Total Vulns Filtered", totalFiltered);
+        builder.add("Total Vulns Pass Filters", totalPassed);
         return builder.build();
     }
 
@@ -97,6 +106,14 @@ public class FilterMetricsOutputTool {
         this.numFiltered = filterMetrics.numFiltered();
         this.proportionPassed = filterMetrics.proportionPassed();
         this.newVulnsPerRun = filterMetrics.newVulnsPerRun();
+    }
+
+    public JsonObject buildSingleFilterMetrics(String filter, FilterMetrics currentMetrics) {
+        List<Filter> customFilter = new ArrayList<>();
+        customFilter.add(FilterFactory.createFilter(filter));
+        currentMetrics.setCustomFilters(customFilter);
+        updateCurrentFilterMetrics(currentMetrics);
+        return buildAllMetrics();
     }
 
     public static void main(String[] args) {
@@ -109,28 +126,32 @@ public class FilterMetricsOutputTool {
 
         FilterHandler filterHandler = new FilterHandler();
         filterHandler.setCustomFilters(customFilters);
-        FilterMetrics filterMetrics = new FilterMetrics("./src/test/resources", filterHandler, FilterHandler.FilterScope.CUSTOM);
+        FilterMetrics filterMetrics = new FilterMetrics("./src/test/resources/multipleJsons", filterHandler, FilterHandler.FilterScope.CUSTOM);
         FilterMetricsOutputTool fmot = new FilterMetricsOutputTool(filterMetrics);
 
-        //Create complete object builder
-        JsonObjectBuilder joBuilder = Json.createObjectBuilder();
+        JsonObjectBuilder objBuilder = Json.createObjectBuilder();
+
+        //Build object with all local filters
+        objBuilder.add("LOCAL_FILTERS", fmot.buildAllMetrics());
 
         //Build object with MULTIPLE_CVE_DESCRIPTION filter
-        customFilters.clear();
+        objBuilder.add("MULTIPLE_CVE_DESCRIPTION", fmot.buildSingleFilterMetrics(FilterFactory.MULTIPLE_CVE_DESCRIPTION, filterMetrics));
+        //Build object with CVE_MATCHES_DESCRIPTION filter
+        objBuilder.add("CVE_MATCHES_DESCRIPTION", fmot.buildSingleFilterMetrics(FilterFactory.CVE_MATCHES_DESCRIPTION, filterMetrics));
+        //Build object with CVE_MATCHES_DESCRIPTION filter
+        objBuilder.add("DESCRIPTION_SIZE", fmot.buildSingleFilterMetrics(FilterFactory.DESCRIPTION_SIZE, filterMetrics));
+        //Build object with CVE_MATCHES_DESCRIPTION filter
+        objBuilder.add("INTEGER_DESCRIPTION", fmot.buildSingleFilterMetrics(FilterFactory.INTEGER_DESCRIPTION, filterMetrics));
+        //Build object with CVE_MATCHES_DESCRIPTION filter
+        objBuilder.add("BLANK_DESCRIPTION", fmot.buildSingleFilterMetrics(FilterFactory.BLANK_DESCRIPTION, filterMetrics));
 
-        customFilters.add(FilterFactory.createFilter(FilterFactory.MULTIPLE_CVE_DESCRIPTION));
-        filterMetrics.setCustomFilters(customFilters);
-        fmot.updateCurrentFilterMetrics(filterMetrics);
+        JsonObject obj = objBuilder.build();
 
-        JsonObject jo = fmot.buildAllMetrics();
         LocalDateTime now = LocalDateTime.now();
         try (FileWriter writer = new FileWriter("./src/main/java/edu/rit/se/nvip/sandbox/jsons/FilterMetricsOutput_" + dtf.format(now) + ".json")) {
-            writer.write(jo.toString());
+            writer.write(obj.toString());
         } catch (IOException e) {
             e.printStackTrace();
         }
-//        System.out.println(fmot.getAllMetricsString());
-        //Create filtermetrics obj with list of all filters
-        //Create output tool
     }
 }
