@@ -155,8 +155,8 @@ public class CweController {
                         Element relatedWeaknessElement = (Element) relatedWeaknessNodes.item(j);
                         String nature = relatedWeaknessElement.getAttribute("Nature");
                         if (nature.equals("ChildOf")) {
-                            int childCweId = Integer.parseInt(relatedWeaknessElement.getAttribute("CWE_ID"));
-                            cwe.addParentId(childCweId);
+                            int parentId = Integer.parseInt(relatedWeaknessElement.getAttribute("CWE_ID"));
+                            cwe.addParentId(parentId);
                         }
                     }
 

@@ -9,7 +9,6 @@ public class CWE {
     private Set<CWE> children;
     private Set<Integer> parentIds;
     private Set<CWE> parents;
-    private Set<CWE> siblings;
     private static final Set<CWE> allCWEs = new HashSet<>();
 
     /**
@@ -26,7 +25,6 @@ public class CWE {
         this.children = new HashSet<>();
         this.parentIds = new HashSet<>();
         this.parents = new HashSet<>();
-        this.siblings =  new HashSet<>();
         allCWEs.add(this);
     }
 
@@ -46,97 +44,23 @@ public class CWE {
      */
     public void generateFamily(Set<CWE> set){
         for (CWE cwe : set){
-            if (this.getParentIds().contains(cwe.getId())){ //if this CWE's parentId matches the ID of the cwe
-                cwe.addChild(this); //add this cwe to that cwe's children
-                this.addParent(cwe); //make the cwe this cwe's parent
-            }
-            if(this.getParent() == cwe.getParent()){ //if two cwes share the same parent
-                this.siblings.add(cwe); //make them siblings
+            if(!(this == cwe)){
+                if (this.getParentIds().contains(cwe.getId())) { //if this CWE's parentId matches the ID of the cwe
+                    cwe.addChild(this); //add this cwe to that cwe's children
+                    this.addParent(cwe); //make the cwe this cwe's parent
+                }
             }
 
         }
     }
     public Set<Integer> getParentIds(){return this.parentIds;}
     public Set<CWE> getChildren(){return this.children;}
-    public Set<CWE> getSiblings(){return this.siblings;}
     public static Set<CWE> getAllCWEs(){return allCWEs;}
     public String getName(){ return this.name;}
     public Integer getId(){return this.id;}
 
     public Set<CWE> getParent(){return this.parents;}
+    public String getDescription(){return this.description;}
 
-    static class CWETree {
-        private CWE root;
-        private Set<CWETree> subtrees;
 
-        public CWETree(CWE root) {
-            this.root = root;
-            this.subtrees = new HashSet<>();
-        }
-
-        public void addSubtree(CWETree subtree) {
-            subtrees.add(subtree);
-        }
-
-        public CWE getRoot() {
-            return root;
-        }
-
-        public Set<CWETree> getSubtrees() {
-            return subtrees;
-        }
-        public int maxChildren() {
-            if (this.getRoot().getChildren().size() == 0) {
-                return 0;
-            }
-            int max = this.getRoot().getChildren().size();
-            for (CWETree child : this.subtrees) {
-                int maxChildrenOfChild = maxChildren();
-                if (maxChildrenOfChild > max) {
-                    max = maxChildrenOfChild;
-                }
-            }
-            return max;
-        }
-    }
-
-    static class CWEForest {
-        private Set<CWETree> trees;
-
-        public CWEForest() {
-            this.trees = new HashSet<>();
-            constructForest(CWE.getAllCWEs());
-        }
-
-        public void constructForest(Set<CWE> cwes) {
-            Map<CWE, CWETree> cweToTreeMap = new HashMap<>();
-
-            for (CWE cwe : cwes) {
-                CWETree tree = new CWETree(cwe);
-                cweToTreeMap.put(cwe, tree);
-            }
-
-            for (CWE cwe : cwes) {
-                CWETree tree = cweToTreeMap.get(cwe);
-                Set<CWE> cweParents = cwe.getParent();
-
-                if (!cweParents.isEmpty()) {
-                    for (CWE parent : cweParents) {
-                        CWETree parentTree = cweToTreeMap.get(parent);
-                        parentTree.addSubtree(tree);
-                    }
-                } else {
-                    trees.add(tree);
-                }
-
-                for (CWE sibling : cwe.getSiblings()) {
-                    CWETree siblingTree = cweToTreeMap.get(sibling);
-                    tree.addSubtree(siblingTree);
-                }
-            }
-        }
-        public Set<CWETree> getTrees() {
-            return trees;
-        }
-    }
 }
