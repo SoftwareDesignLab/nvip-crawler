@@ -23,8 +23,7 @@ import java.util.concurrent.*;
  * @author Dylan Mulligan
  */
 public class Messenger {
-    private final static String INPUT_QUEUE = "patchfinder";
-//    private final static String OUTPUT_QUEUE = "";
+    private final static String INPUT_QUEUE = "PNE_OUT";
     private static final Logger logger = LogManager.getLogger(DatabaseHelper.class.getSimpleName());
     private static final ObjectMapper OM = new ObjectMapper();
     private ConnectionFactory factory;

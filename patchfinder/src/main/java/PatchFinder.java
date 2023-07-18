@@ -54,17 +54,6 @@ public class PatchFinder {
 	private static final Logger logger = LogManager.getLogger(PatchFinder.class.getName());
 
 	private static final ArrayList<PatchCommit> patchCommits = new ArrayList<>();
-	protected static int cveLimit = 20;
-	protected static int maxThreads = 10;
-	protected static int cvesPerThread = 1;
-	protected static String databaseType = "mysql";
-	protected static String hikariUrl = "jdbc:mysql://localhost:3306/nvip?useSSL=false&allowPublicKeyRetrieval=true";
-	protected static String hikariUser = "root";
-	protected static String hikariPassword = "root";
-	protected static int cloneCommitThreshold = 1000; // TODO: Find omptimal value once github scraping is working well
-	protected static final int cloneCommitLimit = 50000; // TODO: Find omptimal value once github scraping is working well
-	protected static String clonePath = "patchfinder/src/main/resources/patch-repos";
-	protected static final String patchSrcUrlPath = "patchfinder/src/main/resources/source_dict.json";
 	protected static String[] addressBases = { "https://github.com/", "https://www.gitlab.com/" };
 	protected static Instant urlDictLastCompilationDate = Instant.parse("2000-01-01T00:00:00.00Z");
 	private static final ObjectMapper OM = new ObjectMapper();
