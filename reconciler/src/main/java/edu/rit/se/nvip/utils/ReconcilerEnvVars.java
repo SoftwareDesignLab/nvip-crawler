@@ -38,7 +38,7 @@ public class ReconcilerEnvVars extends Properties {
         loadVars(DEFAULT_ENV_LIST_PATH);
     }
     public static void loadVars(String path) {
-        if (System.getenv(EnvVar.HIKARI_URL.toString()) == null) {
+        if (System.getenv(EnvVar.FILTER_LIST.toString()) == null) {
             clearLoadParse(false, path);
         } else {
             clearLoadParse(true, "");
@@ -143,6 +143,7 @@ public class ReconcilerEnvVars extends Properties {
         for (EnvVar name : EnvVar.values()) {
             rawEnvVars.put(name.toString(), System.getenv(name.toString()));
         }
+
     }
 
     // in case we don't have environment variables actually set in the system, load them in directly from the env.list file instead
