@@ -25,6 +25,7 @@ package edu.rit.se.nvip;
  */
 
 import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import edu.rit.se.nvip.model.cpe.CpeEntry;
@@ -296,28 +297,17 @@ public class ProductDictionary {
         // Collect CPE data from NVD API
         try {
             int index = 0;
-            int attempts = 0;
 
-            LinkedHashMap<String, ?> rawData;
             // Get raw data
+            LinkedHashMap<String, ?> rawData;
             if(isRefresh) rawData = getNvdCpeData(index, true);
             else rawData = getNvdCpeData(index, false);
 
             // Extract results data
             int remainingResults = (int) rawData.get("totalResults");
             final int totalPages = (int) Math.ceil((double) remainingResults / resultsPerPage);
+
             while(remainingResults > 0) {
-                // Skip page after it has reach max attempts
-                if(attempts >= maxAttemptsPerPage) {
-                    // Reduce remaining results by number parsed
-                    remainingResults -= resultsPerPage;
-                    // Increment index
-                    index += resultsPerPage;
-                    // Sleep 3 sec between queries (adjust until we do not get 403 errors)
-                    Thread.sleep(4000);
-                    // Reset attempt count
-                    attempts = 0;
-                }
                 try {
                     // Skip first query, as it was already done in order to get the totalResults number
                     if(index > 0) {
@@ -392,20 +382,20 @@ public class ProductDictionary {
                     index += resultsPerPage;
                     // Sleep 6 sec between queries (NVD Recommended)
                     Thread.sleep(6000);
-                    // Reset attempt count
-                    attempts = 0;
 
                     logger.info("Successfully loaded CPE dictionary page {}/{}", page, totalPages);
                 }
-                // This block catches rate limiting errors, sleeps, then rethrows the error
-                catch (InterruptedIOException e) {
-                    Thread.sleep(10000);
-                    throw e;
-                } catch(IOException e) {
-                    attempts++;
-                } catch (Exception e) {
-                    logger.error("Error loading CPE dictionary page {}/{}, Attempt {}/{}: {}", (index / resultsPerPage) + 1, totalPages, attempts + 1, maxAttemptsPerPage, e.getMessage());
-                    attempts++;
+
+                // This block will skip the page if the content was unable to be pulled
+                catch (IOException e) {
+                    logger.info("Failed to load CPE dictionary page {}/{}, skipping...", 1 + (index / resultsPerPage), totalPages);
+
+                    // Reduce remaining results by number parsed
+                    remainingResults -= resultsPerPage;
+                    // Increment index
+                    index += resultsPerPage;
+                    // Sleep 6 sec between queries (NVD Recommended)
+                    Thread.sleep(6000);
                 }
             }
 
@@ -440,26 +430,23 @@ public class ProductDictionary {
         // Otherwise, querying the entire thing at specified index/results per page
         } else url = baseNVDUrl + String.format("?resultsPerPage=%s&startIndex=%s", resultsPerPage, startIndex);
 
-        logger.info("Fetching product list from CPE dictionary at {}", url);
+        logger.info("Fetching product list from CPE dictionary page {} at {}", 1 + startIndex / resultsPerPage, url);
 
 
         // Parse contents (if fails, will throw JsonParseException)
         try {
-            // Query URL for contents (THIS WILL THROW AN IOException WHEN IT HITS A 403 RESPONSE)
+            // Query URL for contents (THIS WILL THROW AN InterruptedIOException WHEN IT HITS A 403 RESPONSE)
             final String contents = getContentFromUrl(url);
             return OM.readValue(contents, LinkedHashMap.class);
-        } catch (JsonParseException e) {
+        } catch (JsonParseException | JsonMappingException e) {
             logger.error("Failed to parse contents retrieved from url {}: {}", url, e.toString());
-            throw e;
-        } catch (IOException e) {
-            logger.error("Failed to query url due to rate limiting, sleeping for 30sec");
-            try { Thread.sleep(30000); } catch (InterruptedException ignored) { }
             throw e;
         }
     }
 
     /**
-     * Queries and gets the contents of a given url, returning the result as a String.
+     * Queries and gets the contents of a given url, returning the result as a String. Will attempt to pull data
+     * for maxAttemptsPerPage attempts, throwing an IOException error upon failure.
      *
      * @param url url to query
      * @return String contents of url
@@ -469,31 +456,56 @@ public class ProductDictionary {
         StringBuilder response = new StringBuilder();
         BufferedReader bufferedReader;
 
-        try {
-            URL urlObject = new URL(url);
-            HttpURLConnection httpURLConnection = (HttpURLConnection) urlObject.openConnection();
-            httpURLConnection.setRequestMethod("GET");
-            httpURLConnection.setRequestProperty("User-Agent", userAgent);
-//			httpURLConnection.setRequestProperty("Accept-Encoding", "identity");
+        int attempts = 0;
 
-            // Rate limit protection
-            if(httpURLConnection.getResponseCode() == 403) {
-                throw new InterruptedIOException(String.format("URL '%s' responded with 403 - Forbidden. It is likely that rate limiting has been triggered.", url));
+        while (attempts < maxAttemptsPerPage) {
+            try {
+                URL urlObject = new URL(url);
+                HttpURLConnection httpURLConnection = (HttpURLConnection) urlObject.openConnection();
+                httpURLConnection.setRequestMethod("GET");
+                httpURLConnection.setRequestProperty("User-Agent", userAgent);
+                httpURLConnection.setRequestProperty("Accept-Encoding", "identity");
+
+                // Rate limit protection
+                if (httpURLConnection.getResponseCode() == 403) {
+                    throw new IOException(String.format("URL '%s' responded with 403 - Forbidden. It is likely that rate limiting has been triggered.", url));
+                }
+
+                // Service Unavailable error
+                if (httpURLConnection.getResponseCode() == 503) {
+                    throw new IOException(String.format("URL '%s' responded with 503 - Service Unavailable. The page was unable to be loaded.", url));
+                }
+
+                bufferedReader = new BufferedReader(new InputStreamReader(httpURLConnection.getInputStream()));
+                String inputLine;
+                while ((inputLine = bufferedReader.readLine()) != null) {
+                    response.append(inputLine).append("\n");
+                }
+                bufferedReader.close();
+
+                return response.toString();
+
+            // If error occurs, increment attempts and sleep for 30 seconds before retrying
+            } catch (IOException e) {
+                attempts++;
+
+                try {
+                    // Even if on last attempt, still sleep
+                    if (attempts == maxAttemptsPerPage) {
+                        logger.error("Error: {}", e.toString());
+                        logger.info("Attempt {}/{} failed, sleeping for 30s before proceeding to next page...", attempts, maxAttemptsPerPage);
+                        Thread.sleep(30000);
+
+                    } else {
+                        logger.error("Error: {}", e.toString());
+                        logger.info("Attempt {}/{} failed, sleeping for 30s before retrying query...", attempts, maxAttemptsPerPage);
+                        Thread.sleep(30000);
+                    }
+                } catch (InterruptedException ignored) {}
             }
-
-            bufferedReader = new BufferedReader(new InputStreamReader(httpURLConnection.getInputStream()));
-            String inputLine;
-            while ((inputLine = bufferedReader.readLine()) != null) {
-                response.append(inputLine).append("\n");
-            }
-            bufferedReader.close();
-
-        } catch(InterruptedIOException e) {
-            throw new IOException(e); // Rethrow as IOException
-        } catch (IOException e) {
-            logger.error(e.toString());
         }
 
-        return response.toString();
+        throw new IOException();
     }
 }
+

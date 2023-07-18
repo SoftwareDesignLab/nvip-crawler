@@ -29,10 +29,12 @@ import org.apache.logging.log4j.Logger;
 import java.util.Map;
 
 /**
- * Environment Variable Initialization class for Product Name Extractor
+ * Environment Variable Initialization class for Product Name Extractor.
+ * Provides static access to all environment variables throughout the program.
  *
  * @author Paul Vickers
  */
+
 public class ProductNameExtractorEnvVars {
     private static final Logger logger = LogManager.getLogger(ProductNameExtractorEnvVars.class);
 
@@ -40,13 +42,16 @@ public class ProductNameExtractorEnvVars {
 
     private static int rabbitPollInterval = 10;
     private static int numThreads = 12;
-    private static int maxAttemptsPerPage = 2;
-    private static boolean prettyPrint = false;
-    private static boolean testMode = false;
-    private static String productDictName = "product_dict.json";
     private static String resourceDir = "productnameextractor/nvip_data";
     private static String dataDir = "data";
     private static String nlpDir = "nlp";
+
+    // Default values for Product Dictionary environment variables
+
+    private static int maxAttemptsPerPage = 5;
+    private static boolean prettyPrint = false;
+    private static boolean testMode = false;
+    private static String productDictName = "product_dict.json";
 
     // Default values for database environment variables
 

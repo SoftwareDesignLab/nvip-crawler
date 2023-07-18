@@ -91,6 +91,7 @@ public class ProductNameExtractorMain {
      * @param vulnList List of vulnerabilities to be processed
      */
     protected static void initializeProductIdentifier(List<CompositeVulnerability> vulnList){
+
         // If null, AffectedProductIdentifier needs to be initialized with AI models & product dictionary
         if(affectedProductIdentifier == null){
             productDict = ProductDictionary.getProductDict();
