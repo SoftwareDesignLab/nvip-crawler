@@ -54,22 +54,32 @@ public class ChatGPTProcessor {
         messages.add(new ChatMessage(USER_ROLE, description));
         return messages;
     }
-    private String askChatGPT(Set<CWE.CWETree> candidates, CompositeVulnerability vuln){
+    private String askChatGPT(Set<CWETree> candidates, CompositeVulnerability vuln){
         StringBuilder cwes = new StringBuilder();
-        for (CWE.CWETree tree : candidates) {
+        int count = 1;
+        StringBuilder out = new StringBuilder();
+        for (CWETree tree : candidates) {
             cwes.append(tree.getRoot().getId()).append(": ").append(tree.getRoot().getName()).append(", ");
+            if(count % 10 == 0){
+                String chatMessage = cwes + " CVE Description: " + vuln.getDescription();
+                out.append(callModel(chatMessage));
+                cwes = new StringBuilder();
+            }
+            count++;
         }
-        String chatMessage = "CWEs: \n" + cwes + "\n CVE Description: \n" + vuln.getDescription();
-        return callModel(chatMessage);
+        String chatMessage = cwes + " CVE Description: " + vuln.getDescription();
+        String finalRun = callModel(chatMessage);
+        out.append(finalRun);
+        return out.toString();
     }
-    private Set<CWE.CWETree> parseResponse(Set<CWE.CWETree> candidates, String response){
-        Set<CWE.CWETree> list = new HashSet<>();
+    private Set<CWETree> parseResponse(Set<CWETree> candidates, String response){
+        Set<CWETree> list = new HashSet<>();
         if (response.equals("NONE")){
             return list;
         }
-        String[] cweIds = response.split(",");
+        String[] cweIds = response.split(", ");
         for (String id : cweIds){
-            for(CWE.CWETree cweTree : candidates){ //what goes here
+            for(CWETree cweTree : candidates){ //what goes here
                 if (cweTree.getRoot().getId() == Integer.parseInt(id)){
                     list.add(cweTree);
                 }
@@ -77,14 +87,14 @@ public class ChatGPTProcessor {
         }
         return list;
     }
-    private Set<CWE.CWETree> whichMatchHelper(Set<CWE.CWETree> candidates, CompositeVulnerability vuln) {
+    private Set<CWETree> whichMatchHelper(Set<CWETree> candidates, CompositeVulnerability vuln) {
         if (candidates.isEmpty()) {
             return new HashSet<>();
         }
         String response = askChatGPT(candidates, vuln);
-        Set<CWE.CWETree> matches = parseResponse(candidates, response);
-        Set<CWE.CWETree> out = new HashSet<>();
-        for (CWE.CWETree match : matches) {
+        Set<CWETree> matches = parseResponse(candidates, response);
+        Set<CWETree> out = new HashSet<>();
+        for (CWETree match : matches) {
             out.addAll(whichMatchHelper(match.getSubtrees(), vuln));
         }
         return out;
@@ -98,7 +108,7 @@ public class ChatGPTProcessor {
         }
         Set<CWETree> trees = whichMatchHelper(forest.getTrees(), vuln);
         Set<CWE> out = new HashSet<>();
-        for (CWE.CWETree tree : trees) {
+        for (CWETree tree : trees) {
             out.add(tree.getRoot());
         }
         return out;
