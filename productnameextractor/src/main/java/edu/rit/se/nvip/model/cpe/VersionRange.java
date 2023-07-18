@@ -1,4 +1,5 @@
 package edu.rit.se.nvip.model.cpe;
+
 /**
  * Copyright 2023 Rochester Institute of Technology (RIT). Developed with
  * government support under contract 70RSAT19CB0000020 awarded by the United
@@ -26,23 +27,43 @@ package edu.rit.se.nvip.model.cpe;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+/**
+ * Class to represent a Version Range which can be used to check whether a standalone version falls within the range.
+ *
+ * Supports version ranges BEFORE, THROUGH, AFTER, and EXACT.
+ * Example - Version Range 'BEFORE 3.3' will mark version 2.1.4 as within the range.
+ *
+ * @author Paul Vickers
+ * @author Dylan Mulligan
+ *
+ */
 public class VersionRange {
     private final ProductVersion version1;
     private final ProductVersion version2;
     private final RangeType type;
     private final static Logger logger = LogManager.getLogger(VersionRange.class);
 
+    // Enumeration types for version ranges
     public enum RangeType {
         BEFORE,
         THROUGH,
         AFTER,
         EXACT;
 
+        // Turn string such as "after" into AFTER enum
         public static RangeType fromString(String rangeTypeString) {
             return RangeType.valueOf(rangeTypeString.toUpperCase().trim());
         }
     }
 
+    /**
+     * Default constructor for Version Range. Takes in a version range string such as "3.6 through 4.2"
+     * and processes that into a correct version range object.
+     * Supports 3 cases - BEFORE/AFTER, THROUGH, and EXACT depending on number of words in string parameter.
+     *
+     * @param versionRangeString version range string to be processed into a VersionRange object
+     * @throws IllegalArgumentException for incorrectly formatted strings
+     */
     public VersionRange(String versionRangeString) throws IllegalArgumentException {
         // Extract data from params
         final String[] versionData = versionRangeString.split(" ");
@@ -83,26 +104,27 @@ public class VersionRange {
         }
     }
 
-    public RangeType getType() {
-        return type;
-    }
-    public ProductVersion getVersion1() {
-        return this.version1;
-    }
-    public ProductVersion getVersion2() {
-        return this.version2;
-    }
+    public RangeType getType() { return type; }
+    public ProductVersion getVersion1() { return this.version1; }
+    public ProductVersion getVersion2() { return this.version2; }
 
-    public boolean withinRange(ProductVersion testVersion) {
+    /**
+     * Checks if a standalone version falls within the version range.
+     * For example, version 1.8.3 will fall into version range 1.0 THROUGH 2.0
+     *
+     * @param version ProductVersion object to be tested
+     * @return true if version is within range, false otherwise
+     */
+    public boolean withinRange(ProductVersion version) {
         switch (this.type) {
             case BEFORE:
-                return version1.compareTo(testVersion) >= 0;
+                return version1.compareTo(version) >= 0;
             case THROUGH:
-                return version1.compareTo(testVersion) <= 0 && version2.compareTo(testVersion) >= 0;
+                return version1.compareTo(version) <= 0 && version2.compareTo(version) >= 0;
             case AFTER:
-                return version1.compareTo(testVersion) <= 0;
+                return version1.compareTo(version) <= 0;
             case EXACT:
-                return version1.equals(testVersion);
+                return version1.equals(version);
             default:
                 return false;
         }
