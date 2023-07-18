@@ -69,6 +69,9 @@ public class ProductNameExtractorEnvVars {
     private static String nerModel = "NERallModel.bin";
     private static String nerModelNormalizer = "NERallNorm.bin";
     private static String sentenceModel = "en-sent.bin";
+    private static String rabbitHost = "localhost";
+    private static String rabbitUsername = "guest";
+    private static String rabbitPassword = "guest";
 
     // Automatically load env vars
     static{
@@ -84,44 +87,28 @@ public class ProductNameExtractorEnvVars {
     // Getters
 
     public static int getRabbitPollInterval() { return rabbitPollInterval; }
-
     public static int getNumThreads() { return numThreads; }
-
     public static String getDatabaseType() { return databaseType; }
-
     public static String getHikariUrl() { return hikariUrl; }
-
     public static String getHikariUser() { return hikariUser; }
-
     public static String getHikariPassword() { return hikariPassword; }
-
     public static int getMaxAttemptsPerPage() { return maxAttemptsPerPage; }
-
     public static boolean isPrettyPrint() { return prettyPrint; }
-
     public static boolean isTestMode() { return testMode; }
-
     public static String getProductDictName() { return productDictName; }
-
     public static String getResourceDir() { return resourceDir; }
-
     public static String getDataDir() { return dataDir; }
-
     public static String getNlpDir() { return nlpDir; }
-
     public static String getProductDetectorModel() { return productDetectorModel; }
-
     public static String getChar2VecConfig() { return char2VecConfig; }
-
     public static String getChar2VecWeights() { return char2VecWeights; }
-
     public static String getWord2Vec() { return word2Vec; }
-
     public static String getNerModel() { return nerModel; }
-
     public static String getNerModelNormalizer() { return nerModelNormalizer; }
-
     public static String getSentenceModel() { return sentenceModel; }
+    public static String getRabbitHost() { return rabbitHost; }
+    public static String getRabbitUsername() { return rabbitUsername; }
+    public static String getRabbitPassword() { return rabbitPassword; }
 
     /**
      * Attempts to fetch all required environment variables from System.getenv() safely, logging
@@ -177,6 +164,7 @@ public class ProductNameExtractorEnvVars {
         } else logger.warn("Could not fetch TEST_MODE from env vars, defaulting to {}", testMode);
 
         fetchHikariEnvVars(props);
+        fetchRabbitEnvVars(props);
         fetchModelEnvVars(props);
     }
 
@@ -205,6 +193,28 @@ public class ProductNameExtractorEnvVars {
             hikariPassword = System.getenv("HIKARI_PASSWORD");
             logger.info("Setting HIKARI_PASSWORD to {}", hikariPassword);
         } else logger.warn("Could not fetch HIKARI_PASSWORD from env vars, defaulting to {}", hikariPassword);
+    }
+
+    /**
+     * Initialize RabbitMQ env vars
+     *
+     * @param props map of env vars
+     */
+    private static void fetchRabbitEnvVars(Map<String, String> props) {
+        if(props.containsKey("RABBIT_HOST")) {
+            rabbitHost = System.getenv("RABBIT_HOST");
+            logger.info("Setting RABBIT_HOST to {}", rabbitHost);
+        } else logger.warn("Could not fetch RABBIT_HOST from env vars, defaulting to {}", rabbitHost);
+
+        if(props.containsKey("RABBIT_USERNAME")) {
+            rabbitUsername = System.getenv("RABBIT_USERNAME");
+            logger.info("Setting RABBIT_USERNAME to {}", rabbitUsername);
+        } else logger.warn("Could not fetch RABBIT_USERNAME from env vars, defaulting to {}", rabbitUsername);
+
+        if(props.containsKey("RABBIT_PASSWORD")) {
+            rabbitPassword = System.getenv("RABBIT_PASSWORD");
+            logger.info("Setting RABBIT_PASSWORD to {}", rabbitPassword);
+        } else logger.warn("Could not fetch RABBIT_PASSWORD from env vars, defaulting to {}", rabbitPassword);
     }
 
     /**

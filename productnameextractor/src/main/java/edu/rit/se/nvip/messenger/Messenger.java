@@ -6,6 +6,7 @@ import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.DeliverCallback;
+import edu.rit.se.nvip.ProductNameExtractorEnvVars;
 import edu.rit.se.nvip.db.DatabaseHelper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -25,7 +26,11 @@ public class Messenger {
 
     public Messenger(){
         // Instantiate with default values
-        this("localhost", "guest", "guest");
+        this(
+                ProductNameExtractorEnvVars.getRabbitHost(),
+                ProductNameExtractorEnvVars.getRabbitUsername(),
+                ProductNameExtractorEnvVars.getRabbitPassword()
+        );
     }
 
     /**
@@ -124,12 +129,12 @@ public class Messenger {
         }
     }
 
-    private void sendDummyMessage(List<String> cveIds) {
+    private void sendDummyMessage(String queue, List<String> cveIds) {
         try (Connection connection = factory.newConnection();
              Channel channel = connection.createChannel()) {
-            channel.queueDeclare(INPUT_QUEUE, false, false, false, null);
+            channel.queueDeclare(queue, false, false, false, null);
             String message = genJson(cveIds);
-            channel.basicPublish("", INPUT_QUEUE, null, message.getBytes(StandardCharsets.UTF_8));
+            channel.basicPublish("", queue, null, message.getBytes(StandardCharsets.UTF_8));
         } catch (IOException | TimeoutException e) {}
     }
 
@@ -139,7 +144,7 @@ public class Messenger {
         cveIds.add("CVE-2019-3965");
         cveIds.add("CVE-2019-3966");
 //        cveIds.add("TERMINATE");
-        messenger.sendDummyMessage(cveIds);
+        messenger.sendDummyMessage("CRAWLER_OUT", cveIds);
 
     }
 }
