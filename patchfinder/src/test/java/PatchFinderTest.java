@@ -37,20 +37,6 @@ public class PatchFinderTest {
     }
 
     @Test
-    @Ignore
-    public void testFetchEnvVars() {
-        PatchFinder.fetchEnvVars();
-
-        // Assert that the properties have been set correctly
-        assertEquals(20, PatchFinder.cveLimit);
-        assertEquals(10, PatchFinder.maxThreads);
-        assertEquals(1, PatchFinder.cvesPerThread);
-        assertEquals("patchfinder/src/main/resources/patch-repos", PatchFinder.clonePath);
-        assertEquals("mysql", PatchFinder.databaseType);
-        assertEquals(2000, PatchFinder.cloneCommitThreshold);
-    }
-
-    @Test
     public void testRun() {
         // Create a test input map of affected products
         Map<String, CpeGroup> possiblePatchSources = new HashMap<>();
