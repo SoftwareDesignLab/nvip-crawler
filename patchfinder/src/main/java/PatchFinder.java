@@ -140,11 +140,17 @@ public class PatchFinder {
 		patchURLFinder.parsePatchURLs(possiblePatchURLs, affectedProducts, cveLimit, isStale);
 		urlCount = possiblePatchURLs.values().stream().map(ArrayList::size).reduce(0, Integer::sum);
 
-		logger.info("Successfully parsed {} possible patch urls for {} CVEs in {} seconds",
-				urlCount,
-				possiblePatchURLs.size(),
-				(System.currentTimeMillis() - parseUrlsStart) / 1000
-		);
+		if(urlCount > 0) {
+			logger.info("Successfully parsed {} possible patch urls for {} CVE(s) in {} seconds",
+					urlCount,
+					possiblePatchURLs.size(),
+					(System.currentTimeMillis() - parseUrlsStart) / 1000
+			);
+		} else {
+			logger.warn("No sources found for {} CVE(s)", possiblePatchURLs.size());
+			return;
+		}
+
 
 		// Write found source urls to file
 		writeSourceDict(patchSrcUrlPath, possiblePatchURLs);
@@ -302,7 +308,11 @@ public class PatchFinder {
 	public static void findPatchesMultiThreaded(Map<String, ArrayList<String>> possiblePatchSources) {
 		// Init clone path and clear previously stored repos
 		File dir = new File(clonePath);
-		if(!dir.exists()) logger.warn("Unable to locate clone path for previous run repo deletion");
+		if(!dir.exists()) {
+			logger.warn("Unable to locate clone path '{}' for previous run repo deletion", clonePath);
+			try { dir.createNewFile(); }
+			catch (IOException e) { logger.error("Failed to create missing directory '{}'", clonePath); }
+		}
 		else {
 			logger.info("Clearing any existing repos @ '{}'", clonePath);
 			try { FileUtils.delete(dir, FileUtils.RECURSIVE); }
