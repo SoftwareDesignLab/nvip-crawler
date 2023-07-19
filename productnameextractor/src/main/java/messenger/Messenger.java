@@ -10,6 +10,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import env.ProductNameExtractorEnvVars;
+
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -58,7 +60,7 @@ public class Messenger {
 
                 channel.queueDeclare(INPUT_QUEUE, false, false, false, null);
 
-                BlockingQueue<List<String>> messageQueue = new ArrayBlockingQueue<>(1);
+                BlockingQueue<List<String>> messageQueue = new ArrayBlockingQueue<>(100000);
 
                 DeliverCallback deliverCallback = (consumerTag, delivery) -> {
                     String message = new String(delivery.getBody(), StandardCharsets.UTF_8);
@@ -81,6 +83,9 @@ public class Messenger {
 
                 logger.info("Polling message queue...");
                 cveIds = messageQueue.poll(pollInterval, TimeUnit.SECONDS);
+                while(!messageQueue.isEmpty()) {
+                    cveIds.addAll(messageQueue.poll());
+                }
                 final long elapsedTime = System.currentTimeMillis() - startTime;
 
                 // Status log every 10 minutes
@@ -148,15 +153,39 @@ public class Messenger {
             channel.queueDeclare(queue, false, false, false, null);
             String message = genJson(cveIds);
             channel.basicPublish("", queue, null, message.getBytes(StandardCharsets.UTF_8));
-        } catch (IOException | TimeoutException e) {}
+            logger.info("Successfully sent message:\n\"{}\"", message);
+        } catch (IOException | TimeoutException e) { logger.error("Error sending message: {}", e.toString()); }
+    }
+
+    private static List<String> getIdsFromFile(String filename) {
+        try {
+            // Read in ids
+            final List<String> ids = OM.readerForListOf(String.class).readValue(new File(filename), ArrayList.class);
+            // Remove header element
+            ids.remove(0);
+            // Return ids
+            return ids;
+        }
+        catch (IOException e) { logger.error("Failed to get ids from file '{}'", filename); }
+        return new ArrayList<>();
+    }
+
+    private void sendDummyList(String queue, List<String> messages) {
+        for (String message : messages) {
+            List<String> messageSingle = new ArrayList<>();
+            messageSingle.add(message);
+            this.sendDummyMessage(queue, messageSingle);
+        }
     }
 
     public static void main(String[] args) {
         Messenger messenger = new Messenger();
         List<String> cveIds = new ArrayList<>();
+        cveIds.addAll(getIdsFromFile("cves.csv"));
 //        cveIds.add("CVE-2020-28468");
-        cveIds.add("TERMINATE");
-        messenger.sendDummyMessage(INPUT_QUEUE, cveIds);
+//        cveIds.add("TERMINATE");
+//        messenger.sendDummyMessage("RECONCILER_OUT", cveIds);
+        messenger.sendDummyList("RECONCILER_OUT", cveIds);
 
     }
 }
