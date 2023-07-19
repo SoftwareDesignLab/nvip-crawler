@@ -1,12 +1,15 @@
-import edu.rit.se.nvip.*;
-import edu.rit.se.nvip.model.cpe.ClassifiedWord;
-import edu.rit.se.nvip.model.cpe.CpeGroup;
+package productdetection;
+
+import aimodels.NERmodel;
+import model.cpe.ClassifiedWord;
+import model.cpe.CpeGroup;
+import env.ProductNameExtractorEnvVars;
 import org.junit.Before;
 import org.junit.Test;
+import dictionary.ProductDictionary;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
@@ -15,7 +18,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
- * Class to test ProductDetectorTest
+ * Class to test productdetection.ProductDetectorTest
  *
  * @author Dylan Mulligan
  * @author Paul Vickers
@@ -32,7 +35,7 @@ public class ProductDetectorTest {
 
     @Before
     public void setUp() throws IOException {
-        // Initialize ProductDetector with a mock CpeLookUp object or a real implementation for testing
+        // Initialize productdetection.ProductDetector with a mock productdetection.CpeLookUp object or a real implementation for testing
         CpeLookUp cpeLookUp = new CpeLookUp();
         final Map<String, CpeGroup> productDict = ProductDictionary.readProductDict("src/test/resources/data/test_product_dict.json");
         cpeLookUp.loadProductDict(productDict);

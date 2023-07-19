@@ -1,3 +1,4 @@
+package aimodels;
 /**
  * Copyright 2023 Rochester Institute of Technology (RIT). Developed with
  * government support under contract 70RSAT19CB0000020 awarded by the United
@@ -24,19 +25,17 @@
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Map;
 
-import edu.rit.se.nvip.*;
-import edu.rit.se.nvip.model.cpe.ClassifiedWord;
-import edu.rit.se.nvip.model.cpe.CpeGroup;
-import edu.rit.se.nvip.model.cpe.ProductItem;
-import org.junit.Ignore;
+import model.cpe.ClassifiedWord;
+import model.cpe.ProductItem;
+import env.ProductNameExtractorEnvVars;
 import org.junit.Test;
+import productdetection.ProductDetector;
 
 import static org.junit.Assert.*;
 
 /**
- * Unit tests for the NERmodel and DetectProduct classes
+ * Unit tests for the aimodels.NERmodel and DetectProduct classes
  *
  * @author Igor Khokhlov
  * @author Paul Vickers

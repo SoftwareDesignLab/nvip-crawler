@@ -1,4 +1,4 @@
-/**
+package productdetection; /**
  * Copyright 2023 Rochester Institute of Technology (RIT). Developed with
  * government support under contract 70RSAT19CB0000020 awarded by the United
  * States Department of Homeland Security.
@@ -22,11 +22,10 @@
  * SOFTWARE.
  */
 
-import edu.rit.se.nvip.CpeLookUp;
-import edu.rit.se.nvip.ProductDictionary;
-import edu.rit.se.nvip.model.cpe.CpeGroup;
-import edu.rit.se.nvip.model.cpe.ProductItem;
 import org.junit.Test;
+import model.cpe.CpeGroup;
+import model.cpe.ProductItem;
+import dictionary.ProductDictionary;
 
 import java.io.IOException;
 import java.util.List;
@@ -38,6 +37,8 @@ import static org.junit.Assert.*;
  * Unit tests for the CpeLookUp class
  *
  * @author Igor Khokhlov
+ * @author Richard Sawh
+ * @author Paul Vickers
  *
  */
 

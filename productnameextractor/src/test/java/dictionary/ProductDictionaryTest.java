@@ -1,4 +1,4 @@
-/**
+package dictionary; /**
  * Copyright 2023 Rochester Institute of Technology (RIT). Developed with
  * government support under contract 70RSAT19CB0000020 awarded by the United
  * States Department of Homeland Security.
@@ -22,11 +22,11 @@
  * SOFTWARE.
  */
 
-import edu.rit.se.nvip.ProductDictionary;
-import edu.rit.se.nvip.model.cpe.CpeEntry;
-import edu.rit.se.nvip.model.cpe.CpeGroup;
+import model.cpe.CpeEntry;
+import model.cpe.CpeGroup;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
+import dictionary.ProductDictionary;
 
 import static org.junit.jupiter.api.Assertions.*;
 

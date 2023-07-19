@@ -1,7 +1,5 @@
 package model.cpe;
 
-import edu.rit.se.nvip.model.cpe.ProductVersion;
-import edu.rit.se.nvip.model.cpe.VersionRange;
 import org.junit.Test;
 
 import static org.junit.Assert.*;

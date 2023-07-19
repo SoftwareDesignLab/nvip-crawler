@@ -1,6 +1,5 @@
 package model.cpe;
 
-import edu.rit.se.nvip.model.cpe.Product;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 

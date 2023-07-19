@@ -1,7 +1,5 @@
 package model.cpe;
 
-import edu.rit.se.nvip.model.cpe.CpeEntry;
-import edu.rit.se.nvip.model.cpe.CpeGroup;
 import org.junit.Test;
 import static org.junit.Assert.*;
 

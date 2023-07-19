@@ -1,11 +1,9 @@
-package model.cve;
+package model.cpe;
 
-import edu.rit.se.nvip.model.cpe.AffectedProduct;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 
 public class AffectedProductTest {
 

@@ -1,4 +1,4 @@
-/**
+package productdetection; /**
  * Copyright 2023 Rochester Institute of Technology (RIT). Developed with
  * government support under contract 70RSAT19CB0000020 awarded by the United
  * States Department of Homeland Security.
@@ -22,12 +22,11 @@
  * SOFTWARE.
  */
 
-import edu.rit.se.nvip.AffectedProductIdentifier;
-import edu.rit.se.nvip.ProductDictionary;
-import edu.rit.se.nvip.ProductNameExtractorEnvVars;
-import edu.rit.se.nvip.model.cve.CompositeVulnerability;
-import edu.rit.se.nvip.model.cpe.CpeGroup;
+import env.ProductNameExtractorEnvVars;
+import model.cve.CompositeVulnerability;
+import model.cpe.CpeGroup;
 import org.junit.Test;
+import dictionary.ProductDictionary;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -37,7 +36,7 @@ import java.util.Map;
 import static org.junit.Assert.assertTrue;
 
 /**
- * Test AffectedProductIdentifier
+ * Test affectedproductidentifier.AffectedProductIdentifier
  * @author axoeec
  */
 

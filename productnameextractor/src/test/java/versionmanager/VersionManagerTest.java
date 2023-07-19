@@ -1,11 +1,14 @@
-import edu.rit.se.nvip.VersionManager;
-import edu.rit.se.nvip.model.cpe.ProductVersion;
+package versionmanager;
+
+import model.cpe.ProductVersion;
 
 import org.junit.Test;
+import versionmanager.VersionManager;
+
 import static org.junit.Assert.*;
 
 /**
- * Class to test VersionManager functionality and methods
+ * Class to test versionmanager.VersionManager functionality and methods
  *
  * @author Paul Vickers
  *
