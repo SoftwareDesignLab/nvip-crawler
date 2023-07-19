@@ -28,7 +28,7 @@ import org.junit.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Tests for class env.ProductNameExtractorEnvVars
+ * Tests for class ProductNameExtractorEnvVars
  *
  * @author Paul Vickers
  */
