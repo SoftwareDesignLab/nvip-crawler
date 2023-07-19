@@ -1,0 +1,75 @@
+version: '3.8'
+
+services:
+  crawler:
+    image: ghcr.io/softwaredesignlab/nvip-crawler:latest
+    depends_on:
+      - mysql
+      - taskmanager
+      - email
+    build: ./crawler
+    volumes:
+      - './crawler-output:/usr/local/lib/output'
+      - 'exploit-repo:/usr/local/lib/nvip_data/exploit-repo'
+      - 'mitre-cve:/usr/local/lib/nvip_data/mitre-cve'
+    env_file:
+      - ./nvip-docker.env
+    deploy:
+      resources:
+        limits:
+          memory: 10G
+
+  patchfinder:
+    image: ghcr.io/softwaredesignlab/nvip-patchfinder:latest
+    depends_on:
+      - mysql
+      - taskmanager
+    build: ./patchfinder
+#    volumes:
+#      - ''
+    env_file:
+      - ./nvip-docker.env
+
+  productnameextractor:
+    image: ghcr.io/softwaredesignlab/nvip-productnameextractor:latest
+    depends_on:
+      - mysql
+      - taskmanager
+    build: ./productnameextractor
+#    volumes:
+#      - ''
+    env_file:
+      - ./nvip-docker.env
+
+  reconciler:
+    image: ghcr.io/softwaredesignlab/nvip-reconciler:latest
+    depends_on:
+      - mysql
+      - taskmanager
+    build: ./reconciler
+#    volumes:
+#      - ''
+    env_file:
+      - ./nvip-docker.env
+
+  mysql:
+    image: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: nvip
+
+#  liquibase-migrations:
+#    depends_on: mysql
+
+  taskmanager:
+    image: rabbitmq:3.9-management
+
+  email:
+    image: mailhog/mailhog
+
+volumes:
+  exploit-repo:
+  mitre-cve:
+
+networks:
+  nvip:
