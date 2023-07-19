@@ -33,7 +33,7 @@ public class PatchFinderMain {
             final int affectedProductsCount = affectedProducts.values().stream().map(CpeGroup::getVersionsCount).reduce(0, Integer::sum);
             logger.info("Successfully got {} CVEs mapped to {} affected products from the database", affectedProducts.size(), affectedProductsCount);
             try {
-                PatchFinder.run(affectedProducts, PatchFinder.cveLimit);
+                PatchFinder.run(affectedProducts, PatchFinderEnvVars.getCveLimit());
             } catch (IOException e) {
                 logger.error("A fatal error attempting to complete jobs: {}", e.toString());
             }
@@ -48,7 +48,7 @@ public class PatchFinderMain {
             while(true) {
                 try {
                     // Wait and get jobs
-                    final List<String> jobs = rabbitMQ.waitForProductNameExtractorMessage(15);
+                    final List<String> jobs = rabbitMQ.waitForProductNameExtractorMessage(PatchFinderEnvVars.getRabbitPollInterval());
 
                     // If null is returned, either and error occurred or intentional program quit
                     if(jobs == null) break;

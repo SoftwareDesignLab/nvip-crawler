@@ -188,10 +188,10 @@ public class PatchFinderThread implements Runnable {
 			// Process found repository based on size (commit count on master branch)
 
 			// If commit count is under threshold, scrape commits from url
-			if(commitCount <= PatchFinder.getCloneCommitThreshold())
+			if(commitCount <= PatchFinderEnvVars.getCloneCommitThreshold())
 				findPatchCommitsFromUrl(foundPatchCommits, cve, patchSource, commitCount);
 			// If not over limit, clone repo to parse commits
-			else if(commitCount <= PatchFinder.getCloneCommitLimit())
+			else if(commitCount <= PatchFinderEnvVars.getCloneCommitLimit())
 				findPatchCommitsFromRepo(foundPatchCommits, cve, patchSource);
 			// Otherwise, handle extra large repo
 			else
@@ -199,7 +199,7 @@ public class PatchFinderThread implements Runnable {
 						"REPO SIZE OVER COMMIT_LIMIT, IT WILL NOT BE SCRAPED OR CLONED (" +
 						commitCount +
 						" > " +
-						PatchFinder.getCloneCommitLimit() + ")"
+						PatchFinderEnvVars.getCloneCommitLimit() + ")"
 				);
 
 		} catch (Exception e) {

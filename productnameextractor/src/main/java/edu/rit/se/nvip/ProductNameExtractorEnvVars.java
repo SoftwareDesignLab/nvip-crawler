@@ -71,7 +71,7 @@ public class ProductNameExtractorEnvVars {
 
     // Default values for RabbitMQ environment variables
 
-    private static int rabbitPollInterval = 10;
+    private static int rabbitPollInterval = 60;
     private static String rabbitHost = "localhost";
     private static String rabbitUsername = "guest";
     private static String rabbitPassword = "guest";

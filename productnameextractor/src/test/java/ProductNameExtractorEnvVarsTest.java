@@ -70,7 +70,7 @@ public class ProductNameExtractorEnvVarsTest {
         assertEquals("en-sent.bin", ProductNameExtractorEnvVars.getSentenceModel());
 
         // Default values for RabbitMQ environment variables
-        assertEquals(10, ProductNameExtractorEnvVars.getRabbitPollInterval());
+        assertEquals(60, ProductNameExtractorEnvVars.getRabbitPollInterval());
         assertEquals("localhost", ProductNameExtractorEnvVars.getRabbitHost());
         assertEquals("guest", ProductNameExtractorEnvVars.getRabbitUsername());
         assertEquals("guest", ProductNameExtractorEnvVars.getRabbitPassword());

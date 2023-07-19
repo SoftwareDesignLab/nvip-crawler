@@ -24,13 +24,17 @@
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import java.util.Arrays;
 import java.util.Map;
 
 /**
- * Environment Variable Initialization class for Product Name Extractor.
+ * Environment Variable Initialization class for Patchfinder.
  * Provides static access to all environment variables throughout the program.
  *
  * @author Dylan Mulligan
+ * @author Paul Vickers
+ *
  */
 
 public class PatchFinderEnvVars {
@@ -39,16 +43,12 @@ public class PatchFinderEnvVars {
     // Default values for main environment variables
 
     private static int cveLimit = 20;
+    private static String[] addressBases = {"https://www.github.com/", "https://www.gitlab.com/"};
     private static int maxThreads = 10;
-    private static int cvesPerThread = 1;
-    private static String databaseType = "mysql";
-    private static String hikariUrl = "jdbc:mysql://localhost:3306/nvip?useSSL=false&allowPublicKeyRetrieval=true";
-    private static String hikariUser = "root";
-    private static String hikariPassword = "root";
-    private static int cloneCommitThreshold = 1000; // TODO: Find omptimal value once github scraping is working well
-    private static final int cloneCommitLimit = 50000; // TODO: Find omptimal value once github scraping is working well
+    private static int cloneCommitThreshold = 1000; // TODO: Find optimal value once github scraping is working well
+    private static int cloneCommitLimit = 50000; // TODO: Find optimal value once github scraping is working well
     private static String clonePath = "patchfinder/src/main/resources/patch-repos";
-    private static final String patchSrcUrlPath = "patchfinder/src/main/resources/source_dict.json";
+    private static String patchSrcUrlPath = "patchfinder/src/main/resources/source_dict.json";
 
     // Default values for database environment variables
 
@@ -59,7 +59,7 @@ public class PatchFinderEnvVars {
 
     // Default values for rabbit environment variables
 
-    private static int rabbitPollInterval = 10;
+    private static int rabbitPollInterval = 60;
     private static String rabbitHost = "localhost";
     private static String rabbitUsername = "guest";
     private static String rabbitPassword = "guest";
@@ -77,6 +77,18 @@ public class PatchFinderEnvVars {
 
     // Getters
 
+    public static int getCveLimit() { return cveLimit; }
+    public static String[] getAddressBases() { return addressBases; }
+    public static int getMaxThreads() { return maxThreads; }
+    public static int getCloneCommitThreshold() { return cloneCommitThreshold; }
+    public static int getCloneCommitLimit() { return cloneCommitLimit; }
+    public static String getClonePath() { return clonePath; }
+    public static String getPatchSrcUrlPath() { return patchSrcUrlPath; }
+    public static String getDatabaseType() { return databaseType; }
+    public static String getHikariUrl() { return hikariUrl; }
+    public static String getHikariUser() { return hikariUser; }
+    public static String getHikariPassword() { return hikariPassword; }
+    public static int getRabbitPollInterval() { return rabbitPollInterval; }
     public static String getRabbitHost() { return rabbitHost; }
     public static String getRabbitUsername() { return rabbitUsername; }
     public static String getRabbitPassword() { return rabbitPassword; }
@@ -89,6 +101,40 @@ public class PatchFinderEnvVars {
         // Fetch ENV_VARS and set all found configurable properties
         final Map<String, String> props = System.getenv();
 
+        if(props.containsKey("CVE_LIMIT")) {
+            cveLimit = Integer.parseInt(System.getenv("CVE_LIMIT"));
+            logger.info("Setting CVE_LIMIT to {}", cveLimit);
+        } else logger.warn("Could not fetch CVE_LIMIT from env vars, defaulting to {}", cveLimit);
+
+        if(props.containsKey("ADDRESS_BASES")) {
+            addressBases = System.getenv("ADDRESS_BASES").split(",");
+            logger.info("Setting ADDRESS_BASES to {}", Arrays.toString(addressBases));
+        } else logger.warn("Could not fetch ADDRESS_BASES from env vars, defaulting to {}", Arrays.toString(addressBases));
+
+        if(props.containsKey("MAX_THREADS")) {
+            maxThreads = Integer.parseInt(System.getenv("MAX_THREADS"));
+            logger.info("Setting MAX_THREADS to {}", maxThreads);
+        } else logger.warn("Could not fetch MAX_THREADS from env vars, defaulting to {}", maxThreads);
+
+        if(props.containsKey("CLONE_COMMIT_THRESHOLD")) {
+            cloneCommitThreshold = Integer.parseInt(System.getenv("CLONE_COMMIT_THRESHOLD"));
+            logger.info("Setting CLONE_COMMIT_THRESHOLD to {}", cloneCommitThreshold);
+        } else logger.warn("Could not fetch CLONE_COMMIT_THRESHOLD from env vars, defaulting to {}", cloneCommitThreshold);
+
+        if(props.containsKey("CLONE_COMMIT_LIMIT")) {
+            cloneCommitLimit = Integer.parseInt(System.getenv("CLONE_COMMIT_LIMIT"));
+            logger.info("Setting CLONE_COMMIT_LIMIT to {}", cloneCommitLimit);
+        } else logger.warn("Could not fetch CLONE_COMMIT_LIMIT from env vars, defaulting to {}", cloneCommitLimit);
+
+        if(props.containsKey("CLONE_PATH")) {
+            clonePath = System.getenv("CLONE_PATH");
+            logger.info("Setting CLONE_PATH to {}", clonePath);
+        } else logger.warn("Could not fetch CLONE_PATH from env vars, defaulting to {}", clonePath);
+
+        if(props.containsKey("PATCH_SRC_URL_PATH")) {
+            patchSrcUrlPath = System.getenv("PATCH_SRC_URL_PATH");
+            logger.info("Setting PATCH_SRC_URL_PATH to {}", patchSrcUrlPath);
+        } else logger.warn("Could not fetch PATCH_SRC_URL_PATH from env vars, defaulting to {}", patchSrcUrlPath);
 
         fetchHikariEnvVars(props);
         fetchRabbitEnvVars(props);
@@ -127,6 +173,11 @@ public class PatchFinderEnvVars {
      * @param props map of env vars
      */
     private static void fetchRabbitEnvVars(Map<String, String> props) {
+        if(props.containsKey("RABBIT_POLL_INTERVAL")) {
+            rabbitPollInterval = Integer.parseInt(System.getenv("RABBIT_POLL_INTERVAL"));
+            logger.info("Setting RABBIT_POLL_INTERVAL to {}", rabbitPollInterval);
+        } else logger.warn("Could not fetch RABBIT_POLL_INTERVAL from env vars, defaulting to {}", rabbitPollInterval);
+
         if(props.containsKey("RABBIT_HOST")) {
             rabbitHost = System.getenv("RABBIT_HOST");
             logger.info("Setting RABBIT_HOST to {}", rabbitHost);
@@ -141,9 +192,5 @@ public class PatchFinderEnvVars {
             rabbitPassword = System.getenv("RABBIT_PASSWORD");
             logger.info("Setting RABBIT_PASSWORD to {}", rabbitPassword);
         } else logger.warn("Could not fetch RABBIT_PASSWORD from env vars, defaulting to {}", rabbitPassword);
-        if(props.containsKey("RABBIT_POLL_INTERVAL")) {
-            rabbitPollInterval = Integer.parseInt(System.getenv("RABBIT_POLL_INTERVAL"));
-            logger.info("Setting RABBIT_POLL_INTERVAL to {}", rabbitPollInterval);
-        } else logger.warn("Could not fetch RABBIT_POLL_INTERVAL from env vars, defaulting to {}", rabbitPollInterval);
     }
 }

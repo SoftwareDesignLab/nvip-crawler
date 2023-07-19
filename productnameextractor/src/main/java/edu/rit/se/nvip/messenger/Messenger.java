@@ -77,7 +77,9 @@ public class Messenger {
                 logger.info("Polling message queue...");
                 cveIds = messageQueue.poll(pollInterval, TimeUnit.SECONDS);
                 final long elapsedTime = System.currentTimeMillis() - startTime;
-                if(elapsedTime / 1000 % 60 == 0){
+
+                // Status log every 10 minutes
+                if(elapsedTime / 1000 % 600 == 0){
                     logger.info("Messenger has been waiting for a message for {} minute(s)", elapsedTime / 1000 / 60);
                 }
 

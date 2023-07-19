@@ -53,105 +53,20 @@ import java.util.stream.Collectors;
 public class PatchFinder {
 	private static final Logger logger = LogManager.getLogger(PatchFinder.class.getName());
 
-	private static final ArrayList<PatchCommit> patchCommits = new ArrayList<>();
-	protected static String[] addressBases = { "https://github.com/", "https://www.gitlab.com/" };
-	protected static Instant urlDictLastCompilationDate = Instant.parse("2000-01-01T00:00:00.00Z");
 	private static final ObjectMapper OM = new ObjectMapper();
 	private static DatabaseHelper databaseHelper;
 	private static PatchUrlFinder patchURLFinder;
+
+	private static final ArrayList<PatchCommit> patchCommits = new ArrayList<>();
 	private static Map<String, ArrayList<String>> sourceDict;
+	protected static Instant urlDictLastCompilationDate = Instant.parse("2000-01-01T00:00:00.00Z");
+	protected static final String[] addressBases = PatchFinderEnvVars.getAddressBases();
+	protected static String clonePath = PatchFinderEnvVars.getClonePath();
+	protected static String patchSrcUrlPath = PatchFinderEnvVars.getPatchSrcUrlPath();
+	protected static int cveLimit = PatchFinderEnvVars.getCveLimit();
+	protected static int maxThreads = PatchFinderEnvVars.getMaxThreads();
 
-	public static int getCloneCommitThreshold() { return cloneCommitThreshold; }
-	public static int getCloneCommitLimit() { return cloneCommitLimit; }
 	public static DatabaseHelper getDatabaseHelper() { return databaseHelper; }
-
-	/**
-	 * Attempts to get all required environment variables from System.getenv() safely, logging
-	 * any missing or incorrect variables.
-	 */
-	protected static void fetchEnvVars() {
-		// Fetch ENV_VARS and set all found configurable properties
-		final Map<String, String> props = System.getenv();
-
-		try {
-			if(props.containsKey("CVE_LIMIT")) {
-				cveLimit = Integer.parseInt(System.getenv("CVE_LIMIT"));
-				logger.info("Setting CVE_LIMIT to {}", cveLimit);
-			} else throw new Exception();
-		} catch (Exception ignored) { logger.warn("Could not fetch CVE_LIMIT from env vars, defaulting to {}", cveLimit); }
-
-		try{
-			if(props.containsKey("ADDRESS_BASES")) {
-				addressBases = System.getenv("ADDRESS_BASES").split(",");
-				logger.info("Setting ADDRESS_BASES to {}", Arrays.toString(addressBases));
-			} else throw new Exception();
-		}catch(Exception ignored) {logger.warn("Could not fetch ADDRESS_BASES from env vars, defaulting to {}", Arrays.toString(addressBases)); }
-
-		try {
-			if(props.containsKey("MAX_THREADS")) {
-				maxThreads = Integer.parseInt(System.getenv("MAX_THREADS"));
-				logger.info("Setting MAX_THREADS to {}", maxThreads);
-			} else throw new Exception();
-		}catch (Exception ignored) { logger.warn("Could not fetch MAX_THREADS from env vars, defaulting to {}", maxThreads); }
-
-		try{
-			if(props.containsKey("CVES_PER_THREAD")) {
-				cvesPerThread = Integer.parseInt(System.getenv("CVES_PER_THREAD"));
-				logger.info("Setting CVES_PER_THREAD to {}", cvesPerThread);
-			} else throw new Exception();
-		}catch(Exception ignored) {logger.warn("Could not fetch CVES_PER_THREAD from env vars, defaulting to {}", cvesPerThread); }
-
-		try{
-			if(props.containsKey("CLONE_PATH")) {
-				clonePath = System.getenv("CLONE_PATH");
-				logger.info("Setting CLONE_PATH to {}", clonePath);
-			} else throw new Exception();
-		}catch(Exception ignored) {logger.warn("Could not fetch CLONE_PATH from env vars, defaulting to {}", clonePath); }
-
-		try{
-			if(props.containsKey("DB_TYPE")) {
-				databaseType = System.getenv("DB_TYPE");
-				logger.info("Setting DB_TYPE to {}", databaseType);
-			} else throw new Exception();
-		}catch(Exception ignored) {logger.warn("Could not fetch DB_TYPE from env vars, defaulting to {}", databaseType); }
-
-		try{
-			if(props.containsKey("CLONE_COMMIT_THRESHOLD")) {
-				cloneCommitThreshold = Integer.parseInt(System.getenv("CLONE_COMMIT_THRESHOLD"));
-				logger.info("Setting CLONE_COMMIT_THRESHOLD to {}", cloneCommitThreshold);
-			} else throw new Exception();
-		}catch(Exception ignored) {logger.warn("Could not fetch CLONE_COMMIT_THRESHOLD from env vars, defaulting to {}", cloneCommitThreshold); }
-
-		fetchHikariEnvVars(props);
-	}
-
-	/**
-	 * Attempts to get all required database environment variables from the given properties map safely, logging
-	 * any missing or incorrect variables.
-	 * @param props map of environment variables to be fetched from
-	 */
-	private static void fetchHikariEnvVars(Map<String, String> props) {
-		try {
-			if(props.containsKey("HIKARI_URL")) {
-				hikariUrl = System.getenv("HIKARI_URL");
-				logger.info("Setting HIKARI_URL to {}", hikariUrl);
-			} else throw new Exception();
-		} catch (Exception ignored) { logger.warn("Could not fetch HIKARI_URL from env vars, defaulting to {}", hikariUrl); }
-
-		try {
-			if(props.containsKey("HIKARI_USER")) {
-				hikariUser = System.getenv("HIKARI_USER");
-				logger.info("Setting HIKARI_USER to {}", hikariUser);
-			} else throw new Exception();
-		} catch (Exception ignored) { logger.warn("Could not fetch HIKARI_USER from env vars, defaulting to {}", hikariUser); }
-
-		try {
-			if(props.containsKey("HIKARI_PASSWORD")) {
-				hikariPassword = System.getenv("HIKARI_PASSWORD");
-				logger.info("Setting HIKARI_PASSWORD to {}", hikariPassword);
-			} else throw new Exception();
-		} catch (Exception ignored) { logger.warn("Could not fetch HIKARI_PASSWORD from env vars, defaulting to {}", hikariPassword); }
-	}
 
 	/**
 	 * Initialize the Patchfinder and its subcomponents
@@ -159,14 +74,14 @@ public class PatchFinder {
 	public static void init() {
 		logger.info("Initializing PatchFinder...");
 
-		// Load env vars
-		logger.info("Fetching needed environment variables...");
-		fetchEnvVars();
-		logger.info("Done fetching environment variables");
-
 		// Init db helper
 		logger.info("Initializing DatabaseHelper...");
-		databaseHelper = new DatabaseHelper(databaseType, hikariUrl, hikariUser, hikariPassword);
+		databaseHelper = new DatabaseHelper(
+				PatchFinderEnvVars.getDatabaseType(),
+				PatchFinderEnvVars.getHikariUrl(),
+				PatchFinderEnvVars.getHikariUser(),
+				PatchFinderEnvVars.getHikariPassword()
+		);
 
 		// Init PatchUrlFinder
 		logger.info("Initializing PatchUrlFinder...");
