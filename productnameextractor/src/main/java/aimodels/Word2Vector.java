@@ -30,7 +30,7 @@ import org.deeplearning4j.models.word2vec.Word2Vec;
 import java.io.FileNotFoundException;
 
 /**
- * aimodels.Word2Vector class for words embedding into 1D-vector
+ * Word2Vector class for words embedding into 1D-vector
  * 
  * @author Igor Khokhlov
  *

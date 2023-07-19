@@ -1,4 +1,6 @@
-package productdetection; /**
+package productdetection;
+
+/**
  * Copyright 2023 Rochester Institute of Technology (RIT). Developed with
  * government support under contract 70RSAT19CB0000020 awarded by the United
  * States Department of Homeland Security.
@@ -39,7 +41,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * The affectedproductidentifier.AffectedProductIdentifier class controls the identification of specific
+ * The AffectedProductIdentifier class controls the identification of specific
  * products (via version-specific CPEs) that are affected by known CVEs. The
  * resulting data is inserted into the affectedproducts table.
  *
@@ -57,7 +59,7 @@ public class AffectedProductIdentifier {
 	private final int numThreads;
 
 	/**
-	 * Initialize the affectedproductidentifier.AffectedProductIdentifier with its own internal CpeLookup
+	 * Initialize the AffectedProductIdentifier with its own internal CpeLookup
 	 * instance and a provided list of vulnerabilities to process for product identification
 	 *
 	 * @param vulnList list of vulnerabilities to process for product identification.
@@ -112,7 +114,7 @@ public class AffectedProductIdentifier {
 	 * This method processes a given vulnerability (CVE) and attempts to map it against
 	 * CPEs found in cpeLookUp.
 	 *
-	 * @param productNameDetector productdetection.ProductDetector instance
+	 * @param productNameDetector ProductDetector instance
 	 * @param cpeLookUp CpeLookup instance
 	 * @param vulnerability vulnerability being processed
 	 * @param counterOfBadDescriptionCVEs counter of CVEs with bad descriptions

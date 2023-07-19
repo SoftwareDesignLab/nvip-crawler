@@ -24,7 +24,7 @@
 
 import productdetection.AffectedProductIdentifier;
 import com.opencsv.CSVReader;
-import edu.rit.se.nvip.db.DatabaseHelper;
+import db.DatabaseHelper;
 import env.ProductNameExtractorEnvVars;
 import messenger.Messenger;
 import model.cpe.AffectedProduct;
@@ -79,31 +79,31 @@ public class ProductNameExtractorMain {
     private static final String dataDir = ProductNameExtractorEnvVars.getDataDir();
     private static final String nlpDir = ProductNameExtractorEnvVars.getNlpDir();
 
-    // Variables for affectedproductidentifier.AffectedProductIdentifier
+    // Variables for AffectedProductIdentifier
     private static final int numThreads = ProductNameExtractorEnvVars.getNumThreads();
     private static AffectedProductIdentifier affectedProductIdentifier;
     private static Map<String, CpeGroup> productDict;
 
     /**
-     * Initialize the affectedproductidentifier.AffectedProductIdentifier & related AI models.
+     * Initialize the AffectedProductIdentifier & related AI models.
      * If already loaded in memory, just initializes the new vulnerability list to be processed.
      *
      * @param vulnList List of vulnerabilities to be processed
      */
     protected static void initializeProductIdentifier(List<CompositeVulnerability> vulnList){
 
-        // If null, affectedproductidentifier.AffectedProductIdentifier needs to be initialized with AI models & product dictionary
+        // If null, AffectedProductIdentifier needs to be initialized with AI models & product dictionary
         if(affectedProductIdentifier == null){
-            logger.info("Initializing the affectedproductidentifier.AffectedProductIdentifier...");
+            logger.info("Initializing the AffectedProductIdentifier...");
             affectedProductIdentifier = new AffectedProductIdentifier(numThreads, vulnList);
             affectedProductIdentifier.initializeProductDetector(resourceDir, nlpDir, dataDir);
 
             productDict = ProductDictionary.getProductDict();
             affectedProductIdentifier.loadProductDict(productDict);
 
-        // affectedproductidentifier.AffectedProductIdentifier already initialized, just need to change the vulnerabilities to be processed
+        // AffectedProductIdentifier already initialized, just need to change the vulnerabilities to be processed
         }else{
-            logger.info("affectedproductidentifier.AffectedProductIdentifier already initialized!");
+            logger.info("AffectedProductIdentifier already initialized!");
             affectedProductIdentifier.setVulnList(vulnList);
         }
     }

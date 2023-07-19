@@ -43,7 +43,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * productdetection.ProductDetector class implements Expert System to extract Software Names and
+ * ProductDetector class implements Expert System to extract Software Names and
  * Software Versions from CVE descriptions
  * 
  * @author Igor Khokhlov

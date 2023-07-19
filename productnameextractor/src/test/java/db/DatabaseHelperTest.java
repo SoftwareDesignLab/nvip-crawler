@@ -24,7 +24,6 @@
 package db;
 
 import com.zaxxer.hikari.HikariDataSource;
-import edu.rit.se.nvip.db.DatabaseHelper;
 import model.cpe.AffectedProduct;
 import model.cve.CompositeVulnerability;
 import org.junit.Before;

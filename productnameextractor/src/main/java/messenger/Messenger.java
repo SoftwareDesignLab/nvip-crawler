@@ -6,7 +6,6 @@ import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.DeliverCallback;
-import edu.rit.se.nvip.db.DatabaseHelper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -20,7 +19,7 @@ import java.util.concurrent.*;
 public class Messenger {
     private final static String INPUT_QUEUE = "RECONCILER_OUT";
     private final static String OUTPUT_QUEUE = "PNE_OUT";
-    private static final Logger logger = LogManager.getLogger(DatabaseHelper.class.getSimpleName());
+    private static final Logger logger = LogManager.getLogger(Messenger.class.getSimpleName());
     private static final ObjectMapper OM = new ObjectMapper();
     private final ConnectionFactory factory;
 
@@ -64,14 +63,11 @@ public class Messenger {
                 DeliverCallback deliverCallback = (consumerTag, delivery) -> {
                     String message = new String(delivery.getBody(), StandardCharsets.UTF_8);
 
-                    if(message.equals("FINISHED")) {
-                        // TODO: Call unload
-                    } else {
-                        List<String> parsedIds = parseIds(message);
-                        if(parsedIds.size() > 0 && !messageQueue.offer(parsedIds)) logger.error("Job response could not be added to message queue");
-                    }
+                    List<String> parsedIds = parseIds(message);
+                    if(parsedIds.size() > 0 && !messageQueue.offer(parsedIds)) logger.error("Job response could not be added to message queue");
 
                 };
+
                 channel.basicConsume(INPUT_QUEUE, true, deliverCallback, consumerTag -> { });
 
                 logger.info("Polling message queue...");

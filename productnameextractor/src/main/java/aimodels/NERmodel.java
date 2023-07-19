@@ -1,4 +1,6 @@
-package aimodels; /**
+package aimodels;
+
+/**
  * Copyright 2023 Rochester Institute of Technology (RIT). Developed with
  * government support under contract 70RSAT19CB0000020 awarded by the United
  * States Department of Homeland Security.
@@ -63,7 +65,7 @@ public class NERmodel {
 	private final boolean timingOn = false;
 	private MultiLayerNetwork model = null; // NER model
 	private Char2vec c2vModel; // Char2Vector model
-	private Word2Vector w2vModel; // aimodels.Word2Vector model
+	private Word2Vector w2vModel; // Word2Vector model
 	static public final int numLabelClasses = 3; // Number of classes (SN, SV, O)
 	private final int featureLength; // length of the input features vector.
 	private final int wordVecLength; // Expected length of the word2vector model output. Later will be updated from the actual model
@@ -102,7 +104,7 @@ public class NERmodel {
 				logger.info("Timing for NER model loading: " + (endTime - startTime) + "ms.");
 			}
 
-			// Load aimodels.Char2vec model
+			// Load Char2vec model
 			startTime = System.currentTimeMillis();
 			c2vModel = new Char2vec(c2vModelConfigPath, c2vModelWeightsPath);
 			endTime = System.currentTimeMillis();
@@ -112,14 +114,14 @@ public class NERmodel {
 				logger.info("Timing for Char2Vector model initializing: " + (endTime - startTime) + "ms.");
 			}
 
-			// Load aimodels.Word2Vector model
+			// Load Word2Vector model
 			startTime = System.currentTimeMillis();
 			w2vModel = new Word2Vector(w2vModelPath);
 			endTime = System.currentTimeMillis();
 			wordVecLength = w2vModel.getOutVectorLength();
 
 			if (timingOn) {
-				logger.info("Timing for aimodels.Word2Vector model initializing: " + (endTime - startTime) + "ms.");
+				logger.info("Timing for Word2Vector model initializing: " + (endTime - startTime) + "ms.");
 			}
 
 			rand = new Random();
@@ -157,7 +159,7 @@ public class NERmodel {
 				logger.info("Timing for Normalizer model loading: " + Long.toString(endTime - startTime) + "ms.");
 			}
 		} catch (Exception e) {
-			logger.error("ERROR: Error initializing aimodels.NERmodel {}", e.toString());
+			logger.error("ERROR: Error initializing NERmodel {}", e.toString());
 			logger.warn("Please ensure that your working directory is correct. Current working directory: {}", System.getProperty("user.dir"));
 			throw e;
 		}
@@ -308,9 +310,9 @@ public class NERmodel {
 	 * @param charModel model instance
 	 * @param log         length of the word2vector vector
 	 * @param charVecSize    model instance
-	 * @param wordVecSize         length of the aimodels.Char2vec vector
+	 * @param wordVecSize         length of the Char2vec vector
 	 * 
-	 * @return features vector (length = length of the word2vector + length of the aimodels.Char2vec vector)
+	 * @return features vector (length = length of the word2vector + length of the Char2vec vector)
 	 */
 	public static float[] word2vector(String word, Word2Vector wordModel, int wordVecSize, Char2vec charModel, int charVecSize, Logger log) {
 

@@ -1,4 +1,4 @@
-package edu.rit.se.nvip.db;
+package db;
 
 /**
  * Copyright 2023 Rochester Institute of Technology (RIT). Developed with
@@ -62,7 +62,7 @@ public class DatabaseHelper {
 	 * Constructor for DatabaseHelper. Initializes the HikariDataSource connection to the database to be used.
 	 */
 	public DatabaseHelper(String databaseType, String hikariUrl, String hikariUser, String hikariPassword) {
-		logger.info("New NVIP.DatabaseHelper instantiated! It is configured to use " + databaseType + " database!");
+		logger.info("New DatabaseHelper instantiated! It is configured to use " + databaseType + " database!");
 
 		try {
 			if (databaseType.equalsIgnoreCase("mysql"))

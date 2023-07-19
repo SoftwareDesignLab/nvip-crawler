@@ -1,4 +1,6 @@
-package aimodels; /**
+package aimodels;
+
+/**
  * Copyright 2023 Rochester Institute of Technology (RIT). Developed with
  * government support under contract 70RSAT19CB0000020 awarded by the United
  * States Department of Homeland Security.
@@ -30,14 +32,13 @@ import org.deeplearning4j.nn.modelimport.keras.exceptions.InvalidKerasConfigurat
 import org.deeplearning4j.nn.modelimport.keras.exceptions.UnsupportedKerasConfigurationException;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
-import productdetection.ProductDetector;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.stream.Collectors;
 
 /**
- * aimodels.Char2vec class for words embedding into 1D-vector on a character level
+ * Char2vec class for words embedding into 1D-vector on a character level
  * Uses a Keras model taken from https://hackernoon.com/chars2vec-character-based-language-model-for-handling-real-world-texts-with-spelling-errors-and-a3e4053a147d
  *
  * @author Igor Khokhlov
