@@ -211,8 +211,16 @@ public class PatchFinder {
 		// Filter any sources that are not a current job
 		final Set<String> cachedCVEs = possiblePatchURLs.keySet();
 		final Set<String> newCVEs = affectedProducts.keySet();
+		List<String> keysToRemove = new ArrayList<>();
 		for (String key : cachedCVEs) {
-			if(!newCVEs.contains(key)) possiblePatchURLs.remove(key);
+			if (!newCVEs.contains(key)) {
+				keysToRemove.add(key);
+			}
+		}
+
+		// Remove keys outside the loop
+		for (String keyToRemove : keysToRemove) {
+			possiblePatchURLs.remove(keyToRemove);
 		}
 
 		// Log read in data stats
