@@ -23,9 +23,9 @@ public class ChatGPTProcessor {
     private static final String MODEL = "gpt-3.5-turbo";
     private static final double TEMP = 0.0;
     private static final String SYS_MESSAGE = String.format("You will be presented with several CWEs and their IDs followed by a CVE description." +
-            " Your job is to provide a list, from the cwes given to you, of CWE IDs that you think could be related to the CVE description, you should try to always find at least one " +
-            "unless you are certain it is none of them. " +
-            " if you believe that none of the given CWEs match then simply respond \"NONE\" otherwise send a comma separated list of CWE Ids that match. ");
+            " Your job is to provide a list, from the CWEs given to you, of CWE IDs that you think could be involved with the CVE based on the CVE description," +
+            " if you believe that none of the given CWEs match then simply respond \"NONE\" otherwise send a comma separated list of CWE Ids that match." +
+            " IT MUST BE STRICTLY THE CWE ID NUMBER.");
     private static final String SYS_ROLE = "system";
     private static final String USER_ROLE = "user";
     public ChatGPTProcessor() {
@@ -61,10 +61,9 @@ public class ChatGPTProcessor {
         List<String> out = new ArrayList<>();
         for (CWETree tree : candidates) {
             cwes.append(tree.getRoot().getId()).append(": ").append(tree.getRoot().getName()).append(", ");
-            //logger.info(tree.getRoot().getName());
+            //logger.info(tree.getRoot().getId());
             if(count % 5 == 0){
                 String chatMessage = cwes + " \nCVE Description: \n" + vuln.getDescription();
-                //logger.info(chatMessage);
                 String msg = callModel(chatMessage);
                 out.addAll(getIdsFromResponse(msg));
                 cwes = new StringBuilder();
@@ -80,14 +79,14 @@ public class ChatGPTProcessor {
     }
     private Set<CWETree> parseResponse(Set<CWETree> candidates, List<String> response){
         Set<CWETree> set = new HashSet<>();
-        if (response.equals("NONE")){
+        if (response.equals("NONE") || response.equals("DONE")){
             return set;
         }
-        logger.info(response);
+        //logger.info(response);
         for (String id : response){
             for(CWETree cweTree : candidates){
                 try {
-                    if(id.equals("NONE") || id.equals("")){
+                    if(id.equals("NONE") || id.equals("") || id.equals("DONE")){
                         return set;
                     }
                     if (cweTree.getRoot().getId() == Integer.parseInt(id)) {
@@ -129,10 +128,13 @@ public class ChatGPTProcessor {
         String[] parts = response.split(",");
         List<String> out = new ArrayList<>();
         for (String part : parts) {
-            String trimmedPart = part.trim();
-            if (trimmedPart.equals("") || trimmedPart.equals("NONE")) continue;
-            if (ChatGPTProcessor.isInt(trimmedPart)) {
-                out.add(trimmedPart);
+            String[] finalParts = part.split("CWE-");
+            for (String finalPart : finalParts){
+                String trimmedPart = finalPart.trim();
+                if (trimmedPart.equals("") || trimmedPart.equals("NONE") || trimmedPart.equals("DONE")) continue;
+                if (ChatGPTProcessor.isInt(trimmedPart)) {
+                    out.add(trimmedPart);
+                }
             }
         }
         return out;
