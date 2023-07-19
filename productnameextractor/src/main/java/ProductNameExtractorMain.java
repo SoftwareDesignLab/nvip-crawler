@@ -251,6 +251,7 @@ public class ProductNameExtractorMain {
                     if (cveIds.size() == 1 && cveIds.get(0).equals("TERMINATE")) {
                         logger.info("TERMINATE message received from the Reconciler, shutting down...");
                         databaseHelper.shutdown();
+                        logger.info("Shutdown completed.");
                         System.exit(1);
 
                     // If 'FINISHED' message sent, jobs are done for now, release resources

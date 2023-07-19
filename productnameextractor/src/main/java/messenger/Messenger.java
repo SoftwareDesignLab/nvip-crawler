@@ -63,8 +63,17 @@ public class Messenger {
                 DeliverCallback deliverCallback = (consumerTag, delivery) -> {
                     String message = new String(delivery.getBody(), StandardCharsets.UTF_8);
 
-                    List<String> parsedIds = parseIds(message);
-                    if(parsedIds.size() > 0 && !messageQueue.offer(parsedIds)) logger.error("Job response could not be added to message queue");
+                    // If FINISHED or TERMINATE sent, just offer a 1 element list with the message
+                    if(message.equals("FINISHED") || message.equals("TERMINATE")) {
+                        List<String> noJobs = new ArrayList<>();
+                        noJobs.add(message);
+                        messageQueue.offer(noJobs);
+
+                    // Otherwise jobs were sent, parseIds and then offer the list of jobs
+                    } else {
+                        List<String> parsedIds = parseIds(message);
+                        if(parsedIds.size() > 0 && !messageQueue.offer(parsedIds)) logger.error("Job response could not be added to message queue");
+                    }
 
                 };
 
@@ -145,9 +154,9 @@ public class Messenger {
     public static void main(String[] args) {
         Messenger messenger = new Messenger();
         List<String> cveIds = new ArrayList<>();
-        cveIds.add("CVE-2020-28468");
-//        cveIds.add("TERMINATE");
-        messenger.sendDummyMessage("CRAWLER_OUT", cveIds);
+//        cveIds.add("CVE-2020-28468");
+        cveIds.add("TERMINATE");
+        messenger.sendDummyMessage(INPUT_QUEUE, cveIds);
 
     }
 }
