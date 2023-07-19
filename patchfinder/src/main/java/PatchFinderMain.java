@@ -14,7 +14,7 @@ import org.apache.logging.log4j.Logger;
  * @author Dylan Mulligan
  */
 public class PatchFinderMain {
-    private final static boolean devMode = true;
+    private final static boolean devMode = false;
     private final static Logger logger = LogManager.getLogger(PatchFinderMain.class);
 
     /**
@@ -39,12 +39,12 @@ public class PatchFinderMain {
             }
         } else {
             // Start busy-wait loop
-            logger.info("Starting busy-wait loop for jobs...");
             final Messenger rabbitMQ = new Messenger(
                     PatchFinderEnvVars.getRabbitHost(), // TODO: Create PatchFinderEnvVars class and move all env var code there
                     PatchFinderEnvVars.getRabbitUsername(), // TODO: Add rabbit env vars
                     PatchFinderEnvVars.getRabbitPassword()
             );
+            logger.info("Starting busy-wait loop for jobs...");
             while(true) {
                 try {
                     // Wait and get jobs
