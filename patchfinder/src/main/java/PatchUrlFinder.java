@@ -68,9 +68,10 @@ public class PatchUrlFinder {
 			if(!isStale) {
 				if(possiblePatchUrls.containsKey(cveId)) {
 //					logger.info("Found {} existing & fresh possible sources for CVE {}, skipping url parsing...", possiblePatchUrls.get(cveId).size(), cveId);
-					foundCount += possiblePatchUrls.get(cveId).size();
+					final int urlCount = possiblePatchUrls.get(cveId).size();
+					foundCount += urlCount;
 					cachedUrlCount++;
-					continue;
+					if(urlCount != 0) continue;
 				}
 			} else possiblePatchUrls.remove(cveId); // Remove stale entry
 
