@@ -57,14 +57,17 @@ public class ReconcilerController {
                 throw new RuntimeException(e);
             }
         }
+        logger.info("Finished reconciliation stage - sending message to PNE");
 
         //PNE team changed their mind about streaming jobs as they finish, they now just want one big list
         messenger.sendPNEMessage(reconciledVulns.stream()
                 .filter(v -> v.getReconciliationStatus() == CompositeVulnerability.ReconciliationStatus.NEW || v.getReconciliationStatus() == CompositeVulnerability.ReconciliationStatus.UPDATED)
                 .map(CompositeVulnerability::getCveId).collect(Collectors.toList()));
 
+        logger.info("Starting processing");
         runProcessors(reconciledVulns);
 
+        logger.info("Starting characterization");
         if (ReconcilerEnvVars.getDoCharacterization() > 0) {
             characterizeCVEs(reconciledVulns);
 
