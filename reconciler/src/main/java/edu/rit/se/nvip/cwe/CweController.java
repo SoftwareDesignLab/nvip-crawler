@@ -3,7 +3,6 @@ package edu.rit.se.nvip.cwe;
 import edu.rit.se.nvip.characterizer.CveCharacterizer;
 import edu.rit.se.nvip.model.CompositeVulnerability;
 import edu.rit.se.nvip.model.RawVulnerability;
-import edu.rit.se.nvip.openai.OpenAIRequestHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.w3c.dom.Document;
@@ -25,7 +24,7 @@ public class CweController {
 
     private static final String URL = "https://cwe.mitre.org/data/xml/cwec_latest.xml.zip";
     private static final String PATH = System.getProperty("user.dir") + "\\src\\main\\resources\\cwedata\\cwec_v4.12.xml";
-    private Logger logger = LogManager.getLogger(CveCharacterizer.class.getSimpleName());
+    private static Logger logger = LogManager.getLogger(CveCharacterizer.class.getSimpleName());
 
     public static void main(String[] args) {
         CweController cwe = new CweController();
@@ -42,9 +41,11 @@ public class CweController {
                 new Timestamp(System.currentTimeMillis()),
                 "www.example.com");
         CompositeVulnerability vuln = new CompositeVulnerability(rawVuln);
-        gpt.assignCWEs(vuln);
-        OpenAIRequestHandler.getInstance().shutdown();
-
+        Set<CWE> gptCWEs = gpt.assignCWEs(vuln);
+        logger.info(gptCWEs.size());
+        for(CWE cw : gptCWEs){
+            System.out.println(cw.getId() + ": " + cw.getName());
+        }
     }
 
     public void getCWEsFromWeb() {

@@ -70,7 +70,7 @@ public class ChatGPTProcessor {
             }
             count++;
         }
-        if (cwes.length() != 0){
+        if (cwes.length() > 0){
             String chatMessage = cwes + " CVE Description: " + vuln.getDescription();
             String finalRun = callModel(chatMessage);
             out.addAll(getIdsFromResponse(finalRun));
@@ -79,14 +79,14 @@ public class ChatGPTProcessor {
     }
     private Set<CWETree> parseResponse(Set<CWETree> candidates, List<String> response){
         Set<CWETree> set = new HashSet<>();
-        if (response.equals("NONE") || response.equals("DONE")){
+        if (response.isEmpty()){
             return set;
         }
-        //logger.info(response);
+        logger.info(response);
         for (String id : response){
             for(CWETree cweTree : candidates){
                 try {
-                    if(id.equals("NONE") || id.equals("") || id.equals("DONE")){
+                    if(id.equals("NONE") || id.equals("")){
                         return set;
                     }
                     if (cweTree.getRoot().getId() == Integer.parseInt(id)) {
@@ -118,20 +118,21 @@ public class ChatGPTProcessor {
 
         CWEForest forest = new CWEForest(); // builds the forest
         Set<CWETree> trees = whichMatchHelper(forest.getTrees(), vuln);
+        logger.error(trees.size());
         Set<CWE> out = new HashSet<>();
         for (CWETree tree : trees) {
             out.add(tree.getRoot());
         }
         return out;
     }
-    private List<String> getIdsFromResponse(String response) {
+    private Set<String> getIdsFromResponse(String response) {
         String[] parts = response.split(",");
-        List<String> out = new ArrayList<>();
+        Set<String> out = new HashSet<>();
         for (String part : parts) {
             String[] finalParts = part.split("CWE-");
             for (String finalPart : finalParts){
                 String trimmedPart = finalPart.trim();
-                if (trimmedPart.equals("") || trimmedPart.equals("NONE") || trimmedPart.equals("DONE")) continue;
+                if (trimmedPart.equals("") || trimmedPart.equals("NONE")) continue;
                 if (ChatGPTProcessor.isInt(trimmedPart)) {
                     out.add(trimmedPart);
                 }
