@@ -47,6 +47,9 @@ public class ReconcilerController {
             Future<CompositeVulnerability> future = executor.submit(task);
             futures.add(future);
         }
+
+        executor.shutdown();
+
         for (Future<CompositeVulnerability> futureVuln : futures) {
             try {
                 CompositeVulnerability compVuln = futureVuln.get();
@@ -54,6 +57,7 @@ public class ReconcilerController {
                     reconciledVulns.add(compVuln);
                 }
             } catch (InterruptedException | ExecutionException e) {
+                // TODO: Thrown error does not kill running futures, appears as hang
                 throw new RuntimeException(e);
             }
         }
@@ -79,7 +83,6 @@ public class ReconcilerController {
         // PNE team no longer wants a finish message
         //messenger.sendPNEFinishMessage();
 
-        executor.shutdown();
     }
 
     private class ReconcileTask implements Callable<CompositeVulnerability> {
