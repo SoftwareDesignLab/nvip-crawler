@@ -17,6 +17,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.stream.Collectors;
 
 public class ReconcilerController {
     private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
@@ -57,6 +58,11 @@ public class ReconcilerController {
             }
         }
 
+        //PNE team changed their mind about streaming jobs as they finish, they now just want one big list
+        messenger.sendPNEMessage(reconciledVulns.stream()
+                .filter(v -> v.getReconciliationStatus() == CompositeVulnerability.ReconciliationStatus.NEW || v.getReconciliationStatus() == CompositeVulnerability.ReconciliationStatus.UPDATED)
+                .map(CompositeVulnerability::getCveId).collect(Collectors.toList()));
+
         runProcessors(reconciledVulns);
 
         if (ReconcilerEnvVars.getDoCharacterization() > 0) {
@@ -67,7 +73,8 @@ public class ReconcilerController {
                 dbh.updateVDO(vuln);
             }
         }
-        messenger.sendPNEFinishMessage();
+        // PNE team no longer wants a finish message
+        //messenger.sendPNEFinishMessage();
 
         executor.shutdown();
     }
@@ -145,10 +152,11 @@ public class ReconcilerController {
 
 
         List<String> outList = new ArrayList<>();
-        if (out.getReconciliationStatus() == CompositeVulnerability.ReconciliationStatus.NEW || out.getReconciliationStatus() == CompositeVulnerability.ReconciliationStatus.UPDATED){
-            outList.add(out.getCveId());
-            messenger.sendPNEMessage(outList);
-        }
+        // PNE team no longer wants a message for every job, just one big message when they're all done
+//        if (out.getReconciliationStatus() == CompositeVulnerability.ReconciliationStatus.NEW || out.getReconciliationStatus() == CompositeVulnerability.ReconciliationStatus.UPDATED){
+//            outList.add(out.getCveId());
+//            messenger.sendPNEMessage(outList);
+//        }
 
         return out;
     }
