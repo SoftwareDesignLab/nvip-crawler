@@ -60,7 +60,7 @@ public class Messenger {
 
                 channel.queueDeclare(INPUT_QUEUE, false, false, false, null);
 
-                BlockingQueue<List<String>> messageQueue = new ArrayBlockingQueue<>(100000);
+                BlockingQueue<List<String>> messageQueue = new ArrayBlockingQueue<>(1);
 
                 DeliverCallback deliverCallback = (consumerTag, delivery) -> {
                     String message = new String(delivery.getBody(), StandardCharsets.UTF_8);
@@ -83,9 +83,6 @@ public class Messenger {
 
                 logger.info("Polling message queue...");
                 cveIds = messageQueue.poll(pollInterval, TimeUnit.SECONDS);
-                while(!messageQueue.isEmpty()) {
-                    cveIds.addAll(messageQueue.poll());
-                }
                 final long elapsedTime = System.currentTimeMillis() - startTime;
 
                 // Status log every 10 minutes
@@ -159,12 +156,8 @@ public class Messenger {
 
     private static List<String> getIdsFromFile(String filename) {
         try {
-            // Read in ids
-            final List<String> ids = OM.readerForListOf(String.class).readValue(new File(filename), ArrayList.class);
-            // Remove header element
-            ids.remove(0);
             // Return ids
-            return ids;
+            return OM.readerForListOf(String.class).readValue(new File(filename), ArrayList.class);
         }
         catch (IOException e) { logger.error("Failed to get ids from file '{}'", filename); }
         return new ArrayList<>();
@@ -181,11 +174,11 @@ public class Messenger {
     public static void main(String[] args) {
         Messenger messenger = new Messenger();
         List<String> cveIds = new ArrayList<>();
-        cveIds.addAll(getIdsFromFile("cves.csv"));
+        cveIds.addAll(getIdsFromFile("cves-short5.csv"));
 //        cveIds.add("CVE-2020-28468");
 //        cveIds.add("TERMINATE");
-//        messenger.sendDummyMessage("RECONCILER_OUT", cveIds);
-        messenger.sendDummyList("RECONCILER_OUT", cveIds);
+        messenger.sendDummyMessage("RECONCILER_OUT", cveIds);
+//        messenger.sendDummyList("RECONCILER_OUT", cveIds);
 
     }
 }
