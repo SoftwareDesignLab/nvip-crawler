@@ -298,6 +298,7 @@ public class AffectedProductIdentifier {
 		executor.shutdown();
 
 		final int timeout = 15;
+		final int logFrequency = 60;
 		long secondsWaiting = 0;
 		int numCVEsProcessed = 0;
 		int lastNumCVEs = totalCVEtoProcess;
@@ -306,7 +307,7 @@ public class AffectedProductIdentifier {
 				secondsWaiting += timeout;
 
 				// Every minute, log a progress update
-				if(secondsWaiting % 60 == 0) {
+				if(secondsWaiting % logFrequency == 0) {
 
 					// Determine number of CVEs processed
 					final int currNumCVEs = workQueue.size(); // Current number of remaining CVEs
@@ -316,7 +317,7 @@ public class AffectedProductIdentifier {
 					numCVEsProcessed += deltaNumCVEs;
 
 					// Calculate rate, avg rate, and remaining time
-					final double rate = (double) deltaNumCVEs / 60; // CVEs/sec
+					final double rate = (double) deltaNumCVEs / logFrequency; // CVEs/sec
 					final double avgRate = (double) numCVEsProcessed / secondsWaiting; // CVEs/sec
 					final double remainingAvgTime = currNumCVEs / rate; // CVEs / CVEs/sec = remaining seconds
 
@@ -326,7 +327,7 @@ public class AffectedProductIdentifier {
 							totalCVEtoProcess - currNumCVEs,
 							totalCVEtoProcess,
 							Math.floor(rate * 100) / 100,
-							avgRate,
+							Math.floor(avgRate * 100) / 100,
 							Math.floor(remainingAvgTime / 60 * 100) / 100,
 							Math.floor(remainingAvgTime * 100) / 100
 					);
