@@ -24,7 +24,7 @@ import java.util.concurrent.*;
  */
 public class OpenAIRequestHandler {
     private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
-    private final PriorityBlockingQueue<RequestWrapper> requestQueue = new PriorityBlockingQueue<>();
+    private final PriorityBlockingQueue<RequestWrapper> requestQueue = new PriorityBlockingQueue<>(1000);
     private ExecutorService mainExecutor = Executors.newFixedThreadPool(1);
     private ExecutorService requestExecutor = Executors.newFixedThreadPool(5);
     private static OpenAIRequestHandler handler;
