@@ -41,7 +41,7 @@ public class ProductNameExtractorEnvVars {
     // Default values for main environment variables
 
     private static int numThreads = 12;
-    private static String resourceDir = "productnameextractor/nvip_data";
+    private static String resourceDir = "nvip_data";
     private static String dataDir = "data";
     private static String nlpDir = "nlp";
 
