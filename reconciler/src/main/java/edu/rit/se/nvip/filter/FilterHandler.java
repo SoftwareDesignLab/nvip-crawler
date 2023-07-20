@@ -80,7 +80,7 @@ public class FilterHandler {
         }
         // update filter statuses in each equiv class to match its sample
         for (RawVulnerability sample : samples) {
-            for (RawVulnerability rv : equivClasses.get(sample.getDescription())) {
+            for (RawVulnerability rv : equivClasses.get(sample.getDescription().trim())) {
                 rv.setFilterStatus(sample.getFilterStatus());
             }
         }
