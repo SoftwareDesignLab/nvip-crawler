@@ -152,4 +152,8 @@
         />
     </changeSet>
 
+    <changeSet author="memeee" id="affectedproduct-remove-date">
+        <removeColumn tableName="affectedproduct" columnName="release_date"/>
+    </changeSet>
+
 </databaseChangeLog>
