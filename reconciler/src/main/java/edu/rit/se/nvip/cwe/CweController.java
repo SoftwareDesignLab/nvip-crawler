@@ -3,6 +3,7 @@ package edu.rit.se.nvip.cwe;
 import edu.rit.se.nvip.characterizer.CveCharacterizer;
 import edu.rit.se.nvip.model.CompositeVulnerability;
 import edu.rit.se.nvip.model.RawVulnerability;
+import edu.rit.se.nvip.openai.OpenAIRequestHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.w3c.dom.Document;
@@ -33,18 +34,17 @@ public class CweController {
 
         ChatGPTProcessor gpt = new ChatGPTProcessor();
         RawVulnerability rawVuln = new RawVulnerability(1, "cve-1",
-                "In Jenkins Email Extension Plugin 2.93 and earlier, templates defined inside a folder were not subject to " +
-                        "Script Security protection, allowing attackers able to define email templates in folders to bypass the sandbox " +
-                        "protection and execute arbitrary code in the context of the Jenkins controller JVM.",
+                "Protection Mechanism Failure",
                 new Timestamp(System.currentTimeMillis()),
                 new Timestamp(System.currentTimeMillis()),
                 new Timestamp(System.currentTimeMillis()),
                 "www.example.com");
         CompositeVulnerability vuln = new CompositeVulnerability(rawVuln);
         Set<CWE> gptCWEs = gpt.assignCWEs(vuln);
+        OpenAIRequestHandler.getInstance().shutdown();
         logger.info(gptCWEs.size());
         for(CWE cw : gptCWEs){
-            System.out.println(cw.getId() + ": " + cw.getName());
+            logger.info(cw.getId() + ": " + cw.getName());
         }
     }
 

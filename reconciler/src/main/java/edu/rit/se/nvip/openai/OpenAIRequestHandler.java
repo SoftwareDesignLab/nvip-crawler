@@ -99,7 +99,9 @@ public class OpenAIRequestHandler {
 
     private void sendRequest(RequestWrapper requestWrapper) {
         try {
+            logger.info("sending msg");
             ChatCompletionResult res = service.createChatCompletion(requestWrapper.request);
+            logger.info("sent");
             requestWrapper.futureResult.complete(res);
         } catch (OpenAiHttpException e) {
             Thread.currentThread().interrupt();
