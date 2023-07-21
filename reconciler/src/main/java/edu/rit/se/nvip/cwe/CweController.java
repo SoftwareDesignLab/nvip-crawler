@@ -34,7 +34,7 @@ public class CweController {
 
         ChatGPTProcessor gpt = new ChatGPTProcessor();
         RawVulnerability rawVuln = new RawVulnerability(1, "cve-1",
-                "Protection Mechanism Failure",
+                "There is a vulnerability in wordpad that allows low level access employees to access databases with user personal information",
                 new Timestamp(System.currentTimeMillis()),
                 new Timestamp(System.currentTimeMillis()),
                 new Timestamp(System.currentTimeMillis()),

@@ -22,12 +22,16 @@ public class ChatGPTProcessor {
     private OpenAIRequestHandler requestHandler;
     private static final String MODEL = "gpt-3.5-turbo";
     private static final double TEMP = 0.0;
-    private static final String SYS_MESSAGE = String.format("You will be presented with several CWEs and their IDs followed by a CVE description." +
-            " Your job is to provide a list, from the CWEs given to you, of CWE IDs that you think could be involved with the CVE based on the CVE description," +
-            " if you believe that none of the given CWEs match then simply respond \"NONE\" otherwise send a comma separated list of CWE Ids that match." +
-            " You should NEVER send both an ID number and \"NONE\" it's one or the other and you should NEVER send words other than \"NONE\"");
+    private static final String SYS_MESSAGE = String.format("You will be presented with several CWE IDs, their names, and their descriptions followed by a CVE description." +
+            " Your job is to provide a list, from the CWE IDs given to you, of CWE IDs that you are 100 percent sure could be categorized with the CVE description," +
+            " if you believe that none of the given CWE IDs match based on their name then simply respond \"NONE\" otherwise send ONLY a comma separated list of CWE Ids that match." +
+            " if you ever send a CWE's name you have failed your job.");
     private static final String SYS_ROLE = "system";
     private static final String USER_ROLE = "user";
+    private Set<String> processedIds = new HashSet<>();
+    private Set<CWETree> out = new HashSet<>();
+    private Set<CWETree> matches = new HashSet<>();
+    private Set<Integer> matchedIds = new HashSet<>();
     public ChatGPTProcessor() {
         requestHandler = OpenAIRequestHandler.getInstance();
     }
@@ -60,14 +64,15 @@ public class ChatGPTProcessor {
         int count = 1; //count so we can ensure only 5 vulns get sent at a time (attempts to not overwhelm chatgpt)
         Set<String> out = new HashSet<>(); //the output set
         for (CWETree tree : candidates) {
-            cwes.append(tree.getRoot().getId()).append(": ").append(tree.getRoot().getName()).append(", "); //append this string in the form{ 123: Cwe Name, 456: Cwe Name2, ...}
-            if(count % 5 == 0){ //when 5 vulns are added to the cwe string
+            cwes.append(tree.getRoot().getId()).append(" ").append(tree.getRoot().getName()).append(": ").append(tree.getRoot().getDescription()); //append this string in the form{ 123: Cwe Name, 456: Cwe Name2, ...}
+            if (count % 5 == 0) { //when 5 vulns are added to the cwe string
                 String chatMessage = cwes + " \nCVE Description: \n" + vuln.getDescription(); //create the message to send to chat gpt
                 String msg = callModel(chatMessage); //call chatgpt
                 out.addAll(getIdsFromResponse(msg)); //add a set of ids from chat gpt to the output set
                 cwes = new StringBuilder(); //clear out previous cwes
             }
             count++;
+
         }
         if (cwes.length() > 0){ //case for if there are 4-1 vulns left... AKA cwes.length is only zero if there are no CWEs left
             String chatMessage = cwes + " CVE Description: " + vuln.getDescription(); //create message to send to chat gpt
@@ -78,27 +83,22 @@ public class ChatGPTProcessor {
     }
     private Set<CWETree> parseResponse(Set<CWETree> candidates, Set<String> response){
         Set<CWETree> set = new HashSet<>();
-        logger.info(response);
-        if(response.contains("NONE")){
-            return candidates;
+        if(response.contains("NONE") || response.isEmpty()){
+            return set;
         }
         for (String id : response){ //for each id
-            logger.info(id);
             for(CWETree cweTree : candidates){ //for each candidate id
                 try {
-                    if(id.equals("NONE") || id.equals("")){
-                        continue;
-                    }
+                    if(id.equals("NONE") || id.equals("")) continue;
                     if (cweTree.getRoot().getId() == Integer.parseInt(id)) { //if the root id matches the id present then add the tree to the set of trees
                         set.add(cweTree);
                     }
                 }catch(NumberFormatException e){
-                    logger.error("Wrong format: {}", id); //in case chatgpt sends some weird format but this should never happen
+                    logger.error("Wrong format: {}", id); //in case chatgpt sends some weird format
                     break;
                 }
             }
         }
-
         return set;
     }
     private Set<CWETree> whichMatchHelper(Set<CWETree> candidates, CompositeVulnerability vuln) {
@@ -106,10 +106,27 @@ public class ChatGPTProcessor {
             return new HashSet<>();
         }
         Set<String> response = askChatGPT(candidates, vuln); //ask chatgpt what candidates might be related to the cve
-        Set<CWETree> matches = parseResponse(candidates, response); //parse chatgpt's response
-        Set<CWETree> out = new HashSet<>();
-        for (CWETree match : matches) {
-            out.addAll(whichMatchHelper(match.getSubtrees(), vuln));
+        Set<String> filteredResponse = new HashSet<>();
+        if(!response.isEmpty()) {
+            for (String id : response) {
+                if(id.equals("NONE") || id.equals("")){
+                    break;
+                }
+                if (!processedIds.contains(id)) { //keeps repeats from being sent
+                    processedIds.add(id);
+                    filteredResponse.add(id);
+                }
+            }
+        }
+        matches.addAll(parseResponse(candidates, filteredResponse)); //parse chatgpt's response
+
+        List<CWETree> treesToProcess = new ArrayList<>(matches);
+        for (CWETree match : treesToProcess) {
+            if(!matchedIds.contains(match.getRoot().getId())) {
+                matchedIds.add(match.getRoot().getId());
+                out.add(match);
+                whichMatchHelper(match.getSubtrees(), vuln);
+            }
         }
         return out;
     }
@@ -118,6 +135,7 @@ public class ChatGPTProcessor {
 
         CWEForest forest = new CWEForest(); // builds the forest
         Set<CWETree> trees = whichMatchHelper(forest.getTrees(), vuln); //gets trees related to vuln
+        logger.info("trees size: " + trees.size());
         Set<CWE> out = new HashSet<>();
         for (CWETree tree : trees) {
             out.add(tree.getRoot());
