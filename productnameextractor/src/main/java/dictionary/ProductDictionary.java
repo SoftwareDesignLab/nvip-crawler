@@ -259,7 +259,6 @@ public class ProductDictionary {
         } else if (timeSinceLastRefresh / (60 * 60 * 24) > 0){
             logger.info("Product dictionary file is stale, fetching data from NVD to refresh it...");
             int insertedCounter = 0;
-            int notChangedCounter = 0;
             int updatedCounter = 0;
 
             // Refreshing, pass in true and perform a query pulling only changed entries from the most recent refresh to now
@@ -270,14 +269,12 @@ public class ProductDictionary {
             for (Map.Entry<String, CpeGroup> e : updatedProductDict.entrySet()) {
                 final CpeGroup oldValue = productDict.put(e.getKey(), e.getValue());
                 if(oldValue == null) insertedCounter++;
-                else if(oldValue.equals(e.getValue())) notChangedCounter++;
                 else updatedCounter++;
             }
 
-            logger.info("Successfully refreshed the product dictionary with {} inserted, {} updated, and {} unchanged entries",
+            logger.info("Successfully refreshed the product dictionary with {} inserted and {} updated entries",
                     insertedCounter,
-                    updatedCounter,
-                    notChangedCounter
+                    updatedCounter
             );
 
             writeProductDict(productDict, productDictPath); // Write new product dict
@@ -347,12 +344,10 @@ public class ProductDictionary {
                         // Build key
                         final String key = String.join(":", vendorName, productName);
 
-                        // Add data to cpeMapFile
-                        CpeGroup value;
                         // If key is not found, create new group and entry
                         if(!productDict.containsKey(key)) {
                             // Create group
-                            value = new CpeGroup(vendorName, productName);
+                            CpeGroup value = new CpeGroup(vendorName, productName);
 
                             // Create & add entry to group
                             value.addVersion(new CpeEntry(productName, version, cpeId));
