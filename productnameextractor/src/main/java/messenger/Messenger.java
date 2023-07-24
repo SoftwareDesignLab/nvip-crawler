@@ -46,6 +46,10 @@ import java.util.concurrent.*;
  * Messenger class used to handle RabbitMQ implementation in the Product Name Extractor.
  *
  * Includes functionality to receive jobs from the Reconciler and send jobs to the PatchFinder.
+ *
+ * @author Paul Vickers
+ * @author Dylan Mulligan
+ * @author Steven Shadders
  */
 public class Messenger {
     private final static String INPUT_QUEUE = "RECONCILER_OUT";
