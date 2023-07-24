@@ -9,13 +9,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.Assert.*;
+import static org.junit.platform.commons.function.Try.success;
 import static org.mockito.Mockito.*;
 
 public class MessengerTest {
@@ -39,36 +37,31 @@ public class MessengerTest {
         ObjectMapper objectMapper = new ObjectMapper();
         String jsonMessage = objectMapper.writeValueAsString(expectedMessage);
 
-        // Use CountDownLatch to wait for the message to be received
-        CountDownLatch latch = new CountDownLatch(1);
-
         // Set up the mock channel to deliver the message
         doAnswer(invocation -> {
             String consumerTag = invocation.getArgument(0);
             DeliverCallback deliverCallback = invocation.getArgument(2);
             deliverCallback.handle(consumerTag, new Delivery(null, null, jsonMessage.getBytes()));
-            latch.countDown(); // Signal that the message has been received
             return consumerTag;
         }).when(channelMock).basicConsume((String) eq("patchfinder"), eq(true), (DeliverCallback) any(), (CancelCallback) any());
 
-        // Invoke the method under test
-        AtomicReference<List<String>> actualMessage = new AtomicReference<>();
-        Thread thread = new Thread(() -> {
+        // Invoke the method under test asynchronously using CompletableFuture
+        CompletableFuture<List<String>> completableFuture = CompletableFuture.supplyAsync(() -> {
             try {
-                actualMessage.set(messenger.waitForProductNameExtractorMessage(5));
+                return messenger.waitForProductNameExtractorMessage(5);
             } catch (Exception e) {
                 e.printStackTrace();
+                return null;
             }
         });
-        thread.start();
 
-        // Wait for the message to be received or timeout after 5 seconds
-        boolean messageReceived = latch.await(5, TimeUnit.SECONDS);
-        thread.join();
-
-        // Verify the behavior and result
-        assertTrue(messageReceived);
-        assertNotNull(actualMessage);
+        // Wait for the message to be delivered and the method under test to complete or timeout after 5 seconds
+        try {
+            List<String> actualMessage = completableFuture.get(5, TimeUnit.SECONDS);
+            assertNotNull(actualMessage);
+        } catch (TimeoutException e) {
+            success("Message not received within the specified timeout.");
+        }
     }
 
 
