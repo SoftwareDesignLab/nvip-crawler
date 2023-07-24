@@ -163,22 +163,53 @@ public class Messenger {
         return new ArrayList<>();
     }
 
-    private void sendDummyList(String queue, List<String> messages) {
-        for (String message : messages) {
-            List<String> messageSingle = new ArrayList<>();
-            messageSingle.add(message);
-            this.sendDummyMessage(queue, messageSingle);
+    private void sendDummyBatchedList(String queue, List<String> messages, int batchSize) {
+        // 0 results in no batching
+        if(batchSize == 0) batchSize = messages.size();
+
+        // Get number of batches (including any partial batches)
+        final int numBatches = (int) Math.ceil((double) messages.size() / batchSize);
+
+        // Determine if there is a partial batch
+        final boolean hasPartial = messages.size() % batchSize != 0;
+
+        // Send batches
+        for (int i = 0; i < numBatches; i++) {
+            if(!hasPartial && i + 1 == numBatches) this.sendDummyMessage(queue, messages.subList(i * batchSize, messages.size() - 1));
+            else this.sendDummyMessage(queue, messages.subList(i * batchSize, (i + 1) * batchSize));
         }
     }
 
     public static void main(String[] args) {
         Messenger messenger = new Messenger();
         List<String> cveIds = new ArrayList<>();
-        cveIds.addAll(getIdsFromFile("cves-short5.csv"));
-//        cveIds.add("CVE-2020-28468");
+        cveIds.addAll(getIdsFromFile("cves-demo.csv"));
+        messenger.sendDummyMessage("CRAWLER_OUT", cveIds);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//        cveIds.add("CVE-2008-2951");
+//        cveIds.add("CVE-2014-0472");
 //        cveIds.add("TERMINATE");
-        messenger.sendDummyMessage("RECONCILER_OUT", cveIds);
+//        cveIds.addAll(getIdsFromFile("cves-short.csv"));
 //        messenger.sendDummyList("RECONCILER_OUT", cveIds);
+//        messenger.sendDummyBatchedList("PNE_OUT", cveIds, 100);
 
     }
 }
