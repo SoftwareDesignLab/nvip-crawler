@@ -4,6 +4,7 @@ import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import com.zaxxer.hikari.pool.HikariPool;
 import edu.rit.se.nvip.characterizer.CveCharacterizer;
+import edu.rit.se.nvip.cwe.CWE;
 import edu.rit.se.nvip.model.*;
 import edu.rit.se.nvip.utils.ReconcilerEnvVars;
 import org.apache.logging.log4j.LogManager;
@@ -42,6 +43,7 @@ public class DatabaseHelper {
 
     private static final String INSERT_CVSS = "INSERT INTO cvss (base_score, impact_score, cve_id, create_date) VALUES (?, ?, ?, ?)";
     private static final String INSERT_VDO = "INSERT INTO vdoCharacteristic (vdo_label, vdo_noun_group, vdo_confidence, cve_id, created_date) VALUES (?, ?, ?, ?, ?)";
+    private static final String INSERT_CWE = "INSERT INTO weakness (cve_id, cwe_id) VALUES (?, ?)";
 
 
     private String GET_ALL_NEW_CVES = "SELECT cve_id, published_date, status FROM nvddata order by cve_id desc";
@@ -522,5 +524,24 @@ public class DatabaseHelper {
         pstmt.setString(2, String.valueOf(CveCharacterizer.VDONounGroup.getVdoNounGroup(vdo.getVdoNounGroupId())));
         pstmt.setDouble(3, vdo.getVdoConfidence());
         pstmt.setString(4, vdo.getCveId());
+    }
+    public int insertCWEs(CompositeVulnerability vuln) {
+        try (Connection conn = getConnection();
+             PreparedStatement upsertStatement = conn.prepareStatement(INSERT_CWE)) {
+            for (CWE cwe : vuln.getCWEs()) {
+              populateCWEInsert(upsertStatement, cwe, vuln.getCveId());
+              upsertStatement.addBatch();
+            }
+            upsertStatement.executeBatch();
+            return 1;
+        } catch (SQLException e) {
+            logger.error("ERROR: Failed to insert CWE, {}", e.getMessage());
+        }
+        return 0;
+    }
+    private void populateCWEInsert(PreparedStatement pstmt, CWE cwe, String cve_id) throws SQLException {
+        pstmt.setString(1, cve_id);
+        pstmt.setInt(2, cwe.getId());
+
     }
 }
