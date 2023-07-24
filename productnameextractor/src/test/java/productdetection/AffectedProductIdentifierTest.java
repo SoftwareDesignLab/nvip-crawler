@@ -36,8 +36,10 @@ import java.util.Map;
 import static org.junit.Assert.assertTrue;
 
 /**
- * Test affectedproductidentifier.AffectedProductIdentifier
+ * Unit tests for AffectedProductIdentifier class
+ *
  * @author axoeec
+ * @author Paul Vickers
  */
 
 public class AffectedProductIdentifierTest {

@@ -1,5 +1,29 @@
 package messenger;
 
+/**
+ * Copyright 2023 Rochester Institute of Technology (RIT). Developed with
+ * government support under contract 70RSAT19CB0000020 awarded by the United
+ * States Department of Homeland Security.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.Channel;
@@ -18,6 +42,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
 
+/**
+ * Messenger class used to handle RabbitMQ implementation in the Product Name Extractor.
+ *
+ * Includes functionality to receive jobs from the Reconciler and send jobs to the PatchFinder.
+ */
 public class Messenger {
     private final static String INPUT_QUEUE = "RECONCILER_OUT";
     private final static String OUTPUT_QUEUE = "PNE_OUT";
@@ -47,6 +76,14 @@ public class Messenger {
         factory.setPassword(password);
     }
 
+    /**
+     * Function to wait for jobs from the Reconciler, which upon reception will be passed to main to be processed.
+     * Will continuously poll every pollInterval number of seconds until a message is received. Also handles
+     * 'FINISHED' and 'TERMINATE' cases.
+     *
+     * @param pollInterval number of seconds between each poll to the queue
+     * @return list of jobs or one-element list containing 'FINISHED' or 'TERMINATE'
+     */
     public List<String> waitForReconcilerMessage(int pollInterval) {
         // Initialize job list
         List<String> cveIds = null;
@@ -99,6 +136,11 @@ public class Messenger {
         return cveIds;
     }
 
+    /**
+     * Sends a list of jobs in the form of CVE IDs to be processed by the PatchFinder to the 'PNE_OUT' queue.
+     *
+     * @param cveIds list of jobs to be processed
+     */
     public void sendPatchFinderMessage(List<String> cveIds) {
 
         try (Connection connection = factory.newConnection();
@@ -112,8 +154,11 @@ public class Messenger {
         }
     }
 
+    /**
+     * Sends 'FINISHED' to the PatchFinder to notify it that all jobs have been processed within the PNE
+     * and to not expect to receive any more jobs for the time being.
+     */
     public void sendPatchFinderFinishMessage() {
-
         try (Connection connection = factory.newConnection();
              Channel channel = connection.createChannel()) {
             channel.queueDeclare(OUTPUT_QUEUE, false, false, false, null);
@@ -125,6 +170,12 @@ public class Messenger {
         }
     }
 
+    /**
+     * Takes a JSON string containing all CVE jobs to be processed and splits them into a list
+     *
+     * @param jsonString string containing the CVE IDs
+     * @return list of CVE IDs
+     */
     @SuppressWarnings("unchecked")
     public List<String> parseIds(String jsonString) {
         try {
@@ -135,6 +186,12 @@ public class Messenger {
         }
     }
 
+    /**
+     * Takes in a list of CVE IDs and transforms it into a JSON string to be sent via RabbitMQ.
+     *
+     * @param cveIds list of CVE IDs
+     * @return single JSON string of all CVE IDs
+     */
     private String genJson(List<String> cveIds) {
         try {
             return OM.writeValueAsString(cveIds);

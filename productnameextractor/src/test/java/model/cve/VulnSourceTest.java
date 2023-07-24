@@ -27,6 +27,11 @@ package model.cve;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+/**
+ * Unit tests for VulnSource class
+ *
+ * @author Richard Sawh
+ */
 public class VulnSourceTest {
 
     @Test

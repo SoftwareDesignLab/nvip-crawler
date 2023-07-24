@@ -46,7 +46,7 @@ import java.util.Map;
  * Main class and driver for the NVIP Product Name Extractor.
  *
  * Core functionality is to determine which vulnerabilities will be processed, use the
- * affectedproductidentifier.AffectedProductIdentifier to derive affected products from those vulnerabilities,
+ * AffectedProductIdentifier to derive affected products from those vulnerabilities,
  * and then insert those affected products into the database.
  *
  * By default, the ProductNameExtractor will wait idly for jobs to process from the NVIP Reconciler
@@ -258,6 +258,9 @@ public class ProductNameExtractorMain {
                     } else if (cveIds.size() == 1 && cveIds.get(0).equals("FINISHED")) {
                         logger.info("FINISHED message received from the Reconciler, releasing resources...");
                         releaseResources();
+
+                        // If PNE is finished, notify PatchFinder
+                        rabbitMQ.sendPatchFinderFinishMessage();
 
                     // Otherwise, CVE jobs were received, process them
                     } else {

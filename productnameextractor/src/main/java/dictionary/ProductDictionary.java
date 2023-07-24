@@ -130,6 +130,7 @@ public class ProductDictionary {
         } catch (Exception e) {
             // If error occurs reading current stored dictionary, perform a full query of NVD's CPE Dictionary
             logger.warn("Failed to load product dictionary at filepath '{}' due to error: {}", productDictPath, e);
+            logger.warn("Please ensure your working directory is correct. Current working directory: {}", System.getProperty("user.dir"));
             logger.info("Fully querying NVD data with no page limit...");
 
             // Not refreshing, doing a full pull, pass in false

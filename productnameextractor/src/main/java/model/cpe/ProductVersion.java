@@ -35,6 +35,9 @@ import java.util.HashSet;
 /**
  * Data class to represent a version of a product. This class also contains static functionality
  * to manipulate ProductVersion instances.
+ *
+ * @author Dylan Mulligan
+ * @author Paul Vickers
  */
 public class ProductVersion implements Comparable<ProductVersion> {
     private final int[] versionParts;

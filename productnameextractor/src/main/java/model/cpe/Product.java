@@ -28,6 +28,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
+ * Product class for a product with a CPE
  *
  * @author axoeec
  *
