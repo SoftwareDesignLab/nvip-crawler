@@ -33,7 +33,7 @@ import java.util.ArrayList;
  *
  */
 
-public class ProductItem{
+public class ProductItem {
 
 	private String name;
 	private ArrayList<String> versions = new ArrayList<>();
