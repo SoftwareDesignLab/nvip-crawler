@@ -34,7 +34,9 @@ public class CweController {
 
         ChatGPTProcessor gpt = new ChatGPTProcessor();
         RawVulnerability rawVuln = new RawVulnerability(1, "cve-1",
-                "There is a vulnerability in wordpad that allows low level access employees to access databases with user personal information",
+                "The ntpd_driver component before 1.3.0 and 2.x before 2.2.0 for Robot Operating System (ROS) allows attackers, " +
+                        "who control the source code of a different node in the same ROS application, to change a robot's behavior. " +
+                        "This occurs because a topic name depends on the attacker-controlled time_ref_topic parameter.",
                 new Timestamp(System.currentTimeMillis()),
                 new Timestamp(System.currentTimeMillis()),
                 new Timestamp(System.currentTimeMillis()),
@@ -42,7 +44,6 @@ public class CweController {
         CompositeVulnerability vuln = new CompositeVulnerability(rawVuln);
         Set<CWE> gptCWEs = gpt.assignCWEs(vuln);
         OpenAIRequestHandler.getInstance().shutdown();
-        logger.info(gptCWEs.size());
         for(CWE cw : gptCWEs){
             logger.info(cw.getId() + ": " + cw.getName());
         }

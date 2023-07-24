@@ -22,16 +22,17 @@ public class ChatGPTProcessor {
     private OpenAIRequestHandler requestHandler;
     private static final String MODEL = "gpt-3.5-turbo";
     private static final double TEMP = 0.0;
-    private static final String SYS_MESSAGE = String.format("You will be presented with several CWE IDs, their names, and their descriptions followed by a CVE description." +
-            " Your job is to provide a list, from the CWE IDs given to you, of CWE IDs that you are 100 percent sure could be categorized with the CVE description," +
-            " if you believe that none of the given CWE IDs match based on their name then simply respond \"NONE\" otherwise send ONLY a comma separated list of CWE Ids that match." +
-            " if you ever send a CWE's name you have failed your job.");
+    private static final String SYS_MESSAGE = String.format("You will be presented with several CWE IDs and their corresponding names followed by a CVE description." +
+            " Your job is to provide a list, from the CWE IDs given to you, of CWE IDs that have a direct correlation to the CVE Description, based on the CWE ID's corresponding name" +
+            " if you believe that none of the CWEs have a direct correlation with the provided CVE description respond with \"NONE\" otherwise send " +
+            "ONLY a comma separated list of CWE Ids that match. If you ever send a CWE's name you have failed your job.");
     private static final String SYS_ROLE = "system";
     private static final String USER_ROLE = "user";
     private Set<String> processedIds = new HashSet<>();
     private Set<CWETree> out = new HashSet<>();
     private Set<CWETree> matches = new HashSet<>();
     private Set<Integer> matchedIds = new HashSet<>();
+    private int tokenCount = 0;
     public ChatGPTProcessor() {
         requestHandler = OpenAIRequestHandler.getInstance();
     }
@@ -64,9 +65,10 @@ public class ChatGPTProcessor {
         int count = 1; //count so we can ensure only 5 vulns get sent at a time (attempts to not overwhelm chatgpt)
         Set<String> out = new HashSet<>(); //the output set
         for (CWETree tree : candidates) {
-            cwes.append(tree.getRoot().getId()).append(" ").append(tree.getRoot().getName()).append(": ").append(tree.getRoot().getDescription()); //append this string in the form{ 123: Cwe Name, 456: Cwe Name2, ...}
+            cwes.append(tree.getRoot().getId()).append(": ").append(tree.getRoot().getName()).append("\n"); //append this string in the form{ 123: Cwe Name, 456: Cwe Name2, ...}
             if (count % 5 == 0) { //when 5 vulns are added to the cwe string
                 String chatMessage = cwes + " \nCVE Description: \n" + vuln.getDescription(); //create the message to send to chat gpt
+                logger.info(chatMessage);
                 String msg = callModel(chatMessage); //call chatgpt
                 out.addAll(getIdsFromResponse(msg)); //add a set of ids from chat gpt to the output set
                 cwes = new StringBuilder(); //clear out previous cwes
@@ -76,6 +78,7 @@ public class ChatGPTProcessor {
         }
         if (cwes.length() > 0){ //case for if there are 4-1 vulns left... AKA cwes.length is only zero if there are no CWEs left
             String chatMessage = cwes + " CVE Description: " + vuln.getDescription(); //create message to send to chat gpt
+            logger.info(chatMessage);
             String finalRun = callModel(chatMessage); //send it
             out.addAll(getIdsFromResponse(finalRun)); //add the response to the list of outputs
         }
@@ -165,5 +168,6 @@ public class ChatGPTProcessor {
             return false;
         }
     }
+
 
 }
