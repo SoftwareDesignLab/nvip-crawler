@@ -29,25 +29,25 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Unit tests for the Char2Vec class
+ * Unit tests for the Char2Vector class
  *
  * @author Richard Sawh
  */
-public class Char2vecTest {
-    private Char2vec char2vec;
+public class Char2VectorTest {
+    private Char2Vector char2Vector;
 
     @BeforeEach
     public void setUp() {
         String modelConfigPath = "nvip_data/data/c2v_model_config_50.json";
         String modelWeightsPath = "nvip_data/data/c2v_model_weights_50.h5";
-        char2vec = new Char2vec(modelConfigPath, modelWeightsPath);
+        char2Vector = new Char2Vector(modelConfigPath, modelWeightsPath);
     }
 
     @Test
     public void testGetOutVectorLength() {
         // Test the getOutVectorLength() method
         int expectedLength = 50;
-        int actualLength = char2vec.getOutVectorLength();
+        int actualLength = char2Vector.getOutVectorLength();
         assertEquals(expectedLength, actualLength);
     }
 
@@ -55,12 +55,12 @@ public class Char2vecTest {
     public void testWord2vecWithKnownWord() {
         // Test word2vec method with a known word
         String word = "hello";
-        float[] vector = char2vec.word2vec(word);
+        float[] vector = char2Vector.word2vec(word);
 
         // Verify that the returned vector is not null
         assertNotNull(vector);
         // Verify that the length of the vector matches the expected length
-        int expectedLength = char2vec.getOutVectorLength();
+        int expectedLength = char2Vector.getOutVectorLength();
         assertEquals(expectedLength, vector.length);
     }
 
@@ -68,10 +68,10 @@ public class Char2vecTest {
     public void testWord2vecWithUnknownWord() {
         // Test word2vec method with an unknown word
         String word = "$#@!";
-        float[] vector = char2vec.word2vec(word);
+        float[] vector = char2Vector.word2vec(word);
 
         // Verify that the returned vector is an array of all zeros
         assertNotNull(vector);
-        assertEquals(char2vec.getOutVectorLength(), vector.length);
+        assertEquals(char2Vector.getOutVectorLength(), vector.length);
     }
 }

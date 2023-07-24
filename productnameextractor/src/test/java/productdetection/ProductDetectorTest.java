@@ -24,7 +24,7 @@ package productdetection;
  * SOFTWARE.
  */
 
-import aimodels.NERmodel;
+import aimodels.NERModel;
 import model.cpe.ClassifiedWord;
 import model.cpe.CpeGroup;
 import env.ProductNameExtractorEnvVars;
@@ -71,7 +71,7 @@ public class ProductDetectorTest {
     public void classifyWordsInDescriptionTest() {
         String[] words = {"The", "software", "version", "is", "vulnerable", "before", "2.1.0"};
         float[] confidences = {1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.9f, 0.9f};
-        NERmodel nerModel = mock(NERmodel.class);
+        NERModel nerModel = mock(NERModel.class);
         ArrayList<ClassifiedWord> nerResult = new ArrayList<>();
         ClassifiedWord word1 = new ClassifiedWord("The", confidences);
         ClassifiedWord word2 =new ClassifiedWord("software", confidences);

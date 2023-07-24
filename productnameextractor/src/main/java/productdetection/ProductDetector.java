@@ -24,7 +24,7 @@ package productdetection;
  * SOFTWARE.
  */
 
-import aimodels.NERmodel;
+import aimodels.NERModel;
 import env.ProductNameExtractorEnvVars;
 import model.cpe.ClassifiedWord;
 import model.cpe.ProductItem;
@@ -55,7 +55,7 @@ import java.util.List;
 public class ProductDetector {
 	private static final Logger logger = LogManager.getLogger(ProductDetector.class);
 	public static final String NNP = "NNP";
-	private NERmodel nerModel;
+	private NERModel nerModel;
 	private CpeLookUp cpeDict;
 	private POSTaggerME tagger;
 	private POSModel model;
@@ -69,7 +69,7 @@ public class ProductDetector {
 		try {
 			// Load NER model
 			logger.info("Loading NER model...");
-			nerModel = new NERmodel(resourceDir + "/" + dataDir + "/", nlpDir);
+			nerModel = new NERModel(resourceDir + "/" + dataDir + "/", nlpDir);
 
 			// Load CPE dictionary
 			cpeDict = cpeLookUp;

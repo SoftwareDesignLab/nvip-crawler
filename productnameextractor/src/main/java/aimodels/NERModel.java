@@ -60,11 +60,11 @@ import java.util.Random;
  *
  */
 
-public class NERmodel {
+public class NERModel {
 	private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
 	private final boolean timingOn = false;
 	private MultiLayerNetwork model = null; // NER model
-	private Char2vec c2vModel; // Char2Vector model
+	private Char2Vector c2vModel; // Char2Vector model
 	private Word2Vector w2vModel; // Word2Vector model
 	static public final int numLabelClasses = 3; // Number of classes (SN, SV, O)
 	private final int featureLength; // length of the input features vector.
@@ -79,7 +79,7 @@ public class NERmodel {
 	/**
 	 * Class constructor
 	 */
-	public NERmodel(String modelsDir, String nlpDir) throws FileNotFoundException {
+	public NERModel(String modelsDir, String nlpDir) throws FileNotFoundException {
 		super();
 
 		try {
@@ -104,9 +104,9 @@ public class NERmodel {
 				logger.info("Timing for NER model loading: " + (endTime - startTime) + "ms.");
 			}
 
-			// Load Char2vec model
+			// Load Char2Vector model
 			startTime = System.currentTimeMillis();
-			c2vModel = new Char2vec(c2vModelConfigPath, c2vModelWeightsPath);
+			c2vModel = new Char2Vector(c2vModelConfigPath, c2vModelWeightsPath);
 			endTime = System.currentTimeMillis();
 			charVecLength = c2vModel.getOutVectorLength();
 
@@ -159,7 +159,7 @@ public class NERmodel {
 				logger.info("Timing for Normalizer model loading: " + Long.toString(endTime - startTime) + "ms.");
 			}
 		} catch (Exception e) {
-			logger.error("ERROR: Error initializing NERmodel {}", e.toString());
+			logger.error("ERROR: Error initializing NERModel {}", e.toString());
 			logger.warn("Please ensure that your working directory is correct. Current working directory: {}", System.getProperty("user.dir"));
 			throw e;
 		}
@@ -308,21 +308,21 @@ public class NERmodel {
 	 * 
 	 * @param wordModel      word to be converted
 	 * @param charModel model instance
-	 * @param log         length of the word2vector vector
+	 * @param log         length of the Word2Vector vector
 	 * @param charVecSize    model instance
-	 * @param wordVecSize         length of the Char2vec vector
+	 * @param wordVecSize         length of the Char2Vector vector
 	 * 
-	 * @return features vector (length = length of the word2vector + length of the Char2vec vector)
+	 * @return features vector (length = length of the Word2Vector + length of the Char2Vector vector)
 	 */
-	public static float[] word2vector(String word, Word2Vector wordModel, int wordVecSize, Char2vec charModel, int charVecSize, Logger log) {
+	public static float[] word2vector(String word, Word2Vector wordModel, int wordVecSize, Char2Vector charModel, int charVecSize, Logger log) {
 
 		float[] wordVector = new float[wordVecSize + charVecSize];
 
-		// get word embedding from word2vector model
+		// get word embedding from Word2Vector model
 		double[] wordVector1 = wordModel.word2vector(word);
 		float[] wordVector2 = null;
 
-		// get word embedding from char2vector model (on the character level)
+		// get word embedding from Char2Vector model (on the character level)
 		try {
 			wordVector2 = charModel.word2vec(word);
 		}catch (IllegalArgumentException e){

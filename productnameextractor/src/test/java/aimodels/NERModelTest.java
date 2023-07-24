@@ -36,7 +36,7 @@ import productdetection.ProductDetector;
 import static org.junit.Assert.*;
 
 /**
- * Unit tests for the NERmodel and DetectProduct classes
+ * Unit tests for the NERModel and DetectProduct classes
  *
  * @author Igor Khokhlov
  * @author Paul Vickers
@@ -45,7 +45,7 @@ import static org.junit.Assert.*;
  *
  */
 
-public class NERmodelTest {
+public class NERModelTest {
 
 	// Statically load environment variables
 	static{
@@ -67,7 +67,7 @@ public class NERmodelTest {
 		String c2vModelConfigPath = modelsDir + CHAR_2_VEC_CONFIG;
 		String c2vModelWeightsPath = modelsDir + CHAR_2_VEC_WEIGHTS;
 
-		Char2vec c2vModel = new Char2vec(c2vModelConfigPath, c2vModelWeightsPath);
+		Char2Vector c2vModel = new Char2Vector(c2vModelConfigPath, c2vModelWeightsPath);
 		int charVecLength = c2vModel.getOutVectorLength();
 
 		long startTime = System.currentTimeMillis();
@@ -118,9 +118,9 @@ public class NERmodelTest {
 		String testDescription = "The daemon in rsync 3.1.2 and 3.1.3-development before 2017-12-03 does not check for fnamecmp filenames in the daemon_filter_list data structure (in the recv_files function in receiver.c) and also does not apply the sanitize_paths protection mechanism to pathnames found in \"xname follows\" strings (in the read_ndx_and_attrs function in rsync.c) which allows remote attackers to bypass intended access restrictions.";
 
 		long startTime = System.currentTimeMillis();
-		NERmodel nerModel = null;
+		NERModel nerModel = null;
 		try {
-			nerModel = new NERmodel(RESOURCE_DIR + "/" + DATA_DIR + "/", NLP_DIR);
+			nerModel = new NERModel(RESOURCE_DIR + "/" + DATA_DIR + "/", NLP_DIR);
 		} catch (Exception e) {
 			fail(e.toString());
 		}
@@ -141,9 +141,9 @@ public class NERmodelTest {
 
 		if (notNull) {
 			lengthNotZero = result.size()>0;
-			hasOther = result.get(0)[1].equals(NERmodel.OTHER);
-			hasSN = result.get(3)[1].equals(NERmodel.SN);
-			hasSV = result.get(4)[1].equals(NERmodel.SV);
+			hasOther = result.get(0)[1].equals(NERModel.OTHER);
+			hasSN = result.get(3)[1].equals(NERModel.SN);
+			hasSV = result.get(4)[1].equals(NERModel.SV);
 		}
 
 		assertTrue("Result is not empty ", (notNull && lengthNotZero));
