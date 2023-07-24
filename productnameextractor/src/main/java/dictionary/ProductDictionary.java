@@ -237,8 +237,8 @@ public class ProductDictionary {
      */
     private static void updateProductDict(Map<String, CpeGroup> productDict, long timeSinceLastComp, long timeSinceLastRefresh, String productDictPath) {
         // Check if it has been over a week since a full pull/compilation of the NVD dictionary
-        if(timeSinceLastComp / (60 * 60 * 24) > 7) { // 60sec/min * 60min/hr * 24hrs = 1 day
-            logger.info("Product dictionary file is over a week old, fully querying NVD data with no page limit...");
+        if(timeSinceLastComp / (60 * 60 * 24) > 14) { // 60sec/min * 60min/hr * 24hrs = 1 day
+            logger.info("Product dictionary file is over two weeks old, fully querying NVD data with no page limit...");
 
             // Fully clear product dict and fill it with no page limit query
             int oldSize = productDict.size();
@@ -396,7 +396,11 @@ public class ProductDictionary {
                 }
             }
 
-            logger.info("Loading product list is done!");
+            if(isRefresh){
+                logger.info("In the new data, {} total results were merged into {} CPE groups to be added to the dictionary",
+                        rawData.get("totalResults"), productDict.size());
+            }
+
         } catch (Exception e) {
             logger.error("Error loading CPE dictionary: {}", e.toString());
         }
