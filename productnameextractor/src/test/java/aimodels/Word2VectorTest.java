@@ -31,12 +31,17 @@ import java.io.FileNotFoundException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Unit tests for the Word2Vector class
+ *
+ * @author Richard Sawh
+ */
 public class Word2VectorTest {
     private static Word2Vector word2Vector;
 
     @BeforeAll
     public static void setUp() throws FileNotFoundException {
-        // Initialize the aimodels.Word2Vector instance with the model file path
+        // Initialize the Word2Vector instance with the model file path
         String modelPath = "nvip_data/data/w2v_model_250.bin";
         word2Vector = new Word2Vector(modelPath);
     }

@@ -107,12 +107,10 @@ public class AffectedProduct {
 		return vendor;
 	}
 
-	//Returns pURL. If productName is unknown, sets value to NULL.
 	public String getPURL(){
 		return purl;
 	}
 
-	//Returns swid. If productName is unknown, sets value to NULL.
 	public String getSWID(){
 		return swid;
 	}
@@ -174,7 +172,6 @@ public class AffectedProduct {
 		swidBuilder.append("</SoftwareIdentity>");
 		swid = swidBuilder.toString();
 	}
-
 
 	@Override
 	public boolean equals(Object obj) {

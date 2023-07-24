@@ -1,4 +1,5 @@
 package aimodels;
+
 /**
  * Copyright 2023 Rochester Institute of Technology (RIT). Developed with
  * government support under contract 70RSAT19CB0000020 awarded by the United
@@ -35,10 +36,12 @@ import productdetection.ProductDetector;
 import static org.junit.Assert.*;
 
 /**
- * Unit tests for the aimodels.NERmodel and DetectProduct classes
+ * Unit tests for the NERmodel and DetectProduct classes
  *
  * @author Igor Khokhlov
  * @author Paul Vickers
+ * @author Dylan Mulligan
+ * @author Richard Sawh
  *
  */
 

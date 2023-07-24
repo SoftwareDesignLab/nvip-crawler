@@ -28,6 +28,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Unit tests for the Char2Vec class
+ *
+ * @author Richard Sawh
+ */
 public class Char2vecTest {
     private Char2vec char2vec;
 

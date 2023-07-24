@@ -1,3 +1,5 @@
+package db;
+
 /**
  * Copyright 2023 Rochester Institute of Technology (RIT). Developed with
  * government support under contract 70RSAT19CB0000020 awarded by the United
@@ -21,7 +23,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package db;
 
 import com.zaxxer.hikari.HikariDataSource;
 import model.cpe.AffectedProduct;
@@ -44,10 +45,13 @@ import static org.mockito.Mockito.*;
 
 /**
  * Collection of tests for the DatabaseHelper class. The general approach here it to use mocking/spying in order to
- * sever dependenies on database connections. Generally, SQL arguments are verified, execute commands are verified, and
+ * sever dependencies on database connections. Generally, SQL arguments are verified, execute commands are verified, and
  * return values are verified where applicable.
  *
+ * @author Paul Vickers
+ * @author Richard Sawh
  */
+
 @RunWith(MockitoJUnitRunner.class)
 public class DatabaseHelperTest {
 	protected static String databaseType = "mysql";
