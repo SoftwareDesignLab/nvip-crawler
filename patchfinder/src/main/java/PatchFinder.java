@@ -114,7 +114,7 @@ public class PatchFinder {
 
 		// Filter any sources that are not a current job
 		final Set<String> cachedCVEs = possiblePatchURLs.keySet();
-		final Set<String> newCVEs = affectedProducts.keySet();
+		final Set<String> newCVEs = new HashSet<>(affectedProducts.keySet()); // Prevents concurrent mod exceptions
 		List<String> keysToRemove = new ArrayList<>();
 		for (String key : cachedCVEs) {
 			if (!newCVEs.contains(key)) {
