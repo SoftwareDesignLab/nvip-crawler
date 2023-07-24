@@ -53,6 +53,7 @@ public class DatabaseHelper {
 	private final String insertPatchSourceURLSql = "INSERT INTO patchsourceurl (cve_id, source_url) VALUES (?, ?);";
 	private final String insertPatchCommitSql = "INSERT INTO patchcommit (source_url_id, cve_id, commit_sha, commit_date, commit_message, uni_diff, timeline, timeToPatch, linesChanged) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);";
 	// Regex101: https://regex101.com/r/9uaTQb/1
+	private final String deletePatchCommitSql = "DELETE FROM patchcommit WHERE commit_sha = ?;";
 	public static final Pattern CPE_PATTERN = Pattern.compile("cpe:2\\.3:[aho\\*\\-]:([^:]*):([^:]*):([^:]*):.*");
 
 	/**
@@ -133,6 +134,20 @@ public class DatabaseHelper {
 	public void shutdown() {
 		dataSource.close();
 		config = null;
+	}
+
+	/**
+	 * Deletes a patchcommit from the database given a commit SHA
+	 * @param commitSha the commit SHA to delete
+	 */
+	public void deletePatchCommit(String commitSha) {
+		try (Connection connection = getConnection();
+			 PreparedStatement pstmt = connection.prepareStatement(deletePatchCommitSql)) {
+			pstmt.setString(1, commitSha);
+			pstmt.executeUpdate();
+		} catch (Exception e) {
+			logger.error(e.toString());
+		}
 	}
 
 	/**
