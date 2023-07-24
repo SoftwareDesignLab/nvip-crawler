@@ -24,6 +24,7 @@ package aimodels;
  * SOFTWARE.
  */
 
+import env.ProductNameExtractorEnvVars;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
@@ -36,10 +37,19 @@ import static org.junit.jupiter.api.Assertions.*;
 public class Char2VectorTest {
     private Char2Vector char2Vector;
 
+    static{
+        ProductNameExtractorEnvVars.initializeEnvVars();
+    }
+
+    private static final String RESOURCE_DIR = ProductNameExtractorEnvVars.getResourceDir();
+    private static final String DATA_DIR = ProductNameExtractorEnvVars.getDataDir();
+    private static final String CHAR_2_VEC_CONFIG = ProductNameExtractorEnvVars.getChar2VecConfig();
+    private static final String CHAR_2_VEC_WEIGHTS = ProductNameExtractorEnvVars.getChar2VecWeights();
+
     @BeforeEach
     public void setUp() {
-        String modelConfigPath = "nvip_data/data/c2v_model_config_50.json";
-        String modelWeightsPath = "nvip_data/data/c2v_model_weights_50.h5";
+        String modelConfigPath = RESOURCE_DIR + "/" + DATA_DIR + "/" + CHAR_2_VEC_CONFIG;
+        String modelWeightsPath = RESOURCE_DIR + "/" + DATA_DIR + "/" + CHAR_2_VEC_WEIGHTS;
         char2Vector = new Char2Vector(modelConfigPath, modelWeightsPath);
     }
 

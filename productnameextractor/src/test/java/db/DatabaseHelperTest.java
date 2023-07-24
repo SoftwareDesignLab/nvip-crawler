@@ -25,8 +25,10 @@ package db;
  */
 
 import com.zaxxer.hikari.HikariDataSource;
+import env.ProductNameExtractorEnvVars;
 import model.cpe.AffectedProduct;
 import model.cve.CompositeVulnerability;
+import org.apache.commons.math3.stat.descriptive.summary.Product;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -54,10 +56,15 @@ import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class DatabaseHelperTest {
-	protected static String databaseType = "mysql";
-	protected static String hikariUrl = "jdbc:mysql://localhost:3306/nvip?useSSL=false&allowPublicKeyRetrieval=true";
-	protected static String hikariUser = "root";
-	protected static String hikariPassword = "root";
+
+	static{
+		ProductNameExtractorEnvVars.initializeEnvVars();
+	}
+
+	private static final String databaseType = ProductNameExtractorEnvVars.getDatabaseType();
+	private static final String hikariUrl = ProductNameExtractorEnvVars.getHikariUrl();
+	private static final String hikariUser = ProductNameExtractorEnvVars.getHikariUser();
+	private static final String hikariPassword = ProductNameExtractorEnvVars.getHikariPassword();
 	private DatabaseHelper dbh;
 	@Mock
 	private HikariDataSource hds;
@@ -74,21 +81,6 @@ public class DatabaseHelperTest {
 			when(conn.prepareStatement(any())).thenReturn(pstmt);
 			when(pstmt.executeQuery()).thenReturn(res);
 			when(conn.createStatement()).thenReturn(pstmt);
-		} catch (SQLException ignored) {}
-	}
-
-	/**
-	 * Sets up the "database" results to return n rows
-	 * @param n Number of rows (number of times next() will return true)
-	 */
-	private void setResNextCount(int n) {
-		try {
-			when(res.next()).thenAnswer(new Answer<Boolean>() {
-				private int iterations = n;
-				public Boolean answer(InvocationOnMock invocation) {
-					return iterations-- > 0;
-				}
-			});
 		} catch (SQLException ignored) {}
 	}
 
@@ -120,6 +112,7 @@ public class DatabaseHelperTest {
 	/**
 	 * Tests the insertAffectedProducts method. In this case since there are 5 products,
 	 * there should be 8 psmt.setStrings() so 8x5=40
+	 *
 	 * @throws SQLException
 	 */
 	@Test

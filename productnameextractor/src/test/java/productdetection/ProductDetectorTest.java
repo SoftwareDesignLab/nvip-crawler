@@ -60,7 +60,7 @@ public class ProductDetectorTest {
 
     @Before
     public void setUp() throws IOException {
-        // Initialize productdetection.ProductDetector with a mock productdetection.CpeLookUp object or a real implementation for testing
+        // Initialize ProductDetector with a mock CpeLookUp object or a real implementation for testing
         CpeLookUp cpeLookUp = new CpeLookUp();
         final Map<String, CpeGroup> productDict = ProductDictionary.readProductDict("src/test/resources/data/test_product_dict.json");
         cpeLookUp.loadProductDict(productDict);
