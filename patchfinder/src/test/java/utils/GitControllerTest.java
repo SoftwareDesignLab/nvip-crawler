@@ -10,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 public class GitControllerTest {
-    private static final String LOCAL_PATH = "resources/patch-repos";
+    private static final String LOCAL_PATH = "src/main/resources/patch-repos";
 
     private static final String REMOTE_PATH = "https://github.com/apache/airflow.git";
     private GitController gitController;
