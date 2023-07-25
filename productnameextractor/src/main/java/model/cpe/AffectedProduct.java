@@ -27,6 +27,8 @@ package model.cpe;
 /**
  * 
  * @author axoeec
+ * @author Paul Vickers
+ * @author Richard Sawh
  *
  */
 public class AffectedProduct {
