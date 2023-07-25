@@ -22,6 +22,7 @@ public class ReconcilerMain {
         ReconcilerEnvVars.loadVars();
         switch(ReconcilerEnvVars.getInputMode()){
             case "db":
+                logger.info("Using Database for acquiring jobs");
                 jobs = dbh.getJobs();
                 if (jobs == null){
                     logger.error("No Jobs found in database");
@@ -29,6 +30,7 @@ public class ReconcilerMain {
                 }
                 break;
             case "rabbit":
+                logger.info("Using Rabbit for acquiring jobs");
                 Messenger messenger = new Messenger();
                 List<String> jobsList = messenger.waitForCrawlerMessage(ReconcilerEnvVars.getRabbitTimeout());
                 if (jobsList == null){
@@ -41,5 +43,6 @@ public class ReconcilerMain {
         }
         ReconcilerController rc = new ReconcilerController();
         rc.main(jobs);
+
     }
 }

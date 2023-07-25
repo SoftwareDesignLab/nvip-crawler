@@ -26,6 +26,7 @@ public class ReconcilerController {
     private final FilterHandler filterHandler;
     private final List<Processor> processors = new ArrayList<>();
     private final Messenger messenger = new Messenger();
+    private CveCharacterizer cveCharacterizer;
 
     public ReconcilerController() {
         this.dbh = DatabaseHelper.getInstance();
@@ -40,21 +41,27 @@ public class ReconcilerController {
     public void main(Set<String> jobs) {
         logger.info(jobs.size() + " jobs found for reconciliation");
         Set<CompositeVulnerability> reconciledVulns = new HashSet<>();
-        ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-        List<Future<CompositeVulnerability>> futures = new ArrayList<>();
-        for (String job : jobs) {
-            ReconcileTask task = new ReconcileTask(job);
-            Future<CompositeVulnerability> future = executor.submit(task);
-            futures.add(future);
+
+
+        ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors()); //available threads
+        List<Future<CompositeVulnerability>> futures = new ArrayList<>(); //list of futures of composite vulns (future is just a "soon to be")
+
+        //characterizer initialization
+        CharacterizeTask cTask = new CharacterizeTask();
+        Future<CveCharacterizer> futureCharacterizer = executor.submit(cTask);;//list of futures of characterizers (should just be 1 always)
+        //set up reconcile job tasks
+        for (String job : jobs) { //for each job
+            ReconcileTask task = new ReconcileTask(job); //make a new callable task
+            Future<CompositeVulnerability> future = executor.submit(task); //actually create the thread and does the task
+            futures.add(future); //add that list of future comp vulns to the list
         }
-
         executor.shutdown();
-
-        for (Future<CompositeVulnerability> futureVuln : futures) {
+        //waits for for reconcile jobs
+        for (Future<CompositeVulnerability> futureVuln : futures) { //for each list of futures of comp vulns in the list
             try {
-                CompositeVulnerability compVuln = futureVuln.get();
-                if (compVuln != null){
-                    reconciledVulns.add(compVuln);
+                CompositeVulnerability compVuln = futureVuln.get(); //get the comp vuln (get is a wait for that thread to finish)
+                if (compVuln != null){ //if it's not null
+                    reconciledVulns.add(compVuln); //at it to the reconciledVulns list
                 }
             } catch (InterruptedException | ExecutionException e) {
                 // TODO: Thrown error does not kill running futures, appears as hang
@@ -72,6 +79,13 @@ public class ReconcilerController {
         runProcessors(reconciledVulns);
 
         logger.info("Starting characterization");
+        //wait for characterizer task to complete
+        try {
+            cveCharacterizer = futureCharacterizer.get();
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+        //run characterizer
         if (ReconcilerEnvVars.getDoCharacterization() > 0) {
             characterizeCVEs(reconciledVulns);
 
@@ -96,26 +110,28 @@ public class ReconcilerController {
             return handleReconcilerJob(job);
         }
     }
+    private class CharacterizeTask implements Callable<CveCharacterizer> {
+
+        @Override
+        public CveCharacterizer call() {
+           try {
+                String[] trainingDataInfo = {ReconcilerEnvVars.getTrainingDataDir(), ReconcilerEnvVars.getTrainingData()};
+                logger.info("Setting NVIP_CVE_CHARACTERIZATION_LIMIT to {}", ReconcilerEnvVars.getCharacterizationLimit());
+                return new CveCharacterizer(trainingDataInfo[0], trainingDataInfo[1], "ML", "Vote");
+           } catch (NullPointerException | NumberFormatException e) {
+                logger.warn("Could not fetch NVIP_CVE_CHARACTERIZATION_TRAINING_DATA or NVIP_CVE_CHARACTERIZATION_TRAINING_DATA_DIR from env vars");
+                return null;
+           }
+        }
+    }
 
     private void characterizeCVEs(Set<CompositeVulnerability> crawledVulnerabilityList) {
         // characterize
         logger.info("Characterizing and scoring NEW CVEs...");
 
-        try {
-            String[] trainingDataInfo = {ReconcilerEnvVars.getTrainingDataDir(), ReconcilerEnvVars.getTrainingData()};
-            logger.info("Setting NVIP_CVE_CHARACTERIZATION_LIMIT to {}", ReconcilerEnvVars.getCharacterizationLimit());
+        List<CompositeVulnerability> cveList = new ArrayList<>(crawledVulnerabilityList);
 
-            CveCharacterizer cveCharacterizer = new CveCharacterizer(trainingDataInfo[0], trainingDataInfo[1], ReconcilerEnvVars.getCharacterizationApproach(),
-                    ReconcilerEnvVars.getCharacterizationMethod());
-
-            List<CompositeVulnerability> cveList = new ArrayList<>(crawledVulnerabilityList);
-
-            cveCharacterizer.characterizeCveList(cveList,
-                   ReconcilerEnvVars.getCharacterizationLimit());
-        }
-        catch (NullPointerException | NumberFormatException e) {
-            logger.warn("Could not fetch NVIP_CVE_CHARACTERIZATION_TRAINING_DATA or NVIP_CVE_CHARACTERIZATION_TRAINING_DATA_DIR from env vars");
-        }
+        cveCharacterizer.characterizeCveList(cveList, ReconcilerEnvVars.getCharacterizationLimit());
 
     }
 
