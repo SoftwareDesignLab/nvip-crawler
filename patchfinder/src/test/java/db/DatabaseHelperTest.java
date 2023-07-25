@@ -88,9 +88,12 @@ public class DatabaseHelperTest {
         );
     }
 
+
     @Test
     public void testInsertPatchCommitWithDuplicates() {
-        // Prepare test data
+        // Mock the databaseHelper
+        DatabaseHelper databaseHelper = mock(DatabaseHelper.class);
+
         int sourceId = 1; // Assume a valid source ID
         String patchCommitSha = "abcdef123456";
         String cveId = "CVE-2023-3765";
@@ -101,19 +104,36 @@ public class DatabaseHelperTest {
         String timeToPatch = "2 days";
         int linesChanged = 2;
 
-        // Insert the first patch commit
+        // Stub the getExistingPatchCommitShas() method to return a set containing the first patch commit SHA
+        Set<String> existingCommitShas = new HashSet<>();
+        existingCommitShas.add(patchCommitSha);
+        when(databaseHelper.getExistingPatchCommitShas()).thenReturn(existingCommitShas);
+
+        // Attempt to insert the first patch commit
         databaseHelper.insertPatchCommit(sourceId, cveId, patchCommitSha, commitDate, commitMessage, uniDiff, timeLine, timeToPatch, linesChanged);
 
         // Attempt to insert the same patch commit again
         try {
             databaseHelper.insertPatchCommit(sourceId, cveId, patchCommitSha, commitDate, commitMessage, uniDiff, timeLine, timeToPatch, linesChanged);
-            success("Expected IllegalArgumentException to be thrown due to duplicate patch commit");
         } catch (IllegalArgumentException e) {
             // The exception is expected to be thrown
             // Add assertions or verify the exception message, if needed
             String expectedErrorMessage = "Failed to insert patch commit, as it already exists in the database";
             assertEquals(expectedErrorMessage, e.getMessage());
         }
+
+        // Verify that the insertPatchCommit method was called twice with the correct arguments
+        verify(databaseHelper, times(2)).insertPatchCommit(
+                eq(sourceId),
+                eq(cveId),
+                eq(patchCommitSha),
+                any(Date.class),
+                eq(commitMessage),
+                eq(uniDiff),
+                eq(timeLine),
+                eq(timeToPatch),
+                eq(linesChanged)
+        );
     }
 
 }
