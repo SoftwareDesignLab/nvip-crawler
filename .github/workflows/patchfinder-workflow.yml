@@ -21,6 +21,7 @@ env:
   HIKARI_PASSWORD: 'root'
   OUTPUT_DIR: 'output'
   CLONE_PATH: 'src/main/resources/patch-repos'
+  PATCH_SRC_URL_PATH: 'src/main/resources/source_dict.json'
 
 jobs:
   # Build and Test Patchfinder Component
