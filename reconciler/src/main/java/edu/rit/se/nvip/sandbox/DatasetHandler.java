@@ -2,14 +2,18 @@ package edu.rit.se.nvip.sandbox;
 
 import edu.rit.se.nvip.filter.Filter;
 import edu.rit.se.nvip.filter.FilterFactory;
+import edu.rit.se.nvip.filter.GPTFilter;
 import edu.rit.se.nvip.model.RawVulnerability;
 import edu.rit.se.nvip.model.VulnSetWrapper;
+import edu.rit.se.nvip.openai.OpenAIRequestHandler;
 
 import javax.json.*;
 import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -21,11 +25,9 @@ public class DatasetHandler {
     DatabaseSandbox db;
     public static void main(String[] args) {
         DatasetHandler dh = new DatasetHandler();
-//        dh.jsonToDb();
-//        dh.dbToJson();
-        dh.updateJson("./src/main/java/edu/rit/se/nvip/sandbox/OUTDATEDFORMAT_CrawlerOutputFull_6_22_2023.json");
-//        dh.firstSecondWaveFilterMetrics("./src/main/java/edu/rit/se/nvip/sandbox/GenericParserOutputFull_6_22_2023.json");
-//        dh.analyzeCveForMatt();
+        dh.runGPT("./src/main/java/edu/rit/se/nvip/sandbox/jsons/CrawlerOutputFull_6_22_2023.json", true);
+        OpenAIRequestHandler rh = OpenAIRequestHandler.getInstance();
+        rh.shutdown();
     }
 
     public DatasetHandler() {
@@ -129,6 +131,96 @@ public class DatasetHandler {
         System.out.println("Total: " + jArray.size());
         System.out.println("Rejected Count: " + rejected.size());
         System.out.println("Accepted Count: " + unFiltered.size());
+    }
+
+    public void runGPT(String jsonPath, boolean removeLocalFiltered) {
+        List<Filter> filters = new ArrayList<>();
+        filters.add(FilterFactory.createFilter(FilterFactory.MULTIPLE_CVE_DESCRIPTION));
+        filters.add(FilterFactory.createFilter(FilterFactory.BLANK_DESCRIPTION));
+        filters.add(FilterFactory.createFilter(FilterFactory.INTEGER_DESCRIPTION));
+        filters.add(FilterFactory.createFilter(FilterFactory.DESCRIPTION_SIZE));
+        filters.add(FilterFactory.createFilter(FilterFactory.CVE_MATCHES_DESCRIPTION));
+
+        JsonArray jArray = null;
+        try (FileReader reader = new FileReader(jsonPath)) {
+            JsonReader jReader = Json.createReader(reader);
+            jArray = jReader.readArray();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        Set<RawVulnerability> rawVulns = new HashSet<>();
+        for (int i = 0; i < jArray.size(); i++) {
+            JsonObject jo = jArray.getJsonObject(i);
+            rawVulns.add(new RawVulnerability(
+                    jo.getInt("raw_description_id"),
+                    jo.getString("cve_id"),
+                    jo.getString("raw_description"),
+                    new Timestamp(jo.getJsonNumber("published_date").longValue()),
+                    new Timestamp(jo.getJsonNumber("last_modified_date").longValue()),
+                    new Timestamp(jo.getJsonNumber("created_date").longValue()),
+                    jo.getString("source_url"),
+                    jo.getString("source_type"),
+                    jo.getInt("filter_status")));
+        }
+        System.out.println("Parsed rawvulns: " + rawVulns.size());
+        Set<RawVulnerability> unFiltered = rawVulns;
+        if (removeLocalFiltered) {
+            Set<RawVulnerability> currentRejected;
+            for (Filter filter: filters) {
+                currentRejected = filter.filterAllAndSplit(unFiltered);
+                unFiltered.removeAll(currentRejected);
+            }
+        }
+
+        GPTFilter gptFilter = new GPTFilter();
+
+        int indexMax = 100;
+        Set<RawVulnerability> filterSet = new HashSet<>();
+        for (int i = 0; i < indexMax; i ++) {
+            filterSet.add((RawVulnerability) unFiltered.toArray()[i]);
+        }
+
+        int remoteTotalCount = filterSet.size();
+        Set<RawVulnerability> rejected = new HashSet<>();
+
+        System.out.println("Total for GPT filter: " + remoteTotalCount);
+        rejected.addAll(gptFilter.filterAllAndSplit(filterSet));
+
+        System.out.println("Total: " + remoteTotalCount);
+        System.out.println("Rejected: " + rejected.size());
+        createJsonFromSet(filterSet, false);
+        createJsonFromSet(rejected, true);
+    }
+
+    private void createJsonFromSet(Set<RawVulnerability> rawVulns, boolean isRejected) {
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy_MM_dd HH_mm_ss");
+        LocalDateTime now = LocalDateTime.now();
+        JsonArrayBuilder jsonArrayBuilder = Json.createArrayBuilder();
+        for (RawVulnerability currentVuln: rawVulns) {
+            JsonObjectBuilder vulnBuilder = Json.createObjectBuilder();
+            vulnBuilder.add("raw_description_id", currentVuln.getId());
+            vulnBuilder.add("cve_id", currentVuln.getCveId());
+            vulnBuilder.add("raw_description", currentVuln.getDescription());
+            vulnBuilder.add("filter_status", currentVuln.getFilterStatus().value);
+            jsonArrayBuilder.add(vulnBuilder);
+        }
+
+        JsonArray ja = jsonArrayBuilder.build();
+
+        String jsonPath = "./src/main/java/edu/rit/se/nvip/sandbox/jsons/GPTFilteredVulns";
+        if (isRejected) {
+            jsonPath += "Failed";
+        } else {
+            jsonPath += "Passed";
+        }
+        jsonPath += "_" + dtf.format(now) + ".json";
+
+        try (FileWriter writer = new FileWriter(jsonPath)) {
+            writer.write(ja.toString());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
 
     public void updateJson(String jsonPath) {
