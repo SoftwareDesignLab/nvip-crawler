@@ -25,12 +25,15 @@ package edu.rit.se.nvip.db;
 
 import com.zaxxer.hikari.HikariDataSource;
 import edu.rit.se.nvip.DatabaseHelper;
-import edu.rit.se.nvip.model.CompositeVulnerability;
-import edu.rit.se.nvip.model.NvdVulnerability;
-import edu.rit.se.nvip.model.RawVulnerability;
+import edu.rit.se.nvip.characterizer.CveCharacterizer;
+import edu.rit.se.nvip.cwe.CWE;
+import edu.rit.se.nvip.model.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.*;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.MockedConstruction;
@@ -329,5 +332,127 @@ public class DatabaseHelperTest {
 
         // Verify the result of the insertNvdCve method
         assertEquals(1, result);
+    }
+
+    @Test
+    public void insertCWEsTest() throws SQLException {
+        // Create a sample CompositeVulnerability object
+        CompositeVulnerability vuln = new CompositeVulnerability(new RawVulnerability(1, "cve-1",
+                "The ntpd_driver component before 1.3.0 and 2.x before 2.2.0 for Robot Operating System (ROS) allows attackers, " +
+                        "who control the source code of a different node in the same ROS application, to change a robot's behavior. " +
+                        "This occurs because a topic name depends on the attacker-controlled time_ref_topic parameter.",
+                new Timestamp(System.currentTimeMillis()),
+                new Timestamp(System.currentTimeMillis()),
+                new Timestamp(System.currentTimeMillis()),
+                "www.example.com"));
+
+        CWE cwe1 = new CWE(123, "cwe1", "cwe");
+        CWE cwe2 = new CWE(234, "cwe2", "cwe");
+        CWE cwe3 = new CWE(345, "cwe3", "cwe");
+
+        vuln.addCWE(cwe1);
+        vuln.addCWE(cwe2);
+        vuln.addCWE(cwe3);
+
+
+        // Call the insertCWEs method
+        int result = dbh.insertCWEs(vuln);
+
+        // Verify the expected method calls and parameter values
+        verify(conn).setAutoCommit(false);
+        verify(pstmt, times(3)).addBatch();
+        verify(pstmt, times(4)).setString(1, "cve-1");
+        verify(pstmt).execute();
+
+        verify(pstmt).setInt(2, 123);
+        verify(pstmt).setInt(2, 234);
+        verify(pstmt).setInt(2, 345);
+
+        verify(pstmt, times(3)).addBatch();
+        verify(pstmt).executeBatch();
+        verify(conn).commit();
+
+        // Verify that pstmt.execute() is called
+        verify(pstmt).execute();
+
+        // Verify the result of the insertCWEs method
+        assertEquals(1, result);
+    }
+
+    @Test
+    public void updateVDOTest() throws SQLException {
+        CompositeVulnerability vuln = new CompositeVulnerability(new RawVulnerability(1, "cve-1",
+    "The ntpd_driver component before 1.3.0 and 2.x before 2.2.0 for Robot Operating System (ROS) allows attackers, " +
+            "who control the source code of a different node in the same ROS application, to change a robot's behavior. " +
+            "This occurs because a topic name depends on the attacker-controlled time_ref_topic parameter.",
+            new Timestamp(System.currentTimeMillis()),
+            new Timestamp(System.currentTimeMillis()),
+            new Timestamp(System.currentTimeMillis()),
+            "www.example.com"));
+
+        VdoCharacteristic vdo = new VdoCharacteristic("cve-1", 1, 1.5, 2);
+        VdoCharacteristic vdo1 = new VdoCharacteristic("cve-1", 2, 2.0, 3);
+        VdoCharacteristic vdo2 = new VdoCharacteristic("cve-1", 3, 1.0, 1);
+
+        vuln.addVdoCharacteristic(vdo);
+        vuln.addVdoCharacteristic(vdo1);
+        vuln.addVdoCharacteristic(vdo2);
+
+        int result = dbh.updateVDO(vuln);
+
+        // Verify the expected method calls and parameter values
+        verify(conn).setAutoCommit(false);
+        verify(pstmt, times(1)).setString(1, "cve-1");
+        verify(pstmt).setDouble(3, 1.5);
+        verify(pstmt).setDouble(3, 2.0);
+        verify(pstmt).setDouble(3, 1.0);
+        verify(pstmt).setString(2, String.valueOf(CveCharacterizer.VDONounGroup.getVdoNounGroup(vdo.getVdoNounGroupId())));
+        verify(pstmt).setString(2, String.valueOf(CveCharacterizer.VDONounGroup.getVdoNounGroup(vdo1.getVdoNounGroupId())));
+        verify(pstmt).setString(2, String.valueOf(CveCharacterizer.VDONounGroup.getVdoNounGroup(vdo2.getVdoNounGroupId())));
+        verify(pstmt).setString(1, String.valueOf(CveCharacterizer.VDOLabel.getVdoLabel(vdo.getVdoLabelId())));
+        verify(pstmt).setString(1, String.valueOf(CveCharacterizer.VDOLabel.getVdoLabel(vdo1.getVdoLabelId())));
+        verify(pstmt).setString(1, String.valueOf(CveCharacterizer.VDOLabel.getVdoLabel(vdo2.getVdoLabelId())));
+        verify(pstmt, times(3)).setString(4, vdo.getCveId());
+        verify(pstmt, times(3)).addBatch();
+        verify(pstmt).execute();
+        verify(pstmt).executeBatch();
+        verify(conn).commit();
+
+        assertEquals(1, result);
+
+    }
+
+    @Test
+    public void updateCVSSTest() throws SQLException {
+        CompositeVulnerability vuln = new CompositeVulnerability(new RawVulnerability(1, "cve-1",
+                "The ntpd_driver component before 1.3.0 and 2.x before 2.2.0 for Robot Operating System (ROS) allows attackers, " +
+                        "who control the source code of a different node in the same ROS application, to change a robot's behavior. " +
+                        "This occurs because a topic name depends on the attacker-controlled time_ref_topic parameter.",
+                new Timestamp(System.currentTimeMillis()),
+                new Timestamp(System.currentTimeMillis()),
+                new Timestamp(System.currentTimeMillis()),
+                "www.example.com"));
+
+        vuln.addCvssScore(new CvssScore("cve-1", 1, 1.0, "1", 2.0));
+
+        int result = dbh.updateCVSS(vuln);
+
+        verify(conn).prepareStatement(anyString());
+        verify(pstmt).setDouble(1, 1.0);
+        verify(pstmt).setString(2, "1");
+
+        assertEquals(1, result);
+
+        vuln.setRecStatus(CompositeVulnerability.ReconciliationStatus.UNCHANGED);
+        vuln.updateDescription("new desc is this!", new HashSet<>(), false);
+        vuln.addCvssScore(new CvssScore("cve-1", 2, 2.0, "2", 3.0));
+        int result2 = dbh.updateCVSS(vuln);
+        verify(conn, times(2)).prepareStatement(anyString());
+        verify(pstmt, times(2)).setString(3, "cve-1");
+        verify(pstmt).setDouble(1, 2.0);
+        verify(pstmt).setString(2, "2");
+        verify(pstmt, times(2)).execute();
+
+        assertEquals(1, result2);
     }
 }

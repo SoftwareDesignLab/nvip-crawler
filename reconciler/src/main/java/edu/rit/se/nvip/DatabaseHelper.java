@@ -39,11 +39,11 @@ public class DatabaseHelper {
     private static final String INSERT_DESCRIPTION = "INSERT INTO description (description, created_date, gpt_func, cve_id) VALUES (?, ?, ?, ?)";
     private static final String DELETE_JOB = "DELETE FROM cvejobtrack WHERE cve_id = ?";
     private static final String UPDATE_CVSS = "UPDATE cvss SET base_score = ?, impact_score = ? WHERE cve_id = ?";
-    private static final String UPDATE_VDO = "UPDATE vdoCharacteristic SET vdo_label = ?, vdo_noun_group = ?, vdo_confidence = ? WHERE cve_id = ?";
-
     private static final String INSERT_CVSS = "INSERT INTO cvss (base_score, impact_score, cve_id, create_date) VALUES (?, ?, ?, ?)";
     private static final String INSERT_VDO = "INSERT INTO vdoCharacteristic (vdo_label, vdo_noun_group, vdo_confidence, cve_id, created_date) VALUES (?, ?, ?, ?, ?)";
     private static final String INSERT_CWE = "INSERT INTO weakness (cve_id, cwe_id) VALUES (?, ?)";
+    private static final String DELETE_VDO = "DELETE FROM vdoCharacteristic WHERE cve_id = ?";
+    private static final String DELETE_CWE = "DELETE FROM weakness WHERE cve_id = ?";
 
 
     private String GET_ALL_NEW_CVES = "SELECT cve_id, published_date, status FROM nvddata order by cve_id desc";
@@ -445,14 +445,13 @@ public class DatabaseHelper {
         }
         try (Connection conn = getConnection();
              PreparedStatement upsertStatement = conn.prepareStatement(isUpdate ? UPDATE_CVSS: INSERT_CVSS)) {
-            for (CvssScore cvss : vuln.getCvssScoreInfo()) {
-                if (isUpdate) {
-                    populateCVSSUpdate(upsertStatement, cvss);
-                } else {
-                    populateCVSSInsert(upsertStatement, cvss);
-                }
-                upsertStatement.addBatch();
+
+            if (isUpdate) {
+                populateCVSSUpdate(upsertStatement, vuln.getCvssScoreInfo());
+            } else {
+                populateCVSSInsert(upsertStatement, vuln.getCvssScoreInfo());
             }
+
             upsertStatement.execute();
 
             return 1;
@@ -469,28 +468,18 @@ public class DatabaseHelper {
      * @return
      */
     public int updateVDO(CompositeVulnerability vuln) {
-        boolean isUpdate;
-        switch (vuln.getReconciliationStatus()) {
-            case UPDATED:
-                isUpdate = true;
-                break;
-            case NEW:
-                isUpdate = false;
-                break;
-            default:
-                return 0;
-        }
         try (Connection conn = getConnection();
-             PreparedStatement upsertStatement = conn.prepareStatement(isUpdate ? UPDATE_VDO: INSERT_VDO)) {
+             PreparedStatement insertStatement = conn.prepareStatement(INSERT_VDO);
+             PreparedStatement deleteStatement = conn.prepareStatement(DELETE_VDO)) {
+            conn.setAutoCommit(false);
+            deleteStatement.setString(1, vuln.getCveId());
+            deleteStatement.execute();
             for (VdoCharacteristic vdo : vuln.getVdoCharacteristic()) {
-                if (isUpdate) {
-                    populateVDOUpdate(upsertStatement, vdo);
-                } else {
-                    populateVDOInsert(upsertStatement, vdo);
-                }
-                upsertStatement.addBatch();
+                populateVDOInsert(insertStatement, vdo);
+                insertStatement.addBatch();
             }
-            upsertStatement.execute();
+            insertStatement.executeBatch();
+            conn.commit();
             return 1;
         } catch (SQLException e) {
             logger.error("ERROR: Failed to update VDO, {}", e.getMessage());
@@ -519,20 +508,19 @@ public class DatabaseHelper {
         pstmt.setTimestamp(5, new Timestamp(System.currentTimeMillis()));
 
     }
-    private void populateVDOUpdate(PreparedStatement pstmt, VdoCharacteristic vdo) throws SQLException {
-        pstmt.setString(1, String.valueOf(CveCharacterizer.VDOLabel.getVdoLabel(vdo.getVdoLabelId())));
-        pstmt.setString(2, String.valueOf(CveCharacterizer.VDONounGroup.getVdoNounGroup(vdo.getVdoNounGroupId())));
-        pstmt.setDouble(3, vdo.getVdoConfidence());
-        pstmt.setString(4, vdo.getCveId());
-    }
     public int insertCWEs(CompositeVulnerability vuln) {
         try (Connection conn = getConnection();
-             PreparedStatement upsertStatement = conn.prepareStatement(INSERT_CWE)) {
+             PreparedStatement upsertStatement = conn.prepareStatement(INSERT_CWE);
+             PreparedStatement deleteStatement = conn.prepareStatement(DELETE_CWE)) {
+            conn.setAutoCommit(false);
+            deleteStatement.setString(1, vuln.getCveId());
+            deleteStatement.execute();
             for (CWE cwe : vuln.getCWEs()) {
-              populateCWEInsert(upsertStatement, cwe, vuln.getCveId());
-              upsertStatement.addBatch();
+                populateCWEInsert(upsertStatement, cwe, vuln.getCveId());
+                upsertStatement.addBatch();
             }
             upsertStatement.executeBatch();
+            conn.commit();
             return 1;
         } catch (SQLException e) {
             logger.error("ERROR: Failed to insert CWE, {}", e.getMessage());
