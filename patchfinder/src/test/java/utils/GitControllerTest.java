@@ -4,10 +4,10 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 public class GitControllerTest {
     private static final String LOCAL_PATH = "src/main/resources/patch-repos";
@@ -19,27 +19,21 @@ public class GitControllerTest {
     public void setup() {
         gitController = new GitController(LOCAL_PATH, REMOTE_PATH);
         gitController.deleteRepo();
-
     }
 
-
     @Test
-    public void testRepo() {
-        assertFalse(Files.exists(Paths.get(LOCAL_PATH)));
+    public void testRepoCreation() {
+        Path path = Paths.get(LOCAL_PATH);
+        assertFalse(Files.exists(path));
         assertTrue(gitController.cloneRepo());
         assertTrue(gitController.pullRepo());
+        assertTrue(Files.exists(path));
     }
 
     @Test
-    public void testMain_DeleteRepo() {
-        // Invoke the method under test
-        GitController.main(new String[]{});
-
-        // Verify the behavior and result
-        assertTrue(Files.exists(Paths.get(LOCAL_PATH)));
-
-        //rebuild the repo
-        gitController.cloneRepo();
+    public void testRepoDeletion() {
+        gitController.deleteRepo();
+        assertFalse(Files.exists(Paths.get(LOCAL_PATH)));
     }
 
 }
