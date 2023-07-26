@@ -45,6 +45,10 @@ public class DatabaseHelper {
     private static final String DELETE_VDO = "DELETE FROM vdoCharacteristic WHERE cve_id = ?";
     private static final String DELETE_CWE = "DELETE FROM weakness WHERE cve_id = ?";
     private static final String MITRE_COUNT = "SELECT COUNT(*) AS num_rows FROM mitredata;";
+    private static final String MITRE_NVD_STATUS_INSERT = "INSERT INTO nvdmitrestatus (cve_id, create_date, in_nvd, in_mitre) VALUES (?, ?, ?, ?)";
+    private static final String MITRE_NVD_STATUS_UPDATE = "UPDATE nvdmitrestatus SET in_nvd = ?, in_mitre = ? WHERE cve_id = ?";
+    private static final String UPDATE_MITREDATA = "INSERT IGNORE INTO mitredata (cve_id, mitreStatus) VALUES (?, ?) ON DUPLICATE KEY UPDATE mitreStatus = VALUES(mitreStatus);";
+
 
 
     private String GET_ALL_NEW_CVES = "SELECT cve_id, published_date, status FROM nvddata order by cve_id desc";
@@ -560,7 +564,7 @@ public class DatabaseHelper {
 
     public boolean getMitreTableCount() {
         try (Connection conn = getConnection();
-             PreparedStatement upsertStatement = conn.prepareStatement("SELECT COUNT(*) AS num_rows FROM mitredata");
+             PreparedStatement upsertStatement = conn.prepareStatement(MITRE_COUNT);
              ResultSet resultSet = upsertStatement.executeQuery()) {
 
             if (resultSet.next()) {
@@ -577,20 +581,15 @@ public class DatabaseHelper {
         }
     }
     public int updateMitreData(List<MitreVulnerability> vulns){
-        StringBuilder UPDATE_MITREDATA = new StringBuilder("INSERT IGNORE INTO mitredata (cve_id, mitreStatus)\n" +
-                "VALUES\n");
-        int count = 0;
-        for(MitreVulnerability vuln : vulns){
-            if (count != vulns.size()-1) {
-                UPDATE_MITREDATA.append("('").append(vuln.getCveId()).append("', ").append(vuln.getMitreStatus()).append(")").append(",\n");
-            }else{
-                UPDATE_MITREDATA.append("('").append(vuln.getCveId()).append("', ").append(vuln.getMitreStatus()).append(")").append(" ON DUPLICATE KEY UPDATE mitreStatus = VALUES(mitreStatus);");
-            }
-            count++;
-        }
+
         try (Connection conn = getConnection();
              PreparedStatement upsertStatement = conn.prepareStatement(String.valueOf(UPDATE_MITREDATA))) {
 
+            for(MitreVulnerability vuln : vulns){
+                upsertStatement.setString(1, vuln.getCveId());
+                upsertStatement.setInt(2, vuln.getMitreStatus());
+                upsertStatement.addBatch();
+            }
             upsertStatement.execute();
 
             return 1;
@@ -599,4 +598,45 @@ public class DatabaseHelper {
             return 0;
         }
     }
+
+    public int updateMitreNVDStatus(CompositeVulnerability vuln){
+        boolean isUpdate;
+        switch (vuln.getReconciliationStatus()) {
+            case UPDATED:
+                isUpdate = true;
+                break;
+            case NEW:
+                isUpdate = false;
+                break;
+            default:
+                return 0;
+        }
+
+        try (Connection conn = getConnection();
+             PreparedStatement insertStatement = conn.prepareStatement(MITRE_NVD_STATUS_INSERT);
+             PreparedStatement updateStatement = conn.prepareStatement(MITRE_NVD_STATUS_UPDATE)) {
+            if(isUpdate){
+                populateNvdMitreInsert(insertStatement, vuln);
+            }else{
+                populateNvdMitreUpdate(updateStatement, vuln);
+            }
+            return 1;
+        } catch (SQLException e) {
+            logger.error("ERROR: Failed to get the amount of rows for mitredata table, {}", e.getMessage());
+            return 0;
+        }
+    }
+    private void populateNvdMitreInsert(PreparedStatement pstmt, CompositeVulnerability vuln) throws SQLException {
+        pstmt.setString(1, vuln.getCveId());
+        pstmt.setTimestamp(2, vuln.getCreateDate());
+        pstmt.setInt(3, vuln.getInNvd());
+        pstmt.setInt(4, vuln.getInMitre());
+    }
+    private void populateNvdMitreUpdate(PreparedStatement pstmt, CompositeVulnerability vuln) throws SQLException {
+        pstmt.setInt(1, vuln.getInNvd());
+        pstmt.setInt(2, vuln.getInMitre());
+        pstmt.setString(3, vuln.getCveId());
+
+    }
+
 }
