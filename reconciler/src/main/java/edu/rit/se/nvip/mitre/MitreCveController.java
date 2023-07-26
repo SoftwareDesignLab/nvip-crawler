@@ -84,6 +84,7 @@ public class MitreCveController {
         logger.info("Found {} reserved CVEs from MITRE", numReserved);
 
         dbh.updateMitreData(results);
+
     }
 
     public MitreCveController(String mitreGithubUrl, List<String> localPaths) {
