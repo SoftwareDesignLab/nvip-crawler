@@ -3,7 +3,7 @@ logs
 **/.settings
 *.log
 *.csv
-nvip.iml
+*.iml
 
 # Class outputs
 /target/
@@ -23,17 +23,16 @@ output/
 
 # UnModifiables
 logs/
-/.github/
 nvip_data/pypa-repo/
 /nvip_data/productnameextraction/w2v_model_250.bin
 /nvip_data/exploit-repo/exploitdb/
 Servers/
 nvip_data/
 /nvip_data/mysql-database/
-/.github/
 pom.xml
 
 
 # Git Repos
 nvip_data/pypa-repo/
 exploitfinder/src/main/resources/exploit-repo
+patchfinder/src/main/resources/patch-repos

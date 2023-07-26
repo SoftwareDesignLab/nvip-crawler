@@ -99,6 +99,15 @@ public class CrawlerMain {
             }
         }
 
+        // Update the source types for the found CVEs and insert new entries into the rawdescriptions table
+        updateSourceTypes(crawledCVEs);
+
+        logger.info("Outputting CVEs to a CSV and JSON");
+        int linesWritten = cvesToCsv(crawledCVEs);
+        logger.info("Wrote {} lines to {}", linesWritten, (String)crawlerVars.get("testOutputDir")+"/test_output.csv");
+        cvesToJson(crawledCVEs);
+        logger.info("Done!");
+
         // Output results in testmode
         // Store raw data in DB otherwise
         if (crawlerTestMode) {
@@ -112,7 +121,6 @@ public class CrawlerMain {
             }
         } else {
             // Update the source types for the found CVEs and insert new entries into the rawdescriptions table
-            updateSourceTypes(crawledCVEs);
             logger.info("Done! Preparing to insert all raw data found in this run!");
             crawlerMain.insertRawCVEsAndPrepareMessage(crawledCVEs);
             logger.info("Raw data inserted and Message sent successfully!");
@@ -137,6 +145,7 @@ public class CrawlerMain {
         String enableReport = System.getenv("NVIP_CRAWLER_REPORT_ENABLE");
         String crawlerNum = System.getenv("NVIP_NUM_OF_CRAWLER");
         String testMode = System.getenv("NVIP_CRAWLER_TEST_MODE");
+        String testOutputDir = System.getenv("NVIP_TEST_OUTPUT_DIR");
 
         addEnvvarString(CrawlerMain.crawlerVars,"outputDir", outputDir, "output/crawlers",
                 "WARNING: Crawler output path not defined in NVIP_OUTPUT_DIR, using default path: output/crawlers");
@@ -154,22 +163,29 @@ public class CrawlerMain {
                 "WARNING: CVE GitHub Enabler not defined in NVIP_ENABLE_GITHUB, allowing CVE GitHub pull on default");
 
         addEnvvarInt(CrawlerMain.crawlerVars,"crawlerPoliteness", crawlerPoliteness, 3000,
-                "WARNING: Crawler Politeness is not defined, using 3000 as default value");
+                "WARNING: Crawler Politeness is not defined, using 3000 as default value",
+                "NVIP_CRAWLER_POLITENESS");
 
         addEnvvarInt(CrawlerMain.crawlerVars,"maxPages", maxPages, 3000,
-                "WARNING: Crawler Max Pages not defined in NVIP_CRAWLER_MAX_PAGES, using 3000 as default value");
+                "WARNING: Crawler Max Pages not defined in NVIP_CRAWLER_MAX_PAGES, using 3000 as default value",
+                "NVIP_CRAWLER_MAX_PAGES");
 
         addEnvvarInt(CrawlerMain.crawlerVars,"depth", depth, 1,
-                "WARNING: Crawler Depth not defined in NVIP_CRAWLER_DEPTH, using 1 as default value");
+                "WARNING: Crawler Depth not defined in NVIP_CRAWLER_DEPTH, using 1 as default value",
+                "NVIP_CRAWLER_DEPTH");
 
         addEnvvarBool(CrawlerMain.crawlerVars,"enableReport", enableReport, true,
                 "WARNING: Crawler Report Enabling not defined in NVIP_CRAWLER_REPORT_ENABLE, allowing report by default");
 
         addEnvvarInt(CrawlerMain.crawlerVars,"crawlerNum", crawlerNum, 10,
-                "WARNING: Number of Crawlers not defined in NVIP_NUM_OF_CRAWLER, using 10 as default value");
+                "WARNING: Number of Crawlers not defined in NVIP_NUM_OF_CRAWLER, using 10 as default value",
+                "NVIP_NUM_OF_CRAWLER");
 
         addEnvvarBool(CrawlerMain.crawlerVars,"testMode", testMode, false,
                 "WARNING: Crawler Test Mode not defined in NVIP_CRAWLER_TEST_MODE, using false as default value");
+
+        addEnvvarString(CrawlerMain.crawlerVars,"testOutputDir", testOutputDir, "output",
+                "WARNING: Crawler test output dir path not defined in NVIP_TEST_OUTPUT_DIR, using default path: output");
     }
 
 
@@ -248,14 +264,15 @@ public class CrawlerMain {
      * @param envvarValue
      * @param defaultValue
      * @param warningMessage
+     * @param ennvarName
      */
     private void addEnvvarInt(Map<String, Object> envvarMap, String envvarName, String envvarValue,
-                              int defaultValue, String warningMessage) {
+                              int defaultValue, String warningMessage, String ennvarName) {
         if (envvarValue != null && !envvarValue.isEmpty()) {
             try {
                 envvarMap.put(envvarName, Integer.parseInt(envvarValue));
             } catch (NumberFormatException e) {
-                logger.warn("WARNING: Variable: {} = {} is not an integer, using 1 as default value", envvarName
+                logger.warn("WARNING: Variable: {} = {} is not an integer, using 1 as default value", ennvarName
                         , defaultValue);
                 envvarMap.put(envvarName, defaultValue);
             }
@@ -274,6 +291,7 @@ public class CrawlerMain {
         String crawlerSeeds = (String) crawlerVars.get("seedFileDir");
         String whitelistFileDir = (String) crawlerVars.get("whitelistFileDir");
         String crawlerOutputDir = (String) crawlerVars.get("outputDir");
+        String testOutputDir = (String) crawlerVars.get("testOutputDir");
 
         if (!new File(dataDir).exists()) {
             logger.error("The data dir provided does not exist, check the 'NVIP_DATA_DIR' key in the env.list file, currently configured data dir is {}", dataDir);
@@ -292,6 +310,11 @@ public class CrawlerMain {
 
         if (!new File(crawlerOutputDir).exists()) {
             logger.error("The crawler output dir provided: {} does not exits!", crawlerOutputDir);
+            System.exit(1);
+        }
+
+        if (!new File(testOutputDir).exists()) {
+            logger.error("The crawler output dir provided: {} does not exits!", testOutputDir);
             System.exit(1);
         }
     }
@@ -314,6 +337,13 @@ public class CrawlerMain {
                 urls.add(url);
                 url = seedReader.readLine();
             }
+
+            // logger.info("Loaded {} seed URLS from {}", seedURLs.size(), seeds.getAbsolutePath());
+
+            // for (String seedURL : seedURLs) {
+            //     if (!urls.contains(seedURL))
+            //         urls.add(seedURL);
+            // }
 
             logger.info("Loaded {} total seed URLs", urls.size());
 
@@ -394,7 +424,6 @@ public class CrawlerMain {
     }
 
     private static int cvesToCsv(HashMap<String, ArrayList<RawVulnerability>> crawledCVEs){
-        logger.info("write to csv");
         int lineCount = 0;
         CSVWriter writer = null;
         String filepath = (String) crawlerVars.get("testOutputDir") + "/test_output.csv";

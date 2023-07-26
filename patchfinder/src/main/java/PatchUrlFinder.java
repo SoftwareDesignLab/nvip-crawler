@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-import db.DatabaseHelper;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import model.CpeGroup;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -36,72 +36,85 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.regex.Matcher;
+import java.util.*;
 import java.util.regex.Pattern;
 
 
 /**
- * Start patch finder for a given repository list (as .csv)
+ * Responsible for finding possible patch source URLs for the PatchFinder
  *
- * Responsible for finding possible patch source URLs
+ * @author Dylan Mulligan
  */
 public class PatchUrlFinder {
-
 	private static final Logger logger = LogManager.getLogger(PatchUrlFinder.class.getName());
-
-	// TODO: all old vars, get rid of these
 	private static int advancedSearchCount;
+	private static final ObjectMapper OM = new ObjectMapper();
 
 	/**
-	 * Parse URLs from all CPEs given within the map
-	 * @param affectedProducts
-	 * @throws IOException
-	 * @throws InterruptedException
+	 * Parses possible patch URLs from all CPEs in the given affectedProducts map
+	 * @param possiblePatchUrls map of CVEs -> a list of possible patch urls (output list, initially not empty)
+	 * @param affectedProducts map of CVEs -> CPEs to parse source urls for
+	 * @param cveLimit maximum number of CVEs to process
+	 * @param isStale boolean representation of the quality of existing data in possiblePatchUrls
 	 */
-	public Map<String, ArrayList<String>> parseMassURLs(Map<String, CpeGroup> affectedProducts, int cveLimit) throws IOException, InterruptedException {
-		Map<String, ArrayList<String>> cveCpeUrls = new HashMap<>();
-
-		final long totalStart = System.currentTimeMillis();
+	public void parsePatchURLs(Map<String, ArrayList<String>> possiblePatchUrls, Map<String, CpeGroup> affectedProducts, int cveLimit, boolean isStale) {
+		int cachedUrlCount = 0, foundCount = 0;
 		for (Map.Entry<String, CpeGroup> entry : affectedProducts.entrySet()) {
 			final long entryStart = System.currentTimeMillis();
-			final String cveId = entry.getKey();
+			final String cveId = entry.getKey().trim();
 			final CpeGroup group = entry.getValue();
+
+			// Skip entries that already have values (only if refresh is not needed)
+			if(!isStale) {
+				if(possiblePatchUrls.containsKey(cveId)) {
+//					logger.info("Found {} existing & fresh possible sources for CVE {}, skipping url parsing...", possiblePatchUrls.get(cveId).size(), cveId);
+					final int urlCount = possiblePatchUrls.get(cveId).size();
+					foundCount += urlCount;
+					cachedUrlCount++;
+					if(urlCount != 0) continue;
+				}
+			} else possiblePatchUrls.remove(cveId); // Remove stale entry
+
+
+			// Warn and skip blank entries
+			if(cveId.isEmpty() || group.getVersionsCount() == 0) {
+				logger.warn("Unable to parse URLs for empty affected product");
+				continue;
+			}
+
 			// Break out of loop when limit is reached
-			if (cveCpeUrls.size() >= cveLimit) {
+			if (cveLimit != 0 && possiblePatchUrls.size() >= cveLimit) {
 				logger.info("CVE limit of {} reached for patchfinder", cveLimit);
 				break;
 			}
 
-			// Find urls
-			final ArrayList<String> urls = parseURL(group.getVendor(), group.getProduct());
+			try {
+				// Find urls
+				final ArrayList<String> urls = parseURL(group.getVendor(), group.getProduct());
 
-			// Store found urls
-			cveCpeUrls.put(cveId, urls);
-			long entryDelta = (System.currentTimeMillis() - entryStart) / 1000;
-			logger.info("Found {} potential patch sources for CVE '{}' in {} seconds", urls.size(), cveId, entryDelta);
+				// Store found urls
+				possiblePatchUrls.put(cveId, urls);
+				long entryDelta = (System.currentTimeMillis() - entryStart) / 1000;
+				logger.info("Found {} potential patch sources for CVE '{}' in {} seconds", urls.size(), cveId, entryDelta);
+			} catch (IOException e) {
+				logger.error("Failed to parse urls from product {}: {}", group.getProduct(), e);
+			}
 		}
-
-		long totalDelta = (System.currentTimeMillis() - totalStart) / 1000;
-		logger.info("Found {} potential patch sources for {} CVEs in {} seconds", cveCpeUrls.size(), Math.min(cveLimit, affectedProducts.size()), totalDelta);
-		return cveCpeUrls;
+		logger.info("Found {} existing & fresh possible sources for {} CVEs, skipping url parsing...", foundCount, cachedUrlCount);
 	}
 
 	/**
 	 * Parses URL with github.com base and cpe keywords tests connection and inserts
 	 * into DB if so.
 	 *
-	 * @throws IOException
-	 * @throws InterruptedException
+	 * @param product product name
+	 * @param vendor vendor name
+	 * @throws IOException if an IO error occurs while testing the url connection
 	 */
-	private ArrayList<String> parseURL(String vendor, String product) throws IOException, InterruptedException {
+	private ArrayList<String> parseURL(String vendor, String product) throws IOException {
 		ArrayList<String> newAddresses = new ArrayList<>();
-		
-		// TODO: Fix this
-		// Parse keywords from CPE to create links for github, bitbucket and gitlab
+
+		// Parse keywords from CPE to create links for GitHub, Bitbucket, and GitLab
 		// Also checks if the created URL is already used
 		if (!vendor.equals("*")) {
 			HashSet<String> addresses = initializeAddresses(vendor);
@@ -110,26 +123,26 @@ public class PatchUrlFinder {
 					address += product;
 				}
 
-				// Check the http connections for each URL,
+				// Check the HTTP connections for each URL,
 				// If any successful, add them to the list to be stored
-				newAddresses = testConnection(address);
+				ArrayList<String> connectedAddresses = testConnection(address);
+				newAddresses.addAll(connectedAddresses);
 			}
-
 		} else if (!product.equals("*")) {
 			for (String base : PatchFinder.addressBases) {
 				String address = base + product;
-				newAddresses = testConnection(address);
+				ArrayList<String> connectedAddresses = testConnection(address);
+				newAddresses.addAll(connectedAddresses);
 			}
 		}
 
 		// If no successful URLs, try an advanced search with
-		// GitHub's search feature to double check
+		// GitHub's search feature to double-check
 		if (newAddresses.isEmpty()) {
 			newAddresses = advanceParseSearch(vendor, product);
 		}
 
 		return newAddresses;
-		
 	}
 
 	/**
@@ -150,9 +163,9 @@ public class PatchUrlFinder {
 	 * for correct repo via github company page (Assuming the link directs to it for
 	 * now)
 	 * 
-	 * @param address
-	 * @return
-	 * @throws IOException
+	 * @param address address to test
+	 * @return a list of valid addresses
+	 * @throws IOException if an error occurs during the testing of the given address
 	 */
 	private ArrayList<String> testConnection(String address) throws IOException {
 
@@ -206,10 +219,8 @@ public class PatchUrlFinder {
 	 * Searches for all links within a companies github page to find the correct
 	 * repo the cpe is correlated to. Uses keywords from cpe to validate and checks
 	 * for git remote connection with found links
-	 * 
-	 * Uses jSoup framework
 	 *
-	 * @param newURL
+	 * @param newURL url to search
 	 */
 	private ArrayList<String> searchForRepos(String newURL) {
 		logger.info("Grabbing repos from github user page...");
@@ -252,8 +263,9 @@ public class PatchUrlFinder {
 	/**
 	 * Method to loop through given repo links and verify git connection, returns
 	 * list of all successful links
-	 * 
-	 * @return
+	 *
+	 * @param repoLinks collection of page elements containing link data
+	 * @return list of valid links only
 	 */
 	private ArrayList<String> testLinks(Elements repoLinks) {
 		ArrayList<String> urls = new ArrayList<>();
@@ -276,10 +288,12 @@ public class PatchUrlFinder {
 	 * Performs an advanced search for the repo link(s) for a CPE using the Github
 	 * search feature
 	 *
-	 * @return
-	 * @throws InterruptedException
+	 * @param product product name
+	 * @param vendor vendor name
+	 * @return a list of found links
 	 */
-	private ArrayList<String> advanceParseSearch(String vendor, String product) throws InterruptedException {
+	@SuppressWarnings({"unchecked", "rawtypes"})
+	private ArrayList<String> advanceParseSearch(String vendor, String product) {
 
 		String searchParams = PatchFinder.addressBases[0] + "search?q=";
 		ArrayList<String> urls = new ArrayList<>();
@@ -307,37 +321,80 @@ public class PatchUrlFinder {
 				}
 
 				advancedSearchCount++;
-				Document searchPage = Jsoup.connect(searchParams + "&type=repositories").get();
-				Elements searchResults = searchPage.select("li.repo-list-item a[href]");
+				Document searchPage = Jsoup.connect(searchParams + "&type=repositories")
+						.header("Accept-Encoding", "gzip, deflate")
+						.userAgent("Mozilla/5.0 (Windows NT 6.1; WOW64; rv:23.0) Gecko/20100101 Firefox/23.0")
+						.maxBodySize(0)
+						.timeout(600000)
+						.get();
 
-				for (Element searchResult : searchResults) {
-					if (!searchResult.attr("href").isEmpty()) {
-						String newURL = searchResult.attr("abs:href");
-						String innerText = searchResult.text();
-						if (verifyGitRemote(newURL, innerText, vendor, product)) {
+				final LinkedHashMap searchData =
+						(LinkedHashMap) OM.readValue(
+								searchPage.select("div.application-main").select("script").get(0).html(),
+								LinkedHashMap.class
+						).get("payload");
+
+				final ArrayList<LinkedHashMap> searchResults = (ArrayList<LinkedHashMap>) searchData.get("results");
+
+				String newURL = null;
+				for (LinkedHashMap searchResult : searchResults) {
+					try {
+						final String endpoint = ((String) searchResult.get("hl_name"))
+								.replace("<em>", "")
+								.replace("</em>", "");
+
+						newURL = PatchFinder.addressBases[0] + endpoint;
+
+						final String description = ((String) searchResult.get("hl_trunc_description"))
+								.replace("<em>", "")
+								.replace("</em>", "");
+
+
+						if (verifyGitRemote(newURL, description, vendor, product)) {
 							urls.add(newURL);
 						}
+					} catch (Exception e) {
+						logger.warn("Failed to validate/verify URL {}: {}", newURL, e);
 					}
 				}
 
-			} catch (IOException e) {
+				// TODO: Remove when this method is fixed
+//				Elements searchResults = searchPage.select("li.repo-list-item a[href]");
+//
+//				for (Element searchResult : searchResults) {
+//					if (!searchResult.attr("href").isEmpty()) {
+//						String newURL = searchResult.attr("abs:href");
+//						String innerText = searchResult.text();
+//						if (verifyGitRemote(newURL, innerText, vendor, product)) {
+//							urls.add(newURL);
+//						}
+//					}
+//				}
+
+			} catch (IOException | InterruptedException e) {
 				logger.error(e.toString());
 			}
 
 		return urls;
 	}
 
+	// TODO: What is the description param supposed to be filled by?
 	/**
 	 * Method used for verifying Git remote connection to created url via keywords,
 	 * checks if the keywords are included as well before performing connection
-	 * @return
+	 *
+	 * @param repoURL url to the repo to verify
+	 * @param description url description
+	 * @param vendor vendor name
+	 * @param product product name
+	 * @return result of verification
 	 */
-	private boolean verifyGitRemote(String repoURL, String innerText, String vendor, String product) {
+	private boolean verifyGitRemote(String repoURL, String description, String vendor, String product) {
 
 		// Verify if the repo is correlated to the product by checking if the keywords
 		// lie in the inner text of the html link via regex
-		if (Pattern.compile(Pattern.quote(vendor), Pattern.CASE_INSENSITIVE).matcher(innerText).find()
-				|| Pattern.compile(Pattern.quote(product), Pattern.CASE_INSENSITIVE).matcher(innerText)
+		if (Pattern.compile(Pattern.quote(vendor), Pattern.CASE_INSENSITIVE).matcher(description).find()
+				|| Pattern.compile(Pattern.quote(product), Pattern.CASE_INSENSITIVE).matcher(description)
 						.find()) {
 
 			LsRemoteCommand lsCmd = new LsRemoteCommand(null);

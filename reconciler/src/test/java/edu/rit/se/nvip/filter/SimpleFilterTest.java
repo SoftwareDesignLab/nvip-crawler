@@ -21,7 +21,7 @@ class SimpleFilterTest {
         for (int i = 0; i < 10; i++) {
             vulns.add(genRawVuln(i));
         }
-        Set<RawVulnerability> filtered = filter.filterAll(vulns);
+        Set<RawVulnerability> filtered = filter.filterAllAndSplit(vulns);
         assertEquals(0, filtered.size());
         assertEquals(10, vulns.size());
     }

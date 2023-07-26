@@ -321,7 +321,9 @@
             baseColumnNames="cve_id"
             referencedTableName="vulnerability"
             referencedColumnNames="cve_id"
-            constraintName="patch_source_cve_id_fk"/>
+            constraintName="patch_source_cve_id_fk"
+            onDelete="CASCADE"
+        />
     </changeSet>
 
     <changeSet author="patchcommit" id="patchcommit">
@@ -332,13 +334,28 @@
             <column name="source_url_id" type="INT">
                 <constraints nullable="false"/>
             </column>
-            <column name="commit_url" type="TINYTEXT">
+            <column name="cve_id" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="commit_sha" type="TINYTEXT">
                 <constraints nullable="false"/>
             </column>
             <column name="commit_date" type="DATETIME">
                 <constraints nullable="false"/>
             </column>
             <column name="commit_message" type="VARCHAR(1000)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="uni_diff" type="VARCHAR(500)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="timeline" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="timeToPatch" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="linesChanged" type="INT">
                 <constraints nullable="false"/>
             </column>
         </createTable>

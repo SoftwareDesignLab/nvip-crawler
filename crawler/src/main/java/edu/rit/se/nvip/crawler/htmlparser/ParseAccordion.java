@@ -101,7 +101,7 @@ public class ParseAccordion extends AbstractCveParser implements ParserStrategy 
 
                 // try and click on child to see if we can gain any more CVE info from it
                 WebElement childWebElement = driver.tryFindElement(By.xpath(jsoupToXpath(child)));
-                if(childWebElement != null && driver.tryClickElement(childWebElement, 5)) {
+                if(childWebElement != null && driver.tryClickElement(childWebElement, 1)) {
                     String newHtml = driver.getDriver().getPageSource();
                     diff = StringUtils.difference(originalHtml, newHtml);
                 }

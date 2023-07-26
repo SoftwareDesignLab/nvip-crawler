@@ -1,0 +1,98 @@
+# CI for NVIP
+
+name: Crawler Workflow
+
+on:
+  pull_request:
+    branches:
+      - main
+      - dev
+  push:
+    branches:
+      - main
+      - dev
+      - 'cicd/**'
+
+env:
+  AWS_REGION: 'us-east-1'
+  DB_TYPE: 'mysql'
+  DB_NAME: 'nvip'
+  HIKARI_URL: 'jdbc:mysql://localhost:3306/nvip?useSSL=false&allowPublicKeyRetrieval=true'
+  HIKARI_USER: 'root'
+  HIKARI_PASSWORD: 'root'
+  OUTPUT_DIR: 'output'
+  RESOURCE_DIR: 'nvip_data'
+  DATA_DIR: 'data'
+  NLP_DIR: 'nlp'
+  CHAR_2_VEC_CONFIG: 'c2v_model_config_50.json'
+  CHAR_2_VEC_WEIGHTS: 'c2v_model_weights_50.h5'
+  WORD_2_VEC: 'w2v_model_250.bin'
+  NER_MODEL: 'NERallModel.bin'
+  NER_MODEL_NORMALIZER: 'NERallNorm.bin'
+  SENTENCE_MODEL: 'en-sent.bin'
+  PRODUCT_DETECTOR_MODEL: 'en-pos-perceptron.bin'
+
+jobs:
+  # Build and Test Crawler Component
+  build-test-crawler:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          lfs: 'true'
+
+      - uses: actions/setup-java@v3.10.0
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Set up dependencies
+        run: mvn dependency:resolve
+
+      # Setup MySQL DB for tests that require connection (Might not need this)
+      - name: Initialize Database
+        env:
+          LIQUIBASE_URL: ${{ env.HIKARI_URL }}
+          LIQUIBASE_USER: ${{ env.HIKARI_USER }}
+          LIQUIBASE_PASS: ${{ env.HIKARI_PASSWORD }}
+        run: |
+          sudo /etc/init.d/mysql start
+          mysql -e 'CREATE DATABASE ${{ env.DB_NAME }};' -u${{ env.HIKARI_USER }} -p${{ env.HIKARI_PASSWORD }}
+
+      - name: Run Liquibase Update
+        run: |
+          mvn liquibase:update
+
+      - name: Test Crawler
+        run: |
+          cd crawler
+          mvn dependency:go-offline
+          mvn test
+
+      - name: Publish Test Report
+        if: success() || failure()
+        uses: scacap/action-surefire-report@v1
+        with:
+          check_name: Crawler Test Report
+
+  # Deploy crawler component project to container registry
+  deploy-crawler:
+    runs-on: ubuntu-latest
+    needs: build-test-crawler
+    if: ${{ success() && github.ref == 'refs/heads/dev' }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Push Docker Image for Crawler
+        run: |
+          cd crawler
+          docker build . -t nvip-crawler-sub:dev -t ghcr.io/softwaredesignlab/nvip-crawler-sub:dev
+          docker push ghcr.io/softwaredesignlab/nvip-crawler-sub:dev     

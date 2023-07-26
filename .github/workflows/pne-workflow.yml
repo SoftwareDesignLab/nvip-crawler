@@ -1,0 +1,124 @@
+# CI for NVIP
+
+name: Product Name Extractor Workflow
+
+on:
+  pull_request:
+    branches:
+      - main
+      - dev
+  push:
+    branches:
+      - main
+      - dev
+      - 'cicd/**'
+
+env:
+  AWS_REGION: 'us-east-1'
+  DB_TYPE: 'mysql'
+  HIKARI_URL: 'jdbc:mysql://localhost:3306/nvip?useSSL=false&allowPublicKeyRetrieval=true'
+  HIKARI_USER: 'root'
+  HIKARI_PASSWORD: 'root'
+  OUTPUT_DIR: 'output'
+  RESOURCE_DIR: 'nvip_data'
+  DATA_DIR: 'data'
+  NLP_DIR: 'nlp'
+  CHAR_2_VEC_CONFIG: 'c2v_model_config_50.json'
+  CHAR_2_VEC_WEIGHTS: 'c2v_model_weights_50.h5'
+  WORD_2_VEC: 'w2v_model_250.bin'
+  NER_MODEL: 'NERallModel.bin'
+  NER_MODEL_NORMALIZER: 'NERallNorm.bin'
+  SENTENCE_MODEL: 'en-sent.bin'
+  PRODUCT_DETECTOR_MODEL: 'en-pos-perceptron.bin'
+
+jobs:
+  # Build and Test Product Extraction Component
+  build-test-product-extractor:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+        with:
+          lfs: 'true'
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # Grab large files (w2v model) from S3 bucket
+      - name: Pull file from S3 bucket
+        run: |
+          cd productnameextractor/nvip_data/data
+          aws s3 cp s3://binaries-for-crawler/w2v_model_250.bin .
+
+      # Setup MySQL DB for tests that require connection (Might not need this)
+      - name: Start MySQL Service
+        run: sudo /etc/init.d/mysql start
+        # run: |
+        #   sudo /etc/init.d/mysql start
+        #   mysql -e 'CREATE DATABASE nvip;' -uroot -proot
+        #   mysql -e 'SHOW DATABASES;' -uroot -proot
+        #   mysql -e 'source nvip_data/mysql-database/CreateAndInitializeDb.sql' -uroot -proot
+
+      - name: Initialize DB
+        env:
+          LIQUIBASE_URL: ${{ env.HIKARI_URL }}
+          LIQUIBASE_USER: ${{ env.HIKARI_USER }}
+          LIQUIBASE_PASS: ${{ env.HIKARI_PASSWORD }}
+        run: |
+          mysql -e 'CREATE DATABASE nvip;' -u${{ env.HIKARI_USER }} -p${{ env.HIKARI_PASSWORD }} 
+          mvn liquibase:update --no-transfer-progress
+
+      - name: Test and Build Product Extractor with Maven
+        run: |
+          cd productnameextractor
+          mvn dependency:go-offline
+          mvn package
+
+      - name: Publish Test Report
+        if: success() || failure()
+        uses: scacap/action-surefire-report@v1
+        with:
+          check_name: PNE Test Report
+
+  # Deploy product extractor component project to container registry
+  deploy-product-extractor:
+    runs-on: ubuntu-latest
+    needs: build-test-product-extractor
+    if: ${{ success() && github.ref == 'refs/heads/dev' }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # Pull large files (w2v model) so they're in the container
+      - name: Pull file from S3 bucket
+        run: |
+          cd productnameextractor/nvip_data/data
+          aws s3 cp s3://binaries-for-crawler/w2v_model_250.bin . 
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Push Docker Image for Product Extractor
+        run: |
+          cd productnameextractor
+          docker build . -t nvip-product-extractor:dev -t ghcr.io/softwaredesignlab/nvip-product-extractor:dev
+          docker push ghcr.io/softwaredesignlab/nvip-product-extractor:dev
