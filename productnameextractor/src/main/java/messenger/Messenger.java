@@ -56,7 +56,7 @@ public class Messenger {
     private final static String OUTPUT_QUEUE = "PNE_OUT";
     private static final Logger logger = LogManager.getLogger(Messenger.class.getSimpleName());
     private static final ObjectMapper OM = new ObjectMapper();
-    private final ConnectionFactory factory;
+    private ConnectionFactory factory;
 
     public Messenger(){
         // Instantiate with default values
@@ -78,6 +78,15 @@ public class Messenger {
         factory.setHost(host);
         factory.setUsername(username);
         factory.setPassword(password);
+    }
+
+    /**
+     * Manually sets the factory
+     *
+     * @param factory ConnectionFactory to be set
+     */
+    public void setFactory(ConnectionFactory factory){
+        this.factory = factory;
     }
 
     /**
