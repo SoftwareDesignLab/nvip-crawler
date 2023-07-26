@@ -49,6 +49,9 @@ public class DatabaseHelper {
     private String GET_ALL_NEW_CVES = "SELECT cve_id, published_date, status FROM nvddata order by cve_id desc";
     private final String insertIntoNvdData = "INSERT INTO nvd_data (cve_id, published_date, status) VALUES (?, ?, ?)";
 
+    private static final String INSERT_RUN_STATS = "INSERT INTO runhistory (run_date_time, total_cve_count, new_cve_count, updated_cve_count, not_in_nvd_count, not_in_mitre_count, not_in_both_count, avg_time_gap_nvd, avg_time_gap_mitre)" +
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
 
     public static synchronized DatabaseHelper getInstance() {
         if (databaseHelper == null) {
@@ -485,6 +488,27 @@ public class DatabaseHelper {
             logger.error("ERROR: Failed to update VDO, {}", e.getMessage());
         }
         return 0;
+    }
+
+    public void insertRun(RunStats run) {
+        try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(INSERT_RUN_STATS)) {
+            populateDailyRunInsert(pstmt, run);
+            pstmt.execute();
+        } catch (SQLException e) {
+            logger.error("Failed to insert the the run statistics\n{}", e.toString());
+        }
+    }
+
+    private void populateDailyRunInsert(PreparedStatement pstmt, RunStats run) throws SQLException {
+        pstmt.setTimestamp(1, run.getRunDateTime());
+        pstmt.setInt(2, run.getTotalCveCount());
+        pstmt.setInt(3, run.getNewCveCount());
+        pstmt.setInt(4, run.getUpdatedCveCount());
+        pstmt.setInt(5, run.getNotInNvdCount());
+        pstmt.setInt(6, run.getNotInMitreCount());
+        pstmt.setInt(7, run.getNotInBothCount());
+        pstmt.setDouble(8, run.getAvgTimeGapNvd());
+        pstmt.setDouble(9, run.getAvgTimeGapMitre());
     }
 
     private void populateCVSSUpdate(PreparedStatement pstmt, CvssScore cvss) throws SQLException {

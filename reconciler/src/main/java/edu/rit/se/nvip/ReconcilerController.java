@@ -6,6 +6,7 @@ import edu.rit.se.nvip.filter.FilterReturn;
 import edu.rit.se.nvip.messenger.Messenger;
 import edu.rit.se.nvip.model.CompositeVulnerability;
 import edu.rit.se.nvip.model.RawVulnerability;
+import edu.rit.se.nvip.model.RunStats;
 import edu.rit.se.nvip.model.VulnSetWrapper;
 import edu.rit.se.nvip.process.Processor;
 import edu.rit.se.nvip.process.ProcessorFactory;
@@ -70,13 +71,18 @@ public class ReconcilerController {
         }
         logger.info("Finished reconciliation stage - sending message to PNE");
 
-        //PNE team changed their mind about streaming jobs as they finish, they now just want one big list
-        messenger.sendPNEMessage(reconciledVulns.stream()
+        Set<CompositeVulnerability> newOrUpdated = reconciledVulns.stream()
                 .filter(v -> v.getReconciliationStatus() == CompositeVulnerability.ReconciliationStatus.NEW || v.getReconciliationStatus() == CompositeVulnerability.ReconciliationStatus.UPDATED)
-                .map(CompositeVulnerability::getCveId).collect(Collectors.toList()));
+                .collect(Collectors.toSet());
+
+        //PNE team changed their mind about streaming jobs as they finish, they now just want one big list
+        messenger.sendPNEMessage(newOrUpdated.stream().map(CompositeVulnerability::getCveId).collect(Collectors.toList()));
 
         logger.info("Starting processing");
         runProcessors(reconciledVulns);
+
+        logger.info("Updating runstats");
+        dbh.insertRun(new RunStats(reconciledVulns));
 
         logger.info("Starting characterization");
         //wait for characterizer task to complete
