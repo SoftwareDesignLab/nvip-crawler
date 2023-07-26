@@ -44,6 +44,7 @@ public class DatabaseHelper {
     private static final String INSERT_CWE = "INSERT INTO weakness (cve_id, cwe_id) VALUES (?, ?)";
     private static final String DELETE_VDO = "DELETE FROM vdoCharacteristic WHERE cve_id = ?";
     private static final String DELETE_CWE = "DELETE FROM weakness WHERE cve_id = ?";
+    private static final String MITRE_COUNT = "SELECT COUNT(*) AS num_rows FROM mitredata;";
 
 
     private String GET_ALL_NEW_CVES = "SELECT cve_id, published_date, status FROM nvddata order by cve_id desc";
@@ -555,5 +556,47 @@ public class DatabaseHelper {
         pstmt.setString(1, cve_id);
         pstmt.setInt(2, cwe.getId());
 
+    }
+
+    public boolean getMitreTableCount() {
+        try (Connection conn = getConnection();
+             PreparedStatement upsertStatement = conn.prepareStatement("SELECT COUNT(*) AS num_rows FROM mitredata");
+             ResultSet resultSet = upsertStatement.executeQuery()) {
+
+            if (resultSet.next()) {
+                int rowCount = resultSet.getInt("num_rows");
+                return rowCount == 0;
+            } else {
+                // This means no rows were returned by the query (something unexpected happened).
+                logger.error("ERROR: No result returned from the query.");
+                return false;
+            }
+        } catch (SQLException e) {
+            logger.error("ERROR: Failed to get the amount of rows for mitredata table, {}", e.getMessage());
+            return false;
+        }
+    }
+    public int updateMitreData(List<MitreVulnerability> vulns){
+        StringBuilder UPDATE_MITREDATA = new StringBuilder("INSERT IGNORE INTO mitredata (cve_id, mitreStatus)\n" +
+                "VALUES\n");
+        int count = 0;
+        for(MitreVulnerability vuln : vulns){
+            if (count != vulns.size()-1) {
+                UPDATE_MITREDATA.append("('").append(vuln.getCveId()).append("', ").append(vuln.getMitreStatus()).append(")").append(",\n");
+            }else{
+                UPDATE_MITREDATA.append("('").append(vuln.getCveId()).append("', ").append(vuln.getMitreStatus()).append(")").append(" ON DUPLICATE KEY UPDATE mitreStatus = VALUES(mitreStatus);");
+            }
+            count++;
+        }
+        try (Connection conn = getConnection();
+             PreparedStatement upsertStatement = conn.prepareStatement(String.valueOf(UPDATE_MITREDATA))) {
+
+            upsertStatement.execute();
+
+            return 1;
+        } catch (SQLException e) {
+            logger.error("ERROR: Failed to update mitredata table, {}", e.getMessage());
+            return 0;
+        }
     }
 }

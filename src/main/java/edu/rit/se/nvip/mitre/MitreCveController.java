@@ -170,7 +170,7 @@ public class MitreCveController {
 	}
 
 	/**
-	 * For Deleting the CVE MITRE Reo after it's no longer needed
+	 * For Deleting the CVE MITRE Repo after it's no longer needed
 	 */
 	public void deleteMitreRepo() {
 		logger.info("Deleting MITRE Repo. This may take some time.....");
