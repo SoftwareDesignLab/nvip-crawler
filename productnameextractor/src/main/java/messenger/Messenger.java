@@ -35,10 +35,10 @@ import org.apache.logging.log4j.Logger;
 
 import env.ProductNameExtractorEnvVars;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.concurrent.*;
 
@@ -241,11 +241,34 @@ public class Messenger {
         }
     }
 
+    private static List<String> getIdsFromJson(String path) {
+        try {
+            final LinkedHashMap<String, ArrayList> data = OM.readValue(new File(path), LinkedHashMap.class);
+            return new ArrayList<>(data.keySet());
+        } catch (IOException e) {
+            return new ArrayList<>();
+        }
+    }
+
+    private static void writeIdsToFile(List<String> ids, String path) {
+        try {
+            FileWriter writer = new FileWriter(path);
+
+            for (String id: ids) {
+                writer.write(id + "\n");
+            }
+            writer.close();
+        } catch (IOException e) {
+            logger.error("Failed to write ids to file: {}", e.toString());
+        }
+    }
+
     public static void main(String[] args) {
         Messenger messenger = new Messenger();
         List<String> cveIds = new ArrayList<>();
-        cveIds.addAll(getIdsFromFile("cves-demo.csv"));
-        messenger.sendDummyMessage("CRAWLER_OUT", cveIds);
+        cveIds.addAll(getIdsFromJson("test_output.json"));
+        writeIdsToFile(cveIds, "test_ids.txt");
+//        messenger.sendDummyMessage("CRAWLER_OUT", cveIds);
 
 
 

@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+// TODO: Add doctring to this
 public class AristaParser extends AbstractCveParser {
 
     public AristaParser(String domainName) {sourceDomainName = domainName;}
