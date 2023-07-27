@@ -81,27 +81,24 @@
 
 	<!-- List of dependencies for NVIP -->
 	<dependencies>
+
+		<dependency>
+			<groupId>com.rabbitmq</groupId>
+			<artifactId>amqp-client</artifactId>
+			<version>5.16.0</version>
+		</dependency>
+
 		<dependency>
 			<groupId>io.github.bonigarcia</groupId>
 			<artifactId>webdrivermanager</artifactId>
 			<version>5.3.2</version>
 		</dependency>
+
 		<dependency>
 			<groupId>org.seleniumhq.selenium</groupId>
 			<artifactId>selenium-java</artifactId>
 			<version>4.10.0</version>
-			<!--			<exclusions>-->
-			<!--				<exclusion>-->
-			<!--					<groupId>org.seleniumhq.selenium</groupId>-->
-			<!--					<artifactId>htmlunit-driver</artifactId>-->
-			<!--				</exclusion>-->
-			<!--			</exclusions>-->
 		</dependency>
-		<!--		<dependency>-->
-		<!--			<groupId>org.seleniumhq.selenium</groupId>-->
-		<!--			<artifactId>htmlunit-driver</artifactId>-->
-		<!--			<version>2.26</version>-->
-		<!--		</dependency>-->
 
 		<!-- https://mvnrepository.com/artifact/xml-apis/xml-apis -->
 		<dependency>
