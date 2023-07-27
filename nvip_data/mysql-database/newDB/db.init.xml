@@ -352,10 +352,10 @@
             <column name="timeline" type="TEXT">
                 <constraints nullable="false"/>
             </column>
-            <column name="timeToPatch" type="VARCHAR(50)">
+            <column name="time_to_patch" type="VARCHAR(50)">
                 <constraints nullable="false"/>
             </column>
-            <column name="linesChanged" type="INT">
+            <column name="lines_changed" type="INT">
                 <constraints nullable="false"/>
             </column>
         </createTable>
