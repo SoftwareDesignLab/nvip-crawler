@@ -56,7 +56,7 @@ public class ReconcilerController {
             futures.add(future); //add that list of future comp vulns to the list
         }
         executor.shutdown();
-        //waits for for reconcile jobs
+        //waits for reconcile jobs
         for (Future<CompositeVulnerability> futureVuln : futures) { //for each list of futures of comp vulns in the list
             try {
                 CompositeVulnerability compVuln = futureVuln.get(); //get the comp vuln (get is a wait for that thread to finish)

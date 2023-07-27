@@ -26,9 +26,11 @@ package edu.rit.se.nvip.mitre;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import edu.rit.se.nvip.DatabaseHelper;
+import edu.rit.se.nvip.model.CompositeVulnerability;
 import edu.rit.se.nvip.model.MitreVulnerability;
 import edu.rit.se.nvip.model.Vulnerability;
 import edu.rit.se.nvip.utils.GitController;
+import edu.rit.se.nvip.utils.ReconcilerEnvVars;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -36,9 +38,8 @@ import org.apache.logging.log4j.Logger;
 import java.io.File;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  *
@@ -58,32 +59,8 @@ public class MitreCveController {
 
     public static void main(String[] args) {
 
-        //if it is the first run do them all: SELECT COUNT * < 0
-        if(dbh.getMitreTableCount()){
-            List<String> list = new ArrayList<>();
-            list.add("nvip_data/mitre-cve/" );
-            main = new MitreCveController("https://github.com/CVEProject/cvelist", list);
-        }else{
-            List<String> list = new ArrayList<>();
-            // Getting the year as a string
-            String currentYear = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy"));
-            list.add("nvip_data/mitre-cve/" + currentYear);
-            list.add("nvip_data/mitre-cve/" + (Integer.parseInt(currentYear)-1));
-            main = new MitreCveController("https://github.com/CVEProject/cvelist", list);
-        }
-        List<MitreVulnerability> results = main.getMitreCVEsFromGitRepo();
-        logger.info("{} cves found from MITRE", results.size());
-
-        int numReserved = 0;
-
-        for (MitreVulnerability mitreVuln: results) {
-            //logger.info(mitreVuln.getStatus());
-            numReserved = mitreVuln.getStatus() == MitreVulnerability.MitreStatus.RESERVED ? numReserved + 1: numReserved;
-        }
-
-        logger.info("Found {} reserved CVEs from MITRE", numReserved);
-
-        dbh.updateMitreData(results);
+        // this does not need to be all CVEs, just the ones we got from the reconciler
+        //main.compareReconciledCVEsWithMitre(dbh.getAllCVEsIds());
 
     }
 
@@ -135,8 +112,8 @@ public class MitreCveController {
      * updates if any. Then it recursively loads all json files in the local repo,
      * parses them and creates a CSV file at the output path.
      */
-    public List<MitreVulnerability> getMitreCVEsFromGitRepo() {
-        List<MitreVulnerability> mitreCveMap = new ArrayList<>();
+    public Set<MitreVulnerability> getMitreCVEsFromGitRepo() {
+        Set<MitreVulnerability> mitreCveMap = new HashSet<>();
         GitController gitController = new GitController(gitLocalPath, mitreGithubUrl);
         logger.info("Checking local Git CVE repo...");
 
@@ -204,7 +181,6 @@ public class MitreCveController {
                     getJSONFilesFromGitFolder(fileEntry, jsonList);
             } else {
                 try {
-
                     String filename = fileEntry.getName();
                     String extension = filename.substring(filename.lastIndexOf(".") + 1);
                     if (extension.equalsIgnoreCase("json")) {
@@ -223,5 +199,94 @@ public class MitreCveController {
         return jsonList;
     }
 
+    public void compareReconciledCVEsWithMitre(Set<CompositeVulnerability> reconciledVulns) {
+        // Get NVD CVEs
+        Set<MitreVulnerability> mitreCves = dbh.getAllMitreCVEs();
+
+        //Run comparison by iterating raw CVEs
+        int inMitre = 0;
+        int notInMitre = 0;
+        int publicCve = 0;
+        int reservedCve = 0;
+
+
+        logger.info("Comparing with NVD, this may take some time....");
+
+        // For each composite vulnerability, iterate through Mitre vulns to see if there's a match in the CVE IDs
+        // If there's a match, check status of the CVE in Mitre, otherwise mark it as not in Mitre
+        Map<String, MitreVulnerability> idToVuln = new HashMap<>();
+        mitreCves.forEach(v -> idToVuln.put(v.getCveId(), v));
+
+        for (CompositeVulnerability recVuln : reconciledVulns) {
+            if (idToVuln.containsKey(recVuln.getCveId())) {
+                switch (idToVuln.get(recVuln.getCveId()).getStatus()) {
+                    case 1:
+                        recVuln.setInMitre(1);
+                        inMitre++;
+                        publicCve++;
+                        break;
+                    case 2:
+                        reservedCve++;
+                        notInMitre++; //todo should this be considered not in mitre? (based on what Chris says)
+                        break;
+                    default: {
+                        break;
+                    }
+                }
+            }
+        }
+
+        //Print Results
+        logger.info("NVD Comparison Results\n" +
+                        "{} in Mitre\n" +
+                        "{} not in Mitre\n" +
+                        "{} Reserved by Mitre\n" +
+                        "{} Public in Mitre\n",
+                inMitre, notInMitre, reservedCve, publicCve);
+
+    }
+
+    /**
+     *
+     * @param newVulns this is a list of vulns from the getMitreCVEsFromGitRepo() method
+     * @return
+     */
+    public Set<MitreVulnerability> getNewMitreVulns(Set<MitreVulnerability> newVulns){
+        Set<MitreVulnerability> newMitreVulns = new HashSet<>(); //new mitre vuln list
+        Set<MitreVulnerability> currMitreVulns = dbh.getAllMitreCVEs(); //all current mitre cves in db
+
+        for (MitreVulnerability newVuln : newVulns){ //for each new mitre vuln
+            //if that new vuln is not in the db
+            //add it to the list
+            if(!currMitreVulns.contains(newVuln)){ //if it's new
+                newMitreVulns.add(newVuln);
+                break;
+            }
+
+        }
+        return newMitreVulns;
+    }
+
+    /**
+     *
+     * @param newVulns this is a list of vulns from the getMitreCVEsFromGitRepo() method
+     * @return
+     */
+    public Set<MitreVulnerability> getChangedMitreVulns(Set<MitreVulnerability> newVulns){
+        Set<MitreVulnerability> newMitreVulns = new HashSet<>(); //new mitre vuln list
+        Set<MitreVulnerability> currMitreVulns = dbh.getAllMitreCVEs(); //all current mitre cves in db
+        Map<String, MitreVulnerability> idToVuln = new HashMap<>();
+        currMitreVulns.forEach(v -> idToVuln.put(v.getCveId(), v));
+
+        for (MitreVulnerability newVuln : newVulns) {
+            if (idToVuln.containsKey(newVuln.getCveId())) {
+                if (idToVuln.get(newVuln.getCveId()).getMitreStatus() != newVuln.getMitreStatus()) {
+                    newMitreVulns.add(newVuln);
+                    break;
+                }
+            }
+        }
+        return newMitreVulns;
+    }
 
 }
