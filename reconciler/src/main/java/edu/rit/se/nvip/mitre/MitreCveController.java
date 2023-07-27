@@ -27,6 +27,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import edu.rit.se.nvip.DatabaseHelper;
 import edu.rit.se.nvip.model.MitreVulnerability;
+import edu.rit.se.nvip.model.Vulnerability;
 import edu.rit.se.nvip.utils.GitController;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
@@ -52,7 +53,6 @@ public class MitreCveController {
     private String mitreGithubUrl;
     private List<String> localPaths;
     private final String gitLocalPath = "nvip_data/mitre-cve/";
-    private static MitreCveController main;
     private static DatabaseHelper dbh = DatabaseHelper.getInstance();
 
 
@@ -87,9 +87,46 @@ public class MitreCveController {
 
     }
 
-    public MitreCveController(String mitreGithubUrl, List<String> localPaths) {
-        this.mitreGithubUrl = mitreGithubUrl;
-        this.localPaths = localPaths;
+    public MitreCveController() {
+        this.mitreGithubUrl = ReconcilerEnvVars.getMitreGithubUrl();
+        //if it is the first run do them all otherwise only run the last 2 years
+        if(dbh.getMitreTableCount()){
+            List<String> list = new ArrayList<>();
+            list.add("nvip_data/mitre-cve/" );
+            this.localPaths = list;
+        }else{
+            List<String> list = new ArrayList<>();
+            // Getting the year as a string
+            String currentYear = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy"));
+            list.add("nvip_data/mitre-cve/" + currentYear);
+            list.add("nvip_data/mitre-cve/" + (Integer.parseInt(currentYear)-1));
+            this.localPaths = list;
+        }
+    }
+
+    public void updateMitreTables() {
+
+        // pull mitre data
+        Set<MitreVulnerability> results = this.getMitreCVEsFromGitRepo();
+        logger.info("{} cves found from MITRE", results.size());
+
+        int numReserved = 0;
+
+        for (MitreVulnerability mitreVuln: results) {
+            //logger.info(mitreVuln.getStatus());
+            numReserved = mitreVuln.getStatus() == 2 ? numReserved + 1: numReserved;
+        }
+
+        logger.info("Found {} reserved CVEs from MITRE", numReserved);
+
+        // insert mitre data into mitredata, update status for changed ones
+        Set<MitreVulnerability> newVulns = this.getNewMitreVulns(results);
+        dbh.insertMitreData(newVulns);
+        //get changed vulns and change their status to 1 (PUBLIC)
+        Set<MitreVulnerability> changedVulns = this.getChangedMitreVulns(results);
+        dbh.updateMitreData(changedVulns);
+        // set nvdmitrestatus.in_mitre = 1 for any new mitre vulns
+        dbh.setInNvdMitreStatus(newVulns.stream().map(v -> (Vulnerability) v).collect(Collectors.toSet()));
     }
 
     /**

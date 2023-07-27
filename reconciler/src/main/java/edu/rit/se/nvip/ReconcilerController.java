@@ -77,6 +77,7 @@ public class ReconcilerController {
 
         logger.info("Starting processing");
         runProcessors(reconciledVulns);
+        dbh.insertNvdMitreStatuses(reconciledVulns);
 
         logger.info("Starting characterization");
         //wait for characterizer task to complete

@@ -615,4 +615,19 @@ public class DatabaseHelper {
 
     }
 
+    public void insertNvdMitreStatuses(Set<CompositeVulnerability> reconciledVulns) {
+        try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(INSERT_NVD_MITRE_STATUS)) {
+            for (CompositeVulnerability vuln : reconciledVulns) {
+                pstmt.setString(1, vuln.getCveId());
+                pstmt.setInt(2, vuln.getInNvd());
+                pstmt.setInt(3, vuln.getInMitre());
+                pstmt.setTimestamp(4, new Timestamp(System.currentTimeMillis())); // todo not sure if we really need this (create_date), ask chris if we can drop
+                pstmt.addBatch();
+            }
+            pstmt.executeBatch();
+        } catch (SQLException ex) {
+            logger.error("Error while inserting rows into nvdmitrestatus table\n{}", ex.toString());
+            ex.printStackTrace();
+        }
+    }
 }
