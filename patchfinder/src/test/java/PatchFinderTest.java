@@ -102,5 +102,27 @@ public class PatchFinderTest {
         }
     }
 
+    @Test
+    public void testRun2() throws IOException {
+        // Test data
+        String cveId = "CVE-2023-1001";
+        CpeGroup cpeGroup = new CpeGroup("apache", "airflow", "product_name_value", new HashMap<>());
+
+        // Create the affectedProducts map with the test data
+        Map<String, CpeGroup> affectedProducts = new HashMap<>();
+        affectedProducts.put(cveId, cpeGroup);
+
+          // Mock the PatchFinder class
+        PatchFinder patchFinder = mock(PatchFinder.class);
+
+        // Call the run method and assert the expected behavior or outcome
+        patchFinder.run(affectedProducts, PatchFinder.cveLimit);
+
+        // Assert that the affectedProducts map is empty
+        assertEquals(1, affectedProducts.size());
+    }
+
+
+
 
 }
