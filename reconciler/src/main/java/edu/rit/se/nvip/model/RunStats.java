@@ -20,7 +20,7 @@ public class RunStats {
         this.totalCveCount = reconciledVulns.size();
         this.newCveCount = filterThenCount(reconciledVulns, v -> v.getReconciliationStatus() == CompositeVulnerability.ReconciliationStatus.NEW);
         this.updatedCveCount = filterThenCount(reconciledVulns, v -> v.getReconciliationStatus() == CompositeVulnerability.ReconciliationStatus.UNCHANGED);
-        this.notInNvdCount = filterThenCount(reconciledVulns, v -> !v.doesExistInNvd());
+        this.notInNvdCount = filterThenCount(reconciledVulns, v -> v.getInNvd() == 0);
         this.notInMitreCount = 0; // todo implement this when we have mitre comparisons
         this.notInBothCount = 0; // todo
         this.avgTimeGapNvd = 0; // todo compute this when the nvd status gets checked

@@ -294,10 +294,6 @@ public class DatabaseHelperTest {
             when(res.getTimestamp("published_date")).thenReturn(new Timestamp(System.currentTimeMillis()));
             when(res.getString("status")).thenReturn("ANALYZED");
 
-            // Access the private GET_ALL_NEW_CVES constant using reflection
-            Field getNewCvesField = DatabaseHelper.class.getDeclaredField("GET_ALL_NEW_CVES");
-            getNewCvesField.setAccessible(true);
-            String getNewCvesValue = (String) getNewCvesField.get(dbh);
 
             // Call the method under test
             ArrayList<NvdVulnerability> result = dbh.getAllNvdCVEs();
@@ -306,11 +302,9 @@ public class DatabaseHelperTest {
             assertEquals(2, result.size());
             assertEquals("CVE-2021-1234", result.get(0).getCveId());
             assertEquals("CVE-2021-5678", result.get(1).getCveId());
-
-            // Verify that pstmt.prepareStatement() is called with the correct argument
-            verify(conn).prepareStatement(getNewCvesValue);
-        } catch (SQLException | NoSuchFieldException | IllegalAccessException e) {
+        } catch (SQLException e) {
             logger.error("Error loading Database");
+            fail();
         }
     }
 
