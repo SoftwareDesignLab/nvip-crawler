@@ -80,6 +80,7 @@ public class ReconcilerController {
 
         logger.info("Starting processing");
         runProcessors(reconciledVulns);
+        dbh.insertNvdMitreStatuses(reconciledVulns);
 
         logger.info("Updating runstats");
         dbh.insertRun(new RunStats(reconciledVulns));

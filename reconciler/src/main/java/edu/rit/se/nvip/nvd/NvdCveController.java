@@ -25,6 +25,7 @@ package edu.rit.se.nvip.nvd;
 
 import edu.rit.se.nvip.DatabaseHelper;
 import edu.rit.se.nvip.model.CompositeVulnerability;
+import edu.rit.se.nvip.model.MitreVulnerability;
 import edu.rit.se.nvip.model.NvdVulnerability;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -63,15 +64,15 @@ public class NvdCveController {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		NvdCveController nvd = new NvdCveController();
-		//nvd.updateNvdDataTable("https://services.nvd.nist.gov/rest/json/cves/2.0?pubStartDate=<StartDate>&pubEndDate=<EndDate>");
-		//nvd.compareReconciledCVEsWithNVD();
-		HashMap<String, NvdVulnerability> nvdCves = nvd.fetchNVDCVEs(
-				"https://services.nvd.nist.gov/rest/json/cves/2.0?pubstartDate=<StartDate>&pubEndDate=<EndDate>", 10);
-		for (String cve: nvdCves.keySet()) {
-			if (nvdCves.get(cve).getStatus() == NvdVulnerability.nvdStatus.RECEIVED)
-				System.out.println(nvdCves.get(cve));
-		}
+//		NvdCveController nvd = new NvdCveController();
+//		//nvd.updateNvdDataTable("https://services.nvd.nist.gov/rest/json/cves/2.0?pubStartDate=<StartDate>&pubEndDate=<EndDate>");
+//		//nvd.compareReconciledCVEsWithNVD();
+//		HashMap<String, NvdVulnerability> nvdCves = nvd.fetchNVDCVEs(
+//				"https://services.nvd.nist.gov/rest/json/cves/2.0?pubstartDate=<StartDate>&pubEndDate=<EndDate>", 10);
+//		for (String cve: nvdCves.keySet()) {
+//			if (nvdCves.get(cve).getStatus() == NvdVulnerability.nvdStatus.RECEIVED)
+//				System.out.println(nvdCves.get(cve));
+//		}
 	}
 
 
