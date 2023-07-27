@@ -122,6 +122,7 @@ public class NvdCveController {
 
 		for (CompositeVulnerability compVuln : reconciledVulns) {
 			if (idToVuln.containsKey(compVuln.getCveId())) {
+				NvdVulnerability nvdVuln = idToVuln.get(compVuln.getCveId());
 				switch (idToVuln.get(compVuln.getCveId()).getStatus()) {
 					case RECEIVED: {
 						received++;
@@ -142,6 +143,8 @@ public class NvdCveController {
 						analyzed++;
 						inNvd++;
 						compVuln.setInNvd(1);
+						double timeGap = Math.max((nvdVuln.getPublishDate().getTime() - compVuln.getCreateDate().getTime())/3600./1000., 0);
+						compVuln.setTimeGapNvd(timeGap);
 						break;
 					}
 					default: {

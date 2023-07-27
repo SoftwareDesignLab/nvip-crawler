@@ -24,7 +24,7 @@ public class RunStats {
         this.notInMitreCount = filterThenCount(reconciledVulns, v -> v.getInMitre() == 0);
         this.notInBothCount = filterThenCount(reconciledVulns, v -> v.getInMitre() == 0 && v.getInNvd() == 0);
         this.avgTimeGapNvd = 0; // todo compute this when the nvd status gets checked
-        this.avgTimeGapMitre = 0; // todo set this to the same as timeGapNvd, that's what the old code does because mitre records usually don't have dates
+        this.avgTimeGapMitre = this.avgTimeGapNvd; //  set this to the same as timeGapNvd, that's what the old code does because mitre records usually don't have dates
     }
 
     private int filterThenCount(Set<CompositeVulnerability> vulns, Predicate<CompositeVulnerability> filterFunc) {
