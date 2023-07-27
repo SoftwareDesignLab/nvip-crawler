@@ -47,12 +47,19 @@ public class DatabaseHelper {
     private static final String MITRE_COUNT = "SELECT COUNT(*) AS num_rows FROM mitredata;";
     private static final String MITRE_NVD_STATUS_INSERT = "INSERT INTO nvdmitrestatus (cve_id, create_date, in_nvd, in_mitre) VALUES (?, ?, ?, ?)";
     private static final String MITRE_NVD_STATUS_UPDATE = "UPDATE nvdmitrestatus SET in_nvd = ?, in_mitre = ? WHERE cve_id = ?";
-    private static final String UPDATE_MITREDATA = "INSERT IGNORE INTO mitredata (cve_id, mitreStatus) VALUES (?, ?) ON DUPLICATE KEY UPDATE mitreStatus = VALUES(mitreStatus);";
+    private static final String INSERT_MITREDATA = "INSERT INTO mitredata (cve_id, mitreStatus) VALUES (?, ?)";
+    private static final String UPDATE_MITREDATA = "UPDATE mitredata SET mitreStatus = 1 WHERE cve_id = ?";
+    private static final String UPDATE_MITRE_STATUS = "UPDATE nvdmitrestatus set in_mitre = 1 where cve_id = ?";
+    private static final String UPDATE_NVD_STATUS = "UPDATE nvdmitrestatus set in_nvd = 1 where cve_id = ?";
 
 
 
-    private String GET_ALL_NEW_CVES = "SELECT cve_id, published_date, status FROM nvddata order by cve_id desc";
-    private final String insertIntoNvdData = "INSERT INTO nvd_data (cve_id, published_date, status) VALUES (?, ?, ?)";
+    private static final String GET_ALL_NEW_CVES_NVD = "SELECT cve_id, published_date, status FROM nvddata order by cve_id desc";
+    private static final String GET_ALL_NEW_CVES_MITRE = "SELECT cve_id, status FROM mitredata order by cve_id desc";
+    private static final String GET_ALL_CVES = "SELECT cve_id FROM vulnerability order by cve_id desc";
+    private static final String INSERT_NVDDATA = "INSERT INTO nvddata (cve_id, published_date, status) VALUES (?, ?, ?)";
+    private static final String UPDATE_NVDDATA = "UPDATE nvddata SET in_nvd = 1 WHERE cve_id = ?";
+    private static final String INSERT_NVD_MITRE_STATUS = "INSERT INTO nvdmitrestatus (cve_id, in_nvd, in_mitre, created_date) VALUES (?, ?, ?)";
 
     private static final String INSERT_RUN_STATS = "INSERT INTO runhistory (run_date_time, total_cve_count, new_cve_count, updated_cve_count, not_in_nvd_count, not_in_mitre_count, not_in_both_count, avg_time_gap_nvd, avg_time_gap_mitre)" +
             "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
@@ -390,7 +397,7 @@ public class DatabaseHelper {
         ArrayList<NvdVulnerability> nvdVulnerabilities = new ArrayList<>();
 
         try (Connection connection = getConnection();
-             PreparedStatement pstmt = connection.prepareStatement(GET_ALL_NEW_CVES)) {
+             PreparedStatement pstmt = connection.prepareStatement(GET_ALL_NEW_CVES_NVD)) {
             ResultSet rs = pstmt.executeQuery();
 
             while (rs.next()) {
@@ -406,6 +413,26 @@ public class DatabaseHelper {
 
         return nvdVulnerabilities;
     }
+    public Set<MitreVulnerability> getAllMitreCVEs() {
+
+        Set<MitreVulnerability> mitreVulns = new HashSet<>();
+
+        try (Connection connection = getConnection();
+             PreparedStatement pstmt = connection.prepareStatement(GET_ALL_NEW_CVES_MITRE)) {
+            ResultSet rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                try {
+                    mitreVulns.add(new MitreVulnerability(rs.getString("cve_id"), rs.getString("status")));
+                } catch (Exception ignore) {}
+
+            }
+        } catch (Exception e) {
+            logger.error("ERROR: Failed to grab NVD CVEs from nvddata table\n{}", e.toString());
+        }
+
+        return mitreVulns;
+    }
 
 
     /**
@@ -413,15 +440,19 @@ public class DatabaseHelper {
      * @param nvdCve
      * @return
      */
-    public int insertNvdCve(NvdVulnerability nvdCve) {
+    public int updateNvdData(NvdVulnerability nvdCve, boolean isUpdate) {
 
         try (Connection connection = getConnection();
-             PreparedStatement pstmt = connection.prepareStatement(insertIntoNvdData);) {
-
-            pstmt.setString(1, nvdCve.getCveId());
-            pstmt.setTimestamp(2, nvdCve.getPublishDate());
-            pstmt.setString(3, nvdCve.getStatus().toString());
-            pstmt.execute();
+             PreparedStatement pstmt = connection.prepareStatement(INSERT_NVDDATA);
+             PreparedStatement updateStmt = connection.prepareStatement(UPDATE_NVDDATA)) {
+            if(!isUpdate) {
+                pstmt.setString(1, nvdCve.getCveId());
+                pstmt.setTimestamp(2, nvdCve.getPublishDate());
+                pstmt.setString(3, nvdCve.getStatus().toString());
+                pstmt.execute();
+            }else{
+                updateStmt.setString(1, nvdCve.getCveId());
+            }
 
             logger.info("Successfully Inserted CVE {} with Published Date {} and Status {} into nvd_data", nvdCve.getCveId(), nvdCve.getPublishDate(), nvdCve.getStatus());
 
@@ -580,18 +611,35 @@ public class DatabaseHelper {
             return false;
         }
     }
-    public int updateMitreData(List<MitreVulnerability> vulns){
+    public int insertMitreData(Set<MitreVulnerability> vulns){
 
         try (Connection conn = getConnection();
-             PreparedStatement upsertStatement = conn.prepareStatement(String.valueOf(UPDATE_MITREDATA))) {
+             PreparedStatement insertStatement = conn.prepareStatement(INSERT_MITREDATA)) {
 
             for(MitreVulnerability vuln : vulns){
-                upsertStatement.setString(1, vuln.getCveId());
-                upsertStatement.setInt(2, vuln.getMitreStatus());
-                upsertStatement.addBatch();
-            }
-            upsertStatement.execute();
+                insertStatement.setString(1, vuln.getCveId());
+                insertStatement.setInt(2, vuln.getMitreStatus());
+                insertStatement.addBatch();
 
+            }
+            insertStatement.executeBatch();
+            return 1;
+        } catch (SQLException e) {
+            logger.error("ERROR: Failed to update mitredata table, {}", e.getMessage());
+            return 0;
+        }
+    }
+    public int updateMitreData(Set<MitreVulnerability> vulns){
+
+        try (Connection conn = getConnection();
+             PreparedStatement insertStatement = conn.prepareStatement(UPDATE_MITREDATA)) {
+
+            for(MitreVulnerability vuln : vulns){
+                insertStatement.setString(1, vuln.getCveId());
+                insertStatement.addBatch();
+
+            }
+            insertStatement.executeBatch();
             return 1;
         } catch (SQLException e) {
             logger.error("ERROR: Failed to update mitredata table, {}", e.getMessage());
@@ -599,33 +647,31 @@ public class DatabaseHelper {
         }
     }
 
-    public int updateMitreNVDStatus(CompositeVulnerability vuln){
-        boolean isUpdate;
-        switch (vuln.getReconciliationStatus()) {
-            case UPDATED:
-                isUpdate = true;
-                break;
-            case NEW:
-                isUpdate = false;
-                break;
-            default:
-                return 0;
-        }
-
+    public int setInNvdMitreStatus(Set<Vulnerability> newVulns) {
         try (Connection conn = getConnection();
-             PreparedStatement insertStatement = conn.prepareStatement(MITRE_NVD_STATUS_INSERT);
-             PreparedStatement updateStatement = conn.prepareStatement(MITRE_NVD_STATUS_UPDATE)) {
-            if(isUpdate){
-                populateNvdMitreInsert(insertStatement, vuln);
-            }else{
-                populateNvdMitreUpdate(updateStatement, vuln);
+             PreparedStatement pstmtMitre = conn.prepareStatement(UPDATE_MITRE_STATUS);
+             PreparedStatement pstmtNvd = conn.prepareStatement(UPDATE_NVD_STATUS)) {
+            for(Vulnerability vuln : newVulns){
+                if (vuln instanceof MitreVulnerability) {
+                    pstmtMitre.setString(1, vuln.getCveId());
+                    pstmtMitre.addBatch();
+                }else if (vuln instanceof NvdVulnerability){
+                    pstmtNvd.setString(1, vuln.getCveId());
+                    pstmtNvd.addBatch();
+                }else{
+                    throw new SQLException();
+                }
             }
+            pstmtMitre.executeBatch();
+            pstmtNvd.executeBatch();
             return 1;
-        } catch (SQLException e) {
-            logger.error("ERROR: Failed to get the amount of rows for mitredata table, {}", e.getMessage());
+        }
+        catch (SQLException e) {
+            logger.error("ERROR: Failed to update mitre status in nvdmitrestatus table, {}", e.getMessage());
             return 0;
         }
     }
+
     private void populateNvdMitreInsert(PreparedStatement pstmt, CompositeVulnerability vuln) throws SQLException {
         pstmt.setString(1, vuln.getCveId());
         pstmt.setTimestamp(2, vuln.getCreateDate());
@@ -637,6 +683,28 @@ public class DatabaseHelper {
         pstmt.setInt(2, vuln.getInMitre());
         pstmt.setString(3, vuln.getCveId());
 
+    }
+
+    public Set<String> getAllCVEsIds() {
+
+        Set<String> vulnIds = new HashSet<>();
+
+        try (Connection connection = getConnection();
+             PreparedStatement pstmt = connection.prepareStatement(GET_ALL_CVES)) {
+            ResultSet rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+
+                try {
+                    vulnIds.add(rs.getString("cve_id"));
+                } catch (Exception ignore) {
+                }
+
+            }
+        } catch (Exception e) {
+            logger.error("ERROR: Failed to grab NVD CVEs from vulnerability table\n{}", e.toString());
+        }
+        return vulnIds;
     }
 
     public void insertNvdMitreStatuses(Set<CompositeVulnerability> reconciledVulns) {

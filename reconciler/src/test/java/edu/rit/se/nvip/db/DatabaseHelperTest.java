@@ -320,7 +320,7 @@ public class DatabaseHelperTest {
         NvdVulnerability nvdCve = new NvdVulnerability("CVE-2023-1234", new Timestamp(System.currentTimeMillis()), "Analyzed");
 
         // Call the insertNvdCve method
-        int result = dbh.insertNvdCve(nvdCve);
+        int result = dbh.updateNvdData(nvdCve, false);
 
         // Verify that pstmt.setString() and pstmt.setTimestamp() are called with the correct arguments
         verify(pstmt).setString(1, "CVE-2023-1234");

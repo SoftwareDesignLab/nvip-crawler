@@ -50,6 +50,8 @@ import java.util.*;
 
 public class NvdCveController {
 	private final Logger logger = LogManager.getLogger(NvdCveController.class);
+
+	private static DatabaseHelper dbh = DatabaseHelper.getInstance();
 	private static DatabaseHelper databaseHelper;
 	private String startDate;
 	private String endDate;
@@ -97,9 +99,9 @@ public class NvdCveController {
 	 *
 	 * Calculates # of CVEs not in NVD, as well as average time gaps
 	 *
-	 * @param vulns
+	 * @param reconciledVulns
 	 */
-	public Set<CompositeVulnerability> compareReconciledCVEsWithNVD(Set<CompositeVulnerability> vulns) {
+	public void compareReconciledCVEsWithNVD(Set<CompositeVulnerability> reconciledVulns) {
 		// Get NVD CVEs
 		ArrayList<NvdVulnerability> nvdCves = databaseHelper.getAllNvdCVEs();
 
@@ -115,54 +117,40 @@ public class NvdCveController {
 
 		logger.info("Comparing with NVD, this may take some time....");
 
-		// For each composite vulnerability, iterate through NVD vulns to see if there's a match in the CVE IDs
-		// If there's a match, check status of the CVE in NVD, otherwise mark it as not in NVD
-		for (CompositeVulnerability vuln: vulns) {
-			boolean checked = false;
+		Map<String, NvdVulnerability> idToVuln = new HashMap<>();
+		nvdCves.forEach(v -> idToVuln.put(v.getCveId(), v));
 
-			for (NvdVulnerability nvdCve: nvdCves) {
-
-				if (checked)
-					break;
-
-				if (nvdCve.getCveId().equals(vuln.getCveId())) {
-					switch (nvdCve.getStatus()) {
-						case RECEIVED: {
-							received++;
-							notInNvd++;
-							checked = true;
-							break;
-						}
-						case UNDERGOINGANALYSIS: {
-							underGoingAnalysis++;
-							notInNvd++;
-							checked = true;
-							break;
-						}
-						case AWAITINGANALYSIS: {
-							awaitingAnalysis++;
-							notInNvd++;
-							checked = true;
-							break;
-						}
-						case ANALYZED: {
-							analyzed++;
-							inNvd++;
-							checked = true;
-							vuln.setNvdStatus(CompositeVulnerability.NvdStatus.IN_NVD);
-							break;
-						}
-						default: {
-							break;
-						}
+		for (CompositeVulnerability compVuln : reconciledVulns) {
+			if (idToVuln.containsKey(compVuln.getCveId())) {
+				switch (idToVuln.get(compVuln.getCveId()).getStatus()) {
+					case RECEIVED: {
+						received++;
+						notInNvd++;
+						break;
+					}
+					case UNDERGOINGANALYSIS: {
+						underGoingAnalysis++;
+						notInNvd++;
+						break;
+					}
+					case AWAITINGANALYSIS: {
+						awaitingAnalysis++;
+						notInNvd++;
+						break;
+					}
+					case ANALYZED: {
+						analyzed++;
+						inNvd++;
+						compVuln.setInNvd(1);
+						break;
+					}
+					default: {
+						break;
 					}
 				}
-			}
-
-			if (!checked) {
+			} else {
 				notInNvd++;
 			}
-
 		}
 
 		//Print Results
@@ -175,8 +163,6 @@ public class NvdCveController {
 				"{} awaiting analysis in NVD",
 				inNvd, notInNvd, analyzed, received, underGoingAnalysis, awaitingAnalysis);
 
-
-		return vulns;
 	}
 
 	/**
@@ -300,7 +286,7 @@ public class NvdCveController {
 		int totalUpdated = 0;
 
 		for (NvdVulnerability NvdCve: NvdCves) {
-			totalUpdated += databaseHelper.insertNvdCve(NvdCve);
+			totalUpdated += databaseHelper.updateNvdData(NvdCve, false);
 		}
 
 		logger.info("Inserted {} new CVEs from NVD into NVD Database Table", totalUpdated);

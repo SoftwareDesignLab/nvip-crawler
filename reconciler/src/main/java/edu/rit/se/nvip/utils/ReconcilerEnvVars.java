@@ -34,6 +34,8 @@ public class ReconcilerEnvVars extends Properties {
     private static String rabbitUsername;
     private static String rabbitPassword;
 
+    private static String mitreGithubUrl;
+
     /**
      * Ensures vars are loaded before anybody else uses this class. They can be reloaded by calling any public load method manually
      */
@@ -148,6 +150,8 @@ public class ReconcilerEnvVars extends Properties {
                 case RABBIT_PASSWORD:
                     rabbitPassword = addEnvvarString(envName, envVar, "guest");
                     break;
+                case MITRE_GITHUB_URL:
+                    mitreGithubUrl = addEnvvarString(envName, envVar, "https://github.com/CVEProject/cvelist");
             }
         }
     }
@@ -259,6 +263,7 @@ public class ReconcilerEnvVars extends Properties {
     public static String getRabbitPassword() {
         return rabbitPassword;
     }
+    public static String getMitreGithubUrl() {return mitreGithubUrl;}
 
 
     private static String addEnvvarString(String name, String value, String defaultValue) {
