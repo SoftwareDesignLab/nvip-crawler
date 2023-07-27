@@ -273,10 +273,10 @@
             <column name="created_date" type="DATETIME">
                 <constraints nullable="false"/>
             </column>
-            <column name="status_nvd" type="TINYTEXT">
+            <column name="exists_nvd" type="INT">
                 <constraints nullable="false"/>
             </column>
-            <column name="status_mitre" type="TINYTEXT">
+            <column name="exists_mitre" type="INT">
                 <constraints nullable="false"/>
             </column>
         </createTable>
