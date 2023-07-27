@@ -42,16 +42,19 @@ import static org.mockito.Mockito.*;
 public class PatchFinderTest {
 
     @Test
-    public void testFindPatchesMultiThreaded() {
+    public void testFindPatchesMultiThreaded2() {
         // Create a sample input for possiblePatchSources
         Map<String, ArrayList<String>> possiblePatchSources = new HashMap<>();
         ArrayList<String> patchSources1 = new ArrayList<>();
         patchSources1.add("https://github.com/apache/airflow");
         possiblePatchSources.put("CVE-2023-1001", patchSources1);
+
+        // Mock the ThreadPoolExecutor
         ThreadPoolExecutor e = mock(ThreadPoolExecutor.class);
 
-        //clear the patch commits
+        // Clear the patch commits
         PatchFinder.getPatchCommits().clear();
+
         // Call the method
         PatchFinder.findPatchesMultiThreaded(possiblePatchSources);
 
@@ -59,10 +62,23 @@ public class PatchFinderTest {
         // For example, check if the repos are cleared
         assertTrue(new File(PatchFinder.clonePath).exists());
 
-        //check the patch commits
+        // Check the patch commits
         assertEquals(24, PatchFinder.getPatchCommits().size());
+    }
 
-        // Add more assertions based on your requirements
+
+    @Test
+    public void testFindPatchesMultiThreaded() {
+        // Create a sample input for possiblePatchSources
+        Map<String, ArrayList<String>> possiblePatchSources = new HashMap<>();
+        ArrayList<String> patchSources1 = new ArrayList<>();
+        patchSources1.add("https://github.com/apache/airflow");
+        possiblePatchSources.put("CVE-2023-1001", patchSources1);
+        // Call the findPatchesMultiThreaded method and assert the expected behavior or outcome
+        PatchFinder.findPatchesMultiThreaded(possiblePatchSources);
+        // Assert that the affectedProducts map is empty
+        assertEquals(1, possiblePatchSources.size());
+
     }
 
     @Test
