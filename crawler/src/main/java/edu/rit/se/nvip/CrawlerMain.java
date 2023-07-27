@@ -214,7 +214,8 @@ public class CrawlerMain {
         addEnvvarString(CrawlerMain.dataVars,"mqHost", mqHost, "localhost",
                 "WARNING: MQ Host not defined in MQ_HOST, using 'localhost' as default");
         addEnvvarInt(CrawlerMain.dataVars,"mqPort", mqPort, 5762,
-                "WARNING: MQ Port not defined in MQ_PORT, using 5762 as default");
+                "WARNING: MQ Port not defined in MQ_PORT, using 5762 as default",
+                "MQ_PORT");
         addEnvvarString(CrawlerMain.dataVars,"mqQueueName", mqQueueName, "raw_data_queue",
                 "WARNING: MQ Queue Name not defined in MQ_QUEUE_NAME, using 'raw_data_queue' as default");
 
@@ -557,7 +558,7 @@ public class CrawlerMain {
             String queueName = dataVars.get("mqQueueName") + "";
             channel.queueDeclare(queueName, false, false, false, null);
             logger.info("Queue '{}' created successfully.", queueName);
-            channel.basicPublish("", queueName, null, messageBody.toJSONString().getBytes());
+            channel.basicPublish("", queueName, null, cveArray.toJSONString().getBytes());
             logger.info("Message to Reconciler sent successfully.");
 
             channel.close();
