@@ -40,8 +40,8 @@ import org.eclipse.jgit.lib.StoredConfig;
 public class GitController {
 	private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
 
-	private String localPath;
-	private String remotePath;
+	private final String localPath;
+	private final String remotePath;
 
 	public GitController(String localPath, String remotePath) {
 		super();
@@ -56,7 +56,7 @@ public class GitController {
 	 */
 	public boolean pullRepo() {
 		logger.info("Checking for updates for {} repo!...", localPath);
-		try (FileRepository localRepo = new FileRepository(localPath + "/.git");) {
+		try (FileRepository localRepo = new FileRepository(localPath + "/.git")) {
 			try (Git git = new Git(localRepo)) {
 				PullCommand pull = git.pull();
 				pull.call();
@@ -80,7 +80,8 @@ public class GitController {
 		Git git = null;
 		File localFileDir;
 		try {
-			logger.info("{} repository does not exist! Cloning repo now, this will take some time, please wait!...", localPath);
+			final String[] pathParts = localPath.split("/");
+			logger.info("{} repository does not exist! Cloning repo now, this will take some time...", pathParts[pathParts.length - 1]);
 			localFileDir = new File(localPath);
 			CloneCommand cloneCommand = Git.cloneRepository();
 			cloneCommand.setURI(remotePath);
@@ -100,6 +101,7 @@ public class GitController {
 		} finally {
 			if(git != null) git.close();
 		}
+
 		return true;
 	}
 
@@ -107,12 +109,12 @@ public class GitController {
 	 * For deleting the repo at the assigned location
 	 */
 	public void deleteRepo() {
-		logger.info("Deleting local repo @ {}", localPath);
+		logger.info("Deleting local repo '{}'...", localPath);
 		try { // TODO: Throwing AccessDeniedExceptions
 			FileUtils.delete(new File(localPath), FileUtils.RECURSIVE);
-			logger.info("Successfully deleted repo @ {}", localPath);
+			logger.info("Successfully deleted repo '{}'", localPath);
 		} catch (Exception e) {
-			logger.error("ERROR: Failed to delete repo @ {}\n{}", localPath, e);
+			logger.error("ERROR: Failed to delete repo '{}': {}", localPath, e);
 		}
 	}
 

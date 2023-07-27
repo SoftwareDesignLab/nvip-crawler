@@ -57,6 +57,9 @@
             <column name="source_type" type="VARCHAR(20)" defaultValue="other">
                 <constraints nullable="false" />
             </column>
+            <column name="parser_type" type="VARCHAR(30)">
+                <constraints nullable="false" />
+            </column>
         </createTable>
 
         <createIndex
@@ -270,10 +273,10 @@
             <column name="created_date" type="DATETIME">
                 <constraints nullable="false"/>
             </column>
-            <column name="status_nvd" type="TINYTEXT">
+            <column name="exists_nvd" type="INT">
                 <constraints nullable="false"/>
             </column>
-            <column name="status_mitre" type="TINYTEXT">
+            <column name="exists_mitre" type="INT">
                 <constraints nullable="false"/>
             </column>
         </createTable>
@@ -318,7 +321,9 @@
             baseColumnNames="cve_id"
             referencedTableName="vulnerability"
             referencedColumnNames="cve_id"
-            constraintName="patch_source_cve_id_fk"/>
+            constraintName="patch_source_cve_id_fk"
+            onDelete="CASCADE"
+        />
     </changeSet>
 
     <changeSet author="patchcommit" id="patchcommit">
@@ -329,13 +334,28 @@
             <column name="source_url_id" type="INT">
                 <constraints nullable="false"/>
             </column>
-            <column name="commit_url" type="TINYTEXT">
+            <column name="cve_id" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="commit_sha" type="TINYTEXT">
                 <constraints nullable="false"/>
             </column>
             <column name="commit_date" type="DATETIME">
                 <constraints nullable="false"/>
             </column>
             <column name="commit_message" type="VARCHAR(1000)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="uni_diff" type="VARCHAR(500)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="timeline" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="time_to_patch" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="lines_changed" type="INT">
                 <constraints nullable="false"/>
             </column>
         </createTable>

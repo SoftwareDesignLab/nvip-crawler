@@ -28,6 +28,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * abstract representation of a filtering stage
@@ -37,27 +38,39 @@ public abstract class Filter {
     protected final Logger logger = LogManager.getLogger(getClass().getSimpleName());
 
     /**
-     * Checks to see if a RawVulnerability contains a well-formed description
+     * Checks to see if a RawVulnerability contains a well-formed description. Implementations must not alter the input
      * @param rawVuln A RawVulnerability in need of verification
      * @return true iff the RawVulnerability is well-formed
      */
     public abstract boolean passesFilter(RawVulnerability rawVuln);
 
     /**
-     * Runs each RawVulnerability through the filter, removing the rejects from the list and returning the rejects as their own list
+     * Runs each RawVulnerability through the filter and updates their FilterStatus accordingly
      * @param rawVulns A list of RawVulnerabilities in need of description verification
      * @return Set of rejected RawVulnerabilities
      */
-    public Set<RawVulnerability> filterAll(Set<RawVulnerability> rawVulns) {
-        Set<RawVulnerability> removed = new HashSet<>();
-        Iterator<RawVulnerability> iterator = rawVulns.iterator();
-        while (iterator.hasNext()) {
-            RawVulnerability vuln = iterator.next();
-            if (!passesFilter(vuln)) {
-                iterator.remove();
-                removed.add(vuln);
-            }
+    public void filterAll(Set<RawVulnerability> rawVulns) {
+        for (RawVulnerability vuln : rawVulns) {
+            updateFilterStatus(vuln);
         }
-        return removed;
+    }
+
+    public Set<RawVulnerability> filterAllAndSplit(Set<RawVulnerability> rawVulns) {
+        filterAll(rawVulns);
+        Set<RawVulnerability> rejects = rawVulns.stream().filter(v -> v.getFilterStatus() == RawVulnerability.FilterStatus.FAILED).collect(Collectors.toSet());
+        rawVulns.removeAll(rejects);
+        return rejects;
+    }
+
+    protected void updateFilterStatus(RawVulnerability vuln) {
+        // already failed earlier in the pipeline? don't bother filtering any more
+        if (vuln.getFilterStatus() == RawVulnerability.FilterStatus.FAILED) {
+            return;
+        }
+        if (passesFilter(vuln)) {
+            vuln.setFilterStatus(RawVulnerability.FilterStatus.PASSED);
+        } else {
+            vuln.setFilterStatus(RawVulnerability.FilterStatus.FAILED);
+        }
     }
 }

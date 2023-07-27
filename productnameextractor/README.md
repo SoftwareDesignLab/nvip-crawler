@@ -53,7 +53,7 @@ The product name extractor component of NVIP Crawler identifies affected product
 
 * During the configuration of MySQL Server, when prompted for a password (for user "root"), make sure you use the "same password" that you have at the **HIKARI_PASSWORD** Environment Variable.
 
-## 2. Create Database (via MySQL Workbench)
+## 2. Create Database (via MySQL Workbench & Liquibase)
 
 * After the setup process is finished open "MySQL Workbench" program (Click start and search for "MySQL Workbench" to find it).
 
@@ -61,8 +61,12 @@ The product name extractor component of NVIP Crawler identifies affected product
 * Click on "Database/Connect To Database" menu on MySQL Workbench and Click "Ok". Enter the password you set for user "root" earlier. You should be connected to the MySQL database.
 
 
-* Open a new query editor in MySQL Workbench and execute the script provided at '\nvip_data\mysql-database\CreateAndInitializeDb.sql' to create and initialize the MySQL database.
-> Please make sure the MySQL username and password parameters in the
+* Once you have a database created, run this command in the mysql-database/newDB directory:
+
+> liquibase --changeLogFile=db.init.xml --classpath=./mysql-connector-j-8.0.33.jar --url="jdbc:mysql://localhost:3306/DB Name" --username=USERNAME --password=PASSWORD update
+
+
+> **NOTE**: Please make sure the MySQL username and password parameters in the
 > environment variables are updated! (Refer to **Environment Variables** section for specific DB parameters needed)
 
 ## 3. Build & Package
@@ -85,8 +89,9 @@ After the build process, the output jar will be located under the "target" direc
 
 ## 4. Create a Configuration to run the Product Name Extractor (IntelliJ)
 
-> **NOTE:** Intellij does not read env.list files automatically, the contents of the patch finder env.list file can be copied directly into the menu shown in the image below. See **Environment Variables** for more information. <img * **src**: Placeholder
-	- Default value:"src/main/resources/docs/configMenu.png">
+> **NOTE:** Intellij does not read env.list files automatically, the contents of the patch finder env.list file can be copied directly into the menu shown in the image below. See **Environment Variables** for more information. 
+> 
+> ![Screenshot](nvip_data/docs/configMenu.png)
 
 
 

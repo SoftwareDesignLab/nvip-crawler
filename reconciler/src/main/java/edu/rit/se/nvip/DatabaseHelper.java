@@ -3,10 +3,10 @@ package edu.rit.se.nvip;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import com.zaxxer.hikari.pool.HikariPool;
-import edu.rit.se.nvip.model.CompositeDescription;
-import edu.rit.se.nvip.model.CompositeVulnerability;
-import edu.rit.se.nvip.model.NvdVulnerability;
-import edu.rit.se.nvip.model.RawVulnerability;
+import edu.rit.se.nvip.characterizer.CveCharacterizer;
+import edu.rit.se.nvip.cwe.CWE;
+import edu.rit.se.nvip.model.*;
+import edu.rit.se.nvip.utils.ReconcilerEnvVars;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import java.sql.*;
@@ -21,8 +21,8 @@ public class DatabaseHelper {
     private static DatabaseHelper databaseHelper = null;
 
     private static final String GET_JOBS = "SELECT * FROM cvejobtrack";
-    private static final String GET_RAW_BY_CVE_ID = "SELECT * FROM rawdescription WHERE cve_id = ? AND is_garbage = 0";
-    private static final String MARK_GARBAGE = "UPDATE rawdescription SET is_garbage = ? WHERE raw_description_id = ?";
+    private static final String GET_RAW_BY_CVE_ID = "SELECT * FROM rawdescription WHERE cve_id = ?";
+    private static final String UPDATE_FILTER_STATUS = "UPDATE rawdescription SET is_garbage = ? WHERE raw_description_id = ?";
     private static final String GET_VULN = "SELECT v.*, d.description_id, d.description, d.created_date AS description_date, d.gpt_func " +
             "FROM vulnerability AS v INNER JOIN description AS d ON v.description_id = d.description_id WHERE v.cve_id = ?";
     private static final String GET_USED_RAW_VULNS = "SELECT rd.* " +
@@ -38,9 +38,20 @@ public class DatabaseHelper {
     private static final String INSERT_JT = "INSERT INTO rawdescriptionjt (description_id, raw_description_id) VALUES (?, ?)";
     private static final String INSERT_DESCRIPTION = "INSERT INTO description (description, created_date, gpt_func, cve_id) VALUES (?, ?, ?, ?)";
     private static final String DELETE_JOB = "DELETE FROM cvejobtrack WHERE cve_id = ?";
+    private static final String UPDATE_CVSS = "UPDATE cvss SET base_score = ?, impact_score = ? WHERE cve_id = ?";
+    private static final String INSERT_CVSS = "INSERT INTO cvss (base_score, impact_score, cve_id, create_date) VALUES (?, ?, ?, ?)";
+    private static final String INSERT_VDO = "INSERT INTO vdoCharacteristic (vdo_label, vdo_noun_group, vdo_confidence, cve_id, created_date) VALUES (?, ?, ?, ?, ?)";
+    private static final String INSERT_CWE = "INSERT INTO weakness (cve_id, cwe_id) VALUES (?, ?)";
+    private static final String DELETE_VDO = "DELETE FROM vdoCharacteristic WHERE cve_id = ?";
+    private static final String DELETE_CWE = "DELETE FROM weakness WHERE cve_id = ?";
+
 
     private String GET_ALL_NEW_CVES = "SELECT cve_id, published_date, status FROM nvddata order by cve_id desc";
     private final String insertIntoNvdData = "INSERT INTO nvd_data (cve_id, published_date, status) VALUES (?, ?, ?)";
+
+    private static final String INSERT_RUN_STATS = "INSERT INTO runhistory (run_date_time, total_cve_count, new_cve_count, updated_cve_count, not_in_nvd_count, not_in_mitre_count, not_in_both_count, avg_time_gap_nvd, avg_time_gap_mitre)" +
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
 
     public static synchronized DatabaseHelper getInstance() {
         if (databaseHelper == null) {
@@ -50,7 +61,7 @@ public class DatabaseHelper {
         return databaseHelper;
     }
 
-    public static synchronized DatabaseHelper getInstance(String url, String username, String password)  {
+    public static synchronized DatabaseHelper getInstance(String url, String username, String password) {
         if (databaseHelper == null) {
             HikariConfig config = createHikariConfigFromArgs(url, username, password);
             databaseHelper = new DatabaseHelper(config);
@@ -86,16 +97,15 @@ public class DatabaseHelper {
     }
 
     protected static HikariConfig createHikariConfigFromEnvironment() {
-
-        String url = System.getenv("HIKARI_URL");
+        String url = ReconcilerEnvVars.getHikariURL();
         HikariConfig hikariConfig;
 
-        if (url != null){
+        if (url != null) {
             logger.info("Creating HikariConfig with url={}", url);
             hikariConfig = new HikariConfig();
             hikariConfig.setJdbcUrl(url);
-            hikariConfig.setUsername(System.getenv("HIKARI_USER"));
-            hikariConfig.setPassword(System.getenv("HIKARI_PASSWORD"));
+            hikariConfig.setUsername(ReconcilerEnvVars.getHikariUser());
+            hikariConfig.setPassword(ReconcilerEnvVars.getHikariPassword());
 
             System.getenv().entrySet().stream()
                     .filter(e -> e.getKey().startsWith("HIKARI_"))
@@ -119,6 +129,10 @@ public class DatabaseHelper {
         return dataSource.getConnection();
     }
 
+    /**
+     * Tests the database connection
+     * @return
+     */
     public boolean testDbConnection() {
         try {
             Connection conn = dataSource.getConnection();
@@ -133,6 +147,10 @@ public class DatabaseHelper {
         return false;
     }
 
+    /**
+     * Gets jobs
+     * @return
+     */
     public Set<String> getJobs() {
         Set<String> cveIds = new HashSet<>();
         try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(GET_JOBS)) {
@@ -148,6 +166,11 @@ public class DatabaseHelper {
         return cveIds;
     }
 
+    /**
+     * Gets a set of Raw Vulnerabilities
+     * @param cveId
+     * @return
+     */
     public Set<RawVulnerability> getRawVulnerabilities(String cveId) {
         Set<RawVulnerability> rawVulns = new HashSet<>();
         try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(GET_RAW_BY_CVE_ID)) {
@@ -165,10 +188,14 @@ public class DatabaseHelper {
         return rawVulns;
     }
 
-    public void markGarbage(Set<RawVulnerability> rejectedRawVulns) {
-        try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(MARK_GARBAGE)) {
+    /**
+     *
+     * @param rejectedRawVulns
+     */
+    public void updateFilterStatus(Set<RawVulnerability> rejectedRawVulns) {
+        try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(UPDATE_FILTER_STATUS)) {
             for (RawVulnerability vuln : rejectedRawVulns) {
-                pstmt.setInt(1, 1);
+                pstmt.setInt(1, vuln.getFilterStatus().value);
                 pstmt.setInt(2, vuln.getId());
                 pstmt.addBatch();
             }
@@ -290,14 +317,14 @@ public class DatabaseHelper {
             // execute atomically
             conn.commit();
         } catch (SQLException ex) {
-            logger.error("ERROR while {} {}", isUpdate? "updating" : "inserting", vuln.getCveId());
+            logger.error("ERROR while {} {}", isUpdate ? "updating" : "inserting", vuln.getCveId());
             logger.error(ex);
             return -1;
         }
         return 1;
     }
 
-    private void populateDescriptionInsert(PreparedStatement descriptionStatement, CompositeVulnerability vuln) throws SQLException{
+    private void populateDescriptionInsert(PreparedStatement descriptionStatement, CompositeVulnerability vuln) throws SQLException {
         descriptionStatement.setString(1, vuln.getDescription());
         descriptionStatement.setTimestamp(2, vuln.getDescriptionCreateDate());
         descriptionStatement.setString(3, vuln.getBuildString());
@@ -338,7 +365,9 @@ public class DatabaseHelper {
                     res.getTimestamp("published_date"),
                     res.getTimestamp("last_modified_date"),
                     res.getTimestamp("published_date"),
-                    res.getString("source_url")
+                    res.getString("source_url"),
+                    res.getString("source_type"),
+                    res.getInt("is_garbage") // todo change this column to "filter_status" to reflect its new purpose
             );
         } catch (SQLException ex) {
             logger.error(ex);
@@ -362,7 +391,7 @@ public class DatabaseHelper {
             while (rs.next()) {
 
                 try {
-                    nvdVulnerabilities.add(new NvdVulnerability(rs.getString("cve_id"), rs.getTimestamp("published_date").toLocalDateTime(), rs.getString("status")));
+                    nvdVulnerabilities.add(new NvdVulnerability(rs.getString("cve_id"), rs.getTimestamp("published_date"), rs.getString("status")));
                 } catch (Exception ignore) {}
 
             }
@@ -386,7 +415,7 @@ public class DatabaseHelper {
 
             pstmt.setString(1, nvdCve.getCveId());
             pstmt.setTimestamp(2, nvdCve.getPublishDate());
-            pstmt.setString(3, nvdCve.getStatus());
+            pstmt.setString(3, nvdCve.getStatus().toString());
             pstmt.execute();
 
             logger.info("Successfully Inserted CVE {} with Published Date {} and Status {} into nvd_data", nvdCve.getCveId(), nvdCve.getPublishDate(), nvdCve.getStatus());
@@ -399,4 +428,132 @@ public class DatabaseHelper {
         return 0;
     }
 
+    /**
+     * updates (or inserts) CVSS score of given vuln
+     *
+     * @param vuln
+     * @return
+     */
+    public int updateCVSS(CompositeVulnerability vuln) {
+        boolean isUpdate;
+        switch (vuln.getReconciliationStatus()) {
+            case UPDATED:
+                isUpdate = true;
+                break;
+            case NEW:
+                isUpdate = false;
+                break;
+            default:
+                return 0;
+        }
+        try (Connection conn = getConnection();
+             PreparedStatement upsertStatement = conn.prepareStatement(isUpdate ? UPDATE_CVSS: INSERT_CVSS)) {
+
+            if (isUpdate) {
+                populateCVSSUpdate(upsertStatement, vuln.getCvssScoreInfo());
+            } else {
+                populateCVSSInsert(upsertStatement, vuln.getCvssScoreInfo());
+            }
+
+            upsertStatement.execute();
+
+            return 1;
+
+        } catch (SQLException e) {
+            logger.error("ERROR: Failed to update CVSS, {}", e.getMessage());
+        }
+        return 0;
+    }
+    /**
+     * updates (or inserts) vdo info of given vuln
+     *
+     * @param vuln
+     * @return
+     */
+    public int updateVDO(CompositeVulnerability vuln) {
+        try (Connection conn = getConnection();
+             PreparedStatement insertStatement = conn.prepareStatement(INSERT_VDO);
+             PreparedStatement deleteStatement = conn.prepareStatement(DELETE_VDO)) {
+            conn.setAutoCommit(false);
+            deleteStatement.setString(1, vuln.getCveId());
+            deleteStatement.execute();
+            for (VdoCharacteristic vdo : vuln.getVdoCharacteristic()) {
+                populateVDOInsert(insertStatement, vdo);
+                insertStatement.addBatch();
+            }
+            insertStatement.executeBatch();
+            conn.commit();
+            return 1;
+        } catch (SQLException e) {
+            logger.error("ERROR: Failed to update VDO, {}", e.getMessage());
+        }
+        return 0;
+    }
+
+    public void insertRun(RunStats run) {
+        try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(INSERT_RUN_STATS)) {
+            populateDailyRunInsert(pstmt, run);
+            pstmt.execute();
+        } catch (SQLException e) {
+            logger.error("Failed to insert the the run statistics\n{}", e.toString());
+        }
+    }
+
+    private void populateDailyRunInsert(PreparedStatement pstmt, RunStats run) throws SQLException {
+        pstmt.setTimestamp(1, run.getRunDateTime());
+        pstmt.setInt(2, run.getTotalCveCount());
+        pstmt.setInt(3, run.getNewCveCount());
+        pstmt.setInt(4, run.getUpdatedCveCount());
+        pstmt.setInt(5, run.getNotInNvdCount());
+        pstmt.setInt(6, run.getNotInMitreCount());
+        pstmt.setInt(7, run.getNotInBothCount());
+        pstmt.setDouble(8, run.getAvgTimeGapNvd());
+        pstmt.setDouble(9, run.getAvgTimeGapMitre());
+    }
+
+    private void populateCVSSUpdate(PreparedStatement pstmt, CvssScore cvss) throws SQLException {
+        pstmt.setDouble(1, cvss.getSeverityId());
+        pstmt.setString(2, cvss.getImpactScore());
+        pstmt.setString(3, cvss.getCveId());
+    }
+    private void populateCVSSInsert(PreparedStatement pstmt, CvssScore cvss) throws SQLException {
+        pstmt.setDouble(1, cvss.getSeverityId());
+        pstmt.setString(2, cvss.getImpactScore());
+        pstmt.setString(3, cvss.getCveId());
+        pstmt.setTimestamp(4, new Timestamp(System.currentTimeMillis()));
+
+    }
+
+    private void populateVDOInsert(PreparedStatement pstmt, VdoCharacteristic vdo) throws SQLException {
+        pstmt.setString(1, String.valueOf(CveCharacterizer.VDOLabel.getVdoLabel(vdo.getVdoLabelId())));
+        pstmt.setString(2, String.valueOf(CveCharacterizer.VDONounGroup.getVdoNounGroup(vdo.getVdoNounGroupId())));
+        pstmt.setDouble(3, vdo.getVdoConfidence());
+        pstmt.setString(4, vdo.getCveId());
+        pstmt.setTimestamp(5, new Timestamp(System.currentTimeMillis()));
+
+    }
+    public int insertCWEs(CompositeVulnerability vuln) {
+        try (Connection conn = getConnection();
+             PreparedStatement upsertStatement = conn.prepareStatement(INSERT_CWE);
+             PreparedStatement deleteStatement = conn.prepareStatement(DELETE_CWE)) {
+            conn.setAutoCommit(false);
+            deleteStatement.setString(1, vuln.getCveId());
+            deleteStatement.execute();
+            for (CWE cwe : vuln.getCWEs()) {
+                populateCWEInsert(upsertStatement, cwe, vuln.getCveId());
+                upsertStatement.addBatch();
+            }
+            upsertStatement.executeBatch();
+            conn.commit();
+            return 1;
+        } catch (SQLException e) {
+            logger.error("ERROR: Failed to insert CWE, {}", e.getMessage());
+        }
+        return 0;
+    }
+    private void populateCWEInsert(PreparedStatement pstmt, CWE cwe, String cve_id) throws SQLException {
+        pstmt.setString(1, cve_id);
+        pstmt.setInt(2, cwe.getId());
+
+    }
 }

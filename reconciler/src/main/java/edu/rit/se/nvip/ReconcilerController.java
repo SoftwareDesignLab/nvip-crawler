@@ -1,109 +1,191 @@
 package edu.rit.se.nvip;
 
-import edu.rit.se.nvip.filter.Filter;
-import edu.rit.se.nvip.filter.FilterFactory;
+import edu.rit.se.nvip.characterizer.CveCharacterizer;
+import edu.rit.se.nvip.filter.FilterHandler;
+import edu.rit.se.nvip.filter.FilterReturn;
+import edu.rit.se.nvip.messenger.Messenger;
 import edu.rit.se.nvip.model.CompositeVulnerability;
 import edu.rit.se.nvip.model.RawVulnerability;
+import edu.rit.se.nvip.model.RunStats;
+import edu.rit.se.nvip.model.VulnSetWrapper;
 import edu.rit.se.nvip.process.Processor;
 import edu.rit.se.nvip.process.ProcessorFactory;
 import edu.rit.se.nvip.reconciler.Reconciler;
 import edu.rit.se.nvip.reconciler.ReconcilerFactory;
+import edu.rit.se.nvip.utils.ReconcilerEnvVars;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.*;
+import java.util.concurrent.*;
+import java.util.stream.Collectors;
 
 public class ReconcilerController {
     private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
     private final DatabaseHelper dbh;
     private final Reconciler reconciler;
-    private final List<Filter> filters = new ArrayList<>();
+    private final FilterHandler filterHandler;
     private final List<Processor> processors = new ArrayList<>();
+    private final Messenger messenger = new Messenger();
+    private CveCharacterizer cveCharacterizer;
 
-    public ReconcilerController(List<String> filterTypes, String reconcilerType, List<String> processorTypes, Map<String, Integer> knownCveSources) {
+    public ReconcilerController() {
         this.dbh = DatabaseHelper.getInstance();
-        addLocalFilters();
-        for (String filterType : filterTypes) {
-            filters.add(FilterFactory.createFilter(filterType));
-        }
-        this.reconciler = ReconcilerFactory.createReconciler(reconcilerType);
-        this.reconciler.setKnownCveSources(knownCveSources);
-        for (String processorType : processorTypes) {
+        filterHandler = new FilterHandler(ReconcilerEnvVars.getFilterList());
+        this.reconciler = ReconcilerFactory.createReconciler(ReconcilerEnvVars.getReconcilerType());
+        this.reconciler.setKnownCveSources(ReconcilerEnvVars.getKnownSourceMap());
+        for (String processorType : ReconcilerEnvVars.getProcessorList()) {
             processors.add(ProcessorFactory.createProcessor(processorType));
         }
     }
 
-    public void main() {
-        Set<String> jobs = dbh.getJobs();
+    public void main(Set<String> jobs) {
         logger.info(jobs.size() + " jobs found for reconciliation");
         Set<CompositeVulnerability> reconciledVulns = new HashSet<>();
-        for (String job : jobs) {
-            CompositeVulnerability vuln = handleReconcilerJob(job);
-            if (vuln != null) {
-                reconciledVulns.add(vuln);
+
+
+        ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors()); //available threads
+        List<Future<CompositeVulnerability>> futures = new ArrayList<>(); //list of futures of composite vulns (future is just a "soon to be")
+
+        //characterizer initialization
+        CharacterizeTask cTask = new CharacterizeTask();
+        Future<CveCharacterizer> futureCharacterizer = executor.submit(cTask);;//list of futures of characterizers (should just be 1 always)
+        //set up reconcile job tasks
+        for (String job : jobs) { //for each job
+            ReconcileTask task = new ReconcileTask(job); //make a new callable task
+            Future<CompositeVulnerability> future = executor.submit(task); //actually create the thread and does the task
+            futures.add(future); //add that list of future comp vulns to the list
+        }
+        executor.shutdown();
+        //waits for for reconcile jobs
+        for (Future<CompositeVulnerability> futureVuln : futures) { //for each list of futures of comp vulns in the list
+            try {
+                CompositeVulnerability compVuln = futureVuln.get(); //get the comp vuln (get is a wait for that thread to finish)
+                if (compVuln != null){ //if it's not null
+                    reconciledVulns.add(compVuln); //at it to the reconciledVulns list
+                }
+            } catch (InterruptedException | ExecutionException e) {
+                // TODO: Thrown error does not kill running futures, appears as hang
+                throw new RuntimeException(e);
             }
         }
+        logger.info("Finished reconciliation stage - sending message to PNE");
 
+        Set<CompositeVulnerability> newOrUpdated = reconciledVulns.stream()
+                .filter(v -> v.getReconciliationStatus() == CompositeVulnerability.ReconciliationStatus.NEW || v.getReconciliationStatus() == CompositeVulnerability.ReconciliationStatus.UPDATED)
+                .collect(Collectors.toSet());
+
+        //PNE team changed their mind about streaming jobs as they finish, they now just want one big list
+        messenger.sendPNEMessage(newOrUpdated.stream().map(CompositeVulnerability::getCveId).collect(Collectors.toList()));
+
+        logger.info("Starting processing");
         runProcessors(reconciledVulns);
 
-        int upsertCount = 0;
-        for (CompositeVulnerability vuln : reconciledVulns) {
-            int status = dbh.insertOrUpdateVulnerabilityFull(vuln);
-            if (status != -1) {
-                upsertCount += status;
-            }
-            logger.info("Finished job for cveId " + vuln.getCveId());
+        logger.info("Updating runstats");
+        dbh.insertRun(new RunStats(reconciledVulns));
+
+        logger.info("Starting characterization");
+        //wait for characterizer task to complete
+        try {
+            cveCharacterizer = futureCharacterizer.get();
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
         }
-        logger.info("Upserted {} vulnerabilities", upsertCount);
+        //run characterizer
+        if (ReconcilerEnvVars.getDoCharacterization() > 0) {
+            characterizeCVEs(reconciledVulns);
+
+            for (CompositeVulnerability vuln : reconciledVulns){
+                dbh.updateCVSS(vuln);
+                dbh.updateVDO(vuln);
+            }
+        }
+        // PNE team no longer wants a finish message
+        //messenger.sendPNEFinishMessage();
+
+    }
+
+    private class ReconcileTask implements Callable<CompositeVulnerability> {
+        private final String job;
+        public ReconcileTask(String job) {
+            this.job = job;
+        }
+
+        @Override
+        public CompositeVulnerability call() throws Exception {
+            return handleReconcilerJob(job);
+        }
+    }
+    private class CharacterizeTask implements Callable<CveCharacterizer> {
+
+        @Override
+        public CveCharacterizer call() {
+           try {
+                String[] trainingDataInfo = {ReconcilerEnvVars.getTrainingDataDir(), ReconcilerEnvVars.getTrainingData()};
+                logger.info("Setting NVIP_CVE_CHARACTERIZATION_LIMIT to {}", ReconcilerEnvVars.getCharacterizationLimit());
+                return new CveCharacterizer(trainingDataInfo[0], trainingDataInfo[1], "ML", "Vote");
+           } catch (NullPointerException | NumberFormatException e) {
+                logger.warn("Could not fetch NVIP_CVE_CHARACTERIZATION_TRAINING_DATA or NVIP_CVE_CHARACTERIZATION_TRAINING_DATA_DIR from env vars");
+                return null;
+           }
+        }
+    }
+
+    private void characterizeCVEs(Set<CompositeVulnerability> crawledVulnerabilityList) {
+        // characterize
+        logger.info("Characterizing and scoring NEW CVEs...");
+
+        List<CompositeVulnerability> cveList = new ArrayList<>(crawledVulnerabilityList);
+
+        cveCharacterizer.characterizeCveList(cveList, ReconcilerEnvVars.getCharacterizationLimit());
+
     }
 
     private CompositeVulnerability handleReconcilerJob(String cveId) {
         // pull data
-        int rawCount;
-        int newRawCount;
-        int rejectCount;
         Set<RawVulnerability> rawVulns = dbh.getRawVulnerabilities(cveId);
-        rawCount = rawVulns.size();
-        newRawCount = rawCount;
+        int rawCount = rawVulns.size();
+        VulnSetWrapper wrapper = new VulnSetWrapper(rawVulns);
+        // mark new vulns as unevaluated
+        int newRawCount = wrapper.setNewToUneval();
+        // get an existing vuln from prior reconciliation if one exists
         CompositeVulnerability existing = dbh.getCompositeVulnerability(cveId);
-        if (existing != null) {
-            // isolate new raw vulnerabilities
-            newRawCount -= removeUsedVulns(rawVulns, existing.getComponents());
-        }
-        // filter
-        Set<RawVulnerability> failed = runFilters(rawVulns);
-        rejectCount = failed.size();
-        dbh.markGarbage(failed);
-        logger.info("{} raw vulnerabilities with CVE ID {} were found, {} were new, {} of the new raw vulns were rejected, and {} are being submitted for reconciliation",
-                rawCount, cveId, newRawCount, rejectCount, newRawCount);
+        // filter in waves by priority
+        FilterReturn firstWaveReturn = filterHandler.runFilters(wrapper.firstFilterWave()); //high prio sources
+        FilterReturn secondWaveReturn = filterHandler.runFilters(wrapper.secondFilterWave()); //either empty or low prio depending on filter status of high prio sources
+        // update the filter status in the db for new and newly evaluated vulns
+        dbh.updateFilterStatus(wrapper.toUpdate());
+        logger.info("{} raw vulnerabilities with CVE ID {} were found and {} were new.\n" +
+                        "The first wave of filtering passed {} out of {} new high priority sources.\n" +
+                        "The second wave of filtering passed {} out of {} new backup low priority sources.\n" +
+                        "In total, {} distinct descriptions were explicitly filtered.",
+                rawCount, cveId, newRawCount,
+                firstWaveReturn.numPassed, firstWaveReturn.numIn,
+                secondWaveReturn.numPassed, secondWaveReturn.numIn,
+                firstWaveReturn.numDistinct + secondWaveReturn.numDistinct);
         // reconcile
-        return reconciler.reconcile(existing, rawVulns);
-    }
+        CompositeVulnerability out = reconciler.reconcile(existing, wrapper.toReconcile());
+        // link all the rawvulns to the compvuln, regardless of filter/reconciliation status
+        // we do this because publish dates and mod dates should be determined by all sources, not just those with good descriptions
 
-    private Set<RawVulnerability> runFilters(Set<RawVulnerability> vulns) {
-        // set up equivalence classes partitioned by equal descriptions
-        Map<String, Set<RawVulnerability>> equivClasses = new HashMap<>();
-        Set<RawVulnerability> samples = new HashSet<>(); // holds one from each equivalence class
-        for (RawVulnerability rawVuln : vulns) {
-            String desc = rawVuln.getDescription();
-            if (!equivClasses.containsKey(desc)) {
-                equivClasses.put(desc, new HashSet<>());
-                samples.add(rawVuln);
-            }
-            equivClasses.get(desc).add(rawVuln);
+        if (out == null){
+            return null;
         }
-        // filter a sample from each equivalence class
-        Set<RawVulnerability> failedSamples = new HashSet<>();
-        for (Filter filter : filters) {
-            failedSamples.addAll(filter.filterAll(samples));
-        }
-        // if a sample failed then all the vulns it represents fail too
-        Set<RawVulnerability> out = new HashSet<>();
-        for (RawVulnerability failure : failedSamples) {
-            Set<RawVulnerability> equivSet = equivClasses.get(failure.getDescription());
-            out.addAll(equivSet); // we return the failures
-            vulns.removeAll(equivSet); // the input set should no longer contain the failures
-        }
+
+        out.setPotentialSources(rawVulns);
+
+        dbh.insertOrUpdateVulnerabilityFull(out);
+
+        logger.info("Finished job for cveId " + out.getCveId());
+
+
+        List<String> outList = new ArrayList<>();
+        // PNE team no longer wants a message for every job, just one big message when they're all done
+//        if (out.getReconciliationStatus() == CompositeVulnerability.ReconciliationStatus.NEW || out.getReconciliationStatus() == CompositeVulnerability.ReconciliationStatus.UPDATED){
+//            outList.add(out.getCveId());
+//            messenger.sendPNEMessage(outList);
+//        }
+
         return out;
     }
 
@@ -111,32 +193,5 @@ public class ReconcilerController {
         for (Processor ap : processors) {
             ap.process(vulns);
         }
-    }
-
-    private int removeUsedVulns(Set<RawVulnerability> totalList, Set<RawVulnerability> usedList) {
-        Iterator<RawVulnerability> iterator = totalList.iterator();
-        int count = 0;
-        while (iterator.hasNext()) {
-            RawVulnerability sample = iterator.next();
-            for (RawVulnerability used : usedList) {
-                if (sample.equals(used)) {
-                    iterator.remove();
-                    count++;
-                    break;
-                }
-            }
-        }
-        return count;
-    }
-
-    /**
-     * Helper method for adding all local/simple filters
-     */
-    private void addLocalFilters() {
-        filters.add(FilterFactory.createFilter(FilterFactory.BLANK_DESCRIPTION));
-        filters.add(FilterFactory.createFilter(FilterFactory.CVE_MATCHES_DESCRIPTION));
-        filters.add(FilterFactory.createFilter(FilterFactory.INTEGER_DESCRIPTION));
-        filters.add(FilterFactory.createFilter(FilterFactory.MULTIPLE_CVE_DESCRIPTION));
-        filters.add(FilterFactory.createFilter(FilterFactory.DESCRIPTION_SIZE));
     }
 }

@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+// TODO: Add doctring to this
 public class AristaParser extends AbstractCveParser {
 
     public AristaParser(String domainName) {sourceDomainName = domainName;}
@@ -67,7 +68,7 @@ public class AristaParser extends AbstractCveParser {
         Set<String> cves = getCVEs(doc.text());
         for (String cve : cves)
             vulnList.add(new RawVulnerability(
-                    sSourceURL, cve, publishedDate, lastModifiedDate, description.toString()
+                    sSourceURL, cve, publishedDate, lastModifiedDate, description.toString(), getClass().getSimpleName()
             ));
 
 

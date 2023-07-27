@@ -1,0 +1,74 @@
+# CI for NVIP
+
+name: Reconciler Workflow
+
+on:
+  pull_request:
+    branches:
+      - main
+      - dev
+  push:
+    branches:
+      - main
+      - dev
+      - 'cicd/**'
+
+env:
+  AWS_REGION: 'us-east-1'
+  OUTPUT_DIR: 'output'
+  RESOURCE_DIR: 'nvip_data'
+
+jobs:
+  # Build and Test Reconciler Component
+  build-test-reconciler:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+        with:
+          lfs: 'true'
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Test and Build Reconciler with Maven
+        run: |
+          cd reconciler
+          mvn dependency:go-offline
+          mvn test
+
+      - name: Publish Test Report
+        if: success() || failure()
+        uses: scacap/action-surefire-report@v1
+        with:
+          check_name: Reconciler Test Report
+
+  # Deploy reconciler component project to container registry
+  deploy-reconciler:
+    runs-on: ubuntu-latest
+    needs: build-test-reconciler
+    if: ${{ success() && github.ref == 'refs/heads/dev' }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Push Docker Image for Reconciler
+        run: |
+          cd reconciler
+          docker build . -t nvip-reconciler:dev -t ghcr.io/softwaredesignlab/nvip-reconciler:dev
+          docker push ghcr.io/softwaredesignlab/nvip-reconciler:dev  

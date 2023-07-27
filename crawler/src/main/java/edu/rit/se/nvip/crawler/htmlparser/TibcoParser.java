@@ -79,7 +79,7 @@ public class TibcoParser extends AbstractCveParser {
         }
         if (description.equals("")) return vulnList;
 
-        vulnList.add(new RawVulnerability(sSourceURL, cveId, publishDate, lastModifiedDate, description
+        vulnList.add(new RawVulnerability(sSourceURL, cveId, publishDate, lastModifiedDate, description, getClass().getSimpleName()
         ));
 
         return vulnList;

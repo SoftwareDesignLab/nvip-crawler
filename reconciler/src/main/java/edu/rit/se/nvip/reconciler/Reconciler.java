@@ -60,12 +60,17 @@ public abstract class Reconciler {
 	 * Merges information from RawVulnerabilities into a CompositeVulnerability. Date reconciliation is trivially order-based
 	 * and happens internally within the CompostiteVulnerability class
 	 * @param existingVuln A (possibly null) CompositeVulnerability
-	 * @param newVulns A non-null list of RawVulnerabilities with the same CVE-XXX-XXXX identifier as the existingVuln
+	 * @param newVulns A non-null list of RawVulnerabilities with the same CVE-XXX-XXXX identifier as the existingVuln. Filter status will not be checked here, and all rawvulns are assumed to be equal priority
 	 * @return A CompositeVulnerability containing merged and updated information
 	 */
 	public CompositeVulnerability reconcile(CompositeVulnerability existingVuln, Set<RawVulnerability> newVulns) {
 		if (newVulns.size() == 0) {
 			return existingVuln;
+			// todo handle the case where we have no passed rawvulns and no existingvuln but still want to report something
+		}
+		// if the existing vuln only uses low prio sources and the new ones are high prio, we dump the old sources and rebuild
+		if (existingVuln != null && !existingVuln.usesHighPrio() && hasHighPrio(newVulns)) {
+			existingVuln.resetDescription();
 		}
 		CompositeVulnerability reconciledVuln = null;
 		// TODO figure out what to do if a new rawvulnerability is an updated version of one of the existing sources, right now nothing special happens
@@ -108,6 +113,7 @@ public abstract class Reconciler {
 	private CompositeVulnerability oneByOneHandler(CompositeVulnerability existingVuln, Set<RawVulnerability> newVulns) {
 		CompositeVulnerability reconciledVuln = existingVuln;
 		Set<RawVulnerability> vulnsToUse = new HashSet<>(newVulns);
+		// if nothing already existed then make a compvuln from one of the newvulns and remove it from the set
 		if (reconciledVuln == null) {
 			Iterator<RawVulnerability> it = vulnsToUse.iterator();
 			reconciledVuln = new CompositeVulnerability(it.next());
@@ -126,6 +132,14 @@ public abstract class Reconciler {
 		String bulkUpdatedDescription = bulkUpdateDescription(existingVuln, newVulns);
 		existingVuln.updateDescription(bulkUpdatedDescription, newVulns, false);
 		return existingVuln;
+	}
+
+	protected static boolean hasHighPrio(Set<RawVulnerability> rawVulns) {
+		// when the new vulns hit the reconciler we can assume they're equal priority, so just check the first one
+		for (RawVulnerability v : rawVulns) {
+			return v.isHighPriority();
+		}
+		return false;
 	}
 
 	/**

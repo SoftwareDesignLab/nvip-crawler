@@ -64,7 +64,7 @@ public class ParseAccordion extends AbstractCveParser implements ParserStrategy 
         if (lastMod == null || lastMod.equals("")) lastMod = rawDate;
         for (String cve : thisAccCVES) {
             RawVulnerability vuln = new RawVulnerability(
-                    sourceUrl, cve, rawDate, lastMod, accordionText);
+                    sourceUrl, cve, rawDate, lastMod, accordionText, getClass().getSimpleName());
             cves.add(vuln);
         }
         return cves;
@@ -101,7 +101,7 @@ public class ParseAccordion extends AbstractCveParser implements ParserStrategy 
 
                 // try and click on child to see if we can gain any more CVE info from it
                 WebElement childWebElement = driver.tryFindElement(By.xpath(jsoupToXpath(child)));
-                if(childWebElement != null && driver.tryClickElement(childWebElement, 5)) {
+                if(childWebElement != null && driver.tryClickElement(childWebElement, 1)) {
                     String newHtml = driver.getDriver().getPageSource();
                     diff = StringUtils.difference(originalHtml, newHtml);
                 }
