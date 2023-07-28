@@ -379,7 +379,7 @@ public class DatabaseHelperTest {
 
 	@Test
 	public void testInsertRawVuln() {
-		RawVulnerability vuln = new RawVulnerability("www.google.com", "cve_id", "2023-07-03 14:00:52", "2023-07-03 14:00:52", "test");
+		RawVulnerability vuln = new RawVulnerability("www.google.com", "cve_id", "2023-07-03 14:00:52", "2023-07-03 14:00:52", "test", "test");
 		vuln.setSourceType("cna");
 		int success = dbh.insertRawVulnerability(vuln);
 		assertTrue(success == 1);
