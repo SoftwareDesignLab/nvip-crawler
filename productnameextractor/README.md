@@ -155,7 +155,8 @@ If you want to run it locally without Docker, you'll need to provide the environ
 
 ### Database Variables
 
-* **DB_TYPE**: Database type used (by default, mysql)
+* **DB_TYPE**: Database type used
+    - Defaut value: `mysql`
 
 
 * **HIKARI_URL**: JDBC URL used for connecting to the MySQL Database.
