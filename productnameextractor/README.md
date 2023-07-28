@@ -112,7 +112,7 @@ After the build process, the output jar will be located under the "target" direc
     $ docker build -t productnameextractor .
 
 #### Run with Env List
-    $ docker run --name productnameextractor productnameextractor
+    $ docker run --name productnameextractor -m 10GB productnameextractor
 	- Default value:10g
  --env-file env.list productnameextractor
 
