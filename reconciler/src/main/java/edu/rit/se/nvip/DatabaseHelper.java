@@ -40,9 +40,9 @@ public class DatabaseHelper {
     private static final String DELETE_JOB = "DELETE FROM cvejobtrack WHERE cve_id = ?";
     private static final String UPDATE_CVSS = "UPDATE cvss SET base_score = ?, impact_score = ? WHERE cve_id = ?";
     private static final String INSERT_CVSS = "INSERT INTO cvss (base_score, impact_score, cve_id, create_date) VALUES (?, ?, ?, ?)";
-    private static final String INSERT_VDO = "INSERT INTO vdoCharacteristic (vdo_label, vdo_noun_group, vdo_confidence, cve_id, created_date) VALUES (?, ?, ?, ?, ?)";
+    private static final String INSERT_VDO = "INSERT INTO vdocharacteristic (vdo_label, vdo_noun_group, vdo_confidence, cve_id, created_date) VALUES (?, ?, ?, ?, ?)";
     private static final String INSERT_CWE = "INSERT INTO weakness (cve_id, cwe_id) VALUES (?, ?)";
-    private static final String DELETE_VDO = "DELETE FROM vdoCharacteristic WHERE cve_id = ?";
+    private static final String DELETE_VDO = "DELETE FROM vdocharacteristic WHERE cve_id = ?";
     private static final String DELETE_CWE = "DELETE FROM weakness WHERE cve_id = ?";
 
 
