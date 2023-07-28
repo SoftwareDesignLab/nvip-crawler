@@ -22,6 +22,8 @@
  * SOFTWARE.
  */
 
+import it.unimi.dsi.fastutil.Hash;
+import model.CpeEntry;
 import model.CpeGroup;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -106,20 +108,25 @@ public class PatchFinderTest {
     public void testRun2() throws IOException {
         // Test data
         String cveId = "CVE-2023-1001";
-        CpeGroup cpeGroup = new CpeGroup("apache", "airflow", "product_name_value", new HashMap<>());
+        final String versionString = "1.2.3";
+        final String versionString2 = "1.2.4";
+        HashMap<String, CpeEntry> entry = new HashMap<>();
+        entry.put(versionString, new CpeEntry(versionString, "rc1", "2023-06-20 10:00:00"));
+        entry.put(versionString2, new CpeEntry(versionString2, "rc1", "2023-06-20 10:00:00"));
+        CpeGroup cpeGroup = new CpeGroup("apache", "airflow", "product_name_value", entry);
+        String cveId2 = "CVE-2021-3572";
+        CpeGroup cpeGroup2 = new CpeGroup("apache", "tomcat", "product_name_value", entry);
 
         // Create the affectedProducts map with the test data
         Map<String, CpeGroup> affectedProducts = new HashMap<>();
         affectedProducts.put(cveId, cpeGroup);
-
-          // Mock the PatchFinder class
-        PatchFinder patchFinder = mock(PatchFinder.class);
+        affectedProducts.put(cveId2, cpeGroup2);
 
         // Call the run method and assert the expected behavior or outcome
-        patchFinder.run(affectedProducts, PatchFinder.cveLimit);
+        PatchFinder.run(affectedProducts, PatchFinder.cveLimit);
 
         // Assert that the affectedProducts map is empty
-        assertEquals(1, affectedProducts.size());
+        assertEquals(2, affectedProducts.size());
     }
 
 
