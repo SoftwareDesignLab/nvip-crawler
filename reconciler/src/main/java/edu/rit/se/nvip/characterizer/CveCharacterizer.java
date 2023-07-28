@@ -281,19 +281,20 @@ public class CveCharacterizer {
 			try {
 				vulnerability = cveList.get(i);
 				String cveDesc = vulnerability.getDescription();
-				if (cveDesc == null || cveDesc.length() < 50) {
-					if (cveDesc.length() > 1 && cveDesc.length() < 50)
-						logger.warn("WARNING: Description too small for {} at {}. Desc: {}",
-								vulnerability.getCveId(),
-								vulnerability.getSourceURL(),
-								cveDesc);
-					else
-						logger.warn("WARNING: BAD or MISSING Description '{}' for {} at {}",
-								cveDesc,
-								vulnerability.getCveId(),
-								vulnerability.getSourceURL());
+				if (cveDesc == null) {
+					logger.warn("WARNING: BAD or MISSING Description '{}' for {} at {}",
+							cveDesc,
+							vulnerability.getCveId(),
+							vulnerability.getSourceURL());
 					countBadDescription++;
-					continue; // if no description or old CVE skip!
+					continue; // if no description skip
+				} else if (cveDesc.length() < 50) {
+					logger.warn("WARNING: Description too small for {} at {}. Desc: {}",
+							vulnerability.getCveId(),
+							vulnerability.getSourceURL(),
+							cveDesc);
+					countBadDescription++;
+					continue; // if description is too short skip
 				}
 				if (vulnerability.getReconciliationStatus() == CompositeVulnerability.ReconciliationStatus.UNCHANGED) {
 					//logger.info("No change in description for Characterization of {}", cveDesc);
@@ -306,10 +307,6 @@ public class CveCharacterizer {
 				for (VDONounGroup vdoNounGroup : VDONounGroup.values()) {
 					ArrayList<String[]> predictionsForNounGroup = prediction.get(vdoNounGroup.vdoNounGroupName);
 					int vdoNounGroupId = vdoNounGroup.vdoNounGroupId;
-//					if (vdoNounGroupId == null) {
-//						logger.warn("WARNING: No entry was found for vdo noun group: {}! Please add it to the db.", vdoNounGroup);
-//						continue;
-//					}
 					for (String[] item : predictionsForNounGroup) {
 						Integer vdoLabelId = VDOLabel.getVdoLabelId(item[0]);
 						if (vdoLabelId == null)
