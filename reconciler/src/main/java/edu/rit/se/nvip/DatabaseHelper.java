@@ -435,6 +435,9 @@ public class DatabaseHelper {
      * @return
      */
     public int updateCVSS(CompositeVulnerability vuln) {
+        if (vuln.getCvssScoreInfo() == null) {
+            return 0;
+        }
         boolean isUpdate;
         switch (vuln.getReconciliationStatus()) {
             case UPDATED:
