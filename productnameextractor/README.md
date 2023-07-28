@@ -109,12 +109,12 @@ After the build process, the output jar will be located under the "target" direc
 ## 5. Build and Deploy Docker Container
 
 #### Build Crawler Image
-    $ docker build -t crawler .
+    $ docker build -t productnameextractor .
 
 #### Run with Env List
     $ docker run -* **m**: Placeholder
 	- Default value:10g
- --env-file env.list crawler
+ --env-file env.list productnameextractor
 
 Where `-m` is the maximum memory (RAM) the container can use during runtime, and `--env-file` is the path to
 the environment variable file (in `.list` format)
