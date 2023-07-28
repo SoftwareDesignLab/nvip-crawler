@@ -80,7 +80,7 @@ The product name extractor component of NVIP identifies affected products in a C
 
 ## 3. Build & Package
 
-From the nvip-crawler/productnameextractor directory, run the following command via terminal to install dependencies:
+From the `nvip-crawler/productnameextractor` directory, run the following command via terminal to install dependencies:
 
     $ mvn clean install
 
