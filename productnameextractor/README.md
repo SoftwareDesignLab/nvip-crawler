@@ -2,11 +2,11 @@
 # NVIP Crawler Backend - Product Name Extractor
 
 The product name extractor component of NVIP Crawler identifies affected products in a CVE via a Named Entity Recognition (NER) model.
-- The model and its training data is provided in the resources directory
-- Each extracted product is converted as a Common Product Enumeration (CPE) string
+- The model and its training data is provided in the `productnameextractor/nvip_data` directory
+- Each extracted product is mapped to a Common Product Enumeration (CPE) string in NVD's official CPE Dictionary
 - CPE Definition and Dictionary(s): https://nvd.nist.gov/products/cpe
 
-> **NOTE:** This component relies directly on the vulnerability data from the crawler and should be ran after vulnerability data is populated in the db
+> **NOTE:** This component relies directly on the vulnerability data from the crawler and reconciler and should be run after the crawler and reconciler
 
 ## System Requirements
 
@@ -14,7 +14,7 @@ The product name extractor component of NVIP Crawler identifies affected product
     - Download Link: https://www.oracle.com/java/technologies/javase/javase8-archive-downloads.html
 
 
-* Product Name Extractor uses MySQL (version 8) to store CVEs. The database must be created before running the system. The current database dump is provided at '../nvip_data/mysql-database'.
+* Product Name Extractor uses MySQL (version 8) to store CVEs. The database must be created before running the system. The current database dump is provided at `nvip-crawler/nvip_data/mysql-database/newDB`. See the instructions below on initializing the database.
     - Download Link: https://dev.mysql.com/downloads/installer/
 
 
@@ -30,52 +30,61 @@ The product name extractor component of NVIP Crawler identifies affected product
     - Download Link: https://docs.docker.com/engine/install/
 
 
-* Because the crawling process is a multi-threaded process and the characterization and product name extraction trains AI/ML models, minimum 8GB RAM is needed to run the system.
+* Finally, RabbitMQ is also needed if using a queue-based system with the NVIP components (Crawler feeds Reconciler jobs, Reconciler feeds Product Name Extractor jobs, etc.).
+    - Download Link: https://www.rabbitmq.com/download.html
+
+
+* A minimum of 8GB RAM is needed to run the program, but 16GB is recommended.
 
 ## Summary of Open Source Technologies/Systems Used
 
-* MySQL database is used to store crawled and characterized CVEs and products affected by said CVEs: https://www.mysql.com/
+* MySQL database is used to store products affected by CVEs: https://www.mysql.com/
 
-* NVIP also uses Log4j for logging errors and state: https://logging.apache.org/log4j/2.x/javadoc.html
+* Log4j is used for logging errors and state: https://logging.apache.org/log4j/2.x/javadoc.html
 
 * The DeepLearning4j framework is used to train Deep Learning (LSTM) models for product name extraction: https://deeplearning4j.org/
+
+* RabbitMQ is used to pass jobs between components in the NVIP program: https://www.rabbitmq.com/
+
+* Docker is used to containerize each component: https://www.docker.com/
 
 
 # Installation and Setup Guide
 
-## 1. Download & Install MySQL, Create the Database
+## 1. Download & Install MySQL
 
-* Download “mysql-installer-community-8.0.20.0.msi” from  https://dev.mysql.com/downloads/installer/.
-
-
-* Click on the downloaded file, choose “Full” installation and continue with default options.
+* Download the latest MySQL installer from  https://dev.mysql.com/downloads/installer/.
 
 
-* During the configuration of MySQL Server, when prompted for a password (for user "root"), make sure you use the "same password" that you have at the **HIKARI_PASSWORD** Environment Variable.
+* Run the downloaded file, choose “Full” installation and continue with default options.
+
+
+* During the configuration of MySQL Server, when prompted for a password (for user "root"), ensure that you remember this password and store it in the HIKARI_PASSWORD environment variable (see **Environment Variables** section below).
 
 ## 2. Create Database (via MySQL Workbench & Liquibase)
 
-* After the setup process is finished open "MySQL Workbench" program (Click start and search for "MySQL Workbench" to find it).
+* After the installation process is finished, open the "MySQL Workbench" program.
 
 
 * Click on "Database/Connect To Database" menu on MySQL Workbench and Click "Ok". Enter the password you set for user "root" earlier. You should be connected to the MySQL database.
 
 
-* Once you have a database created, run this command in the mysql-database/newDB directory:
+* Once you have a database created, run the following command with your specific parameters (for DB_NAME, USERNAME, and PASSWORD) in the 
+`nvip-crawler/nvip_data/mysql-database/newDB` directory:
 
-> liquibase --changeLogFile=db.init.xml --classpath=./mysql-connector-j-8.0.33.jar --url="jdbc:mysql://localhost:3306/DB Name" --username=USERNAME --password=PASSWORD update
+> liquibase --changeLogFile=db.init.xml --classpath=./mysql-connector-j-8.0.33.jar --url="jdbc:mysql://localhost:3306/DB_Name" --username=USERNAME --password=PASSWORD update
 
 
 > **NOTE**: Please make sure the MySQL username and password parameters in the
-> environment variables are updated! (Refer to **Environment Variables** section for specific DB parameters needed)
+> environment variables are updated! (Refer to **Environment Variables** section below)
 
 ## 3. Build & Package
 
-From the root directory, run the following command via cmd line to install dependencies:
+From the nvip-crawler/productnameextractor directory, run the following command via terminal to install dependencies:
 
     $ mvn clean install
 
-If successful, run the following command to package the Maven project into a jar file
+If successful, run the following command to package the Maven project into a jar file:
 
     $ mvn package -DskipTests`
 
@@ -89,13 +98,15 @@ After the build process, the output jar will be located under the "target" direc
 
 ## 4. Create a Configuration to run the Product Name Extractor (IntelliJ)
 
-> **NOTE:** Intellij does not read env.list files automatically, the contents of the patch finder env.list file can be copied directly into the menu shown in the image below. See **Environment Variables** for more information. 
+> **NOTE:** Intellij does not read env.list files automatically, the contents of the product name extactor env.list file can be copied directly into the menu shown in the image below. See **Environment Variables** for more information. Please ensure that the program is run with environment variables for your specific IDE/Docker configuration.
+> 
+> Otherwise, default environment variables will be used but this may not be compatible with your setup.
 > 
 > ![Screenshot](nvip_data/docs/configMenu.png)
 
 
 
-## 4. Install Docker and Build via Docker CLI
+## 4. Install Docker and Build via Docker CLI (REWORK TODO)
 
 #### Build Crawler Image
     $ docker build -t crawler .
@@ -123,15 +134,12 @@ Make sure your MySQL service is running. If not, try the following:
 ### Installation & Configuration Checklist
 - All parameters are located in **Environment Variables**
 
-- Required training data and resources are stored under the `src/main/resources` folder (the data directory).
-  You need to configure the data directory of the project (in the **Environment Variables** and (maybe) `nvip.properties`)
-  to point to this directory.
-
+- Required training data and resources are stored under the `productnameextractor/nvip_data` folder. Please ensure that you have downloaded the `w2v_model_250.bin` from the NVIP Google Drive (in a file called `large files`) as it is required for the NER Model to work.
 
 ### Environment Variables
 
-The `env.list` file contains a set of environment variables that the crawler requires in order to run.
-Some variables contain default values for if they're not specified, but it is advised to have them configured based on your usage.
+The `env.list` file contains a set of environment variables that the product name extractor requires in order to run.
+All environment variables contain default values if they're not specified, but it is generally advisable to have them configured to fit your workspace.
 
 Like stated previously, you can provide these variables when running the application with Docker via the `env.list` file.
 If you want to run it locally without Docker, you'll need to provide the environment variables through whatever tool or IDE you're using.
@@ -141,59 +149,98 @@ If you want to run it locally without Docker, you'll need to provide the environ
 
 - Setting up environment variables w/ **VS Code**: https://code.visualstudio.com/remote/advancedcontainers/environment-variables
 
-**NOTE** If you're running the application with Docker, you will not need to worry about setting up the Env Vars via your IDE.
-IF there's any change in your Env Vars, you don't need to rebuild the image (unless there's changes in the code or properties files).
 
-A list of the environment variables is provided below:
 
-#### Database
+
+
+### Database Variables
+* **DB_TYPE**: Database type used (by default, mysql)
+
 
 * **HIKARI_URL**: JDBC URL used for connecting to the MySQL Database.
-    - There is no default value.
-    - Use mysql://localhost:3306 for running locally, and mysql://host.docker.internal:3306 to run with docker
+    - By default, assumes that application will be run with Docker.
+    - Use `mysql://localhost:3306/DB_NAME?useSSL=false&allowPublicKeyRetrieval=true` for running locally 
+    - Use `mysql://host.docker.internal:3306/DB_NAME?useSSL=false&allowPublicKeyRetrieval=true` to run with Docker
 
 
-* **HIKARI_USER**: Database username used to login to the MySQL database
-    - There is no default value
+* **HIKARI_USER**: Database username used to login to the database
+    - Default value: `root`
 
 
-* **HIKARI_PASSWORD**: Database password used to login to the MySQL database
-    - There is no default value
+* **HIKARI_PASSWORD**: Database password used to login to the database
+    - Default value: `root`
 
-#### Runtime Data
+### Data Directory Variables
+> **NOTE**: All default values for Data Directory Variables assume that the working directory is `nvip-crawler/productnameextractor`
+* **RESOURCE_DIR**: Directory path for all data resources used by Product Name Extractor
+    - Default value: `nvip_data`
 
-* **NVIP_DATA_DIR**: Directory path for data resources used by NVIP at runtime
-    - Default value: src/main/resources
 
-* **NVIP_OUTPUT_DIR**: Output directory path for the web crawler(s)
-    - Default value: output/crawlers
+* **DATA_DIR**: Directory within **RESOURCE_DIR** which holds data used at runtime.
+    - Default value: `data`
 
-#### Product Name Extractor
 
-* **CHAR_2_VEC_CONFIG**: Path to the char2vec config file
-	- Default value:c2v_model_config_50.json
+* **NLP_DIR**: Directory within **DATA_DIR** which holds training files for the sentence model.
+    - Default value: `nlp`
 
-* **CHAR_2_VEC_WEIGHTS**: Path to the char2vec weights file
-	- Default value:c2v_model_weights_50.h5
+### RabbitMQ Variables
+* **RABBIT_POLL_INTERVAL**: The time interval (in seconds) by which the Product Name Extractor will poll RabbitMQ for jobs from the Reconciler.
+    - Default value: `60`
 
-* **WORD_2_VEC**: Path to the word2vec model file
-	- Default value:w2v_model_250.bin
 
-* **NER_MODEL**: Path to the NER model file
-	- Default value:NERallModel.bin
+* **RABBIT_HOST**: The hostname for the RabbitMQ server.
+    - Default value: `host.docker.internal`
 
-* **NER_MODEL_NORMALIZER**: Path to the NER model normalizer file
-	- Default value:NERallNorm.bin
 
-* **CVE_LIMIT**: Limit of CVEs to process
-	- Default value:1000
+* **RABBIT_USERNAME**: The username for the RabbitMQ server connection.
+    - Default value: `guest`
 
-* **MAX_PAGES**: Limit of pages of CPEs to query from NVD
-	- Default value:5
 
-* **MAX_ATTEMPTS_PER_PAGE**: Max attempts at getting CPEs per page before a page is skipped
-	- Default value:2
+* **RABBIT_PASSWORD**: The password for the RabbitMQ server connection.
+    - Default value: `guest`
 
-* **PRODUCT_DICT_PATH**: Path to the saved CPE product dictionary file
-	- Default value:src/main/resources/data/product_dict.json
 
+### Product Name Extractor Variables
+
+* **CHAR_2_VEC_CONFIG**: Name of the configuration file for the Char2Vec model.
+	- Default value: `c2v_model_config_50.json`
+
+
+* **CHAR_2_VEC_WEIGHTS**: Name of the weights file for the Char2Vec model.
+	- Default value: `c2v_model_weights_50.h5`
+
+
+* **WORD_2_VEC**: Name of the Word2Vec file. This needs to be separately downloaded from the Google Drive and inserted into your data directory alongside the other models as its size is too big for the GitHub repository.
+	- Default value: `w2v_model_250.bin`
+
+
+* **NER_MODEL**: Name of the NER Model file.
+	- Default value: `NERallModel.bin`
+
+
+* **NER_MODEL_NORMALIZER**: Name of the NER Model Normalizer file.
+	- Default value: `NERallNorm.bin`
+
+
+* **SENTENCE_MODEL**: Name of the Sentence Model.
+	- Default value: `en-sent.bin`
+
+
+* **PRODUCT_DETECTOR_MODEL**: Name of the model used for Product Detection.
+	- Default value: `en-pos-perceptron.bin`
+
+
+* **NUM_THREADS**: Number of concurrent threads running to detect products for CVEs.
+	- Default value: `12`
+
+
+* **PRODUCT_DICT_NAME**: Name of the written CPE product dictionary file pulled from NVD's CPE Dictionary.
+	- Default value: `product_dict.json`
+
+
+* **TEST_MODE**: A boolean environment variable. Set to true to run the Product Name Extractor in test mode, false otherwise. This relies on the `test_vulnerabilities.csv` file in the data directory.
+    - Default value: `false`
+
+
+* **PRETTY_PRINT**: A boolean environment variable. Determines whether Pretty Print will be used when writing the product dictionary to `product_dict.json` file from NVD's CPE Dictionary. This results in increased storage usage.
+    - Default value: `false`
