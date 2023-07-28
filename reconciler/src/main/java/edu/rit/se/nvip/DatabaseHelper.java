@@ -436,6 +436,7 @@ public class DatabaseHelper {
      */
     public int updateCVSS(CompositeVulnerability vuln) {
         if (vuln.getCvssScoreInfo() == null) {
+            logger.warn("CVE {} does not have a CVSS score - skipping its cvss insertion", vuln.getCveId());
             return 0;
         }
         boolean isUpdate;
