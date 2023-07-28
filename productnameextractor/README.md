@@ -78,59 +78,65 @@ The product name extractor component of NVIP identifies affected products in a C
 > **NOTE**: Please make sure the MySQL username and password parameters in the
 > environment variables are updated! (Refer to **Environment Variables** section below)
 
-## 3. Build & Package
+## 3. Running Locally
 
-From the `nvip-crawler/productnameextractor` directory, run the following command via terminal to install dependencies:
+#### Change Working Directory:
+
+    $ cd productnameextractor
+
+#### Install Dependencies:
 
     $ mvn clean install
 
-If successful, run the following command to package the Maven project into a jar file:
+#### Package Maven Project:
 
     $ mvn package -DskipTests`
 
-You can also run unit tests separately with the Maven test command:
+#### (Optional) Run Unit Tests:
 
     $ mvn test
 
-After the build process, the output jar will be located under the "target" directory of the project root.
+> **NOTE:** The `w2v_model_250.bin` file is needed for the Word2Vector model to function. This file can be derived from the `largeFiles.zip` file within the NVIP Google Drive resources folder. Please ensure this is in the data directory with the other AI model files (by default, `productnameextractor/nvip_data/data`).
 
-**If you are not using Docker**, you don't have to worry about the jar file as long as it builds successfully. Otherwise, this is the Jar file that Docker will use to run the application.
-
-## 4. Create a Configuration to run the Product Name Extractor (IntelliJ)
-
-> **NOTE:** Intellij does not read env.list files automatically, the contents of the product name extactor env.list file can be copied directly into the menu shown in the image below. See **Environment Variables** for more information. Please ensure that the program is run with environment variables for your specific IDE configuration.
+### Run Configuration
+> Environment variables are set to be compatible with those running the program through Docker by default. Thus, if you are running locally, you will have to manually change the environment variables and run configuration as is applicable to your setup.
 > 
-> Otherwise, default environment variables will be used but this may not be compatible with your setup.
+> Using Intellij as an example, it does not read env.list files automatically. The contents of the product name extactor env.list file can be copied directly into the menu as shown in the image below. Please ensure that the program is run with environment variables applicable to your choice of IDE and configuration.
+> 
+> See **Environment Variables** below for more information.
 > 
 > ![Screenshot](nvip_data/docs/configMenu.png)
 
 
 
-## 5. Build and Deploy Docker Container
+## 5. Running With Docker:
 
-#### Build Crawler Image
+#### Change Working Directory:
+    $ cd productnameextractor
+
+#### Build Product Name Extractor Image:
     $ docker build -t productnameextractor .
 
-#### Run with Env List
+#### Run with Env List:
     $ docker run --name productnameextractor -m 10GB --env-file env.list productnameextractor
 
 Where `-m` is the maximum memory (RAM) the container can use during runtime, and `--env-file` is the path to
-the environment variable file (in `.list` format)
+the environment variable file (`env.list`). It is recommended to allot at least 10GB of ram during runtime.
 
-Make sure your MySQL service is running. If not, try the following:
-
-- (Windows) Go to services panel via windows explorer, navigate to where your MySQL service is (named MySQL80), select
-  the service and click "start".
-
-
-- You can verify the service running by logging into MySQL via MySQL Command Line or MySQL Workbench
-  (Login will automatically fail if the service isn't running, so be sure the login credentials are correct!)
-
-
-- Make sure the data directories and the database user and password in the **Environment Variables** are correct.
+>**NOTE**: Make sure your MySQL service is running. If not, try the following:
+>
+> - If on Windows, go to services panel via Windows Explorer, navigate to where your MySQL service is (named MySQL80), select
+>  the service and click `start`.
+>
+>
+> - Verify the service is running by logging into MySQL via MySQL Command Line or MySQL Workbench
+>  (login will automatically fail if the service isn't running).
+>
+>
+> - Make sure the database user and password as well as the hikari URL in the **Environment Variables** are correct.
 
 ### Installation & Configuration Checklist
-- All parameters are located in **Environment Variables**
+- All environment variables are correctly configured in file `env.list`.
 
 - Required training data and resources are stored under the `productnameextractor/nvip_data` folder. Please ensure that you have downloaded the `w2v_model_250.bin` from the NVIP Google Drive (in a file called `large files`) as it is required for the NER Model to work.
 
@@ -142,10 +148,10 @@ All environment variables contain default values if they're not specified, but i
 Like stated previously, you can provide these variables when running the application with Docker via the `env.list` file.
 If you want to run it locally without Docker, you'll need to provide the environment variables through whatever tool or IDE you're using.
 
-- Setting up environment variables w/ **IntelliJ**: https://www.jetbrains.com/help/objc/add-environment-variables-and-program-arguments.html
+- Setting up environment variables with **IntelliJ**: https://www.jetbrains.com/help/objc/add-environment-variables-and-program-arguments.html
 
 
-- Setting up environment variables w/ **VS Code**: https://code.visualstudio.com/remote/advancedcontainers/environment-variables
+- Setting up environment variables with **VS Code**: https://code.visualstudio.com/remote/advancedcontainers/environment-variables
 
 
 
