@@ -23,7 +23,7 @@
  */
 package edu.rit.se.nvip.crawler.htmlparser;
 
-import edu.rit.se.nvip.model.Product;
+// import edu.rit.se.nvip.model.Product;
 import org.junit.Test;
 
 import java.util.List;

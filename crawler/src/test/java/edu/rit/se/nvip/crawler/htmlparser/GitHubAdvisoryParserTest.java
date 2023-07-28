@@ -50,8 +50,8 @@ public class GitHubAdvisoryParserTest extends AbstractParserTest {
         assertEquals("CVE-2023-27477", vuln.getCveId());
         assertTrue(vuln.getDescription().contains("There is an off-by-one error in the calculation of the mask to the"));
         assertFalse(vuln.getDescription().contains("If you have any questions or comments about this advisory"));
-        assertEquals("2023-03-08 14:38:00", vuln.getPublishDate());
-        assertEquals("2023-03-08 19:09:00", vuln.getLastModifiedDate());
+        assertEquals("2023-03-08 19:38:37", vuln.getPublishDate());
+        assertEquals("2023-03-09 00:09:04", vuln.getLastModifiedDate());
     }
 
     /**
@@ -68,8 +68,8 @@ public class GitHubAdvisoryParserTest extends AbstractParserTest {
         RawVulnerability vuln = list.get(0);
         assertEquals("CVE-2023-26105", vuln.getCveId());
         assertTrue(vuln.getDescription().contains("All versions of the package utilities are vulnerable to Prototype Pollution via the _mix function."));
-        assertEquals("2023-02-28 01:30:00", vuln.getPublishDate());
-        assertEquals("2023-03-08 18:14:00", vuln.getLastModifiedDate());
+        assertEquals("2023-02-28 06:30:25", vuln.getPublishDate());
+        assertEquals("2023-03-08 23:14:00", vuln.getLastModifiedDate());
     }
 
     /**

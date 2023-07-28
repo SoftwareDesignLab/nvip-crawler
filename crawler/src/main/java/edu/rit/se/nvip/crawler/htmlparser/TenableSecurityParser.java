@@ -23,7 +23,7 @@
  */
 package edu.rit.se.nvip.crawler.htmlparser;
 
-import edu.rit.se.nvip.model.Product;
+// import edu.rit.se.nvip.model.Product;
 import edu.rit.se.nvip.model.RawVulnerability;
 import edu.rit.se.nvip.utils.UtilHelper;
 
@@ -58,7 +58,7 @@ public class TenableSecurityParser extends AbstractCveParser {
 	@Override
 	public List<RawVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
 		List<RawVulnerability> vulns = new ArrayList<>();
-		List<Product> products = new ArrayList<>();
+		// List<Product> products = new ArrayList<>();
 		boolean foundProducts = false;
 
 		// If its the main research page, skip it since it has no descriptions
@@ -138,11 +138,11 @@ public class TenableSecurityParser extends AbstractCveParser {
 			vulns.add(vuln);
 		}
 
-		for (Product p : products) {
-			Pattern versionPattern = Pattern.compile(regexVersionInfo);
-			Matcher versionMatcher = versionPattern.matcher(p.getDomain());
-			String version = (versionMatcher.find()) ? versionMatcher.group() : null;
-		}
+		// for (Product p : products) {
+		// 	Pattern versionPattern = Pattern.compile(regexVersionInfo);
+		// 	Matcher versionMatcher = versionPattern.matcher(p.getDomain());
+		// 	String version = (versionMatcher.find()) ? versionMatcher.group() : null;
+		// }
 
 		return vulns;
 	}

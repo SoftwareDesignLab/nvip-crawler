@@ -23,9 +23,7 @@
  */
 package edu.rit.se.nvip.crawler;
 
-import edu.rit.se.nvip.cnnvd.CnnvdCveParser;
 import io.github.bonigarcia.wdm.WebDriverManager;
-import edu.rit.se.nvip.model.CnnvdVulnerability;
 import edu.rit.se.nvip.model.RawVulnerability;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -76,7 +74,7 @@ public class QuickCveCrawler {
 		getSeclistsCveUpdates(crawler, list);
 
 		// Cnnvd
-		getCnnvdCveUpdates(list);
+		// getCnnvdCveUpdates(list);
 
 		// packet storm
 		getPacketStrormCveUpdates(crawler, list);
@@ -203,56 +201,56 @@ public class QuickCveCrawler {
 	 * @param list
 	 * @return
 	 */
-	public List<RawVulnerability> getCnnvdCveUpdates(List<RawVulnerability> list) {
-		try {
-			String sUrlForCveListPage = "http://www.cnnvd.org.cn/web/vulnerability/querylist.tag?pageno=$pageno$&repairLd=";
-			CnnvdCveParser chinaCveParser = new CnnvdCveParser();
-			String dateTimeNow = UtilHelper.longDateFormat.format(new Date());
-			int count = list.size();
-			Random r = new Random(100);
-			// scrape first 3 pages
-			for (int pageIndex = 1; pageIndex < 4; pageIndex++) {
-				String pageLink = sUrlForCveListPage.replace("$pageno$", pageIndex + "");
-				logger.info("Scraping CVEs from CNNVD {} ,pape # {}", pageLink, pageIndex);
+	// public List<RawVulnerability> getCnnvdCveUpdates(List<RawVulnerability> list) {
+	// 	try {
+	// 		String sUrlForCveListPage = "http://www.cnnvd.org.cn/web/vulnerability/querylist.tag?pageno=$pageno$&repairLd=";
+	// 		CnnvdCveParser chinaCveParser = new CnnvdCveParser();
+	// 		String dateTimeNow = UtilHelper.longDateFormat.format(new Date());
+	// 		int count = list.size();
+	// 		Random r = new Random(100);
+	// 		// scrape first 3 pages
+	// 		for (int pageIndex = 1; pageIndex < 4; pageIndex++) {
+	// 			String pageLink = sUrlForCveListPage.replace("$pageno$", pageIndex + "");
+	// 			logger.info("Scraping CVEs from CNNVD {} ,pape # {}", pageLink, pageIndex);
 
-				String pageStr = getContentFromUrl(pageLink);
-				List<String> cveURLsInPage = chinaCveParser.getCveUrlListFromPage(pageStr);
-				for (String cveURLItem : cveURLsInPage) {
-					try {
+	// 			String pageStr = getContentFromUrl(pageLink);
+	// 			List<String> cveURLsInPage = chinaCveParser.getCveUrlListFromPage(pageStr);
+	// 			for (String cveURLItem : cveURLsInPage) {
+	// 				try {
 
-						String[] cveUrlParts = cveURLItem.split("=");
-						String cnnvdCveId = cveUrlParts[1];
+	// 					String[] cveUrlParts = cveURLItem.split("=");
+	// 					String cnnvdCveId = cveUrlParts[1];
 
-						logger.info("Getting {} details from {}", cnnvdCveId, cveURLItem);
+	// 					logger.info("Getting {} details from {}", cnnvdCveId, cveURLItem);
 
-						String cveDetailHtml = getContentFromUrl(cveURLItem);
-						// get CVE details
-						CnnvdVulnerability vuln = chinaCveParser.getCveDetailsFromPage(cveDetailHtml);
+	// 					String cveDetailHtml = getContentFromUrl(cveURLItem);
+	// 					// get CVE details
+	// 					CnnvdVulnerability vuln = chinaCveParser.getCveDetailsFromPage(cveDetailHtml);
 
-						// get ref urls
-						List<String> refURLs = chinaCveParser.getCveReferencesFromPage(cveDetailHtml);
-						for (String refUrl : refURLs)
-							vuln.addVulnerabilitySource(refUrl);
+	// 					// get ref urls
+	// 					List<String> refURLs = chinaCveParser.getCveReferencesFromPage(cveDetailHtml);
+	// 					for (String refUrl : refURLs)
+	// 						vuln.addVulnerabilitySource(refUrl);
 
-						String description = "New vulnerability from CNNVD! Details:  " + vuln.toString();
-						// add vuln
-						RawVulnerability vulnComposite = new RawVulnerability(cveURLItem, vuln.getCveId(), dateTimeNow, dateTimeNow, description, chinaCveParser.getClass().getSimpleName());
-						list.add(vulnComposite);
-						Thread.sleep(r.nextInt(100) + 1000); // random wait
-					} catch (Exception e) {
-						logger.error("Error while getting CVE details from {}, {} ", cveURLItem, e.toString());
-					}
-				}
-			}
+	// 					String description = "New vulnerability from CNNVD! Details:  " + vuln.toString();
+	// 					// add vuln
+	// 					RawVulnerability vulnComposite = new RawVulnerability(cveURLItem, vuln.getCveId(), dateTimeNow, dateTimeNow, description);
+	// 					list.add(vulnComposite);
+	// 					Thread.sleep(r.nextInt(100) + 1000); // random wait
+	// 				} catch (Exception e) {
+	// 					logger.error("Error while getting CVE details from {}, {} ", cveURLItem, e.toString());
+	// 				}
+	// 			}
+	// 		}
 
-			logger.info("Done! Scraped {} CVEs from Cnnvd! ", list.size() - count);
-		} catch (Exception e) {
-			logger.error("Error scraping CNNVD! {}", e);
+	// 		logger.info("Done! Scraped {} CVEs from Cnnvd! ", list.size() - count);
+	// 	} catch (Exception e) {
+	// 		logger.error("Error scraping CNNVD! {}", e);
 
-		}
-		return list;
+	// 	}
+	// 	return list;
 
-	}
+	// }
 
 	/**
 	 * Seclists CVE summaries are provided for each quarter. For example:
