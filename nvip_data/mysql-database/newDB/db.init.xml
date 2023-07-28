@@ -433,100 +433,99 @@
             constraintName="vdocharacteristic_cve_id_fk"/>
     </changeSet>
 
-<!--    TODO: Remove -->
-<!--    <changeSet author="vulnerabilityaggregate" id="vulnerabilityaggregate">-->
-<!--        <createTable tableName="vulnerabilityaggregate">-->
-<!--            <column name="vuln_id" type="INT">-->
-<!--                <constraints primaryKey="true" nullable="false"/>-->
-<!--            </column>-->
-<!--            <column name="cve_id" type="VARCHAR(20)">-->
-<!--                <constraints nullable="false"/>-->
-<!--            </column>-->
-<!--            <column name="description" type="MEDIUMTEXT">-->
-<!--                <constraints nullable="false"/>-->
-<!--            </column>-->
-<!--            <column name="created_date" type="DATETIME">-->
-<!--                <constraints nullable="false"/>-->
-<!--            </column>-->
-<!--            <column name="published_date" type="DATETIME">-->
-<!--                <constraints nullable="false"/>-->
-<!--            </column>-->
-<!--            <column name="last_modified_date" type="DATETIME">-->
-<!--                <constraints nullable="false"/>-->
-<!--            </column>-->
-<!--            <column name="fixed_date" type="DATETIME">-->
-<!--                <constraints nullable="true"/>-->
-<!--            </column>-->
-<!--            <column name="exists_at_nvd" type="TINYTEXT">-->
-<!--                <constraints nullable="true"/>-->
-<!--            </column>-->
-<!--            <column name="exists_at_mitre" type="TINYTEXT">-->
-<!--                <constraints nullable="true"/>-->
-<!--            </column>-->
-<!--            <column name="vdo_labels" type="TINYTEXT">-->
-<!--                <constraints nullable="true"/>-->
-<!--            </column>-->
-<!--            <column name="vdo_label_confidences" type="TINYTEXT">-->
-<!--                <constraints nullable="true"/>-->
-<!--            </column>-->
-<!--            <column name="vdo_noun_groups" type="TINYTEXT">-->
-<!--                <constraints nullable="true"/>-->
-<!--            </column>-->
-<!--            <column name="source_urls" type="MEDIUMTEXT">-->
-<!--                <constraints nullable="false"/>-->
-<!--            </column>-->
-<!--            <column name="base_scores" type="TINYTEXT">-->
-<!--                <constraints nullable="false"/>-->
-<!--            </column>-->
-<!--            <column name="impact_scores" type="TINYTEXT">-->
-<!--                <constraints nullable="false"/>-->
-<!--            </column>-->
-<!--            <column name="cpes" type="TINYTEXT">-->
-<!--                <constraints nullable="false"/>-->
-<!--            </column>-->
-<!--            <column name="exploit_publish_date" type="DATETIME">-->
-<!--                <constraints nullable="false"/>-->
-<!--            </column>-->
-<!--            <column name="exploit_url" type="TINYTEXT">-->
-<!--                <constraints nullable="false"/>-->
-<!--            </column>-->
-<!--            <column name="runhistory_id" type="INT">-->
-<!--                <constraints nullable="false"/>-->
-<!--            </column>-->
-<!--        </createTable>-->
+    <changeSet author="vulnerabilityaggregate" id="vulnerabilityaggregate">
+        <createTable tableName="vulnerabilityaggregate">
+            <column name="vuln_id" type="INT">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="cve_id" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="MEDIUMTEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_date" type="DATETIME">
+                <constraints nullable="false"/>
+            </column>
+            <column name="published_date" type="DATETIME">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_modified_date" type="DATETIME">
+                <constraints nullable="false"/>
+            </column>
+            <column name="fixed_date" type="DATETIME">
+                <constraints nullable="true"/>
+            </column>
+            <column name="exists_at_nvd" type="TINYTEXT">
+                <constraints nullable="true"/>
+            </column>
+            <column name="exists_at_mitre" type="TINYTEXT">
+                <constraints nullable="true"/>
+            </column>
+            <column name="vdo_labels" type="TINYTEXT">
+                <constraints nullable="true"/>
+            </column>
+            <column name="vdo_label_confidences" type="TINYTEXT">
+                <constraints nullable="true"/>
+            </column>
+            <column name="vdo_noun_groups" type="TINYTEXT">
+                <constraints nullable="true"/>
+            </column>
+            <column name="source_urls" type="MEDIUMTEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="base_scores" type="TINYTEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="impact_scores" type="TINYTEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="cpes" type="TINYTEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="exploit_publish_date" type="DATETIME">
+                <constraints nullable="false"/>
+            </column>
+            <column name="exploit_url" type="TINYTEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="runhistory_id" type="INT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
 
-<!--        <createIndex-->
-<!--            indexName="aggregate_vuln_id"-->
-<!--            tableName="vulnerabilityaggregate"-->
-<!--            unique="true">-->
-<!--            <column name="vuln_id"/>-->
-<!--        </createIndex>-->
+        <createIndex
+            indexName="aggregate_vuln_id"
+            tableName="vulnerabilityaggregate"
+            unique="true">
+            <column name="vuln_id"/>
+        </createIndex>
 
-<!--         <createIndex-->
-<!--            indexName="aggregate_run_date_time_id"-->
-<!--            tableName="vulnerabilityaggregate"-->
-<!--            unique="false">-->
-<!--            <column name="runhistory_id"/>-->
-<!--        </createIndex>-->
+         <createIndex
+            indexName="aggregate_run_date_time_id"
+            tableName="vulnerabilityaggregate"
+            unique="false">
+            <column name="runhistory_id"/>
+        </createIndex>
 
-<!--        <addForeignKeyConstraint-->
-<!--            baseTableName="vulnerabilityaggregate"-->
-<!--            baseColumnNames="cve_id"-->
-<!--            referencedTableName="vulnerability"-->
-<!--            referencedColumnNames="cve_id"-->
-<!--            constraintName="aggregate_cve_id"/>-->
+        <addForeignKeyConstraint
+            baseTableName="vulnerabilityaggregate"
+            baseColumnNames="cve_id"
+            referencedTableName="vulnerability"
+            referencedColumnNames="cve_id"
+            constraintName="aggregate_cve_id"/>
 
-<!--        <addForeignKeyConstraint-->
-<!--            baseTableName="vulnerabilityaggregate"-->
-<!--            baseColumnNames="runhistory_id"-->
-<!--            referencedTableName="runhistory"-->
-<!--            referencedColumnNames="runhistory_id"-->
-<!--            constraintName="aggregate_run_date_time_id"/>-->
+        <addForeignKeyConstraint
+            baseTableName="vulnerabilityaggregate"
+            baseColumnNames="runhistory_id"
+            referencedTableName="runhistory"
+            referencedColumnNames="runhistory_id"
+            constraintName="aggregate_run_date_time_id"/>
 
-<!--        <addUniqueConstraint-->
-<!--                columnNames="cve_id"-->
-<!--                tableName="vulnerabilityaggregate"/>-->
-<!--    </changeSet>-->
+        <addUniqueConstraint
+                columnNames="cve_id"
+                tableName="vulnerabilityaggregate"/>
+    </changeSet>
 
     <changeSet author="cvejobtrack" id="cvejobtrack">
         <createTable tableName="cvejobtrack">
