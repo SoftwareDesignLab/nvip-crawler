@@ -112,9 +112,7 @@ After the build process, the output jar will be located under the "target" direc
     $ docker build -t productnameextractor .
 
 #### Run with Env List
-    $ docker run --name productnameextractor -m 10GB productnameextractor
-	- Default value:10g
- --env-file env.list productnameextractor
+    $ docker run --name productnameextractor -m 10GB --env-file env.list productnameextractor
 
 Where `-m` is the maximum memory (RAM) the container can use during runtime, and `--env-file` is the path to
 the environment variable file (in `.list` format)
