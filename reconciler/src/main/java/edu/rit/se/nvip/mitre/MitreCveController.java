@@ -56,18 +56,10 @@ public class MitreCveController {
     private final String gitLocalPath = "nvip_data/mitre-cve/";
     private static DatabaseHelper dbh = DatabaseHelper.getInstance();
 
-
-    public static void main(String[] args) {
-
-        // this does not need to be all CVEs, just the ones we got from the reconciler
-        //main.compareReconciledCVEsWithMitre(dbh.getAllCVEsIds());
-
-    }
-
     public MitreCveController() {
         this.mitreGithubUrl = ReconcilerEnvVars.getMitreGithubUrl();
         //if it is the first run do them all otherwise only run the last 2 years
-        if(dbh.getMitreTableCount()){
+        if(dbh.isMitreTableEmpty()){
             List<String> list = new ArrayList<>();
             list.add("nvip_data/mitre-cve/" );
             this.localPaths = list;

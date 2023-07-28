@@ -30,6 +30,7 @@ import edu.rit.se.nvip.cwe.CWE;
 import edu.rit.se.nvip.model.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.checkerframework.checker.units.qual.N;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -39,12 +40,14 @@ import org.mockito.Mock;
 import org.mockito.MockedConstruction;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.test.util.ReflectionTestUtils;
+import weka.Run;
 
 import java.lang.reflect.Field;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -448,5 +451,137 @@ public class DatabaseHelperTest {
         verify(pstmt, times(2)).execute();
 
         assertEquals(1, result2);
+    }
+    @Test
+    public void getMitreDataCountTest(){
+        try {
+            when(res.next()).thenReturn(true, false);
+            when(res.getInt(anyString())).thenReturn(0, 1);
+
+            boolean result = dbh.isMitreTableEmpty();
+
+            assertTrue(result);
+            result = dbh.isMitreTableEmpty();
+            assertFalse(result);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
+    public void insertMitreDataTest() throws SQLException {
+        Set<MitreVulnerability> vulns = new HashSet<>();
+        MitreVulnerability mv1 = new MitreVulnerability("CVE-1", "PUBLIC");
+        MitreVulnerability mv2 = new MitreVulnerability("CVE-2", "RESERVED");
+        vulns.add(mv1);
+        vulns.add(mv2);
+
+        int result = dbh.insertMitreData(vulns);
+
+        verify(pstmt).setString(1, "CVE-1");
+        verify(pstmt).setString(1, "CVE-2");
+        verify(pstmt).setInt(2, 1);
+        verify(pstmt).setInt(2, 2);
+        verify(pstmt, times(2)).addBatch();
+        verify(pstmt).executeBatch();
+
+        assertEquals(1, result);
+    }
+
+    @Test
+    public void updateMitreDataTest() throws SQLException {
+        Set<MitreVulnerability> vulns = new HashSet<>();
+        MitreVulnerability mv1 = new MitreVulnerability("CVE-1", "PUBLIC");
+        MitreVulnerability mv2 = new MitreVulnerability("CVE-2", "RESERVED");
+        vulns.add(mv1);
+        vulns.add(mv2);
+
+        int res = dbh.updateMitreData(vulns);
+
+        verify(pstmt).setString(1, "CVE-1");
+        verify(pstmt).setString(1, "CVE-2");
+        verify(pstmt, times(2)).addBatch();
+        verify(pstmt).executeBatch();
+
+        assertEquals(1, res);
+    }
+
+    @Test
+    public void setInNvdMitreStatusTest() throws SQLException {
+        Set<MitreVulnerability> mVulns = new HashSet<>();
+        MitreVulnerability mv1 = new MitreVulnerability("CVE-1", "PUBLIC");
+        MitreVulnerability mv2 = new MitreVulnerability("CVE-2", "RESERVED");
+        mVulns.add(mv1);
+        mVulns.add(mv2);
+
+        Set<NvdVulnerability> nVulns = new HashSet<>();
+        NvdVulnerability nv1 = new NvdVulnerability("CVE-3", new Timestamp(System.currentTimeMillis()), "ANALYZED");
+        NvdVulnerability nv2 = new NvdVulnerability("CVE-4", new Timestamp(System.currentTimeMillis()), "RECEIVED");
+        nVulns.add(nv1);
+        nVulns.add(nv2);
+
+
+        int resM = dbh.setInNvdMitreStatus(mVulns.stream().map(v -> (Vulnerability) v).collect(Collectors.toSet()));
+        int resN = dbh.setInNvdMitreStatus(nVulns.stream().map(v -> (Vulnerability) v).collect(Collectors.toSet()));
+
+        verify(pstmt).setString(1, "CVE-1");
+        verify(pstmt).setString(1, "CVE-2");
+        verify(pstmt).setString(1, "CVE-3");
+        verify(pstmt).setString(1, "CVE-4");
+        verify(pstmt, times(4)).addBatch();
+        verify(pstmt, times(4)).executeBatch();
+
+        assertEquals(1, resM);
+        assertEquals(1, resN);
+
+    }
+
+    @Test
+    public void insertNvdMitreStatusesTest() throws SQLException {
+        Set<CompositeVulnerability> compVulns = new HashSet<>();
+        CompositeVulnerability vuln1 = new CompositeVulnerability(new RawVulnerability(1, "CVE-1", "desc", new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis()), "ex.com"));
+        CompositeVulnerability vuln2 = new CompositeVulnerability(new RawVulnerability(2, "CVE-2", "desc2", new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis()), "ex2.com"));
+        vuln1.setInMitre(1);
+        vuln2.setInNvd(1);
+        compVulns.add(vuln1);
+        compVulns.add(vuln2);
+
+        int res = dbh.insertNvdMitreStatuses(compVulns);
+
+        verify(pstmt).setString(1, "CVE-1");
+        verify(pstmt).setString(1, "CVE-2");
+        verify(pstmt).setInt(2, 0);
+        verify(pstmt).setInt(2, 1);
+        verify(pstmt).setInt(3, 0);
+        verify(pstmt).setInt(3, 1);
+
+        verify(pstmt, times(2)).addBatch();
+        verify(pstmt).executeBatch();
+
+        assertEquals(1, res);
+    }
+
+    @Test
+    public void insertRunTest() throws SQLException {
+        Set<CompositeVulnerability> vulns = new HashSet<>();
+
+        CompositeVulnerability vuln1 = new CompositeVulnerability(new RawVulnerability(1, "CVE-1", "desc", new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis()), "ex.com"));
+        vulns.add(vuln1);
+
+        RunStats run = new RunStats(vulns);
+
+        int res = dbh.insertRun(run);
+
+        verify(pstmt).setInt(2, 1);
+        verify(pstmt).setInt(3, 1);
+        verify(pstmt).setInt(4, 0);
+        verify(pstmt).setInt(5, 1);
+        verify(pstmt).setInt(6, 1);
+        verify(pstmt).setInt(7, 1);
+        verify(pstmt).setDouble(8, 0);
+        verify(pstmt).setDouble(9, 0);
+
+        verify(pstmt).execute();
+        assertEquals(1, res);
     }
 }

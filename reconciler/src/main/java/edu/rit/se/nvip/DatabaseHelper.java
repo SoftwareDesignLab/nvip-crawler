@@ -526,12 +526,14 @@ public class DatabaseHelper {
         return 0;
     }
 
-    public void insertRun(RunStats run) {
+    public int insertRun(RunStats run) {
         try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(INSERT_RUN_STATS)) {
             populateDailyRunInsert(pstmt, run);
             pstmt.execute();
+            return 1;
         } catch (SQLException e) {
             logger.error("Failed to insert the the run statistics\n{}", e.toString());
+            return 0;
         }
     }
 
@@ -593,7 +595,7 @@ public class DatabaseHelper {
 
     }
 
-    public boolean getMitreTableCount() {
+    public boolean isMitreTableEmpty() {
         try (Connection conn = getConnection();
              PreparedStatement upsertStatement = conn.prepareStatement(MITRE_COUNT);
              ResultSet resultSet = upsertStatement.executeQuery()) {
@@ -672,42 +674,7 @@ public class DatabaseHelper {
         }
     }
 
-    private void populateNvdMitreInsert(PreparedStatement pstmt, CompositeVulnerability vuln) throws SQLException {
-        pstmt.setString(1, vuln.getCveId());
-        pstmt.setTimestamp(2, vuln.getCreateDate());
-        pstmt.setInt(3, vuln.getInNvd());
-        pstmt.setInt(4, vuln.getInMitre());
-    }
-    private void populateNvdMitreUpdate(PreparedStatement pstmt, CompositeVulnerability vuln) throws SQLException {
-        pstmt.setInt(1, vuln.getInNvd());
-        pstmt.setInt(2, vuln.getInMitre());
-        pstmt.setString(3, vuln.getCveId());
-
-    }
-
-    public Set<String> getAllCVEsIds() {
-
-        Set<String> vulnIds = new HashSet<>();
-
-        try (Connection connection = getConnection();
-             PreparedStatement pstmt = connection.prepareStatement(GET_ALL_CVES)) {
-            ResultSet rs = pstmt.executeQuery();
-
-            while (rs.next()) {
-
-                try {
-                    vulnIds.add(rs.getString("cve_id"));
-                } catch (Exception ignore) {
-                }
-
-            }
-        } catch (Exception e) {
-            logger.error("ERROR: Failed to grab NVD CVEs from vulnerability table\n{}", e.toString());
-        }
-        return vulnIds;
-    }
-
-    public void insertNvdMitreStatuses(Set<CompositeVulnerability> reconciledVulns) {
+    public int insertNvdMitreStatuses(Set<CompositeVulnerability> reconciledVulns) {
         try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(INSERT_NVD_MITRE_STATUS)) {
             for (CompositeVulnerability vuln : reconciledVulns) {
                 pstmt.setString(1, vuln.getCveId());
@@ -717,9 +684,11 @@ public class DatabaseHelper {
                 pstmt.addBatch();
             }
             pstmt.executeBatch();
+            return 1;
         } catch (SQLException ex) {
             logger.error("Error while inserting rows into nvdmitrestatus table\n{}", ex.toString());
             ex.printStackTrace();
+            return 0;
         }
     }
 }
