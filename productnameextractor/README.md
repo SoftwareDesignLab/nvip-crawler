@@ -154,6 +154,7 @@ If you want to run it locally without Docker, you'll need to provide the environ
 
 
 ### Database Variables
+
 * **DB_TYPE**: Database type used (by default, mysql)
 
 
@@ -170,7 +171,9 @@ If you want to run it locally without Docker, you'll need to provide the environ
 * **HIKARI_PASSWORD**: Database password used to login to the database
     - Default value: `root`
 
+
 ### Data Directory Variables
+
 > **NOTE**: All default values for Data Directory Variables assume that the working directory is `nvip-crawler/productnameextractor`
 * **RESOURCE_DIR**: Directory path for all data resources used by Product Name Extractor
     - Default value: `nvip_data`
@@ -183,7 +186,9 @@ If you want to run it locally without Docker, you'll need to provide the environ
 * **NLP_DIR**: Directory within **DATA_DIR** which holds training files for the sentence model.
     - Default value: `nlp`
 
+
 ### RabbitMQ Variables
+
 * **RABBIT_POLL_INTERVAL**: The time interval (in seconds) by which the Product Name Extractor will poll RabbitMQ for jobs from the Reconciler.
     - Default value: `60`
 
@@ -236,6 +241,14 @@ If you want to run it locally without Docker, you'll need to provide the environ
 
 * **PRODUCT_DICT_NAME**: Name of the written CPE product dictionary file pulled from NVD's CPE Dictionary.
 	- Default value: `product_dict.json`
+
+
+* **REFRESH_INTERVAL**: Time interval (in days) for how often a refresh of the product dictionary should occur.
+    - Default value: `1.0`
+
+
+* **FULL_PULL_INTERVAL**: Time interval (in days) for how often a full pull of the product dictionary should occur.
+    - Default value: `14.0`
 
 
 * **TEST_MODE**: A boolean environment variable. Set to true to run the Product Name Extractor in test mode, false otherwise. This relies on the `test_vulnerabilities.csv` file in the data directory.

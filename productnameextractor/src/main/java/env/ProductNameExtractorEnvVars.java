@@ -51,6 +51,8 @@ public class ProductNameExtractorEnvVars {
     private static boolean prettyPrint = false;
     private static boolean testMode = false;
     private static String productDictName = "product_dict.json";
+    private static float refreshInterval = 1;
+    private static float fullPullInterval = 14;
 
     // Default values for database environment variables
 
@@ -99,6 +101,8 @@ public class ProductNameExtractorEnvVars {
     public static boolean isPrettyPrint() { return prettyPrint; }
     public static boolean isTestMode() { return testMode; }
     public static String getProductDictName() { return productDictName; }
+    public static float getRefreshInterval() { return refreshInterval; }
+    public static float getFullPullInterval() { return fullPullInterval; }
     public static String getResourceDir() { return resourceDir; }
     public static String getDataDir() { return dataDir; }
     public static String getNlpDir() { return nlpDir; }
@@ -165,6 +169,16 @@ public class ProductNameExtractorEnvVars {
             testMode = Boolean.parseBoolean(System.getenv("TEST_MODE"));
             logger.info("Setting TEST_MODE to {}", testMode);
         } else logger.warn("Could not fetch TEST_MODE from env vars, defaulting to {}", testMode);
+
+        if(props.containsKey("REFRESH_INTERVAL")) {
+            refreshInterval = Float.parseFloat(System.getenv("REFRESH_INTERVAL"));
+            logger.info("Setting REFRESH_INTERVAL to {}", refreshInterval);
+        } else logger.warn("Could not fetch REFRESH_INTERVAL from env vars, defaulting to {}", refreshInterval);
+
+        if(props.containsKey("FULL_PULL_INTERVAL")) {
+            fullPullInterval = Float.parseFloat(System.getenv("FULL_PULL_INTERVAL"));
+            logger.info("Setting FULL_PULL_INTERVAL to {}", fullPullInterval);
+        } else logger.warn("Could not fetch FULL_PULL_INTERVAL from env vars, defaulting to {}", fullPullInterval);
 
         fetchHikariEnvVars(props);
         fetchRabbitEnvVars(props);

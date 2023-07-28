@@ -51,6 +51,9 @@ public class ProductNameExtractorEnvVarsTest {
         assertEquals(5, ProductNameExtractorEnvVars.getMaxAttemptsPerPage());
         assertFalse(ProductNameExtractorEnvVars.isPrettyPrint());
         assertFalse(ProductNameExtractorEnvVars.isTestMode());
+        assertEquals("product_dict.json", ProductNameExtractorEnvVars.getProductDictName());
+        assertEquals(1.0, ProductNameExtractorEnvVars.getRefreshInterval());
+        assertEquals(14.0, ProductNameExtractorEnvVars.getFullPullInterval());
         assertEquals("nvip_data", ProductNameExtractorEnvVars.getResourceDir());
         assertEquals("data", ProductNameExtractorEnvVars.getDataDir());
         assertEquals("nlp", ProductNameExtractorEnvVars.getNlpDir());
