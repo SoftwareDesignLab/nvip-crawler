@@ -98,7 +98,7 @@ After the build process, the output jar will be located under the "target" direc
 
 ## 4. Create a Configuration to run the Product Name Extractor (IntelliJ)
 
-> **NOTE:** Intellij does not read env.list files automatically, the contents of the product name extactor env.list file can be copied directly into the menu shown in the image below. See **Environment Variables** for more information. Please ensure that the program is run with environment variables for your specific IDE/Docker configuration.
+> **NOTE:** Intellij does not read env.list files automatically, the contents of the product name extactor env.list file can be copied directly into the menu shown in the image below. See **Environment Variables** for more information. Please ensure that the program is run with environment variables for your specific IDE configuration.
 > 
 > Otherwise, default environment variables will be used but this may not be compatible with your setup.
 > 
@@ -106,7 +106,7 @@ After the build process, the output jar will be located under the "target" direc
 
 
 
-## 4. Install Docker and Build via Docker CLI (REWORK TODO)
+## 5. Build and Deploy Docker Container
 
 #### Build Crawler Image
     $ docker build -t crawler .
@@ -129,14 +129,14 @@ Make sure your MySQL service is running. If not, try the following:
   (Login will automatically fail if the service isn't running, so be sure the login credentials are correct!)
 
 
-- Make sure the **NVIP_DATA_DIR** points to the resources directory and the database user and password in the **Environment Variables** are correct.
+- Make sure the data directories and the database user and password in the **Environment Variables** are correct.
 
 ### Installation & Configuration Checklist
 - All parameters are located in **Environment Variables**
 
 - Required training data and resources are stored under the `productnameextractor/nvip_data` folder. Please ensure that you have downloaded the `w2v_model_250.bin` from the NVIP Google Drive (in a file called `large files`) as it is required for the NER Model to work.
 
-### Environment Variables
+## Environment Variables
 
 The `env.list` file contains a set of environment variables that the product name extractor requires in order to run.
 All environment variables contain default values if they're not specified, but it is generally advisable to have them configured to fit your workspace.
