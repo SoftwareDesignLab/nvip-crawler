@@ -42,6 +42,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.sql.*;
 import java.text.ParseException;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.Date;
 
@@ -129,6 +130,46 @@ public class DatabaseHelperTest {
 						return 0;
 					}
 					return 1337 * index++;
+				}
+			});
+		} catch (SQLException ignored) {}
+	}
+
+	/**
+	 * Helper method for populating the "database" results. Just returns multiples of 1337 and does not have zeros
+	 * @param getIntArg Name of the column to retrieve from.
+	 * @param count Number of results to populate.
+	 */
+	private void setResIntsNoZero(String getIntArg, int count) {
+		try {
+			when(res.getInt(getIntArg)).thenAnswer(new Answer<Integer>() {
+				private int index = 0;
+
+				public Integer answer(InvocationOnMock invocation) {
+					if (index == count) {
+						return 0;
+					}
+					return 1337 * index++ + 1;
+				}
+			});
+		} catch (SQLException ignored) {}
+	}
+
+	/**
+	 * Helper method for populating the "database" results.
+	 * @param getTimestampArg Name of the column to retrieve from. Used for that column's value as well with a suffix.
+	 * @param count Number of results to populate.
+	 */
+	private void setResTimestamps(String getTimestampName, String getTimestampArg, int count) {
+		try {
+			when(res.getTimestamp(getTimestampName)).thenAnswer(new Answer<Timestamp>() {
+				private int index = 0;
+
+				public Timestamp answer(InvocationOnMock invocation) {
+					if (index == count) {
+						return null;
+					}
+					return Timestamp.valueOf(getTimestampArg + index++);
 				}
 			});
 		} catch (SQLException ignored) {}
@@ -299,5 +340,135 @@ public class DatabaseHelperTest {
 			verify(pstmt).setInt(1, 8888);
 			assertEquals("cve_id0", out);
 		} catch (SQLException ignored) {}
+	}
+
+	@Test
+	public void testInsertNvdCve() {
+		int success = dbh.insertNvdCve("cve_id", "2023-07-03 14:00:52");
+		assertTrue(success == 1);
+		try {
+			verify(pstmt).setString(1, "cve_id");
+			verify(pstmt).setTimestamp(2, Timestamp.valueOf("2023-07-03 14:00:52"));
+			verify(pstmt).execute();
+		} catch (SQLException ignored) {}
+	}
+
+	@Test
+	public void testGetNvdCve() {
+		setResNextCount(1);
+		setResIntsNoZero("numInNvd", 1);
+		try{
+			boolean success = dbh.checkIfInNvd("cve_id");
+			verify(pstmt).setString(1, "cve_id");
+			assertTrue(success);
+		} catch (Exception e) {}
+
+		setResNextCount(1);
+		setResInts("numInNvd", 1);
+		try{
+			boolean success = dbh.checkIfInNvd("cve_id");
+			assertFalse(success);
+		} catch (Exception e) {}
+
+		setResNextCount(0);
+		try{
+			boolean success = dbh.checkIfInNvd("cve_id");
+			assertFalse(success);
+		} catch (Exception e) {}
+	}
+
+	@Test
+	public void testInsertRawVuln() {
+		RawVulnerability vuln = new RawVulnerability("www.google.com", "cve_id", "2023-07-03 14:00:52", "2023-07-03 14:00:52", "test", "test");
+		vuln.setSourceType("cna");
+		int success = dbh.insertRawVulnerability(vuln);
+		assertTrue(success == 1);
+		try {
+			verify(pstmt).setString(1, "test");
+			verify(pstmt).setString(2, "cve_id");
+			verify(pstmt).setTimestamp(3, Timestamp.valueOf(vuln.getCreatedDateAsDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
+			verify(pstmt).setTimestamp(4, Timestamp.valueOf("2023-07-03 14:00:52"));
+			verify(pstmt).setTimestamp(5, Timestamp.valueOf("2023-07-03 14:00:52"));
+			verify(pstmt).setString(6, "www.google.com");
+			verify(pstmt).setString(7, "cna");
+			verify(pstmt).execute();
+		} catch (SQLException ignored) {}
+	}
+
+	@Test
+	public void testIfInRawDesc() {
+		setResNextCount(1);
+		setResIntsNoZero("numInRawDesc", 1);
+		try{
+			boolean success = dbh.checkIfInRawDescriptions("cve_id", "desc");
+			verify(pstmt).setString(1, "cve_id");
+			verify(pstmt).setString(2, "desc");
+			assertTrue(success);
+		} catch (Exception e) {}
+
+		setResNextCount(1);
+		setResInts("numInRawDesc", 1);
+		try{
+			boolean success = dbh.checkIfInRawDescriptions("cve_id", "desc");
+			assertFalse(success);
+		} catch (Exception e) {}
+
+		setResNextCount(0);
+		try{
+			boolean success = dbh.checkIfInRawDescriptions("cve_id", "desc");
+			assertFalse(success);
+		} catch (Exception e) {}
+	}
+
+	@Test
+	public void testAddCveJob() {
+		dbh.addJobForCVE("cve_id");
+		try {
+			verify(pstmt).setString(1, "cve_id");
+			verify(pstmt).executeUpdate();
+		} catch (SQLException ignored) {}
+	}
+
+	@Test
+	public void testIfCveInJob() {
+		// Testr result having an entry thats not zero
+		setResNextCount(1);
+		setResIntsNoZero("numInJobtrack", 1);
+		try{
+			boolean success = dbh.isCveInJobTrack("cve_id");
+			verify(pstmt).setString(1, "cve_id");
+			assertTrue(success);
+		} catch (Exception e) {}
+
+		// Test result having an entry thats zero
+		setResNextCount(1);
+		setResInts("numInJobtrack", 1);
+		try{
+			boolean success = dbh.isCveInJobTrack("cve_id");
+			assertFalse(success);
+		} catch (Exception e) {}
+
+		// Test empty result
+		setResNextCount(0);
+		try{
+			boolean success = dbh.isCveInJobTrack("cve_id");
+			assertFalse(success);
+		} catch (Exception e) {}
+	}
+
+	@Test
+	public void testRawCveForNvd() {
+		int count = 2;
+		setResNextCount(count);
+		setResStrings("cve_id", count);
+		setResTimestamps("published_date", "2023-07-03 14:00:5", count);
+
+		HashMap<String, LocalDateTime> out = dbh.getRawCVEForNVDComparisons();
+		int i = 0;
+		for (Map.Entry test : out.entrySet()) {
+			assertEquals("cve_id" + i, test.getKey());
+			assertEquals("2023-07-03T14:00:5" + i, test.getValue().toString());
+			i++;
+		}
 	}
 }

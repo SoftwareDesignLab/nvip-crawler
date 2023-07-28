@@ -59,7 +59,6 @@ public class ArubaParserTest extends AbstractParserTest {
         assertEquals(8, list.size());
         RawVulnerability vuln = getVulnerability(list, "CVE-2023-25591");
         assertNotNull(vuln);
-        System.out.println(vuln);
         assertTrue(vuln.getDescription().contains("further privileges on the ClearPass instance"));
         assertFalse(vuln.getDescription().contains("execute arbitrary script code in a victim's"));
         assertEquals("2023-03-14 00:00:00", vuln.getPublishDate());

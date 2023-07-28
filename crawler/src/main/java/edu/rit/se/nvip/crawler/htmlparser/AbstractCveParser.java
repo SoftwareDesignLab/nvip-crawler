@@ -78,8 +78,8 @@ public abstract class AbstractCveParser {
 	 */
 	protected String grabDynamicHTML(String url, SeleniumDriver driver) {
 		String html = driver.tryPageGet(url);
-		if (url.contains("mend.io"))
-			return (String) ((JavascriptExecutor) driver.getDriver()).executeScript("return document.getElementsByTagName('html')[0].innerHTML");
+		// if (url.contains("mend.io"))
+		// 	return (String) ((JavascriptExecutor) driver.getDriver()).executeScript("return document.getElementsByTagName('html')[0].innerHTML");
 		return html;
 	}
 

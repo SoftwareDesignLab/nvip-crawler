@@ -97,8 +97,10 @@ public class AffectedRelease {
 		if (!(obj instanceof AffectedRelease))
 			return false;
 		AffectedRelease other = (AffectedRelease) obj;
+		if(this.cveId == null || other.cveId == null){
+			return other.cpe.equals(this.cpe);
+		}
 		return other.cveId.equals(this.cveId) && other.cpe.equals(this.cpe);
-
 	}
 
 	@Override
