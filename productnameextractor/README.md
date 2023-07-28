@@ -1,7 +1,7 @@
 
-# NVIP Crawler Backend - Product Name Extractor
+# NVIP Product Name Extractor
 
-The product name extractor component of NVIP Crawler identifies affected products in a CVE via a Named Entity Recognition (NER) model.
+The product name extractor component of NVIP identifies affected products in a CVE via a Named Entity Recognition (NER) model.
 - The model and its training data is provided in the `productnameextractor/nvip_data` directory
 - Each extracted product is mapped to a Common Product Enumeration (CPE) string in NVD's official CPE Dictionary
 - CPE Definition and Dictionary(s): https://nvd.nist.gov/products/cpe
