@@ -6,7 +6,7 @@ import java.io.UnsupportedEncodingException;
 
 public class MessageReceiverRabbit {
 
-    private static final String QUEUE_NAME = "my_queue";
+    private static final String QUEUE_NAME = "openai_responses";
 
     public static void main(String[] args) throws Exception {
         // Create a connection factory and configure it
