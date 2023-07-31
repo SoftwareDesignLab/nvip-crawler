@@ -92,7 +92,7 @@ public class CsvUtils {
 							continue; // ignore CVEs with no description
 
 						String description = vuln.getDescription().replace(mySeparatorChar + "", "").replace("\n", "");
-						String sourceUrl = Arrays.deepToString(vuln.getSourceURL().toArray());
+						String sourceUrl = Arrays.deepToString(vuln.getSourceURLs().toArray());
 
 						StringBuilder vdoCharacteristic = new StringBuilder();
 						StringBuilder vdoConfidence = new StringBuilder();
@@ -103,7 +103,7 @@ public class CsvUtils {
 							}
 						}
 
-						arr.add(new String[] { vuln.getCveId(), vuln.getPlatform(), description, sourceUrl, vdoCharacteristic.toString(), vdoConfidence.toString(), vuln.getNvdSearchResult(), vuln.getMitreSearchResult(), vuln.getNvipNote() });
+						arr.add(new String[] { vuln.getCveId(), vuln.getPlatform(), description, sourceUrl, vdoCharacteristic.toString(), vdoConfidence.toString() });
 					} catch (Exception e) {
 						logger.error("Error while adding Vulnerability to list!" + " Vuln: " + vuln + ". " + e);
 					}

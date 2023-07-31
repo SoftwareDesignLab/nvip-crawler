@@ -318,13 +318,13 @@ public class CveCharacterizer {
 					if (cveDesc.length() > 1 && cveDesc.length() < 50)
 						logger.warn("WARNING: Description too small for {} at {}. Desc: {}",
 								vulnerability.getCveId(),
-								vulnerability.getSourceURL(),
+								vulnerability.getSourceURLs(),
 								cveDesc);
 					else
 						logger.warn("WARNING: BAD or MISSING Description '{}' for {} at {}",
 								cveDesc,
 								vulnerability.getCveId(),
-								vulnerability.getSourceURL());
+								vulnerability.getSourceURLs());
 					countBadDescription++;
 					continue; // if no description or old CVE skip!
 				}
