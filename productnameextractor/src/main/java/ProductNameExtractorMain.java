@@ -220,7 +220,6 @@ public class ProductNameExtractorMain {
         ProductDictionary.initializeProductDict();
 
         List<CompositeVulnerability> vulnList;
-        final Messenger rabbitMQ = new Messenger();
 
         if(testMode){
 
@@ -241,6 +240,7 @@ public class ProductNameExtractorMain {
 
         }else{
             // Otherwise using RabbitMQ, get the list of cve IDs from the reconciler and create vuln list from those
+            final Messenger rabbitMQ = new Messenger();
             while(true) {
                 try {
 

@@ -105,7 +105,7 @@ public class ProductDetector {
 	/**
 	 * Extracts SN and SV
 	 * 
-	 * @param words                  array of words to be classified
+	 * @param words array of words to be classified
 	 * @param nerResult<ClassifiedWord> results from NER model
 	 * @return ArrayList of classified words of labels (ArrayList<ClassifiedWord>)
 	 */
