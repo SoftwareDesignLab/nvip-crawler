@@ -33,6 +33,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
@@ -201,6 +202,15 @@ public class DatabaseHelperTest {
 		assertEquals(vuln1.getDescription(), description1);
 		assertEquals(vuln2.getDescription(), description2);
 		assertEquals(vuln3.getDescription(), description3);
+	}
+
+	@Test
+	public void testInsertAffectedProductsToDB() {
+		//dont actually want to insert anything into the db
+		dbh = spy(dbh);
+		doNothing().when(dbh).insertAffectedProducts(anyList());
+		dbh.insertAffectedProductsToDB(new ArrayList<>());
+		verify(dbh).insertAffectedProducts(anyList());
 	}
 
 	@Test
