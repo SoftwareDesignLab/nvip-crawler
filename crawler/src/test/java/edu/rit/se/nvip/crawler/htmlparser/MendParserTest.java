@@ -31,6 +31,7 @@ import edu.rit.se.nvip.crawler.SeleniumDriver;
 import org.junit.Test;
 import org.junit.BeforeClass;
 import org.junit.AfterClass;
+import org.junit.Ignore;
 
 import java.util.List;
 import java.util.ArrayList;

@@ -76,7 +76,7 @@ public class SeleniumDriver {
 		System.setProperty("webdriver.chrome.silentOutput", "true");
 
 		ChromeOptions options = new ChromeOptions();
-		options.addArguments("--headless=new","--user-agent=Mozilla/5.0");
+		options.addArguments("--headless=new","--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36");
 		options.addArguments("--remote-allow-origins=*");
 		options.addArguments("--enable-javascript");
 		options.addArguments("--no-sandbox");
@@ -130,8 +130,9 @@ public class SeleniumDriver {
 
         String html = null;
         try{
+            Thread.sleep(1000);
             html = driver.getPageSource();
-        } catch (TimeoutException e) {
+        } catch (TimeoutException | InterruptedException e) {
             logger.warn("Unable to get {}", sSourceURL);
         }
         return html;

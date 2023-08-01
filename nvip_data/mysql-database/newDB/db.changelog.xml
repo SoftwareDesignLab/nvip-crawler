@@ -152,89 +152,93 @@
 <!--        />-->
 <!--    </changeSet>-->
 
-<!--    <changeSet author="memeee" id="affectedproduct-remove-date">-->
-<!--        <removeColumn tableName="affectedproduct" columnName="release_date"/>-->
-<!--    </changeSet>-->
+    <changeSet author="memeee" id="affectedproduct-remove-date">
+        <removeColumn tableName="affectedproduct" columnName="release_date"/>
+    </changeSet>
 
-<!--    <changeSet id="createPermissionTable" author="memeee">-->
-<!--        <createTable tableName="permission">-->
-<!--            <column name="permission_id" type="int" autoIncrement="true"-->
-<!--                    constraints="primaryKey"/>-->
-<!--            <column name="permission_name" type="varchar(45)"/>-->
-<!--        </createTable>-->
-<!--    </changeSet>-->
+    <changeSet id="createPermissionTable" author="memeee">
+        <createTable tableName="permission">
+            <column name="permission_id" type="int" autoIncrement="true"
+                    constraints="primaryKey"/>
+            <column name="permission_name" type="varchar(45)"/>
+        </createTable>
+    </changeSet>
 
-<!--    <changeSet id="createRoleTable" author="memeee">-->
-<!--        <createTable tableName="role">-->
-<!--            <column name="role_id" type="int" autoIncrement="true"-->
-<!--                    constraints="primaryKey"/>-->
-<!--            <column name="name" type="varchar(20)" nullable="false"/>-->
-<!--        </createTable>-->
-<!--    </changeSet>-->
+    <changeSet id="createRoleTable" author="memeee">
+        <createTable tableName="role">
+            <column name="role_id" type="int" autoIncrement="true"
+                    constraints="primaryKey"/>
+            <column name="name" type="varchar(20)" nullable="false"/>
+        </createTable>
+    </changeSet>
 
-<!--    <changeSet id="createUserTable" author="memeee">-->
-<!--        <createTable tableName="user">-->
-<!--            <column name="user_id" type="int" autoIncrement="true"-->
-<!--                    constraints="primaryKey"/>-->
-<!--            <column name="user_name" type="varchar(45)" nullable="false"/>-->
-<!--            <column name="password_hash" type="varchar(1024)" nullable="false"/>-->
-<!--            <column name="token" type="varchar(512)" nullable="true"/>-->
-<!--            <column name="token_expiration_date" type="datetime" nullable="true"/>-->
-<!--            <column name="first_name" type="varchar(50)" nullable="true"/>-->
-<!--            <column name="last_name" type="varchar(50)" nullable="true"/>-->
-<!--            <column name="role_id" type="int" nullable="false"/>-->
-<!--            <column name="email" type="varchar(45)" nullable="true"/>-->
-<!--            <column name="registered_date" type="datetime" nullable="true"/>-->
-<!--            <column name="last_login_date" type="datetime" nullable="true"/>-->
+    <changeSet id="createUserTable" author="memeee">
+        <createTable tableName="user">
+            <column name="user_id" type="int" autoIncrement="true"
+                    constraints="primaryKey"/>
+            <column name="user_name" type="varchar(45)" nullable="false"/>
+            <column name="password_hash" type="varchar(1024)" nullable="false"/>
+            <column name="token" type="varchar(512)" nullable="true"/>
+            <column name="token_expiration_date" type="datetime" nullable="true"/>
+            <column name="first_name" type="varchar(50)" nullable="true"/>
+            <column name="last_name" type="varchar(50)" nullable="true"/>
+            <column name="role_id" type="int" nullable="false"/>
+            <column name="email" type="varchar(45)" nullable="true"/>
+            <column name="registered_date" type="datetime" nullable="true"/>
+            <column name="last_login_date" type="datetime" nullable="true"/>
 
-<!--            <constraints primaryKey="user_id"/>-->
-<!--            <constraints uniqueConstraint="user_name_idx"-->
-<!--                         uniqueColumns="user_name"/>-->
-<!--            <constraints foreignKeyConstraint="user_role"-->
-<!--                         referencedTableName="role"-->
-<!--                         referencedColumnNames="role_id"-->
-<!--                         baseColumnNames="role_id"/>-->
-<!--        </createTable>-->
-<!--    </changeSet>-->
+            <constraints primaryKey="user_id"/>
+            <constraints uniqueConstraint="user_name_idx"
+                         uniqueColumns="user_name"/>
+            <constraints foreignKeyConstraint="user_role"
+                         referencedTableName="role"
+                         referencedColumnNames="role_id"
+                         baseColumnNames="role_id"/>
+        </createTable>
+    </changeSet>
 
 
-<!--    <changeSet id="createUserPermissionTable" author="memeee">-->
-<!--        <createTable tableName="userpermission">-->
-<!--            <column name="user_id" type="int" nullable="false"/>-->
-<!--            <column name="permission_id" type="int" nullable="false"/>-->
-<!--            <column name="date" type="datetime" nullable="true"/>-->
+    <changeSet id="createUserPermissionTable" author="memeee">
+        <createTable tableName="userpermission">
+            <column name="user_id" type="int" nullable="false"/>
+            <column name="permission_id" type="int" nullable="false"/>
+            <column name="date" type="datetime" nullable="true"/>
 
-<!--            <constraints primaryKey="user_id,permission_id"/>-->
-<!--            <constraints foreignKeyConstraint="userpermission_permission_id_fk"-->
-<!--                         referencedTableName="permission"-->
-<!--                         referencedColumnNames="permission_id"-->
-<!--                         baseColumnNames="permission_id"/>-->
-<!--            <constraints foreignKeyConstraint="userpermission_user_id_fk"-->
-<!--                         referencedTableName="user"-->
-<!--                         referencedColumnNames="user_id"-->
-<!--                         baseColumnNames="user_id"/>-->
-<!--        </createTable>-->
-<!--    </changeSet>-->
+            <constraints primaryKey="user_id,permission_id"/>
+            <constraints foreignKeyConstraint="userpermission_permission_id_fk"
+                         referencedTableName="permission"
+                         referencedColumnNames="permission_id"
+                         baseColumnNames="permission_id"/>
+            <constraints foreignKeyConstraint="userpermission_user_id_fk"
+                         referencedTableName="user"
+                         referencedColumnNames="user_id"
+                         baseColumnNames="user_id"/>
+        </createTable>
+    </changeSet>
 
-<!--    <changeSet id="removeColumnsFromRunHistory" author="yourname">-->
-<!--        <removeColumn tableName="runhistory" columnName="run_start_date" />-->
-<!--        <removeColumn tableName="runhistory" columnName="run_end_date" />-->
-<!--    </changeSet>-->
+    <changeSet id="removeColumnsFromRunHistory" author="memeee">
+        <removeColumn tableName="runhistory" columnName="run_start_date" />
+        <removeColumn tableName="runhistory" columnName="run_end_date" />
+    </changeSet>
 
-<!--    &lt;!&ndash; Add new columns to the existing table &ndash;&gt;-->
-<!--    <changeSet id="enhanceRunHistory" author="memeee">-->
-<!--        <addColumn tableName="runhistory">-->
-<!--            <column name="run_date_time" type="datetime" />-->
-<!--            <column name="total_cve_count" type="int" />-->
-<!--            <column name="new_cve_count" type="int" />-->
-<!--            <column name="updated_cve_count" type="int" />-->
-<!--            <column name="not_in_nvd_count" type="int" />-->
-<!--            <column name="not_in_mitre_count" type="int" />-->
-<!--            <column name="not_in_both_count" type="int" />-->
-<!--            <column name="avg_time_gap_nvd" type="double" />-->
-<!--            <column name="avg_time_gap_mitre" type="double" />-->
-<!--        </addColumn>-->
-<!--    </changeSet>-->
+    <!-- Add new columns to the existing table -->
+    <changeSet id="enhanceRunHistory" author="memeee">
+        <addColumn tableName="runhistory">
+            <column name="run_date_time" type="datetime" />
+            <column name="total_cve_count" type="int" />
+            <column name="new_cve_count" type="int" />
+            <column name="updated_cve_count" type="int" />
+            <column name="not_in_nvd_count" type="int" />
+            <column name="not_in_mitre_count" type="int" />
+            <column name="not_in_both_count" type="int" />
+            <column name="avg_time_gap_nvd" type="double" />
+            <column name="avg_time_gap_mitre" type="double" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="dropVulnerabilityAggregate" author="dylan">
+        <dropTable tableName="vulnerabilityaggregate" cascadeConstraints="true"/>
+    </changeSet>
 
 <!--    <changeSet id="renamePatchCommitColumns" author="dylan">-->
 <!--        <renameColumn tableName="patchcommit" oldColumnName="timeToPatch" newColumnName="time_to_patch" columnDataType="VARCHAR(50)" />-->

@@ -148,7 +148,7 @@ public class CveCharacterizer {
 		}
 
 	}
-	public enum CVSSSeverity {
+	public enum CVSSSeverityClass {
 		HIGH(1),
 		MEDIUM(2),
 		NA(3),
@@ -158,7 +158,7 @@ public class CveCharacterizer {
 		private final int cvssSeverityId;
 
 
-		CVSSSeverity(int cvssSeverityId) {
+		CVSSSeverityClass(int cvssSeverityId) {
 			this.cvssSeverityId = cvssSeverityId;
 		}
 
@@ -166,15 +166,14 @@ public class CveCharacterizer {
 			return cvssSeverityId;
 		}
 
-		public static CVSSSeverity getCVSSSeverity(int cvssSeverityId){
-			for(CVSSSeverity cvss : CVSSSeverity.values()){
+		public static CVSSSeverityClass getCVSSSeverityById(int cvssSeverityId){
+			for(CVSSSeverityClass cvss : CVSSSeverityClass.values()){
 				if (cvssSeverityId == cvss.getCvssSeverityId()){
 					return cvss;
 				}
 			}
 			return null;
 		}
-
 	}
 	
 	/**
@@ -256,34 +255,6 @@ public class CveCharacterizer {
 	}
 
 	/**
-	 * Gets the data from the table as a Hashmap
-	 * @param enums
-	 * @return
-	 */
-	public Map<String, Integer> getTableDataAsHashMap(Enum<?>[] enums) {
-		Map<String, Integer> dataMap = new HashMap<>();
-
-		for (int i = 0; i < enums.length; i++) {
-			int id = i + 1;
-			String name = enums[i].name();
-			dataMap.put(name, id);
-		}
-
-		return dataMap;
-	}
-
-	public Map<String, Integer> getCvssSeverityLabels() {
-		return getTableDataAsHashMap(CVSSSeverity.values());
-	}
-	public Map<String, Integer> getVdoLabels() {
-		return getTableDataAsHashMap(VDOLabel.values());
-	}
-
-	public Map<String, Integer> getVdoNounGroups() {
-		return getTableDataAsHashMap(VDONounGroup.values());
-	}
-
-	/**
 	 * characterize vulnerabilities in the given <cveList>
 	 * 
 	 * @param cveList
@@ -292,10 +263,6 @@ public class CveCharacterizer {
 
 		long start = System.currentTimeMillis();
 		int totCharacterized = 0;
-
-		Map<String, Integer> cvssSeverityLabels = getCvssSeverityLabels();
-		Map<String, Integer> vdoLabels = getVdoLabels();
-		Map<String, Integer> vdoNounGroups = getVdoNounGroups();
 
 		int countNotChanged = 0;
 		int countBadDescription = 0;
@@ -314,19 +281,20 @@ public class CveCharacterizer {
 			try {
 				vulnerability = cveList.get(i);
 				String cveDesc = vulnerability.getDescription();
-				if (cveDesc == null || cveDesc.length() < 50) {
-					if (cveDesc.length() > 1 && cveDesc.length() < 50)
-						logger.warn("WARNING: Description too small for {} at {}. Desc: {}",
-								vulnerability.getCveId(),
-								vulnerability.getSourceURLs(),
-								cveDesc);
-					else
-						logger.warn("WARNING: BAD or MISSING Description '{}' for {} at {}",
-								cveDesc,
-								vulnerability.getCveId(),
-								vulnerability.getSourceURLs());
+				if (cveDesc == null) {
+					logger.warn("WARNING: BAD or MISSING Description '{}' for {} at {}",
+							cveDesc,
+							vulnerability.getCveId(),
+							vulnerability.getSourceURLs());
 					countBadDescription++;
-					continue; // if no description or old CVE skip!
+					continue; // if no description skip
+				} else if (cveDesc.length() < 50) {
+					logger.warn("WARNING: Description too small for {} at {}. Desc: {}",
+							vulnerability.getCveId(),
+							vulnerability.getSourceURLs(),
+							cveDesc);
+					countBadDescription++;
+					continue; // if description is too short skip
 				}
 				if (vulnerability.getReconciliationStatus() == CompositeVulnerability.ReconciliationStatus.UNCHANGED) {
 					//logger.info("No change in description for Characterization of {}", cveDesc);
@@ -339,10 +307,6 @@ public class CveCharacterizer {
 				for (VDONounGroup vdoNounGroup : VDONounGroup.values()) {
 					ArrayList<String[]> predictionsForNounGroup = prediction.get(vdoNounGroup.vdoNounGroupName);
 					int vdoNounGroupId = vdoNounGroup.vdoNounGroupId;
-//					if (vdoNounGroupId == null) {
-//						logger.warn("WARNING: No entry was found for vdo noun group: {}! Please add it to the db.", vdoNounGroup);
-//						continue;
-//					}
 					for (String[] item : predictionsForNounGroup) {
 						Integer vdoLabelId = VDOLabel.getVdoLabelId(item[0]);
 						if (vdoLabelId == null)
@@ -359,14 +323,10 @@ public class CveCharacterizer {
 
 				// get severity
 				double[] cvssScore = getCvssScoreFromVdoLabels(prediction); // get mean/minimum/maximum/std dev
-				Integer severityId = cvssSeverityLabels.get(getSeverityLabelFromCvssScore(cvssScore[0])); // use mean
-				if (severityId == null)
-					logger.warn("WARNING: No entry was found for severity class {}! Please add it to the db.", severityId);
-				else {
-					CvssScore score = new CvssScore(vulnerability.getCveId(), severityId, 0.5, String.valueOf(cvssScore[0]), 0.5);
-					vulnerability.addCvssScore(score);
-//					logger.info("CVSS Score predicted for {}", vulnerability.getCveId());
-				}
+				int severityId = getSeverityLabelFromCvssScore(cvssScore[0]).getCvssSeverityId(); // use mean
+				CvssScore score = new CvssScore(vulnerability.getCveId(), severityId, 0.5, String.valueOf(cvssScore[0]), 0.5);
+				vulnerability.addCvssScore(score);
+//				logger.info("CVSS Score predicted for {}", vulnerability.getCveId());
 
 				// update list
 				cveList.set(i, vulnerability);
@@ -407,16 +367,16 @@ public class CveCharacterizer {
 		return cvssScoreCalculator.getCvssScoreJython(cvssVec);
 	}
 
-	private String getSeverityLabelFromCvssScore(double cvssScore) {
-		String severityLabel;
+	private CVSSSeverityClass getSeverityLabelFromCvssScore(double cvssScore) {
+		CVSSSeverityClass severityLabel;
 		if (cvssScore < 4)
-			severityLabel = "LOW";
+			severityLabel = CVSSSeverityClass.LOW;
 		else if (cvssScore <= 6.5)
-			severityLabel = "MEDIUM";
+			severityLabel = CVSSSeverityClass.MEDIUM;
 		else if (cvssScore < 9)
-			severityLabel = "HIGH";
+			severityLabel = CVSSSeverityClass.HIGH;
 		else
-			severityLabel = "CRITICAL";
+			severityLabel = CVSSSeverityClass.CRITICAL;
 		return severityLabel;
 	}
 

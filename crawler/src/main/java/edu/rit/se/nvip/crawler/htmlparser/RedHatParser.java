@@ -30,6 +30,7 @@ import org.jsoup.nodes.Document;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -58,7 +59,7 @@ public class RedHatParser extends AbstractCveParser {
             String publishedDate = doc.select("p.cve-public-date > pfe-datetime").attr("datetime");
             String modifiedTimestamp = doc.select("p.cve-last-modified > pfe-datetime").attr("timestamp");
 
-            String lastModifiedDate = new Timestamp(Integer.parseInt(modifiedTimestamp)*1000L).toLocalDateTime().toString();
+            String lastModifiedDate = LocalDateTime.ofEpochSecond(Integer.parseInt(modifiedTimestamp), 0, ZoneOffset.UTC).toString();
             DateTimeFormatter publishFormatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
             LocalDateTime date = LocalDateTime.parse(publishedDate, publishFormatter);
             publishedDate = date.toString();

@@ -51,8 +51,10 @@ public class ArubaParser extends AbstractCveParser {
             String section = sections.get(i).replace("\r", "");
             if (section.contains("\n" + title + "\n")) {
                 String nextSection = sections.get(i + 1);
-                nextSection = nextSection.split("\n\n")[0];
-                sectionText = nextSection;
+                String[] nextSections = nextSection.split("\n\n");
+                for (int j = 1; j < nextSections.length; j++){
+                    sectionText = sectionText + nextSections[j];
+                }
             }
         }
         return sectionText;
