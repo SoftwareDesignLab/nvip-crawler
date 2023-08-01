@@ -25,8 +25,12 @@ package model.cpe;
  */
 
 /**
- * 
+ *
+ * Class to represent a product that is affected by a CVE.
+ *
  * @author axoeec
+ * @author Paul Vickers
+ * @author Richard Sawh
  *
  */
 public class AffectedProduct {
@@ -41,6 +45,15 @@ public class AffectedProduct {
 	private String purl;
 	private String swid;
 
+	/**
+	 * Default constructor for an affectedProduct
+	 *
+	 * @param id id of the affected product
+	 * @param cveId CVE that affects the product
+	 * @param cpe CPE for the product
+	 * @param releaseDate release date of the vulnerability
+	 * @param version version of the product
+	 */
 	public AffectedProduct(int id, String cveId, String cpe, String releaseDate, String version) {
 		this.id = id;
 		this.cveId = cveId;
@@ -49,6 +62,13 @@ public class AffectedProduct {
 		this.version = version;
 	}
 
+	/**
+	 * Same as above but includes vendor and product name. Because of this, generatePURL() and generateSWID() are called
+	 * as they can only be built if vendor and product name are known.
+	 *
+	 * @param vendor vendor of the product
+	 * @param productName name of the product
+	 */
 	public AffectedProduct(int id, String cveId, String cpe, String productName, String releaseDate, String version, String vendor) {
 		this(id, cveId, cpe, releaseDate, version);
 		this.productName = productName;
@@ -57,6 +77,7 @@ public class AffectedProduct {
 		generateSWID();
 	}
 
+	// Generate with just cpe, releaseDate and version
 	public AffectedProduct(String cpe, String releaseDate, String version) {
 		this.id = 0;
 		this.cveId = null;
@@ -65,6 +86,7 @@ public class AffectedProduct {
 		this.version = version;
 	}
 
+	// Creates a copy of another affectedProduct
 	public AffectedProduct(AffectedProduct a) {
 		this.id = a.id;
 		this.cveId = a.cveId;
@@ -144,8 +166,8 @@ public class AffectedProduct {
 	}
 
 	/**
-	 * Generate SWID using product name
-	 * Scheme: swid:productname@version
+	 * Generate SWID for the affectedproduct
+	 * Format: swid:productname@version
 	 */
 	private void generateSWID(){
 		//match the scheme

@@ -25,9 +25,9 @@ package model.cve;
  */
 
 /**
- * 
- * @author axoeec
+ * Class to represent a source that a vulnerability was found at
  *
+ * @author axoeec
  */
 public class VulnSource {
 	String cveId;
