@@ -464,6 +464,38 @@ public class DatabaseHelper {
         return 0;
     }
 
+    public Set<NvdVulnerability> upsertNvdData(Set<NvdVulnerability> nvdCves) {
+        List<NvdVulnerability> nvdVulnList = new ArrayList<>(nvdCves); // need order
+        Set<NvdVulnerability> inserted = new HashSet<>(); // not updates
+        String query = "INSERT INTO nvddata (cve_id, published_date, status) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE status = VALUES(status)";
+
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+            conn.setAutoCommit(false);
+            for (NvdVulnerability vuln : nvdVulnList) {
+                pstmt.setString(1, vuln.getCveId());
+                pstmt.setTimestamp(2, vuln.getPublishDate());
+                pstmt.setString(3, vuln.getStatus().toString());
+                pstmt.addBatch();
+            }
+            int[] insertCounts = pstmt.executeBatch();
+            conn.commit();
+            for (int i = 0; i < nvdVulnList.size(); i++) {
+                int count = insertCounts[i];
+                // count == 1 -> successful insert
+                // count == 2 -> successful update
+                // other -> something went wrong, but i don't think that's possible since this is atomic
+                if (count == 1) { // 1 row affected means successful insert
+                    inserted.add(nvdVulnList.get(i));
+                }
+            }
+        } catch (SQLException ex) {
+            logger.error("Error while updating nvddata table");
+            logger.error(ex);
+        }
+        return inserted;
+    }
+
     /**
      * updates (or inserts) CVSS score of given vuln
      *

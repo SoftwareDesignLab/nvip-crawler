@@ -4,10 +4,8 @@ import edu.rit.se.nvip.characterizer.CveCharacterizer;
 import edu.rit.se.nvip.filter.FilterHandler;
 import edu.rit.se.nvip.filter.FilterReturn;
 import edu.rit.se.nvip.messenger.Messenger;
-import edu.rit.se.nvip.model.CompositeVulnerability;
-import edu.rit.se.nvip.model.RawVulnerability;
-import edu.rit.se.nvip.model.RunStats;
-import edu.rit.se.nvip.model.VulnSetWrapper;
+import edu.rit.se.nvip.model.*;
+import edu.rit.se.nvip.nvd.NvdCveController;
 import edu.rit.se.nvip.process.Processor;
 import edu.rit.se.nvip.process.ProcessorFactory;
 import edu.rit.se.nvip.reconciler.Reconciler;
@@ -44,29 +42,29 @@ public class ReconcilerController {
         Set<CompositeVulnerability> reconciledVulns = new HashSet<>();
 
 
-        ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors()); //available threads
-        List<Future<CompositeVulnerability>> futures = new ArrayList<>(); //list of futures of composite vulns (future is just a "soon to be")
+        ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
         //characterizer initialization
         CharacterizeTask cTask = new CharacterizeTask();
-        Future<CveCharacterizer> futureCharacterizer = executor.submit(cTask);;//list of futures of characterizers (should just be 1 always)
-        //set up reconcile job tasks
-        for (String job : jobs) { //for each job
-            ReconcileTask task = new ReconcileTask(job); //make a new callable task
-            Future<CompositeVulnerability> future = executor.submit(task); //actually create the thread and does the task
-            futures.add(future); //add that list of future comp vulns to the list
+        Future<CveCharacterizer> futureCharacterizer = executor.submit(cTask);
+
+        //set up reconcile job tasks, map from cve id to future
+        Map<String, Future<CompositeVulnerability>> futures = new HashMap<>();
+        for (String job : jobs) {
+            ReconcileTask task = new ReconcileTask(job);
+            Future<CompositeVulnerability> future = executor.submit(task);
+            futures.put(job, future);
         }
         executor.shutdown();
         //waits for reconcile jobs
-        for (Future<CompositeVulnerability> futureVuln : futures) { //for each list of futures of comp vulns in the list
+        for (String job : futures.keySet()) {
             try {
-                CompositeVulnerability compVuln = futureVuln.get(); //get the comp vuln (get is a wait for that thread to finish)
-                if (compVuln != null){ //if it's not null
-                    reconciledVulns.add(compVuln); //at it to the reconciledVulns list
+                CompositeVulnerability compVuln = futures.get(job).get();
+                if (compVuln != null){
+                    reconciledVulns.add(compVuln);
                 }
             } catch (InterruptedException | ExecutionException e) {
-                // TODO: Thrown error does not kill running futures, appears as hang
-                throw new RuntimeException(e);
+                logger.error("Error encountered while reconciling {}", job);
             }
         }
         logger.info("Finished reconciliation stage - sending message to PNE");
@@ -113,8 +111,14 @@ public class ReconcilerController {
         }
 
         @Override
-        public CompositeVulnerability call() throws Exception {
-            return handleReconcilerJob(job);
+        public CompositeVulnerability call() {
+            try {
+                return handleReconcilerJob(job);
+            } catch (Exception ex) {
+                logger.error("Eror encountered while reconciling {}", job);
+                logger.error(ex);
+                return null;
+            }
         }
     }
     private class CharacterizeTask implements Callable<CveCharacterizer> {
@@ -188,6 +192,10 @@ public class ReconcilerController {
 //        }
 
         return out;
+    }
+
+    private void updateNvdMitre() {
+        Set<NvdVulnerability> newNvdVulns = new NvdCveController().updateNvdDataTable2("url"); // todo right url
     }
 
     private void runProcessors(Set<CompositeVulnerability> vulns) {

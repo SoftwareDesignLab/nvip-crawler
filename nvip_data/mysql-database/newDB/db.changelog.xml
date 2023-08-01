@@ -252,4 +252,39 @@
 <!--        <modifyDataType tableName="nvdmitrestatus" columnName="exists_nvd" newDataType="INT" />-->
 <!--    </changeSet>-->
 
+    <changeSet id="dropNvdMitreStatus" author="memeee">
+        <dropTable tableName="nvdmitrestatus"/>
+    </changeSet>
+
+    <changeSet id="createTimegapTable" author="memeee">
+        <createTable tableName="timegap">
+            <column name="timegap_id" type="int">
+                <constraints primaryKey="true" primaryKeyName="pk_timegap"/>
+                <autoIncrement>true</autoIncrement>
+            </column>
+            <column name="cve_id" type="varchar(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="location" type="varchar(10)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="timegap" type="double">
+                <constraints nullable="false"/>
+            </column>
+            <column name="timegap_insert_date" type="datetime">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addPrimaryKey tableName="timegap" columnNames="timegap_id" constraintName="pk_timegap"/>
+
+        <createIndex tableName="timegap" indexName="timegap_cve_id_index" unique="false">
+            <column name="cve_id"/>
+        </createIndex>
+
+        <addForeignKeyConstraint baseTableName="timegap" baseColumnNames="cve_id"
+                                 referencedTableName="vulnerability" referencedColumnNames="cve_id"
+                                 constraintName="timegap_cve_id_fk"/>
+    </changeSet>
+
 </databaseChangeLog>
