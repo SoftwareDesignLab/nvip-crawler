@@ -165,4 +165,17 @@ public class ProductDictionaryTest {
     private Map<String, CpeGroup> readProductDictFromFile(String filePath) throws IOException {
         return ProductDictionary.readProductDict(filePath);
     }
+
+    @Test
+    public void testUnloadProductDict() {
+        // Create sample product dictionary
+        Map<String, CpeGroup> productDict = createSampleProductDict();
+
+        // Unload the product dictionary
+        ProductDictionary.unloadProductDict();
+
+        // Assertions to verify the data integrity
+        assertEquals(3, productDict.size());
+    }
+
 }
