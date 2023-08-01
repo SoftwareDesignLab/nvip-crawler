@@ -20,10 +20,10 @@ public class RunStats {
         this.totalCveCount = reconciledVulns.size();
         this.newCveCount = filterThenCount(reconciledVulns, v -> v.getReconciliationStatus() == CompositeVulnerability.ReconciliationStatus.NEW);
         this.updatedCveCount = filterThenCount(reconciledVulns, v -> v.getReconciliationStatus() == CompositeVulnerability.ReconciliationStatus.UNCHANGED);
-        this.notInNvdCount = filterThenCount(reconciledVulns, v -> v.getInNvd() == 0);
-        this.notInMitreCount = filterThenCount(reconciledVulns, v -> v.getInMitre() == 0);
-        this.notInBothCount = filterThenCount(reconciledVulns, v -> v.getInMitre() == 0 && v.getInNvd() == 0);
-        this.avgTimeGapNvd = 0; // todo compute this when the nvd status gets checked
+        this.notInNvdCount = filterThenCount(reconciledVulns, v -> !v.isInNvd());
+        this.notInMitreCount = filterThenCount(reconciledVulns, v -> !v.isInMitre());
+        this.notInBothCount = filterThenCount(reconciledVulns, v -> !v.isInNvd() && !v.isInMitre());
+        this.avgTimeGapNvd = 0; // todo figure out what on earth this means, need input from Mehdi
         this.avgTimeGapMitre = this.avgTimeGapNvd; //  set this to the same as timeGapNvd, that's what the old code does because mitre records usually don't have dates
     }
 

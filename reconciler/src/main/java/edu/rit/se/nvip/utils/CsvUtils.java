@@ -103,7 +103,7 @@ public class CsvUtils {
 							}
 						}
 
-						arr.add(new String[] { vuln.getCveId(), vuln.getPlatform(), description, sourceUrl, vdoCharacteristic.toString(), vdoConfidence.toString() });
+						arr.add(new String[] { vuln.getCveId(), description, sourceUrl, vdoCharacteristic.toString(), vdoConfidence.toString() });
 					} catch (Exception e) {
 						logger.error("Error while adding Vulnerability to list!" + " Vuln: " + vuln + ". " + e);
 					}

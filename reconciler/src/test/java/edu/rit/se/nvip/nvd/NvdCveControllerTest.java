@@ -118,16 +118,6 @@ public class NvdCveControllerTest {
                 "CVE-2023-4444", "Received",
                 "CVE-2023-5555", "Not in NVD");
 
-        Set<String> ids = new HashSet<>();
-        for (CompositeVulnerability vuln : vulns){
-            ids.add(vuln.getCveId());
-        }
-        //nvdCveController.compareReconciledCVEsWithNVD(ids);
-
-
-        //assertEquals(result.size(), 5); //asserts 5 vulns were passed through successfully
-
-
-
+        nvdCveController.compareReconciledCVEsWithNVD(vulns);
     }
 }

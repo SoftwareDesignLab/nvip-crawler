@@ -541,8 +541,8 @@ public class DatabaseHelperTest {
         Set<CompositeVulnerability> compVulns = new HashSet<>();
         CompositeVulnerability vuln1 = new CompositeVulnerability(new RawVulnerability(1, "CVE-1", "desc", new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis()), "ex.com"));
         CompositeVulnerability vuln2 = new CompositeVulnerability(new RawVulnerability(2, "CVE-2", "desc2", new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis()), "ex2.com"));
-        vuln1.setInMitre(1);
-        vuln2.setInNvd(1);
+        vuln1.setMitreVuln(new MitreVulnerability(vuln1.getCveId(), "PUBLIC"));
+        vuln2.setNvdVuln(new NvdVulnerability(vuln1.getCveId(), new Timestamp(System.currentTimeMillis()), "PUBLIC"));
         compVulns.add(vuln1);
         compVulns.add(vuln2);
 

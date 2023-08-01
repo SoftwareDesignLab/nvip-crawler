@@ -620,7 +620,7 @@ public class DatabaseHelper {
 
             for(MitreVulnerability vuln : vulns){
                 insertStatement.setString(1, vuln.getCveId());
-                insertStatement.setInt(2, vuln.getMitreStatus());
+                insertStatement.setInt(2, vuln.getStatus().getStatusInt());
                 insertStatement.addBatch();
 
             }
@@ -678,8 +678,8 @@ public class DatabaseHelper {
         try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(INSERT_NVD_MITRE_STATUS)) {
             for (CompositeVulnerability vuln : reconciledVulns) {
                 pstmt.setString(1, vuln.getCveId());
-                pstmt.setInt(2, vuln.getInNvd());
-                pstmt.setInt(3, vuln.getInMitre());
+                pstmt.setInt(2, vuln.isInNvd() ? 1 : 0);
+                pstmt.setInt(3, vuln.isInMitre() ? 1 : 0);
                 pstmt.setTimestamp(4, new Timestamp(System.currentTimeMillis())); // todo not sure if we really need this (create_date), ask chris if we can drop
                 pstmt.addBatch();
             }

@@ -79,12 +79,7 @@ public class MitreCveController {
         Set<MitreVulnerability> results = this.getMitreCVEsFromGitRepo();
         logger.info("{} cves found from MITRE", results.size());
 
-        int numReserved = 0;
-
-        for (MitreVulnerability mitreVuln: results) {
-            //logger.info(mitreVuln.getStatus());
-            numReserved = mitreVuln.getStatus() == 2 ? numReserved + 1: numReserved;
-        }
+        long numReserved = results.stream().filter(v -> v.getStatus() == MitreVulnerability.MitreStatus.RESERVED).count();
 
         logger.info("Found {} reserved CVEs from MITRE", numReserved);
 
@@ -211,13 +206,14 @@ public class MitreCveController {
 
         for (CompositeVulnerability recVuln : reconciledVulns) {
             if (idToVuln.containsKey(recVuln.getCveId())) {
-                switch (idToVuln.get(recVuln.getCveId()).getStatus()) {
-                    case 1:
-                        recVuln.setInMitre(1);
+                MitreVulnerability mitreVuln = idToVuln.get(recVuln.getCveId());
+                switch (mitreVuln.getStatus()) {
+                    case PUBLIC:
+                        recVuln.setMitreVuln(mitreVuln);
                         inMitre++;
                         publicCve++;
                         break;
-                    case 2:
+                    case RESERVED:
                         reservedCve++;
                         notInMitre++; //todo should this be considered not in mitre? (based on what Chris says)
                         break;
@@ -272,7 +268,7 @@ public class MitreCveController {
 
         for (MitreVulnerability newVuln : newVulns) {
             if (idToVuln.containsKey(newVuln.getCveId())) {
-                if (idToVuln.get(newVuln.getCveId()).getMitreStatus() != newVuln.getMitreStatus()) {
+                if (idToVuln.get(newVuln.getCveId()).getStatus() != newVuln.getStatus()) {
                     newMitreVulns.add(newVuln);
                     break;
                 }
