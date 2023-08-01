@@ -165,6 +165,11 @@ public class NvdCveController {
 
 	}
 
+	public void compareWithNvd(Set<CompositeVulnerability> reconciledVulns) {
+		Set<CompositeVulnerability> inNvd = dbh.filterByNvd(reconciledVulns);
+		// todo load up the nvd statuses and do what's being done up above
+	}
+
 //	/**
 //	 * For updating NVD table with recent CVEs
 //	 * Grabs CVEs via API request to NVD API
@@ -271,26 +276,6 @@ public class NvdCveController {
 //
 //		return NvdCves;
 //	}
-
-	/**
-	 * Updates Nvd Data Table based on string URL
-	 * @param url
-	 */
-	public void updateNvdDataTable(String url) {
-		// fetch the CVEs from NVD
-		Set<NvdVulnerability> NvdCves = fetchCvesFromNvd(url.replaceAll("<StartDate>", this.startDate)
-				.replaceAll("<EndDate>", this.endDate));
-
-		logger.info("Grabbed {} cves from NVD for the past month", NvdCves.size());
-
-		int totalUpdated = 0;
-
-		for (NvdVulnerability NvdCve: NvdCves) {
-			totalUpdated += databaseHelper.updateNvdData(NvdCve, false);
-		}
-
-		logger.info("Inserted {} new CVEs from NVD into NVD Database Table", totalUpdated);
-	}
 
 	public void updateNvdTables(String url) {
 		Set<NvdVulnerability> nvdCves = fetchCvesFromNvd(url.replaceAll("<StartDate>", this.startDate)
