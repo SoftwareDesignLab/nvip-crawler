@@ -24,7 +24,7 @@ import java.util.zip.ZipInputStream;
 public class CweController {
 
     private static final String URL = "https://cwe.mitre.org/data/xml/cwec_latest.xml.zip";
-    private static final String PATH = System.getProperty("user.dir") + "\\src\\main\\resources\\cwedata\\cwec_v4.12.xml";
+    private static final String PATH = System.getProperty("user.dir") + "\\reconciler\\src\\main\\resources\\cwedata\\cwec_v4.12.xml";
     private static Logger logger = LogManager.getLogger(CveCharacterizer.class.getSimpleName());
 
     public static void main(String[] args) {
@@ -44,13 +44,11 @@ public class CweController {
         CompositeVulnerability vuln = new CompositeVulnerability(rawVuln);
         Set<CWE> gptCWEs = gpt.assignCWEs(vuln);
         OpenAIRequestHandler.getInstance().shutdown();
-        for(CWE cw : gptCWEs){
-            logger.info(cw.getId() + ": " + cw.getName());
-        }
+        logger.info("ChatGPT found " + gptCWEs.size() + " CWEs associated with " + vuln.getCveId());
     }
 
     public void getCWEsFromWeb() {
-        String saveDir = System.getProperty("user.dir") + "\\src\\main\\resources\\cwedata\\";
+        String saveDir = System.getProperty("user.dir") + "\\reconciler\\src\\main\\resources\\cwedata\\";
 
         try {
             downloadFile(URL, saveDir);

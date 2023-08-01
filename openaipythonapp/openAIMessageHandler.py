@@ -2,7 +2,9 @@ import pika
 import openai
 import json
 
-
+#DOCKER SET UP
+#docker build -t openaiapp .
+#docker run openaiapp
 def get_openai_response(api_key, system_message, user_message, temperature):
     openai.api_key = api_key
 
@@ -24,8 +26,8 @@ def get_openai_response(api_key, system_message, user_message, temperature):
 
 
 def rabbitmq_callback(ch, method, properties, body):
-
     try:
+        print("Retrieved message from Rabbit")
         # Parse the incoming RabbitMQ message as JSON
         message_data = json.loads(body)
 
@@ -36,11 +38,9 @@ def rabbitmq_callback(ch, method, properties, body):
         temperature = message_data.get("temperature", 0.0)
 
         response = get_openai_response(openai_api_key, system_message, user_message, temperature)
-        print("OpenAI API response:")
-        print(response)
 
         # RabbitMQ configuration for the output queue
-        rabbitmq_host = 'localhost'
+        rabbitmq_host = 'host.docker.internal'
         output_queue = 'openai_responses'
 
         # Connect to RabbitMQ for publishing the response
@@ -55,8 +55,7 @@ def rabbitmq_callback(ch, method, properties, body):
                               routing_key=output_queue,
                               body=response)
 
-        print("OpenAI API response sent to the output queue.")
-
+        print("sent response")
         # Close the connection after sending the response
         connection.close()
 
@@ -68,7 +67,7 @@ def rabbitmq_callback(ch, method, properties, body):
 
 if __name__ == "__main__":
     # RabbitMQ's configuration for the input queue
-    rabbitmq_host = 'localhost'
+    rabbitmq_host = 'host.docker.internal'
     rabbitmq_queue = 'openai_requests'
 
     # Connect to RabbitMQ
@@ -81,7 +80,7 @@ if __name__ == "__main__":
     # Set up a consumer to listen for messages from RabbitMQ
     channel.basic_consume(queue=rabbitmq_queue, on_message_callback=rabbitmq_callback, auto_ack=True)
 
-    print(f"[*] Waiting for messages. To exit, press CTRL+C")
+    print(f"[*] Waiting for rabbit messages. To exit, press CTRL+C")
     try:
         channel.start_consuming()
     except KeyboardInterrupt:
