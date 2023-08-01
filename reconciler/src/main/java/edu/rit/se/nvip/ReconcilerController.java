@@ -198,8 +198,8 @@ public class ReconcilerController {
     private void updateNvdMitre() { // todo run this asynchronously
         NvdCveController nvdCont = new NvdCveController();
         MitreCveController mitreCont = new MitreCveController();
-        Set<NvdVulnerability> newNvdVulns = nvdCont.updateNvdDataTables("url"); // todo right url
-        Set<MitreVulnerability> newMitreVulns = mitreCont.updateMitreDataTable();
+        nvdCont.updateNvdTables("url"); // todo right url
+        mitreCont.updateMitreTables();
     }
 
     private void runProcessors(Set<CompositeVulnerability> vulns) {

@@ -766,7 +766,7 @@ public class DatabaseHelper {
         // at this point these nvd vulns should already be in the nvddata table and we have create dates for all vulns in our system
         // so we can compute the timestamp difference within sql, and the inner join ensures this only happens for vulns we already have
         String query = "INSERT INTO timegap (cve_id, location, timegap, created_date) " +
-                "SELECT v.cve_id, 'nvd', TIMESTAMPDIFF(HOUR, n.published_date, v.created_date), NOW() " +
+                "SELECT v.cve_id, 'nvd', TIMESTAMPDIFF(HOUR, v.created_date, n.published_date), NOW() " +
                 "FROM nvddata AS n INNER JOIN vulnerability AS v ON n.cve_id = v.cve_id WHERE v.cve_id = cve_id";
         try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(query)) {
             for (NvdVulnerability vuln : newNvdVulns) {
@@ -779,4 +779,22 @@ public class DatabaseHelper {
             logger.error(ex);
         }
     }
+
+    public void insertMitreTimeGaps(Set<MitreVulnerability> newNvdVulns) {
+        // mitre vulns don't have publish dates - so we're using NOW as their "publish date" to compute time gaps until further notice
+        String query = "INSERT INTO timegap (cve_id, location, timegap, created_date) " +
+                "SELECT v.cve_id, 'mitre', TIMESTAMPDIFF(HOUR, v.created_date, NOW()), NOW() " +
+                "FROM mitredata AS n INNER JOIN vulnerability AS v ON m.cve_id = v.cve_id WHERE v.cve_id = cve_id";
+        try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(query)) {
+            for (MitreVulnerability vuln : newNvdVulns) {
+                pstmt.setString(1, vuln.getCveId());
+                pstmt.addBatch();
+            }
+            pstmt.executeBatch();
+        } catch (SQLException ex) {
+            logger.error("Error while inserting time gaps");
+            logger.error(ex);
+        }
+    }
+
 }

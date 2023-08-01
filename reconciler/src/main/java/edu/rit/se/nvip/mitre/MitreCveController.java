@@ -73,34 +73,34 @@ public class MitreCveController {
         }
     }
 
+//    public void updateMitreTables() {
+//
+//        // pull mitre data
+//        Set<MitreVulnerability> results = this.getMitreCVEsFromGitRepo();
+//        logger.info("{} cves found from MITRE", results.size());
+//
+//        long numReserved = results.stream().filter(v -> v.getStatus() == MitreVulnerability.MitreStatus.RESERVED).count();
+//
+//        logger.info("Found {} reserved CVEs from MITRE", numReserved);
+//
+//        // insert mitre data into mitredata, update status for changed ones
+//        Set<MitreVulnerability> newVulns = this.getNewMitreVulns(results);
+//        dbh.insertMitreData(newVulns);
+//        //get changed vulns and change their status to 1 (PUBLIC)
+//        Set<MitreVulnerability> changedVulns = this.getChangedMitreVulns(results);
+//        dbh.updateMitreData(changedVulns);
+//        // set nvdmitrestatus.in_mitre = 1 for any new mitre vulns
+//        dbh.setInNvdMitreStatus(newVulns.stream().map(v -> (Vulnerability) v).collect(Collectors.toSet()));
+//    }
+
     public void updateMitreTables() {
-
-        // pull mitre data
-        Set<MitreVulnerability> results = this.getMitreCVEsFromGitRepo();
-        logger.info("{} cves found from MITRE", results.size());
-
-        long numReserved = results.stream().filter(v -> v.getStatus() == MitreVulnerability.MitreStatus.RESERVED).count();
-
-        logger.info("Found {} reserved CVEs from MITRE", numReserved);
-
-        // insert mitre data into mitredata, update status for changed ones
-        Set<MitreVulnerability> newVulns = this.getNewMitreVulns(results);
-        dbh.insertMitreData(newVulns);
-        //get changed vulns and change their status to 1 (PUBLIC)
-        Set<MitreVulnerability> changedVulns = this.getChangedMitreVulns(results);
-        dbh.updateMitreData(changedVulns);
-        // set nvdmitrestatus.in_mitre = 1 for any new mitre vulns
-        dbh.setInNvdMitreStatus(newVulns.stream().map(v -> (Vulnerability) v).collect(Collectors.toSet()));
-    }
-
-    public Set<MitreVulnerability> updateMitreDataTable() {
         Set<MitreVulnerability> results = this.getMitreCVEsFromGitRepo();
         logger.info("{} cves found from MITRE", results.size());
         long numReserved = results.stream().filter(v -> v.getStatus() == MitreVulnerability.MitreStatus.RESERVED).count();
         logger.info("Found {} reserved CVEs from MITRE", numReserved);
         Set<MitreVulnerability> insertedVulns = dbh.upsertMitreData(results);
         logger.info("{} mitre cves were new", insertedVulns.size());
-        return insertedVulns;
+        dbh.insertMitreTimeGaps(insertedVulns); // todo get the number of inserted gaps
     }
 
     /**
