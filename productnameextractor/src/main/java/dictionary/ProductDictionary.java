@@ -48,7 +48,7 @@ import java.util.regex.Pattern;
  * Product Dictionary Class
  *
  * Represents the CPE dictionary pulled from NVD with all necessary utility
- * to keep it up to date and functional throughout runs of the Product Name Extractor
+ * to keep it up to date and functional throughout runs of the Product Name Extractor.
  *
  * @author Dylan Mulligan
  * @author Paul Vickers
@@ -225,11 +225,11 @@ public class ProductDictionary {
 
     /**
      * Function to take in the current product dictionary data stored in the local productdict.json file
-     * and update it with a fresh NVD CPE Dictionary data query. If the time since the last composition (full pull
-     * of data) is greater than a week, the current data is wiped and a full re-pull from NVD is performed.
+     * and update it with a fresh NVD CPE Dictionary data query. If the time since the last full pull
+     * of data is greater than fullPullInterval (env var), the current data is wiped and a full re-pull from NVD is performed.
      *
-     * On the other hand, if it has been less than a week since the most recent composition but longer than a day
-     * since the most recent refresh, then only NVD's recently updated entries are queried and the
+     * On the other hand, if it has been less than fullPullInterval since the most recent full pull but longer than refreshInterval
+     * (env var) since the most recent refresh, then only NVD's recently updated entries are queried and the
      * current data is updated with the freshly pulled data, logging the changes.
      *
      * @param productDict dictionary of CPEs
