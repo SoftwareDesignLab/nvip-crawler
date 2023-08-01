@@ -29,6 +29,10 @@ import com.rabbitmq.client.*;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.*;
@@ -109,6 +113,66 @@ public class MessengerTest {
 
         assertNotNull(actualIds);
         Assert.assertTrue(actualIds.isEmpty());
+    }
+
+
+    @Test
+    public void testSendPatchFinderMessage() throws IOException, TimeoutException {
+        // Arrange
+        Messenger messenger = new Messenger();
+        ConnectionFactory factory = mock(ConnectionFactory.class);
+        messenger.setFactory(factory);
+
+        when(factory.newConnection()).thenReturn(mock(Connection.class));
+        Channel channel = mock(Channel.class);
+        when(factory.newConnection().createChannel()).thenReturn(channel);
+
+        String queueName = "PNE_OUT";
+        List<String> cveIds = Arrays.asList("CVE-2023-0001", "CVE-2023-0002");
+
+        // Act
+        messenger.sendPatchFinderMessage(cveIds);
+
+        // Assert
+        String expectedMessage = "[\"CVE-2023-0001\",\"CVE-2023-0002\"]";
+        verify(channel, times(1)).queueDeclare(
+                eq(queueName),
+                eq(false),
+                eq(false),
+                eq(false),
+                isNull()
+        );
+        verify(channel, times(1)).basicPublish(
+                eq(""),
+                eq(queueName),
+                isNull(),
+                eq(expectedMessage.getBytes(StandardCharsets.UTF_8))
+        );
+    }
+
+    @Test
+    public void testSendPatchFinderFinishMessage() throws IOException, TimeoutException {
+        // Arrange
+        Messenger messenger = new Messenger();
+        ConnectionFactory factory = mock(ConnectionFactory.class);
+        messenger.setFactory(factory);
+
+        Connection connection = mock(Connection.class);
+        Channel channel = mock(Channel.class);
+
+        when(factory.newConnection()).thenReturn(connection);
+        when(connection.createChannel()).thenReturn(channel);
+
+        String queueName = "PNE_OUT";
+        String message = "FINISHED";
+        byte[] messageBytes = message.getBytes(StandardCharsets.UTF_8);
+
+        // Act
+        messenger.sendPatchFinderFinishMessage();
+
+        // Assert
+        verify(channel, times(1)).queueDeclare(eq(queueName), eq(false), eq(false), eq(false), isNull());
+        verify(channel, times(1)).basicPublish(eq(""), eq(queueName), isNull(), eq(messageBytes));
     }
 
 }
