@@ -292,11 +292,14 @@ public class NvdCveController {
 		logger.info("Inserted {} new CVEs from NVD into NVD Database Table", totalUpdated);
 	}
 
-	public Set<NvdVulnerability> updateNvdDataTable2(String url) {
+	public Set<NvdVulnerability> updateNvdDataTables(String url) {
 		Set<NvdVulnerability> nvdCves = fetchCvesFromNvd(url.replaceAll("<StartDate>", this.startDate)
 				.replaceAll("<EndDate>", this.endDate));
 		logger.info("Grabbed {} cves from NVD for the past month", nvdCves.size());
-		return databaseHelper.upsertNvdData(nvdCves); // return the ones that were inserted
+		Set<NvdVulnerability> insertedVulns = databaseHelper.upsertNvdData(nvdCves); // return the ones that were inserted
+		logger.info("Inserted {} new CVEs from NVD into NVD Database Table", insertedVulns.size());
+		databaseHelper.insertNvdTimeGaps(insertedVulns); // todo return number of time gaps
+		return insertedVulns;
 	}
 
 
@@ -348,6 +351,4 @@ public class NvdCveController {
 
 		return nvdCves;
 	}
-
-
 }

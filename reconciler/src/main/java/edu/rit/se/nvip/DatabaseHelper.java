@@ -467,7 +467,7 @@ public class DatabaseHelper {
     public Set<NvdVulnerability> upsertNvdData(Set<NvdVulnerability> nvdCves) {
         List<NvdVulnerability> nvdVulnList = new ArrayList<>(nvdCves); // need order
         Set<NvdVulnerability> inserted = new HashSet<>(); // not updates
-        String query = "INSERT INTO nvddata (cve_id, published_date, status) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE status = VALUES(status)";
+        String query = "INSERT INTO nvddata (cve_id, published_date, status) VALUES (?, ?, ?) AS input ON DUPLICATE KEY UPDATE status = input.status";
 
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(query)) {
@@ -482,11 +482,44 @@ public class DatabaseHelper {
             conn.commit();
             for (int i = 0; i < nvdVulnList.size(); i++) {
                 int count = insertCounts[i];
+                // count == 0 -> no changes
                 // count == 1 -> successful insert
                 // count == 2 -> successful update
                 // other -> something went wrong, but i don't think that's possible since this is atomic
                 if (count == 1) { // 1 row affected means successful insert
                     inserted.add(nvdVulnList.get(i));
+                }
+            }
+        } catch (SQLException ex) {
+            logger.error("Error while updating nvddata table");
+            logger.error(ex);
+        }
+        return inserted;
+    }
+
+    public Set<MitreVulnerability> upsertMitreData(Set<MitreVulnerability> mitreCves) {
+        List<MitreVulnerability> mitreVulnList = new ArrayList<>(mitreCves); // need order
+        Set<MitreVulnerability> inserted = new HashSet<>(); // not updates
+        String query = "INSERT INTO mitredata (cve_id, status) VALUES (?, ?) AS input ON DUPLICATE KEY UPDATE status = input.status";
+
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+            conn.setAutoCommit(false);
+            for (MitreVulnerability vuln : mitreVulnList) {
+                pstmt.setString(1, vuln.getCveId());
+                pstmt.setString(2, vuln.getStatus().toString());
+                pstmt.addBatch();
+            }
+            int[] insertCounts = pstmt.executeBatch();
+            conn.commit();
+            for (int i = 0; i < mitreVulnList.size(); i++) {
+                int count = insertCounts[i];
+                // count == 0 -> no change
+                // count == 1 -> successful insert
+                // count == 2 -> successful update
+                // other -> something went wrong, but i don't think that's possible since this is atomic
+                if (count == 1) { // 1 row affected means successful insert
+                    inserted.add(mitreVulnList.get(i));
                 }
             }
         } catch (SQLException ex) {
@@ -725,6 +758,25 @@ public class DatabaseHelper {
             logger.error("Error while inserting rows into nvdmitrestatus table\n{}", ex.toString());
             ex.printStackTrace();
             return 0;
+        }
+    }
+
+    public void insertNvdTimeGaps(Set<NvdVulnerability> newNvdVulns) {
+        // we don't need to compute time gaps ourselves
+        // at this point these nvd vulns should already be in the nvddata table and we have create dates for all vulns in our system
+        // so we can compute the timestamp difference within sql, and the inner join ensures this only happens for vulns we already have
+        String query = "INSERT INTO timegap (cve_id, location, timegap, created_date) " +
+                "SELECT v.cve_id, 'nvd', TIMESTAMPDIFF(HOUR, n.published_date, v.created_date), NOW() " +
+                "FROM nvddata AS n INNER JOIN vulnerability AS v ON n.cve_id = v.cve_id WHERE v.cve_id = cve_id";
+        try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(query)) {
+            for (NvdVulnerability vuln : newNvdVulns) {
+                pstmt.setString(1, vuln.getCveId());
+                pstmt.addBatch();
+            }
+            pstmt.executeBatch();
+        } catch (SQLException ex) {
+            logger.error("Error while inserting time gaps");
+            logger.error(ex);
         }
     }
 }

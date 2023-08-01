@@ -93,6 +93,16 @@ public class MitreCveController {
         dbh.setInNvdMitreStatus(newVulns.stream().map(v -> (Vulnerability) v).collect(Collectors.toSet()));
     }
 
+    public Set<MitreVulnerability> updateMitreDataTable() {
+        Set<MitreVulnerability> results = this.getMitreCVEsFromGitRepo();
+        logger.info("{} cves found from MITRE", results.size());
+        long numReserved = results.stream().filter(v -> v.getStatus() == MitreVulnerability.MitreStatus.RESERVED).count();
+        logger.info("Found {} reserved CVEs from MITRE", numReserved);
+        Set<MitreVulnerability> insertedVulns = dbh.upsertMitreData(results);
+        logger.info("{} mitre cves were new", insertedVulns.size());
+        return insertedVulns;
+    }
+
     /**
      * Get Mitre CVEs. Checks if a local git repo exists for Mitre CVEs. If not
      * clones the remote Git repo. If a local repo exists then it pulls the latest

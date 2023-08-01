@@ -4,6 +4,7 @@ import edu.rit.se.nvip.characterizer.CveCharacterizer;
 import edu.rit.se.nvip.filter.FilterHandler;
 import edu.rit.se.nvip.filter.FilterReturn;
 import edu.rit.se.nvip.messenger.Messenger;
+import edu.rit.se.nvip.mitre.MitreCveController;
 import edu.rit.se.nvip.model.*;
 import edu.rit.se.nvip.nvd.NvdCveController;
 import edu.rit.se.nvip.process.Processor;
@@ -194,8 +195,11 @@ public class ReconcilerController {
         return out;
     }
 
-    private void updateNvdMitre() {
-        Set<NvdVulnerability> newNvdVulns = new NvdCveController().updateNvdDataTable2("url"); // todo right url
+    private void updateNvdMitre() { // todo run this asynchronously
+        NvdCveController nvdCont = new NvdCveController();
+        MitreCveController mitreCont = new MitreCveController();
+        Set<NvdVulnerability> newNvdVulns = nvdCont.updateNvdDataTables("url"); // todo right url
+        Set<MitreVulnerability> newMitreVulns = mitreCont.updateMitreDataTable();
     }
 
     private void runProcessors(Set<CompositeVulnerability> vulns) {

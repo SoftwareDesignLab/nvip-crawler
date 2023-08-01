@@ -271,7 +271,7 @@
             <column name="timegap" type="double">
                 <constraints nullable="false"/>
             </column>
-            <column name="timegap_insert_date" type="datetime">
+            <column name="created_date" type="datetime">
                 <constraints nullable="false"/>
             </column>
         </createTable>
