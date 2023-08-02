@@ -22,7 +22,6 @@
  * SOFTWARE.
  */
 
-import it.unimi.dsi.fastutil.Hash;
 import model.CpeEntry;
 import model.CpeGroup;
 import org.junit.Ignore;

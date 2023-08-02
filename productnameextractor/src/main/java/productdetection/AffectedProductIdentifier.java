@@ -195,20 +195,20 @@ public class AffectedProductIdentifier {
 				// map identified products/version to CPE
 				for (ProductItem productItem : productList) {
 					long startCPETime = System.currentTimeMillis();
-					List<String> productIDs = cpeLookUp.getCPEIds(productItem);
+					List<String> cpeIds = cpeLookUp.getCPEIds(productItem);
 					long cpeTime = System.currentTimeMillis() - startCPETime;
 					totalCPETime.addAndGet(cpeTime);
 					counterOfProcessedCPEs.getAndIncrement();
 
-					if (productIDs == null || productIDs.isEmpty()) {
+					if (cpeIds == null || cpeIds.isEmpty()) {
 						numOfProductsNotMappedToCPE.getAndIncrement();
 						logger.warn("Could not match CPEs for the predicted product name '{}'! | CVE-ID: {}", productItem.toString(), vulnerability.getCveId());
 						continue;
 					}
 
 					// if CPE identified, add it as affected product
-					for (String itemID : productIDs) {
-						existingProducts.add(new AffectedProduct(0, vulnerability.getCveId(), itemID, CpeLookUp.getNameFromCPEid(itemID), vulnerability.getPublishDate(), CpeLookUp.getVersionFromCPEid(itemID), CpeLookUp.getVendorFromCPEid(itemID)));
+					for (String cpeID : cpeIds) {
+						existingProducts.add(new AffectedProduct(vulnerability.getCveId(), cpeID, CpeLookUp.getNameFromCPEid(cpeID), CpeLookUp.getVersionFromCPEid(cpeID), CpeLookUp.getVendorFromCPEid(cpeID)));
 						numOfProductsMappedToCpe.getAndIncrement();
 						numProductsFound++;
 					}

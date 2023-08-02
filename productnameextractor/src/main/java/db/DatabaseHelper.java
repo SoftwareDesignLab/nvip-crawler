@@ -55,7 +55,7 @@ public class DatabaseHelper {
 	private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
 	private final String selectVulnerabilitySql = "SELECT vulnerability.vuln_id, vulnerability.cve_id, description.description FROM vulnerability JOIN description ON vulnerability.description_id = description.description_id;";
 	private final String selectSpecificVulnerabilitySql = "SELECT vulnerability.vuln_id, description.description FROM vulnerability JOIN description ON vulnerability.description_id = description.description_id WHERE vulnerability.cve_id = ?;";
-	private final String insertAffectedProductSql = "INSERT INTO affectedproduct (cve_id, cpe, product_name, release_date, version, vendor, purl, swid_tag) VALUES (?, ?, ?, ?, ?, ?, ?, ?);";
+	private final String insertAffectedProductSql = "INSERT INTO affectedproduct (cve_id, cpe, product_name, version, vendor, purl, swid_tag) VALUES (?, ?, ?, ?, ?, ?, ?, ?);";
 	private final String deleteAffectedProductSql = "DELETE FROM affectedproduct where cve_id = ?;";
 
 	/**
@@ -170,11 +170,10 @@ public class DatabaseHelper {
 					pstmt.setString(1, affectedProduct.getCveId());
 					pstmt.setString(2, affectedProduct.getCpe());
 					pstmt.setString(3, affectedProduct.getProductName());
-					pstmt.setString(4, affectedProduct.getReleaseDate());
-					pstmt.setString(5, affectedProduct.getVersion());
-					pstmt.setString(6, affectedProduct.getVendor());
-					pstmt.setString(7, affectedProduct.getPURL());
-					pstmt.setString(8, affectedProduct.getSWID());
+					pstmt.setString(4, affectedProduct.getVersion());
+					pstmt.setString(5, affectedProduct.getVendor());
+					pstmt.setString(6, affectedProduct.getPURL());
+					pstmt.setString(7, affectedProduct.getSWID());
 
 					count += pstmt.executeUpdate();
 

@@ -89,7 +89,7 @@ public class DatabaseHelperTest {
 		List<AffectedProduct> products = new ArrayList<>();
 		for (int i = 0; i < count; i++) {
 			String cpeName = "cpe:2.3:a:" + i + ":" + i + ":*:*:*:*:*:*:*:*";
-			products.add(new AffectedProduct(i, "cve"+i, cpeName, "productName"+i, "date"+i, "version"+i, "vendor"+i));
+			products.add(new AffectedProduct("cve"+i, cpeName, "productName"+i, "version"+i, "vendor"+i));
 		}
 		return products;
 	}

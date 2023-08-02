@@ -152,4 +152,8 @@
         />
     </changeSet>
 
+    <changeSet author="paul" id="affectedproduct-drop-release_date">
+        <dropColumn tableName="affectedproduct" columnName="release_date"/>
+    </changeSet>
+
 </databaseChangeLog>

@@ -40,8 +40,8 @@ public class AffectedProductTest {
     @Test
     public void testEquals_WithEqualObjects() {
         // Create two AffectedProduct objects with different CVE ID and CPE
-        AffectedProduct product1 = new AffectedProduct(1, "CVE-2023-1234", "cpe:2.3:a:vulnerable_product:1.0", "2023-01-01", "1.0");
-        AffectedProduct product2 = new AffectedProduct(2, "CVE-2023-5678", "cpe:2.3:a:vulnerable_product:1.0", "2023-01-01", "1.0");
+        AffectedProduct product1 = new AffectedProduct("CVE-2023-1234", "cpe:2.3:a:vulnerable_product:1.0", "1.0");
+        AffectedProduct product2 = new AffectedProduct("CVE-2023-5678", "cpe:2.3:a:vulnerable_product:1.0", "1.0");
 
         // Assert that the two objects are not equal
         Assertions.assertNotEquals(product1, product2);
@@ -50,8 +50,8 @@ public class AffectedProductTest {
     @Test
     public void testEquals_WithDifferentObjects() {
         // Create two AffectedProduct objects with different CPEs
-        AffectedProduct Product1 = new AffectedProduct(1, "CVE-2023-1234", "cpe:2.3:a:vulnerable_product:1.0", "2023-01-01", "1.0");
-        AffectedProduct Product2 = new AffectedProduct(2, "CVE-2023-5678", "cpe:2.3:a:vulnerable_product:2.0", "2023-01-01", "2.0");
+        AffectedProduct Product1 = new AffectedProduct("CVE-2023-1234", "cpe:2.3:a:vulnerable_product:1.0", "1.0");
+        AffectedProduct Product2 = new AffectedProduct("CVE-2023-5678", "cpe:2.3:a:vulnerable_product:2.0", "2.0");
 
         // Assert that the two objects are not equal
         Assertions.assertNotEquals(Product1, Product2);
@@ -60,7 +60,7 @@ public class AffectedProductTest {
     @Test
     public void testEquals_WithNullObject() {
         // Create an AffectedProduct object
-        AffectedProduct product = new AffectedProduct(1, "CVE-2023-1234", "cpe:2.3:a:vulnerable_product:1.0", "2023-01-01", "1.0");
+        AffectedProduct product = new AffectedProduct("CVE-2023-1234", "cpe:2.3:a:vulnerable_product:1.0", "1.0");
 
         // Assert that the object is not equal to null
         Assertions.assertNotEquals(product, null);
@@ -83,7 +83,7 @@ public class AffectedProductTest {
         String vendor = "ExampleVendor";
         String version = "1.0.0";
 
-        AffectedProduct product = new AffectedProduct(1, "", "", productName, "", version, vendor);
+        AffectedProduct product = new AffectedProduct("", "", productName, version, vendor);
 
         assertEquals(expectedSWID, product.getSWID());
     }
@@ -105,7 +105,7 @@ public class AffectedProductTest {
         String vendor = "ExampleVendor";
         String version = "";
 
-        AffectedProduct product = new AffectedProduct(1, "", "", productName, "", version, vendor);
+        AffectedProduct product = new AffectedProduct("", "", productName, version, vendor);
 
         assertEquals(expectedSWID, product.getSWID());
     }
@@ -114,7 +114,7 @@ public class AffectedProductTest {
     @org.junit.Test
     public void purlGenerationWOVersionTest(){
         String productName = "android";
-        AffectedProduct product = new AffectedProduct(1, "", "", productName, "", "", "google");
+        AffectedProduct product = new AffectedProduct("", "", productName, "", "google");
 
         String expected = "pkg:google/android";
 
@@ -124,7 +124,7 @@ public class AffectedProductTest {
     @org.junit.Test
     public void purlGenerationVersionTest(){
         String productName = "security";
-        AffectedProduct product = new AffectedProduct(1, "", "", productName, "", "1.6.2", "gentoo");
+        AffectedProduct product = new AffectedProduct("", "", productName, "1.6.2", "gentoo");
 
         String expected = "pkg:gentoo/security@1.6.2";
 
