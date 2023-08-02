@@ -175,5 +175,32 @@ public class MessengerTest {
         verify(channel, times(1)).basicPublish(eq(""), eq(queueName), isNull(), eq(messageBytes));
     }
 
+    @Test
+    public void testMain(){
+        //timeout after 15 seconds
+        Messenger messenger = new Messenger("localhost", "guest", "guest");
+
+        //create a thread to run the messenger
+        Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    messenger.main(new String[]{"localhost", "guest", "guest"});
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+        thread.start();
+
+        //wait for the thread to finish
+        try {
+            thread.join(15000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        assertFalse(thread.isAlive());
+    }
+
 }
 
