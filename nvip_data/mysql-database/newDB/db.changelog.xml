@@ -290,4 +290,26 @@
 
     </changeSet>
 
+    <changeSet id="createMitreDataTable" author="memeee">
+        <createTable tableName="mitredata">
+            <column name="cve_id" type="VARCHAR(20)">
+                <constraints primaryKey="true" nullable="false" unique="true"/>
+            </column>
+            <column name="status" type="TINYTEXT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex
+                indexName="mitredata_index_cve_id"
+                tableName="mitredata"
+                unique="true">
+            <column name="cve_id"/>
+        </createIndex>
+
+        <addUniqueConstraint
+                columnNames="cve_id"
+                tableName="nvddata"/>
+    </changeSet>
+
 </databaseChangeLog>
