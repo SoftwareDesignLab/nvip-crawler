@@ -103,21 +103,4 @@ public class NvdCveControllerTest {
 
         }
     }
-
-    @Test
-    public void compareReconciledCVEsWithNVDTest() throws SQLException { //todo needs fixing
-
-        Set<CompositeVulnerability> vulns = genRawVulns(5);
-
-        when(conn.prepareStatement(anyString())).thenReturn(pstmt);
-        when(pstmt.executeQuery()).thenReturn(res);
-        when(res.next()).thenReturn(true, true, true, true, true, false);
-        when(res.getString(anyString())).thenReturn("CVE-2023-1111", "Analyzed",
-                "CVE-2023-2222", "Undergoing Analysis",
-                "CVE-2023-3333", "Awaiting Analysis",
-                "CVE-2023-4444", "Received",
-                "CVE-2023-5555", "Not in NVD");
-
-        nvdCveController.compareReconciledCVEsWithNVD(vulns);
-    }
 }

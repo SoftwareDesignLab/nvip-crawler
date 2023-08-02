@@ -38,6 +38,7 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 
@@ -50,30 +51,21 @@ import java.util.*;
 public class NvdCveController {
 	private final Logger logger = LogManager.getLogger(NvdCveController.class);
 
-	private static DatabaseHelper dbh = DatabaseHelper.getInstance();
+	private static final DatabaseHelper dbh = DatabaseHelper.getInstance();
 	private static DatabaseHelper databaseHelper;
-	private String startDate;
-	private String endDate;
+	private final String startDate;
+	private final String endDate;
 	private static final String nvdJsonFeedUrl = "https://services.nvd.nist.gov/rest/json/cves/2.0/?pubStartDate=<StartDate>&pubEndDate=<EndDate>";
-	String[] header = new String[] { "CVE-ID", "Description", "BaseScore", "BaseSeverity", "ImpactScore", "ExploitabilityScore", "CWE", "Advisory", "Patch", "Exploit" };
-	private DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'hh:mm:ss");
+	private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'hh:mm:ss");
 
-	boolean logCPEInfo = true;
 
 	/**
 	 * for testing NVD CVE pull
 	 * @param args
 	 */
 	public static void main(String[] args) {
-//		NvdCveController nvd = new NvdCveController();
-//		//nvd.updateNvdDataTable("https://services.nvd.nist.gov/rest/json/cves/2.0?pubStartDate=<StartDate>&pubEndDate=<EndDate>");
-//		//nvd.compareReconciledCVEsWithNVD();
-//		HashMap<String, NvdVulnerability> nvdCves = nvd.fetchNVDCVEs(
-//				"https://services.nvd.nist.gov/rest/json/cves/2.0?pubstartDate=<StartDate>&pubEndDate=<EndDate>", 10);
-//		for (String cve: nvdCves.keySet()) {
-//			if (nvdCves.get(cve).getStatus() == NvdVulnerability.nvdStatus.RECEIVED)
-//				System.out.println(nvdCves.get(cve));
-//		}
+		NvdCveController nvd = new NvdCveController();
+		nvd.updateNvdTables(nvdJsonFeedUrl);
 	}
 
 
@@ -84,7 +76,6 @@ public class NvdCveController {
 	public NvdCveController() {
 		LocalDateTime today = LocalDateTime.now();
 		LocalDateTime lastMonth = LocalDateTime.now().minusDays(30);
-		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'hh:mm:ss");
 
 		this.startDate = lastMonth.format(formatter);
 		this.endDate = today.format(formatter);
@@ -92,189 +83,33 @@ public class NvdCveController {
 		databaseHelper = DatabaseHelper.getInstance();
 	}
 
-	/**
-	 * For comparing Reconciled CVEs with NVD,
-	 * Grabs CVEs from nvddata table to run comparison
-	 *
-	 * Calculates # of CVEs not in NVD, as well as average time gaps
-	 *
-	 * @param reconciledVulns
-	 */
-	public void compareReconciledCVEsWithNVD(Set<CompositeVulnerability> reconciledVulns) {
-		// Get NVD CVEs
-		ArrayList<NvdVulnerability> nvdCves = databaseHelper.getAllNvdCVEs();
-
-		//Run comparison by iterating raw CVEs
-		int inNvd = 0;
-		int notInNvd = 0;
-		int received = 0;
-		int analyzed = 0;
-		int awaitingAnalysis = 0;
-		int underGoingAnalysis = 0;
-
-		double avgTimeGap = 0;
-
-		logger.info("Comparing with NVD, this may take some time....");
-
-		Map<String, NvdVulnerability> idToVuln = new HashMap<>();
-		nvdCves.forEach(v -> idToVuln.put(v.getCveId(), v));
-
-		for (CompositeVulnerability compVuln : reconciledVulns) {
-			if (idToVuln.containsKey(compVuln.getCveId())) {
-				NvdVulnerability nvdVuln = idToVuln.get(compVuln.getCveId());
-				switch (idToVuln.get(compVuln.getCveId()).getStatus()) {
-					case RECEIVED: {
-						received++;
-						notInNvd++;
-						break;
-					}
-					case UNDERGOING_ANALYSIS: {
-						underGoingAnalysis++;
-						notInNvd++;
-						break;
-					}
-					case AWAITING_ANALYSIS: {
-						awaitingAnalysis++;
-						notInNvd++;
-						break;
-					}
-					case ANALYZED: {
-						analyzed++;
-						inNvd++;
-						compVuln.setNvdVuln(nvdVuln); // todo should we do this in all cases and use the status enum internally?
-						break;
-					}
-					default: {
-						break;
-					}
-				}
+	public void compareWithNvd(Set<CompositeVulnerability> reconciledVulns) {
+		Set<CompositeVulnerability> affected = dbh.attachNvdVulns(reconciledVulns); // returns the compvulns that got an nvdvuln attached
+		int inNvd = (int) reconciledVulns.stream().filter(CompositeVulnerability::isInNvd).count(); // let the compvuln decide for itself if it's in nvd
+		int notInNvd = reconciledVulns.size() - inNvd;
+		Set<NvdVulnerability> nvdVulns = affected.stream().map(CompositeVulnerability::getNvdVuln).collect(Collectors.toSet()); // pull out the matching nvdvulns
+		Map<NvdVulnerability.NvdStatus, Integer> statusToCount = new HashMap<>();
+		for (NvdVulnerability nvdVuln : nvdVulns) { // iterate through each nvd vuln and update appropriate counters. better than 4 filter streams
+			NvdVulnerability.NvdStatus status = nvdVuln.getStatus();
+			if (statusToCount.containsKey(status)) {
+				statusToCount.put(status, statusToCount.get(status)+1);
 			} else {
-				notInNvd++;
+				statusToCount.put(status, 1);
 			}
 		}
-
-		//Print Results
 		logger.info("NVD Comparison Results\n" +
-				"{} in NVD\n" +
-				"{} not in NVD\n" +
-				"{} analyzed in NVD\n" +
-				"{} received by NVD\n" +
-				"{} undergoing analysis in NVD\n" +
-				"{} awaiting analysis in NVD",
-				inNvd, notInNvd, analyzed, received, underGoingAnalysis, awaitingAnalysis);
-
+						"{} in NVD\n" +
+						"{} not in NVD\n" +
+						"{} analyzed in NVD\n" +
+						"{} received by NVD\n" +
+						"{} undergoing analysis in NVD\n" +
+						"{} awaiting analysis in NVD",
+				inNvd, notInNvd,
+				statusToCount.get(NvdVulnerability.NvdStatus.ANALYZED),
+				statusToCount.get(NvdVulnerability.NvdStatus.RECEIVED),
+				statusToCount.get(NvdVulnerability.NvdStatus.ANALYZED),
+				statusToCount.get(NvdVulnerability.NvdStatus.AWAITING_ANALYSIS));
 	}
-
-	public void compareWithNvd(Set<CompositeVulnerability> reconciledVulns) {
-		dbh.attachNvdVulns(reconciledVulns);
-	}
-
-//	/**
-//	 * For updating NVD table with recent CVEs
-//	 * Grabs CVEs via API request to NVD API
-//	 *
-//	 * TODO: Need to add logic for checking if a vulnerability is already in the table, then update status if needed
-//	 *
-//	 * @param url
-//	 */
-//	/**
-//	 * For grabbing CVEs from NVD via NVD's API
-//	 * @param nvdApiPath
-//	 * @return
-//	 */
-//	public HashMap<String, NvdVulnerability> fetchNVDCVEs(String nvdApiPath, int requestLimit) {
-//		HashMap<String, NvdVulnerability> NvdCves = new HashMap<>();
-//		int resultsPerPage = 2000;
-//		int startIndex = 0;
-//		int requestNum = 0;
-//
-//		String currentRequestString = nvdApiPath.replaceAll("<StartDate>", this.startDate).replaceAll("<EndDate>", this.endDate);
-//
-//		while (requestNum < requestLimit) {
-//			// 30 second wait for every 5 requests, according to NVD Doc: https://nvd.nist.gov/developers/start-here
-//			if (requestNum % 5 == 0 && requestNum > 0) {
-//				logger.info("Sleeping for 60 seconds before continuing");
-//				try {
-//					Thread.sleep(60000);
-//				} catch (InterruptedException e) {
-//					logger.error("ERROR: Failed to wait 30seconds for pulling NVD CVEs\n{}", e);
-//				}
-//			}
-//
-//			try {
-//				// Pull from NVD, keep track of startIndex for paginating response
-//				String url = currentRequestString + "&resultsPerPage=" + resultsPerPage + "&startIndex=" + startIndex;
-//				URL apiUrl = new URL(url);
-//				HttpURLConnection connection = (HttpURLConnection) apiUrl.openConnection();
-//				connection.setRequestMethod("GET");
-//
-//				if (connection.getResponseCode() != 200) {
-//					logger.error("Error retrieving CVEs with URL {}\nResponse Code: {}\n{}", url, connection.getResponseCode(), connection.getResponseMessage());
-//					break;
-//				}
-//
-//				logger.info("Connection Acquired for URL {}", url);
-//
-//				requestNum++;
-//
-//				// Parse response to JSON
-//				StringBuilder response = new StringBuilder();
-//				BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-//				String line;
-//				while ((line = reader.readLine()) != null) {
-//					response.append(line);
-//					response.append(System.lineSeparator()); // Add line separator if needed
-//				}
-//				reader.close();
-//
-//				JSONObject cveData = new JSONObject(response.toString());
-//
-//				JSONArray vulnerabilities = cveData.getJSONArray("vulnerabilities");
-//				if (vulnerabilities.length() == 0) {
-//					logger.info("No more CVEs in response, list is empty");
-//					break;
-//				}
-//
-//				// for each vulnerability in response list, add cveId, publishedDate and status to the hashmap
-//				for (int i = 0; i < vulnerabilities.length(); i++) {
-//					JSONObject cve = vulnerabilities.getJSONObject(i);
-//
-//					String cveId = cve.getJSONObject("cve").getString("id");
-//					String publishedDate = cve.getJSONObject("cve").getString("published");
-//					String lastModifiedDate = cve.getJSONObject("cve").getString("lastModified");
-//					String status = cve.getJSONObject("cve").getString("vulnStatus");
-//
-////					logger.info("CVE ID: {}", cveId);
-////					logger.info("Published Date: {}", publishedDate);
-////					logger.info("Status: {}", status);
-//
-//					NvdCves.put(cveId, new NvdVulnerability(cveId, Timestamp.valueOf(publishedDate),  Timestamp.valueOf(lastModifiedDate), status));
-//				}
-//
-//				logger.info("{} Total CVEs", NvdCves.size());
-//
-//				// Check if there's more CVEs to pull, otherwise break and return the data
-//				int totalResults = cveData.getInt("totalResults");
-//				startIndex += cveData.getInt("resultsPerPage");
-//
-//				// If we've reached the total results for the response, move the start and end dates back by 119 days
-//				// We must adhere to the 120 day range limit in NVD's API for specifying date ranges
-//				if (startIndex >= totalResults) {
-//					startIndex = 0;
-//					this.endDate = this.startDate;
-//					this.startDate = LocalDateTime.parse(this.endDate).minusDays(119).format(formatter);
-//					currentRequestString = nvdApiPath.replaceAll("<StartDate>", this.startDate).replaceAll("<EndDate>", this.endDate);
-//				}
-//
-//				connection.disconnect();
-//			} catch (IOException e) {
-//				logger.error("ERROR: Failed to parse CVEs form NVD\n{}", e.toString());
-//				break;
-//			}
-//		}
-//
-//		return NvdCves;
-//	}
 
 	public void updateNvdTables(String url) {
 		Set<NvdVulnerability> nvdCves = fetchCvesFromNvd(url.replaceAll("<StartDate>", this.startDate)
