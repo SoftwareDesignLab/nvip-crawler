@@ -28,6 +28,7 @@ import com.google.gson.JsonParser;
 import edu.rit.se.nvip.DatabaseHelper;
 import edu.rit.se.nvip.model.CompositeVulnerability;
 import edu.rit.se.nvip.model.MitreVulnerability;
+import edu.rit.se.nvip.model.NvdVulnerability;
 import edu.rit.se.nvip.model.Vulnerability;
 import edu.rit.se.nvip.utils.GitController;
 import edu.rit.se.nvip.utils.ReconcilerEnvVars;
@@ -73,26 +74,6 @@ public class MitreCveController {
         }
     }
 
-//    public void updateMitreTables() {
-//
-//        // pull mitre data
-//        Set<MitreVulnerability> results = this.getMitreCVEsFromGitRepo();
-//        logger.info("{} cves found from MITRE", results.size());
-//
-//        long numReserved = results.stream().filter(v -> v.getStatus() == MitreVulnerability.MitreStatus.RESERVED).count();
-//
-//        logger.info("Found {} reserved CVEs from MITRE", numReserved);
-//
-//        // insert mitre data into mitredata, update status for changed ones
-//        Set<MitreVulnerability> newVulns = this.getNewMitreVulns(results);
-//        dbh.insertMitreData(newVulns);
-//        //get changed vulns and change their status to 1 (PUBLIC)
-//        Set<MitreVulnerability> changedVulns = this.getChangedMitreVulns(results);
-//        dbh.updateMitreData(changedVulns);
-//        // set nvdmitrestatus.in_mitre = 1 for any new mitre vulns
-//        dbh.setInNvdMitreStatus(newVulns.stream().map(v -> (Vulnerability) v).collect(Collectors.toSet()));
-//    }
-
     public void updateMitreTables() {
         Set<MitreVulnerability> results = this.getMitreCVEsFromGitRepo();
         logger.info("{} cves found from MITRE", results.size());
@@ -109,7 +90,7 @@ public class MitreCveController {
      * updates if any. Then it recursively loads all json files in the local repo,
      * parses them and creates a CSV file at the output path.
      */
-    public Set<MitreVulnerability> getMitreCVEsFromGitRepo() {
+    private Set<MitreVulnerability> getMitreCVEsFromGitRepo() {
         Set<MitreVulnerability> mitreCveMap = new HashSet<>();
         GitController gitController = new GitController(gitLocalPath, mitreGithubUrl);
         logger.info("Checking local Git CVE repo...");
@@ -196,98 +177,28 @@ public class MitreCveController {
         return jsonList;
     }
 
-    public void compareReconciledCVEsWithMitre(Set<CompositeVulnerability> reconciledVulns) {
-        // Get NVD CVEs
-        Set<MitreVulnerability> mitreCves = dbh.getAllMitreCVEs();
-
-        //Run comparison by iterating raw CVEs
-        int inMitre = 0;
-        int notInMitre = 0;
-        int publicCve = 0;
-        int reservedCve = 0;
-
-
-        logger.info("Comparing with NVD, this may take some time....");
-
-        // For each composite vulnerability, iterate through Mitre vulns to see if there's a match in the CVE IDs
-        // If there's a match, check status of the CVE in Mitre, otherwise mark it as not in Mitre
-        Map<String, MitreVulnerability> idToVuln = new HashMap<>();
-        mitreCves.forEach(v -> idToVuln.put(v.getCveId(), v));
-
-        for (CompositeVulnerability recVuln : reconciledVulns) {
-            if (idToVuln.containsKey(recVuln.getCveId())) {
-                MitreVulnerability mitreVuln = idToVuln.get(recVuln.getCveId());
-                switch (mitreVuln.getStatus()) {
-                    case PUBLIC:
-                        recVuln.setMitreVuln(mitreVuln);
-                        inMitre++;
-                        publicCve++;
-                        break;
-                    case RESERVED:
-                        reservedCve++;
-                        notInMitre++; //todo should this be considered not in mitre? (based on what Chris says)
-                        break;
-                    default: {
-                        break;
-                    }
-                }
+    public void compareWithMitre(Set<CompositeVulnerability> reconciledVulns) {
+        Set<CompositeVulnerability> affected = dbh.attachMitreVulns(reconciledVulns);
+        int inMitre = (int) reconciledVulns.stream().filter(CompositeVulnerability::isInMitre).count();
+        int notInMitre = reconciledVulns.size() - inMitre;
+        Set<MitreVulnerability> mitreVulns = affected.stream().map(CompositeVulnerability::getMitreVuln).collect(Collectors.toSet()); // pull out the matching nvdvulns
+        Map<MitreVulnerability.MitreStatus, Integer> statusToCount = new HashMap<>();
+        for (MitreVulnerability mitreVuln : mitreVulns) { // iterate through each nvd vuln and update appropriate counters. better than 4 filter streams
+            MitreVulnerability.MitreStatus status = mitreVuln.getStatus();
+            if (statusToCount.containsKey(status)) {
+                statusToCount.put(status, statusToCount.get(status)+1);
+            } else {
+                statusToCount.put(status, 1);
             }
         }
 
-        //Print Results
         logger.info("NVD Comparison Results\n" +
                         "{} in Mitre\n" +
                         "{} not in Mitre\n" +
                         "{} Reserved by Mitre\n" +
                         "{} Public in Mitre\n",
-                inMitre, notInMitre, reservedCve, publicCve);
-
-    }
-
-    /**
-     *
-     * @param newVulns this is a list of vulns from the getMitreCVEsFromGitRepo() method
-     * @return
-     */
-    public Set<MitreVulnerability> getNewMitreVulns(Set<MitreVulnerability> newVulns){
-        Set<MitreVulnerability> newMitreVulns = new HashSet<>(); //new mitre vuln list
-        Set<MitreVulnerability> currMitreVulns = dbh.getAllMitreCVEs(); //all current mitre cves in db
-
-        for (MitreVulnerability newVuln : newVulns){ //for each new mitre vuln
-            //if that new vuln is not in the db
-            //add it to the list
-            if(!currMitreVulns.contains(newVuln)){ //if it's new
-                newMitreVulns.add(newVuln);
-                break;
-            }
-
-        }
-        return newMitreVulns;
-    }
-
-    /**
-     *
-     * @param newVulns this is a list of vulns from the getMitreCVEsFromGitRepo() method
-     * @return
-     */
-    public Set<MitreVulnerability> getChangedMitreVulns(Set<MitreVulnerability> newVulns){
-        Set<MitreVulnerability> newMitreVulns = new HashSet<>(); //new mitre vuln list
-        Set<MitreVulnerability> currMitreVulns = dbh.getAllMitreCVEs(); //all current mitre cves in db
-        Map<String, MitreVulnerability> idToVuln = new HashMap<>();
-        currMitreVulns.forEach(v -> idToVuln.put(v.getCveId(), v));
-
-        for (MitreVulnerability newVuln : newVulns) {
-            if (idToVuln.containsKey(newVuln.getCveId())) {
-                if (idToVuln.get(newVuln.getCveId()).getStatus() != newVuln.getStatus()) {
-                    newMitreVulns.add(newVuln);
-                    break;
-                }
-            }
-        }
-        return newMitreVulns;
-    }
-
-    public void compareWithMitre(Set<CompositeVulnerability> newVulns) {
-        dbh.attachMitreVulns(newVulns);
+                inMitre, notInMitre,
+                statusToCount.get(MitreVulnerability.MitreStatus.RESERVED),
+                statusToCount.get(MitreVulnerability.MitreStatus.PUBLIC));
     }
 }
