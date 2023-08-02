@@ -178,12 +178,12 @@ public class MitreCveController {
     }
 
     public void compareWithMitre(Set<CompositeVulnerability> reconciledVulns) {
-        Set<CompositeVulnerability> affected = dbh.attachMitreVulns(reconciledVulns);
-        int inMitre = (int) reconciledVulns.stream().filter(CompositeVulnerability::isInMitre).count();
+        Set<CompositeVulnerability> affected = dbh.attachMitreVulns(reconciledVulns); // returns compvulns with attached mitrevulns
+        int inMitre = (int) reconciledVulns.stream().filter(CompositeVulnerability::isInMitre).count(); // comp vuln decides what "in" means
         int notInMitre = reconciledVulns.size() - inMitre;
         Set<MitreVulnerability> mitreVulns = affected.stream().map(CompositeVulnerability::getMitreVuln).collect(Collectors.toSet()); // pull out the matching nvdvulns
         Map<MitreVulnerability.MitreStatus, Integer> statusToCount = new HashMap<>();
-        for (MitreVulnerability mitreVuln : mitreVulns) { // iterate through each nvd vuln and update appropriate counters. better than 4 filter streams
+        for (MitreVulnerability mitreVuln : mitreVulns) { // iterate through each mitre vuln and update appropriate counters. better than 4 filter streams
             MitreVulnerability.MitreStatus status = mitreVuln.getStatus();
             if (statusToCount.containsKey(status)) {
                 statusToCount.put(status, statusToCount.get(status)+1);
