@@ -152,11 +152,11 @@
 <!--        />-->
 <!--    </changeSet>-->
 
-    <changeSet author="memeee" id="affectedproduct-remove-date">
+    <!-- <changeSet author="memeee" id="affectedproduct-remove-date">
         <removeColumn tableName="affectedproduct" columnName="release_date"/>
-    </changeSet>
+    </changeSet> -->
 
-    <changeSet id="createPermissionTable" author="memeee">
+    <!-- <changeSet id="createPermissionTable" author="memeee">
         <createTable tableName="permission">
             <column name="permission_id" type="int" autoIncrement="true"
                     constraints="primaryKey"/>
@@ -214,15 +214,15 @@
                          referencedColumnNames="user_id"
                          baseColumnNames="user_id"/>
         </createTable>
-    </changeSet>
+    </changeSet> -->
 
-    <changeSet id="removeColumnsFromRunHistory" author="memeee">
+    <!-- <changeSet id="removeColumnsFromRunHistory" author="memeee">
         <removeColumn tableName="runhistory" columnName="run_start_date" />
         <removeColumn tableName="runhistory" columnName="run_end_date" />
-    </changeSet>
+    </changeSet> -->
 
     <!-- Add new columns to the existing table -->
-    <changeSet id="enhanceRunHistory" author="memeee">
+    <!-- <changeSet id="enhanceRunHistory" author="memeee">
         <addColumn tableName="runhistory">
             <column name="run_date_time" type="datetime" />
             <column name="total_cve_count" type="int" />
@@ -234,11 +234,11 @@
             <column name="avg_time_gap_nvd" type="double" />
             <column name="avg_time_gap_mitre" type="double" />
         </addColumn>
-    </changeSet>
+    </changeSet> -->
 
-    <changeSet id="dropVulnerabilityAggregate" author="dylan">
+    <!-- <changeSet id="dropVulnerabilityAggregate" author="dylan">
         <dropTable tableName="vulnerabilityaggregate" cascadeConstraints="true"/>
-    </changeSet>
+    </changeSet> -->
 
 <!--    <changeSet id="renamePatchCommitColumns" author="dylan">-->
 <!--        <renameColumn tableName="patchcommit" oldColumnName="timeToPatch" newColumnName="time_to_patch" columnDataType="VARCHAR(50)" />-->
@@ -251,5 +251,21 @@
 <!--        <modifyDataType tableName="nvdmitrestatus" columnName="exists_mitre" newDataType="INT" />-->
 <!--        <modifyDataType tableName="nvdmitrestatus" columnName="exists_nvd" newDataType="INT" />-->
 <!--    </changeSet>-->
+
+    <changeSet id="addUserToCvss" author="asawtelle">
+        <addColumn tableName="cvss">
+            <column name="user_id" type="int">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="addUserToVdo" author="asawtelle">
+        <addColumn tableName="vdocharacteristic">
+            <column name="user_id" type="int">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
 
 </databaseChangeLog>
