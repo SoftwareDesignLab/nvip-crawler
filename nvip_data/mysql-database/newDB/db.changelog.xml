@@ -153,72 +153,97 @@
 <!--    </changeSet>-->
 
     <changeSet author="memeee" id="affectedproduct-remove-date">
-        <removeColumn tableName="affectedproduct" columnName="release_date"/>
+        <dropColumn tableName="affectedproduct" columnName="release_date"/>
     </changeSet>
 
     <changeSet id="createPermissionTable" author="memeee">
         <createTable tableName="permission">
-            <column name="permission_id" type="int" autoIncrement="true"
-                    constraints="primaryKey"/>
+            <column name="permission_id" type="int" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false" unique="true"/>
+            </column>
             <column name="permission_name" type="varchar(45)"/>
         </createTable>
     </changeSet>
 
     <changeSet id="createRoleTable" author="memeee">
         <createTable tableName="role">
-            <column name="role_id" type="int" autoIncrement="true"
-                    constraints="primaryKey"/>
-            <column name="name" type="varchar(20)" nullable="false"/>
+            <column name="role_id" type="int" autoIncrement="true">
+                    <constraints primaryKey="true" nullable="false" unique="true"/>
+            </column>
+            <column name="name" type="varchar(20)">
+                <constraints nullable="false"/>
+            </column>
         </createTable>
     </changeSet>
 
     <changeSet id="createUserTable" author="memeee">
         <createTable tableName="user">
-            <column name="user_id" type="int" autoIncrement="true"
-                    constraints="primaryKey"/>
-            <column name="user_name" type="varchar(45)" nullable="false"/>
-            <column name="password_hash" type="varchar(1024)" nullable="false"/>
-            <column name="token" type="varchar(512)" nullable="true"/>
-            <column name="token_expiration_date" type="datetime" nullable="true"/>
-            <column name="first_name" type="varchar(50)" nullable="true"/>
-            <column name="last_name" type="varchar(50)" nullable="true"/>
-            <column name="role_id" type="int" nullable="false"/>
-            <column name="email" type="varchar(45)" nullable="true"/>
-            <column name="registered_date" type="datetime" nullable="true"/>
-            <column name="last_login_date" type="datetime" nullable="true"/>
-
-            <constraints primaryKey="user_id"/>
-            <constraints uniqueConstraint="user_name_idx"
-                         uniqueColumns="user_name"/>
-            <constraints foreignKeyConstraint="user_role"
-                         referencedTableName="role"
-                         referencedColumnNames="role_id"
-                         baseColumnNames="role_id"/>
+            <column name="user_id" type="int" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false" unique="true"/>
+            </column>
+            <column name="user_name" type="varchar(45)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="password_hash" type="varchar(1024)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="token" type="varchar(512)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="token_expiration_date" type="datetime">
+                <constraints nullable="true"/>
+            </column>
+            <column name="first_name" type="varchar(50)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="last_name" type="varchar(50)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="role_id" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="email" type="varchar(45)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="registered_date" type="datetime">
+                <constraints nullable="true"/>
+            </column>
+            <column name="last_login_date" type="datetime">
+                <constraints nullable="true"/>
+            </column>
         </createTable>
+        <addUniqueConstraint columnNames="user_name" constraintName="user_name_idx" tableName="user"/>
+        <addForeignKeyConstraint baseColumnNames="role_id" baseTableName="user" constraintName="user_role"
+                                 referencedColumnNames="role_id" referencedTableName="role"/>
     </changeSet>
+
 
 
     <changeSet id="createUserPermissionTable" author="memeee">
         <createTable tableName="userpermission">
-            <column name="user_id" type="int" nullable="false"/>
-            <column name="permission_id" type="int" nullable="false"/>
-            <column name="date" type="datetime" nullable="true"/>
-
-            <constraints primaryKey="user_id,permission_id"/>
-            <constraints foreignKeyConstraint="userpermission_permission_id_fk"
-                         referencedTableName="permission"
-                         referencedColumnNames="permission_id"
-                         baseColumnNames="permission_id"/>
-            <constraints foreignKeyConstraint="userpermission_user_id_fk"
-                         referencedTableName="user"
-                         referencedColumnNames="user_id"
-                         baseColumnNames="user_id"/>
+            <column name="user_id" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="permission_id" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="date" type="datetime">
+                <constraints nullable="true"/>
+            </column>
         </createTable>
+        <addPrimaryKey columnNames="user_id, permission_id" tableName="userpermission"/>
+        <addForeignKeyConstraint baseColumnNames="permission_id" baseTableName="userpermission"
+                                 constraintName="userpermission_permission_id_fk"
+                                 referencedColumnNames="permission_id" referencedTableName="permission"/>
+        <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="userpermission"
+                                 constraintName="userpermission_user_id_fk"
+                                 referencedColumnNames="user_id" referencedTableName="user"/>
     </changeSet>
 
+
     <changeSet id="removeColumnsFromRunHistory" author="memeee">
-        <removeColumn tableName="runhistory" columnName="run_start_date" />
-        <removeColumn tableName="runhistory" columnName="run_end_date" />
+        <dropColumn tableName="runhistory" columnName="run_start_date" />
+        <dropColumn tableName="runhistory" columnName="run_end_date" />
     </changeSet>
 
     <!-- Add new columns to the existing table -->
@@ -258,9 +283,8 @@
 
     <changeSet id="createTimegapTable" author="memeee">
         <createTable tableName="timegap">
-            <column name="timegap_id" type="int">
+            <column name="timegap_id" type="int" autoIncrement="true">
                 <constraints primaryKey="true" primaryKeyName="pk_timegap"/>
-                <autoIncrement>true</autoIncrement>
             </column>
             <column name="cve_id" type="varchar(20)">
                 <constraints nullable="false"/>
@@ -275,8 +299,6 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
-
-        <addPrimaryKey tableName="timegap" columnNames="timegap_id" constraintName="pk_timegap"/>
 
         <createIndex tableName="timegap" indexName="timegap_cve_id_index" unique="false">
             <column name="cve_id"/>
@@ -310,22 +332,6 @@
         <addUniqueConstraint
                 columnNames="cve_id"
                 tableName="nvddata"/>
-    </changeSet>
-
-    <changeSet id="addUserToCvss" author="asawtelle">
-        <addColumn tableName="cvss">
-            <column name="user_id" type="int">
-                <constraints nullable="true"/>
-            </column>
-        </addColumn>
-    </changeSet>
-
-    <changeSet id="addUserToVdo" author="asawtelle">
-        <addColumn tableName="vdocharacteristic">
-            <column name="user_id" type="int">
-                <constraints nullable="true"/>
-            </column>
-        </addColumn>
     </changeSet>
 
 </databaseChangeLog>
