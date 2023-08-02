@@ -55,9 +55,10 @@ public class DatabaseHelper {
             "SELECT v.cve_id, 'mitre', TIMESTAMPDIFF(HOUR, v.created_date, NOW()), NOW() " +
             "FROM mitredata AS n INNER JOIN vulnerability AS v ON m.cve_id = v.cve_id WHERE v.cve_id = cve_id AS input " +
             "ON DUPLICATE KEY SET cve_id = input.cve_id";
+    private static final String UPSERT_NVD = "INSERT INTO nvddata (cve_id, published_date, status) VALUES (?, ?, ?) AS input ON DUPLICATE KEY UPDATE status = input.status";
+    private static final String UPSERT_MITRE = "INSERT INTO mitredata (cve_id, status) VALUES (?, ?) AS input ON DUPLICATE KEY UPDATE status = input.status";
     private static final String INSERT_RUN_STATS = "INSERT INTO runhistory (run_date_time, total_cve_count, new_cve_count, updated_cve_count, not_in_nvd_count, not_in_mitre_count, not_in_both_count, avg_time_gap_nvd, avg_time_gap_mitre)" +
             "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
-
 
     public static synchronized DatabaseHelper getInstance() {
         if (databaseHelper == null) {
@@ -384,10 +385,9 @@ public class DatabaseHelper {
     public Set<NvdVulnerability> upsertNvdData(Set<NvdVulnerability> nvdCves) {
         List<NvdVulnerability> nvdVulnList = new ArrayList<>(nvdCves); // need order
         Set<NvdVulnerability> toBackfill = new HashSet<>(); // inserts and nontrivial updates
-        String query = "INSERT INTO nvddata (cve_id, published_date, status) VALUES (?, ?, ?) AS input ON DUPLICATE KEY UPDATE status = input.status";
 
         try (Connection conn = getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(query)) {
+             PreparedStatement pstmt = conn.prepareStatement(UPSERT_NVD)) {
             conn.setAutoCommit(false);
             for (NvdVulnerability vuln : nvdVulnList) {
                 pstmt.setString(1, vuln.getCveId());
@@ -419,10 +419,9 @@ public class DatabaseHelper {
     public Set<MitreVulnerability> upsertMitreData(Set<MitreVulnerability> mitreCves) {
         List<MitreVulnerability> mitreVulnList = new ArrayList<>(mitreCves); // need order
         Set<MitreVulnerability> toBackfill = new HashSet<>(); // inserts and nontrivial updates
-        String query = "INSERT INTO mitredata (cve_id, status) VALUES (?, ?) AS input ON DUPLICATE KEY UPDATE status = input.status";
 
         try (Connection conn = getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(query)) {
+             PreparedStatement pstmt = conn.prepareStatement(UPSERT_MITRE)) {
             conn.setAutoCommit(false);
             for (MitreVulnerability vuln : mitreVulnList) {
                 pstmt.setString(1, vuln.getCveId());
