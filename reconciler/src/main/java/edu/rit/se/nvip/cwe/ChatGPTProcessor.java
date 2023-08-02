@@ -41,7 +41,7 @@ public class ChatGPTProcessor {
 
     public String callModel(String arg) {
         OpenAIProcessor openAI = new OpenAIProcessor();
-        openAI.sendMessage(ReconcilerEnvVars.getOpenAIKey(), SYS_MESSAGE, arg, TEMP);
+        openAI.sendRequest(SYS_MESSAGE, arg, TEMP, RequestorIdentity.ANON);
 
         return openAI.getResponse();
     }

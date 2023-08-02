@@ -18,6 +18,11 @@ public class RequestWrapper implements Comparable<RequestWrapper> {
         this.priority = priority;
     }
 
+    public RequestWrapper(RequestorIdentity requestor, int priority) {
+        this.requestor = requestor;
+        this.priority = priority;
+    }
+
     @Override
     public int compareTo(@NotNull RequestWrapper o) {
         if (this.requestor == o.requestor) {

@@ -1,9 +1,13 @@
 package edu.rit.se.nvip.openai;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import com.rabbitmq.client.*;
 import edu.rit.se.nvip.utils.ReconcilerEnvVars;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.json.JSONObject;
 import org.nd4j.linalg.api.ops.Op;
 
 import java.io.IOException;
@@ -19,15 +23,7 @@ public class OpenAIProcessor {
     private static ConnectionFactory factory;
     private static final Logger logger = LogManager.getLogger(OpenAIProcessor.class.getSimpleName());
 
-    public static void main(String[] args) {
-        OpenAIProcessor openAi = new OpenAIProcessor();
-        openAi.sendMessage(ReconcilerEnvVars.getOpenAIKey(),
-                "You are a calculator",
-                "What is 2 + 2",
-                0.0);
-        String response = openAi.getResponse();
-        logger.info(response);
-    }
+    private int nextPriorityId = 0;
     public OpenAIProcessor(){
         ReconcilerEnvVars.loadVars();
         // Create a connection factory and configure it
@@ -37,25 +33,24 @@ public class OpenAIProcessor {
         factory.setPassword("guest");
     }
 
-    public void sendMessage(String apiKey, String sys_msg, String usr_msg, double temp){
-        //Sanitize msgs
-        sys_msg = sys_msg.replace("\"", "'");
-        usr_msg = usr_msg.replace("\"", "'");
+    public void sendRequest(String sys_msg, String usr_msg, double temp, RequestorIdentity requestor){
         // Create a connection to the RabbitMQ server
         try(Connection connection = factory.newConnection();
             Channel channel = connection.createChannel()) {
             // Declare the queue
             channel.queueDeclare(OPENAI_SENDER, false, false, false, null);
             // Define the message content
-            String message = "{"
-                    + "\"openai_api_key\": \"" + apiKey + "\","
-                    + "\"system_message\": \""+sys_msg+"\","
-                    + "\"user_message\": \""+usr_msg+"\","
-                    + "\"temperature\": " + temp
-                    + "}";
-
+            JsonObject message = new JsonObject();
+            message.add("openai_api_key", new JsonPrimitive(ReconcilerEnvVars.getOpenAIKey()));
+            message.add("system_message", new JsonPrimitive(sys_msg));
+            message.add("user_message", new JsonPrimitive(usr_msg));
+            message.add("temperature", new JsonPrimitive(temp));
+            message.add("requestorPrioId", new JsonPrimitive(requestor.priority));
+            message.add("PrioId", new JsonPrimitive(nextPriorityId++));
+            Gson gson = new Gson();
+            String jsonString = gson.toJson(message);
             // Publish the message to the queue
-            channel.basicPublish("", OPENAI_SENDER, null, message.getBytes());
+            channel.basicPublish("", OPENAI_SENDER, null, jsonString.getBytes());
 
         } catch (IOException | TimeoutException e) {
             logger.error("Error sending message: " + e);
