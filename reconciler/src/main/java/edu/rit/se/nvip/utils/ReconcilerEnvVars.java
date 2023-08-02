@@ -33,8 +33,8 @@ public class ReconcilerEnvVars extends Properties {
     private static String rabbitHost;
     private static String rabbitUsername;
     private static String rabbitPassword;
-
     private static String mitreGithubUrl;
+    private static String nvdApiUrl;
 
     /**
      * Ensures vars are loaded before anybody else uses this class. They can be reloaded by calling any public load method manually
@@ -152,6 +152,10 @@ public class ReconcilerEnvVars extends Properties {
                     break;
                 case MITRE_GITHUB_URL:
                     mitreGithubUrl = addEnvvarString(envName, envVar, "https://github.com/CVEProject/cvelist");
+                    break;
+                case NVD_API_URL:
+                    nvdApiUrl = addEnvvarString(envName, envVar, "https://services.nvd.nist.gov/rest/json/cves/2.0?pubStartDate=<StartDate>&pubEndDate=<EndDate>");
+                    break;
             }
         }
     }
@@ -264,6 +268,7 @@ public class ReconcilerEnvVars extends Properties {
         return rabbitPassword;
     }
     public static String getMitreGithubUrl() {return mitreGithubUrl;}
+    public static String getNvdApiUrl() {return nvdApiUrl;}
 
 
     private static String addEnvvarString(String name, String value, String defaultValue) {

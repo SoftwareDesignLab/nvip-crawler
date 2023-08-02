@@ -26,6 +26,7 @@ package edu.rit.se.nvip.nvd;
 import edu.rit.se.nvip.DatabaseHelper;
 import edu.rit.se.nvip.model.CompositeVulnerability;
 import edu.rit.se.nvip.model.NvdVulnerability;
+import edu.rit.se.nvip.utils.ReconcilerEnvVars;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.JSONArray;
@@ -55,8 +56,8 @@ public class NvdCveController {
 	private static DatabaseHelper databaseHelper;
 	private final String startDate;
 	private final String endDate;
-	private static final String nvdJsonFeedUrl = "https://services.nvd.nist.gov/rest/json/cves/2.0/?pubStartDate=<StartDate>&pubEndDate=<EndDate>";
 	private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'hh:mm:ss");
+	private String nvdApiUrl;
 
 
 	/**
@@ -65,7 +66,7 @@ public class NvdCveController {
 	 */
 	public static void main(String[] args) {
 		NvdCveController nvd = new NvdCveController();
-		nvd.updateNvdTables(nvdJsonFeedUrl);
+		nvd.updateNvdTables();
 	}
 
 
@@ -74,6 +75,7 @@ public class NvdCveController {
 	 * Sets today and last month's times on construction
 	 */
 	public NvdCveController() {
+		this.nvdApiUrl = ReconcilerEnvVars.getNvdApiUrl();
 		LocalDateTime today = LocalDateTime.now();
 		LocalDateTime lastMonth = LocalDateTime.now().minusDays(30);
 
@@ -112,8 +114,8 @@ public class NvdCveController {
 		return affected;
 	}
 
-	public void updateNvdTables(String url) {
-		Set<NvdVulnerability> nvdCves = fetchCvesFromNvd(url.replaceAll("<StartDate>", this.startDate)
+	public void updateNvdTables() {
+		Set<NvdVulnerability> nvdCves = fetchCvesFromNvd(nvdApiUrl.replaceAll("<StartDate>", this.startDate)
 				.replaceAll("<EndDate>", this.endDate));
 		logger.info("Grabbed {} cves from NVD for the past month", nvdCves.size());
 		Set<NvdVulnerability> toBackfill = databaseHelper.upsertNvdData(nvdCves); // return the ones that were inserted/updated

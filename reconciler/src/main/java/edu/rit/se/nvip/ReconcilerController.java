@@ -200,8 +200,7 @@ public class ReconcilerController {
     }
 
     private void updateNvdMitre() {
-        // todo url envvar
-        nvdController.updateNvdTables("https://services.nvd.nist.gov/rest/json/cves/2.0?pubStartDate=<StartDate>&pubEndDate=<EndDate>");
+        nvdController.updateNvdTables();
         mitreController.updateMitreTables();
     }
     private Set<CompositeVulnerability> attachNvdMitre(Set<CompositeVulnerability> newVulns) {
