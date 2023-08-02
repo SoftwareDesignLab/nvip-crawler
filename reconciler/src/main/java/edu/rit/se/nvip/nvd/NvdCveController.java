@@ -166,8 +166,7 @@ public class NvdCveController {
 	}
 
 	public void compareWithNvd(Set<CompositeVulnerability> reconciledVulns) {
-		Set<CompositeVulnerability> inNvd = dbh.filterByNvd(reconciledVulns);
-		// todo load up the nvd statuses and do what's being done up above
+		dbh.attachNvdVulns(reconciledVulns);
 	}
 
 //	/**

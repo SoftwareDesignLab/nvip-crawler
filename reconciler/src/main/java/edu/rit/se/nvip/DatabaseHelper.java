@@ -799,22 +799,28 @@ public class DatabaseHelper {
         }
     }
 
-    public Set<CompositeVulnerability> filterByNvd(Set<CompositeVulnerability> vulns) {
+    public Set<CompositeVulnerability> attachNvdVulns(Set<CompositeVulnerability> vulns) {
         Map<String, CompositeVulnerability> idToVuln = new HashMap<>();
         vulns.forEach(v -> idToVuln.put(v.getCveId(), v));
         Set<CompositeVulnerability> out = new HashSet<>();
 
         // generate comma separated string of question marks for cve_id candidates
         String questionMarks = IntStream.range(0, vulns.size()).mapToObj(i -> "?").collect(Collectors.joining(","));
-        String query = "SELECT cve_id FROM nvddata WHERE cve_id IN (" + questionMarks + ")";
+        String query = "SELECT cve_id, published_date, status FROM nvddata WHERE cve_id IN (" + questionMarks + ")";
         try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(query)) {
             int i = 0;
             for (CompositeVulnerability v : vulns) {
                 pstmt.setString(++i, v.getCveId());
             }
             ResultSet res = pstmt.executeQuery();
-            while (res.next()) {
-                out.add(idToVuln.get(res.getString(1)));
+            while (res.next()) { // goes through each matching cve_id, creates the NvdVuln and attaches it to the CompVuln
+                String cveId = res.getString("cve_id");
+                NvdVulnerability nvdVuln = new NvdVulnerability(cveId,
+                        res.getTimestamp("published_date"),
+                        res.getString("status"));
+                CompositeVulnerability compVuln = idToVuln.get(cveId);
+                compVuln.setNvdVuln(nvdVuln);
+                out.add(compVuln);
             }
         } catch (SQLException ex) {
             logger.error("Error while inserting time gaps");
@@ -824,14 +830,14 @@ public class DatabaseHelper {
     }
 
     // todo lots of duplicate code for nvd/mitre, should find a suitable abstraction
-    public Set<CompositeVulnerability> filterByMitre(Set<CompositeVulnerability> vulns) {
+    public Set<CompositeVulnerability> attachMitreVulns(Set<CompositeVulnerability> vulns) {
         Map<String, CompositeVulnerability> idToVuln = new HashMap<>();
         vulns.forEach(v -> idToVuln.put(v.getCveId(), v));
         Set<CompositeVulnerability> out = new HashSet<>();
 
         // generate comma separated string of question marks for cve_id candidates
         String questionMarks = IntStream.range(0, vulns.size()).mapToObj(i -> "?").collect(Collectors.joining(","));
-        String query = "SELECT cve_id FROM mitredata WHERE cve_id IN (" + questionMarks + ")";
+        String query = "SELECT cve_id, status FROM mitredata WHERE cve_id IN (" + questionMarks + ")";
         try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(query)) {
             int i = 0;
             for (CompositeVulnerability v : vulns) {
@@ -839,7 +845,11 @@ public class DatabaseHelper {
             }
             ResultSet res = pstmt.executeQuery();
             while (res.next()) {
-                out.add(idToVuln.get(res.getString(1)));
+                String cveId = res.getString("cve_id");
+                MitreVulnerability mitreVuln = new MitreVulnerability(cveId, res.getString("status"));
+                CompositeVulnerability compVuln = idToVuln.get(cveId);
+                compVuln.setMitreVuln(mitreVuln);
+                out.add(compVuln);
             }
         } catch (SQLException ex) {
             logger.error("Error while inserting time gaps");
