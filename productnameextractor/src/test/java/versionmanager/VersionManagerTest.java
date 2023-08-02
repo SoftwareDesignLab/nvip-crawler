@@ -234,4 +234,85 @@ public class VersionManagerTest {
         assertTrue(manager.getVersionRanges().toString().contains("1.4 THROUGH 1.7.5"));
         assertTrue(manager.getVersionRanges().toString().contains("AFTER 3.8.5"));
     }
+
+    @Test
+    public void testProcessVersions() {
+        VersionManager processor = new VersionManager();
+
+        // Test 1: Standalone version "1.5.6"
+        String[] versionWords1 = {"1.5.6"};
+        processor.processVersions(versionWords1);
+        assertEquals(1, processor.getVersionRanges().size());
+
+        // Test 2: Through case "1.2.5 through 2.4.1"
+        String[] versionWords2 = {"1.2.5", "through", "2.4.1"};
+        processor.processVersions(versionWords2);
+        assertEquals(3, processor.getVersionRanges().size());
+
+        // Test 3: Before case "before 3.7.1"
+        String[] versionWords3 = {"before", "3.7.1"};
+        processor.processVersions(versionWords3);
+        assertEquals(4, processor.getVersionRanges().size());
+
+        // Test 4: After case "after 3.7.1"
+        String[] versionWords4 = {"after", "3.7.1"};
+        processor.processVersions(versionWords4);
+        assertEquals(5, processor.getVersionRanges().size());
+
+        // Test 5: "before" and "after" with "and" case
+        String[] versionWords5 = {"1.8", "and", "earlier"};
+        processor.processVersions(versionWords5);
+        assertEquals(7, processor.getVersionRanges().size());
+
+        // Test 6: "before" and "after" with "and" case
+        String[] versionWords6 = {"6.3.1", "and", "prior", "versions"};
+        processor.processVersions(versionWords6);
+        assertEquals(9, processor.getVersionRanges().size());
+
+        // Test 7: "between" case "between 1.5 and 2.8"
+        String[] versionWords7 = {"between", "1.5", "and", "2.8"};
+        processor.processVersions(versionWords7);
+        assertEquals(11, processor.getVersionRanges().size());
+
+        // Test 8: "3.9+" case
+        String[] versionWords8 = {"3.9+"};
+        processor.processVersions(versionWords8);
+        assertEquals(12, processor.getVersionRanges().size());
+
+        // Test 9: "<1.2.4" case
+        String[] versionWords9 = {"<1.2.4"};
+        processor.processVersions(versionWords9);
+        assertEquals(13, processor.getVersionRanges().size());
+
+        // Test 10: ">1.2.4" case
+        String[] versionWords10 = {">1.2.4"};
+        processor.processVersions(versionWords10);
+        assertEquals(14, processor.getVersionRanges().size());
+
+        // Test 11: Standalone version with ".x" "8.2.x"
+        String[] versionWords11 = {"8.2.x"};
+        processor.processVersions(versionWords11);
+        assertEquals(15, processor.getVersionRanges().size());
+
+        // Test 12: Before case with ".x" "before 5.x"
+        String[] versionWords12 = {"before", "5.x"};
+        processor.processVersions(versionWords12);
+        assertEquals(16, processor.getVersionRanges().size());
+
+        // Test 13: After case with ".x" "after 5.x"
+        String[] versionWords13 = {"after", "5.x"};
+        processor.processVersions(versionWords13);
+        assertEquals(17, processor.getVersionRanges().size());
+
+        // Test 14: Through case with ".x" "4.2.3 through 5.x"
+        String[] versionWords14 = {"4.2.3", "through", "5.x"};
+        processor.processVersions(versionWords14);
+        assertEquals(19, processor.getVersionRanges().size());
+
+        // Test 15: Standalone ".x" version "5.x"
+        String[] versionWords15 = {"5.x"};
+        processor.processVersions(versionWords15);
+        assertEquals(20, processor.getVersionRanges().size());
+    }
+
 }
