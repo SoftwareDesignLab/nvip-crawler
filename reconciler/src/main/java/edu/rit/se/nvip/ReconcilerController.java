@@ -7,8 +7,6 @@ import edu.rit.se.nvip.messenger.Messenger;
 import edu.rit.se.nvip.mitre.MitreCveController;
 import edu.rit.se.nvip.model.*;
 import edu.rit.se.nvip.nvd.NvdCveController;
-import edu.rit.se.nvip.process.Processor;
-import edu.rit.se.nvip.process.ProcessorFactory;
 import edu.rit.se.nvip.reconciler.Reconciler;
 import edu.rit.se.nvip.reconciler.ReconcilerFactory;
 import edu.rit.se.nvip.utils.ReconcilerEnvVars;
@@ -24,18 +22,18 @@ public class ReconcilerController {
     private final DatabaseHelper dbh;
     private final Reconciler reconciler;
     private final FilterHandler filterHandler;
-    private final List<Processor> processors = new ArrayList<>();
     private final Messenger messenger = new Messenger();
     private CveCharacterizer cveCharacterizer;
+    private final NvdCveController nvdController;
+    private final MitreCveController mitreController;
 
     public ReconcilerController() {
         this.dbh = DatabaseHelper.getInstance();
         filterHandler = new FilterHandler(ReconcilerEnvVars.getFilterList());
         this.reconciler = ReconcilerFactory.createReconciler(ReconcilerEnvVars.getReconcilerType());
         this.reconciler.setKnownCveSources(ReconcilerEnvVars.getKnownSourceMap());
-        for (String processorType : ReconcilerEnvVars.getProcessorList()) {
-            processors.add(ProcessorFactory.createProcessor(processorType));
-        }
+        this.nvdController = new NvdCveController();
+        this.mitreController = new MitreCveController();
     }
 
     public void main(Set<String> jobs) {
@@ -78,7 +76,8 @@ public class ReconcilerController {
         messenger.sendPNEMessage(newOrUpdated.stream().map(CompositeVulnerability::getCveId).collect(Collectors.toList()));
 
         logger.info("Starting processing");
-        runProcessors(reconciledVulns);
+        updateNvdMitre(); // todo this could be done from the start asynchronously, but attaching shouldn't happen until it's done
+        attachNvdMitre(reconciledVulns.stream().filter(v -> v.getReconciliationStatus() == CompositeVulnerability.ReconciliationStatus.NEW).collect(Collectors.toSet()));
         dbh.insertNvdMitreStatuses(reconciledVulns);
 
         logger.info("Updating runstats");
@@ -104,6 +103,8 @@ public class ReconcilerController {
         //messenger.sendPNEFinishMessage();
 
     }
+
+
 
     private class ReconcileTask implements Callable<CompositeVulnerability> {
         private final String job;
@@ -195,16 +196,13 @@ public class ReconcilerController {
         return out;
     }
 
-    private void updateNvdMitre() { // todo run this asynchronously
-        NvdCveController nvdCont = new NvdCveController();
-        MitreCveController mitreCont = new MitreCveController();
-        nvdCont.updateNvdTables("url"); // todo right url
-        mitreCont.updateMitreTables();
+    private void updateNvdMitre() {
+        // todo url envvar
+        nvdController.updateNvdTables("https://services.nvd.nist.gov/rest/json/cves/2.0?pubStartDate=<StartDate>&pubEndDate=<EndDate>");
+        mitreController.updateMitreTables();
     }
-
-    private void runProcessors(Set<CompositeVulnerability> vulns) {
-        for (Processor ap : processors) {
-            ap.process(vulns);
-        }
+    private void attachNvdMitre(Set<CompositeVulnerability> newVulns) {
+        nvdController.compareWithNvd(newVulns);
+        mitreController.compareWithMitre(newVulns);
     }
 }

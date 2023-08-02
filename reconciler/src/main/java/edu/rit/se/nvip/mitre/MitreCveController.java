@@ -287,4 +287,7 @@ public class MitreCveController {
         return newMitreVulns;
     }
 
+    public void compareWithMitre(Set<CompositeVulnerability> newVulns) {
+        dbh.attachMitreVulns(newVulns);
+    }
 }
