@@ -181,6 +181,11 @@ public class ReconcilerEnvVars extends Properties {
 
                 rawEnvVars.put(envName, envVar);
             }
+            logger.info(
+                    "Successfully read in {} environment variables from file @ '{}'",
+                    rawEnvVars.size(),
+                    System.getProperty("user.dir") + "\\" + filePath
+            );
         } catch (IOException e) {
             e.printStackTrace();
         }

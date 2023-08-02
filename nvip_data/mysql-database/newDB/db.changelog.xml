@@ -312,4 +312,20 @@
                 tableName="nvddata"/>
     </changeSet>
 
+    <changeSet id="addUserToCvss" author="asawtelle">
+        <addColumn tableName="cvss">
+            <column name="user_id" type="int">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="addUserToVdo" author="asawtelle">
+        <addColumn tableName="vdocharacteristic">
+            <column name="user_id" type="int">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>
