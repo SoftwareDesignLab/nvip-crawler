@@ -285,6 +285,9 @@
         <addForeignKeyConstraint baseTableName="timegap" baseColumnNames="cve_id"
                                  referencedTableName="vulnerability" referencedColumnNames="cve_id"
                                  constraintName="timegap_cve_id_fk"/>
+
+        <addUniqueConstraint tableName="timegap" columnNames="cve_id, location" constraintName="uk_timegap_cve_id_location"/>
+
     </changeSet>
 
 </databaseChangeLog>

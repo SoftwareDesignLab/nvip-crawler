@@ -69,16 +69,19 @@ public class ReconcilerController {
         logger.info("Finished reconciliation stage - sending message to PNE");
 
         Set<CompositeVulnerability> newOrUpdated = reconciledVulns.stream()
-                .filter(v -> v.getReconciliationStatus() == CompositeVulnerability.ReconciliationStatus.NEW || v.getReconciliationStatus() == CompositeVulnerability.ReconciliationStatus.UPDATED)
+                .filter(v -> v.getReconciliationStatus() == CompositeVulnerability.ReconciliationStatus.NEW ||
+                        v.getReconciliationStatus() == CompositeVulnerability.ReconciliationStatus.UPDATED)
                 .collect(Collectors.toSet());
 
         //PNE team changed their mind about streaming jobs as they finish, they now just want one big list
         messenger.sendPNEMessage(newOrUpdated.stream().map(CompositeVulnerability::getCveId).collect(Collectors.toList()));
 
-        logger.info("Starting processing");
+        logger.info("Starting NVD/MITRE comparisons");
         updateNvdMitre(); // todo this could be done from the start asynchronously, but attaching shouldn't happen until it's done
-        attachNvdMitre(reconciledVulns.stream().filter(v -> v.getReconciliationStatus() == CompositeVulnerability.ReconciliationStatus.NEW).collect(Collectors.toSet()));
-        dbh.insertNvdMitreStatuses(reconciledVulns);
+        Set<CompositeVulnerability> inNvdOrMitre = attachNvdMitre(reconciledVulns.stream()
+                .filter(v -> v.getReconciliationStatus() == CompositeVulnerability.ReconciliationStatus.NEW)
+                .collect(Collectors.toSet()));
+        dbh.insertTimeGapsForNewVulns(inNvdOrMitre);
 
         logger.info("Updating runstats");
         dbh.insertRun(new RunStats(reconciledVulns));
@@ -201,8 +204,10 @@ public class ReconcilerController {
         nvdController.updateNvdTables("https://services.nvd.nist.gov/rest/json/cves/2.0?pubStartDate=<StartDate>&pubEndDate=<EndDate>");
         mitreController.updateMitreTables();
     }
-    private void attachNvdMitre(Set<CompositeVulnerability> newVulns) {
-        nvdController.compareWithNvd(newVulns);
-        mitreController.compareWithMitre(newVulns);
+    private Set<CompositeVulnerability> attachNvdMitre(Set<CompositeVulnerability> newVulns) {
+        Set<CompositeVulnerability> affected = new HashSet<>();
+        affected.addAll(nvdController.compareWithNvd(newVulns));
+        affected.addAll(mitreController.compareWithMitre(newVulns));
+        return affected;
     }
 }

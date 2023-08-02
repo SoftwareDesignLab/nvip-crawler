@@ -83,7 +83,7 @@ public class NvdCveController {
 		databaseHelper = DatabaseHelper.getInstance();
 	}
 
-	public void compareWithNvd(Set<CompositeVulnerability> reconciledVulns) {
+	public Set<CompositeVulnerability> compareWithNvd(Set<CompositeVulnerability> reconciledVulns) {
 		Set<CompositeVulnerability> affected = dbh.attachNvdVulns(reconciledVulns); // returns the compvulns that got an nvdvuln attached
 		int inNvd = (int) reconciledVulns.stream().filter(CompositeVulnerability::isInNvd).count(); // let the compvuln decide for itself if it's in nvd
 		int notInNvd = reconciledVulns.size() - inNvd;
@@ -109,15 +109,16 @@ public class NvdCveController {
 				statusToCount.get(NvdVulnerability.NvdStatus.RECEIVED),
 				statusToCount.get(NvdVulnerability.NvdStatus.ANALYZED),
 				statusToCount.get(NvdVulnerability.NvdStatus.AWAITING_ANALYSIS));
+		return affected;
 	}
 
 	public void updateNvdTables(String url) {
 		Set<NvdVulnerability> nvdCves = fetchCvesFromNvd(url.replaceAll("<StartDate>", this.startDate)
 				.replaceAll("<EndDate>", this.endDate));
 		logger.info("Grabbed {} cves from NVD for the past month", nvdCves.size());
-		Set<NvdVulnerability> insertedVulns = databaseHelper.upsertNvdData(nvdCves); // return the ones that were inserted
-		logger.info("Inserted {} new CVEs from NVD into NVD Database Table", insertedVulns.size());
-		databaseHelper.insertNvdTimeGaps(insertedVulns); // todo return number of time gaps
+		Set<NvdVulnerability> toBackfill = databaseHelper.upsertNvdData(nvdCves); // return the ones that were inserted/updated
+		logger.info("Inserted {} new CVEs from NVD into NVD Database Table", toBackfill.size());
+		databaseHelper.backfillNvdTimegaps(toBackfill); // todo return number of time gaps
 	}
 
 

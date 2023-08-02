@@ -47,22 +47,14 @@ public class DatabaseHelper {
     private static final String DELETE_VDO = "DELETE FROM vdocharacteristic WHERE cve_id = ?";
     private static final String DELETE_CWE = "DELETE FROM weakness WHERE cve_id = ?";
     private static final String MITRE_COUNT = "SELECT COUNT(*) AS num_rows FROM mitredata;";
-    private static final String MITRE_NVD_STATUS_INSERT = "INSERT INTO nvdmitrestatus (cve_id, create_date, in_nvd, in_mitre) VALUES (?, ?, ?, ?)";
-    private static final String MITRE_NVD_STATUS_UPDATE = "UPDATE nvdmitrestatus SET in_nvd = ?, in_mitre = ? WHERE cve_id = ?";
-    private static final String INSERT_MITREDATA = "INSERT INTO mitredata (cve_id, mitreStatus) VALUES (?, ?)";
-    private static final String UPDATE_MITREDATA = "UPDATE mitredata SET mitreStatus = 1 WHERE cve_id = ?";
-    private static final String UPDATE_MITRE_STATUS = "UPDATE nvdmitrestatus set in_mitre = 1 where cve_id = ?";
-    private static final String UPDATE_NVD_STATUS = "UPDATE nvdmitrestatus set in_nvd = 1 where cve_id = ?";
-
-
-
-    private static final String GET_ALL_NEW_CVES_NVD = "SELECT cve_id, published_date, status FROM nvddata order by cve_id desc";
-    private static final String GET_ALL_NEW_CVES_MITRE = "SELECT cve_id, status FROM mitredata order by cve_id desc";
-    private static final String GET_ALL_CVES = "SELECT cve_id FROM vulnerability order by cve_id desc";
-    private static final String INSERT_NVDDATA = "INSERT INTO nvddata (cve_id, published_date, status) VALUES (?, ?, ?)";
-    private static final String UPDATE_NVDDATA = "UPDATE nvddata SET in_nvd = 1 WHERE cve_id = ?";
-    private static final String INSERT_NVD_MITRE_STATUS = "INSERT INTO nvdmitrestatus (cve_id, in_nvd, in_mitre, created_date) VALUES (?, ?, ?)";
-
+    private static final String BACKFILL_NVD_TIMEGAPS = "INSERT INTO timegap (cve_id, location, timegap, created_date) " +
+            "SELECT v.cve_id, 'nvd', TIMESTAMPDIFF(HOUR, v.created_date, n.published_date), NOW() " +
+            "FROM nvddata AS n INNER JOIN vulnerability AS v ON n.cve_id = v.cve_id WHERE v.cve_id = cve_id AS input " +
+            "ON DUPLICATE KEY SET cve_id = input.cve_id";
+    private static final String BACKFILL_MITRE_TIMEGAPS = "INSERT INTO timegap (cve_id, location, timegap, created_date) " +
+            "SELECT v.cve_id, 'mitre', TIMESTAMPDIFF(HOUR, v.created_date, NOW()), NOW() " +
+            "FROM mitredata AS n INNER JOIN vulnerability AS v ON m.cve_id = v.cve_id WHERE v.cve_id = cve_id AS input " +
+            "ON DUPLICATE KEY SET cve_id = input.cve_id";
     private static final String INSERT_RUN_STATS = "INSERT INTO runhistory (run_date_time, total_cve_count, new_cve_count, updated_cve_count, not_in_nvd_count, not_in_mitre_count, not_in_both_count, avg_time_gap_nvd, avg_time_gap_mitre)" +
             "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
@@ -389,86 +381,9 @@ public class DatabaseHelper {
         return rawVuln;
     }
 
-
-    /**
-     * for Getting NVD CVEs in nvddata
-     * @return
-     */
-    public ArrayList<NvdVulnerability> getAllNvdCVEs() {
-
-        ArrayList<NvdVulnerability> nvdVulnerabilities = new ArrayList<>();
-
-        try (Connection connection = getConnection();
-             PreparedStatement pstmt = connection.prepareStatement(GET_ALL_NEW_CVES_NVD)) {
-            ResultSet rs = pstmt.executeQuery();
-
-            while (rs.next()) {
-
-                try {
-                    nvdVulnerabilities.add(new NvdVulnerability(rs.getString("cve_id"), rs.getTimestamp("published_date"), rs.getString("status")));
-                } catch (Exception ignore) {}
-
-            }
-        } catch (Exception e) {
-            logger.error("ERROR: Failed to grab NVD CVEs from nvddata table\n{}", e.toString());
-        }
-
-        return nvdVulnerabilities;
-    }
-    public Set<MitreVulnerability> getAllMitreCVEs() {
-
-        Set<MitreVulnerability> mitreVulns = new HashSet<>();
-
-        try (Connection connection = getConnection();
-             PreparedStatement pstmt = connection.prepareStatement(GET_ALL_NEW_CVES_MITRE)) {
-            ResultSet rs = pstmt.executeQuery();
-
-            while (rs.next()) {
-                try {
-                    mitreVulns.add(new MitreVulnerability(rs.getString("cve_id"), rs.getString("status")));
-                } catch (Exception ignore) {}
-
-            }
-        } catch (Exception e) {
-            logger.error("ERROR: Failed to grab NVD CVEs from nvddata table\n{}", e.toString());
-        }
-
-        return mitreVulns;
-    }
-
-
-    /**
-     * for inserting a NVD Vulnerability in the nvddata table
-     * @param nvdCve
-     * @return
-     */
-    public int updateNvdData(NvdVulnerability nvdCve, boolean isUpdate) {
-
-        try (Connection connection = getConnection();
-             PreparedStatement pstmt = connection.prepareStatement(INSERT_NVDDATA);
-             PreparedStatement updateStmt = connection.prepareStatement(UPDATE_NVDDATA)) {
-            if(!isUpdate) {
-                pstmt.setString(1, nvdCve.getCveId());
-                pstmt.setTimestamp(2, nvdCve.getPublishDate());
-                pstmt.setString(3, nvdCve.getStatus().toString());
-                pstmt.execute();
-            }else{
-                updateStmt.setString(1, nvdCve.getCveId());
-            }
-
-            logger.info("Successfully Inserted CVE {} with Published Date {} and Status {} into nvd_data", nvdCve.getCveId(), nvdCve.getPublishDate(), nvdCve.getStatus());
-
-            return 1;
-        } catch (Exception e) {
-            logger.error("ERROR: Failed to insert CVE {} with Published Date {} ans Status {} into nvd_data table", nvdCve.getCveId(), nvdCve.getPublishDate(), nvdCve.getStatus());
-        }
-
-        return 0;
-    }
-
     public Set<NvdVulnerability> upsertNvdData(Set<NvdVulnerability> nvdCves) {
         List<NvdVulnerability> nvdVulnList = new ArrayList<>(nvdCves); // need order
-        Set<NvdVulnerability> inserted = new HashSet<>(); // not updates
+        Set<NvdVulnerability> toBackfill = new HashSet<>(); // inserts and nontrivial updates
         String query = "INSERT INTO nvddata (cve_id, published_date, status) VALUES (?, ?, ?) AS input ON DUPLICATE KEY UPDATE status = input.status";
 
         try (Connection conn = getConnection();
@@ -488,20 +403,22 @@ public class DatabaseHelper {
                 // count == 1 -> successful insert
                 // count == 2 -> successful update
                 // other -> something went wrong, but i don't think that's possible since this is atomic
-                if (count == 1) { // 1 row affected means successful insert
-                    inserted.add(nvdVulnList.get(i));
+                NvdVulnerability vuln = nvdVulnList.get(i);
+                if ((count == 1 || count == 2) && vuln.inNvd()) {
+                    // anything inserted or updated that is "in NVD" might require us to backfill timegap calculations
+                    toBackfill.add(vuln);
                 }
             }
         } catch (SQLException ex) {
             logger.error("Error while updating nvddata table");
             logger.error(ex);
         }
-        return inserted;
+        return toBackfill;
     }
 
     public Set<MitreVulnerability> upsertMitreData(Set<MitreVulnerability> mitreCves) {
         List<MitreVulnerability> mitreVulnList = new ArrayList<>(mitreCves); // need order
-        Set<MitreVulnerability> inserted = new HashSet<>(); // not updates
+        Set<MitreVulnerability> toBackfill = new HashSet<>(); // inserts and nontrivial updates
         String query = "INSERT INTO mitredata (cve_id, status) VALUES (?, ?) AS input ON DUPLICATE KEY UPDATE status = input.status";
 
         try (Connection conn = getConnection();
@@ -520,15 +437,16 @@ public class DatabaseHelper {
                 // count == 1 -> successful insert
                 // count == 2 -> successful update
                 // other -> something went wrong, but i don't think that's possible since this is atomic
-                if (count == 1) { // 1 row affected means successful insert
-                    inserted.add(mitreVulnList.get(i));
+                MitreVulnerability vuln = mitreVulnList.get(i);
+                if ((count == 1 || count == 2) && vuln.inMitre()) {
+                    toBackfill.add(vuln);
                 }
             }
         } catch (SQLException ex) {
             logger.error("Error while updating nvddata table");
             logger.error(ex);
         }
-        return inserted;
+        return toBackfill;
     }
 
     /**
@@ -684,93 +602,13 @@ public class DatabaseHelper {
             return false;
         }
     }
-    public int insertMitreData(Set<MitreVulnerability> vulns){
 
-        try (Connection conn = getConnection();
-             PreparedStatement insertStatement = conn.prepareStatement(INSERT_MITREDATA)) {
-
-            for(MitreVulnerability vuln : vulns){
-                insertStatement.setString(1, vuln.getCveId());
-                insertStatement.setInt(2, vuln.getStatus().getStatusInt());
-                insertStatement.addBatch();
-
-            }
-            insertStatement.executeBatch();
-            return 1;
-        } catch (SQLException e) {
-            logger.error("ERROR: Failed to update mitredata table, {}", e.getMessage());
-            return 0;
-        }
-    }
-    public int updateMitreData(Set<MitreVulnerability> vulns){
-
-        try (Connection conn = getConnection();
-             PreparedStatement insertStatement = conn.prepareStatement(UPDATE_MITREDATA)) {
-
-            for(MitreVulnerability vuln : vulns){
-                insertStatement.setString(1, vuln.getCveId());
-                insertStatement.addBatch();
-
-            }
-            insertStatement.executeBatch();
-            return 1;
-        } catch (SQLException e) {
-            logger.error("ERROR: Failed to update mitredata table, {}", e.getMessage());
-            return 0;
-        }
-    }
-
-    public int setInNvdMitreStatus(Set<Vulnerability> newVulns) {
-        try (Connection conn = getConnection();
-             PreparedStatement pstmtMitre = conn.prepareStatement(UPDATE_MITRE_STATUS);
-             PreparedStatement pstmtNvd = conn.prepareStatement(UPDATE_NVD_STATUS)) {
-            for(Vulnerability vuln : newVulns){
-                if (vuln instanceof MitreVulnerability) {
-                    pstmtMitre.setString(1, vuln.getCveId());
-                    pstmtMitre.addBatch();
-                }else if (vuln instanceof NvdVulnerability){
-                    pstmtNvd.setString(1, vuln.getCveId());
-                    pstmtNvd.addBatch();
-                }else{
-                    throw new SQLException();
-                }
-            }
-            pstmtMitre.executeBatch();
-            pstmtNvd.executeBatch();
-            return 1;
-        }
-        catch (SQLException e) {
-            logger.error("ERROR: Failed to update mitre status in nvdmitrestatus table, {}", e.getMessage());
-            return 0;
-        }
-    }
-
-    public int insertNvdMitreStatuses(Set<CompositeVulnerability> reconciledVulns) {
-        try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(INSERT_NVD_MITRE_STATUS)) {
-            for (CompositeVulnerability vuln : reconciledVulns) {
-                pstmt.setString(1, vuln.getCveId());
-                pstmt.setInt(2, vuln.isInNvd() ? 1 : 0);
-                pstmt.setInt(3, vuln.isInMitre() ? 1 : 0);
-                pstmt.setTimestamp(4, new Timestamp(System.currentTimeMillis())); // todo not sure if we really need this (create_date), ask chris if we can drop
-                pstmt.addBatch();
-            }
-            pstmt.executeBatch();
-            return 1;
-        } catch (SQLException ex) {
-            logger.error("Error while inserting rows into nvdmitrestatus table\n{}", ex.toString());
-            ex.printStackTrace();
-            return 0;
-        }
-    }
-
-    public void insertNvdTimeGaps(Set<NvdVulnerability> newNvdVulns) {
+    public void backfillNvdTimegaps(Set<NvdVulnerability> newNvdVulns) {
         // we don't need to compute time gaps ourselves
         // at this point these nvd vulns should already be in the nvddata table and we have create dates for all vulns in our system
         // so we can compute the timestamp difference within sql, and the inner join ensures this only happens for vulns we already have
-        String query = "INSERT INTO timegap (cve_id, location, timegap, created_date) " +
-                "SELECT v.cve_id, 'nvd', TIMESTAMPDIFF(HOUR, v.created_date, n.published_date), NOW() " +
-                "FROM nvddata AS n INNER JOIN vulnerability AS v ON n.cve_id = v.cve_id WHERE v.cve_id = cve_id";
-        try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(query)) {
+        // the (cve_id, location) pair is a key in this table, so the last clause stops any duplicate time gaps
+        try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(BACKFILL_NVD_TIMEGAPS)) {
             for (NvdVulnerability vuln : newNvdVulns) {
                 pstmt.setString(1, vuln.getCveId());
                 pstmt.addBatch();
@@ -782,12 +620,10 @@ public class DatabaseHelper {
         }
     }
 
-    public void insertMitreTimeGaps(Set<MitreVulnerability> newNvdVulns) {
+    public void backfillMitreTimegaps(Set<MitreVulnerability> newNvdVulns) {
         // mitre vulns don't have publish dates - so we're using NOW as their "publish date" to compute time gaps until further notice
-        String query = "INSERT INTO timegap (cve_id, location, timegap, created_date) " +
-                "SELECT v.cve_id, 'mitre', TIMESTAMPDIFF(HOUR, v.created_date, NOW()), NOW() " +
-                "FROM mitredata AS n INNER JOIN vulnerability AS v ON m.cve_id = v.cve_id WHERE v.cve_id = cve_id";
-        try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(query)) {
+        // the (cve_id, location) pair is a key in this table, so the last clause stops any duplicate time gaps
+        try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(BACKFILL_MITRE_TIMEGAPS)) {
             for (MitreVulnerability vuln : newNvdVulns) {
                 pstmt.setString(1, vuln.getCveId());
                 pstmt.addBatch();
@@ -795,6 +631,33 @@ public class DatabaseHelper {
             pstmt.executeBatch();
         } catch (SQLException ex) {
             logger.error("Error while inserting time gaps");
+            logger.error(ex);
+        }
+    }
+
+    public void insertTimeGapsForNewVulns(Set<CompositeVulnerability> vulns) {
+        String query = "INSERT INTO timegap (cve_id, location, timegap, created_date) VALUES (?, ?, ?, NOW())";
+        try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(query)) {
+            for (CompositeVulnerability vuln : vulns) {
+                if (vuln.getReconciliationStatus() != CompositeVulnerability.ReconciliationStatus.NEW) {
+                    continue; // we should only be putting in time gaps for new vulns. old ones get time gaps when nvddata/mitredata tables are updated
+                }
+                if (vuln.isInNvd()) {
+                    pstmt.setString(1, vuln.getCveId());
+                    pstmt.setString(2, "nvd");
+                    pstmt.setDouble(3, vuln.getNvdTimeGap());
+                    pstmt.addBatch();
+                }
+                if (vuln.isInMitre()) { // purposely not an "else" - we very well might want to insert 2 time gaps
+                    pstmt.setString(1, vuln.getCveId());
+                    pstmt.setString(2, "mitre");
+                    pstmt.setDouble(3, vuln.getNvdTimeGap());
+                    pstmt.addBatch();
+                }
+            }
+            pstmt.executeBatch();
+        } catch (SQLException ex) {
+            logger.error("Error while inserting time gaps for newly discovered vulnerabilities");
             logger.error(ex);
         }
     }

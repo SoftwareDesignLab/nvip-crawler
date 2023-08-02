@@ -28,8 +28,6 @@ import com.google.gson.JsonParser;
 import edu.rit.se.nvip.DatabaseHelper;
 import edu.rit.se.nvip.model.CompositeVulnerability;
 import edu.rit.se.nvip.model.MitreVulnerability;
-import edu.rit.se.nvip.model.NvdVulnerability;
-import edu.rit.se.nvip.model.Vulnerability;
 import edu.rit.se.nvip.utils.GitController;
 import edu.rit.se.nvip.utils.ReconcilerEnvVars;
 import org.apache.commons.io.FileUtils;
@@ -79,9 +77,9 @@ public class MitreCveController {
         logger.info("{} cves found from MITRE", results.size());
         long numReserved = results.stream().filter(v -> v.getStatus() == MitreVulnerability.MitreStatus.RESERVED).count();
         logger.info("Found {} reserved CVEs from MITRE", numReserved);
-        Set<MitreVulnerability> insertedVulns = dbh.upsertMitreData(results);
-        logger.info("{} mitre cves were new", insertedVulns.size());
-        dbh.insertMitreTimeGaps(insertedVulns); // todo get the number of inserted gaps
+        Set<MitreVulnerability> toBackfill = dbh.upsertMitreData(results);
+        logger.info("{} mitre cves were new", toBackfill.size());
+        dbh.backfillMitreTimegaps(toBackfill); // todo get the number of inserted gaps
     }
 
     /**
@@ -177,7 +175,7 @@ public class MitreCveController {
         return jsonList;
     }
 
-    public void compareWithMitre(Set<CompositeVulnerability> reconciledVulns) {
+    public Set<CompositeVulnerability> compareWithMitre(Set<CompositeVulnerability> reconciledVulns) {
         Set<CompositeVulnerability> affected = dbh.attachMitreVulns(reconciledVulns); // returns compvulns with attached mitrevulns
         int inMitre = (int) reconciledVulns.stream().filter(CompositeVulnerability::isInMitre).count(); // comp vuln decides what "in" means
         int notInMitre = reconciledVulns.size() - inMitre;
@@ -200,5 +198,6 @@ public class MitreCveController {
                 inMitre, notInMitre,
                 statusToCount.get(MitreVulnerability.MitreStatus.RESERVED),
                 statusToCount.get(MitreVulnerability.MitreStatus.PUBLIC));
+        return affected;
     }
 }
