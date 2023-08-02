@@ -214,6 +214,9 @@
             <column name="impact_score" type="DOUBLE">
                 <constraints nullable="false"/>
             </column>
+            <column name="user_id" type="int">
+                <constraints nullable="true"/>
+            </column>
         </createTable>
 
         <createIndex
@@ -415,6 +418,9 @@
             </column>
             <column name="vdo_confidence" type="DOUBLE">
                 <constraints nullable="false"/>
+            </column>
+            <column name="user_id" type="int">
+                <constraints nullable="true"/>
             </column>
         </createTable>
 
