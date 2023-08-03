@@ -334,4 +334,20 @@
                 tableName="nvddata"/>
     </changeSet>
 
+    <changeSet id="addNvdLastModifiedColumn" author="memeee">
+        <addColumn tableName="nvddata">
+            <column name="last_modified" type="datetime">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="addMitreLastModifiedColumn" author="memeee">
+        <addColumn tableName="mitredata">
+            <column name="last_modified" type="datetime">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>

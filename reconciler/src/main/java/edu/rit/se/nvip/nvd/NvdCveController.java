@@ -26,6 +26,7 @@ package edu.rit.se.nvip.nvd;
 import edu.rit.se.nvip.DatabaseHelper;
 import edu.rit.se.nvip.model.CompositeVulnerability;
 import edu.rit.se.nvip.model.NvdVulnerability;
+import edu.rit.se.nvip.reconciler.Reconciler;
 import edu.rit.se.nvip.utils.ReconcilerEnvVars;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -75,13 +76,13 @@ public class NvdCveController {
 	 * Sets today and last month's times on construction
 	 */
 	public NvdCveController() {
-		this.nvdApiUrl = ReconcilerEnvVars.getNvdApiUrl();
-		LocalDateTime today = LocalDateTime.now();
-		LocalDateTime lastMonth = LocalDateTime.now().minusDays(30);
+		this(ReconcilerEnvVars.getNvdApiUrl(), LocalDateTime.now().minusDays(30), LocalDateTime.now());
+	}
 
-		this.startDate = lastMonth.format(formatter);
-		this.endDate = today.format(formatter);
-
+	public NvdCveController(String nvdApiUrl, LocalDateTime startDate, LocalDateTime endDate) {
+		this.nvdApiUrl = nvdApiUrl;
+		this.startDate = startDate.format(formatter);
+		this.endDate = endDate.format(formatter);
 		databaseHelper = DatabaseHelper.getInstance();
 	}
 

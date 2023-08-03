@@ -55,8 +55,16 @@ public class DatabaseHelper {
             "SELECT v.cve_id, 'mitre', TIMESTAMPDIFF(HOUR, v.created_date, NOW()), NOW() " +
             "FROM mitredata AS n INNER JOIN vulnerability AS v ON m.cve_id = v.cve_id WHERE v.cve_id = ?  " +
             "ON DUPLICATE KEY UPDATE cve_id = v.cve_id";
-    private static final String UPSERT_NVD = "INSERT INTO nvddata (cve_id, published_date, status) VALUES (?, ?, ?) AS input ON DUPLICATE KEY UPDATE status = input.status";
-    private static final String UPSERT_MITRE = "INSERT INTO mitredata (cve_id, status) VALUES (?, ?) AS input ON DUPLICATE KEY UPDATE status = input.status";
+    private static final String UPSERT_NVD = "INSERT INTO nvddata (cve_id, published_date, status, last_modified) VALUES (?, ?, ?, NOW()) AS input " +
+            "ON DUPLICATE KEY UPDATE " +
+            "status = input.status, " +
+            "last_modified = IF(input.status <> nvddata.status, NOW(), nvddata.last_modified)";
+    private static final String UPSERT_MITRE = "INSERT INTO mitredata (cve_id, status, last_modified) VALUES (?, ?, NOW()) AS input " +
+            "ON DUPLICATE KEY UPDATE " +
+            "status = input.status, " +
+            "last_modified = IF(input.status <> mitredata.status, NOW(), mitredata.last_modified)";
+    private static final String SELECT_NVD_BY_DATE = "SELECT cve_id FROM nvddata WHERE last_modified >= DATE_SUB(NOW(), INTERVAL 2 MINUTE)";
+    private static final String SELECT_MITRE_BY_DATE = "SELECT cve_id FROM mitredata WHERE last_modified >= DATE_SUB(NOW(), INTERVAL 2 MINUTE)";
     private static final String INSERT_RUN_STATS = "INSERT INTO runhistory (run_date_time, total_cve_count, new_cve_count, updated_cve_count, not_in_nvd_count, not_in_mitre_count, not_in_both_count, avg_time_gap_nvd, avg_time_gap_mitre)" +
             "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
@@ -386,29 +394,30 @@ public class DatabaseHelper {
         List<NvdVulnerability> nvdVulnList = new ArrayList<>(nvdCves); // need order
         Set<NvdVulnerability> toBackfill = new HashSet<>(); // inserts and nontrivial updates
 
+        Map<String, NvdVulnerability> idToVuln = new HashMap<>();
+        nvdCves.forEach(v->idToVuln.put(v.getCveId(), v));
+
         try (Connection conn = getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(UPSERT_NVD)) {
+             PreparedStatement upsertStmt = conn.prepareStatement(UPSERT_NVD);
+             PreparedStatement selectStmt = conn.prepareStatement(SELECT_NVD_BY_DATE)) {
             conn.setAutoCommit(false);
+            // insert/update all the nvd vulns
             for (NvdVulnerability vuln : nvdVulnList) {
-                pstmt.setString(1, vuln.getCveId());
-                pstmt.setTimestamp(2, vuln.getPublishDate());
-                pstmt.setString(3, vuln.getStatus().toString());
-                pstmt.addBatch();
+                upsertStmt.setString(1, vuln.getCveId());
+                upsertStmt.setTimestamp(2, vuln.getPublishDate());
+                upsertStmt.setString(3, vuln.getStatus().toString());
+                upsertStmt.addBatch();
             }
-            int[] insertCounts = pstmt.executeBatch();
-            conn.commit();
-            for (int i = 0; i < nvdVulnList.size(); i++) {
-                int count = insertCounts[i];
-                // count == 0 -> no changes
-                // count == 1 -> successful insert
-                // count == 2 -> successful update
-                // other -> something went wrong, but i don't think that's possible since this is atomic
-                NvdVulnerability vuln = nvdVulnList.get(i);
-                if ((count == 1 || count == 2) && vuln.inNvd()) {
-                    // anything inserted or updated that is "in NVD" might require us to backfill timegap calculations
+            upsertStmt.executeBatch();
+            // identify which ones actually were inserted/changed and are "in nvd" by grabbing all modified within last 10 minutes
+            ResultSet res = selectStmt.executeQuery();
+            while (res.next()) {
+                NvdVulnerability vuln = idToVuln.get(res.getString(1));
+                if (vuln.inNvd()) {
                     toBackfill.add(vuln);
                 }
             }
+            conn.commit();
         } catch (SQLException ex) {
             logger.error("Error while updating nvddata table");
             logger.error(ex);
@@ -420,29 +429,32 @@ public class DatabaseHelper {
         List<MitreVulnerability> mitreVulnList = new ArrayList<>(mitreCves); // need order
         Set<MitreVulnerability> toBackfill = new HashSet<>(); // inserts and nontrivial updates
 
+        Map<String, MitreVulnerability> idToVuln = new HashMap<>();
+        mitreCves.forEach(v->idToVuln.put(v.getCveId(), v));
+
         try (Connection conn = getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(UPSERT_MITRE)) {
+             PreparedStatement upsertStmt = conn.prepareStatement(UPSERT_MITRE);
+             PreparedStatement selectStmt = conn.prepareStatement(SELECT_MITRE_BY_DATE)) {
             conn.setAutoCommit(false);
+            // insert/update all the mitre vulns
             for (MitreVulnerability vuln : mitreVulnList) {
-                pstmt.setString(1, vuln.getCveId());
-                pstmt.setString(2, vuln.getStatus().toString());
-                pstmt.addBatch();
+                upsertStmt.setString(1, vuln.getCveId());
+                upsertStmt.setTimestamp(2, vuln.getPublishDate());
+                upsertStmt.setString(3, vuln.getStatus().toString());
+                upsertStmt.addBatch();
             }
-            int[] insertCounts = pstmt.executeBatch();
-            conn.commit();
-            for (int i = 0; i < mitreVulnList.size(); i++) {
-                int count = insertCounts[i];
-                // count == 0 -> no change
-                // count == 1 -> successful insert
-                // count == 2 -> successful update
-                // other -> something went wrong, but i don't think that's possible since this is atomic
-                MitreVulnerability vuln = mitreVulnList.get(i);
-                if ((count == 1 || count == 2) && vuln.inMitre()) {
+            upsertStmt.executeBatch();
+            // identify which ones actually were inserted/changed and are "in mitre"
+            ResultSet res = selectStmt.executeQuery();
+            while (res.next()) {
+                MitreVulnerability vuln = idToVuln.get(res.getString(1));
+                if (vuln.inMitre()) {
                     toBackfill.add(vuln);
                 }
             }
+            conn.commit();
         } catch (SQLException ex) {
-            logger.error("Error while updating nvddata table");
+            logger.error("Error while updating mitredata table");
             logger.error(ex);
         }
         return toBackfill;
