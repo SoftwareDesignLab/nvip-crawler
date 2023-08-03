@@ -56,7 +56,7 @@ public class NvdCveController {
 	private static DatabaseHelper databaseHelper;
 	private final String startDate;
 	private final String endDate;
-	private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'hh:mm:ss");
+	private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS");
 	private String nvdApiUrl;
 
 
@@ -163,7 +163,8 @@ public class NvdCveController {
 					String status = cve.getString("vulnStatus");
 
 					// Adjust published date substring to be mySql acceptable
-					nvdCves.add(new NvdVulnerability(cveId, Timestamp.valueOf(publishedDate), status));
+					Timestamp pubTime = Timestamp.valueOf(LocalDateTime.parse(publishedDate, formatter));
+					nvdCves.add(new NvdVulnerability(cveId, pubTime, status));
 				}
 			}
 		} catch (IOException e) {

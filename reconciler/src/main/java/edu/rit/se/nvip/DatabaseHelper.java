@@ -49,12 +49,12 @@ public class DatabaseHelper {
     private static final String MITRE_COUNT = "SELECT COUNT(*) AS num_rows FROM mitredata;";
     private static final String BACKFILL_NVD_TIMEGAPS = "INSERT INTO timegap (cve_id, location, timegap, created_date) " +
             "SELECT v.cve_id, 'nvd', TIMESTAMPDIFF(HOUR, v.created_date, n.published_date), NOW() " +
-            "FROM nvddata AS n INNER JOIN vulnerability AS v ON n.cve_id = v.cve_id WHERE v.cve_id = cve_id AS input " +
-            "ON DUPLICATE KEY SET cve_id = input.cve_id";
+            "FROM nvddata AS n INNER JOIN vulnerability AS v ON n.cve_id = v.cve_id WHERE v.cve_id = ? " +
+            "ON DUPLICATE KEY UPDATE cve_id = v.cve_id";
     private static final String BACKFILL_MITRE_TIMEGAPS = "INSERT INTO timegap (cve_id, location, timegap, created_date) " +
             "SELECT v.cve_id, 'mitre', TIMESTAMPDIFF(HOUR, v.created_date, NOW()), NOW() " +
-            "FROM mitredata AS n INNER JOIN vulnerability AS v ON m.cve_id = v.cve_id WHERE v.cve_id = cve_id AS input " +
-            "ON DUPLICATE KEY SET cve_id = input.cve_id";
+            "FROM mitredata AS n INNER JOIN vulnerability AS v ON m.cve_id = v.cve_id WHERE v.cve_id = ?  " +
+            "ON DUPLICATE KEY UPDATE cve_id = v.cve_id";
     private static final String UPSERT_NVD = "INSERT INTO nvddata (cve_id, published_date, status) VALUES (?, ?, ?) AS input ON DUPLICATE KEY UPDATE status = input.status";
     private static final String UPSERT_MITRE = "INSERT INTO mitredata (cve_id, status) VALUES (?, ?) AS input ON DUPLICATE KEY UPDATE status = input.status";
     private static final String INSERT_RUN_STATS = "INSERT INTO runhistory (run_date_time, total_cve_count, new_cve_count, updated_cve_count, not_in_nvd_count, not_in_mitre_count, not_in_both_count, avg_time_gap_nvd, avg_time_gap_mitre)" +

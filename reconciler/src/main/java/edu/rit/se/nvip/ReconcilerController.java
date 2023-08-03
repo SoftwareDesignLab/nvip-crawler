@@ -209,4 +209,8 @@ public class ReconcilerController {
         affected.addAll(mitreController.compareWithMitre(newVulns));
         return affected;
     }
+
+    public static void main(String[] args) {
+        new NvdCveController().updateNvdTables();
+    }
 }
