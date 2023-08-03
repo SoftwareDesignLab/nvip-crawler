@@ -252,7 +252,7 @@
 <!--        <modifyDataType tableName="nvdmitrestatus" columnName="exists_nvd" newDataType="INT" />-->
 <!--    </changeSet>-->
 
-    <changeSet id="addUserToCvss" author="asawtelle">
+    <!-- <changeSet id="addUserToCvss" author="asawtelle">
         <addColumn tableName="cvss">
             <column name="user_id" type="int">
                 <constraints nullable="true"/>
@@ -266,6 +266,19 @@
                 <constraints nullable="true"/>
             </column>
         </addColumn>
+    </changeSet> -->
+
+    <changeSet id="updateCvssPrimaryKey" author="asawtelle"> 
+        <dropPrimaryKey 
+                dropIndex="true" 
+                tableName="cvss"/>
+        <addColumn tableName="cvss">
+            <column name="cvss_id" type="int" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+        </addColumn>
     </changeSet>
+
+
 
 </databaseChangeLog>

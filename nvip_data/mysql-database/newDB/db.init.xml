@@ -202,8 +202,11 @@
 
     <changeSet author="cvss" id="cvss">
         <createTable tableName="cvss">
-            <column name="cve_id" type="VARCHAR(20)">
+            <column name="cvss_id" type="int" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="cve_id" type="VARCHAR(20)">
+                <constraints nullable="false"/>
             </column>
             <column name="create_date" type="DATETIME">
                 <constraints nullable="false"/>
