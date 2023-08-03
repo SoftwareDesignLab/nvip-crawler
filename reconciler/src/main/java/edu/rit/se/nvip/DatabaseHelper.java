@@ -53,7 +53,7 @@ public class DatabaseHelper {
             "ON DUPLICATE KEY UPDATE cve_id = v.cve_id";
     private static final String BACKFILL_MITRE_TIMEGAPS = "INSERT INTO timegap (cve_id, location, timegap, created_date) " +
             "SELECT v.cve_id, 'mitre', TIMESTAMPDIFF(HOUR, v.created_date, NOW()), NOW() " +
-            "FROM mitredata AS n INNER JOIN vulnerability AS v ON m.cve_id = v.cve_id WHERE v.cve_id = ?  " +
+            "FROM mitredata AS m INNER JOIN vulnerability AS v ON m.cve_id = v.cve_id WHERE v.cve_id = ?  " +
             "ON DUPLICATE KEY UPDATE cve_id = v.cve_id";
     private static final String UPSERT_NVD = "INSERT INTO nvddata (cve_id, published_date, status, last_modified) VALUES (?, ?, ?, NOW()) AS input " +
             "ON DUPLICATE KEY UPDATE " +
@@ -439,8 +439,7 @@ public class DatabaseHelper {
             // insert/update all the mitre vulns
             for (MitreVulnerability vuln : mitreVulnList) {
                 upsertStmt.setString(1, vuln.getCveId());
-                upsertStmt.setTimestamp(2, vuln.getPublishDate());
-                upsertStmt.setString(3, vuln.getStatus().toString());
+                upsertStmt.setString(2, vuln.getStatus().toString());
                 upsertStmt.addBatch();
             }
             upsertStmt.executeBatch();
@@ -662,7 +661,7 @@ public class DatabaseHelper {
                 if (vuln.isInMitre()) { // purposely not an "else" - we very well might want to insert 2 time gaps
                     pstmt.setString(1, vuln.getCveId());
                     pstmt.setString(2, "mitre");
-                    pstmt.setDouble(3, vuln.getNvdTimeGap());
+                    pstmt.setDouble(3, vuln.getMitreTimeGap());
                     pstmt.addBatch();
                 }
             }

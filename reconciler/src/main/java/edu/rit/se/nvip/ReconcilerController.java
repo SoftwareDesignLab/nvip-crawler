@@ -211,6 +211,7 @@ public class ReconcilerController {
     }
 
     public static void main(String[] args) {
-        new NvdCveController().updateNvdTables();
+        //new NvdCveController().updateNvdTables();
+        new MitreCveController().updateMitreTables();
     }
 }
