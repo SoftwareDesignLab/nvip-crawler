@@ -223,7 +223,7 @@ public class ReconcilerEnvVars extends Properties {
     public static List<String> getKnownSources() {
         return knownSources;
     }
-    public static int getDoCharacterization() {return doCharacterization;}
+    public static boolean getDoCharacterization() {return doCharacterization == 1;}
     /**
      * Legacy reconcilers use this one. It's unclear what the integer is supposed to be but in the old code it was always set to 0 so that's how I'm leaving it
      * @return

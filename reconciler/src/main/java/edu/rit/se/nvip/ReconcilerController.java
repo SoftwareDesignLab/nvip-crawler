@@ -94,7 +94,7 @@ public class ReconcilerController {
             throw new RuntimeException(e);
         }
         //run characterizer
-        if (ReconcilerEnvVars.getDoCharacterization() > 0) {
+        if (ReconcilerEnvVars.getDoCharacterization()) {
             characterizeCVEs(reconciledVulns);
 
             for (CompositeVulnerability vuln : reconciledVulns){
@@ -130,6 +130,9 @@ public class ReconcilerController {
 
         @Override
         public CveCharacterizer call() {
+            if (!ReconcilerEnvVars.getDoCharacterization()) {
+                return null; // if we're not going to characterize don't load up the models
+            }
            try {
                 String[] trainingDataInfo = {ReconcilerEnvVars.getTrainingDataDir(), ReconcilerEnvVars.getTrainingData()};
                 logger.info("Setting NVIP_CVE_CHARACTERIZATION_LIMIT to {}", ReconcilerEnvVars.getCharacterizationLimit());
