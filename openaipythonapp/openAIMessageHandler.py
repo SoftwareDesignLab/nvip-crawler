@@ -1,22 +1,24 @@
-import pika
 import openai
 import json
-import heapq
+import asyncio
+import aio_pika
+from queue import PriorityQueue
 
-#DOCKER SET UP
-#docker build -t openaiapp .
-#docker run openaiapp
 
-class RequestWrapper:
-    def __init__(self, requestor, priority, message_data):
-        self.requestor = requestor
-        self.priority = priority
-        self.message_data = message_data
+# DOCKER SET UP
+# docker build -t openaiapp .
+# docker run openaiapp
 
-    def __lt__(self, other):
-        if self.requestor == other.requestor:
-            return self.priority < other.priority
-        return self.requestor < other.requestor
+class Request:
+    def __init__(self, sys_msg, usr_msg, temp):
+        self.sys_msg = sys_msg
+        self.usr_msg = usr_msg
+        self.temp = temp
+
+
+class NestedPriorityQueue:
+    def __init__(self, queue):
+        self.queue = queue
 
 
 def get_openai_response(api_key, system_message, user_message, temperature):
@@ -39,63 +41,71 @@ def get_openai_response(api_key, system_message, user_message, temperature):
         print(f"An error occurred: {err}")
 
 
-def rabbitmq_callback(ch, method, properties, body):
+priorityRequestor_queue = PriorityQueue()
+priorityId_queue = PriorityQueue()
+response_dict = {}  # Dictionary to store responses for each request
+
+
+async def rabbitmq_callback(message: aio_pika.IncomingMessage):
     try:
-        print("Retrieved message from Rabbit")
-        # Parse the incoming RabbitMQ message as JSON
-        message_data = json.loads(body)
+        async with message.process():
+            print("Retrieved message from Rabbit")
+            # Parse the incoming RabbitMQ message as JSON
+            body = message.body.decode()
+            message_data = json.loads(body)
 
-        # Extract the relevant fields
-        openai_api_key = message_data.get("openai_api_key", "")
-        system_message = message_data.get("system_message", "")
-        user_message = message_data.get("user_message", "")
-        temperature = message_data.get("temperature", 0.0)
-        requestor_prio_id = message_data.get("requestorPrioId", 2)
-        prio_id = message_data.get("PrioId")
-
-        # Calculate the priority for the message using the 'PrioId' field
-        # The lower the value, the higher the priority
-        priority = prio_id
-
-        # Create a RequestWrapper object to represent the message and its priority
-        request_wrapper = RequestWrapper(requestor_prio_id, priority, message_data)
-
-        # RabbitMQ configuration for the output queue
-        rabbitmq_host = 'host.docker.internal'
-        output_queue = 'openai_responses'
-
-        # Connect to RabbitMQ for publishing the response
-        connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbitmq_host))
-        channel = connection.channel()
-
-        # Declare the output queue
-        channel.queue_declare(queue=output_queue)
-
-        # Push the message into the priority queue
-        # The priority queue will sort the messages based on priority and requestor priority
-        priority_queue = []
-        heapq.heappush(priority_queue, request_wrapper)
-
-        while priority_queue:
-            # Pop the message with the highest priority from the queue
-            request_wrapper = heapq.heappop(priority_queue)
-            message_data = request_wrapper.message_data
+            # Extract the relevant fields
             openai_api_key = message_data.get("openai_api_key", "")
-            system_message = message_data.get("system_message", "")
-            user_message = message_data.get("user_message", "")
-            temperature = message_data.get("temperature", 0.0)
+            sys_msg = message_data.get("system_message", "")
+            usr_msg = message_data.get("user_message", "")
+            temp = message_data.get("temperature", 0.0)
+            requestor_prio_id = message_data.get("requestorPrioId", 2)
+            prio_id = message_data.get("PrioId")
 
-            response = get_openai_response(openai_api_key, system_message, user_message, temperature)
+            # RabbitMQ configuration for the output queue
+            rabbitmq_host = 'host.docker.internal'
+            output_queue = 'openai_responses'
+
+            # Connect to RabbitMQ for publishing the response
+            connection = await aio_pika.connect_robust(host=rabbitmq_host)
+            channel = await connection.channel()
+
+            # Declare the output queue
+            await channel.declare_queue(output_queue)
+
+            # Push the message into the priority queue
+            # The priority queue will sort the messages based on priority and requestor priority
+            priorityId_queue.put((prio_id, Request(sys_msg, usr_msg, temp)))
+            priorityRequestor_queue.put((requestor_prio_id, NestedPriorityQueue(priorityId_queue)))
+
+            while not priorityRequestor_queue.empty():
+                # Pop the message with the highest priority from the queue
+                requestorQueue = priorityRequestor_queue.get()
+                while not requestorQueue[1].queue.empty():
+                    request = requestorQueue[1].queue.get()
+                    system_message = request[1].sys_msg
+                    user_message = request[1].usr_msg
+                    temperature = request[1].temp
+
+                    response = await get_openai_response_async(openai_api_key, system_message, user_message,
+                                                               temperature)
+
+                    # Store the response in the dictionary with user_message as the key
+                    response_dict[user_message] = response
+
+                    # Publish the OpenAI API response to the output queue
+            # Get the OpenAI response asynchronously
+            # Get the OpenAI response asynchronously
+            response = await get_openai_response_async(openai_api_key, system_message, user_message, temperature)
+
+            # Encode the response string before publishing it to the output queue
+            response_bytes = response.encode()
 
             # Publish the OpenAI API response to the output queue
-            channel.basic_publish(exchange='',
-                                  routing_key=output_queue,
-                                  body=response)
-
+            await channel.default_exchange.publish(aio_pika.Message(body=response_bytes), routing_key=output_queue)
             print("sent response")
-
-        # Close the connection after sending all responses
-        connection.close()
+            # Close the connection after sending all responses
+            await connection.close()
 
     except json.JSONDecodeError:
         print("Invalid JSON format received from RabbitMQ.")
@@ -103,26 +113,35 @@ def rabbitmq_callback(ch, method, properties, body):
         print(f"An error occurred: {e}")
 
 
-if __name__ == "__main__":
+async def get_openai_response_async(api_key, system_message, user_message, temperature):
+    loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(None, get_openai_response, api_key, system_message, user_message, temperature)
+
+
+async def main():
     # RabbitMQ's configuration for the input queue
     rabbitmq_host = 'host.docker.internal'
     rabbitmq_queue = 'openai_requests'
 
     # Connect to RabbitMQ
-    connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbitmq_host))
-    channel = connection.channel()
+    connection = await aio_pika.connect_robust(host=rabbitmq_host)
+    channel = await connection.channel()
 
     # Declare the input queue
-    channel.queue_declare(queue=rabbitmq_queue)
+    queue = await channel.declare_queue(rabbitmq_queue)
 
     # Set up a consumer to listen for messages from RabbitMQ
-    channel.basic_consume(queue=rabbitmq_queue, on_message_callback=rabbitmq_callback, auto_ack=True)
+    await queue.consume(rabbitmq_callback)
 
     print(f"[*] Waiting for rabbit messages. To exit, press CTRL+C")
     try:
-        channel.start_consuming()
+        while True:
+            await asyncio.sleep(1)
     except KeyboardInterrupt:
         print("Exiting...")
         # Gracefully close the connection when Ctrl+C is pressed
-        channel.stop_consuming()
-        connection.close()
+        await connection.close()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
