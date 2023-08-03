@@ -122,7 +122,7 @@ public class DatabaseHelperTest {
 		List<AffectedProduct> products = buildDummyProducts(inCount);
 		dbh.insertAffectedProducts(products);
 		try {
-			verify(pstmt, times(inCount*8)).setString(anyInt(), any());
+			verify(pstmt, times(inCount*7)).setString(anyInt(), any());
 			verify(pstmt, times(inCount)).executeUpdate();
 			verify(pstmt).setString(1, products.get(inCount-1).getCveId());
 		} catch (SQLException ignored) {}
