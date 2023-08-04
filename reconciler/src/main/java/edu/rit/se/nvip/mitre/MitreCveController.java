@@ -190,7 +190,7 @@ public class MitreCveController {
             }
         }
 
-        logger.info("NVD Comparison Results\n" +
+        logger.info("Mitre Comparison Results\n" +
                         "{} in Mitre\n" +
                         "{} not in Mitre\n" +
                         "{} Reserved by Mitre\n" +

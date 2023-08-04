@@ -673,9 +673,13 @@ public class DatabaseHelper {
     }
 
     public Set<CompositeVulnerability> attachNvdVulns(Set<CompositeVulnerability> vulns) {
+        Set<CompositeVulnerability> out = new HashSet<>();
+
+        // if no vulnerabilities, return empty set
+        if(vulns.isEmpty()) return out;
+
         Map<String, CompositeVulnerability> idToVuln = new HashMap<>();
         vulns.forEach(v -> idToVuln.put(v.getCveId(), v));
-        Set<CompositeVulnerability> out = new HashSet<>();
 
         // generate comma separated string of question marks for cve_id candidates
         String questionMarks = IntStream.range(0, vulns.size()).mapToObj(i -> "?").collect(Collectors.joining(","));
@@ -704,9 +708,13 @@ public class DatabaseHelper {
 
     // todo lots of duplicate code for nvd/mitre, should find a suitable abstraction
     public Set<CompositeVulnerability> attachMitreVulns(Set<CompositeVulnerability> vulns) {
+        Set<CompositeVulnerability> out = new HashSet<>();
+
+        // if no vulnerabilities, return empty set
+        if(vulns.isEmpty()) return out;
+
         Map<String, CompositeVulnerability> idToVuln = new HashMap<>();
         vulns.forEach(v -> idToVuln.put(v.getCveId(), v));
-        Set<CompositeVulnerability> out = new HashSet<>();
 
         // generate comma separated string of question marks for cve_id candidates
         String questionMarks = IntStream.range(0, vulns.size()).mapToObj(i -> "?").collect(Collectors.joining(","));
