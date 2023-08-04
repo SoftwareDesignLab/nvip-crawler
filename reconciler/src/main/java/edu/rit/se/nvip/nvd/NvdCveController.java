@@ -100,6 +100,16 @@ public class NvdCveController {
 				statusToCount.put(status, 1);
 			}
 		}
+
+		int numAnalyzed = 0;
+		int numReceived = 0;
+		int numUndergoing = 0;
+		int numAwaiting = 0;
+		if(statusToCount.get(NvdVulnerability.NvdStatus.ANALYZED) != null) numAnalyzed = statusToCount.get(NvdVulnerability.NvdStatus.ANALYZED);
+		if(statusToCount.get(NvdVulnerability.NvdStatus.RECEIVED) != null) numReceived = statusToCount.get(NvdVulnerability.NvdStatus.RECEIVED);
+		if(statusToCount.get(NvdVulnerability.NvdStatus.UNDERGOING_ANALYSIS) != null) numUndergoing = statusToCount.get(NvdVulnerability.NvdStatus.UNDERGOING_ANALYSIS);
+		if(statusToCount.get(NvdVulnerability.NvdStatus.AWAITING_ANALYSIS) != null) numAwaiting = statusToCount.get(NvdVulnerability.NvdStatus.AWAITING_ANALYSIS);
+
 		logger.info("NVD Comparison Results\n" +
 						"{} in NVD\n" +
 						"{} not in NVD\n" +
@@ -108,10 +118,12 @@ public class NvdCveController {
 						"{} undergoing analysis in NVD\n" +
 						"{} awaiting analysis in NVD",
 				inNvd, notInNvd,
-				statusToCount.get(NvdVulnerability.NvdStatus.ANALYZED),
-				statusToCount.get(NvdVulnerability.NvdStatus.RECEIVED),
-				statusToCount.get(NvdVulnerability.NvdStatus.ANALYZED),
-				statusToCount.get(NvdVulnerability.NvdStatus.AWAITING_ANALYSIS));
+				numAnalyzed,
+				numReceived,
+				numUndergoing,
+				numAwaiting
+		);
+
 		return affected;
 	}
 

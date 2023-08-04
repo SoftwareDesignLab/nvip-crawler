@@ -190,14 +190,21 @@ public class MitreCveController {
             }
         }
 
+        int numReserved = 0;
+        int numPublic = 0;
+        if(statusToCount.get(MitreVulnerability.MitreStatus.RESERVED) != null) numReserved = statusToCount.get(MitreVulnerability.MitreStatus.RESERVED);
+        if(statusToCount.get(MitreVulnerability.MitreStatus.PUBLIC) != null) numPublic = statusToCount.get(MitreVulnerability.MitreStatus.PUBLIC);
+
         logger.info("Mitre Comparison Results\n" +
                         "{} in Mitre\n" +
                         "{} not in Mitre\n" +
                         "{} Reserved by Mitre\n" +
                         "{} Public in Mitre\n",
                 inMitre, notInMitre,
-                statusToCount.get(MitreVulnerability.MitreStatus.RESERVED),
-                statusToCount.get(MitreVulnerability.MitreStatus.PUBLIC));
+                numReserved,
+                numPublic
+        );
+
         return affected;
     }
 }
