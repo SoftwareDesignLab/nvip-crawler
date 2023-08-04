@@ -67,6 +67,11 @@ public abstract class Filter {
         if (vuln.getFilterStatus() == RawVulnerability.FilterStatus.FAILED) {
             return;
         }
+        // users are always right
+        if (vuln.getSourceType() == RawVulnerability.SourceType.USER) {
+            vuln.setFilterStatus(RawVulnerability.FilterStatus.PASSED);
+            return;
+        }
         if (passesFilter(vuln)) {
             vuln.setFilterStatus(RawVulnerability.FilterStatus.PASSED);
         } else {
