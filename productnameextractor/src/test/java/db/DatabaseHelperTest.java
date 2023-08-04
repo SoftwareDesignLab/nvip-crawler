@@ -214,6 +214,36 @@ public class DatabaseHelperTest {
 	}
 
 	@Test
+	public void testGetVulnsByCpe() throws SQLException {
+		String cpe = "cpe:/a:apache:activemq:5.15.8";
+		String cveId = "CVE-2019-0221";
+		String description = "In Apache ActiveMQ 5.0.0 - 5.15.8, unmarshalling corrupt MQTT frame can lead to broker Out of Memory exception making it unresponsive.";
+		String publishDate = "2019-04-19T18:29Z";
+		String lastModifiedDate = "2019-04-19T18:29Z";
+		int vulnId = 1;
+
+		// Mock the database interactions
+		when(conn.prepareStatement(anyString())).thenReturn(pstmt);
+		when(pstmt.executeQuery()).thenReturn(res);
+		when(res.next()).thenReturn(true, false);
+
+		List<CompositeVulnerability> vulnList = dbh.getVulnsByCpe(cpe);
+		assertEquals(vulnList.size(), 1);
+
+		CompositeVulnerability vuln = vulnList.get(0);
+
+		verify(conn).prepareStatement(anyString());
+		verify(pstmt).setString(1, cpe);
+		verify(pstmt).executeQuery();
+		verify(res).getInt(0);
+		verify(res).getString(1);
+		verify(res).getString(2);
+		verify(res).getString(3);
+		verify(res).getString(4);
+
+	}
+
+	@Test
 	public void shutdownTest() {
 		dbh.shutdown();
 		verify(hds).close();
