@@ -26,6 +26,12 @@ package env;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -37,6 +43,7 @@ import java.util.Map;
 
 public class ProductNameExtractorEnvVars {
     private static final Logger logger = LogManager.getLogger(ProductNameExtractorEnvVars.class);
+    private static final String envVarPath = "env.list";
 
     // Default values for main environment variables
 
@@ -57,7 +64,7 @@ public class ProductNameExtractorEnvVars {
     // Default values for database environment variables
 
     private static String databaseType = "mysql";
-    private static String hikariUrl = "jdbc:mysql://localhost:3306/nvip?useSSL=false&allowPublicKeyRetrieval=true";
+    private static String hikariUrl = "jdbc:mysql://host.docker.internal:3306/nvip?useSSL=false&allowPublicKeyRetrieval=true";
     private static String hikariUser = "root";
     private static String hikariPassword = "root";
 
@@ -74,7 +81,7 @@ public class ProductNameExtractorEnvVars {
     // Default values for RabbitMQ environment variables
 
     private static int rabbitPollInterval = 60;
-    private static String rabbitHost = "localhost";
+    private static String rabbitHost = "host.docker.internal";
     private static String rabbitUsername = "guest";
     private static String rabbitPassword = "guest";
 
@@ -85,8 +92,9 @@ public class ProductNameExtractorEnvVars {
 
     // Manually load env vars
     public static void initializeEnvVars() {
+        logger.info("CURRENT PATH --> " + System.getProperty("user.dir"));
         logger.info("Initializing Environment Variables...");
-        fetchEnvVars();
+        fetchEnvVars(loadEnvVarsFromFile(envVarPath));
     }
 
     // Getters
@@ -118,15 +126,50 @@ public class ProductNameExtractorEnvVars {
     public static String getRabbitPassword() { return rabbitPassword; }
 
     /**
+     * Loads environment variables from env.list file into HashMap and returns it.
+     * By default, assumes that your working directory is 'nvip-crawler/productnameextractor'.
+     *
+     * @return map of environment variables
+     */
+    private static Map<String, String> loadEnvVarsFromFile(String path){
+        Map<String, String> props = new HashMap<>();
+
+        try{
+            FileReader fileReader = new FileReader(path);
+            BufferedReader reader = new BufferedReader(fileReader);
+
+            // Go through each line
+            String line = reader.readLine();
+            while(line != null){
+                // If it contains an equals sign, is an environment variable
+                if(line.contains("=")){
+                    int index = line.indexOf('=');
+                    // Add the env var and its value
+                    props.put(line.substring(0, index), line.substring(index + 1));
+                }
+
+                line = reader.readLine();
+            }
+
+        } catch (FileNotFoundException e){
+            logger.error("Environment variable file (env.list) not found. Please ensure your working directory is correct");
+            logger.error("Current working directory: {}", System.getProperty("user.dir"));
+        } catch (IOException e){
+            logger.error("Reading from environment variable file failed with error {}", e.toString());
+        }
+
+        return props;
+
+    }
+
+    /**
      * Attempts to fetch all required environment variables from System.getenv() safely, logging
      * any missing or incorrect variables.
      */
-    private static void fetchEnvVars() {
-        // Fetch ENV_VARS and set all found configurable properties
-        final Map<String, String> props = System.getenv();
+    private static void fetchEnvVars(Map<String, String> props) {
 
         if(props.containsKey("RABBIT_POLL_INTERVAL")) {
-            rabbitPollInterval = Integer.parseInt(System.getenv("RABBIT_POLL_INTERVAL"));
+            rabbitPollInterval = Integer.parseInt(props.get("RABBIT_POLL_INTERVAL"));
             logger.info("Setting RABBIT_POLL_INTERVAL to {}", rabbitPollInterval);
         } else logger.warn("Could not fetch RABBIT_POLL_INTERVAL from env vars, defaulting to {}", rabbitPollInterval);
 

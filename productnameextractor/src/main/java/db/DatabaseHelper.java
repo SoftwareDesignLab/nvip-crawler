@@ -55,7 +55,7 @@ public class DatabaseHelper {
 	private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
 	private final String selectVulnerabilitySql = "SELECT vulnerability.vuln_id, vulnerability.cve_id, description.description FROM vulnerability JOIN description ON vulnerability.description_id = description.description_id;";
 	private final String selectSpecificVulnerabilitySql = "SELECT vulnerability.vuln_id, description.description FROM vulnerability JOIN description ON vulnerability.description_id = description.description_id WHERE vulnerability.cve_id = ?;";
-	private final String insertAffectedProductSql = "INSERT INTO affectedproduct (cve_id, cpe, product_name, version, vendor, purl, swid_tag) VALUES (?, ?, ?, ?, ?, ?, ?, ?);";
+	private final String insertAffectedProductSql = "INSERT INTO affectedproduct (cve_id, cpe, product_name, version, vendor, purl, swid_tag) VALUES (?, ?, ?, ?, ?, ?, ?);";
 	private final String deleteAffectedProductSql = "DELETE FROM affectedproduct where cve_id = ?;";
 
 	/**
