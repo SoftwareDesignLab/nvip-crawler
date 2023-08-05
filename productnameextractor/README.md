@@ -101,17 +101,20 @@ The product name extractor component of NVIP identifies affected products in a C
 ### Run Configuration
 > Environment variables are set to be compatible with those running the program through Docker by default. Thus, if you are running locally, you will have to manually change the environment variables and run configuration as is applicable to your setup.
 > 
-> Using Intellij as an example, it does not read env.list files automatically. The contents of the product name extactor env.list file can be copied directly into the menu as shown in the image below. Please ensure that the program is run with environment variables applicable to your choice of IDE and configuration.
+> Environment variables are automatically read from the env.list file by default. In order to avoid any possible errors, it is best to run the program in the `nvip-crawler/productnameextractor` working directory.
 > 
 > See **Environment Variables** below for more information.
-> 
-> ![Screenshot](nvip_data/docs/configMenu.png)
+>
 
 
 
 ## 5. Running With Docker:
+Before proceeding to the following steps, please make sure that the Docker Engine is running on your workstation.
 
-#### Change Working Directory:
+#### Build and Run RabbitMQ Image:
+    $ docker run -it --rm --name rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq:3.12-management
+
+#### Open New Terminal & Change Working Directory:
     $ cd productnameextractor
 
 #### Build Product Name Extractor Image:
@@ -145,8 +148,8 @@ the environment variable file (`env.list`). It is recommended to allot at least 
 The `env.list` file contains a set of environment variables that the product name extractor requires in order to run.
 All environment variables contain default values if they're not specified, but it is generally advisable to have them configured to fit your workspace.
 
-Like stated previously, you can provide these variables when running the application with Docker via the `env.list` file.
-If you want to run it locally without Docker, you'll need to provide the environment variables through whatever tool or IDE you're using.
+As stated previously, you can provide these variables when running the application with Docker via the `env.list` file.
+If you want to run it locally without Docker, the program will attempt to automatically read from the `env.list` file. For this to work correctly, please ensure that your working directory is `nvip-crawler/productnameextractor`. You also may manually configure the environment variables using your IDE if you prefer.
 
 - Setting up environment variables with **IntelliJ**: https://www.jetbrains.com/help/objc/add-environment-variables-and-program-arguments.html
 
@@ -160,7 +163,7 @@ If you want to run it locally without Docker, you'll need to provide the environ
 ### Database Variables
 
 * **DB_TYPE**: Database type used
-    - Defaut value: `mysql`
+    - Default value: `mysql`
 
 
 * **HIKARI_URL**: JDBC URL used for connecting to the MySQL Database.
