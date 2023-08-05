@@ -163,8 +163,10 @@ public class ProductNameExtractorEnvVars {
     }
 
     /**
-     * Attempts to fetch all required environment variables from System.getenv() safely, logging
-     * any missing or incorrect variables.
+     * Attempts to fetch all required environment variables from parameter props safely, logging any
+     * missing or incorrect variables. Resorts to default values if props doesn't contain a certain env var.
+     *
+     * @param props map of environment variables
      */
     private static void fetchEnvVars(Map<String, String> props) {
 
@@ -174,52 +176,52 @@ public class ProductNameExtractorEnvVars {
         } else logger.warn("Could not fetch RABBIT_POLL_INTERVAL from env vars, defaulting to {}", rabbitPollInterval);
 
         if(props.containsKey("NUM_THREADS")) {
-            numThreads = Integer.parseInt(System.getenv("NUM_THREADS"));
+            numThreads = Integer.parseInt(props.get("NUM_THREADS"));
             logger.info("Setting NUM_THREADS to {}", numThreads);
         } else logger.warn("Could not fetch NUM_THREADS from env vars, defaulting to {}", numThreads);
 
         if(props.containsKey("MAX_ATTEMPTS_PER_PAGE")) {
-            maxAttemptsPerPage = Integer.parseInt(System.getenv("MAX_ATTEMPTS_PER_PAGE"));
+            maxAttemptsPerPage = Integer.parseInt(props.get("MAX_ATTEMPTS_PER_PAGE"));
             logger.info("Setting MAX_ATTEMPTS_PER_PAGE to {}", maxAttemptsPerPage);
         } else logger.warn("Could not fetch MAX_ATTEMPTS_PER_PAGE from env vars, defaulting to {}", maxAttemptsPerPage);
 
         if(props.containsKey("PRODUCT_DICT_NAME")) {
-            productDictName = System.getenv("PRODUCT_DICT_NAME");
+            productDictName = props.get("PRODUCT_DICT_NAME");
             logger.info("Setting PRODUCT_DICT_NAME to {}", productDictName);
         } else logger.warn("Could not fetch PRODUCT_DICT_NAME from env vars, defaulting to {}", productDictName);
 
         if(props.containsKey("RESOURCE_DIR")) {
-            resourceDir = System.getenv("RESOURCE_DIR");
+            resourceDir = props.get("RESOURCE_DIR");
             logger.info("Setting RESOURCE_DIR to {}", resourceDir);
         } else logger.warn("Could not fetch RESOURCE_DIR from env vars, defaulting to {}", resourceDir);
 
         if(props.containsKey("DATA_DIR")) {
-            dataDir = System.getenv("DATA_DIR");
+            dataDir = props.get("DATA_DIR");
             logger.info("Setting DATA_DIR to {}", dataDir);
         } else logger.warn("Could not fetch DATA_DIR from env vars, defaulting to {}", dataDir);
 
         if(props.containsKey("NLP_DIR")) {
-            nlpDir = System.getenv("NLP_DIR");
+            nlpDir = props.get("NLP_DIR");
             logger.info("Setting NLP_DIR to {}", nlpDir);
         } else logger.warn("Could not fetch NLP_DIR from env vars, defaulting to {}", nlpDir);
 
         if(props.containsKey("PRETTY_PRINT")) {
-            prettyPrint = Boolean.parseBoolean(System.getenv("PRETTY_PRINT"));
+            prettyPrint = Boolean.parseBoolean(props.get("PRETTY_PRINT"));
             logger.info("Setting PRETTY_PRINT to {}", prettyPrint);
         } else logger.warn("Could not fetch PRETTY_PRINT from env vars, defaulting to {}", prettyPrint);
 
         if(props.containsKey("TEST_MODE")) {
-            testMode = Boolean.parseBoolean(System.getenv("TEST_MODE"));
+            testMode = Boolean.parseBoolean(props.get("TEST_MODE"));
             logger.info("Setting TEST_MODE to {}", testMode);
         } else logger.warn("Could not fetch TEST_MODE from env vars, defaulting to {}", testMode);
 
         if(props.containsKey("REFRESH_INTERVAL")) {
-            refreshInterval = Float.parseFloat(System.getenv("REFRESH_INTERVAL"));
+            refreshInterval = Float.parseFloat(props.get("REFRESH_INTERVAL"));
             logger.info("Setting REFRESH_INTERVAL to {}", refreshInterval);
         } else logger.warn("Could not fetch REFRESH_INTERVAL from env vars, defaulting to {}", refreshInterval);
 
         if(props.containsKey("FULL_PULL_INTERVAL")) {
-            fullPullInterval = Float.parseFloat(System.getenv("FULL_PULL_INTERVAL"));
+            fullPullInterval = Float.parseFloat(props.get("FULL_PULL_INTERVAL"));
             logger.info("Setting FULL_PULL_INTERVAL to {}", fullPullInterval);
         } else logger.warn("Could not fetch FULL_PULL_INTERVAL from env vars, defaulting to {}", fullPullInterval);
 
@@ -235,22 +237,22 @@ public class ProductNameExtractorEnvVars {
      */
     private static void fetchHikariEnvVars(Map<String, String> props) {
         if(props.containsKey("DB_TYPE")) {
-            databaseType = System.getenv("DB_TYPE");
+            databaseType = props.get("DB_TYPE");
             logger.info("Setting DB_TYPE to {}", databaseType);
         } else logger.warn("Could not fetch DB_TYPE from env vars, defaulting to {}", databaseType);
 
         if(props.containsKey("HIKARI_URL")) {
-            hikariUrl = System.getenv("HIKARI_URL");
+            hikariUrl = props.get("HIKARI_URL");
             logger.info("Setting HIKARI_URL to {}", hikariUrl);
         } else logger.warn("Could not fetch HIKARI_URL from env vars, defaulting to {}", hikariUrl);
 
         if(props.containsKey("HIKARI_USER")) {
-            hikariUser = System.getenv("HIKARI_USER");
+            hikariUser = props.get("HIKARI_USER");
             logger.info("Setting HIKARI_USER to {}", hikariUser);
         } else logger.warn("Could not fetch HIKARI_USER from env vars, defaulting to {}", hikariUser);
 
         if(props.containsKey("HIKARI_PASSWORD")) {
-            hikariPassword = System.getenv("HIKARI_PASSWORD");
+            hikariPassword = props.get("HIKARI_PASSWORD");
             logger.info("Setting HIKARI_PASSWORD to {}", hikariPassword);
         } else logger.warn("Could not fetch HIKARI_PASSWORD from env vars, defaulting to {}", hikariPassword);
     }
@@ -262,17 +264,17 @@ public class ProductNameExtractorEnvVars {
      */
     private static void fetchRabbitEnvVars(Map<String, String> props) {
         if(props.containsKey("RABBIT_HOST")) {
-            rabbitHost = System.getenv("RABBIT_HOST");
+            rabbitHost = props.get("RABBIT_HOST");
             logger.info("Setting RABBIT_HOST to {}", rabbitHost);
         } else logger.warn("Could not fetch RABBIT_HOST from env vars, defaulting to {}", rabbitHost);
 
         if(props.containsKey("RABBIT_USERNAME")) {
-            rabbitUsername = System.getenv("RABBIT_USERNAME");
+            rabbitUsername = props.get("RABBIT_USERNAME");
             logger.info("Setting RABBIT_USERNAME to {}", rabbitUsername);
         } else logger.warn("Could not fetch RABBIT_USERNAME from env vars, defaulting to {}", rabbitUsername);
 
         if(props.containsKey("RABBIT_PASSWORD")) {
-            rabbitPassword = System.getenv("RABBIT_PASSWORD");
+            rabbitPassword = props.get("RABBIT_PASSWORD");
             logger.info("Setting RABBIT_PASSWORD to {}", rabbitPassword);
         } else logger.warn("Could not fetch RABBIT_PASSWORD from env vars, defaulting to {}", rabbitPassword);
     }
@@ -284,37 +286,37 @@ public class ProductNameExtractorEnvVars {
      */
     private static void fetchModelEnvVars(Map<String, String> props){
         if(props.containsKey("PRODUCT_DETECTOR_MODEL")) {
-            productDetectorModel = System.getenv("PRODUCT_DETECTOR_MODEL");
+            productDetectorModel = props.get("PRODUCT_DETECTOR_MODEL");
             logger.info("SETTING PRODUCT_DETECTOR_MODEL to {}", productDetectorModel);
         } else logger.warn("Could not fetch PRODUCT_DETECTOR_MODEL from env vars, defaulting to {}", productDetectorModel);
 
         if(props.containsKey("CHAR_2_VEC_CONFIG")) {
-            char2VecConfig = System.getenv("CHAR_2_VEC_CONFIG");
+            char2VecConfig = props.get("CHAR_2_VEC_CONFIG");
             logger.info("SETTING CHAR_2_VEC_CONFIG to {}", char2VecConfig);
         } else logger.warn("Could not fetch CHAR_2_VEC_CONFIG from env vars, defaulting to {}", char2VecConfig);
 
         if(props.containsKey("CHAR_2_VEC_WEIGHTS")) {
-            char2VecWeights = System.getenv("CHAR_2_VEC_WEIGHTS");
+            char2VecWeights = props.get("CHAR_2_VEC_WEIGHTS");
             logger.info("SETTING CHAR_2_VEC_WEIGHTS to {}", char2VecWeights);
         } else logger.warn("Could not fetch CHAR_2_VEC_WEIGHTS from env vars, defaulting to {}", char2VecWeights);
 
         if(props.containsKey("WORD_2_VEC")) {
-            word2Vec = System.getenv("WORD_2_VEC");
+            word2Vec = props.get("WORD_2_VEC");
             logger.info("SETTING WORD_2_VEC to {}", word2Vec);
         } else logger.warn("Could not fetch WORD_2_VEC from env vars, defaulting to {}", word2Vec);
 
         if(props.containsKey("NER_MODEL")) {
-            nerModel = System.getenv("NER_MODEL");
+            nerModel = props.get("NER_MODEL");
             logger.info("SETTING NER_MODEL to {}", nerModel);
         } else logger.warn("Could not fetch NER_MODEL from env vars, defaulting to {}", nerModel);
 
         if(props.containsKey("NER_MODEL_NORMALIZER")) {
-            nerModelNormalizer = System.getenv("NER_MODEL_NORMALIZER");
+            nerModelNormalizer = props.get("NER_MODEL_NORMALIZER");
             logger.info("SETTING NER_MODEL_NORMALIZER to {}", nerModelNormalizer);
         } else logger.warn("Could not fetch NER_MODEL_NORMALIZER from env vars, defaulting to {}", nerModelNormalizer);
 
         if(props.containsKey("SENTENCE_MODEL")) {
-            sentenceModel = System.getenv("SENTENCE_MODEL");
+            sentenceModel = props.get("SENTENCE_MODEL");
             logger.info("SETTING SENTENCE_MODEL to {}", sentenceModel);
         } else logger.warn("Could not fetch SENTENCE_MODEL from env vars, defaulting to {}", sentenceModel);
 
