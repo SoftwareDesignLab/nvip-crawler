@@ -53,7 +53,7 @@ public class GitController {
 	/**
 	 * pull repo
 	 * 
-	 * @return
+	 * @return true if successful, false if not
 	 */
 	public boolean pullRepo() {
 		logger.info("Checking for updates for {} repo!...", localPath);
@@ -75,7 +75,7 @@ public class GitController {
 	/**
 	 * clone git repo
 	 * 
-	 * @return
+	 * @return true if successful, false if not
 	 */
 	public boolean cloneRepo() {
 		Git git = null;
