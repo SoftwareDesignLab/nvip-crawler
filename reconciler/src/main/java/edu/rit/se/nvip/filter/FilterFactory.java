@@ -32,6 +32,7 @@ public class FilterFactory {
     public static final String INTEGER_DESCRIPTION = "INTEGER_DESCRIPTION";
     public static final String MULTIPLE_CVE_DESCRIPTION = "MULTIPLE_CVE_DESCRIPTION";
     public static final String DESCRIPTION_SIZE = "DESCRIPTION_SIZE";
+    public static final String CHARACTER_PROPORTION = "CHARACTER_PROPORTION";
 
     public static Filter createFilter(String type) {
         switch (type) {
@@ -47,6 +48,8 @@ public class FilterFactory {
                 return new MultipleCveDescriptionsFilter();
             case DESCRIPTION_SIZE:
                 return new DescriptionSizeFilter();
+            case CHARACTER_PROPORTION:
+                return new CharacterProportionFilter();
             case OPENAI:
                 return new GPTFilter();
             default:

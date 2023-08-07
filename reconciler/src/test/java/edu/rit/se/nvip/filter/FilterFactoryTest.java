@@ -52,4 +52,10 @@ class FilterFactoryTest {
         Filter filter = FilterFactory.createFilter("BLANK_DESCRIPTION");
         assertTrue(filter instanceof BlankDescriptionFilter);
     }
+
+    @Test
+    void createCharacterProportionFilter() {
+        Filter filter = FilterFactory.createFilter("CHARACTER_PROPORTION");
+        assertTrue(filter instanceof CharacterProportionFilter);
+    }
 }
