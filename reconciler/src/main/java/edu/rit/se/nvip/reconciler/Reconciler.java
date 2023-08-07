@@ -71,8 +71,9 @@ public abstract class Reconciler {
 			// todo handle the case where we have no passed rawvulns and no existingvuln but still want to report something
 		}
 		// take the user edits out of the newVulns set and apply the most recent one
-		RawVulnerability latestNewUserEdit = extractUserSources(newVulns).get(0); // sorted by newest created date first
-		if (latestNewUserEdit != null) {
+		List<RawVulnerability> newUserEdits = extractUserSources(newVulns); // sorted by newest created date first
+		if (!newUserEdits.isEmpty()) {
+			RawVulnerability latestNewUserEdit = newUserEdits.get(0);
 			// a user edit should guarantee that existingVuln exists, but just in case...
 			if (existingVuln == null) {
 				logger.warn("Attempt to reconcile a user edit for a nonexistent CVE {}", latestNewUserEdit.getCveId());
