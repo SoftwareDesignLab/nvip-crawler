@@ -165,11 +165,12 @@ public abstract class Reconciler {
 	}
 
 	private List<RawVulnerability> extractUserSources(Set<RawVulnerability> rawVulns) {
-		return rawVulns.stream()
+		List<RawVulnerability> out = rawVulns.stream()
 				.filter(v->v.getSourceType()== RawVulnerability.SourceType.USER)
-				.peek(rawVulns::remove)
 				.sorted(Comparator.comparing(Vulnerability::getCreateDate).reversed())
 				.collect(Collectors.toList());
+		out.forEach(rawVulns::remove);
+		return out;
 	}
 
 	/**
