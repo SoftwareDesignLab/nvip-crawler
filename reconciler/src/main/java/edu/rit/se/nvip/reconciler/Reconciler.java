@@ -27,6 +27,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import edu.rit.se.nvip.DatabaseHelper;
 import edu.rit.se.nvip.model.RawVulnerability;
 import edu.rit.se.nvip.model.Vulnerability;
 import org.apache.logging.log4j.LogManager;
@@ -82,6 +83,10 @@ public abstract class Reconciler {
 			// if there are no additional non-user sources, then short-circuit a return
 			if (newVulns.isEmpty()) {
 				return existingVuln;
+			}
+			// if there are also new non-user sources, store a copy of the composite user description and then continue reconciling on top of it
+			else {
+				DatabaseHelper.getInstance().insertDescription(existingVuln.getSystemDescription());
 			}
 		}
 		// if the existing vuln only uses low prio sources and the new ones are high prio, we dump the old sources and rebuild

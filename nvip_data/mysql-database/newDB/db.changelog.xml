@@ -377,15 +377,15 @@
         </addColumn>
     </changeSet>
 
-    <changeSet id="addUserDescriptionIdColumn" author="memeee">
-        <addColumn tableName="vulnerability">
-            <column name="user_description_id" type="int"/>
+    <changeSet id="addDescriptionUserId" author="memeee">
+        <addColumn tableName="description">
+            <column name="user_id" type="int"/>
         </addColumn>
-        <addForeignKeyConstraint baseTable="vulnerability"
-                                 baseColumnNames="user_description_id"
-                                 constraintName="fk_user_description_id"
-                                 referencedTableName="description"
-                                 referencedColumnNames="description_id"/>
+        <addForeignKeyConstraint baseTable="description"
+                                 baseColumnNames="user_id"
+                                 constraintName="fk_user_id"
+                                 referencedTableName="user"
+                                 referencedColumnNames="user_id"/>
     </changeSet>
 
 

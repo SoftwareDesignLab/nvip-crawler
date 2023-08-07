@@ -178,13 +178,13 @@ public class ReconcilerController {
                 firstWaveReturn.numDistinct + secondWaveReturn.numDistinct);
         // reconcile
         CompositeVulnerability out = reconciler.reconcile(existing, wrapper.toReconcile());
-        // link all the rawvulns to the compvuln, regardless of filter/reconciliation status
-        // we do this because publish dates and mod dates should be determined by all sources, not just those with good descriptions
 
         if (out == null){
             return null;
         }
 
+        // link all the rawvulns to the compvuln, regardless of filter/reconciliation status
+        // we do this because publish dates and mod dates should be determined by all sources, not just those with good descriptions
         out.setPotentialSources(rawVulns);
 
         dbh.insertOrUpdateVulnerabilityFull(out);

@@ -302,7 +302,7 @@ public class DatabaseHelper {
             // handle all these atomically
             conn.setAutoCommit(false);
             // insert into description table
-            populateDescriptionInsert(descriptionStatement, vuln);
+            populateDescriptionInsert(descriptionStatement, vuln.getSystemDescription());
             descriptionStatement.executeUpdate();
             // get generated description id
             ResultSet rs = descriptionStatement.getGeneratedKeys();
@@ -315,7 +315,7 @@ public class DatabaseHelper {
             }
             // batch insert into joint table
             for (RawVulnerability rawVuln : vuln.getComponents()) {
-                populateJTInsert(jtStatement, vuln, rawVuln);
+                populateJTInsert(jtStatement, vuln.getSystemDescription(), rawVuln);
                 jtStatement.addBatch();
             }
             jtStatement.executeBatch();
@@ -339,15 +339,41 @@ public class DatabaseHelper {
         return 1;
     }
 
-    private void populateDescriptionInsert(PreparedStatement descriptionStatement, CompositeVulnerability vuln) throws SQLException {
-        descriptionStatement.setString(1, vuln.getDescription());
-        descriptionStatement.setTimestamp(2, vuln.getDescriptionCreateDate());
-        descriptionStatement.setString(3, vuln.getBuildString());
-        descriptionStatement.setString(4, vuln.getCveId());
+    public void insertDescription(CompositeDescription compDesc) {
+        try (Connection conn = getConnection();
+             PreparedStatement descriptionStatement = conn.prepareStatement(INSERT_DESCRIPTION);
+             PreparedStatement jtStatement = conn.prepareStatement(INSERT_JT)) {
+            conn.setAutoCommit(false);
+            populateDescriptionInsert(descriptionStatement, compDesc);
+            descriptionStatement.executeUpdate();
+            ResultSet rs = descriptionStatement.getGeneratedKeys();
+            if (rs.next()) {
+                compDesc.setId(rs.getInt(1));
+            } else {
+                // Pretty sure an exception would have been thrown by now anyway, but just in case...
+                logger.error("ERROR: Failure in inserting a description for {}", compDesc.getCveId());
+                throw new SQLException();
+            }
+            for (RawVulnerability rawVuln : compDesc.getSources()) {
+                populateJTInsert(jtStatement, compDesc, rawVuln);
+                jtStatement.addBatch();
+            }
+            jtStatement.executeBatch();
+            conn.commit();
+        } catch (SQLException ex) {
+            logger.error("Error while inserting description for {}", compDesc.getCveId());
+        }
     }
 
-    private void populateJTInsert(PreparedStatement jtStatement, CompositeVulnerability vuln, RawVulnerability rawVuln) throws SQLException {
-        jtStatement.setInt(1, vuln.getDescriptionId());
+    private void populateDescriptionInsert(PreparedStatement descriptionStatement, CompositeDescription compDesc) throws SQLException {
+        descriptionStatement.setString(1, compDesc.getDescription());
+        descriptionStatement.setTimestamp(2, compDesc.getCreatedDate());
+        descriptionStatement.setString(3, compDesc.getBuildString());
+        descriptionStatement.setString(4, compDesc.getCveId());
+    }
+
+    private void populateJTInsert(PreparedStatement jtStatement, CompositeDescription compDesc, RawVulnerability rawVuln) throws SQLException {
+        jtStatement.setInt(1, compDesc.getId());
         jtStatement.setInt(2, rawVuln.getId());
     }
 
