@@ -185,8 +185,8 @@ public class ProductNameExtractorEnvVars {
      * Attempts to fetch all required environment variables from props map safely, logging any
      * missing or incorrect variables.
      *
-     * If environment variable is not found from the loaded file, it will attempt to fetch it from System.getenv(). If it
-     * is still not found, it will resort to default value.
+     * If environment variable is not found from System.getenv(), it will attempt to fetch it from the loaded file. If it
+     * is still not found, it will resort to default value. Priority: System.getenv() <- env.list file <- default values
      *
      * @param systemProps map of environment variables from System.getenv()
      * @param fileProps map of environment variables read from file
