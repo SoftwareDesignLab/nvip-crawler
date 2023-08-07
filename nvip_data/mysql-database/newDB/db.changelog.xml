@@ -379,14 +379,12 @@
 
     <changeSet id="addDescriptionUserId" author="memeee">
         <addColumn tableName="description">
-            <column name="user_id" type="int"/>
+            <column name="is_user_generated" type="int">
+                <constraints nullable="false" defaultValue="0"/>
+            </column>
         </addColumn>
-        <addForeignKeyConstraint baseTable="description"
-                                 baseColumnNames="user_id"
-                                 constraintName="fk_user_id"
-                                 referencedTableName="user"
-                                 referencedColumnNames="user_id"/>
     </changeSet>
+
 
 
 

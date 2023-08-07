@@ -38,7 +38,7 @@ public class DatabaseHelper {
     private static final String INSERT_VULNERABILITY = "INSERT INTO vulnerability (cve_id, description_id, created_date, published_date, last_modified_date) VALUES (?, ?, ?, ?, ?)";
     private static final String UPDATE_VULNERABILITY = "UPDATE vulnerability SET description_id = ?, published_date = ?, last_modified_date = ? WHERE cve_id = ?";
     private static final String INSERT_JT = "INSERT INTO rawdescriptionjt (description_id, raw_description_id) VALUES (?, ?)";
-    private static final String INSERT_DESCRIPTION = "INSERT INTO description (description, created_date, gpt_func, cve_id) VALUES (?, ?, ?, ?)";
+    private static final String INSERT_DESCRIPTION = "INSERT INTO description (description, created_date, gpt_func, cve_id, is_user_generated) VALUES (?, ?, ?, ?, ?)";
     private static final String DELETE_JOB = "DELETE FROM cvejobtrack WHERE cve_id = ?";
     private static final String UPDATE_CVSS = "UPDATE cvss SET base_score = ?, impact_score = ? WHERE cve_id = ?";
     private static final String INSERT_CVSS = "INSERT INTO cvss (base_score, impact_score, cve_id, create_date) VALUES (?, ?, ?, ?)";
@@ -370,6 +370,7 @@ public class DatabaseHelper {
         descriptionStatement.setTimestamp(2, compDesc.getCreatedDate());
         descriptionStatement.setString(3, compDesc.getBuildString());
         descriptionStatement.setString(4, compDesc.getCveId());
+        descriptionStatement.setInt(5, compDesc.isUserGenerated() ? 1 : 0);
     }
 
     private void populateJTInsert(PreparedStatement jtStatement, CompositeDescription compDesc, RawVulnerability rawVuln) throws SQLException {

@@ -19,6 +19,8 @@ public class CompositeDescription {
 
     private DescriptionTree descriptionTree;
 
+    private boolean isUserGenerated = false;
+
     /**
      * Builds a CompositeDescription from scratch, should be used when pulling from the database table
      * @param id unique identifier, primary key in the description table
@@ -128,6 +130,14 @@ public class CompositeDescription {
             if (vuln.isHighPriority()) return true;
         }
         return false;
+    }
+
+    public boolean isUserGenerated() {
+        return this.isUserGenerated;
+    }
+
+    public void setIsUserGenerated(boolean isUserGenerated) {
+        this.isUserGenerated = isUserGenerated;
     }
 
     // Cloneable interface is annoying with final fields, doing this instead
