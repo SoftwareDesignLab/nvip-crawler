@@ -51,6 +51,7 @@ public class CompositeDescription {
      */
     public CompositeDescription(RawVulnerability newSingleSource) {
         this.id = 0;
+        this.cveId = newSingleSource.getCveId();
         this.description = newSingleSource.getDescription();
         setCreateDateCurrent();
         this.descriptionTree = new DescriptionTree(newSingleSource.getIdString());
@@ -91,6 +92,10 @@ public class CompositeDescription {
             return "";
         }
         return this.descriptionTree.toString();
+    }
+
+    public String getCveId() {
+        return this.cveId;
     }
 
     public void addSources(String description, Set<RawVulnerability> rawVulns) {
