@@ -213,7 +213,6 @@ public class ProductNameExtractorMain {
      *
      */
     public static void main(String[] args) {
-        logger.info("CURRENT PATH --> " + System.getProperty("user.dir"));
 
         // Initialize Database Helper and Product Dictionary
         DatabaseHelper databaseHelper = new DatabaseHelper(databaseType, hikariUrl, hikariUser, hikariPassword);
@@ -239,6 +238,7 @@ public class ProductNameExtractorMain {
             writeTestResults(vulnList);
 
         }else{
+
             // Otherwise using RabbitMQ, get the list of cve IDs from the reconciler and create vuln list from those
             final Messenger rabbitMQ = new Messenger();
             while(true) {

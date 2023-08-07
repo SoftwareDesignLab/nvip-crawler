@@ -75,7 +75,7 @@ public class ProductNameExtractorEnvVarsTest {
 
         // Default values for RabbitMQ environment variables
         assertEquals(60, ProductNameExtractorEnvVars.getRabbitPollInterval());
-        assertEquals("localhost", ProductNameExtractorEnvVars.getRabbitHost());
+        assertEquals("host.docker.internal", ProductNameExtractorEnvVars.getRabbitHost());
         assertEquals("guest", ProductNameExtractorEnvVars.getRabbitUsername());
         assertEquals("guest", ProductNameExtractorEnvVars.getRabbitPassword());
 
