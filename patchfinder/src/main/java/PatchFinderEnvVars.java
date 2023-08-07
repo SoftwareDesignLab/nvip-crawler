@@ -39,6 +39,7 @@ import java.util.Map;
 
 public class PatchFinderEnvVars {
     private static final Logger logger = LogManager.getLogger(PatchFinderEnvVars.class);
+    private static final String envVarPath = "env.list";
 
     // Default values for main environment variables
 
@@ -47,20 +48,20 @@ public class PatchFinderEnvVars {
     private static int maxThreads = 10;
     private static int cloneCommitThreshold = 1000; // TODO: Find optimal value once github scraping is working well
     private static int cloneCommitLimit = 50000; // TODO: Find optimal value once github scraping is working well
-    private static String clonePath = "patchfinder/src/main/resources/patch-repos";
-    private static String patchSrcUrlPath = "patchfinder/src/main/resources/source_dict.json";
+    private static String clonePath = "src/main/resources/patch-repos";
+    private static String patchSrcUrlPath = "src/main/resources/source_dict.json";
 
     // Default values for database environment variables
 
     private static String databaseType = "mysql";
-    private static String hikariUrl = "jdbc:mysql://localhost:3306/nvip?useSSL=false&allowPublicKeyRetrieval=true";
+    private static String hikariUrl = "jdbc:mysql://host.docker.internal:3306/nvip?useSSL=false&allowPublicKeyRetrieval=true";
     private static String hikariUser = "root";
     private static String hikariPassword = "root";
 
     // Default values for rabbit environment variables
 
     private static int rabbitPollInterval = 60;
-    private static String rabbitHost = "localhost";
+    private static String rabbitHost = "host.docker.internal";
     private static String rabbitUsername = "guest";
     private static String rabbitPassword = "guest";
 
