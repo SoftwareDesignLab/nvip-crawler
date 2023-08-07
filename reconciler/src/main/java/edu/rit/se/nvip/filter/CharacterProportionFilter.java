@@ -42,6 +42,6 @@ public class CharacterProportionFilter extends Filter {
                 charCount++;
             }
         }
-        return (charCount+intCount)/(intCount) > .25;
+        return (intCount)/(charCount+intCount) < .25;
     }
 }
