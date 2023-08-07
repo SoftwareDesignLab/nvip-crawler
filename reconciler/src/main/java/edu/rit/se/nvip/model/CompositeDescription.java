@@ -64,7 +64,10 @@ public class CompositeDescription {
     }
 
     private void setCreateDateCurrent() {
-        this.createdDate = new Timestamp(CLOCK.millis());
+        this.createdDate = getCurrentTime();
+    }
+    private Timestamp getCurrentTime() {
+        return new Timestamp(CLOCK.millis());
     }
 
     public String getDescription() {
@@ -120,6 +123,12 @@ public class CompositeDescription {
             if (vuln.isHighPriority()) return true;
         }
         return false;
+    }
+
+    // Cloneable interface is annoying with final fields, doing this instead
+    public CompositeDescription duplicate() {
+        return new CompositeDescription(0, this.cveId, this.description, getCurrentTime(),
+                this.getBuildString(), new HashSet<>(this.sources));
     }
 
     /**

@@ -42,10 +42,8 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.lang.reflect.Field;
 import java.sql.*;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -393,7 +391,7 @@ public class DatabaseHelperTest {
         assertEquals(1, result);
 
         vuln.setRecStatus(CompositeVulnerability.ReconciliationStatus.UNCHANGED);
-        vuln.updateDescription("new desc is this!", new HashSet<>(), false);
+        vuln.updateSystemDescription("new desc is this!", new HashSet<>(), false);
         vuln.addCvssScore(new CvssScore("cve-1", 2, 2.0, "2", 3.0));
         int result2 = dbh.updateCVSS(vuln);
         verify(conn, times(2)).prepareStatement(anyString());

@@ -28,6 +28,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import edu.rit.se.nvip.model.RawVulnerability;
+import edu.rit.se.nvip.model.Vulnerability;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -64,9 +65,24 @@ public abstract class Reconciler {
 	 * @return A CompositeVulnerability containing merged and updated information
 	 */
 	public CompositeVulnerability reconcile(CompositeVulnerability existingVuln, Set<RawVulnerability> newVulns) {
-		if (newVulns.size() == 0) {
+		if (newVulns.isEmpty()) {
 			return existingVuln;
 			// todo handle the case where we have no passed rawvulns and no existingvuln but still want to report something
+		}
+		// take the user edits out of the newVulns set and apply the most recent one
+		RawVulnerability latestNewUserEdit = extractUserSources(newVulns).get(0); // sorted by newest created date first
+		if (latestNewUserEdit != null) {
+			// a user edit should guarantee that existingVuln exists, but just in case...
+			if (existingVuln == null) {
+				logger.warn("Attempt to reconcile a user edit for a nonexistent CVE {}", latestNewUserEdit.getCveId());
+				return null;
+			}
+			existingVuln.applyUserEdit(latestNewUserEdit);
+			// if the only new sources were user sources then they were all removed and the list is empty
+			// if there are no additional non-user sources, then short-circuit a return
+			if (newVulns.isEmpty()) {
+				return existingVuln;
+			}
 		}
 		// if the existing vuln only uses low prio sources and the new ones are high prio, we dump the old sources and rebuild
 		if (existingVuln != null && !existingVuln.usesHighPrio() && hasHighPrio(newVulns)) {
@@ -106,7 +122,7 @@ public abstract class Reconciler {
 		if (existingVuln == null) {
 			return CompositeVulnerability.fromSet(newVulns, reconciledDescription);
 		}
-		existingVuln.updateDescription(reconciledDescription, newVulns, true);
+		existingVuln.updateSystemDescription(reconciledDescription, newVulns, true);
 		return existingVuln;
 	}
 
@@ -123,14 +139,14 @@ public abstract class Reconciler {
 			String runningDescription = singleUpdateDescription(reconciledVuln, vuln);
 			Set<RawVulnerability> dummySet = new HashSet<>();
 			dummySet.add(vuln);
-			reconciledVuln.updateDescription(runningDescription, dummySet, false);
+			reconciledVuln.updateSystemDescription(runningDescription, dummySet, false);
 		}
 		return reconciledVuln;
 	}
 
 	private CompositeVulnerability bulkHandler(@NonNull CompositeVulnerability existingVuln, Set<RawVulnerability> newVulns) {
 		String bulkUpdatedDescription = bulkUpdateDescription(existingVuln, newVulns);
-		existingVuln.updateDescription(bulkUpdatedDescription, newVulns, false);
+		existingVuln.updateSystemDescription(bulkUpdatedDescription, newVulns, false);
 		return existingVuln;
 	}
 
@@ -140,6 +156,14 @@ public abstract class Reconciler {
 			return v.isHighPriority();
 		}
 		return false;
+	}
+
+	private List<RawVulnerability> extractUserSources(Set<RawVulnerability> rawVulns) {
+		return rawVulns.stream()
+				.filter(v->v.getSourceType()== RawVulnerability.SourceType.USER)
+				.peek(rawVulns::remove)
+				.sorted(Comparator.comparing(Vulnerability::getCreateDate).reversed())
+				.collect(Collectors.toList());
 	}
 
 	/**
