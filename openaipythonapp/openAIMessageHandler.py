@@ -2,23 +2,112 @@ import openai
 import json
 import asyncio
 import aio_pika
+from pyrate_limiter import Duration, RequestRate, Limiter
+import threading
+import concurrent.futures
 from queue import PriorityQueue
+import logging
 
 
 # DOCKER SET UP
 # docker build -t openaiapp .
 # docker run openaiapp
+def __init__(self):
+    self.logger = logging.getLogger(self.__class__.__name__)
+    self.requestQueue = PriorityQueue(maxsize=1000)
+    self.token_rate_limit = 90000
+    self.request_rate_limit = 3500
+    self.token_request_rate = RequestRate(self.token_rate_limit, 60)  # Tokens per minute
+    self.request_request_rate = RequestRate(self.request_rate_limit, 60)  # Requests per minute
+    self.token_limiter = Limiter(self.token_request_rate)
+    self.request_limiter = Limiter(self.request_request_rate)
+    self.mainExecutor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
+    self.requestExecutor = concurrent.futures.ThreadPoolExecutor(max_workers=5)
+    self.init_executors()
+
 
 class Request:
-    def __init__(self, sys_msg, usr_msg, temp):
+    def __init__(self, api_key, sys_msg, usr_msg, temp, job_id, requestor, priority):
+        self.api_key = api_key
         self.sys_msg = sys_msg
         self.usr_msg = usr_msg
         self.temp = temp
+        self.jobid = job_id
+        self.messages = [usr_msg, sys_msg]
+        self.requestor = requestor
+        self.priority = priority
 
 
-class NestedPriorityQueue:
-    def __init__(self, queue):
-        self.queue = queue
+    def __lt__(self, other):
+        if self.requestor == other.requestor:
+            return self.priority - other.priority
+        return self.requestor.__lt__(other.requestor)
+
+
+
+def init_executors(self):
+    self.mainExecutor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
+    self.handlerThreadFuture = self.mainExecutor.submit(handle_requests)
+    self.requestExecutor = concurrent.futures.ThreadPoolExecutor(max_workers=5)
+
+
+async def handle_requests(self):
+    while True:
+        try:
+            request = request_queue.get()
+        except KeyboardInterrupt:
+            return
+        except Exception as e:
+            self.logger.error("Exception while getting request from queue:", exc_info=True)
+            return
+        tokens = chat_completion_token_count(self, request)
+        self.wait_for_limiters(tokens)
+        self.requestExecutor.submit(lambda: send_request(request))
+
+
+async def send_request(request):
+    # RabbitMQ configuration for the output queue
+    rabbitmq_host = 'localhost'  # host.docker.internal
+    output_queue = 'openai_responses'
+
+    # Connect to RabbitMQ for publishing the response
+    connection = await aio_pika.connect_robust(host=rabbitmq_host)
+    channel = await connection.channel()
+
+    # Declare the output queue
+    await channel.declare_queue(output_queue)
+
+    response = await get_openai_response_async(request.api_key, request.sys_msg, request.usr_msg, request.temp)
+    json_response = {
+        "job_id": request.jobid,
+        "message": response
+    }
+
+    response_bytes = json.dumps(json_response).encode()
+
+    # Publish the OpenAI API response to the output queue
+    await channel.default_exchange.publish(aio_pika.Message(body=response_bytes), routing_key=output_queue)
+    print("sent response")
+    # Close the connection after sending all responses
+    await connection.close()
+
+
+def wait_for_limiter(self):
+    self.token_limiter.try_acquire("gptlimit")
+
+
+def chat_completion_token_count(self, request):
+    return self.chat_completion_token_count_with_encoding(request.messages)
+
+
+def chat_completion_token_count_with_encoding(self, messages):
+    tokens_per_msg = 4
+    token_count = 0
+    for msg in messages:
+        token_count += tokens_per_msg
+        token_count += len(self.tokenizer.tokenize(msg.content))
+        token_count += len(self.tokenizer.tokenize(msg.role))
+    return token_count
 
 
 def get_openai_response(api_key, system_message, user_message, temperature):
@@ -30,7 +119,7 @@ def get_openai_response(api_key, system_message, user_message, temperature):
             {"role": "user", "content": user_message}
         ],
         "temperature": temperature,
-        "max_tokens": 1000,  # Adjust the max_tokens parameter as needed
+        "max_tokens": 1000,
         "model": "gpt-3.5-turbo"
     }
 
@@ -41,12 +130,10 @@ def get_openai_response(api_key, system_message, user_message, temperature):
         print(f"An error occurred: {err}")
 
 
-priorityRequestor_queue = PriorityQueue()
-priorityId_queue = PriorityQueue()
-response_dict = {}  # Dictionary to store responses for each request
+request_queue = PriorityQueue()
 
 
-async def rabbitmq_callback(message: aio_pika.IncomingMessage):
+async def rabbitmq_callback(message: aio_pika.IncomingMessage):  # just put in queue
     try:
         async with message.process():
             print("Retrieved message from Rabbit")
@@ -55,57 +142,17 @@ async def rabbitmq_callback(message: aio_pika.IncomingMessage):
             message_data = json.loads(body)
 
             # Extract the relevant fields
-            openai_api_key = message_data.get("openai_api_key", "")
+            api_key = message_data.get("openai_api_key", "")
             sys_msg = message_data.get("system_message", "")
             usr_msg = message_data.get("user_message", "")
             temp = message_data.get("temperature", 0.0)
             requestor_prio_id = message_data.get("requestorPrioId", 2)
             prio_id = message_data.get("PrioId")
+            job_id = message_data.get("JobID")
 
-            # RabbitMQ configuration for the output queue
-            rabbitmq_host = 'host.docker.internal'
-            output_queue = 'openai_responses'
+            request_queue.put(Request(api_key, sys_msg, usr_msg, temp, job_id, requestor_prio_id, prio_id))
 
-            # Connect to RabbitMQ for publishing the response
-            connection = await aio_pika.connect_robust(host=rabbitmq_host)
-            channel = await connection.channel()
 
-            # Declare the output queue
-            await channel.declare_queue(output_queue)
-
-            # Push the message into the priority queue
-            # The priority queue will sort the messages based on priority and requestor priority
-            priorityId_queue.put((prio_id, Request(sys_msg, usr_msg, temp)))
-            priorityRequestor_queue.put((requestor_prio_id, NestedPriorityQueue(priorityId_queue)))
-
-            while not priorityRequestor_queue.empty():
-                # Pop the message with the highest priority from the queue
-                requestorQueue = priorityRequestor_queue.get()
-                while not requestorQueue[1].queue.empty():
-                    request = requestorQueue[1].queue.get()
-                    system_message = request[1].sys_msg
-                    user_message = request[1].usr_msg
-                    temperature = request[1].temp
-
-                    response = await get_openai_response_async(openai_api_key, system_message, user_message,
-                                                               temperature)
-
-                    # Store the response in the dictionary with user_message as the key
-                    response_dict[user_message] = response
-
-                    # Publish the OpenAI API response to the output queue
-            # Get the OpenAI response asynchronously
-            # Get the OpenAI response asynchronously
-            response = await get_openai_response_async(openai_api_key, system_message, user_message, temperature)
-
-            # Encode the response string before publishing it to the output queue
-            response_bytes = response.encode()
-
-            # Publish the OpenAI API response to the output queue
-            await channel.default_exchange.publish(aio_pika.Message(body=response_bytes), routing_key=output_queue)
-            print("sent response")
-            # Close the connection after sending all responses
-            await connection.close()
 
     except json.JSONDecodeError:
         print("Invalid JSON format received from RabbitMQ.")
@@ -120,7 +167,7 @@ async def get_openai_response_async(api_key, system_message, user_message, tempe
 
 async def main():
     # RabbitMQ's configuration for the input queue
-    rabbitmq_host = 'host.docker.internal'
+    rabbitmq_host = 'localhost'  # host.docker.internal
     rabbitmq_queue = 'openai_requests'
 
     # Connect to RabbitMQ
@@ -133,7 +180,11 @@ async def main():
     # Set up a consumer to listen for messages from RabbitMQ
     await queue.consume(rabbitmq_callback)
 
+    # new thread pointed towards new method to call openai (read from queue, send request) within make more threads
+    # to send request and handle response
+
     print(f"[*] Waiting for rabbit messages. To exit, press CTRL+C")
+
     try:
         while True:
             await asyncio.sleep(1)

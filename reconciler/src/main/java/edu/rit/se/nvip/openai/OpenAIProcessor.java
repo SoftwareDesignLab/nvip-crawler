@@ -1,5 +1,9 @@
 package edu.rit.se.nvip.openai;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
@@ -12,6 +16,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import java.util.Queue;
 import java.util.concurrent.*;
 
 public class OpenAIProcessor {
@@ -50,16 +55,17 @@ public class OpenAIProcessor {
             message.add("JobID", new JsonPrimitive(jobId++));
             Gson gson = new Gson();
             String jsonString = gson.toJson(message);
+            CompletableFuture<String> futureResponse = new CompletableFuture<>();
+            futureMap.put(jobId, futureResponse);
             // Publish the message to the queue
             channel.basicPublish("", OPENAI_SENDER, null, jsonString.getBytes());
         } catch (IOException | TimeoutException e) {
             logger.error("Error sending message: " + e);
         }
     }
-
+//while true, wait for rabbit response and then get response based on job id
     public CompletableFuture<String> getResponse() {
-        CompletableFuture<String> futureResponse = new CompletableFuture<>();
-
+        BlockingQueue<CompletableFuture<String>> jobQueue = new ArrayBlockingQueue<>(10000);
         try (Connection connection = factory.newConnection();
              Channel channel = connection.createChannel()) {
             // Declare the queue
@@ -71,17 +77,21 @@ public class OpenAIProcessor {
                 public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws UnsupportedEncodingException {
                     String message = new String(body, StandardCharsets.UTF_8);
 
-                    // Parse the message to check the jobId
-                    JsonObject jsonObject = new Gson().fromJson(message, JsonObject.class);
-                    int receivedJobId = jsonObject.get("JobID").getAsInt();
+                    try {
+                        ObjectMapper objectMapper = new ObjectMapper();
+                        JsonNode jsonNode = objectMapper.readTree(message);
 
-                    // Check if the received jobId matches the requested jobId
-                    if (receivedJobId == jobId) {
-                        // Complete the future with the received message
-                        futureResponse.complete(message);
-                    } else {
-                        // JobId doesn't match, complete the future with an error
-                        futureResponse.completeExceptionally(new IllegalArgumentException("Received response for a different jobId."));
+                        int jobId = jsonNode.get("job_id").asInt();
+                        String response = jsonNode.get("message").asText();
+                        if(futureMap.containsKey(jobId)) {
+                            CompletableFuture<String> future = futureMap.get(jobId);
+                            future.complete(response);
+
+                            jobQueue.add(future);
+                        }
+
+                    } catch (Exception e) {
+                        logger.error(e);
                     }
                 }
             };
@@ -89,12 +99,18 @@ public class OpenAIProcessor {
             // Start consuming messages from the queue
             channel.basicConsume(OPENAI_RECEIVER, true, consumer);
 
+            try {
+                return jobQueue.take();
+            } catch (InterruptedException e) {
+                logger.error("Error retrieving from jobQueue");
+                return null;
+            }
+
         } catch (IOException | TimeoutException e) {
             // Complete the future with an error if there's an exception
-            futureResponse.completeExceptionally(e);
+            logger.error("Error retrieving response");
+            return null;
         }
-
-        return futureResponse;
     }
 
 }
