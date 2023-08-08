@@ -121,7 +121,7 @@ public class ReconcilerEnvVars extends Properties {
                     openAIKey = addEnvvarString(envName, envVar, "sk-xxxxxxxxxxxxx");
                     break;
                 case NVIP_CVE_CHARACTERIZATION_TRAINING_DATA_DIR:
-                    trainingDataDir = addEnvvarString(envName, envVar, "characterization/");
+                    trainingDataDir = addEnvvarString(envName, envVar, "characterization");
                     break;
                 case NVIP_CVE_CHARACTERIZATION_TRAINING_DATA:
                     trainingData = addEnvvarString(envName, envVar, "AttackTheater.csv,Context.csv,ImpactMethod.csv,LogicalImpact.csv,Mitigation.csv");
@@ -172,6 +172,8 @@ public class ReconcilerEnvVars extends Properties {
         try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
             String line;
             while ((line = reader.readLine()) != null) {
+                if(line.startsWith("#")) continue;
+
                 int lastIndex = line.indexOf("=");
                 if (line.equals("")) {
                     lastIndex = 0;

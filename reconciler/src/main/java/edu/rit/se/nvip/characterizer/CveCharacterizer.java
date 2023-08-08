@@ -35,6 +35,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -199,7 +201,7 @@ public class CveCharacterizer {
 			String[] trainingDataFileArr = trainingDataFiles.split(",");
 			for (String trainingDataFileName : trainingDataFileArr) {
 				String vdoNounGroupName = trainingDataFileName.replace(".csv", "");
-				trainingDataFileName = trainingDataPath + trainingDataFileName;
+				trainingDataFileName =  Paths.get(trainingDataPath).resolve(trainingDataFileName).toString();
 				// remove special chars?
 				String sContent = FileUtils.readFileToString(new File(trainingDataFileName));
 				sContent = sContent.replaceAll("[ '|\\\"|â€�|\\|]", " ");
