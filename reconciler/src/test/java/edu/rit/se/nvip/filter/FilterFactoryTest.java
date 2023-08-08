@@ -42,7 +42,7 @@ class FilterFactoryTest {
     }
 
     @Test
-    void createCveIdIsDescriptionFilter() {
+    void createCveMatchesDescriptionFilter() {
         Filter filter = FilterFactory.createFilter("CVE_MATCHES_DESCRIPTION");
         assertTrue(filter instanceof CveMatchesDescriptionFilter);
     }
@@ -57,5 +57,29 @@ class FilterFactoryTest {
     void createCharacterProportionFilter() {
         Filter filter = FilterFactory.createFilter("CHARACTER_PROPORTION");
         assertTrue(filter instanceof CharacterProportionFilter);
+    }
+
+    @Test
+    void createJsonDescriptionFilter() {
+        Filter filter = FilterFactory.createFilter("JSON_DESCRIPTION");
+        assertTrue(filter instanceof JsonDescriptionFilter);
+    }
+
+    @Test
+    void createIntegerDescriptionFilter() {
+        Filter filter = FilterFactory.createFilter("INTEGER_DESCRIPTION");
+        assertTrue(filter instanceof IntegerDescriptionFilter);
+    }
+
+    @Test
+    void createMultipleCveDescriptionFilter() {
+        Filter filter = FilterFactory.createFilter("MULTIPLE_CVE_DESCRIPTION");
+        assertTrue(filter instanceof MultipleCveDescriptionsFilter);
+    }
+
+    @Test
+    void createDescriptionSizeFilter() {
+        Filter filter = FilterFactory.createFilter("DESCRIPTION_SIZE");
+        assertTrue(filter instanceof  DescriptionSizeFilter);
     }
 }
