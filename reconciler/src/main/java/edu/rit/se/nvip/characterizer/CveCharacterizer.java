@@ -206,7 +206,7 @@ public class CveCharacterizer {
 
 				// get severity
 				double[] cvssScore = getCvssScoreFromVdoLabels(prediction); // get mean/minimum/maximum/std dev
-				CVSSSeverityClass severity = getSeverityLabelFromCvssScore(cvssScore[0]); // use mean
+				CVSSSeverityClass severity = CVSSSeverityClass.getCVSSSeverityByScore(cvssScore[0]); // use mean
 				CvssScore score = new CvssScore(vulnerability.getCveId(), severity, 0.5, cvssScore[0], 0.5);
 				vulnerability.addCvssScore(score);
 //				logger.info("CVSS Score predicted for {}", vulnerability.getCveId());
@@ -248,19 +248,6 @@ public class CveCharacterizer {
 
 		// get CVSS mean/min/max/std dev from Python script
 		return cvssScoreCalculator.getCvssScoreJython(cvssVec);
-	}
-
-	private CVSSSeverityClass getSeverityLabelFromCvssScore(double cvssScore) {
-		CVSSSeverityClass severityLabel;
-		if (cvssScore < 4)
-			severityLabel = CVSSSeverityClass.LOW;
-		else if (cvssScore <= 6.5)
-			severityLabel = CVSSSeverityClass.MEDIUM;
-		else if (cvssScore < 9)
-			severityLabel = CVSSSeverityClass.HIGH;
-		else
-			severityLabel = CVSSSeverityClass.CRITICAL;
-		return severityLabel;
 	}
 
 }

@@ -26,4 +26,11 @@ public enum CVSSSeverityClass {
         }
         return null;
     }
+
+    public static CVSSSeverityClass getCVSSSeverityByScore(double cvssScore){
+        if (cvssScore < 4) return LOW;
+        if (cvssScore <= 6.5) return MEDIUM;
+        if (cvssScore < 9) return HIGH;
+        return CRITICAL;
+    }
 }
