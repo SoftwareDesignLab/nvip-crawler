@@ -31,6 +31,7 @@ import env.ProductNameExtractorEnvVars;
 import org.junit.Before;
 import org.junit.Test;
 import dictionary.ProductDictionary;
+import org.mockito.ArgumentMatchers;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -67,6 +68,7 @@ public class ProductDetectorTest {
         productDetector = new ProductDetector(cpeLookUp, resourceDir, nlpDir, dataDir);
 
     }
+
     @Test
     public void classifyWordsInDescriptionTest() {
         String[] words = {"The", "software", "version", "is", "vulnerable", "before", "2.1.0"};
@@ -74,12 +76,12 @@ public class ProductDetectorTest {
         NERModel nerModel = mock(NERModel.class);
         ArrayList<ClassifiedWord> nerResult = new ArrayList<>();
         ClassifiedWord word1 = new ClassifiedWord("The", confidences);
-        ClassifiedWord word2 =new ClassifiedWord("software", confidences);
-        ClassifiedWord word3 =new ClassifiedWord("version", confidences);
-        ClassifiedWord word4 =new ClassifiedWord("is", confidences);
-        ClassifiedWord word5 =new ClassifiedWord("vulnerable", confidences);
-        ClassifiedWord word6 =new ClassifiedWord("before", confidences);
-        ClassifiedWord word7 =new ClassifiedWord("2.1.0", confidences);
+        ClassifiedWord word2 = new ClassifiedWord("software", confidences);
+        ClassifiedWord word3 = new ClassifiedWord("version", confidences);
+        ClassifiedWord word4 = new ClassifiedWord("is", confidences);
+        ClassifiedWord word5 = new ClassifiedWord("vulnerable", confidences);
+        ClassifiedWord word6 = new ClassifiedWord("before", confidences);
+        ClassifiedWord word7 = new ClassifiedWord("2.1.0", confidences);
 
         nerResult.add(word1);
         nerResult.add(word2);
@@ -88,15 +90,14 @@ public class ProductDetectorTest {
         nerResult.add(word5);
         nerResult.add(word6);
         nerResult.add(word7);
-        when(nerModel.classifyComplex(words)).thenReturn(nerResult);
+        when(nerModel.classifyComplex(ArgumentMatchers.eq(words))).thenReturn(nerResult);
+
 
         String productResult = "[The: OTHER, software: OTHER, version: OTHER, is: OTHER, vulnerable: OTHER, before: SOFTWARE_VERSION, 2.1.0: SOFTWARE_VERSION]";
 
         assertTrue(productResult.contains(productDetector.classifyWordsInDescription(words).toString()));
-        assertEquals(nerResult, nerModel.classifyComplex(words));
-
+        assertEquals(nerResult.toString(), nerModel.classifyComplex(words).toString());
     }
-
     @Test
     public void getProductItemsWithDescriptionWordsTest() {
         // Create a sample array of classified words

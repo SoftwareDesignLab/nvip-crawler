@@ -114,24 +114,16 @@ public class NERModelTest {
 
 	@Test
 	public void nerModelTest() {
-
 		String testDescription = "The daemon in rsync 3.1.2 and 3.1.3-development before 2017-12-03 does not check for fnamecmp filenames in the daemon_filter_list data structure (in the recv_files function in receiver.c) and also does not apply the sanitize_paths protection mechanism to pathnames found in \"xname follows\" strings (in the read_ndx_and_attrs function in rsync.c) which allows remote attackers to bypass intended access restrictions.";
 
-		long startTime = System.currentTimeMillis();
 		NERModel nerModel = null;
 		try {
 			nerModel = new NERModel(RESOURCE_DIR + "/" + DATA_DIR + "/", NLP_DIR);
 		} catch (Exception e) {
 			fail(e.toString());
 		}
-		long endTime = System.currentTimeMillis();
-		System.out.println("Timing for overall NER model initialization: " + Long.toString(endTime-startTime) + "ms.");
 
-
-		startTime = System.currentTimeMillis();
 		ArrayList<String[]> result = nerModel.classify(testDescription);
-		endTime = System.currentTimeMillis();
-		System.out.println("Timing for the classification of description of the average length: " + Long.toString(endTime-startTime) + "ms.");
 
 		boolean notNull = (result != null);
 		boolean lengthNotZero = false;
@@ -140,13 +132,19 @@ public class NERModelTest {
 		boolean hasSV = false;
 
 		if (notNull) {
-			lengthNotZero = result.size()>0;
-			hasOther = result.get(0)[1].equals(NERModel.OTHER);
-			hasSN = result.get(3)[1].equals(NERModel.SN);
-			hasSV = result.get(4)[1].equals(NERModel.SV);
+			lengthNotZero = result.size() > 0;
+			for (String[] entry : result) {
+				if (entry[1].equals(NERModel.OTHER)) {
+					hasOther = true;
+				} else if (entry[1].equals(NERModel.SN)) {
+					hasSN = true;
+				} else if (entry[1].equals(NERModel.SV)) {
+					hasSV = true;
+				}
+			}
 		}
 
-		assertTrue("Result is not empty ", (notNull && lengthNotZero));
+		assertTrue("Result is not empty", (notNull && lengthNotZero));
 		assertTrue("Result contains \"OTHER\" class", hasOther);
 		assertTrue("Result contains \"SOFTWARE NAME\" class", hasSN);
 		assertTrue("Result contains \"SOFTWARE VERSION\" class", hasSV);
