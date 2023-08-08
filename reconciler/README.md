@@ -1,7 +1,7 @@
 
 # NVIP Crawler Backend - Reconciler/Characterizer
 
-The reconciler and characterizer components of the NVIP Crawler 
+The reconciler and characterizer components of the NVIP Crawler TODO DESCRIPTION
 
 > **NOTE:** This component relies directly on the raw vulnerability data from the crawler and should be ran after raw data is populated in the db
 
