@@ -23,6 +23,9 @@
  */
 package edu.rit.se.nvip.model;
 
+import edu.rit.se.nvip.characterizer.enums.VDOLabel;
+import edu.rit.se.nvip.characterizer.enums.VDONounGroup;
+
 /**
  * 
  * @author axoeec
@@ -30,16 +33,16 @@ package edu.rit.se.nvip.model;
  */
 public class VdoCharacteristic {
 	private String cveId;
-	private final int vdoLabelId;
+	private final VDOLabel vdoLabel;
 	private final double vdoConfidence;
-	private final int vdoNounGroupId;
+	private final VDONounGroup vdoNounGroup;
 
-	public VdoCharacteristic(String cveId, int vdoLabelId, double vdoConfidence, int vdoNounGroupId) {
+	public VdoCharacteristic(String cveId, VDOLabel vdoLabel, double vdoConfidence, VDONounGroup vdoNounGroup) {
 		super();
 		this.cveId = cveId;
-		this.vdoLabelId = vdoLabelId;
+		this.vdoLabel = vdoLabel;
 		this.vdoConfidence = vdoConfidence;
-		this.vdoNounGroupId = vdoNounGroupId;
+		this.vdoNounGroup = vdoNounGroup;
 	}
 
 	public String getCveId() {
@@ -54,17 +57,17 @@ public class VdoCharacteristic {
 		return vdoConfidence;
 	}
 
-	public int getVdoLabelId() {
-		return vdoLabelId;
+	public VDOLabel getVdoLabel() {
+		return vdoLabel;
 	}
 
-	public int getVdoNounGroupId() {
-		return vdoNounGroupId;
+	public VDONounGroup getVdoNounGroup() {
+		return vdoNounGroup;
 	}
 
 	@Override
 	public String toString() {
-		return "VdoCharacteristic [cveId=" + cveId + ", vdoLabel=" + vdoLabelId + ", vdoConfidence=" + vdoConfidence + "]";
+		return "VdoCharacteristic [cveId=" + cveId + ", vdoLabel=" + vdoLabel + ", vdoConfidence=" + vdoConfidence + "]";
 	}
 
 }

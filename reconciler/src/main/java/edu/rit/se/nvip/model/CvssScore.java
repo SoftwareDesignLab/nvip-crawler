@@ -23,6 +23,8 @@
  */
 package edu.rit.se.nvip.model;
 
+import edu.rit.se.nvip.characterizer.enums.CVSSSeverityClass;
+
 /**
  * 
  * @author axoeec
@@ -30,16 +32,16 @@ package edu.rit.se.nvip.model;
  */
 public class CvssScore {
 	private String cveId;
-	private final int severityId;
+	private final CVSSSeverityClass severityClass;
 	private final double severityConfidence;
 
-	private final String impactScore;
+	private final double impactScore;
 	private final double impactConfidence;
 
-	public CvssScore(String cveId, int severityId, double severityConfidence, String impactScore, double impactConfidence) {
+	public CvssScore(String cveId, CVSSSeverityClass severityClass, double severityConfidence, double impactScore, double impactConfidence) {
 		super();
 		this.cveId = cveId;
-		this.severityId = severityId;
+		this.severityClass = severityClass;
 		this.severityConfidence = severityConfidence;
 		this.impactScore = impactScore;
 		this.impactConfidence = impactConfidence;
@@ -53,15 +55,15 @@ public class CvssScore {
 		this.cveId = cveId;
 	}
 
-	public int getSeverityId() {
-		return severityId;
+	public CVSSSeverityClass getSeverityClass() {
+		return severityClass;
 	}
 
 	public double getSeverityConfidence() {
 		return severityConfidence;
 	}
 
-	public String getImpactScore() {
+	public double getImpactScore() {
 		return impactScore;
 	}
 
@@ -71,7 +73,7 @@ public class CvssScore {
 
 	@Override
 	public String toString() {
-		return "CvssScore [cveId=" + cveId + ", baseSeverity=" + severityId + ", severityConfidence=" + severityConfidence + ", impactScore=" + impactScore + ", impactConfidence=" + impactConfidence + "]";
+		return "CvssScore [cveId=" + cveId + ", baseSeverity=" + severityClass + ", severityConfidence=" + severityConfidence + ", impactScore=" + impactScore + ", impactConfidence=" + impactConfidence + "]";
 	}
 
 }

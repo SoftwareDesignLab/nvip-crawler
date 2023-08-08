@@ -96,17 +96,15 @@ public class ReconcilerController {
         //run characterizer
         if (ReconcilerEnvVars.getDoCharacterization()) {
             characterizeCVEs(reconciledVulns);
+            Set<CompositeVulnerability> recharacterized = reconciledVulns.stream()
+                    .filter(CompositeVulnerability::isRecharacterized).collect(Collectors.toSet());
 
-            for (CompositeVulnerability vuln : reconciledVulns){
-                dbh.updateCVSS(vuln);
-                dbh.updateVDO(vuln);
-            }
+            dbh.insertCvssBatch(recharacterized);
+            dbh.insertVdoBatch(recharacterized);
         }
         // PNE team no longer wants a finish message
         //messenger.sendPNEFinishMessage();
-
     }
-
 
 
     private class ReconcileTask implements Callable<CompositeVulnerability> {
