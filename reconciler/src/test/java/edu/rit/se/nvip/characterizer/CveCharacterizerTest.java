@@ -24,6 +24,8 @@ package edu.rit.se.nvip.characterizer;
  */
 
 import edu.rit.se.nvip.DatabaseHelper;
+import edu.rit.se.nvip.characterizer.enums.VDOLabel;
+import edu.rit.se.nvip.characterizer.enums.VDONounGroup;
 import edu.rit.se.nvip.model.CompositeVulnerability;
 import edu.rit.se.nvip.model.RawVulnerability;
 import edu.rit.se.nvip.utils.CsvUtils;
@@ -55,7 +57,7 @@ public class CveCharacterizerTest {
 		CveCharacterizer cveCharacterizer = new CveCharacterizer(trainingDataInfo[0], trainingDataInfo[1], "ML", "NB");
 
 		//Test characterizeCveForVDO
-		Map<String,ArrayList<String[]>> prediction = cveCharacterizer.characterizeCveForVDO(cveDesc, true);
+		Map<VDONounGroup,Map<VDOLabel, Double>> prediction = cveCharacterizer.characterizeCveForVDO(cveDesc, true);
 		assertTrue(prediction.size() > 0);
 
 		prediction = cveCharacterizer.characterizeCveForVDO(cveDesc, false);

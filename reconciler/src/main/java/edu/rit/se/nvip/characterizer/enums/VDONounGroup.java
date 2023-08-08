@@ -28,4 +28,13 @@ public enum VDONounGroup{
         return null;
     }
 
+    public static VDONounGroup getVdoNounGroup(String vdoNounGroupName){
+        for(VDONounGroup vdo : VDONounGroup.values()){
+            if (vdoNounGroupName.equals(vdo.vdoNounGroupName)){
+                return vdo;
+            }
+        }
+        return null;
+    }
+
 }
