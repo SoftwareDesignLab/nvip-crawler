@@ -43,11 +43,7 @@ public class ChatGPTProcessor {
         OpenAIProcessor openAI = new OpenAIProcessor();
         openAI.sendRequest(SYS_MESSAGE, arg, TEMP, RequestorIdentity.ANON);
 
-        try {
-            return openAI.getResponse().get();
-        } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
-        }
+        return null; //todo fix this
     }
     private Set<String> askChatGPT(Set<CWETree> candidates, CompositeVulnerability vuln){
         StringBuilder cwes = new StringBuilder(); //String that will be sent to chat gpt

@@ -28,6 +28,8 @@ public class OpenAIProcessor {
     private static int nextPriorityId = 0;
     private int jobId = 0;
     private Map<Integer, CompletableFuture<String>> futureMap = new ConcurrentHashMap<>();
+    private ExecutorService requestExecutor = Executors.newFixedThreadPool(5);
+    private boolean shutdown = false;
 
 
     public OpenAIProcessor() {
@@ -37,9 +39,10 @@ public class OpenAIProcessor {
         factory.setHost("localhost");
         factory.setUsername("guest");
         factory.setPassword("guest");
+        startListening();
     }
 
-    public void sendRequest(String sys_msg, String usr_msg, double temp, RequestorIdentity requestor) {
+    public CompletableFuture<String> sendRequest(String sys_msg, String usr_msg, double temp, RequestorIdentity requestor) {
         try (Connection connection = factory.newConnection();
              Channel channel = connection.createChannel()) {
             // Declare the queue
@@ -59,58 +62,59 @@ public class OpenAIProcessor {
             futureMap.put(jobId, futureResponse);
             // Publish the message to the queue
             channel.basicPublish("", OPENAI_SENDER, null, jsonString.getBytes());
+            return futureResponse;
+
         } catch (IOException | TimeoutException e) {
             logger.error("Error sending message: " + e);
-        }
-    }
-//while true, wait for rabbit response and then get response based on job id
-    public CompletableFuture<String> getResponse() {
-        BlockingQueue<CompletableFuture<String>> jobQueue = new ArrayBlockingQueue<>(10000);
-        try (Connection connection = factory.newConnection();
-             Channel channel = connection.createChannel()) {
-            // Declare the queue
-            channel.queueDeclare(OPENAI_RECEIVER, false, false, false, null);
-
-            // Create a consumer and override the handleDelivery method to complete the future with the received message
-            Consumer consumer = new DefaultConsumer(channel) {
-                @Override
-                public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws UnsupportedEncodingException {
-                    String message = new String(body, StandardCharsets.UTF_8);
-
-                    try {
-                        ObjectMapper objectMapper = new ObjectMapper();
-                        JsonNode jsonNode = objectMapper.readTree(message);
-
-                        int jobId = jsonNode.get("job_id").asInt();
-                        String response = jsonNode.get("message").asText();
-                        if(futureMap.containsKey(jobId)) {
-                            CompletableFuture<String> future = futureMap.get(jobId);
-                            future.complete(response);
-
-                            jobQueue.add(future);
-                        }
-
-                    } catch (Exception e) {
-                        logger.error(e);
-                    }
-                }
-            };
-
-            // Start consuming messages from the queue
-            channel.basicConsume(OPENAI_RECEIVER, true, consumer);
-
-            try {
-                return jobQueue.take();
-            } catch (InterruptedException e) {
-                logger.error("Error retrieving from jobQueue");
-                return null;
-            }
-
-        } catch (IOException | TimeoutException e) {
-            // Complete the future with an error if there's an exception
-            logger.error("Error retrieving response");
             return null;
         }
     }
+    public void startListening() {
+        ExecutorService executorService = Executors.newSingleThreadExecutor();
+        executorService.submit(() -> {
+            try (Connection connection = factory.newConnection();
+                 Channel channel = connection.createChannel()) {
+                // Declare the queue
+                channel.queueDeclare(OPENAI_RECEIVER, false, false, false, null);
 
+                // Create a consumer and override the handleDelivery method to complete the future with the received message
+                Consumer consumer = new DefaultConsumer(channel) {
+                    @Override
+                    public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws UnsupportedEncodingException {
+                        String message = new String(body, StandardCharsets.UTF_8);
+                        logger.info(message);
+                        try {
+                            ObjectMapper objectMapper = new ObjectMapper();
+                            JsonNode jsonNode = objectMapper.readTree(message);
+
+                            int jobId = jsonNode.get("job_id").asInt();
+                            String response = jsonNode.get("message").asText();
+                            if (futureMap.containsKey(jobId)) {
+                                CompletableFuture<String> future = futureMap.get(jobId);
+                                future.complete(response);
+                            }
+
+                        } catch (Exception e) {
+                            logger.error("Error matching jobID to future and completing");
+                        }
+                    }
+                };
+
+                // Start consuming messages from the queue
+                channel.basicConsume(OPENAI_RECEIVER, true, consumer);
+
+                while(!shutdown){
+                    Thread.sleep(100);
+                }
+
+            } catch (IOException | TimeoutException e) {
+                logger.error("Error while listening for messages", e);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+    public void shutdownListener(){
+        shutdown = true;
+    }
 }

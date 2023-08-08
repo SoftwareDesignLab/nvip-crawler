@@ -11,7 +11,7 @@ ENV PYTHONUNBUFFERED 1
 COPY openAIMessageHandler.py /app/
 
 # Install the 'pika' library to interact with RabbitMQ
-RUN pip install aio_pika
+RUN pip install pika
 RUN pip install openai
 RUN pip install pyrate-limiter
 

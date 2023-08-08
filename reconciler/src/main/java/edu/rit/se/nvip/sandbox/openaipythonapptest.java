@@ -4,26 +4,40 @@ import edu.rit.se.nvip.openai.OpenAIProcessor;
 import edu.rit.se.nvip.openai.RequestorIdentity;
 import edu.rit.se.nvip.utils.ReconcilerEnvVars;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public class openaipythonapptest {
     public static void main(String[] args) throws InterruptedException {
         OpenAIProcessor op = new OpenAIProcessor();
+        List<CompletableFuture<String>> list = new ArrayList<>();
         int count = 5;
         while(count > 0){
-            op.sendRequest("\"You are a calculator, respond with just the result of the given equation\"", "200+" + count, 0.0, RequestorIdentity.FILTER);
-            op.sendRequest("\"You are a calculator, respond with just the result of the given equation\"", "20+" + count, 0.0, RequestorIdentity.ANON);
-            op.sendRequest("\"You are a calculator, respond with just the result of the given equation\"", "2000+" + count, 0.0, RequestorIdentity.RECONCILE);
-           count--;
+            list.add(op.sendRequest("\"You are a calculator, respond with just the result of the given equation\"", "200+" + count, 0.0, RequestorIdentity.FILTER));
+            list.add(op.sendRequest("\"You are a calculator, respond with just the result of the given equation\"", "20+" + count, 0.0, RequestorIdentity.ANON));
+            list.add(op.sendRequest("\"You are a calculator, respond with just the result of the given equation\"", "2000+" + count, 0.0, RequestorIdentity.RECONCILE));
+            count--;
         }
-        try {
-            System.out.println(op.getResponse().get()); //2005
-            System.out.println(op.getResponse().get()); //2004
-            System.out.println(op.getResponse().get()); //2003
 
-        } catch (ExecutionException e) {
-            throw new RuntimeException(e);
+        for (CompletableFuture<String> futureString : list) {
+            try {
+                // Wait for the response with a timeout of 5 seconds
+                String response = futureString.get(10, TimeUnit.SECONDS);
+                System.out.println(response);
+            } catch (TimeoutException e) {
+                // Handle timeout exception
+                System.out.println("Timeout: " + e);
+            } catch (ExecutionException e) {
+                // Print the exception details to diagnose the issue
+                System.out.println("Error: " + e);
+            }
         }
+        op.shutdownListener();
+
 
     }
 }
