@@ -53,7 +53,7 @@ public class GitController {
 	/**
 	 * pull repo
 	 * 
-	 * @return
+	 * @return true if successful, false if not
 	 */
 	public boolean pullRepo() {
 		logger.info("Checking for updates for {} repo!...", localPath);
@@ -75,7 +75,7 @@ public class GitController {
 	/**
 	 * clone git repo
 	 * 
-	 * @return
+	 * @return true if successful, false if not
 	 */
 	public boolean cloneRepo() {
 		Git git = null;
@@ -87,7 +87,7 @@ public class GitController {
 			CloneCommand cloneCommand = Git.cloneRepository();
 			cloneCommand.setURI(remotePath);
 			cloneCommand.setDirectory(localFileDir);
-			cloneCommand.call();
+			cloneCommand.call().close();
 
 			git = Git.open(localFileDir);
 			StoredConfig config = git.getRepository().getConfig();
@@ -96,6 +96,7 @@ public class GitController {
 			config.setString("remote", "origin", "fetch", "+refs/heads/*:refs/remotes/origin/*");
 			config.setString("remote", "origin", "url", remotePath);
 			config.save();
+
 		} catch (Exception e) {
 			logger.error("Error while cloning repo at: {}\n{}", remotePath, e);
 			return false;
@@ -111,7 +112,7 @@ public class GitController {
 	 */
 	public void deleteRepo() {
 		logger.info("Deleting local repo '{}'...", localPath);
-		try { // TODO: Throwing AccessDeniedExceptions
+		try {
 			FileUtils.delete(new File(localPath), FileUtils.RECURSIVE);
 			logger.info("Successfully deleted repo '{}'", localPath);
 		} catch (Exception e) {
@@ -120,7 +121,8 @@ public class GitController {
 	}
 
 	public static void main(String[] args) {
-		final GitController git = new GitController("", "");
+		final GitController git = new GitController("nvip_data/patch-repos/testrepo", "https://github.com/rmccue/test-repository");
+		git.cloneRepo();
 		git.deleteRepo();
 	}
 
