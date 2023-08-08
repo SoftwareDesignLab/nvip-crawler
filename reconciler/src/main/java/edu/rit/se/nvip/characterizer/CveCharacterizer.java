@@ -38,12 +38,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.File;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 
 /**
@@ -53,7 +48,7 @@ import java.util.Map;
  */
 public class CveCharacterizer {
 	private Logger logger = LogManager.getLogger(CveCharacterizer.class.getSimpleName());
-	private List<AbstractCveClassifier> myClassifierList = new ArrayList<>();
+	private final Map<VDONounGroup, AbstractCveClassifier> nounGroupToClassifier = new HashMap<>();
 
 	/**
 	 * these two vars are used to derive the CVSS vector from VDO labels and then
@@ -85,7 +80,8 @@ public class CveCharacterizer {
 			String[] trainingDataFileArr = trainingDataFiles.split(",");
 			for (String trainingDataFileName : trainingDataFileArr) {
 				String vdoNounGroupName = trainingDataFileName.replace(".csv", "");
-				trainingDataFileName =  Paths.get(trainingDataPath).resolve(trainingDataFileName).toString();
+				VDONounGroup vdoNounGroup = VDONounGroup.getVdoNounGroup(vdoNounGroupName);
+				trainingDataFileName = trainingDataPath + trainingDataFileName;
 				// remove special chars?
 				String sContent = FileUtils.readFileToString(new File(trainingDataFileName));
 				sContent = sContent.replaceAll("[ '|\\\"|â€�|\\|]", " ");
@@ -103,12 +99,12 @@ public class CveCharacterizer {
 				CveClassifierFactory cveCharacterizerFactory = new CveClassifierFactory();
 				AbstractCveClassifier aClassifier = cveCharacterizerFactory.getCveClassifier(approach, method, preProcessedTrainingDataFile);
 
-				// assign a name to each classifier.
+				// assign a noun group to each classifier
 				aClassifier.setCveClassifierName(vdoNounGroupName);
 
 				// train the model
 				aClassifier.trainMLModel();
-				myClassifierList.add(aClassifier);
+				nounGroupToClassifier.put(vdoNounGroup, aClassifier);
 			}
 
 		} catch (Exception e) {
@@ -126,15 +122,20 @@ public class CveCharacterizer {
 	 * @param bPredictMultiple
 	 * @return
 	 */
-	public Map<String, ArrayList<String[]>> characterizeCveForVDO(String cveDesc, boolean bPredictMultiple) {
+	public Map<VDONounGroup, Map<VDOLabel, Double>> characterizeCveForVDO(String cveDesc, boolean bPredictMultiple) {
 		CvePreProcessor cvePreProcessor = new CvePreProcessor(true);
 		String cveDescProcessed = cvePreProcessor.preProcessLine(cveDesc);
 
-		Map<String, ArrayList<String[]>> prediction = new HashMap<String, ArrayList<String[]>>();
-		for (AbstractCveClassifier aClassifier : myClassifierList) {
+		Map<VDONounGroup, Map<VDOLabel, Double>> prediction = new HashMap<>();
+		for (VDONounGroup nounGroup : nounGroupToClassifier.keySet()) {
+			AbstractCveClassifier aClassifier = nounGroupToClassifier.get(nounGroup);
 			ArrayList<String[]> predictionFromClassifier = aClassifier.predict(cveDescProcessed, bPredictMultiple);
-			String vdoNounGroup = aClassifier.getCveClassifierName();
-			prediction.put(vdoNounGroup, predictionFromClassifier);
+			Map<VDOLabel, Double> labelToScore = new HashMap<>();
+			for (String[] pred : predictionFromClassifier) {
+				VDOLabel label = VDOLabel.getVdoLabel(pred[0]);
+				labelToScore.put(label, Double.parseDouble(pred[1]));
+			}
+			prediction.put(nounGroup, labelToScore);
 		}
 
 		return prediction;
@@ -189,19 +190,14 @@ public class CveCharacterizer {
 				}
 				
 				// characterize CVE
-				Map<String, ArrayList<String[]>> prediction = characterizeCveForVDO(cveDesc, true);
+				Map<VDONounGroup, Map<VDOLabel, Double>> prediction = characterizeCveForVDO(cveDesc, true);
 				for (VDONounGroup vdoNounGroup : VDONounGroup.values()) {
-					ArrayList<String[]> predictionsForNounGroup = prediction.get(vdoNounGroup.vdoNounGroupName);
-					for (String[] item : predictionsForNounGroup) {
-						VDOLabel vdoLabelId = VDOLabel.getVdoLabel(item[0]);
-						if (vdoLabelId == null)
-							logger.warn("WARNING: No entry was found for vdo noun group label: {}! Please add it to the db", vdoLabelId);
-						else {
-							VdoCharacteristic vdoCharacteristic = new VdoCharacteristic(vulnerability.getCveId(), vdoLabelId,
-									Double.parseDouble(item[1]), vdoNounGroup);
-							vulnerability.addVdoCharacteristic(vdoCharacteristic);
-							//logger.info("Added the following VDO Characteristic to {}:\n{}", vulnerability.getCveId(), vdoCharacteristic);
-						}
+					Map<VDOLabel, Double> predictionsForNounGroup = prediction.get(vdoNounGroup);
+					for (VDOLabel label : predictionsForNounGroup.keySet()) {
+						VdoCharacteristic vdoCharacteristic = new VdoCharacteristic(vulnerability.getCveId(), label,
+								predictionsForNounGroup.get(label), vdoNounGroup);
+						vulnerability.addVdoCharacteristic(vdoCharacteristic);
+						//logger.info("Added the following VDO Characteristic to {}:\n{}", vulnerability.getCveId(), vdoCharacteristic);
 					}
 					//logger.info("Added VDO Characteristics for {}", vulnerability.getCveId());
 				}
@@ -244,7 +240,7 @@ public class CveCharacterizer {
 	 * @param predictionsForVuln
 	 * @return
 	 */
-	private double[] getCvssScoreFromVdoLabels(Map<String, ArrayList<String[]>> predictionsForVuln) {
+	private double[] getCvssScoreFromVdoLabels(Map<VDONounGroup, Map<VDOLabel, Double>> predictionsForVuln) {
 		// generate partial CVSS vector from VDO prediction
 		String[] cvssVec = partialCvssVectorGenerator.getCVssVector(predictionsForVuln);
 
