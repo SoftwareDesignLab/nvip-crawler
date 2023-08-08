@@ -27,6 +27,9 @@ import edu.rit.se.nvip.automatedcvss.PartialCvssVectorGenerator;
 import edu.rit.se.nvip.automatedcvss.preprocessor.CvePreProcessor;
 import edu.rit.se.nvip.characterizer.classifier.AbstractCveClassifier;
 import edu.rit.se.nvip.characterizer.classifier.CveClassifierFactory;
+import edu.rit.se.nvip.characterizer.enums.CVSSSeverityClass;
+import edu.rit.se.nvip.characterizer.enums.VDOLabel;
+import edu.rit.se.nvip.characterizer.enums.VDONounGroup;
 import edu.rit.se.nvip.model.CompositeVulnerability;
 import edu.rit.se.nvip.model.CvssScore;
 import edu.rit.se.nvip.model.VdoCharacteristic;
@@ -56,125 +59,6 @@ public class CveCharacterizer {
 	 */
 	private PartialCvssVectorGenerator partialCvssVectorGenerator = new PartialCvssVectorGenerator();
 	private CvssScoreCalculator cvssScoreCalculator = new CvssScoreCalculator();
-
-	public enum VDONounGroup{
-		IMPACT_METHOD(1, "ImpactMethod", "Impact Method"),
-		CONTEXT(2, "Context", "Context"),
-		MITIGATION(3, "Mitigation", "Mitigation"),
-		ATTACK_THEATER(4, "AttackTheater", "Attack Theater"),
-		LOGICAL_IMPACT(5, "LogicalImpact", "Logical Impact");
-
-		private int vdoNounGroupId;
-		private String vdoNounGroupName;
-		private String vdoNameForUI;
-
-		VDONounGroup(int vdoNounGroupId, String vdoNounGroupName, String vdoNameForUI) {
-			this.vdoNounGroupId = vdoNounGroupId;
-			this.vdoNounGroupName = vdoNounGroupName;
-			this.vdoNameForUI = vdoNameForUI;
-		}
-		public int getVdoGroupId() {
-			return vdoNounGroupId;
-		}
-		public static VDONounGroup getVdoNounGroup(int vdoNounGroupId){
-			for(VDONounGroup vdo : VDONounGroup.values()){
-				if (vdoNounGroupId == vdo.getVdoGroupId()){
-					return vdo;
-				}
-			}
-			return null;
-		}
-
-	}
-
-	public enum VDOLabel {
-		TRUST_FAILURE(1, "Trust Failure", "Trust Failure", VDONounGroup.IMPACT_METHOD),
-		MAN_IN_THE_MIDDLE(2, "Man-in-the-Middle", "Man-in-the-Middle", VDONounGroup.IMPACT_METHOD),
-		CHANNEL(3, "Channel", "Channel", VDONounGroup.CONTEXT),
-		AUTHENTICATION_BYPASS(4, "Authentication Bypass", "Authentication Bypass", VDONounGroup.IMPACT_METHOD),
-		PHYSICAL_HARDWARE(5, "Physical Hardware", "Physical Hardware", VDONounGroup.CONTEXT),
-		APPLICATION(6, "Application", "Application", VDONounGroup.CONTEXT),
-		HOST_OS(7, "Host OS", "Host OS", VDONounGroup.CONTEXT),
-		FIRMWARE(8, "Firmware", "Firmware", VDONounGroup.CONTEXT),
-		CODE_EXECUTION(9, "Code Execution", "Code Execution", VDONounGroup.IMPACT_METHOD),
-		CONTEXT_ESCAPE(10, "Context Escape", "Context Escape", VDONounGroup.IMPACT_METHOD),
-		GUEST_OS(11, "Guest OS", "Guest OS", VDONounGroup.CONTEXT),
-		HYPERVISOR(12, "Hypervisor", "Hypervisor", VDONounGroup.CONTEXT),
-		SANDBOXED(13, "Sandboxed", "Sandboxed", VDONounGroup.MITIGATION),
-		PHYSICAL_SECURITY(14, "Physical Security", "Physical Security", VDONounGroup.MITIGATION),
-		ASLR(15, "ASLR", "ASLR", VDONounGroup.MITIGATION),
-		LIMITED_RMT(16, "Limited Rmt", "Limited Rmt", VDONounGroup.ATTACK_THEATER),
-		LOCAL(17, "Local", "Local", VDONounGroup.ATTACK_THEATER),
-		READ(18, "Read", "Read", VDONounGroup.LOGICAL_IMPACT),
-		RESOURCE_REMOVAL(19, "Resource Removal", "Resource Removal", VDONounGroup.LOGICAL_IMPACT),
-		HPKP_HSTS(20, "HPKP/HSTS", "HPKP/HSTS", VDONounGroup.MITIGATION),
-		MULTIFACTOR_AUTHENTICATION(21, "MultiFactor Authentication", "MultiFactor Authentication", VDONounGroup.MITIGATION),
-		REMOTE(22, "Remote", "Remote", VDONounGroup.ATTACK_THEATER),
-		WRITE(23, "Write", "Write", VDONounGroup.LOGICAL_IMPACT),
-		INDIRECT_DISCLOSURE(24, "Indirect Disclosure", "Indirect Disclosure", VDONounGroup.LOGICAL_IMPACT),
-		SERVICE_INTERRUPT(25, "Service Interrupt", "Service Interrupt", VDONounGroup.LOGICAL_IMPACT),
-		PRIVILEGE_ESCALATION(26, "Privilege Escalation", "Privilege Escalation", VDONounGroup.LOGICAL_IMPACT),
-		PHYSICAL(27, "Physical", "Physical", VDONounGroup.ATTACK_THEATER);
-
-		private int vdoLabelId;
-		private String vdoLabelName;
-		private String vdoLabelForUI;
-		private VDONounGroup vdoNounGroup;
-
-		VDOLabel(int vdoLabelId, String vdoLabelName, String vdoLabelForUI, VDONounGroup vdoNounGroup) {
-			this.vdoLabelId = vdoLabelId;
-			this.vdoLabelName = vdoLabelName;
-			this.vdoLabelForUI = vdoLabelForUI;
-			this.vdoNounGroup = vdoNounGroup;
-		}
-		public int getVdoLabelId() {
-			return vdoLabelId;
-		}
-		public static Integer getVdoLabelId(String vdoLabelName){
-			for (VDOLabel label : VDOLabel.values()){
-				if (label.vdoLabelName.equals(vdoLabelName)){
-					return label.vdoLabelId;
-				}
-			}
-			return null;
-		}
-		public static VDOLabel getVdoLabel(int vdoLabelId){
-			for(VDOLabel vdo : VDOLabel.values()){
-				if (vdoLabelId == vdo.getVdoLabelId()){
-					return vdo;
-				}
-			}
-			return null;
-		}
-
-	}
-	public enum CVSSSeverityClass {
-		HIGH(1),
-		MEDIUM(2),
-		NA(3),
-		CRITICAL(4),
-		LOW(5);
-
-		private final int cvssSeverityId;
-
-
-		CVSSSeverityClass(int cvssSeverityId) {
-			this.cvssSeverityId = cvssSeverityId;
-		}
-
-		public int getCvssSeverityId() {
-			return cvssSeverityId;
-		}
-
-		public static CVSSSeverityClass getCVSSSeverityById(int cvssSeverityId){
-			for(CVSSSeverityClass cvss : CVSSSeverityClass.values()){
-				if (cvssSeverityId == cvss.getCvssSeverityId()){
-					return cvss;
-				}
-			}
-			return null;
-		}
-	}
 	
 	/**
 	 * Construct a CVE Characterizer. You need to provide an initial training data
@@ -306,14 +190,13 @@ public class CveCharacterizer {
 				Map<String, ArrayList<String[]>> prediction = characterizeCveForVDO(cveDesc, true);
 				for (VDONounGroup vdoNounGroup : VDONounGroup.values()) {
 					ArrayList<String[]> predictionsForNounGroup = prediction.get(vdoNounGroup.vdoNounGroupName);
-					int vdoNounGroupId = vdoNounGroup.vdoNounGroupId;
 					for (String[] item : predictionsForNounGroup) {
-						Integer vdoLabelId = VDOLabel.getVdoLabelId(item[0]);
+						VDOLabel vdoLabelId = VDOLabel.getVdoLabel(item[0]);
 						if (vdoLabelId == null)
 							logger.warn("WARNING: No entry was found for vdo noun group label: {}! Please add it to the db", vdoLabelId);
 						else {
 							VdoCharacteristic vdoCharacteristic = new VdoCharacteristic(vulnerability.getCveId(), vdoLabelId,
-									Double.parseDouble(item[1]), vdoNounGroupId);
+									Double.parseDouble(item[1]), vdoNounGroup);
 							vulnerability.addVdoCharacteristic(vdoCharacteristic);
 							//logger.info("Added the following VDO Characteristic to {}:\n{}", vulnerability.getCveId(), vdoCharacteristic);
 						}
@@ -323,8 +206,8 @@ public class CveCharacterizer {
 
 				// get severity
 				double[] cvssScore = getCvssScoreFromVdoLabels(prediction); // get mean/minimum/maximum/std dev
-				int severityId = getSeverityLabelFromCvssScore(cvssScore[0]).getCvssSeverityId(); // use mean
-				CvssScore score = new CvssScore(vulnerability.getCveId(), severityId, 0.5, String.valueOf(cvssScore[0]), 0.5);
+				CVSSSeverityClass severity = getSeverityLabelFromCvssScore(cvssScore[0]); // use mean
+				CvssScore score = new CvssScore(vulnerability.getCveId(), severity, 0.5, cvssScore[0], 0.5);
 				vulnerability.addCvssScore(score);
 //				logger.info("CVSS Score predicted for {}", vulnerability.getCveId());
 

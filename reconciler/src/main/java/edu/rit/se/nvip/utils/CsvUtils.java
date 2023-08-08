@@ -96,9 +96,9 @@ public class CsvUtils {
 
 						StringBuilder vdoCharacteristic = new StringBuilder();
 						StringBuilder vdoConfidence = new StringBuilder();
-						if (vuln.getVdoCharacteristic().size() > 0) {
-							for (VdoCharacteristic vdo : vuln.getVdoCharacteristic()) {
-								vdoCharacteristic.append(vdo.getVdoLabelId()).append(",");
+						if (vuln.getVdoCharacteristics().size() > 0) {
+							for (VdoCharacteristic vdo : vuln.getVdoCharacteristics()) {
+								vdoCharacteristic.append(vdo.getVdoLabel()).append(",");
 								vdoConfidence.append(vdo.getVdoConfidence()).append(",");
 							}
 						}

@@ -49,10 +49,10 @@ public class characterizerRealTest {
         characterizer.characterizeCveList(cveList,
                 ReconcilerEnvVars.getCharacterizationLimit());
 
-        System.out.println(compVuln.getVdoCharacteristic());
+        System.out.println(compVuln.getVdoCharacteristics());
         System.out.println(compVuln.getCvssScoreInfo());
 
-        System.out.println(compVuln2.getVdoCharacteristic());
+        System.out.println(compVuln2.getVdoCharacteristics());
         System.out.println(compVuln2.getCvssScoreInfo());
 
 

@@ -293,16 +293,16 @@
         </addColumn>
     </changeSet> -->
 
-    <changeSet id="updateCvssPrimaryKey" author="asawtelle">
-        <dropPrimaryKey
-                dropIndex="true"
-                tableName="cvss"/>
-        <addColumn tableName="cvss">
-            <column name="cvss_id" type="int" autoIncrement="true">
-                <constraints primaryKey="true" nullable="false"/>
-            </column>
-        </addColumn>
-    </changeSet>
+<!--    <changeSet id="updateCvssPrimaryKey" author="asawtelle">-->
+<!--        <dropPrimaryKey-->
+<!--                dropIndex="true"-->
+<!--                tableName="cvss"/>-->
+<!--        <addColumn tableName="cvss">-->
+<!--            <column name="cvss_id" type="int" autoIncrement="true">-->
+<!--                <constraints primaryKey="true" nullable="false"/>-->
+<!--            </column>-->
+<!--        </addColumn>-->
+<!--    </changeSet>-->
 
     <changeSet id="dropNvdMitreStatus" author="memeee">
         <dropTable tableName="nvdmitrestatus"/>
