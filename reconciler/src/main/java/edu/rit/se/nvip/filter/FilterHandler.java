@@ -52,6 +52,7 @@ public class FilterHandler {
         localFilters.add(new MultipleCveDescriptionsFilter());
         localFilters.add(new DescriptionSizeFilter());
         localFilters.add(new CharacterProportionFilter());
+        localFilters.add(new JsonDescriptionFilter());
     }
 
     private void initializeRemoteFilters(List<String> filterTypes) {

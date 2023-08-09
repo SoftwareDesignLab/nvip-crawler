@@ -1,3 +1,26 @@
+/**
+ * Copyright 2023 Rochester Institute of Technology (RIT). Developed with
+ * government support under contract 70RSAT19CB0000020 awarded by the United
+ * States Department of Homeland Security.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
 package edu.rit.se.nvip.sandbox;
 
 import edu.rit.se.nvip.filter.Filter;
@@ -26,8 +49,7 @@ public class DatasetHandler {
     public static void main(String[] args) {
         DatasetHandler dh = new DatasetHandler();
         dh.runGPT("./src/main/java/edu/rit/se/nvip/sandbox/jsons/CrawlerOutputFull_6_22_2023.json", true);
-        OpenAIRequestHandler rh = OpenAIRequestHandler.getInstance();
-        rh.shutdown();
+        OpenAIRequestHandler.getInstance().shutdown();
     }
 
     public DatasetHandler() {
@@ -133,6 +155,11 @@ public class DatasetHandler {
         System.out.println("Accepted Count: " + unFiltered.size());
     }
 
+    /**
+     * Creates a failed and passed json object based on rawVuln entries run through GPTFilter
+     * @param jsonPath path to json file containing rawVuln entries
+     * @param removeLocalFiltered argument to remove rawVulns that would be filtered out by local filters
+     */
     public void runGPT(String jsonPath, boolean removeLocalFiltered) {
         List<Filter> filters = new ArrayList<>();
         filters.add(FilterFactory.createFilter(FilterFactory.MULTIPLE_CVE_DESCRIPTION));
@@ -140,7 +167,10 @@ public class DatasetHandler {
         filters.add(FilterFactory.createFilter(FilterFactory.INTEGER_DESCRIPTION));
         filters.add(FilterFactory.createFilter(FilterFactory.DESCRIPTION_SIZE));
         filters.add(FilterFactory.createFilter(FilterFactory.CVE_MATCHES_DESCRIPTION));
+        filters.add(FilterFactory.createFilter(FilterFactory.CHARACTER_PROPORTION));
+        filters.add(FilterFactory.createFilter(FilterFactory.JSON_DESCRIPTION));
 
+        //Create a set of raw vulns from the input json
         JsonArray jArray = null;
         try (FileReader reader = new FileReader(jsonPath)) {
             JsonReader jReader = Json.createReader(reader);
@@ -162,40 +192,51 @@ public class DatasetHandler {
                     jo.getString("source_type"),
                     jo.getInt("filter_status")));
         }
+
         System.out.println("Parsed rawvulns: " + rawVulns.size());
-        Set<RawVulnerability> unFiltered = rawVulns;
+        Set<RawVulnerability> rejected = new HashSet<>();
+
+        //Remove locally filtered vulnerabilities from rawVulns
         if (removeLocalFiltered) {
             Set<RawVulnerability> currentRejected;
             for (Filter filter: filters) {
-                currentRejected = filter.filterAllAndSplit(unFiltered);
-                unFiltered.removeAll(currentRejected);
+                currentRejected = filter.filterAllAndSplit(rawVulns);
+                rawVulns.removeAll(currentRejected);
+                rejected.addAll(currentRejected);
             }
         }
 
+        //Create a set for GPTFilter to analyze
         GPTFilter gptFilter = new GPTFilter();
-
-        int indexMax = 100;
+        int indexMax = 1500;
         Set<RawVulnerability> filterSet = new HashSet<>();
-        for (int i = 0; i < indexMax; i ++) {
-            filterSet.add((RawVulnerability) unFiltered.toArray()[i]);
+        for (int i = 1000; i < indexMax; i ++) {
+            filterSet.add((RawVulnerability) rawVulns.toArray()[i]);
         }
 
         int remoteTotalCount = filterSet.size();
-        Set<RawVulnerability> rejected = new HashSet<>();
+        Set<RawVulnerability> rejectedGPT = new HashSet<>();
 
+        //Print out basic metrics to command line
         System.out.println("Total for GPT filter: " + remoteTotalCount);
-        rejected.addAll(gptFilter.filterAllAndSplit(filterSet));
+        rejectedGPT.addAll(gptFilter.filterAllAndSplit(filterSet));
 
         System.out.println("Total: " + remoteTotalCount);
-        System.out.println("Rejected: " + rejected.size());
+        System.out.println("Rejected: " + rejectedGPT.size());
         createJsonFromSet(filterSet, false);
-        createJsonFromSet(rejected, true);
+        createJsonFromSet(rejectedGPT, true);
     }
 
+    /**
+     * Create a json file from a set of openai filtered rawVulns
+     * @param rawVulns set of raw vulnerabilities that have been filtered by GPT
+     * @param isRejected argument to change name of json file based on if the set is failed/passed vulns
+     */
     private void createJsonFromSet(Set<RawVulnerability> rawVulns, boolean isRejected) {
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy_MM_dd HH_mm_ss");
         LocalDateTime now = LocalDateTime.now();
         JsonArrayBuilder jsonArrayBuilder = Json.createArrayBuilder();
+        int count = 0;
         for (RawVulnerability currentVuln: rawVulns) {
             JsonObjectBuilder vulnBuilder = Json.createObjectBuilder();
             vulnBuilder.add("raw_description_id", currentVuln.getId());
@@ -203,7 +244,10 @@ public class DatasetHandler {
             vulnBuilder.add("raw_description", currentVuln.getDescription());
             vulnBuilder.add("filter_status", currentVuln.getFilterStatus().value);
             jsonArrayBuilder.add(vulnBuilder);
+            count++;
         }
+
+        jsonArrayBuilder.add(count);
 
         JsonArray ja = jsonArrayBuilder.build();
 
