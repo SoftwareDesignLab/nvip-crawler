@@ -349,11 +349,6 @@ public class AffectedProductIdentifier {
 		AtomicInteger count = new AtomicInteger();
 		vulnList.stream().map(v -> v.getAffectedProducts().size()).forEach(count::addAndGet);
 		logger.info("Found {} affected products ({} unique excluding versions) from {} CVEs in {} seconds", count, cpeLookUp.getUniqueCPECount(), totalCVEtoProcess, Math.floor(((double) (System.currentTimeMillis() - start) / 1000) * 100) / 100);
-		logger.info("NER Time: {} seconds | CPE Time: {} seconds | CVE Time: {} seconds ",
-				totalNERTime.get() / 1000 / numThreads,
-				totalCPETime.get() / 1000,
-				totalCVETime.get() / 1000 / numThreads
-		);
 
 		List<AffectedProduct> affectedProducts = new ArrayList<>();
 		for (CompositeVulnerability vulnerability : vulnList) {

@@ -83,10 +83,10 @@ public class ProductDetector {
 			tagger = new POSTaggerME(model);
 			modelStream.close();
 
-			logger.info("Product detector initialization done!");
+			logger.info("Product Detector initialization done!");
 		} catch (IOException e) {
 			// Log and rethrow error to stop program execution
-			logger.error("Error while initializing product detector, model path {}, exception detail {}", binPath, e.toString());
+			logger.error("Error while initializing Product Detector, model path {}, exception detail {}", binPath, e.toString());
 			logger.warn("Please ensure that your working directory is correct. Current working directory: {}", System.getProperty("user.dir"));
 			throw e;
 		}

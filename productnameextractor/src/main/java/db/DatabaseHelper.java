@@ -72,7 +72,7 @@ public class DatabaseHelper {
 		}
 
 		if(config == null){
-			logger.info("Attempting to create HIKARI config from provided values");
+			logger.info("Attempting to create HIKARI config from provided values...");
 			config = createHikariConfig(hikariUrl, hikariUser, hikariPassword);
 		}
 
