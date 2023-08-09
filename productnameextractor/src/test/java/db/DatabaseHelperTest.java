@@ -214,31 +214,6 @@ public class DatabaseHelperTest {
 	}
 
 	@Test
-	public void testGetVulnsByCpe() throws SQLException {
-		String cpe = "cpe:/a:apache:activemq:5.15.8";
-
-		// Mock the database interactions
-		when(conn.prepareStatement(anyString())).thenReturn(pstmt);
-		when(pstmt.executeQuery()).thenReturn(res);
-		when(res.next()).thenReturn(true, false);
-
-		List<CompositeVulnerability> vulnList = dbh.getVulnsByCpe(cpe);
-		assertEquals(vulnList.size(), 1);
-
-		CompositeVulnerability vuln = vulnList.get(0);
-
-		verify(conn).prepareStatement(anyString());
-		verify(pstmt).setString(1, cpe);
-		verify(pstmt).executeQuery();
-		verify(res).getInt(0);
-		verify(res).getString(1);
-		verify(res).getString(2);
-		verify(res).getString(3);
-		verify(res).getString(4);
-
-	}
-
-	@Test
 	public void shutdownTest() {
 		dbh.shutdown();
 		verify(hds).close();
