@@ -385,7 +385,13 @@
         </addColumn>
     </changeSet>
 
-
+    <changeSet id="addVdoActiveFlag" author="memeee">
+        <addColumn tableName="vdocharacteristic">
+            <column name="is_active" type="int">
+                <constraints nullable="false" defaultValue="0"/>
+            </column>
+        </addColumn>
+    </changeSet>
 
 
 </databaseChangeLog>
