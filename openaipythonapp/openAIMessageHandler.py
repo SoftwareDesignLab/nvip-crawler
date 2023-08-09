@@ -1,8 +1,6 @@
 import openai
 import json
 import pika
-from limiter import Limiter
-import threading
 import concurrent.futures
 from queue import PriorityQueue
 import logging
@@ -24,27 +22,33 @@ class Request:
         self.messages = [sys_msg, usr_msg]
         self.requestor = requestor
         self.priority = priority
+        self.attempts_left = 1
 
     def __lt__(self, other):
         if self.requestor == other.requestor:
             return self.priority < other.priority
         return self.requestor.__lt__(other.requestor)
 
+
 class Message:
     def __init__(self, role, content):
         self.role = role
         self.content = content
 
-class openAiMessageHandler:
 
-    MSG_BUCKET: str = 'messages'
-    limit_msgs: Limiter = Limiter(bucket=MSG_BUCKET)
+class openAiMessageHandler:
+    max_requests_per_minute = 3500
+    max_tokens_per_minute = 90000
+
     def __init__(self):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.requestQueue = PriorityQueue(maxsize=1000)
         self.mainExecutor = concurrent.futures.ThreadPoolExecutor()
         self.requestExecutor = concurrent.futures.ThreadPoolExecutor()
         self.request_queue = PriorityQueue()
+        self.last_update_time = time.time()
+        self.available_request_capacity = openAiMessageHandler.max_requests_per_minute
+        self.available_token_capacity = openAiMessageHandler.max_tokens_per_minute
         self.init_executors()
 
     def init_executors(self):
@@ -52,6 +56,7 @@ class openAiMessageHandler:
         self.mainExecutor.submit(self.handle_requests)
         self.requestExecutor = concurrent.futures.ThreadPoolExecutor(max_workers=5)
 
+    # noinspection PyBroadException
     def handle_requests(self):
         while True:
             time.sleep(.3)
@@ -62,8 +67,8 @@ class openAiMessageHandler:
             except Exception as e:
                 self.logger.error("Exception while getting request from queue:", exc_info=True)
                 return
-            tokens = self.get_token_count(request)
-            self.wait_for_limiters()
+
+            self.wait_for_limiters(request)
             self.requestExecutor.submit(lambda: self.send_request(request))
 
     def send_request(self, request):
@@ -74,8 +79,8 @@ class openAiMessageHandler:
         connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbitmq_host))
         channel = connection.channel()
         channel.queue_declare(queue=output_queue)
-        print(request.usr_msg)
-        response = self.get_openai_response(request.api_key, request.sys_msg.content, request.usr_msg.content, request.temp)
+        response = self.get_openai_response(request.api_key, request.sys_msg.content, request.usr_msg.content,
+                                            request.temp)
         json_response = {
             "job_id": request.jobid,
             "message": response
@@ -88,10 +93,33 @@ class openAiMessageHandler:
 
         connection.close()
 
-    def wait_for_limiters(self):
-        self.token_limiter.try_acquire("gptlimit")
+    def wait_for_limiters(self, request):
+        tokens = self.get_token_count(request)
+        print(tokens)
+        while True:
+            # update available capacity
+            current_time = time.time()
+            seconds_since_update = current_time - self.last_update_time
+            self.available_request_capacity = min(
+                self.available_request_capacity + openAiMessageHandler.max_requests_per_minute * seconds_since_update / 60.0,
+                3500,
+            )
+            self.available_token_capacity = min(
+                self.available_token_capacity + openAiMessageHandler.max_tokens_per_minute * seconds_since_update / 60.0,
+                90000,
+            )
+            self.last_update_time = current_time
+            if (self.available_request_capacity >= 1
+                    and self.available_token_capacity >= tokens):
 
-    def get_token_count(self, request):
+                # update counters
+                self.available_request_capacity -= 1
+                self.available_token_capacity -= tokens
+                request.attempts_left -= 1
+                break
+
+    @staticmethod
+    def get_token_count(request):
         encoding = tiktoken.encoding_for_model("gpt-3.5-turbo")
         tokens_per_msg = 4
         token_count = 0
@@ -101,7 +129,8 @@ class openAiMessageHandler:
             token_count += len(encoding.encode(msg.content))
         return token_count
 
-    def get_openai_response(self, api_key, system_message, user_message, temperature):
+    @staticmethod
+    def get_openai_response(api_key, system_message, user_message, temperature):
         openai.api_key = api_key
 
         data = {

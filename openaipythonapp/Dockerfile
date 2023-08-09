@@ -13,7 +13,8 @@ COPY openAIMessageHandler.py /app/
 # Install the 'pika' library to interact with RabbitMQ
 RUN pip install pika
 RUN pip install openai
-RUN pip install pyrate-limiter
+RUN pip install token_bucket
+RUN pip install tiktoken
 
 # Run the Python script when the container starts
 CMD ["python", "openAIMessageHandler.py"]

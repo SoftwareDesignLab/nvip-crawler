@@ -82,7 +82,6 @@ public class OpenAIProcessor {
                     @Override
                     public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws UnsupportedEncodingException {
                         String message = new String(body, StandardCharsets.UTF_8);
-                        logger.info(message);
                         try {
                             ObjectMapper objectMapper = new ObjectMapper();
                             JsonNode jsonNode = objectMapper.readTree(message);

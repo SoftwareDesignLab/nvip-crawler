@@ -15,11 +15,22 @@ public class openaipythonapptest {
     public static void main(String[] args) throws InterruptedException {
         OpenAIProcessor op = new OpenAIProcessor();
         List<CompletableFuture<String>> list = new ArrayList<>();
-        int count = 5;
+        int count = 1000;
+//        while(count > 0){
+//            list.add(op.sendRequest("\"You are a calculator, respond with just the result of the given equation\"", "200+" + count, 0.0, RequestorIdentity.FILTER));
+//            list.add(op.sendRequest("\"You are a calculator, respond with just the result of the given equation\"", "20+" + count, 0.0, RequestorIdentity.ANON));
+//            list.add(op.sendRequest("\"You are a calculator, respond with just the result of the given equation\"", "2000+" + count, 0.0, RequestorIdentity.RECONCILE));
+//            count--;
+//        }
+        int wordCount = 50;
+        StringBuilder string = new StringBuilder();
+        while (wordCount > 0){
+            string.append("token ");
+            wordCount--;
+        }
+
         while(count > 0){
-            list.add(op.sendRequest("\"You are a calculator, respond with just the result of the given equation\"", "200+" + count, 0.0, RequestorIdentity.FILTER));
-            list.add(op.sendRequest("\"You are a calculator, respond with just the result of the given equation\"", "20+" + count, 0.0, RequestorIdentity.ANON));
-            list.add(op.sendRequest("\"You are a calculator, respond with just the result of the given equation\"", "2000+" + count, 0.0, RequestorIdentity.RECONCILE));
+            op.sendRequest("respond Hi to every message you get", string.toString(), 0.0, RequestorIdentity.ANON);
             count--;
         }
 
