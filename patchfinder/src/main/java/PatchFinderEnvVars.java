@@ -51,8 +51,8 @@ public class PatchFinderEnvVars {
     private static int cveLimit = 20;
     private static String[] addressBases = {"https://www.github.com/", "https://www.gitlab.com/"};
     private static int maxThreads = 10;
-    private static int cloneCommitThreshold = 1000; // TODO: Find optimal value once github scraping is working well
-    private static int cloneCommitLimit = 50000; // TODO: Find optimal value once github scraping is working well
+    private static int cloneCommitThreshold = 1000;
+    private static int cloneCommitLimit = 50000;
     private static String clonePath = "nvip_data/patch-repos";
     private static String patchSrcUrlPath = "nvip_data/source_dict.json";
 
