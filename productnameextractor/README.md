@@ -1,12 +1,13 @@
 
 # NVIP Product Name Extractor
 
-The product name extractor component of NVIP identifies affected products in a CVE via a Named Entity Recognition (NER) model.
+The Product Name Extractor component of NVIP identifies affected products in a CVE via a Named Entity Recognition (NER) model.
 - The model and its training data is provided in the `productnameextractor/nvip_data` directory
 - Each extracted product is mapped to a Common Product Enumeration (CPE) string in NVD's official CPE Dictionary
+- Each affected product is then stored in the `affectedproduct` table in the database
 - CPE Definition and Dictionary(s): https://nvd.nist.gov/products/cpe
 
-> **NOTE:** This component relies directly on the vulnerability data from the crawler and reconciler and should be run after the crawler and reconciler
+> **NOTE:** This component relies directly on the vulnerability data from the crawler and reconciler and should be run after the crawler and reconciler. 
 
 ## System Requirements
 
@@ -34,7 +35,7 @@ The product name extractor component of NVIP identifies affected products in a C
     - Download Link: https://www.rabbitmq.com/download.html
 
 
-* A minimum of 8GB RAM is needed to run the program, but 16GB is recommended.
+* A minimum of 4GB RAM is needed to run the program, but 8GB is recommended.
 
 ## Summary of Open Source Technologies/Systems Used
 
@@ -59,7 +60,7 @@ The product name extractor component of NVIP identifies affected products in a C
 * Run the downloaded file, choose “Full” installation and continue with default options.
 
 
-* During the configuration of MySQL Server, when prompted for a password (for user "root"), ensure that you remember this password and store it in the HIKARI_PASSWORD environment variable (see **Environment Variables** section below).
+* During the configuration of MySQL Server, when prompted for a password (for user "root"), ensure that you remember this password and store it in the **HIKARI_PASSWORD** environment variable (see **Environment Variables** section below).
 
 ## 2. Create Database (via MySQL Workbench & Liquibase)
 
@@ -76,7 +77,7 @@ The product name extractor component of NVIP identifies affected products in a C
 
 
 > **NOTE**: Please make sure the MySQL username and password parameters in the
-> environment variables are updated! (Refer to **Environment Variables** section below)
+> environment variables are updated! (Refer to **Environment Variables** section below).
 
 ## 3. Running Locally
 
@@ -106,12 +107,10 @@ The product name extractor component of NVIP identifies affected products in a C
 > See **Environment Variables** below for more information.
 >
 
+## 4. Running With Docker:
+Before proceeding to the following steps, please make sure that the Docker Engine is installed and running on your workstation.
 
-
-## 5. Running With Docker:
-Before proceeding to the following steps, please make sure that the Docker Engine is running on your workstation.
-
-#### Build and Run RabbitMQ Image:
+#### Build & Run RabbitMQ Image:
     $ docker run -it --rm --name rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq:3.12-management
 
 #### Open New Terminal & Change Working Directory:
@@ -124,7 +123,7 @@ Before proceeding to the following steps, please make sure that the Docker Engin
     $ docker run --name productnameextractor -m 10GB --env-file env.list productnameextractor
 
 Where `-m` is the maximum memory (RAM) the container can use during runtime, and `--env-file` is the path to
-the environment variable file (`env.list`). It is recommended to allot at least 10GB of ram during runtime.
+the environment variable file (`env.list`). It is recommended to allot at least 4GB of ram during runtime.
 
 >**NOTE**: Make sure your MySQL service is running. If not, try the following:
 >
@@ -145,7 +144,7 @@ the environment variable file (`env.list`). It is recommended to allot at least 
 
 ## Environment Variables
 
-The `env.list` file contains a set of environment variables that the product name extractor requires in order to run.
+The `env.list` file contains a set of environment variables that the Product Name Extractor requires in order to run.
 All environment variables contain default values if they're not specified, but it is generally advisable to have them configured to fit your workspace.
 
 As stated previously, you can provide these variables when running the application with Docker via the `env.list` file.
@@ -162,7 +161,7 @@ If you want to run it locally without Docker, the program will attempt to automa
 
 ### Database Variables
 
-* **DB_TYPE**: Database type used
+* **DB_TYPE**: Database type used.
     - Default value: `mysql`
 
 
@@ -172,18 +171,18 @@ If you want to run it locally without Docker, the program will attempt to automa
     - Use `mysql://host.docker.internal:3306/DB_NAME?useSSL=false&allowPublicKeyRetrieval=true` to run with Docker
 
 
-* **HIKARI_USER**: Database username used to login to the database
+* **HIKARI_USER**: Database username used to log in to the database.
     - Default value: `root`
 
 
-* **HIKARI_PASSWORD**: Database password used to login to the database
+* **HIKARI_PASSWORD**: Database password used to log in to the database.
     - Default value: `root`
 
 
 ### Data Directory Variables
 
 > **NOTE**: All default values for Data Directory Variables assume that the working directory is `nvip-crawler/productnameextractor`
-* **RESOURCE_DIR**: Directory path for all data resources used by Product Name Extractor
+* **RESOURCE_DIR**: Directory path for all data resources used by Product Name Extractor.
     - Default value: `nvip_data`
 
 

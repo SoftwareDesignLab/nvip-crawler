@@ -1,11 +1,12 @@
 
-# NVIP Crawler Backend - Patch Finder
+# NVIP Patch Finder
 
-The patch finder component of NVIP Crawler identifies possible patches for CVEs
-- Patches are found by crawling available repos for the affected products of a CVE
+The Patch Finder component of NVIP identifies possible patches for products affected by CVEs.
+- Patches are found by crawling available repositories for the affected products of a CVE
 - Each repo is cloned, then each commit is navigated to identify patches by checking for keywords in the commit messages
+- Each patch found is then stored in the database
 - Product repos are cloned in the resources folder, then deleted after use
-> **NOTE:** This component relies directly on the affected product data from product extraction and should be ran after affected product data is populated in the db
+> **NOTE:** This component relies directly on the affected product data from the product name extractor and should be run after affected product data is populated in the database.
 
 ## System Requirements
 
@@ -13,7 +14,7 @@ The patch finder component of NVIP Crawler identifies possible patches for CVEs
     - Download Link: https://www.oracle.com/java/technologies/javase/javase8-archive-downloads.html
 
 
-* Patch Finder uses MySQL (version 8) to store CVEs. The database must be created before running the system. The current database dump is provided at '../nvip_data/mysql-database'.
+* Patch Finder uses MySQL (version 8) to store CVEs. The database must be created before running the system. The current database dump is provided at `nvip-crawler/nvip_data/mysql-database/newDB`. See the instructions below on initializing the database.
     - Download Link: https://dev.mysql.com/downloads/installer/
 
 
@@ -29,141 +30,194 @@ The patch finder component of NVIP Crawler identifies possible patches for CVEs
     - Download Link: https://docs.docker.com/engine/install/
 
 
-* Because the crawling process is a multi-threaded process and the characterization and product name extraction trains AI/ML models, minimum 8GB RAM is needed to run the system.
+* Finally, RabbitMQ is also needed if using a queue-based system with the NVIP components (Crawler feeds Reconciler jobs, Reconciler feeds Product Name Extractor jobs, etc.).
+  - Download Link: https://www.rabbitmq.com/download.html
+
+
+* A minimum of 4GB RAM is needed to run the program, but 8GB is recommended.
 
 ## Summary of Open Source Technologies/Systems Used
 
-* MySQL database is used to store crawled and characterized CVEs and products affected by said CVEs: https://www.mysql.com/
+* MySQL database is used to store patches for CVEs: https://www.mysql.com/
 
-* NVIP also uses Log4j for logging errors and state: https://logging.apache.org/log4j/2.x/javadoc.html
+* Log4j is used for logging errors and state: https://logging.apache.org/log4j/2.x/javadoc.html
+
+* RabbitMQ is used to pass jobs between components in the NVIP program: https://www.rabbitmq.com/
+
+* Docker is used to containerize each component: https://www.docker.com/
 
 
 # Installation and Setup Guide
 
 ## 1. Download & Install MySQL, Create the Database
 
-* Download “mysql-installer-community-8.0.20.0.msi” from  https://dev.mysql.com/downloads/installer/.
+* Download the latest MySQL installer from  https://dev.mysql.com/downloads/installer/.
 
 
-* Click on the downloaded file, choose “Full” installation and continue with default options.
+* Run the downloaded file, choose “Full” installation and continue with default options.
 
 
-* During the configuration of MySQL Server, when prompted for a password (for user "root"), make sure you use the "same password" that you have at the **HIKARI_PASSWORD** Environment Variable.
+* During the configuration of MySQL Server, when prompted for a password (for user "root"), ensure that you remember this password and store it in the **HIKARI_PASSWORD** environment variable (see **Environment Variables** section below).
 
 ## 2. Create Database (via MySQL Workbench & Liquibase)
 
-* After the setup process is finished open "MySQL Workbench" program (Click start and search for "MySQL Workbench" to find it).
+* After the installation process is finished, open the "MySQL Workbench" program.
 
 
 * Click on "Database/Connect To Database" menu on MySQL Workbench and Click "Ok". Enter the password you set for user "root" earlier. You should be connected to the MySQL database.
 
 
-* Once you have a database created, run this command in the mysql-database/newDB directory:
+* Once you have a database created, run the following command with your specific parameters (for DB_NAME, USERNAME, and PASSWORD) in the
+  `nvip-crawler/nvip_data/mysql-database/newDB` directory:
 
-> liquibase --changeLogFile=db.init.xml --classpath=./mysql-connector-j-8.0.33.jar --url="jdbc:mysql://localhost:3306/DB Name" --username=USERNAME --password=PASSWORD update
+> liquibase --changeLogFile=db.init.xml --classpath=./mysql-connector-j-8.0.33.jar --url="jdbc:mysql://localhost:3306/DB_Name" --username=USERNAME --password=PASSWORD update
 
 
 > **NOTE**: Please make sure the MySQL username and password parameters in the
-> environment variables are updated! (Refer to **Environment Variables** section for specific DB parameters needed)
+> environment variables are updated! (Refer to **Environment Variables** section below).
 
-## 3. Build & Package
+## 3. Running Locally
 
-From the root directory, run the following command via cmd line to install dependencies:
+#### Change Working Directory:
+
+    $ cd patchfinder
+
+#### Install Dependencies:
 
     $ mvn clean install
 
-If successful, run the following command to package the Maven project into a jar file
+#### Package Maven Project:
 
     $ mvn package -DskipTests`
 
-You can also run unit tests separately with the Maven test command:
+#### (Optional) Run Unit Tests:
 
     $ mvn test
 
-After the build process, the output jar will be located under the "target" directory of the project root.
+### Run Configuration
+> Environment variables are set to be compatible with those running the program through Docker by default. Thus, if you are running locally, you will have to manually change the environment variables and run configuration as is applicable to your setup.
+>
+> Environment variables are automatically read from the env.list file by default. In order to avoid any possible errors, it is best to run the program in the `nvip-crawler/patchfinder` working directory.
+>
+> See **Environment Variables** below for more information.
+>
 
-**If you are not using Docker**, you don't have to worry about the jar file as long as it builds successfully. Otherwise, this is the Jar file that Docker will use to run the application.
+## 4. Running With Docker:
+Before proceeding to the following steps, please make sure that the Docker Engine is installed and running on your workstation.
 
-## 4. Create a Configuration to run the Patch Finder (IntelliJ)
+#### Build & Run RabbitMQ Image:
+    $ docker run -it --rm --name rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq:3.12-management
 
-> **NOTE:** Intellij does not read env.list files automatically, the contents of the patch finder env.list file can be copied directly into the menu shown in the image below. See **Environment Variables** for more information. <img src="src/main/resources/docs/configMenu.png">
+#### Open New Terminal & Change Working Directory:
+    $ cd patchfinder
 
+#### Build Product Name Extractor Image:
+    $ docker build -t patchfinder .
 
-## 5. Install Docker and Build via Docker CLI (Only for deployment)
-
-#### Build Crawler Image
-    $ docker build -t crawler .
-
-#### Run with Env List
-    $ docker run -m=10g --env-file env.list crawler
+#### Run with Env List:
+    $ docker run --name patchfinder -m 10GB --env-file env.list patchfinder
 
 Where `-m` is the maximum memory (RAM) the container can use during runtime, and `--env-file` is the path to
-the environment variable file (in `.list` format)
+the environment variable file (`env.list`). It is recommended to allot at least 4GB of ram during runtime.
 
-Make sure your MySQL service is running. If not, try the following:
-
-- (Windows) Go to services panel via windows explorer, navigate to where your MySQL service is (named MySQL80), select
-  the service and click "start".
-
-
-- You can verify the service running by logging into MySQL via MySQL Command Line or MySQL Workbench
-  (Login will automatically fail if the service isn't running, so be sure the login credentials are correct!)
-
-
-- Make sure the **NVIP_DATA_DIR** points to the resources directory and the database user and password in the **Environment Variables** are correct.
+>**NOTE**: Make sure your MySQL service is running. If not, try the following:
+>
+> - If on Windows, go to services panel via Windows Explorer, navigate to where your MySQL service is (named MySQL80), select
+    >  the service and click `start`.
+>
+>
+> - Verify the service is running by logging into MySQL via MySQL Command Line or MySQL Workbench
+    >  (login will automatically fail if the service isn't running).
+>
+>
+> - Make sure the database user and password as well as the hikari URL in the **Environment Variables** are correct.
 
 ### Installation & Configuration Checklist
-- All parameters are located in **Environment Variables**
-
-- Required training data and resources are stored under the `src/main/resources` folder (the data directory).
-  You need to configure the data directory of the project (in the **Environment Variables** and (maybe) `nvip.properties`)
-  to point to this directory.
+- All environment variables are correctly configured in file `env.list`.
 
 
-### Environment Variables
+## Environment Variables
 
-The `env.list` file contains a set of environment variables that the crawler requires in order to run.
-Some variables contain default values for if they're not specified, but it is advised to have them configured based on your usage.
+The `env.list` file contains a set of environment variables that the Patch Finder requires in order to run.
+All environment variables contain default values if they're not specified, but it is generally advisable to have them configured to fit your workspace.
 
-Like stated previously, you can provide these variables when running the application with Docker via the `env.list` file.
-If you want to run it locally without Docker, you'll need to provide the environment variables through whatever tool or IDE you're using.
+As stated previously, you can provide these variables when running the application with Docker via the `env.list` file.
+If you want to run it locally without Docker, the program will attempt to automatically read from the `env.list` file. For this to work correctly, please ensure that your working directory is `nvip-crawler/patchfinder`. You also may manually configure the environment variables using your IDE if you prefer.
 
-- Setting up environment variables w/ **IntelliJ**: https://www.jetbrains.com/help/objc/add-environment-variables-and-program-arguments.html
+- Setting up environment variables with **IntelliJ**: https://www.jetbrains.com/help/objc/add-environment-variables-and-program-arguments.html
 
 
-- Setting up environment variables w/ **VS Code**: https://code.visualstudio.com/remote/advancedcontainers/environment-variables
+- Setting up environment variables with **VS Code**: https://code.visualstudio.com/remote/advancedcontainers/environment-variables
 
-**NOTE** If you're running the application with Docker, you will not need to worry about setting up the Env Vars via your IDE.
-IF there's any change in your Env Vars, you don't need to rebuild the image (unless there's changes in the code or properties files).
 
-A list of the environment variables is provided below:
 
-#### Database
+
+
+### Database Variables
+
+* **DB_TYPE**: Database type used.
+  - Default value: `mysql`
+
 
 * **HIKARI_URL**: JDBC URL used for connecting to the MySQL Database.
-    - There is no default value.
-    - Use mysql://localhost:3306 for running locally, and mysql://host.docker.internal:3306 to run with docker
+  - By default, assumes that application will be run with Docker
+  - Use `mysql://localhost:3306/DB_NAME?useSSL=false&allowPublicKeyRetrieval=true` for running locally
+  - Use `mysql://host.docker.internal:3306/DB_NAME?useSSL=false&allowPublicKeyRetrieval=true` to run with Docker
 
 
-* **HIKARI_USER**: Database username used to login to the MySQL database
-    - There is no default value
+* **HIKARI_USER**: Database username used to log in to the database.
+  - Default value: `root`
 
 
-* **HIKARI_PASSWORD**: Database password used to login to the MySQL database
-    - There is no default value
+* **HIKARI_PASSWORD**: Database password used to log in to the database.
+  - Default value: `root`
 
-#### Runtime Data
 
-* **NVIP_DATA_DIR**: Directory path for data resources used by NVIP at runtime
-    - Default value: src/main/resources
 
-* **NVIP_OUTPUT_DIR**: Output directory path for the web crawler(s)
-    - Default value: output/crawlers
+### RabbitMQ Variables
 
-#### Patch Finder
+* **RABBIT_POLL_INTERVAL**: The time interval (in seconds) by which the Patch Finder will poll RabbitMQ for jobs from the Product Name Extractor.
+  - Default value: `60`
 
-* **PATCHFINDER_SOURCE_LIMIT**: Limit of maximum # of repos to scrape for patches
-    - Default value: 10
 
-* **PATCHFINDER_MAX_THREADS**: Limit of maximum # of threads for patch finder
-    - Default value: 10
+* **RABBIT_HOST**: The hostname for the RabbitMQ server.
+  - Default value: `host.docker.internal`
+
+
+* **RABBIT_USERNAME**: The username for the RabbitMQ server connection.
+  - Default value: `guest`
+
+
+* **RABBIT_PASSWORD**: The password for the RabbitMQ server connection.
+  - Default value: `guest`
+
+
+### Patch Finder Variables
+
+* **CVE_LIMIT**: The limit for CVEs to be processed by the Patch Finder during runtime.
+  - Default value: `20`
+
+
+* **ADDRESS_BASES**: The URL address bases for which URLs are built upon when searching for GitHub repositories of affected products.
+  - Default value: `https://www.github.com/,https://www.gitlab.com/`
+  - If adding additional address bases, separate them by a comma `,` as shown above
+
+
+* **MAX_THREADS**: Maximum number of concurrent threads running to identify patches for CVEs.
+  - Default value: `10`
+
+
+* **CLONE_COMMIT_THRESHOLD**: Minimum number of commits in a GitHub repository for it to be cloned. If less than threshold, commits are scraped instead without cloning the repository.
+  - Default value: `1000`
+
+
+* **CLONE_COMMIT_LIMIT**: Maximum number of commits in a GitHub repository for it to be cloned. If over the limit, the repository will be ignored.
+  - Default value: `50000`
+
+
+* **CLONE_PATH**: Path to the directory where GitHub repositories containing possible patches will be cloned to.
+  - Default value: `nvip_data/patch-repos`
+
+
+* **PATCH_SRC_URL_PATH**: Path to the dictionary containing possible patch sources.
+  - Default value: `nvip_data/source_dict.json`

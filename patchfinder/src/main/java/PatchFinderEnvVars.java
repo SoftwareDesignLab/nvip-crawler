@@ -170,11 +170,11 @@ public class PatchFinderEnvVars {
 
         if(systemProps.containsKey("CVE_LIMIT")) {
             cveLimit = Integer.parseInt(systemProps.get("CVE_LIMIT"));
-            logger.info("Setting CVE_LIMIT to {}", cveLimit);
+            logger.info("Setting CVE_LIMIT to {} CVEs", cveLimit);
         } else if (fileProps.containsKey("CVE_LIMIT")) {
             cveLimit = Integer.parseInt(fileProps.get("CVE_LIMIT"));
-            logger.info("Setting CVE_LIMIT to {}", cveLimit);
-        } else logger.warn("Could not fetch CVE_LIMIT from env vars, defaulting to {}", cveLimit);
+            logger.info("Setting CVE_LIMIT to {} CVEs", cveLimit);
+        } else logger.warn("Could not fetch CVE_LIMIT from env vars, defaulting to {} CVEs", cveLimit);
 
         if(systemProps.containsKey("ADDRESS_BASES")) {
             addressBases = systemProps.get("ADDRESS_BASES").split(",");
@@ -186,27 +186,27 @@ public class PatchFinderEnvVars {
 
         if(systemProps.containsKey("MAX_THREADS")) {
             maxThreads = Integer.parseInt(systemProps.get("MAX_THREADS"));
-            logger.info("Setting MAX_THREADS to {}", maxThreads);
+            logger.info("Setting MAX_THREADS to {} threads", maxThreads);
         } else if (fileProps.containsKey("MAX_THREADS")) {
             maxThreads = Integer.parseInt(fileProps.get("MAX_THREADS"));
-            logger.info("Setting MAX_THREADS to {}", maxThreads);
-        } else logger.warn("Could not fetch MAX_THREADS from env vars, defaulting to {}", maxThreads);
+            logger.info("Setting MAX_THREADS to {} threads", maxThreads);
+        } else logger.warn("Could not fetch MAX_THREADS from env vars, defaulting to {} threads", maxThreads);
 
         if(systemProps.containsKey("CLONE_COMMIT_THRESHOLD")) {
             cloneCommitThreshold = Integer.parseInt(systemProps.get("CLONE_COMMIT_THRESHOLD"));
-            logger.info("Setting CLONE_COMMIT_THRESHOLD to {}", cloneCommitThreshold);
+            logger.info("Setting CLONE_COMMIT_THRESHOLD to {} commits", cloneCommitThreshold);
         } else if (fileProps.containsKey("CLONE_COMMIT_THRESHOLD")) {
             cloneCommitThreshold = Integer.parseInt(fileProps.get("CLONE_COMMIT_THRESHOLD"));
-            logger.info("Setting CLONE_COMMIT_THRESHOLD to {}", cloneCommitThreshold);
-        } else logger.warn("Could not fetch CLONE_COMMIT_THRESHOLD from env vars, defaulting to {}", cloneCommitThreshold);
+            logger.info("Setting CLONE_COMMIT_THRESHOLD to {} commits", cloneCommitThreshold);
+        } else logger.warn("Could not fetch CLONE_COMMIT_THRESHOLD from env vars, defaulting to {} commits", cloneCommitThreshold);
 
         if(systemProps.containsKey("CLONE_COMMIT_LIMIT")) {
             cloneCommitLimit = Integer.parseInt(systemProps.get("CLONE_COMMIT_LIMIT"));
-            logger.info("Setting CLONE_COMMIT_LIMIT to {}", cloneCommitLimit);
+            logger.info("Setting CLONE_COMMIT_LIMIT to {} commits", cloneCommitLimit);
         } else if (fileProps.containsKey("CLONE_COMMIT_LIMIT")) {
             cloneCommitLimit = Integer.parseInt(fileProps.get("CLONE_COMMIT_LIMIT"));
-            logger.info("Setting CLONE_COMMIT_LIMIT to {}", cloneCommitLimit);
-        } else logger.warn("Could not fetch CLONE_COMMIT_LIMIT from env vars, defaulting to {}", cloneCommitLimit);
+            logger.info("Setting CLONE_COMMIT_LIMIT to {} commits", cloneCommitLimit);
+        } else logger.warn("Could not fetch CLONE_COMMIT_LIMIT from env vars, defaulting to {} commits", cloneCommitLimit);
 
         if(systemProps.containsKey("CLONE_PATH")) {
             clonePath = systemProps.get("CLONE_PATH");
@@ -281,11 +281,11 @@ public class PatchFinderEnvVars {
 
         if(systemProps.containsKey("RABBIT_POLL_INTERVAL")) {
             rabbitPollInterval = Integer.parseInt(systemProps.get("RABBIT_POLL_INTERVAL"));
-            logger.info("Setting RABBIT_POLL_INTERVAL to {}", rabbitPollInterval);
+            logger.info("Setting RABBIT_POLL_INTERVAL to {} seconds", rabbitPollInterval);
         } else if (fileProps.containsKey("RABBIT_POLL_INTERVAL")) {
             rabbitPollInterval = Integer.parseInt(fileProps.get("RABBIT_POLL_INTERVAL"));
-            logger.info("Setting RABBIT_POLL_INTERVAL to {}", rabbitPollInterval);
-        } else logger.warn("Could not fetch RABBIT_POLL_INTERVAL from env vars, defaulting to {}", rabbitPollInterval);
+            logger.info("Setting RABBIT_POLL_INTERVAL to {} seconds", rabbitPollInterval);
+        } else logger.warn("Could not fetch RABBIT_POLL_INTERVAL from env vars, defaulting to {} seconds", rabbitPollInterval);
 
         if(systemProps.containsKey("RABBIT_HOST")) {
             rabbitHost = systemProps.get("RABBIT_HOST");
