@@ -12,7 +12,7 @@ services:
         condition: service_started
     build: ./crawler
     volumes:
-      - './crawler-output:/usr/local/lib/output'
+      - 'crawler-output:/usr/local/lib/output'
       - 'exploit-repo:/usr/local/lib/nvip_data/exploit-repo'
       - 'mitre-cve:/usr/local/lib/nvip_data/mitre-cve'
     env_file:
@@ -84,6 +84,7 @@ services:
 volumes:
   exploit-repo:
   mitre-cve:
+  crawler-output:
 
 networks:
   nvip_network:
