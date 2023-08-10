@@ -19,6 +19,9 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
+/*
+    DEVELOPMENT STOPPED 8/10/23 DUE TO HESITATION TO USE CHATGPT/OPENAI
+ */
 public class ChatGPTProcessor {
     private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
     private OpenAIRequestHandler requestHandler;
@@ -41,9 +44,9 @@ public class ChatGPTProcessor {
 
     public String callModel(String arg) {
         OpenAIProcessor openAI = new OpenAIProcessor();
-        openAI.sendRequest(SYS_MESSAGE, arg, TEMP, RequestorIdentity.ANON);
+        openAI.sendRequest(SYS_MESSAGE, arg, TEMP, RequestorIdentity.ANON, 10);
 
-        return null; //todo fix this
+        return null; //currently does not actually return anything...
     }
     private Set<String> askChatGPT(Set<CWETree> candidates, CompositeVulnerability vuln){
         StringBuilder cwes = new StringBuilder(); //String that will be sent to chat gpt

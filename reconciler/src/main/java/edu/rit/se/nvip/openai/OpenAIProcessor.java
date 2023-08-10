@@ -19,7 +19,14 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.*;
 
+
+/*
+    DEVELOPMENT STOPPED 8/10/23 DUE TO HESITATION TO USE CHATGPT/OPENAI
+ */
+
+
 public class OpenAIProcessor {
+
     private static final String OPENAI_SENDER = "openai_requests";
     private static final String OPENAI_RECEIVER = "openai_responses";
     private ConnectionFactory factory;
@@ -42,7 +49,7 @@ public class OpenAIProcessor {
         startListening();
     }
 
-    public CompletableFuture<String> sendRequest(String sys_msg, String usr_msg, double temp, RequestorIdentity requestor) {
+    public CompletableFuture<String> sendRequest(String sys_msg, String usr_msg, double temp, RequestorIdentity requestor, int maxTokens) {
         try (Connection connection = factory.newConnection();
              Channel channel = connection.createChannel()) {
             // Declare the queue
@@ -56,6 +63,7 @@ public class OpenAIProcessor {
             message.add("requestorPrioId", new JsonPrimitive(requestor.priority));
             message.add("PrioId", new JsonPrimitive(nextPriorityId++));
             message.add("JobID", new JsonPrimitive(jobId++));
+            message.add("maxTokens", new JsonPrimitive(maxTokens));
             Gson gson = new Gson();
             String jsonString = gson.toJson(message);
             CompletableFuture<String> futureResponse = new CompletableFuture<>();
