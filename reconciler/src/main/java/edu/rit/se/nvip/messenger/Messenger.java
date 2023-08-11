@@ -74,8 +74,11 @@ public class Messenger {
                 messageQueue.offer(parsedIds);
             };
             channel.basicConsume(RECONCILER_QUEUE, true, deliverCallback, consumerTag -> { });
-
-            return messageQueue.poll(rabbitTimeout, TimeUnit.SECONDS);
+            if (rabbitTimeout > 0) {
+                return messageQueue.poll(rabbitTimeout, TimeUnit.SECONDS);
+            } else { // negative number means we don't have a timeout and we'll wait as long as we need to
+                return messageQueue.take();
+            }
 
         } catch (TimeoutException e) {
             logger.error("Error occurred while sending the Reconciler message to RabbitMQ: {}", e.getMessage());
