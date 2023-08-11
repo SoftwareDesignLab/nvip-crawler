@@ -23,6 +23,7 @@ package productdetection; /**
  */
 
 import env.ProductNameExtractorEnvVars;
+import model.cpe.AffectedProduct;
 import model.cve.CompositeVulnerability;
 import model.cpe.CpeGroup;
 import org.junit.Test;
@@ -37,6 +38,7 @@ import java.util.logging.Logger;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.*;
 
 /**
  * Unit tests for AffectedProductIdentifier class
@@ -104,22 +106,33 @@ public class AffectedProductIdentifierTest {
 
 	}
 
-	//test this
-	//	public void releaseResources(){
-	//		logger.info("Releasing affected product identifier from memory...");
-	//		vulnList = null;
-	//		cpeLookUp = null;
-	//		if(productDetector != null){
-	//			productDetector.unloadModels();
-	//		}
-	//		productDetector = null;
-	//	}
+
+	@Test
+	public void testIdentifyAffectedProducts() throws Exception {
+		// Create mock dependencies
+		ProductDetector productDetector = mock(ProductDetector.class);
+		CpeLookUp cpeLookUp = mock(CpeLookUp.class);
+		CompositeVulnerability vulnerability = mock(CompositeVulnerability.class);
+
+		List<CompositeVulnerability> vulnList = new ArrayList<>();
+		vulnList.add(vulnerability); // Add mock vulnerability to the list
+
+		// Create an instance of the class under test (adjust constructor parameters as needed)
+		AffectedProductIdentifier identifier = new AffectedProductIdentifier(2, vulnList);
+
+		// Simulate the method call
+		List<AffectedProduct> affectedProducts = identifier.identifyAffectedProducts();
+
+		// Add assertions based on the expected behavior of the method
+		assertEquals(affectedProducts.size(), 0);
+	}
+
 	@Test
 	public void testReleaseResources() {
 		AffectedProductIdentifier affectedProductIdentifier = new AffectedProductIdentifier(12, null);
 
-		Logger logger = Mockito.mock(Logger.class);
-		ProductDetector productDetector = Mockito.mock(ProductDetector.class);
+		Logger logger = mock(Logger.class);
+		ProductDetector productDetector = mock(ProductDetector.class);
 
 
 		// Call releaseResources() method
