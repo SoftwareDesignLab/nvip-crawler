@@ -580,6 +580,208 @@
                 tableName="nvddata"/>
     </changeSet>
 
+    <changeSet author="memeee" id="affectedproduct-remove-date">
+        <dropColumn tableName="affectedproduct" columnName="release_date"/>
+    </changeSet>
+
+    <changeSet id="createPermissionTable" author="memeee">
+        <createTable tableName="permission">
+            <column name="permission_id" type="int" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false" unique="true"/>
+            </column>
+            <column name="permission_name" type="varchar(45)"/>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="createRoleTable" author="memeee">
+        <createTable tableName="role">
+            <column name="role_id" type="int" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false" unique="true"/>
+            </column>
+            <column name="name" type="varchar(20)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="createUserTable" author="memeee">
+        <createTable tableName="user">
+            <column name="user_id" type="int" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false" unique="true"/>
+            </column>
+            <column name="user_name" type="varchar(45)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="password_hash" type="varchar(1024)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="token" type="varchar(512)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="token_expiration_date" type="datetime">
+                <constraints nullable="true"/>
+            </column>
+            <column name="first_name" type="varchar(50)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="last_name" type="varchar(50)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="role_id" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="email" type="varchar(45)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="registered_date" type="datetime">
+                <constraints nullable="true"/>
+            </column>
+            <column name="last_login_date" type="datetime">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+        <addUniqueConstraint columnNames="user_name" constraintName="user_name_idx" tableName="user"/>
+        <addForeignKeyConstraint baseColumnNames="role_id" baseTableName="user" constraintName="user_role"
+                                 referencedColumnNames="role_id" referencedTableName="role"/>
+    </changeSet>
+
+
+
+    <changeSet id="createUserPermissionTable" author="memeee">
+        <createTable tableName="userpermission">
+            <column name="user_id" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="permission_id" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="date" type="datetime">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+        <addPrimaryKey columnNames="user_id, permission_id" tableName="userpermission"/>
+        <addForeignKeyConstraint baseColumnNames="permission_id" baseTableName="userpermission"
+                                 constraintName="userpermission_permission_id_fk"
+                                 referencedColumnNames="permission_id" referencedTableName="permission"/>
+        <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="userpermission"
+                                 constraintName="userpermission_user_id_fk"
+                                 referencedColumnNames="user_id" referencedTableName="user"/>
+    </changeSet>
+
+
+    <changeSet id="removeColumnsFromRunHistory" author="memeee">
+        <dropColumn tableName="runhistory" columnName="run_start_date" />
+        <dropColumn tableName="runhistory" columnName="run_end_date" />
+    </changeSet>
+
+    <!-- Add new columns to the existing table -->
+    <changeSet id="enhanceRunHistory" author="memeee">
+        <addColumn tableName="runhistory">
+            <column name="run_date_time" type="datetime" />
+            <column name="total_cve_count" type="int" />
+            <column name="new_cve_count" type="int" />
+            <column name="updated_cve_count" type="int" />
+            <column name="not_in_nvd_count" type="int" />
+            <column name="not_in_mitre_count" type="int" />
+            <column name="not_in_both_count" type="int" />
+            <column name="avg_time_gap_nvd" type="double" />
+            <column name="avg_time_gap_mitre" type="double" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="dropVulnerabilityAggregate" author="dylan">
+        <dropTable tableName="vulnerabilityaggregate" cascadeConstraints="true"/>
+    </changeSet>
+
+    <changeSet id="dropNvdMitreStatus" author="memeee">
+        <dropTable tableName="nvdmitrestatus"/>
+    </changeSet>
+
+    <changeSet id="createTimegapTable" author="memeee">
+        <createTable tableName="timegap">
+            <column name="timegap_id" type="int" autoIncrement="true">
+                <constraints primaryKey="true" primaryKeyName="pk_timegap"/>
+            </column>
+            <column name="cve_id" type="varchar(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="location" type="varchar(10)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="timegap" type="double">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_date" type="datetime">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="timegap" indexName="timegap_cve_id_index" unique="false">
+            <column name="cve_id"/>
+        </createIndex>
+
+        <addForeignKeyConstraint baseTableName="timegap" baseColumnNames="cve_id"
+                                 referencedTableName="vulnerability" referencedColumnNames="cve_id"
+                                 constraintName="timegap_cve_id_fk"/>
+
+        <addUniqueConstraint tableName="timegap" columnNames="cve_id, location" constraintName="uk_timegap_cve_id_location"/>
+
+    </changeSet>
+
+    <changeSet id="createMitreDataTable" author="memeee">
+        <createTable tableName="mitredata">
+            <column name="cve_id" type="VARCHAR(20)">
+                <constraints primaryKey="true" nullable="false" unique="true"/>
+            </column>
+            <column name="status" type="TINYTEXT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex
+                indexName="mitredata_index_cve_id"
+                tableName="mitredata"
+                unique="true">
+            <column name="cve_id"/>
+        </createIndex>
+
+        <addUniqueConstraint
+                columnNames="cve_id"
+                tableName="nvddata"/>
+    </changeSet>
+
+    <changeSet id="addNvdLastModifiedColumn" author="memeee">
+        <addColumn tableName="nvddata">
+            <column name="last_modified" type="datetime">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="addMitreLastModifiedColumn" author="memeee">
+        <addColumn tableName="mitredata">
+            <column name="last_modified" type="datetime">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="addDescriptionUserId" author="memeee">
+        <addColumn tableName="description">
+            <column name="is_user_generated" type="int" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="addVdoActiveFlag" author="memeee">
+        <addColumn tableName="vdocharacteristic">
+            <column name="is_active" type="int"  defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
     
 
 </databaseChangeLog>
