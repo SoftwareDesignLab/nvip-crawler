@@ -30,6 +30,7 @@ import weka.classifiers.trees.RandomForest;
 import weka.core.Instance;
 import weka.core.SparseInstance;
 
+import java.nio.file.Paths;
 import java.util.ArrayList;
 
 import static org.junit.Assert.assertEquals;
@@ -51,7 +52,7 @@ public class OrdinaryCveClassifierTest {
         String trainingDataFiles = trainingDataInfo[1];
         String[] trainingDataFileArr = trainingDataFiles.split(",");
         String trainingDataFileName = trainingDataFileArr[0];
-        trainingDataFileName = trainingDataPath + trainingDataFileName;
+        trainingDataFileName = Paths.get(trainingDataPath).resolve(trainingDataFileName).toString();
 
         // pre-process training data and store it
         String preProcessedTrainingDataFile = trainingDataFileName.concat("-processed.csv");

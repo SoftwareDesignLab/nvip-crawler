@@ -29,6 +29,7 @@ import edu.rit.se.nvip.automatedcvss.preprocessor.CvePreProcessor;
 import weka.core.Instance;
 import weka.core.SparseInstance;
 
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -44,7 +45,7 @@ public class EntropyBasedCveClassifierTest {
         String trainingDataFiles = trainingDataInfo[1];
         String[] trainingDataFileArr = trainingDataFiles.split(",");
         String trainingDataFileName = trainingDataFileArr[0];
-        trainingDataFileName = trainingDataPath + trainingDataFileName;
+        trainingDataFileName = Paths.get(trainingDataPath).resolve(trainingDataFileName).toString();
 
         // pre-edu.rit.se.nvip.process training data and store it
         String preProcessedTrainingDataFile = trainingDataFileName.concat("-processed.csv");
@@ -62,7 +63,7 @@ public class EntropyBasedCveClassifierTest {
         String trainingDataFiles = trainingDataInfo[1];
         String[] trainingDataFileArr = trainingDataFiles.split(",");
         String trainingDataFileName = trainingDataFileArr[0];
-        trainingDataFileName = trainingDataPath + trainingDataFileName;
+        trainingDataFileName = Paths.get(trainingDataPath).resolve(trainingDataFileName).toString();
 
         // pre-edu.rit.se.nvip.process training data and store it
         String preProcessedTrainingDataFile = trainingDataFileName.concat("-processed.csv");
@@ -81,7 +82,7 @@ public class EntropyBasedCveClassifierTest {
         String trainingDataFiles = trainingDataInfo[1];
         String[] trainingDataFileArr = trainingDataFiles.split(",");
         String trainingDataFileName = trainingDataFileArr[0];
-        trainingDataFileName = trainingDataPath + trainingDataFileName;
+        trainingDataFileName = Paths.get(trainingDataPath).resolve(trainingDataFileName).toString();
 
         // pre-edu.rit.se.nvip.process training data and store it
         String preProcessedTrainingDataFile = trainingDataFileName.concat("-processed.csv");

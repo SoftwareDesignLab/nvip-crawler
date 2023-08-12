@@ -26,6 +26,8 @@ package edu.rit.se.nvip.characterizer.classifier;
 import edu.rit.se.nvip.utils.ReconcilerEnvVars;
 import org.junit.Test;
 
+import java.nio.file.Paths;
+
 import static org.junit.Assert.assertEquals;
 
 public class CveClassifierFactorTest {
@@ -38,7 +40,7 @@ public class CveClassifierFactorTest {
         String trainingDataFiles = trainingDataInfo[1];
         String[] trainingDataFileArr = trainingDataFiles.split(",");
         String trainingDataFileName = trainingDataFileArr[0];
-        trainingDataFileName = trainingDataPath + trainingDataFileName;
+        trainingDataFileName = Paths.get(trainingDataPath).resolve(trainingDataFileName).toString();
 
         // pre-process training data and store it
         String preProcessedTrainingDataFile = trainingDataFileName.concat("-processed.csv");
