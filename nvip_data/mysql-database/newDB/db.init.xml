@@ -782,6 +782,11 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="modify-gpt_func" author="memeee">
+        <modifyDataType tableName="description" columnName="gpt_func" newDataType="MEDIUMTEXT"/>
+    </changeSet>
+
+
     
 
 </databaseChangeLog>
