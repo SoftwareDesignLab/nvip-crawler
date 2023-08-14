@@ -17,10 +17,10 @@ services:
       - 'mitre-cve:/usr/local/lib/nvip_data/mitre-cve'
     env_file:
       - ./nvip-docker.env
-    deploy:
-      resources:
-        limits:
-          memory: 10G
+#    deploy:
+#      resources:
+#        limits:
+#          memory: 10G
 
   patchfinder:
     image: ghcr.io/softwaredesignlab/nvip-patchfinder:latest
@@ -77,6 +77,8 @@ services:
 
   taskmanager:
     image: rabbitmq:3.9-management
+    ports:
+      - '8080:15672'
 
   email:
     image: mailhog/mailhog
