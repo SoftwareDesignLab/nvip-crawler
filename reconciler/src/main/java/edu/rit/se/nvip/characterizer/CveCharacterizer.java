@@ -138,7 +138,7 @@ public class CveCharacterizer {
 			}
 			prediction.put(nounGroup, labelToScore);
 		}
-
+		logger.info(prediction);
 		return prediction;
 	}
 
