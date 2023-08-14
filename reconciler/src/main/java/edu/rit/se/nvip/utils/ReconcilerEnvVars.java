@@ -43,6 +43,8 @@ public class ReconcilerEnvVars extends Properties {
         loadVars(DEFAULT_ENV_LIST_PATH);
     }
     public static void loadVars(String path) {
+        String currentDirectory = System.getProperty("user.dir");
+        logger.info("Current Directory: " + currentDirectory);
         if (System.getenv(EnvVar.FILTER_LIST.toString()) == null) {
             clearLoadParse(false, path);
         } else {
