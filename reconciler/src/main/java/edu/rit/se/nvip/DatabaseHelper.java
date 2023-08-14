@@ -484,7 +484,7 @@ public class DatabaseHelper {
         return toBackfill;
     }
 
-    public void insertCvssBatch(Set<CompositeVulnerability> vulns) {
+    public int insertCvssBatch(Set<CompositeVulnerability> vulns) {
         try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(INSERT_CVSS)) {
             for (CompositeVulnerability vuln : vulns) {
                 if (!vuln.isRecharacterized() || vuln.getCvssScoreInfo() == null) {
@@ -494,13 +494,15 @@ public class DatabaseHelper {
                 pstmt.addBatch();
             }
             pstmt.executeBatch();
+            return 1;
         } catch (SQLException e) {
             logger.error("Error while inserting cvss scores");
             logger.error(e);
+            return 0;
         }
     }
 
-    public void insertVdoBatch(Set<CompositeVulnerability> vulns) {
+    public int insertVdoBatch(Set<CompositeVulnerability> vulns) {
         try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(INSERT_VDO);
              PreparedStatement activeStmt = conn.prepareStatement(UPDATE_VDO_ACTIVE)) {
             conn.setAutoCommit(false);
@@ -516,9 +518,11 @@ public class DatabaseHelper {
             }
             pstmt.executeBatch();
             conn.commit();
+            return 1;
         } catch (SQLException ex) {
             logger.error("Error while inserting vdo labels");
             logger.error(ex);
+            return 0;
         }
     }
 
@@ -602,7 +606,7 @@ public class DatabaseHelper {
         }
     }
 
-    public void backfillNvdTimegaps(Set<NvdVulnerability> newNvdVulns) {
+    public int backfillNvdTimegaps(Set<NvdVulnerability> newNvdVulns) {
         // we don't need to compute time gaps ourselves
         // at this point these nvd vulns should already be in the nvddata table and we have create dates for all vulns in our system
         // so we can compute the timestamp difference within sql, and the inner join ensures this only happens for vulns we already have
@@ -613,13 +617,15 @@ public class DatabaseHelper {
                 pstmt.addBatch();
             }
             pstmt.executeBatch();
+            return 1;
         } catch (SQLException ex) {
             logger.error("Error while inserting time gaps");
             logger.error(ex);
+            return 0;
         }
     }
 
-    public void backfillMitreTimegaps(Set<MitreVulnerability> newNvdVulns) {
+    public int backfillMitreTimegaps(Set<MitreVulnerability> newNvdVulns) {
         // mitre vulns don't have publish dates - so we're using NOW as their "publish date" to compute time gaps until further notice
         // the (cve_id, location) pair is a key in this table, so the last clause stops any duplicate time gaps
         try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(BACKFILL_MITRE_TIMEGAPS)) {
@@ -628,13 +634,15 @@ public class DatabaseHelper {
                 pstmt.addBatch();
             }
             pstmt.executeBatch();
+            return 1;
         } catch (SQLException ex) {
             logger.error("Error while inserting time gaps");
             logger.error(ex);
+            return 0;
         }
     }
 
-    public void insertTimeGapsForNewVulns(Set<CompositeVulnerability> vulns) {
+    public int insertTimeGapsForNewVulns(Set<CompositeVulnerability> vulns) {
         String query = "INSERT INTO timegap (cve_id, location, timegap, created_date) VALUES (?, ?, ?, NOW())";
         try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(query)) {
             for (CompositeVulnerability vuln : vulns) {
@@ -655,9 +663,11 @@ public class DatabaseHelper {
                 }
             }
             pstmt.executeBatch();
+            return 1;
         } catch (SQLException ex) {
             logger.error("Error while inserting time gaps for newly discovered vulnerabilities");
             logger.error(ex);
+            return 0;
         }
     }
 
