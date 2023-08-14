@@ -26,6 +26,9 @@ package edu.rit.se.nvip.db;
 import com.zaxxer.hikari.HikariDataSource;
 import edu.rit.se.nvip.DatabaseHelper;
 import edu.rit.se.nvip.characterizer.CveCharacterizer;
+import edu.rit.se.nvip.characterizer.enums.CVSSSeverityClass;
+import edu.rit.se.nvip.characterizer.enums.VDOLabel;
+import edu.rit.se.nvip.characterizer.enums.VDONounGroup;
 import edu.rit.se.nvip.cwe.CWE;
 import edu.rit.se.nvip.model.*;
 import org.apache.logging.log4j.LogManager;
@@ -42,7 +45,9 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.lang.reflect.Field;
 import java.sql.*;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import static org.junit.Assert.*;
@@ -143,15 +148,8 @@ public class DatabaseHelperTest {
     @Test
     public void getJobsTest() {
         try {
-            // Set up the mock objects and their behavior
-            when(conn.prepareStatement(anyString())).thenReturn(pstmt);
-            when(pstmt.executeQuery()).thenReturn(res);
             when(res.next()).thenReturn(true, true, false);
             when(res.getString("cve_id")).thenReturn("CVE-2021-1234", "CVE-2021-5678");
-
-            // Access the private GET_JOBS constant using reflection
-            Field getJobsField = DatabaseHelper.class.getDeclaredField("GET_JOBS");
-            getJobsField.setAccessible(true);
 
 
             // Call the method under test
@@ -162,16 +160,13 @@ public class DatabaseHelperTest {
             expected.add("CVE-2021-1234");
             expected.add("CVE-2021-5678");
             assertEquals(expected, result);
-        } catch (SQLException | NoSuchFieldException e) {
+        } catch (SQLException e) {
             logger.error("Error loading database");
         }
     }
     @Test
     public void getRawVulnerabilitiesTest() {
         try {
-            // Set up the mock objects and their behavior
-            when(conn.prepareStatement(anyString())).thenReturn(pstmt);
-            when(pstmt.executeQuery()).thenReturn(res);
             when(res.next()).thenReturn(true, false);
 
             // Set up the expected data
@@ -192,16 +187,12 @@ public class DatabaseHelperTest {
 
     @Test
     public void markGarbageTest() throws SQLException {
-        // Create a mocked Connection, PreparedStatement, and set of RawVulnerabilities
+
         Set<RawVulnerability> mockedRawVulns = new HashSet<>();
         mockedRawVulns.add(new RawVulnerability(1, "CVE-2021-1234", "Description", null, null, null, ""));
         mockedRawVulns.add(new RawVulnerability(2, "CVE-2021-5678", "Description", null, null, null, ""));
 
-        // Mock the behavior of the getConnection and prepareStatement methods
-        when(dbh.getConnection()).thenReturn(conn);
-        when(conn.prepareStatement(anyString())).thenReturn(pstmt);
-
-        // Call the markGarbage method
+        // Call the updateFilterStatus method
         dbh.updateFilterStatus(mockedRawVulns);
 
         // Verify that pstmt.setInt() is called with the correct arguments
@@ -219,8 +210,6 @@ public class DatabaseHelperTest {
     @Test
     public void testGetCompositeVulnerability() throws SQLException {
         // Set up the behavior of the mocks
-        when(conn.prepareStatement(anyString())).thenReturn(pstmt);
-        when(pstmt.executeQuery()).thenReturn(res);
         when(res.next()).thenReturn(true, false, true);
         when(res.getInt(anyString())).thenReturn(1);
         when(res.getString(anyString())).thenReturn("1");
@@ -235,9 +224,6 @@ public class DatabaseHelperTest {
     @Test
     public void getUsedRawVulnerabilitiesTest() {
        try{
-           // Set up the behavior of the mocks
-            when(conn.prepareStatement(anyString())).thenReturn(pstmt);
-            when(pstmt.executeQuery()).thenReturn(res);
             when(res.next()).thenReturn(true, true, false);
             when(res.getInt(anyString())).thenReturn(1);
             when(res.getString(anyString())).thenReturn("desc");
@@ -256,7 +242,6 @@ public class DatabaseHelperTest {
     @Test
     public void insertOrUpdateVulnerabilityFullTest() {
         try{
-            when(conn.prepareStatement(anyString())).thenReturn(pstmt);
             when(conn.prepareStatement(anyString(), eq(Statement.RETURN_GENERATED_KEYS))).thenReturn(pstmt);
             when(pstmt.getGeneratedKeys()).thenReturn(res);
             when(res.next()).thenReturn(true);
@@ -326,82 +311,59 @@ public class DatabaseHelperTest {
         assertEquals(1, result);
     }
 
-//    @Test
-//    public void updateVDOTest() throws SQLException {
-//        CompositeVulnerability vuln = new CompositeVulnerability(new RawVulnerability(1, "cve-1",
-//    "The ntpd_driver component before 1.3.0 and 2.x before 2.2.0 for Robot Operating System (ROS) allows attackers, " +
-//            "who control the source code of a different node in the same ROS application, to change a robot's behavior. " +
-//            "This occurs because a topic name depends on the attacker-controlled time_ref_topic parameter.",
-//            new Timestamp(System.currentTimeMillis()),
-//            new Timestamp(System.currentTimeMillis()),
-//            new Timestamp(System.currentTimeMillis()),
-//            "www.example.com"));
-//
-//        VdoCharacteristic vdo = new VdoCharacteristic("cve-1", 1, 1.5, 2);
-//        VdoCharacteristic vdo1 = new VdoCharacteristic("cve-1", 2, 2.0, 3);
-//        VdoCharacteristic vdo2 = new VdoCharacteristic("cve-1", 3, 1.0, 1);
-//
-//        vuln.addVdoCharacteristic(vdo);
-//        vuln.addVdoCharacteristic(vdo1);
-//        vuln.addVdoCharacteristic(vdo2);
-//
-//        int result = dbh.updateVDO(vuln);
-//
-//        // Verify the expected method calls and parameter values
-//        verify(conn).setAutoCommit(false);
-//        verify(pstmt, times(1)).setString(1, "cve-1");
-//        verify(pstmt).setDouble(3, 1.5);
-//        verify(pstmt).setDouble(3, 2.0);
-//        verify(pstmt).setDouble(3, 1.0);
-//        verify(pstmt).setString(2, String.valueOf(CveCharacterizer.VDONounGroup.getVdoNounGroup(vdo.getVdoNounGroup())));
-//        verify(pstmt).setString(2, String.valueOf(CveCharacterizer.VDONounGroup.getVdoNounGroup(vdo1.getVdoNounGroup())));
-//        verify(pstmt).setString(2, String.valueOf(CveCharacterizer.VDONounGroup.getVdoNounGroup(vdo2.getVdoNounGroup())));
-//        verify(pstmt).setString(1, String.valueOf(CveCharacterizer.VDOLabel.getVdoLabel(vdo.getVdoLabel())));
-//        verify(pstmt).setString(1, String.valueOf(CveCharacterizer.VDOLabel.getVdoLabel(vdo1.getVdoLabel())));
-//        verify(pstmt).setString(1, String.valueOf(CveCharacterizer.VDOLabel.getVdoLabel(vdo2.getVdoLabel())));
-//        verify(pstmt, times(3)).setString(4, vdo.getCveId());
-//        verify(pstmt, times(3)).addBatch();
-//        verify(pstmt).execute();
-//        verify(pstmt).executeBatch();
-//        verify(conn).commit();
-//
-//        assertEquals(1, result);
-//
-//    }
+    @Test
+    public void insertCvssBatchTest() throws SQLException {
+        Set<CompositeVulnerability> vulns = new HashSet<>();
 
-//    @Test
-//    public void updateCVSSTest() throws SQLException {
-//        CompositeVulnerability vuln = new CompositeVulnerability(new RawVulnerability(1, "cve-1",
-//                "The ntpd_driver component before 1.3.0 and 2.x before 2.2.0 for Robot Operating System (ROS) allows attackers, " +
-//                        "who control the source code of a different node in the same ROS application, to change a robot's behavior. " +
-//                        "This occurs because a topic name depends on the attacker-controlled time_ref_topic parameter.",
-//                new Timestamp(System.currentTimeMillis()),
-//                new Timestamp(System.currentTimeMillis()),
-//                new Timestamp(System.currentTimeMillis()),
-//                "www.example.com"));
-//
-//        vuln.addCvssScore(new CvssScore("cve-1", 1, 1.0, 1.0, 2.0));
-//
-//        int result = dbh.updateCVSS(vuln);
-//
-//        verify(conn).prepareStatement(anyString());
-//        verify(pstmt).setDouble(1, 1.0);
-//        verify(pstmt).setString(2, "1");
-//
-//        assertEquals(1, result);
-//
-//        vuln.setRecStatus(CompositeVulnerability.ReconciliationStatus.UNCHANGED);
-//        vuln.updateSystemDescription("new desc is this!", new HashSet<>(), false);
-//        vuln.addCvssScore(new CvssScore("cve-1", 2, 2.0, 2.0, 3.0));
-//        int result2 = dbh.updateCVSS(vuln);
-//        verify(conn, times(2)).prepareStatement(anyString());
-//        verify(pstmt, times(2)).setString(3, "cve-1");
-//        verify(pstmt).setDouble(1, 2.0);
-//        verify(pstmt).setString(2, "2");
-//        verify(pstmt, times(2)).execute();
-//
-//        assertEquals(1, result2);
-//    }
+        CompositeVulnerability vuln1 = new CompositeVulnerability(new RawVulnerability(1, "CVE-1", "desc", new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis()), "ex.com"));
+        CompositeVulnerability vuln2 = new CompositeVulnerability(new RawVulnerability(1, "CVE-2", "desc", new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis()), "ex.com"));
+        vuln1.addCvssScore(new CvssScore(vuln1.getCveId(), CVSSSeverityClass.LOW, 1.0, 1.0, 1.0));
+        vuln2.addCvssScore(new CvssScore(vuln2.getCveId(), CVSSSeverityClass.LOW, 1.0, 1.0, 1.0));
+        vulns.add(vuln1);
+        vulns.add(vuln2);
+
+
+        int res = dbh.insertCvssBatch(vulns);
+
+        verify(pstmt).setString(1, vuln1.getCvssScoreInfo().getCveId());
+        verify(pstmt).setString(1, vuln2.getCvssScoreInfo().getCveId());
+        verify(pstmt, times(2)).setDouble(2, 1.0);
+        verify(pstmt, times(2)).setDouble(3, 5.0);
+        verify(pstmt, times(2)).addBatch();
+        verify(pstmt).executeBatch();
+
+        assertEquals(1, res);
+    }
+
+    @Test
+    public void insertVdoBatchTest() throws SQLException {
+        Set<CompositeVulnerability> vulns = new HashSet<>();
+
+        CompositeVulnerability vuln1 = new CompositeVulnerability(new RawVulnerability(1, "CVE-1", "desc", new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis()), "ex.com"));
+        CompositeVulnerability vuln2 = new CompositeVulnerability(new RawVulnerability(1, "CVE-2", "desc", new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis()), "ex.com"));
+
+        vuln1.addVdoCharacteristic(new VdoCharacteristic(vuln1.getCveId(), VDOLabel.LOCAL, 1.0, VDONounGroup.CONTEXT));
+        vuln2.addVdoCharacteristic(new VdoCharacteristic(vuln2.getCveId(), VDOLabel.LOCAL, 1.0, VDONounGroup.CONTEXT));
+
+        vulns.add(vuln1);
+        vulns.add(vuln2);
+
+
+        int res = dbh.insertVdoBatch(vulns);
+
+        verify(conn).setAutoCommit(false);
+        verify(pstmt).executeUpdate();
+        verify(pstmt, times(2)).addBatch();
+        verify(pstmt).setString(1, vuln1.getVdoCharacteristics().get(0).getCveId());
+        verify(pstmt).setString(1, vuln2.getVdoCharacteristics().get(0).getCveId());
+        verify(pstmt, times(2)).setString(2, vuln1.getVdoCharacteristics().get(0).getVdoLabel().vdoLabelName);
+        verify(pstmt, times(2)).setString(3, vuln1.getVdoCharacteristics().get(0).getVdoNounGroup().vdoNounGroupName);
+        verify(pstmt, times(2)).setDouble(4, 1.0);
+        verify(pstmt).executeBatch();
+        verify(conn).commit();
+
+        assertEquals(1, res);
+    }
     @Test
     public void getMitreDataCountTest(){
         try {
@@ -440,5 +402,169 @@ public class DatabaseHelperTest {
 
         verify(pstmt).execute();
         assertEquals(1, res);
+    }
+    @Test
+    public void backfillNvdTimegapsTest() throws SQLException {
+        Set<NvdVulnerability> nvdVulns = new HashSet<>();
+        NvdVulnerability vuln = new NvdVulnerability("cve-1", new Timestamp(System.currentTimeMillis()), "Analyzed");
+        NvdVulnerability vuln2 = new NvdVulnerability("cve-2", new Timestamp(System.currentTimeMillis()), "Received");
+        nvdVulns.add(vuln);
+        nvdVulns.add(vuln2);
+
+        int res = dbh.backfillNvdTimegaps(nvdVulns);
+
+        verify(pstmt).setString(1, "cve-1");
+        verify(pstmt).setString(1, "cve-2");
+        verify(pstmt, times(2)).addBatch();
+        verify(pstmt).executeBatch();
+
+        assertEquals(1, res);
+    }
+
+    @Test
+    public void backfillMitreTimegapsTest() throws SQLException {
+        Set<MitreVulnerability> mitreVulns = new HashSet<>();
+        MitreVulnerability vuln = new MitreVulnerability("cve-1", "Public");
+        MitreVulnerability vuln2 = new MitreVulnerability("cve-2",  "Reserved");
+        mitreVulns.add(vuln);
+        mitreVulns.add(vuln2);
+
+        int res = dbh.backfillMitreTimegaps(mitreVulns);
+
+        verify(pstmt).setString(1, "cve-1");
+        verify(pstmt).setString(1, "cve-2");
+        verify(pstmt, times(2)).addBatch();
+        verify(pstmt).executeBatch();
+
+        assertEquals(1, res);
+
+    }
+
+    @Test
+    public void insertTimeGapsForNewVulnsTest() throws SQLException {
+        Set<CompositeVulnerability> compVulns = new HashSet<>();
+        CompositeVulnerability vuln = new CompositeVulnerability(new RawVulnerability(1, "CVE-2023-1111", "desc", offset(-1), offset(1), offset(-10), "example.com"));
+        CompositeVulnerability vuln2 = new CompositeVulnerability(new RawVulnerability(1, "CVE-2023-2222", "desc", offset(-1), offset(1), offset(-10), "example.com"));
+
+        MitreVulnerability mVuln = new MitreVulnerability("cve-1", "Public");
+        NvdVulnerability nVuln = new NvdVulnerability("cve-1", new Timestamp(System.currentTimeMillis()), "Analyzed");
+
+        vuln.setMitreVuln(mVuln);
+        vuln2.setNvdVuln(nVuln);
+
+        compVulns.add(vuln);
+        compVulns.add(vuln2);
+
+        int res = dbh.insertTimeGapsForNewVulns(compVulns);
+
+        verify(pstmt).setString(1, "CVE-2023-1111");
+        verify(pstmt).setString(1, "CVE-2023-2222");
+        verify(pstmt).setString(2, "nvd");
+        verify(pstmt).setString(2, "mitre");
+        verify(pstmt, times(2)).addBatch();
+        verify(pstmt).executeBatch();
+
+        assertEquals(1, res);
+    }
+
+    @Test
+    public void attachNvdVulnsTest() throws SQLException {
+        Set<CompositeVulnerability> vulns = new HashSet<>();
+
+        when(res.next()).thenReturn(true, false);
+        when(res.getString(anyString())).thenReturn("CVE-2023-2222", "Analyzed");
+
+        CompositeVulnerability vuln = new CompositeVulnerability(new RawVulnerability(1, "CVE-2023-2222", "desc", offset(-1), offset(1), offset(-10), "example.com"));
+        NvdVulnerability nVuln = new NvdVulnerability("cve-1", new Timestamp(System.currentTimeMillis()), "Analyzed");
+        vuln.setNvdVuln(nVuln);
+        Set<CompositeVulnerability> set = dbh.attachNvdVulns(vulns);
+
+        assertTrue(set.isEmpty());
+
+        vulns.add(vuln);
+
+        set = dbh.attachNvdVulns(vulns);
+
+        verify(pstmt).setString(1, "CVE-2023-2222");
+
+        assertEquals(1, set.size());
+        List<CompositeVulnerability> list = new ArrayList<>(set);
+
+        assertEquals(NvdVulnerability.NvdStatus.ANALYZED, list.get(0).getNvdVuln().getStatus());
+
+    }
+
+    @Test
+    public void attachMitreVulnsTest() throws SQLException {
+        Set<CompositeVulnerability> vulns = new HashSet<>();
+
+        when(res.next()).thenReturn(true, false);
+        when(res.getString(anyString())).thenReturn("CVE-2023-2222", "Public");
+
+        CompositeVulnerability vuln = new CompositeVulnerability(new RawVulnerability(1, "CVE-2023-2222", "desc", offset(-1), offset(1), offset(-10), "example.com"));
+        MitreVulnerability mVuln = new MitreVulnerability("cve-1", "Public");
+        vuln.setMitreVuln(mVuln);
+        Set<CompositeVulnerability> set = dbh.attachMitreVulns(vulns);
+
+        assertTrue(set.isEmpty());
+
+        vulns.add(vuln);
+
+        set = dbh.attachMitreVulns(vulns);
+
+        verify(pstmt).setString(1, "CVE-2023-2222");
+
+        assertEquals(1, set.size());
+        List<CompositeVulnerability> list = new ArrayList<>(set);
+
+        assertEquals(MitreVulnerability.MitreStatus.PUBLIC, list.get(0).getMitreVuln().getStatus());
+    }
+
+    @Test
+    public void upsertNvdDataTest() throws SQLException {
+        Set<NvdVulnerability> vulns = new HashSet<>();
+        NvdVulnerability vuln = new NvdVulnerability("cve-1", new Timestamp(System.currentTimeMillis()), "Analyzed");
+        NvdVulnerability vuln2 = new NvdVulnerability("cve-2", new Timestamp(System.currentTimeMillis()), "Not in NVD");
+        vulns.add(vuln);
+        vulns.add(vuln2);
+
+        when(res.next()).thenReturn(true, false);
+        when(res.getString(1)).thenReturn("cve-1");
+
+
+        Set<NvdVulnerability> set = dbh.upsertNvdData(vulns);
+
+        verify(pstmt).setString(1, "cve-1");
+        verify(pstmt).setString(1, "cve-2");
+        verify(pstmt).setString(3, "Analyzed");
+        verify(pstmt).setString(3, "Not in NVD");
+        verify(pstmt, times(2)).addBatch();
+        verify(pstmt).executeBatch();
+
+        assertEquals(1, set.size());
+    }
+
+    @Test
+    public void upsertMitreDataTest() throws SQLException {
+        Set<MitreVulnerability> mitreVulns = new HashSet<>();
+        MitreVulnerability vuln = new MitreVulnerability("cve-1", "Public");
+        MitreVulnerability vuln2 = new MitreVulnerability("cve-2",  "Reserved");
+        mitreVulns.add(vuln);
+        mitreVulns.add(vuln2);
+
+        when(res.next()).thenReturn(true, false);
+        when(res.getString(1)).thenReturn("cve-1");
+
+        Set<MitreVulnerability> set = dbh.upsertMitreData(mitreVulns);
+
+        verify(pstmt).setString(1, "cve-1");
+        verify(pstmt).setString(1, "cve-2");
+        verify(pstmt).setString(2, "Public");
+        verify(pstmt).setString(2, "Reserved");
+        verify(pstmt, times(2)).addBatch();
+        verify(pstmt).executeBatch();
+
+        assertEquals(1, set.size());
+
     }
 }
