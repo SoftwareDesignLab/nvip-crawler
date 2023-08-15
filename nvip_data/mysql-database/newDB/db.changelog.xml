@@ -393,5 +393,13 @@
 <!--        </addColumn>-->
 <!--    </changeSet>-->
 
+    <changeSet id="addCvssActiveFlag" author="cju8676">
+        <addColumn tableName="cvss">
+            <column name="is_active" type="int">
+                <constraints nullable="false" defaultValue="0"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
 
 </databaseChangeLog>
