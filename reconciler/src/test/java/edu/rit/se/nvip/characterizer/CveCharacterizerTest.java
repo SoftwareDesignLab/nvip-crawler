@@ -1,4 +1,4 @@
-package edu.rit.se.nvip.characterizer; 
+package edu.rit.se.nvip.characterizer;
 /**
  * Copyright 2023 Rochester Institute of Technology (RIT). Developed with
  * government support under contract 70RSAT19CB0000020 awarded by the United
@@ -24,17 +24,31 @@ package edu.rit.se.nvip.characterizer;
  */
 
 import edu.rit.se.nvip.DatabaseHelper;
+import edu.rit.se.nvip.automatedcvss.CvssScoreCalculator;
+import edu.rit.se.nvip.automatedcvss.PartialCvssVectorGenerator;
+import edu.rit.se.nvip.automatedcvss.preprocessor.CvePreProcessor;
+import edu.rit.se.nvip.characterizer.classifier.AbstractCveClassifier;
+import edu.rit.se.nvip.characterizer.classifier.CveClassifierFactory;
 import edu.rit.se.nvip.characterizer.enums.VDOLabel;
 import edu.rit.se.nvip.characterizer.enums.VDONounGroup;
 import edu.rit.se.nvip.model.CompositeVulnerability;
 import edu.rit.se.nvip.model.RawVulnerability;
 import edu.rit.se.nvip.utils.CsvUtils;
 import edu.rit.se.nvip.utils.ReconcilerEnvVars;
+import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.MockedConstruction;
+import org.mockito.MockedStatic;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
+import oshi.util.FileUtil;
 
+import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.*;
 import java.nio.file.Paths;
@@ -46,35 +60,41 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.*;
 
+
 public class CveCharacterizerTest {
 
+	private Logger logger = LogManager.getLogger(CveCharacterizerTest.class.getSimpleName());
+	@PrepareForTest({ FileUtils.class })
 	@Test
-	public void testCveCharacterization() {
-		CveCharacterizer mockCveCharacterizer = mock(CveCharacterizer.class);
-		Map<VDONounGroup, Map<VDOLabel, Double>> map = new HashMap<>();
-		map.put(VDONounGroup.CONTEXT, new HashMap<>());
-		List<CompositeVulnerability> mockList = new ArrayList<>();
-		mockList.add(new CompositeVulnerability(new RawVulnerability(1, "cve-1",
-				"The ntpd_driver component before 1.3.0 and 2.x before 2.2.0 for Robot Operating System (ROS) allows attackers, " +
-						"who control the source code of a different node in the same ROS application, to change a robot's behavior. " +
-						"This occurs because a topic name depends on the attacker-controlled time_ref_topic parameter.",
-				new Timestamp(System.currentTimeMillis()),
-				new Timestamp(System.currentTimeMillis()),
-				new Timestamp(System.currentTimeMillis()),
-				"www.example.com")));
+	public void testCveCharacterization() throws NoSuchFieldException, IllegalAccessException, IOException {
+		mockStatic(FileUtils.class);
 
-		when(mockCveCharacterizer.characterizeCveForVDO(anyString(), anyBoolean())).thenReturn(map);
-		when(mockCveCharacterizer.characterizeCveList(anyList(), anyInt())).thenReturn(mockList);
+		CvePreProcessor mockPreProcessor = mock(CvePreProcessor.class);
+		CveClassifierFactory mockCveClassifierFactory = mock(CveClassifierFactory.class);
+		AbstractCveClassifier mockAbstractCveClassifier = mock(AbstractCveClassifier.class);
+		PartialCvssVectorGenerator mockVectorGenerator = mock(PartialCvssVectorGenerator.class);
+		CvssScoreCalculator mockScoreCalculator = mock(CvssScoreCalculator.class);
+
+		doNothing().when(FileUtils.class);
+		FileUtils.writeStringToFile(any(File.class), anyString(), anyBoolean());
+		when(FileUtils.readFileToString(any(File.class))).thenReturn("Mocked content");
+		when(mockPreProcessor.preProcessFile(anyString())).thenReturn(anyString());
+		when(mockCveClassifierFactory.getCveClassifier("test", anyString(), anyString())).thenReturn(mockAbstractCveClassifier);
+
 
 		String[] trainingDataInfo = {ReconcilerEnvVars.getTrainingDataDir(), ReconcilerEnvVars.getTrainingData()};
 		// test prediction
 		String cveDesc = "7.2 HIGH9.0 HIGHCVE-2020-11544 Ã¢â‚¬â€� An issue was discovered in Project Worlds Official Car Rental System 1. It allows the admin user to run commands on the server with their account because the upload section on the file-manager page contains an arbitrary file upload vulnerability via... read CVE-2020-11544 Published: April 06, 2020; 12:15:13 PM -04:00 CVE-2020-11544read CVE-2020-11544V3.1:7.2 HIGH6.5 MEDIUM";
 
+		CveCharacterizer cveCharacterizer = new CveCharacterizer(
+				mockPreProcessor, mockCveClassifierFactory, mockScoreCalculator, mockVectorGenerator,
+				trainingDataInfo[0], trainingDataInfo[1], "ML", "NB");
+
 		//Test characterizeCveForVDO
-		Map<VDONounGroup,Map<VDOLabel, Double>> prediction = mockCveCharacterizer.characterizeCveForVDO(cveDesc, true);
+		Map<VDONounGroup,Map<VDOLabel, Double>> prediction = cveCharacterizer.characterizeCveForVDO(cveDesc, true);
 		assertTrue(prediction.size() > 0);
 
-		prediction = mockCveCharacterizer.characterizeCveForVDO(cveDesc, false);
+		prediction = cveCharacterizer.characterizeCveForVDO(cveDesc, false);
 		assertTrue(prediction.size() > 0);
 		//String csvPath = "src/test/resources/test-composite-vuln-list.csv";
 		//String csvPath = System.getProperty("user.dir") + "\\src\\main\\resources\\cvedata\\mitre-cve.csv";
@@ -88,20 +108,23 @@ public class CveCharacterizerTest {
 		}
 		// generate vuln list
 		List<CompositeVulnerability> vulnList = new ArrayList<>();
+		int i = 0;
 		for (String[] line : testData) {
 			String cveId = line[0];
 			String description = line[1];
 			if (description.contains("** RESERVED") || description.contains("** REJECT"))
 				continue;
-			CompositeVulnerability vuln = new CompositeVulnerability(new RawVulnerability(1, cveId, description, null, null, null, ""));
+			CompositeVulnerability vuln = new CompositeVulnerability(new RawVulnerability(i++, cveId, description, new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis()), ""));
 
 			vulnList.add(vuln);
+
 		}
 
-		List<CompositeVulnerability> newList = mockCveCharacterizer.characterizeCveList(vulnList, 5000);
-		assertEquals(1, newList.size());
+		List<CompositeVulnerability> newList = cveCharacterizer.characterizeCveList(vulnList, 5000);
 
+		assertEquals(10, newList.size());
 
 
 	}
 }
+
