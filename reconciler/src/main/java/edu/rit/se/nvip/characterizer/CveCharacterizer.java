@@ -55,8 +55,70 @@ public class CveCharacterizer {
 	 * these two vars are used to derive the CVSS vector from VDO labels and then
 	 * use the vector to derive the CVSS score
 	 */
-	private PartialCvssVectorGenerator partialCvssVectorGenerator = new PartialCvssVectorGenerator();
-	private CvssScoreCalculator cvssScoreCalculator = new CvssScoreCalculator();
+	private PartialCvssVectorGenerator partialCvssVectorGenerator;
+	private CvssScoreCalculator cvssScoreCalculator;
+
+	/**
+	 * Construct a CVE Characterizer. You need to provide an initial training data
+	 * as CSV. No incremental training this time.
+	 * @param cvePreProcessor
+	 * @param cveClassifierFactory
+	 * @param trainingDataPath
+	 * @param trainingDataFiles
+	 * @param approach
+	 * @param method
+	 */
+	public CveCharacterizer(CvePreProcessor cvePreProcessor,
+							CveClassifierFactory cveClassifierFactory,
+							CvssScoreCalculator cvssScoreCalculator,
+							PartialCvssVectorGenerator partialCvssVectorGenerator,
+							String trainingDataPath, String trainingDataFiles, String approach, String method) {
+		this.cvssScoreCalculator = cvssScoreCalculator;
+		this.partialCvssVectorGenerator = partialCvssVectorGenerator;
+		try {
+
+			/**
+			 * trainingDataPath may include multiple CSV files, if that is the case then
+			 * train a model for each CSV file!
+			 */
+
+			String[] trainingDataFileArr = trainingDataFiles.split(",");
+			for (String trainingDataFileName : trainingDataFileArr) {
+				String vdoNounGroupName = trainingDataFileName.replace(".csv", "");
+				VDONounGroup vdoNounGroup = VDONounGroup.getVdoNounGroup(vdoNounGroupName);
+				trainingDataFileName = Paths.get(trainingDataPath).resolve(trainingDataFileName).toString();
+
+				// remove special chars?
+				String sContent = FileUtils.readFileToString(new File(trainingDataFileName));
+				sContent = sContent.replaceAll("[ '|\\\"|â€�|\\|]", " ");
+				FileUtils.writeStringToFile(new File(trainingDataFileName), sContent, false);
+				// pre-process training data and store it
+				String preProcessedTrainingDataFile = trainingDataFileName.concat("-processed.csv");
+				String sCommaSeparatedAttribRows = cvePreProcessor.preProcessFile(trainingDataFileName);
+
+				FileUtils.writeStringToFile(new File(preProcessedTrainingDataFile), sCommaSeparatedAttribRows, false);
+				logger.info("Raw training data at {} is processed and a CSV file is generated at {}", trainingDataFileName, preProcessedTrainingDataFile);
+
+				// get CVE classification model
+				AbstractCveClassifier aClassifier = cveClassifierFactory.getCveClassifier(approach, method, preProcessedTrainingDataFile);
+
+				// assign a noun group to each classifier
+				aClassifier.setCveClassifierName(vdoNounGroupName);
+
+				// train the model
+				aClassifier.trainMLModel();
+				nounGroupToClassifier.put(vdoNounGroup, aClassifier);
+
+
+			}
+
+		} catch (Exception e) {
+			logger.error("An error occurred while training a classifier for CVE Characterizer! NVIP will not crash but " +
+							"CVE Characterizer will NOT work properly. Check your training data at {}\nException: {}",
+					trainingDataPath, e.getMessage());
+		}
+	}
+
 	
 	/**
 	 * Construct a CVE Characterizer. You need to provide an initial training data
@@ -71,49 +133,7 @@ public class CveCharacterizer {
 
 	//removed  boolean loadSerializedModels as well as exploitability package
 	public CveCharacterizer(String trainingDataPath, String trainingDataFiles, String approach, String method) {
-		try {
-
-			/**
-			 * trainingDataPath may include multiple CSV files, if that is the case then
-			 * train a model for each CSV file!
-			 */
-
-			String[] trainingDataFileArr = trainingDataFiles.split(",");
-			for (String trainingDataFileName : trainingDataFileArr) {
-				String vdoNounGroupName = trainingDataFileName.replace(".csv", "");
-				VDONounGroup vdoNounGroup = VDONounGroup.getVdoNounGroup(vdoNounGroupName);
-				trainingDataFileName = Paths.get(trainingDataPath).resolve(trainingDataFileName).toString();
-				// remove special chars?
-				String sContent = FileUtils.readFileToString(new File(trainingDataFileName));
-				sContent = sContent.replaceAll("[ '|\\\"|â€�|\\|]", " ");
-				FileUtils.writeStringToFile(new File(trainingDataFileName), sContent, false);
-
-				// pre-process training data and store it
-				CvePreProcessor nvipPreProcessor = new CvePreProcessor(true);
-				String preProcessedTrainingDataFile = trainingDataFileName.concat("-processed.csv");
-				String sCommaSeparatedAttribRows = nvipPreProcessor.preProcessFile(trainingDataFileName);
-
-				FileUtils.writeStringToFile(new File(preProcessedTrainingDataFile), sCommaSeparatedAttribRows, false);
-				logger.info("Raw training data at {} is processed and a CSV file is generated at {}", trainingDataFileName, preProcessedTrainingDataFile);
-
-				// get CVE classification model
-				CveClassifierFactory cveCharacterizerFactory = new CveClassifierFactory();
-				AbstractCveClassifier aClassifier = cveCharacterizerFactory.getCveClassifier(approach, method, preProcessedTrainingDataFile);
-
-				// assign a noun group to each classifier
-				aClassifier.setCveClassifierName(vdoNounGroupName);
-
-				// train the model
-				aClassifier.trainMLModel();
-				nounGroupToClassifier.put(vdoNounGroup, aClassifier);
-			}
-
-		} catch (Exception e) {
-			logger.error("An error occurred while training a classifier for CVE Characterizer! NVIP will not crash but " +
-					"CVE Characterizer will NOT work properly. Check your training data at {}\nException: {}",
-					trainingDataPath, e.getMessage());
-		}
-
+		this(new CvePreProcessor(true), new CveClassifierFactory(), new CvssScoreCalculator(), new PartialCvssVectorGenerator(), trainingDataPath, trainingDataFiles, approach, method);
 	}
 
 	/**
@@ -138,7 +158,6 @@ public class CveCharacterizer {
 			}
 			prediction.put(nounGroup, labelToScore);
 		}
-		logger.info(prediction);
 		return prediction;
 	}
 

@@ -56,6 +56,7 @@ public class MitreCveController {
     private static DatabaseHelper dbh = DatabaseHelper.getInstance();
 
     public MitreCveController() {
+
         this.mitreGithubUrl = ReconcilerEnvVars.getMitreGithubUrl();
         //if it is the first run do them all otherwise only run the last 2 years
         if(dbh.isMitreTableEmpty()){
@@ -72,8 +73,11 @@ public class MitreCveController {
         }
     }
 
-    public void updateMitreTables() {
-        Set<MitreVulnerability> results = this.getMitreCVEsFromGitRepo();
+    public void updateMitreTables(boolean getResults) {
+        Set<MitreVulnerability> results = new HashSet<>();
+        if(getResults){
+            results = this.getMitreCVEsFromGitRepo();
+        }
         logger.info("{} cves found from MITRE", results.size());
         long numReserved = results.stream().filter(v -> v.getStatus() == MitreVulnerability.MitreStatus.RESERVED).count();
         logger.info("Found {} reserved CVEs from MITRE", numReserved);
@@ -88,7 +92,7 @@ public class MitreCveController {
      * updates if any. Then it recursively loads all json files in the local repo,
      * parses them and creates a CSV file at the output path.
      */
-    private Set<MitreVulnerability> getMitreCVEsFromGitRepo() {
+    public Set<MitreVulnerability> getMitreCVEsFromGitRepo() {
         Set<MitreVulnerability> mitreCveMap = new HashSet<>();
         GitController gitController = new GitController(gitLocalPath, mitreGithubUrl);
         logger.info("Checking local Git CVE repo...");
@@ -206,5 +210,9 @@ public class MitreCveController {
         );
 
         return affected;
+    }
+
+    public void setDatabaseHelper(DatabaseHelper dbHelper){
+        dbh = dbHelper;
     }
 }

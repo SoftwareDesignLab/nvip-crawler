@@ -50,7 +50,7 @@ public class MitreCveParser {
 	public List<String[]> parseCVEJSONFiles(ArrayList<JsonObject> list) {
 		List<String[]> cveIDList = new ArrayList<>();
 		for (JsonObject json : list) {
-			String[] items = getCVEID(json);
+			String[] items = getCveID(json);
 			if (items != null)
 				cveIDList.add(items);
 		}
@@ -64,16 +64,16 @@ public class MitreCveParser {
 	 * @param json
 	 * @return
 	 */
-	private String[] getCVEID(JsonObject json) {
+	private String[] getCveID(JsonObject json) {
 		String[] items = new String[2];
 
 		try {
-			if (json.getAsJsonArray("cveMetaData") != null) {
-				items[0] = json.getAsJsonObject("cveMetadata").get("cveId").toString().replace("\"", "");
-				items[1] = json.getAsJsonObject("cveMetadata").get("state").toString();
+			if (json.getAsJsonObject("cveMetaData") != null) {
+				items[0] = json.getAsJsonObject("cveMetaData").get("cveId").getAsString();
+				items[1] = json.getAsJsonObject("cveMetaData").get("state").getAsString();
 			} else {
-				items[0] = json.getAsJsonObject("CVE_data_meta").get("ID").toString().replace("\"", "");
-				items[1] = json.getAsJsonObject("CVE_data_meta").get("STATE").toString();
+				items[0] = json.getAsJsonObject("CVE_data_meta").get("ID").getAsString();
+				items[1] = json.getAsJsonObject("CVE_data_meta").get("STATE").getAsString();
 			}
 
 		} catch (Exception e) {
