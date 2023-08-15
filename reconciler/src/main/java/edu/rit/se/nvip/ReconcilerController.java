@@ -202,7 +202,7 @@ public class ReconcilerController {
 
     private void updateNvdMitre() {
         nvdController.updateNvdTables();
-        mitreController.updateMitreTables();
+        mitreController.updateMitreTables(true);
     }
     private Set<CompositeVulnerability> attachNvdMitre(Set<CompositeVulnerability> newVulns) {
         Set<CompositeVulnerability> affected = new HashSet<>();
@@ -213,6 +213,6 @@ public class ReconcilerController {
 
     public static void main(String[] args) {
         //new NvdCveController().updateNvdTables();
-        new MitreCveController().updateMitreTables();
+        new MitreCveController().updateMitreTables(true);
     }
 }
