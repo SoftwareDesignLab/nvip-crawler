@@ -164,6 +164,9 @@
             <column name="cpe" type="VARCHAR(300)">
                 <constraints nullable="false"/>
             </column>
+            <column name="release_date" type="DATETIME">
+                <constraints nullable="false"/>
+            </column>
             <column name="product_name" type="TINYTEXT">
                 <constraints nullable="false"/>
             </column>
