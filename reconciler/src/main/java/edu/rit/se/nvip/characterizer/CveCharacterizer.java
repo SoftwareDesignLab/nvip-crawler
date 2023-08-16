@@ -57,6 +57,7 @@ public class CveCharacterizer {
 	 */
 	private PartialCvssVectorGenerator partialCvssVectorGenerator;
 	private CvssScoreCalculator cvssScoreCalculator;
+	private CvePreProcessor cvePreProcessor;
 
 	/**
 	 * Construct a CVE Characterizer. You need to provide an initial training data
@@ -75,6 +76,7 @@ public class CveCharacterizer {
 							String trainingDataPath, String trainingDataFiles, String approach, String method) {
 		this.cvssScoreCalculator = cvssScoreCalculator;
 		this.partialCvssVectorGenerator = partialCvssVectorGenerator;
+		this.cvePreProcessor = cvePreProcessor;
 		try {
 
 			/**
@@ -144,7 +146,6 @@ public class CveCharacterizer {
 	 * @return
 	 */
 	public Map<VDONounGroup, Map<VDOLabel, Double>> characterizeCveForVDO(String cveDesc, boolean bPredictMultiple) {
-		CvePreProcessor cvePreProcessor = new CvePreProcessor(true);
 		String cveDescProcessed = cvePreProcessor.preProcessLine(cveDesc);
 
 		Map<VDONounGroup, Map<VDOLabel, Double>> prediction = new HashMap<>();
