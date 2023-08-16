@@ -29,6 +29,7 @@ import edu.rit.se.nvip.automatedcvss.PartialCvssVectorGenerator;
 import edu.rit.se.nvip.automatedcvss.preprocessor.CvePreProcessor;
 import edu.rit.se.nvip.characterizer.classifier.AbstractCveClassifier;
 import edu.rit.se.nvip.characterizer.classifier.CveClassifierFactory;
+import edu.rit.se.nvip.characterizer.enums.CVSSSeverityClass;
 import edu.rit.se.nvip.characterizer.enums.VDOLabel;
 import edu.rit.se.nvip.characterizer.enums.VDONounGroup;
 import edu.rit.se.nvip.model.CompositeVulnerability;
@@ -67,7 +68,8 @@ public class CveCharacterizerTest {
 	@PrepareForTest({ FileUtils.class })
 	@Test
 	public void testCveCharacterization() throws NoSuchFieldException, IllegalAccessException, IOException {
-		mockStatic(FileUtils.class);
+		MockedStatic<FileUtils> mocked = mockStatic(FileUtils.class);
+		MockedStatic<CVSSSeverityClass> mockedCvss = mockStatic(CVSSSeverityClass.class);
 
 		CvePreProcessor mockPreProcessor = mock(CvePreProcessor.class);
 		CveClassifierFactory mockCveClassifierFactory = mock(CveClassifierFactory.class);
@@ -77,9 +79,12 @@ public class CveCharacterizerTest {
 
 		doNothing().when(FileUtils.class);
 		FileUtils.writeStringToFile(any(File.class), anyString(), anyBoolean());
-		when(FileUtils.readFileToString(any(File.class))).thenReturn("Mocked content");
+		mocked.when(() -> FileUtils.readFileToString(any(File.class))).thenReturn("{ \"key\": \"value\"}");
 		when(mockPreProcessor.preProcessFile(anyString())).thenReturn(anyString());
+		when(mockPreProcessor.preProcessLine("test")).thenReturn(anyString());
 		when(mockCveClassifierFactory.getCveClassifier("test", anyString(), anyString())).thenReturn(mockAbstractCveClassifier);
+		mockedCvss.when(() -> CVSSSeverityClass.getCVSSSeverityByScore(anyDouble())).thenReturn(any(CVSSSeverityClass.class));
+
 
 
 		String[] trainingDataInfo = {ReconcilerEnvVars.getTrainingDataDir(), ReconcilerEnvVars.getTrainingData()};
@@ -123,6 +128,9 @@ public class CveCharacterizerTest {
 		List<CompositeVulnerability> newList = cveCharacterizer.characterizeCveList(vulnList, 5000);
 
 		assertEquals(10, newList.size());
+
+		mocked.close();
+		mockedCvss.close();
 
 
 	}
