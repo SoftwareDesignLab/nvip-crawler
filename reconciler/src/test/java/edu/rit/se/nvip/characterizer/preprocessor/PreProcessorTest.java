@@ -26,10 +26,13 @@ package edu.rit.se.nvip.characterizer.preprocessor;
 import edu.rit.se.nvip.automatedcvss.preprocessor.CvePreProcessor;
 import org.junit.Test;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public class PreProcessorTest {
 
+	private final CvePreProcessor preProcessorRemove = new CvePreProcessor(true);
+	private final CvePreProcessor preProcessorKeep = new CvePreProcessor(false);
 	/**
 	 * Test the existence of NVD and MITRE CVEs
 	 */
@@ -38,9 +41,27 @@ public class PreProcessorTest {
 
 		String input = "Heap-based buffer overflow in the strip_escapes function in signal.c in GNU ed before 1.0 allows context-dependent or user-assisted attackers to execute arbitrary code via a long filename. NOTE: since ed itself does not typically run with special privileges this issue only crosses privilege boundaries when ed is invoked as a third-party component.";
 		String output = "heap base buffer overflow strip escap function signal gnu ed allow context depend user assist attack execut arbitrari code filenam note ed doe typic run special privileg issu cross privileg boundari ed invok parti compon ";
-		CvePreProcessor nvipPreProcessor = new CvePreProcessor(true);
-		String sTemp = nvipPreProcessor.preProcessLine(input);
+
+		String sTemp = preProcessorRemove.preProcessLine(input);
 		assertTrue(sTemp.contains(output));
+	}
+
+	@Test
+	public void preProcessLineTest(){
+		String testLine = "A test line for the pre processor ";
+		String result = preProcessorRemove.preProcessLine(testLine);
+		String result2 = preProcessorKeep.preProcessLine(testLine);
+		System.out.println(result2);
+		assertEquals("test line pre processor ", result);
+		assertEquals("a test line for the pre processor ", result2);
+	}
+
+	@Test
+	public void preProcessFileTest(){
+		//
+		String result = preProcessorRemove.preProcessFile("src/test/resources/preProcessorTest.txt");
+
+		assertEquals("this, is a test line for the pre processor\n", result);
 	}
 
 }

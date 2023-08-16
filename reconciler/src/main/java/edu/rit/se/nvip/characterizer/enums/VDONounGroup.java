@@ -16,17 +16,6 @@ public enum VDONounGroup{
         this.vdoNounGroupName = vdoNounGroupName;
         this.vdoNameForUI = vdoNameForUI;
     }
-    public int getVdoGroupId() {
-        return vdoNounGroupId;
-    }
-    public static VDONounGroup getVdoNounGroup(int vdoNounGroupId){
-        for(VDONounGroup vdo : VDONounGroup.values()){
-            if (vdoNounGroupId == vdo.getVdoGroupId()){
-                return vdo;
-            }
-        }
-        return null;
-    }
 
     public static VDONounGroup getVdoNounGroup(String vdoNounGroupName){
         for(VDONounGroup vdo : VDONounGroup.values()){
