@@ -201,8 +201,8 @@ public class CveCharacterizer {
 				}
 
 				// get severity
-				double[] cvssScore = getCvssScoreFromVdoLabels(prediction.keySet()); // get mean/minimum/maximum/std dev
-				CvssScore score = new CvssScore(vuln.getCveId(), cvssScore[0], 0.5); //cvssScore[0] is median
+				double cvssScore = getCvssScoreFromVdoLabels(prediction.keySet());
+				CvssScore score = new CvssScore(vuln.getCveId(), cvssScore, 0.5); //confidence isn't used or stored anywhere
 				vuln.addCvssScore(score);
 //				logger.info("CVSS Score predicted for {}", vulnerability.getCveId());
 
@@ -232,11 +232,11 @@ public class CveCharacterizer {
 	 * @param predictionsForVuln
 	 * @return
 	 */
-	private double[] getCvssScoreFromVdoLabels(Set<VDOLabel> predictionsForVuln) {
+	private double getCvssScoreFromVdoLabels(Set<VDOLabel> predictionsForVuln) {
 		// generate partial CVSS vector from VDO prediction
 		String[] cvssVec = partialCvssVectorGenerator.getCVssVector(predictionsForVuln);
 
-		// get CVSS mean/min/max/std dev from Python script
-		return cvssScoreCalculator.getCvssScoreJython(cvssVec);
+		// get CVSS median/min/max/std dev from Python script, return median
+		return cvssScoreCalculator.getCvssScoreJython(cvssVec)[0];
 	}
 }
