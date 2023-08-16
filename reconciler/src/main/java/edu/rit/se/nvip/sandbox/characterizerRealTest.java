@@ -6,8 +6,7 @@ import edu.rit.se.nvip.model.RawVulnerability;
 import edu.rit.se.nvip.utils.ReconcilerEnvVars;
 
 import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class characterizerRealTest {
     private Timestamp offset(int nHours) {
@@ -42,11 +41,11 @@ public class characterizerRealTest {
                 ReconcilerEnvVars.getCharacterizationMethod());
 
 
-        List<CompositeVulnerability> cveList = new ArrayList<>();
-        cveList.add(compVuln);
-        cveList.add(compVuln2);
+        Set<CompositeVulnerability> cveSet = new HashSet<>();
+        cveSet.add(compVuln);
+        cveSet.add(compVuln2);
 
-        characterizer.characterizeCveList(cveList,
+        characterizer.characterizeCveList(cveSet,
                 ReconcilerEnvVars.getCharacterizationLimit());
 
         System.out.println(compVuln.getVdoCharacteristics());
@@ -54,7 +53,5 @@ public class characterizerRealTest {
 
         System.out.println(compVuln2.getVdoCharacteristics());
         System.out.println(compVuln2.getCvssScoreInfo());
-
-
     }
 }

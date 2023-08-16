@@ -37,12 +37,12 @@ public class VdoCharacteristic {
 	private final double vdoConfidence;
 	private final VDONounGroup vdoNounGroup;
 
-	public VdoCharacteristic(String cveId, VDOLabel vdoLabel, double vdoConfidence, VDONounGroup vdoNounGroup) {
+	public VdoCharacteristic(String cveId, VDOLabel vdoLabel, double vdoConfidence) {
 		super();
 		this.cveId = cveId;
 		this.vdoLabel = vdoLabel;
 		this.vdoConfidence = vdoConfidence;
-		this.vdoNounGroup = vdoNounGroup;
+		this.vdoNounGroup = vdoLabel.vdoNounGroup;
 	}
 
 	public String getCveId() {

@@ -152,14 +152,9 @@ public class ReconcilerController {
         }
     }
 
-    private void characterizeCVEs(Set<CompositeVulnerability> crawledVulnerabilityList) {
-        // characterize
+    private void characterizeCVEs(Set<CompositeVulnerability> crawledVulnerabilitySet) {
         logger.info("Characterizing and scoring NEW CVEs...");
-
-        List<CompositeVulnerability> cveList = new ArrayList<>(crawledVulnerabilityList);
-
-        cveCharacterizer.characterizeCveList(cveList, ReconcilerEnvVars.getCharacterizationLimit());
-
+        cveCharacterizer.characterizeCveList(crawledVulnerabilitySet, ReconcilerEnvVars.getCharacterizationLimit());
     }
 
     private CompositeVulnerability handleReconcilerJob(String cveId) {
