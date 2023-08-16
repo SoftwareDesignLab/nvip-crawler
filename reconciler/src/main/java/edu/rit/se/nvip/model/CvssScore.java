@@ -33,16 +33,14 @@ import edu.rit.se.nvip.characterizer.enums.CVSSSeverityClass;
 public class CvssScore {
 	private String cveId;
 	private final CVSSSeverityClass severityClass;
-	private final double severityConfidence;
 
 	private final double impactScore;
 	private final double impactConfidence;
 
-	public CvssScore(String cveId, CVSSSeverityClass severityClass, double severityConfidence, double impactScore, double impactConfidence) {
+	public CvssScore(String cveId, double impactScore, double impactConfidence) {
 		super();
 		this.cveId = cveId;
-		this.severityClass = severityClass;
-		this.severityConfidence = severityConfidence;
+		this.severityClass = CVSSSeverityClass.getCVSSSeverityByScore(impactScore);
 		this.impactScore = impactScore;
 		this.impactConfidence = impactConfidence;
 	}
@@ -59,10 +57,6 @@ public class CvssScore {
 		return severityClass;
 	}
 
-	public double getSeverityConfidence() {
-		return severityConfidence;
-	}
-
 	public double getImpactScore() {
 		return impactScore;
 	}
@@ -73,7 +67,7 @@ public class CvssScore {
 
 	@Override
 	public String toString() {
-		return "CvssScore [cveId=" + cveId + ", baseSeverity=" + severityClass + ", severityConfidence=" + severityConfidence + ", impactScore=" + impactScore + ", impactConfidence=" + impactConfidence + "]";
+		return "CvssScore [cveId=" + cveId + ", baseSeverity=" + severityClass + ", impactScore=" + impactScore + ", impactConfidence=" + impactConfidence + "]";
 	}
 
 }

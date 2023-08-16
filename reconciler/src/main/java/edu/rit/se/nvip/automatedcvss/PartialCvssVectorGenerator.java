@@ -26,9 +26,9 @@ package edu.rit.se.nvip.automatedcvss;
 import edu.rit.se.nvip.characterizer.enums.VDOLabel;
 import edu.rit.se.nvip.characterizer.enums.VDONounGroup;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  *
@@ -53,22 +53,15 @@ public class PartialCvssVectorGenerator {
 	 *                            and confidence for each noun group value.
 	 * @return
 	 */
-	public String[] getCVssVector(Map<VDONounGroup, Map<VDOLabel, Double>> predictionsForVuln) {
+	public String[] getCVssVector(Set<VDOLabel> predictionsForVuln) {
 
 		// values for: AV, AC, PR, UI, S, C, I, A
 		// initially set to unknown
 		String[] vectorCvss = new String[] { "X", "L", "X", "X", "U", "N", "N", "N" };
+		Map<VDONounGroup, Set<VDOLabel>> nounToLabels = predictionsForVuln.stream().collect(Collectors.groupingBy(v->v.vdoNounGroup, Collectors.toSet()));
 
-		Map<VDOLabel, Integer> predictedLabelMap;
-
-		for (VDONounGroup vdoNounGroup : predictionsForVuln.keySet()) {
-			Map<VDOLabel, Double> predictionsForNounGroup = predictionsForVuln.get(vdoNounGroup);
-
-			predictedLabelMap = new HashMap<>(); // create map
-			// put labels into the map to avoid repeated list iterations
-			for (VDOLabel label : predictionsForNounGroup.keySet()) {
-				predictedLabelMap.put(label, 0);
-			}
+		for (VDONounGroup vdoNounGroup : nounToLabels.keySet()) {
+			Set<VDOLabel> predictionsForNounGroup = nounToLabels.get(vdoNounGroup);
 			// attack theater
 			if (vdoNounGroup == VDONounGroup.ATTACK_THEATER) {
 				/**
@@ -76,13 +69,13 @@ public class PartialCvssVectorGenerator {
 				 * (AV:P)
 				 * 
 				 */
-				if (predictedLabelMap.containsKey(VDOLabel.REMOTE))
+				if (predictionsForNounGroup.contains(VDOLabel.REMOTE))
 					vectorCvss[0] = "N";
-				else if (predictedLabelMap.containsKey(VDOLabel.LIMITED_RMT))
+				else if (predictionsForNounGroup.contains(VDOLabel.LIMITED_RMT))
 					vectorCvss[0] = "N";
-				else if (predictedLabelMap.containsKey(VDOLabel.LOCAL))
+				else if (predictionsForNounGroup.contains(VDOLabel.LOCAL))
 					vectorCvss[0] = "L";
-				else if (predictedLabelMap.containsKey(VDOLabel.PHYSICAL))
+				else if (predictionsForNounGroup.contains(VDOLabel.PHYSICAL))
 					vectorCvss[0] = "P";
 
 			} else if (vdoNounGroup == VDONounGroup.CONTEXT) {
@@ -92,9 +85,9 @@ public class PartialCvssVectorGenerator {
 				 * Attack Complexity (AC)* Low (AC:L)High (AC:H)
 				 * 
 				 */
-				if (predictedLabelMap.containsKey(VDOLabel.MAN_IN_THE_MIDDLE))
+				if (predictionsForNounGroup.contains(VDOLabel.MAN_IN_THE_MIDDLE))
 					vectorCvss[1] = "H"; // if there is MitM impact then, we assume attack complexity is High
-				else if (predictedLabelMap.containsKey(VDOLabel.CONTEXT_ESCAPE))
+				else if (predictionsForNounGroup.contains(VDOLabel.CONTEXT_ESCAPE))
 					vectorCvss[4] = "C"; // scope changes if context escape
 
 			} else if (vdoNounGroup == VDONounGroup.LOGICAL_IMPACT) {
@@ -123,29 +116,29 @@ public class PartialCvssVectorGenerator {
 				 * Service Interrupt -> A:LH
 				 * 
 				 */
-				if (predictedLabelMap.containsKey(VDOLabel.PRIVILEGE_ESCALATION)
-						&& (predictedLabelMap.size() == 1 || predictedLabelMap.containsKey(VDOLabel.READ) || predictedLabelMap.containsKey(VDOLabel.INDIRECT_DISCLOSURE))
+				if (predictionsForNounGroup.contains(VDOLabel.PRIVILEGE_ESCALATION)
+						&& (predictionsForNounGroup.size() == 1 || predictionsForNounGroup.contains(VDOLabel.READ) || predictionsForNounGroup.contains(VDOLabel.INDIRECT_DISCLOSURE))
 
 				)
 					vectorCvss[5] = "H"; // confidentiality H
-				else if (predictedLabelMap.containsKey(VDOLabel.PRIVILEGE_ESCALATION)
-						&& (predictedLabelMap.size() == 1 || predictedLabelMap.containsKey(VDOLabel.WRITE) || predictedLabelMap.containsKey(VDOLabel.RESOURCE_REMOVAL))
+				else if (predictionsForNounGroup.contains(VDOLabel.PRIVILEGE_ESCALATION)
+						&& (predictionsForNounGroup.size() == 1 || predictionsForNounGroup.contains(VDOLabel.WRITE) || predictionsForNounGroup.contains(VDOLabel.RESOURCE_REMOVAL))
 
 				)
 					vectorCvss[6] = "H"; // integrity H
-				else if (predictedLabelMap.containsKey(VDOLabel.PRIVILEGE_ESCALATION) && (predictedLabelMap.size() == 1 || predictedLabelMap.containsKey(VDOLabel.SERVICE_INTERRUPT))
+				else if (predictionsForNounGroup.contains(VDOLabel.PRIVILEGE_ESCALATION) && (predictionsForNounGroup.size() == 1 || predictionsForNounGroup.contains(VDOLabel.SERVICE_INTERRUPT))
 
 				)
 					vectorCvss[7] = "H"; // availability H
-				else if (predictedLabelMap.containsKey(VDOLabel.READ) || predictedLabelMap.containsKey(VDOLabel.INDIRECT_DISCLOSURE))
+				else if (predictionsForNounGroup.contains(VDOLabel.READ) || predictionsForNounGroup.contains(VDOLabel.INDIRECT_DISCLOSURE))
 					vectorCvss[5] = "LH"; // confidentiality LH
-				else if (predictedLabelMap.containsKey(VDOLabel.WRITE) || predictedLabelMap.containsKey(VDOLabel.RESOURCE_REMOVAL))
+				else if (predictionsForNounGroup.contains(VDOLabel.WRITE) || predictionsForNounGroup.contains(VDOLabel.RESOURCE_REMOVAL))
 					vectorCvss[6] = "LH"; // integrity LH
-				else if (predictedLabelMap.containsKey(VDOLabel.SERVICE_INTERRUPT))
+				else if (predictionsForNounGroup.contains(VDOLabel.SERVICE_INTERRUPT))
 					vectorCvss[7] = "LH"; // availability LH
 
 			} else if (vdoNounGroup == VDONounGroup.MITIGATION) {
-				if (predictedLabelMap.containsKey(VDOLabel.SANDBOXED))
+				if (predictionsForNounGroup.contains(VDOLabel.SANDBOXED))
 					vectorCvss[4] = "C"; // we assume a scope change if "sandboxed" is feasible for mitigation
 
 			}
