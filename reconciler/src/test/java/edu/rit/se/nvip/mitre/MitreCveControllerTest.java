@@ -7,6 +7,7 @@ import edu.rit.se.nvip.model.MitreVulnerability;
 import edu.rit.se.nvip.model.RawVulnerability;
 import org.apache.commons.io.FileUtils;
 import org.junit.Test;
+import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 
@@ -23,6 +24,8 @@ import static org.mockito.Mockito.*;
 public class MitreCveControllerTest {
 
     private final MitreCveController mitreCveController = new MitreCveController();
+    @Mock
+    DatabaseHelper mockDbh = mock(DatabaseHelper.class);
     @Test
     public void updateMitreTables() {
         Set<MitreVulnerability> mockResults = new HashSet<>();
@@ -33,15 +36,15 @@ public class MitreCveControllerTest {
         mockResults.add(mockVulnerability2);
         mockResults.add(mockVulnerability3);
 
-        DatabaseHelper dbh = mock(DatabaseHelper.class);
-        mitreCveController.setDatabaseHelper(dbh);
-        when(dbh.upsertMitreData(anySet())).thenReturn(mockResults);
-        when(dbh.backfillMitreTimegaps(anySet())).thenReturn(1);
+        
+        mitreCveController.setDatabaseHelper(mockDbh);
+        when(mockDbh.upsertMitreData(anySet())).thenReturn(mockResults);
+        when(mockDbh.backfillMitreTimegaps(anySet())).thenReturn(1);
 
         mitreCveController.updateMitreTables(false);
 
-        verify(dbh).upsertMitreData(anySet());
-        verify(dbh).backfillMitreTimegaps(anySet());
+        verify(mockDbh).upsertMitreData(anySet());
+        verify(mockDbh).backfillMitreTimegaps(anySet());
 
 
     }
@@ -60,9 +63,7 @@ public class MitreCveControllerTest {
 
     @Test
     public void compareWithMitre() {
-
-        DatabaseHelper dbh = mock(DatabaseHelper.class);
-        mitreCveController.setDatabaseHelper(dbh);
+        mitreCveController.setDatabaseHelper(mockDbh);
 
         Set<CompositeVulnerability> reconciledVulns = new HashSet<>();
         CompositeVulnerability vuln1 = new CompositeVulnerability(new RawVulnerability(1, "CVE-2021-123455", "Description", null, null, null, ""));
@@ -83,11 +84,11 @@ public class MitreCveControllerTest {
         vuln3.setMitreVuln(mitreVuln3);
         vuln4.setMitreVuln(mitreVuln4);
 
-        when(dbh.attachMitreVulns(any())).thenReturn(reconciledVulns);
+        when(mockDbh.attachMitreVulns(any())).thenReturn(reconciledVulns);
 
         mitreCveController.compareWithMitre(reconciledVulns);
 
-        verify(dbh).attachMitreVulns(any());
+        verify(mockDbh).attachMitreVulns(any());
 
         //Output should be 2 in Mitre 2 not in Mitre 1 Reserved 2 Public
     }

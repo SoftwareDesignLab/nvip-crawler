@@ -201,7 +201,7 @@ public class ReconcilerController {
     }
 
     private void updateNvdMitre() {
-        nvdController.updateNvdTables();
+        nvdController.updateNvdTables(true);
         mitreController.updateMitreTables(true);
     }
     private Set<CompositeVulnerability> attachNvdMitre(Set<CompositeVulnerability> newVulns) {
