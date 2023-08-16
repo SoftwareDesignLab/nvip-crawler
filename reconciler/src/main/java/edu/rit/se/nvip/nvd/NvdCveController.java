@@ -53,8 +53,7 @@ import java.util.stream.Collectors;
 public class NvdCveController {
 	private final Logger logger = LogManager.getLogger(NvdCveController.class);
 
-	private static final DatabaseHelper dbh = DatabaseHelper.getInstance();
-	private static DatabaseHelper databaseHelper;
+	private static DatabaseHelper dbh = DatabaseHelper.getInstance();
 	private final String startDate;
 	private final String endDate;
 	private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS");
@@ -67,7 +66,7 @@ public class NvdCveController {
 	 */
 	public static void main(String[] args) {
 		NvdCveController nvd = new NvdCveController();
-		nvd.updateNvdTables();
+		nvd.updateNvdTables(true);
 	}
 
 
@@ -83,7 +82,6 @@ public class NvdCveController {
 		this.nvdApiUrl = nvdApiUrl;
 		this.startDate = startDate.format(formatter);
 		this.endDate = endDate.format(formatter);
-		databaseHelper = DatabaseHelper.getInstance();
 	}
 
 	public Set<CompositeVulnerability> compareWithNvd(Set<CompositeVulnerability> reconciledVulns) {
@@ -127,13 +125,16 @@ public class NvdCveController {
 		return affected;
 	}
 
-	public void updateNvdTables() {
-		Set<NvdVulnerability> nvdCves = fetchCvesFromNvd(nvdApiUrl.replaceAll("<StartDate>", this.startDate)
-				.replaceAll("<EndDate>", this.endDate));
+	public void updateNvdTables(boolean doFetch) {
+		Set<NvdVulnerability> nvdCves = new HashSet<>();
+		if(doFetch) {
+			nvdCves = fetchCvesFromNvd(nvdApiUrl.replaceAll("<StartDate>", this.startDate)
+					.replaceAll("<EndDate>", this.endDate));
+		}
 		logger.info("Grabbed {} cves from NVD for the past month", nvdCves.size());
-		Set<NvdVulnerability> toBackfill = databaseHelper.upsertNvdData(nvdCves); // return the ones that were inserted/updated
+		Set<NvdVulnerability> toBackfill = dbh.upsertNvdData(nvdCves); // return the ones that were inserted/updated
 		logger.info("Inserted {} new CVEs from NVD into NVD Database Table", toBackfill.size());
-		databaseHelper.backfillNvdTimegaps(toBackfill); // todo return number of time gaps
+		dbh.backfillNvdTimegaps(toBackfill); // todo return number of time gaps
 	}
 
 
@@ -185,5 +186,8 @@ public class NvdCveController {
 		}
 
 		return nvdCves;
+	}
+	public void setDatabaseHelper(DatabaseHelper dbHelper){
+		dbh = dbHelper;
 	}
 }

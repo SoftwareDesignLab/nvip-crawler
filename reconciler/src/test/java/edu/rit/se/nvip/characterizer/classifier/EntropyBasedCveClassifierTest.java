@@ -24,22 +24,30 @@
 package edu.rit.se.nvip.characterizer.classifier;
 
 import edu.rit.se.nvip.utils.ReconcilerEnvVars;
+import org.apache.commons.io.FileUtils;
 import org.junit.Test;
 import edu.rit.se.nvip.automatedcvss.preprocessor.CvePreProcessor;
+import org.mockito.MockedStatic;
+import org.powermock.core.classloader.annotations.PrepareForTest;
 import weka.core.Instance;
 import weka.core.SparseInstance;
 
+import java.io.File;
+import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 public class EntropyBasedCveClassifierTest {
 
     @Test
-    public void testTrainMLModel() {
+    public void testTrainMLModel() throws IOException {
+        MockedStatic<FileUtils> mocked = mockStatic(FileUtils.class);
         String[] trainingDataInfo = {ReconcilerEnvVars.getTrainingDataDir(), ReconcilerEnvVars.getTrainingData()};
         String trainingDataPath = trainingDataInfo[0];
         String trainingDataFiles = trainingDataInfo[1];
@@ -49,11 +57,12 @@ public class EntropyBasedCveClassifierTest {
 
         // pre-edu.rit.se.nvip.process training data and store it
         String preProcessedTrainingDataFile = trainingDataFileName.concat("-processed.csv");
-
+        mocked.when(() -> FileUtils.readFileToString(any(File.class))).thenReturn("mocked, content");
         EntropyBasedCveClassifier entropyBasedCveClassifier = new EntropyBasedCveClassifier(preProcessedTrainingDataFile);
         entropyBasedCveClassifier.trainMLModel();
 
-        assertEquals(entropyBasedCveClassifier.histograms.size(), 4);
+        assertEquals(entropyBasedCveClassifier.histograms.size(), 1);
+        mocked.close();
     }
 
     @Test
