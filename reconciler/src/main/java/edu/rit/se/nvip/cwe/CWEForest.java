@@ -10,7 +10,6 @@ public class CWEForest {
 
     public CWEForest() {
         this.trees = new HashSet<>();
-        constructForest(CWE.getAllCWEs());
     }
 
     public void constructForest(Set<CWE> cwes) {
