@@ -15,6 +15,5 @@ class CweControllerTest {
     @Test
     void getCWEsFromWeb() {
         MockedStatic<CweController> mocked = mockStatic(CweController.class);
-        mocked.when(() -> CweController.unzipFile(any(File.class), any(File.class))).thenReturn("{ \"key\": \"value\"}");
     }
 }
