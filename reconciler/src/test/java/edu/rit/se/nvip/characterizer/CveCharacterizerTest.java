@@ -87,7 +87,7 @@ public class CveCharacterizerTest {
 		mockedUtils.when(() -> FileUtils.writeStringToFile(any(File.class), anyString(), anyBoolean())).thenAnswer((Answer<Void>) invocation -> null);
 		when(mockClassifier.predict(anyString(), anyBoolean())).thenReturn(dummyPredictions);
 		when(mockCvssScoreCalculator.getCvssScoreJython(any(String[].class))).thenReturn(dummyDoubles);
-		when(mockPartialCvssVectorGenerator.getCVssVector(anyMap())).thenReturn(new String[2]);
+		when(mockPartialCvssVectorGenerator.getCVssVector(anySet())).thenReturn(new String[2]);
 		//create characterizer with the mocks manually injected
 		CveCharacterizer cveCharacterizer = new CveCharacterizer(mockPreProcessor, mockCveClassifierFactory, mockCvssScoreCalculator, mockPartialCvssVectorGenerator,
 				trainingDataInfo[0], trainingDataInfo[1], "ML", "NB");
@@ -95,7 +95,7 @@ public class CveCharacterizerTest {
 
 
 		//Test characterizeCveForVDO
-		Map<VDONounGroup,Map<VDOLabel, Double>> prediction = cveCharacterizer.characterizeCveForVDO(cveDesc, true);
+		Map<VDOLabel, Double> prediction = cveCharacterizer.characterizeCveForVDO(cveDesc, true);
 		assertTrue(prediction.size() > 0);
 
 		prediction = cveCharacterizer.characterizeCveForVDO(cveDesc, false);
@@ -110,7 +110,7 @@ public class CveCharacterizerTest {
 			testData.add(data.get(i));
 		}
 		// generate vuln list
-		List<CompositeVulnerability> vulnList = new ArrayList<>();
+		Set<CompositeVulnerability> vulnSet = new HashSet<>();
 		for (String[] line : testData) {
 			String cveId = line[0];
 			String description = line[1];
@@ -118,18 +118,19 @@ public class CveCharacterizerTest {
 				continue;
 			CompositeVulnerability vuln = new CompositeVulnerability(new RawVulnerability(1, cveId, description, null, null, null, ""));
 
-			vulnList.add(vuln);
+			vulnSet.add(vuln);
 		}
+
 		//added 2 vulns with null desc and short desc to reach more code coverage
 		CompositeVulnerability vuln = new CompositeVulnerability(new RawVulnerability(1, "cve-1", null, null, null, null, ""));
 		vuln.setPotentialSources(new HashSet<>());
 		CompositeVulnerability vuln2 = new CompositeVulnerability(new RawVulnerability(1, "cve-1", "short desc",	null, null, null, ""));
 		vuln2.setPotentialSources(new HashSet<>());
-		vulnList.add(vuln);
-		vulnList.add(vuln2);
+		vulnSet.add(vuln);
+		vulnSet.add(vuln2);
 
-		List<CompositeVulnerability> newList = cveCharacterizer.characterizeCveList(vulnList, 5000);
-		assertEquals(12, newList.size());
+		cveCharacterizer.characterizeCveList(vulnSet, 5000);
+		assertEquals(12, vulnSet.size());
 
 		mockedUtils.close();
 	}
