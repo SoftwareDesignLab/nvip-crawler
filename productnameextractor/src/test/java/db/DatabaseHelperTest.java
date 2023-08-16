@@ -25,12 +25,15 @@ package db;
  */
 
 import com.zaxxer.hikari.HikariDataSource;
+import env.ProductNameExtractorEnvVars;
 import model.cpe.AffectedProduct;
 import model.cve.CompositeVulnerability;
+import org.apache.commons.math3.stat.descriptive.summary.Product;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
@@ -54,10 +57,15 @@ import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class DatabaseHelperTest {
-	protected static String databaseType = "mysql";
-	protected static String hikariUrl = "jdbc:mysql://localhost:3306/nvip?useSSL=false&allowPublicKeyRetrieval=true";
-	protected static String hikariUser = "root";
-	protected static String hikariPassword = "root";
+
+	static{
+		ProductNameExtractorEnvVars.initializeEnvVars();
+	}
+
+	private static final String databaseType = ProductNameExtractorEnvVars.getDatabaseType();
+	private static final String hikariUrl = ProductNameExtractorEnvVars.getHikariUrl();
+	private static final String hikariUser = ProductNameExtractorEnvVars.getHikariUser();
+	private static final String hikariPassword = ProductNameExtractorEnvVars.getHikariPassword();
 	private DatabaseHelper dbh;
 	@Mock
 	private HikariDataSource hds;
@@ -77,26 +85,11 @@ public class DatabaseHelperTest {
 		} catch (SQLException ignored) {}
 	}
 
-	/**
-	 * Sets up the "database" results to return n rows
-	 * @param n Number of rows (number of times next() will return true)
-	 */
-	private void setResNextCount(int n) {
-		try {
-			when(res.next()).thenAnswer(new Answer<Boolean>() {
-				private int iterations = n;
-				public Boolean answer(InvocationOnMock invocation) {
-					return iterations-- > 0;
-				}
-			});
-		} catch (SQLException ignored) {}
-	}
-
 	private List<AffectedProduct> buildDummyProducts(int count) {
 		List<AffectedProduct> products = new ArrayList<>();
 		for (int i = 0; i < count; i++) {
 			String cpeName = "cpe:2.3:a:" + i + ":" + i + ":*:*:*:*:*:*:*:*";
-			products.add(new AffectedProduct(i, "cve"+i, cpeName, "productName"+i, "date"+i, "version"+i, "vendor"+i));
+			products.add(new AffectedProduct("cve"+i, cpeName, "productName"+i, "version"+i, "vendor"+i));
 		}
 		return products;
 	}
@@ -120,6 +113,7 @@ public class DatabaseHelperTest {
 	/**
 	 * Tests the insertAffectedProducts method. In this case since there are 5 products,
 	 * there should be 8 psmt.setStrings() so 8x5=40
+	 *
 	 * @throws SQLException
 	 */
 	@Test
@@ -128,7 +122,7 @@ public class DatabaseHelperTest {
 		List<AffectedProduct> products = buildDummyProducts(inCount);
 		dbh.insertAffectedProducts(products);
 		try {
-			verify(pstmt, times(inCount*8)).setString(anyInt(), any());
+			verify(pstmt, times(inCount*7)).setString(anyInt(), any());
 			verify(pstmt, times(inCount)).executeUpdate();
 			verify(pstmt).setString(1, products.get(inCount-1).getCveId());
 		} catch (SQLException ignored) {}
@@ -208,6 +202,15 @@ public class DatabaseHelperTest {
 		assertEquals(vuln1.getDescription(), description1);
 		assertEquals(vuln2.getDescription(), description2);
 		assertEquals(vuln3.getDescription(), description3);
+	}
+
+	@Test
+	public void testInsertAffectedProductsToDB() {
+		//dont actually want to insert anything into the db
+		dbh = spy(dbh);
+		doNothing().when(dbh).insertAffectedProducts(anyList());
+		dbh.insertAffectedProductsToDB(new ArrayList<>());
+		verify(dbh).insertAffectedProducts(anyList());
 	}
 
 	@Test

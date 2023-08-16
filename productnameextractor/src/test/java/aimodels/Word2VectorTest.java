@@ -24,6 +24,7 @@ package aimodels;
  * SOFTWARE.
  */
 
+import env.ProductNameExtractorEnvVars;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -39,10 +40,18 @@ import static org.junit.jupiter.api.Assertions.*;
 public class Word2VectorTest {
     private static Word2Vector word2Vector;
 
+    static{
+        ProductNameExtractorEnvVars.initializeEnvVars();
+    }
+
+    private static final String RESOURCE_DIR = ProductNameExtractorEnvVars.getResourceDir();
+    private static final String DATA_DIR = ProductNameExtractorEnvVars.getDataDir();
+    private static final String WORD_2_VECTOR = ProductNameExtractorEnvVars.getWord2Vec();
+
     @BeforeAll
     public static void setUp() throws FileNotFoundException {
         // Initialize the Word2Vector instance with the model file path
-        String modelPath = "nvip_data/data/w2v_model_250.bin";
+        String modelPath = RESOURCE_DIR + "/" + DATA_DIR + "/" + WORD_2_VECTOR;
         word2Vector = new Word2Vector(modelPath);
     }
 

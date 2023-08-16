@@ -26,7 +26,6 @@ import model.cpe.CpeEntry;
 import model.cpe.CpeGroup;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
-import dictionary.ProductDictionary;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -166,4 +165,17 @@ public class ProductDictionaryTest {
     private Map<String, CpeGroup> readProductDictFromFile(String filePath) throws IOException {
         return ProductDictionary.readProductDict(filePath);
     }
+
+    @Test
+    public void testUnloadProductDict() {
+        // Create sample product dictionary
+        Map<String, CpeGroup> productDict = createSampleProductDict();
+
+        // Unload the product dictionary
+        ProductDictionary.unloadProductDict();
+
+        // Assertions to verify the data integrity
+        assertEquals(3, productDict.size());
+    }
+
 }

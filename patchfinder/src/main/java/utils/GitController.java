@@ -1,18 +1,20 @@
+package utils;
+
 /**
  * Copyright 2023 Rochester Institute of Technology (RIT). Developed with
  * government support under contract 70RSAT19CB0000020 awarded by the United
  * States Department of Homeland Security.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -21,7 +23,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package utils;
 
 import java.io.File;
 
@@ -52,7 +53,7 @@ public class GitController {
 	/**
 	 * pull repo
 	 * 
-	 * @return
+	 * @return true if successful, false if not
 	 */
 	public boolean pullRepo() {
 		logger.info("Checking for updates for {} repo!...", localPath);
@@ -74,7 +75,7 @@ public class GitController {
 	/**
 	 * clone git repo
 	 * 
-	 * @return
+	 * @return true if successful, false if not
 	 */
 	public boolean cloneRepo() {
 		Git git = null;
@@ -86,7 +87,7 @@ public class GitController {
 			CloneCommand cloneCommand = Git.cloneRepository();
 			cloneCommand.setURI(remotePath);
 			cloneCommand.setDirectory(localFileDir);
-			cloneCommand.call();
+			cloneCommand.call().close();
 
 			git = Git.open(localFileDir);
 			StoredConfig config = git.getRepository().getConfig();
@@ -95,6 +96,7 @@ public class GitController {
 			config.setString("remote", "origin", "fetch", "+refs/heads/*:refs/remotes/origin/*");
 			config.setString("remote", "origin", "url", remotePath);
 			config.save();
+
 		} catch (Exception e) {
 			logger.error("Error while cloning repo at: {}\n{}", remotePath, e);
 			return false;
@@ -110,12 +112,18 @@ public class GitController {
 	 */
 	public void deleteRepo() {
 		logger.info("Deleting local repo '{}'...", localPath);
-		try { // TODO: Throwing AccessDeniedExceptions
+		try {
 			FileUtils.delete(new File(localPath), FileUtils.RECURSIVE);
 			logger.info("Successfully deleted repo '{}'", localPath);
 		} catch (Exception e) {
 			logger.error("ERROR: Failed to delete repo '{}': {}", localPath, e);
 		}
+	}
+
+	public static void main(String[] args) {
+		final GitController git = new GitController("nvip_data/patch-repos/testrepo", "https://github.com/rmccue/test-repository");
+		git.cloneRepo();
+		git.deleteRepo();
 	}
 
 }

@@ -1,4 +1,3 @@
-
 /**
  * Copyright 2023 Rochester Institute of Technology (RIT). Developed with
  * government support under contract 70RSAT19CB0000020 awarded by the United
@@ -44,8 +43,8 @@ public class PatchFinderEnvVarsTest {
         assertEquals(addressBases[1], "https://www.gitlab.com/");
         assertEquals(1000, PatchFinderEnvVars.getCloneCommitThreshold());
         assertEquals(50000, PatchFinderEnvVars.getCloneCommitLimit());
-        assertEquals("src/main/resources/patch-repos", PatchFinderEnvVars.getClonePath());
-        assertEquals("src/main/resources/source_dict.json", PatchFinderEnvVars.getPatchSrcUrlPath());
+        assertEquals("nvip_data/patch-repos", PatchFinderEnvVars.getClonePath());
+        assertEquals("nvip_data/source_dict.json", PatchFinderEnvVars.getPatchSrcUrlPath());
 
         // Default values for database environment variables
         assertEquals("mysql", PatchFinderEnvVars.getDatabaseType());
@@ -55,7 +54,7 @@ public class PatchFinderEnvVarsTest {
 
         // Default values for RabbitMQ environment variables
         assertEquals(60, PatchFinderEnvVars.getRabbitPollInterval());
-        assertEquals("localhost", PatchFinderEnvVars.getRabbitHost());
+        assertEquals("host.docker.internal", PatchFinderEnvVars.getRabbitHost());
         assertEquals("guest", PatchFinderEnvVars.getRabbitUsername());
         assertEquals("guest", PatchFinderEnvVars.getRabbitPassword());
 

@@ -25,108 +25,98 @@ package model.cpe;
  */
 
 /**
- * 
+ *
+ * Class to represent a product that is affected by a CVE.
+ *
  * @author axoeec
  * @author Paul Vickers
  * @author Richard Sawh
  *
  */
 public class AffectedProduct {
-
-	private final int id;
 	private String cveId;
 	private final String cpe;
 	private String productName;
-	private String releaseDate;
 	private String version;
 	private String vendor;
 	private String purl;
 	private String swid;
 
-	public AffectedProduct(int id, String cveId, String cpe, String releaseDate, String version) {
-		this.id = id;
+	/**
+	 * Default constructor for an affectedProduct
+	 *
+	 * @param cveId CVE that affects the product
+	 * @param cpe CPE for the product
+	 * @param version version of the product
+	 */
+	public AffectedProduct(String cveId, String cpe, String version) {
 		this.cveId = cveId;
 		this.cpe = cpe;
-		this.releaseDate = releaseDate;
 		this.version = version;
 	}
 
-	public AffectedProduct(int id, String cveId, String cpe, String productName, String releaseDate, String version, String vendor) {
-		this(id, cveId, cpe, releaseDate, version);
+	/**
+	 * Same as above but includes vendor and product name. Because of this, generatePURL() and generateSWID() are called
+	 * as they can only be built if vendor and product name are known.
+	 *
+	 * @param vendor vendor of the product
+	 * @param productName name of the product
+	 */
+	public AffectedProduct(String cveId, String cpe, String productName, String version, String vendor) {
+		this(cveId, cpe, version);
 		this.productName = productName;
 		this.vendor = vendor;
 		generatePURL();
 		generateSWID();
 	}
 
-	public AffectedProduct(String cpe, String releaseDate, String version) {
-		this.id = 0;
+	// Generate with just cpe, releaseDate and version
+	public AffectedProduct(String cpe, String version) {
 		this.cveId = null;
 		this.cpe = cpe;
-		this.releaseDate = releaseDate;
 		this.version = version;
 	}
 
+	// Creates a copy of another affectedProduct
 	public AffectedProduct(AffectedProduct a) {
-		this.id = a.id;
 		this.cveId = a.cveId;
+		this.productName = a.productName;
 		this.cpe = a.cpe;
-		this.releaseDate = a.releaseDate;
 		this.version = a.version;
 		this.vendor = a.vendor;
 		this.purl = a.purl;
 		this.swid = a.swid;
 	}
 
-	public int getId() {
-		return id;
-	}
-
 	public String getCveId() {
 		return cveId;
 	}
-
 	public String getCpe() {
 		return cpe;
 	}
-
 	public String getProductName() {
 		return productName;
 	}
-
-	public String getReleaseDate() {
-		return releaseDate;
-	}
-
 	public String getVersion() {
 		return version;
-	}
-
-	public void setVersion(String version) {
-		this.version = version;
 	}
 	public String getVendor() {
 		return vendor;
 	}
-
 	public String getPURL(){
 		return purl;
 	}
-
 	public String getSWID(){
 		return swid;
 	}
-
 	public void setVendor(String vendor) {
 		this.vendor = vendor;
 	}
-
 	public void setCveId(String cveId) {
 		this.cveId = cveId;
 	}
-
-	public void setReleaseDate(String releaseDate) {
-		this.releaseDate = releaseDate;
+	public void setVersion(String version) {
+		this.version = version;
 	}
 
 	/**
@@ -146,8 +136,8 @@ public class AffectedProduct {
 	}
 
 	/**
-	 * Generate SWID using product name
-	 * Scheme: swid:productname@version
+	 * Generate SWID for the affectedproduct
+	 * Format: swid:productname@version
 	 */
 	private void generateSWID(){
 		//match the scheme
@@ -186,7 +176,7 @@ public class AffectedProduct {
 
 	@Override
 	public String toString() {
-		return "AffectedProduct [cveId=" + cveId + ", cpe=" + cpe + ", releaseDate=" + releaseDate + ", version=" + version + "]";
+		return "AffectedProduct [cveId=" + cveId + ", cpe=" + cpe + ", version=" + version + "]";
 	}
 
 }

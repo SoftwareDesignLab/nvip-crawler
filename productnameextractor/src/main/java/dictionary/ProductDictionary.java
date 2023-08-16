@@ -48,10 +48,11 @@ import java.util.regex.Pattern;
  * Product Dictionary Class
  *
  * Represents the CPE dictionary pulled from NVD with all necessary utility
- * to keep it up to date and functional throughout runs of the Product Name Extractor
+ * to keep it up to date and functional throughout runs of the Product Name Extractor.
  *
  * @author Dylan Mulligan
  * @author Paul Vickers
+ *
  */
 
 public class ProductDictionary {
@@ -60,10 +61,9 @@ public class ProductDictionary {
      // Dictionary Reading/Storage Vars
 
     private static final ObjectMapper OM = new ObjectMapper();
-    private static final boolean prettyPrint = ProductNameExtractorEnvVars.isPrettyPrint();
     private static final String productDictName = ProductNameExtractorEnvVars.getProductDictName();
-    private static final String resourceDir = ProductNameExtractorEnvVars.getResourceDir();
-    private static final String dataDir = ProductNameExtractorEnvVars.getDataDir();
+    private static final float refreshInterval = ProductNameExtractorEnvVars.getRefreshInterval();
+    private static final float fullPullInterval = ProductNameExtractorEnvVars.getFullPullInterval();
     private static Map<String, CpeGroup> productDict;
     private static Instant productDictLastCompilationDate = Instant.parse("2000-01-01T00:00:00.00Z");
     private static Instant productDictLastRefreshDate = Instant.parse("2000-01-01T00:00:00.00Z");
@@ -75,7 +75,6 @@ public class ProductDictionary {
     private static final String baseNVDUrl = "https://services.nvd.nist.gov/rest/json/cpes/2.0";
     private static final int resultsPerPage = 10000; // Cannot query more than 10000 per page
     private static final int maxAttemptsPerPage = ProductNameExtractorEnvVars.getMaxAttemptsPerPage();
-
 
     // Getter for product dict
     public static Map<String, CpeGroup> getProductDict() {
@@ -109,23 +108,26 @@ public class ProductDictionary {
     public static void initializeProductDict(){
         logger.info("Initializing Product Dictionary...");
 
-        final String productDictPath = resourceDir + "/" + dataDir + "/" + productDictName;
+        final String productDictPath = ProductNameExtractorEnvVars.getResourceDir() + "/"
+                + ProductNameExtractorEnvVars.getDataDir() + "/"
+                + productDictName;
+
         try{
             // Read in existing product dictionary
             productDict = readProductDict(productDictPath);
 
             // Calculate time since last compilation
-            final long timeSinceLastComp = Duration.between(productDictLastCompilationDate, Instant.now()).getSeconds();
+            final long timeSinceLastFullPull = Duration.between(productDictLastCompilationDate, Instant.now()).getSeconds();
             final long timeSinceLastRefresh = Duration.between(productDictLastRefreshDate, Instant.now()).getSeconds();
 
-            logger.info("Successfully read {} products from file '{}' ({} hour(s) old)",
+            logger.info("Successfully read {} products from file '{}' ({} day(s) old)",
                     productDict.size(),
                     productDictName,
-                    timeSinceLastRefresh / 3600 // seconds -> hours
+                    Math.floor((float) timeSinceLastRefresh / 3600 / 24 * 10) / 10 // seconds -> hours
             );
 
             // Update dictionary as needed
-            updateProductDict(productDict, timeSinceLastComp, timeSinceLastRefresh, productDictPath);
+            updateProductDict(productDict, timeSinceLastFullPull, timeSinceLastRefresh, productDictPath);
 
         } catch (Exception e) {
             // If error occurs reading current stored dictionary, perform a full query of NVD's CPE Dictionary
@@ -143,7 +145,7 @@ public class ProductDictionary {
     /**
      * Reads in the CPE dictionary from file at the given path.
      *
-     * @param productDictPath path to read from
+     * @param productDictPath path to read dictionary from
      * @return parsed CPE dictionary
      * @throws IOException if an exception occurs while parsing the CPE dictionary from file
      */
@@ -212,7 +214,7 @@ public class ProductDictionary {
 
         // Write data to file
         try {
-            final ObjectWriter w = prettyPrint ? OM.writerWithDefaultPrettyPrinter() : OM.writer();
+            final ObjectWriter w = ProductNameExtractorEnvVars.isPrettyPrint() ? OM.writerWithDefaultPrettyPrinter() : OM.writer();
             w.writeValue(new File(productDictPath), data);
             logger.info("Successfully wrote {} products to product dict file at filepath '{}'", productDict.size(), productDictPath);
         } catch(Exception e){
@@ -223,22 +225,22 @@ public class ProductDictionary {
 
     /**
      * Function to take in the current product dictionary data stored in the local productdict.json file
-     * and update it with a fresh NVD CPE Dictionary data query. If the time since the last composition (full pull
-     * of data) is greater than a week, the current data is wiped and a full re-pull from NVD is performed.
+     * and update it with a fresh NVD CPE Dictionary data query. If the time since the last full pull
+     * of data is greater than fullPullInterval (env var), the current data is wiped and a full re-pull from NVD is performed.
      *
-     * On the other hand, if it has been less than a week since the most recent composition but longer than a day
-     * since the most recent refresh, then only NVD's recently updated entries are queried and the
+     * On the other hand, if it has been less than fullPullInterval since the most recent full pull but longer than refreshInterval
+     * (env var) since the most recent refresh, then only NVD's recently updated entries are queried and the
      * current data is updated with the freshly pulled data, logging the changes.
      *
-     * @param productDict
-     * @param timeSinceLastComp
-     * @param timeSinceLastRefresh
-     * @param productDictPath
+     * @param productDict dictionary of CPEs
+     * @param timeSinceLastFullPull time since last full pull of the dictionary
+     * @param timeSinceLastRefresh time since last refresh of the dictionary
+     * @param productDictPath path to product dictionary file
      */
-    private static void updateProductDict(Map<String, CpeGroup> productDict, long timeSinceLastComp, long timeSinceLastRefresh, String productDictPath) {
-        // Check if it has been over a week since a full pull/compilation of the NVD dictionary
-        if(timeSinceLastComp / (60 * 60 * 24) > 7) { // 60sec/min * 60min/hr * 24hrs = 1 day
-            logger.info("Product dictionary file is over a week old, fully querying NVD data with no page limit...");
+    private static void updateProductDict(Map<String, CpeGroup> productDict, long timeSinceLastFullPull, long timeSinceLastRefresh, String productDictPath) {
+        // Check if it has been over full pull interval time since a full pull/compilation of the NVD dictionary
+        if((float) timeSinceLastFullPull / (60 * 60 * 24) > fullPullInterval) { // 60sec/min * 60min/hr * 24hrs = 1 day
+            logger.info("Product dictionary file is over {} days old, fully querying NVD data with no page limit...", fullPullInterval);
 
             // Fully clear product dict and fill it with no page limit query
             int oldSize = productDict.size();
@@ -255,11 +257,10 @@ public class ProductDictionary {
 
             writeProductDict(productDict, productDictPath); // Write entire new product dict
 
-        // If less than a week has gone by but over a day, refresh the product dictionary with new entries from NVD
-        } else if (timeSinceLastRefresh / (60 * 60 * 24) > 0){
-            logger.info("Product dictionary file is stale, fetching data from NVD to refresh it...");
+        // If less than full pull interval time has gone by but over refresh interval, refresh the product dictionary with new entries from NVD
+        } else if ((float) timeSinceLastRefresh / (60 * 60 * 24) > refreshInterval){
+            logger.info("Product dictionary file is over {} days old, querying data from NVD to refresh it...", refreshInterval);
             int insertedCounter = 0;
-            int notChangedCounter = 0;
             int updatedCounter = 0;
 
             // Refreshing, pass in true and perform a query pulling only changed entries from the most recent refresh to now
@@ -270,14 +271,12 @@ public class ProductDictionary {
             for (Map.Entry<String, CpeGroup> e : updatedProductDict.entrySet()) {
                 final CpeGroup oldValue = productDict.put(e.getKey(), e.getValue());
                 if(oldValue == null) insertedCounter++;
-                else if(oldValue.equals(e.getValue())) notChangedCounter++;
                 else updatedCounter++;
             }
 
-            logger.info("Successfully refreshed the product dictionary with {} inserted, {} updated, and {} unchanged entries",
+            logger.info("Successfully refreshed the product dictionary with {} inserted and {} updated entries",
                     insertedCounter,
-                    updatedCounter,
-                    notChangedCounter
+                    updatedCounter
             );
 
             writeProductDict(productDict, productDictPath); // Write new product dict
@@ -347,12 +346,10 @@ public class ProductDictionary {
                         // Build key
                         final String key = String.join(":", vendorName, productName);
 
-                        // Add data to cpeMapFile
-                        CpeGroup value;
                         // If key is not found, create new group and entry
                         if(!productDict.containsKey(key)) {
                             // Create group
-                            value = new CpeGroup(vendorName, productName);
+                            CpeGroup value = new CpeGroup(vendorName, productName);
 
                             // Create & add entry to group
                             value.addVersion(new CpeEntry(productName, version, cpeId));
@@ -401,7 +398,11 @@ public class ProductDictionary {
                 }
             }
 
-            logger.info("Loading product list is done!");
+            if(isRefresh){
+                logger.info("In the new data, {} total results were merged into {} CPE groups to be added to the dictionary",
+                        rawData.get("totalResults"), productDict.size());
+            }
+
         } catch (Exception e) {
             logger.error("Error loading CPE dictionary: {}", e.toString());
         }

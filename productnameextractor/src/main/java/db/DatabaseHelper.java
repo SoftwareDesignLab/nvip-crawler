@@ -55,7 +55,7 @@ public class DatabaseHelper {
 	private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
 	private final String selectVulnerabilitySql = "SELECT vulnerability.vuln_id, vulnerability.cve_id, description.description FROM vulnerability JOIN description ON vulnerability.description_id = description.description_id;";
 	private final String selectSpecificVulnerabilitySql = "SELECT vulnerability.vuln_id, description.description FROM vulnerability JOIN description ON vulnerability.description_id = description.description_id WHERE vulnerability.cve_id = ?;";
-	private final String insertAffectedProductSql = "INSERT INTO affectedproduct (cve_id, cpe, product_name, release_date, version, vendor, purl, swid_tag) VALUES (?, ?, ?, ?, ?, ?, ?, ?);";
+	private final String insertAffectedProductSql = "INSERT INTO affectedproduct (cve_id, cpe, product_name, version, vendor, purl, swid_tag) VALUES (?, ?, ?, ?, ?, ?, ?);";
 	private final String deleteAffectedProductSql = "DELETE FROM affectedproduct where cve_id = ?;";
 
 	/**
@@ -72,7 +72,7 @@ public class DatabaseHelper {
 		}
 
 		if(config == null){
-			logger.info("Attempting to create HIKARI config from provided values");
+			logger.info("Attempting to create HIKARI config from provided values...");
 			config = createHikariConfig(hikariUrl, hikariUser, hikariPassword);
 		}
 
@@ -170,11 +170,10 @@ public class DatabaseHelper {
 					pstmt.setString(1, affectedProduct.getCveId());
 					pstmt.setString(2, affectedProduct.getCpe());
 					pstmt.setString(3, affectedProduct.getProductName());
-					pstmt.setString(4, affectedProduct.getReleaseDate());
-					pstmt.setString(5, affectedProduct.getVersion());
-					pstmt.setString(6, affectedProduct.getVendor());
-					pstmt.setString(7, affectedProduct.getPURL());
-					pstmt.setString(8, affectedProduct.getSWID());
+					pstmt.setString(4, affectedProduct.getVersion());
+					pstmt.setString(5, affectedProduct.getVendor());
+					pstmt.setString(6, affectedProduct.getPURL());
+					pstmt.setString(7, affectedProduct.getSWID());
 
 					count += pstmt.executeUpdate();
 
@@ -292,55 +291,6 @@ public class DatabaseHelper {
 			}
 		}
 
-		return vulnList;
-	}
-
-	// TODO: Move to API class
-	public List<CompositeVulnerability> getVulnsByCpe(String cpe) {
-		final String selectVulnerabilityByCpeSql =
-		"SELECT vulnerability.vuln_id, vulnerability.cve_id, description.description, vulnerability.published_date, vulnerability.last_modified_date FROM nvip.vulnerability " +
-		"JOIN nvip.description ON vulnerability.description_id = description.description_id " +
-		"JOIN nvip.affectedproduct ON vulnerability.cve_id = affectedproduct.cve_id " +
-		"WHERE affectedproduct.cve_id = ?";
-		ArrayList<CompositeVulnerability> vulnList = new ArrayList<>();
-		synchronized (DatabaseHelper.class) {
-			try (Connection connection = getConnection()) {
-				// Prepare SQL statement
-				PreparedStatement pstmt = connection.prepareStatement(selectVulnerabilityByCpeSql);
-				pstmt.setString(1, cpe);
-
-				// Get result set and iterate
-				ResultSet rs = pstmt.executeQuery();
-				while (rs.next()) {
-					// Extract values
-					final int vulnId = rs.getInt(0);
-					final String cveId = rs.getString(1);
-					final String description = rs.getString(2);
-					final String publishDate = rs.getString(3);
-					final String lastModifiedDate = rs.getString(4);
-
-					// Build vuln object
-					CompositeVulnerability vulnerability = new CompositeVulnerability(
-							vulnId,
-							"",
-							cveId,
-							"",
-							publishDate,
-							lastModifiedDate,
-							description,
-							CompositeVulnerability.CveReconcileStatus.DO_NOT_CHANGE
-					);
-
-					// Store object in output list
-					vulnList.add(vulnerability);
-				}
-				logger.info("NVIP has loaded {} existing CVE items from DB!", vulnList.size());
-			} catch (Exception e) {
-				logger.error("Error while getting existing vulnerabilities from DB: {}", e.toString());
-			}
-		}
-
-		// Return generated list of objects
 		return vulnList;
 	}
 

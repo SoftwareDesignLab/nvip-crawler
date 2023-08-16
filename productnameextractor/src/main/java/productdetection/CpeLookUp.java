@@ -24,6 +24,7 @@ package productdetection;
  * SOFTWARE.
  */
 
+import edu.stanford.nlp.util.Scored;
 import model.cpe.*;
 import opennlp.tools.tokenize.WhitespaceTokenizer;
 import org.apache.logging.log4j.LogManager;
@@ -35,7 +36,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * This class is to check is a software name in the CPE dictionary
+ * The CpeLookUp class is used to match CPEs to vulnerabilities after the NER Model has
+ * derived product names and versions from each vulnerability.
  * 
  * @author Igor Khokhlov
  * @author Dylan Mulligan
@@ -47,10 +49,56 @@ public class CpeLookUp {
 
 	private final static Logger logger = LogManager.getLogger(CpeLookUp.class);
 
+	/**
+	 * Inner class that maps a CPE Group with a score and can be sorted
+	 */
+	static class ScoredCpeGroup implements Comparable<ScoredCpeGroup> {
+		private final float score;
+		private final CpeGroup cpeGroup;
+
+		/**
+		 * Create new instance of CPEGroupFromMap, mapping CpeGroup to score
+		 *
+		 * @param score score of cpeGroup quality
+		 * @param cpeGroup cpeGroup being scored
+		 */
+		public ScoredCpeGroup(float score, CpeGroup cpeGroup) {
+			super();
+			this.score = score;
+			this.cpeGroup = cpeGroup;
+		}
+
+		/**
+		 * @return the CpeGroup's score
+		 */
+		public float getScore() {
+			return score;
+		}
+
+		/**
+		 * @return the CpeGroup
+		 */
+		public CpeGroup getCpeGroup() {
+			return cpeGroup;
+		}
+
+		/**
+		 * Compare this.score to o.score.
+		 *
+		 * @param o the object to be compared.
+		 * @return -1 | 0 | 1 based on score comparison
+		 */
+		@Override
+		public int compareTo(ScoredCpeGroup o) {
+			float compareScore = o.getScore();
+			return Float.compare(compareScore, this.score);
+		}
+	}
+
 	// Regex101: https://regex101.com/r/9uaTQb/1
 	private static final Pattern CPE_PATTERN = Pattern.compile("cpe:2\\.3:[aho\\*\\-]:([^:]*):([^:]*):([^:]*):.*");
 
-	//Set of generic standalone product names to blacklist from getting CPE groups matched
+	// Set of generic standalone product names to blacklist from getting CPE groups matched
 	private static final HashSet<String> genericProductNames;
 	static{
 		genericProductNames = new HashSet<>();
@@ -85,58 +133,11 @@ public class CpeLookUp {
 		genericProductNames.add("driver");
 	}
 
-	//CPE items from CPE file
+	// CPE items from CPE file
 	private Map<String, CpeGroup> productDict = null;
 
-	//HashSet to store how many unique cpe groups are identified
+	// HashSet to store how many unique cpe groups are identified
 	private final Set<String> uniqueCPEGroups;
-
-	/**
-	 * Class that has CPE groups with matching score and can be sorted
-	 */
-	static class CPEGroupFromMap implements Comparable<CPEGroupFromMap> {
-		private final float score;
-		private final CpeGroup cpeGroup;
-
-		/**
-		 * Create new instance of CPEGroupFromMap, mapping CpeGroup to score
-		 *
-		 * @param score score of cpeGroup quality TODO: what is this score based on?
-		 * @param cpeGroup cpeGroup being scored
-		 */
-		public CPEGroupFromMap(float score, CpeGroup cpeGroup) {
-			super();
-			this.score = score;
-			this.cpeGroup = cpeGroup;
-		}
-
-
-		/**
-		 * @return the CpeGroup's score
-		 */
-		public float getScore() {
-			return score;
-		}
-
-		/**
-		 * @return the CpeGroup
-		 */
-		public CpeGroup getCpeGroup() {
-			return cpeGroup;
-		}
-
-		/**
-		 * Compare this.score to o.score.
-		 *
-		 * @param o the object to be compared.
-		 * @return -1 | 0 | 1 based on score comparison
-		 */
-		@Override
-		public int compareTo(CPEGroupFromMap o) {
-			float compareScore = o.getScore();
-			return Float.compare(compareScore, this.score);
-		}
-	}
 
 	/**
 	 * Create new instance of CpeLookUp
@@ -159,43 +160,44 @@ public class CpeLookUp {
 	}
 
 	/**
-	 * Find CPE groups based on the given product's name
+	 * Find CPE groups based on the given product's name and returns a list of scored
+	 * CPE groups by how closely they match the product's name.
 	 * 
 	 * @param product product to search
 	 *
-	 * @return a list of found CPEGroupFromMap objects
+	 * @return a list of found ScoredCpeGroup objects
 	 */
-	private ArrayList<CPEGroupFromMap> findCPEGroups(ProductItem product) {
+	private ArrayList<ScoredCpeGroup> findCPEGroups(ProductItem product) {
 
+		// Remove all symbols except letters, numbers, and space
 		String productName = product.getName().toLowerCase();
-		// remove all symbols except letters, numbers, and space
 		productName = productName.replaceAll("[^a-zA-Z0-9 ]", "");
 
 		float maxScore = 0;
-		CpeGroup chosenGroup = null;
+		CpeGroup chosenGroup;
 
 		// Result list
-		ArrayList<CPEGroupFromMap> groupsList = new ArrayList<>();
+		ArrayList<ScoredCpeGroup> groupsList = new ArrayList<>();
 
-		//Ensures that generic product names do not get matched to CPE groups such as "security" or "server"
+		// Ensures that generic product names do not get matched to CPE groups such as "security" or "server"
 		String[] splitProductName = productName.split(" ");
 		if(splitProductName.length == 1 && genericProductNames.contains(productName)){
 			return groupsList;
 		}
 
-		// iterate through all cpe groups
+		// Iterate through all cpe groups
 		for (Map.Entry<String, CpeGroup> entry : productDict.entrySet()) {
 
-			// split titles into array of strings
+			// Split titles into array of strings
 			String[] productNameWords = WhitespaceTokenizer.INSTANCE.tokenize(productName);
 			String groupTitle = entry.getValue().getCommonTitle().toLowerCase().replaceAll("[^a-zA-Z0-9 ]", "");
 			String[] groupTitlewords = WhitespaceTokenizer.INSTANCE.tokenize(groupTitle);
 
-			// how many words matches
+			// How many words matches
 			int wordsMatched = 0;
 			float score = 0;
 
-			// how many words matches
+			// How many words matches
 			for (String productNameWord : productNameWords) {
 				for (String groupTitleword : groupTitlewords) {
 					if (productNameWord.equalsIgnoreCase(groupTitleword)) {
@@ -204,7 +206,7 @@ public class CpeLookUp {
 				}
 			}
 
-			// calculate matching score
+			// Calculate matching score
 			if (wordsMatched > 0) {
 				if (productNameWords.length > groupTitlewords.length) {
 					score = (float) wordsMatched / (float) productNameWords.length;
@@ -213,19 +215,19 @@ public class CpeLookUp {
 				}
 			}
 
-			// add to the list if we have equal or greater than max score
+			// Add to the list if we have equal or greater than max score
 			if (score >= maxScore && score > 0) {
 				maxScore = score;
 				chosenGroup = entry.getValue();
-				groupsList.add(new CPEGroupFromMap(score, chosenGroup));
+				groupsList.add(new ScoredCpeGroup(score, chosenGroup));
 			}
 
 		}
 
-		// sort in the descending order
+		// Sort in the descending order
 		Collections.sort(groupsList);
 
-		// keep only best cpe groups
+		// Keep only best cpe groups
 		if (groupsList.size() > 0) {
 			maxScore = groupsList.get(0).score;
 			for (int i = 0; i < groupsList.size(); i++) {
@@ -243,11 +245,11 @@ public class CpeLookUp {
 	 * Finds CPE IDs of the relevant CPE entries by matching affected versions of the product to versions
 	 * stored in the selected CPE groups
 	 * 
-	 * @param selectedGroups result from the findCPEGroups method
+	 * @param selectedGroups resultant matching groups from the findCPEGroups method
 	 * @param product product to search
 	 * @return a list of found CPE ID Strings
 	 */
-	private ArrayList<String> getCPEIdsFromGroups(ArrayList<CPEGroupFromMap> selectedGroups, ProductItem product) {
+	private ArrayList<String> getCPEIdsFromGroups(ArrayList<ScoredCpeGroup> selectedGroups, ProductItem product) {
 
 		ArrayList<String> cpeIDs = new ArrayList<>();
 
@@ -255,7 +257,7 @@ public class CpeLookUp {
 			return null;
 		}
 
-		// if we don't have versions, generate cpe id without version
+		// If we don't have versions, generate cpe id without version
 		if (product.getVersions().size() == 0) {
 			String cpeName = "cpe:2.3:a:" + selectedGroups.get(0).getCpeGroup().getGroupID() + ":*:*:*:*:*:*:*:*";
 			cpeIDs.add(cpeName);
@@ -265,7 +267,7 @@ public class CpeLookUp {
 					.stream().map(String::toLowerCase) // Map each element toLowerCase
 					.toArray(String[]::new); // Return elements in a String[]
 
-			//Instantiate new versionmanager.VersionManager
+			//Instantiate new VersionManager
 			VersionManager versionManager = new VersionManager();
 
 			// Process non-specific versions into enumerated ranges
@@ -273,12 +275,12 @@ public class CpeLookUp {
 			// [ "1.2.2", "1.2.3", ... "1.3", 1.5, "1.8.0", ... "1.8.9" ]
 			versionManager.processVersions(versionWords);
 
-			for (CPEGroupFromMap selectedGroup : selectedGroups) {
+			for (ScoredCpeGroup selectedGroup : selectedGroups) {
 
-				//Ensures that there are no duplicate entries
+				// Ensures that there are no duplicate entries
 				HashSet<String> addedVersions = new HashSet<>();
 
-				//If no version ranges available, break
+				// If no version ranges available, break
 				if(versionManager.getVersionRanges().size() == 0){
 					break;
 				}
@@ -299,11 +301,13 @@ public class CpeLookUp {
 
 					try {
 						final ProductVersion version = new ProductVersion(versionKey);
+
+						// If version is affected, create a CPE ID from it and add it to the list
 						if(versionManager.isAffected(version)) {
 							addedVersions.add(versionKey);
 							matchesCounter++;
-							String cpeName = "cpe:2.3:a:" + group.getGroupID() + ":" + versionKey + ":*:*:*:*:*:*:*";
-							cpeIDs.add(cpeName);
+							String cpeID = "cpe:2.3:a:" + group.getGroupID() + ":" + versionKey + ":*:*:*:*:*:*:*";
+							cpeIDs.add(cpeID);
 							uniqueCPEGroups.add(selectedGroup.getCpeGroup().getGroupID() + product.hashCode());
 						}
 					} catch (IllegalArgumentException e) {
@@ -311,7 +315,7 @@ public class CpeLookUp {
 					}
 				}
 
-				// look in the titles if did not find versions in the previous step
+				// Look in the titles if did not find versions in the previous step
 				if (matchesCounter == 0) {
 					for (Map.Entry<String, CpeEntry> entry : groupVersions.entrySet()) {
 						String entryTitle = entry.getValue().getTitle().toLowerCase();
@@ -324,8 +328,8 @@ public class CpeLookUp {
 							if (entryTitle.contains(versionWord)) {
 								addedVersions.add(versionWord);
 								matchesCounter++;
-								String cpeName = "cpe:2.3:a:" + group.getGroupID() + ":" + versionWord + ":*:*:*:*:*:*:*";
-								cpeIDs.add(cpeName);
+								String cpeID = "cpe:2.3:a:" + group.getGroupID() + ":" + versionWord + ":*:*:*:*:*:*:*";
+								cpeIDs.add(cpeID);
 								uniqueCPEGroups.add(selectedGroup.getCpeGroup().getGroupID() + product.hashCode());
 							}
 						}
@@ -347,8 +351,8 @@ public class CpeLookUp {
 							if (versionManager.isAffected(version)) {
 								addedVersions.add(versionWord);
 								matchesCounter++;
-								String cpeName = "cpe:2.3:a:" + group.getGroupID() + ":" + versionWord + ":*:*:*:*:*:*:*";
-								cpeIDs.add(cpeName);
+								String cpeID = "cpe:2.3:a:" + group.getGroupID() + ":" + versionWord + ":*:*:*:*:*:*:*";
+								cpeIDs.add(cpeID);
 								uniqueCPEGroups.add(selectedGroup.getCpeGroup().getGroupID() + product.hashCode());
 							}
 						} catch (IllegalArgumentException e) {
@@ -378,12 +382,13 @@ public class CpeLookUp {
 	 * @return a list of found CPE ID Strings
 	 */
 	public ArrayList<String> getCPEIds(ProductItem product) {
-		ArrayList<CPEGroupFromMap> cpeGroups = findCPEGroups(product);
+		ArrayList<ScoredCpeGroup> cpeGroups = findCPEGroups(product);
 		return getCPEIdsFromGroups(cpeGroups, product);
 	}
 
 	/**
-	 * Get CPE titles based on the given productName
+	 * Get CPE titles based on the given productName. If a CPE group contains
+	 * the product name in its title, add it to the list of possible matching groups.
 	 * 
 	 * @param productName name of product to get titles for
 	 *
@@ -396,10 +401,12 @@ public class CpeLookUp {
 
 		ArrayList<String> groupsList = new ArrayList<>();
 
+		// Go through each CPE group in the dict
 		for (Map.Entry<String, CpeGroup> entry : productDict.entrySet()) {
 
 			String groupTitle = entry.getValue().getCommonTitle().toLowerCase().replaceAll("[^a-zA-Z0-9 ]", "");
 
+			// If the CPE group's title contains the product name, add it to the list
 			if (groupTitle.contains(productName)) {
 				groupsList.add(groupTitle);
 			}

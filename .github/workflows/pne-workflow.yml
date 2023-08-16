@@ -19,7 +19,6 @@ env:
   HIKARI_URL: 'jdbc:mysql://localhost:3306/nvip?useSSL=false&allowPublicKeyRetrieval=true'
   HIKARI_USER: 'root'
   HIKARI_PASSWORD: 'root'
-  OUTPUT_DIR: 'output'
   RESOURCE_DIR: 'nvip_data'
   DATA_DIR: 'data'
   NLP_DIR: 'nlp'

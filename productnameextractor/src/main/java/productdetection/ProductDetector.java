@@ -24,7 +24,7 @@ package productdetection;
  * SOFTWARE.
  */
 
-import aimodels.NERmodel;
+import aimodels.NERModel;
 import env.ProductNameExtractorEnvVars;
 import model.cpe.ClassifiedWord;
 import model.cpe.ProductItem;
@@ -55,7 +55,7 @@ import java.util.List;
 public class ProductDetector {
 	private static final Logger logger = LogManager.getLogger(ProductDetector.class);
 	public static final String NNP = "NNP";
-	private NERmodel nerModel;
+	private NERModel nerModel;
 	private CpeLookUp cpeDict;
 	private POSTaggerME tagger;
 	private POSModel model;
@@ -69,7 +69,7 @@ public class ProductDetector {
 		try {
 			// Load NER model
 			logger.info("Loading NER model...");
-			nerModel = new NERmodel(resourceDir + "/" + dataDir + "/", nlpDir);
+			nerModel = new NERModel(resourceDir + "/" + dataDir + "/", nlpDir);
 
 			// Load CPE dictionary
 			cpeDict = cpeLookUp;
@@ -83,10 +83,10 @@ public class ProductDetector {
 			tagger = new POSTaggerME(model);
 			modelStream.close();
 
-			logger.info("Product detector initialization done!");
+			logger.info("Product Detector initialization done!");
 		} catch (IOException e) {
 			// Log and rethrow error to stop program execution
-			logger.error("Error while initializing product detector, model path {}, exception detail {}", binPath, e.toString());
+			logger.error("Error while initializing Product Detector, model path {}, exception detail {}", binPath, e.toString());
 			logger.warn("Please ensure that your working directory is correct. Current working directory: {}", System.getProperty("user.dir"));
 			throw e;
 		}
@@ -105,7 +105,7 @@ public class ProductDetector {
 	/**
 	 * Extracts SN and SV
 	 * 
-	 * @param words                  array of words to be classified
+	 * @param words array of words to be classified
 	 * @param nerResult<ClassifiedWord> results from NER model
 	 * @return ArrayList of classified words of labels (ArrayList<ClassifiedWord>)
 	 */
