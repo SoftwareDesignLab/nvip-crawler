@@ -24,7 +24,7 @@ public class CWETree {
             return subtrees;
         }
         public int maxChildren() {
-            if (this.getRoot().getChildren().size() == 0) {
+            if (this.getRoot().getChildren().isEmpty()) {
                 return 0;
             }
             int max = this.getRoot().getChildren().size();

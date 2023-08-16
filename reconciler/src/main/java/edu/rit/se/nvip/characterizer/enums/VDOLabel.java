@@ -40,21 +40,10 @@ public enum VDOLabel {
         this.vdoLabelForUI = vdoLabelForUI;
         this.vdoNounGroup = vdoNounGroup;
     }
-    public int getVdoLabelId() {
-        return vdoLabelId;
-    }
     public static VDOLabel getVdoLabel(String vdoLabelName){
         for (VDOLabel label : VDOLabel.values()){
             if (label.vdoLabelName.equals(vdoLabelName)){
                 return label;
-            }
-        }
-        return null;
-    }
-    public static VDOLabel getVdoLabel(int vdoLabelId){
-        for(VDOLabel vdo : VDOLabel.values()){
-            if (vdoLabelId == vdo.getVdoLabelId()){
-                return vdo;
             }
         }
         return null;

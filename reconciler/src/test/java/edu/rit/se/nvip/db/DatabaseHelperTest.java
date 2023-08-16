@@ -318,7 +318,7 @@ public class DatabaseHelperTest {
         CompositeVulnerability vuln1 = new CompositeVulnerability(new RawVulnerability(1, "CVE-1", "desc", new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis()), "ex.com"));
         CompositeVulnerability vuln2 = new CompositeVulnerability(new RawVulnerability(1, "CVE-2", "desc", new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis()), "ex.com"));
         vuln1.addCvssScore(new CvssScore(vuln1.getCveId(), CVSSSeverityClass.LOW, 1.0, 1.0, 1.0));
-        vuln2.addCvssScore(new CvssScore(vuln2.getCveId(), CVSSSeverityClass.LOW, 1.0, 1.0, 1.0));
+        vuln2.addCvssScore(new CvssScore(vuln2.getCveId(), CVSSSeverityClass.HIGH, 1.0, 1.0, 1.0));
         vulns.add(vuln1);
         vulns.add(vuln2);
 
@@ -328,7 +328,8 @@ public class DatabaseHelperTest {
         verify(pstmt).setString(1, vuln1.getCvssScoreInfo().getCveId());
         verify(pstmt).setString(1, vuln2.getCvssScoreInfo().getCveId());
         verify(pstmt, times(2)).setDouble(2, 1.0);
-        verify(pstmt, times(2)).setDouble(3, 5.0);
+        verify(pstmt).setDouble(3, 5.0);
+        verify(pstmt).setDouble(3, 1.0);
         verify(pstmt, times(2)).addBatch();
         verify(pstmt).executeBatch();
 

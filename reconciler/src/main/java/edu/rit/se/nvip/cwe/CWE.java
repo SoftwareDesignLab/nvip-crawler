@@ -1,5 +1,7 @@
 package edu.rit.se.nvip.cwe;
 
+import edu.rit.se.nvip.model.VulnSource;
+
 import java.util.*;
 
 public class CWE {
@@ -61,6 +63,4 @@ public class CWE {
 
     public Set<CWE> getParent(){return this.parents;}
     public String getDescription(){return this.description;}
-
-
 }
