@@ -35,10 +35,7 @@ import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 import org.mockito.MockedConstruction;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.nio.file.Paths;
 import java.io.File;
 
@@ -57,7 +54,7 @@ public class CveCharacterizerTest {
 		CveCharacterizer cveCharacterizer = new CveCharacterizer(trainingDataInfo[0], trainingDataInfo[1], "ML", "NB");
 
 		//Test characterizeCveForVDO
-		Map<VDONounGroup,Map<VDOLabel, Double>> prediction = cveCharacterizer.characterizeCveForVDO(cveDesc, true);
+		Map<VDOLabel, Double> prediction = cveCharacterizer.characterizeCveForVDO(cveDesc, true);
 		assertTrue(prediction.size() > 0);
 
 		prediction = cveCharacterizer.characterizeCveForVDO(cveDesc, false);
@@ -74,7 +71,7 @@ public class CveCharacterizerTest {
 				testData.add(data.get(i));
 			}
 			// generate vuln list
-			List<CompositeVulnerability> vulnList = new ArrayList<>();
+			Set<CompositeVulnerability> vulnSet = new HashSet<>();
 			for (String[] line : testData) {
 				String cveId = line[0];
 				String description = line[1];
@@ -82,12 +79,11 @@ public class CveCharacterizerTest {
 					continue;
 				CompositeVulnerability vuln = new CompositeVulnerability(new RawVulnerability(1, cveId, description, null, null, null, ""));
 
-				vulnList.add(vuln);
+				vulnSet.add(vuln);
 			}
 
-			List<CompositeVulnerability> newList = cveCharacterizer.characterizeCveList(vulnList, 5000);
-			assertEquals(10, newList.size());
-
+			cveCharacterizer.characterizeCveList(vulnSet, 5000);
+			assertEquals(10, vulnSet.size());
 		}
 
 	}
