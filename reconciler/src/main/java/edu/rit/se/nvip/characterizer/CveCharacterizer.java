@@ -123,31 +123,28 @@ public class CveCharacterizer {
 	 * @param bPredictMultiple
 	 * @return
 	 */
-	public Map<VDONounGroup, Map<VDOLabel, Double>> characterizeCveForVDO(String cveDesc, boolean bPredictMultiple) {
+	public Map<VDOLabel, Double> characterizeCveForVDO(String cveDesc, boolean bPredictMultiple) {
 		CvePreProcessor cvePreProcessor = new CvePreProcessor(true);
 		String cveDescProcessed = cvePreProcessor.preProcessLine(cveDesc);
 
-		Map<VDONounGroup, Map<VDOLabel, Double>> prediction = new HashMap<>();
+		Map<VDOLabel, Double> prediction = new HashMap<>();
 		for (VDONounGroup nounGroup : nounGroupToClassifier.keySet()) {
 			AbstractCveClassifier aClassifier = nounGroupToClassifier.get(nounGroup);
 			ArrayList<String[]> predictionFromClassifier = aClassifier.predict(cveDescProcessed, bPredictMultiple);
-			Map<VDOLabel, Double> labelToScore = new HashMap<>();
 			for (String[] pred : predictionFromClassifier) {
 				VDOLabel label = VDOLabel.getVdoLabel(pred[0]);
-				labelToScore.put(label, Double.parseDouble(pred[1]));
+				prediction.put(label, Double.parseDouble(pred[1]));
 			}
-			prediction.put(nounGroup, labelToScore);
 		}
-
 		return prediction;
 	}
 
 	/**
 	 * characterize vulnerabilities in the given <cveList>
 	 * 
-	 * @param cveList
+	 * @param cveSet
 	 */
-	public List<CompositeVulnerability> characterizeCveList(List<CompositeVulnerability> cveList, int limit) {
+	public void characterizeCveList(Set<CompositeVulnerability> cveSet, int limit) {
 
 		long start = System.currentTimeMillis();
 		int totCharacterized = 0;
@@ -156,8 +153,7 @@ public class CveCharacterizer {
 		int countBadDescription = 0;
 
 		// predict for each CVE, the model was trained in the constructor!
-		for (int i = 0; i < cveList.size(); i++) {
-			CompositeVulnerability vulnerability = null;
+		for (CompositeVulnerability vuln : cveSet) {
 			/**
 			 * To skip the rest of the characterization for the very first run or if the
 			 * system has not been run for a long time. The process could be time consuming
@@ -167,70 +163,46 @@ public class CveCharacterizer {
 				break;
 
 			try {
-				vulnerability = cveList.get(i);
-				String cveDesc = vulnerability.getDescription();
-				if (cveDesc == null) {
-					logger.warn("WARNING: BAD or MISSING Description '{}' for {} at {}",
-							cveDesc,
-							vulnerability.getCveId(),
-							vulnerability.getSourceURLs());
+				if (vuln.getDescription() == null || vuln.getDescription().length() < 50) {
 					countBadDescription++;
-					continue; // if no description skip
-				} else if (cveDesc.length() < 50) {
-					logger.warn("WARNING: Description too small for {} at {}. Desc: {}",
-							vulnerability.getCveId(),
-							vulnerability.getSourceURLs(),
-							cveDesc);
-					countBadDescription++;
-					continue; // if description is too short skip
+					logger.warn("WARNING: BAD or SHORT Description '{}' for {} at {}, skipping characterization", vuln.getDescription(), vuln.getCveId(), vuln.getSourceURLs());
+					continue;
 				}
-				if (vulnerability.getReconciliationStatus() == CompositeVulnerability.ReconciliationStatus.UNCHANGED) {
-					//logger.info("No change in description for Characterization of {}", cveDesc);
+				if (vuln.getReconciliationStatus() == CompositeVulnerability.ReconciliationStatus.UNCHANGED) {
+					logger.info("Vulnerability {} was unchanged during reconciliation and is skipping characterization", vuln.getCveId());
 					countNotChanged++;
-					continue; // the same CVE in db
+					continue;
 				}
-				
 				// characterize CVE
-				Map<VDONounGroup, Map<VDOLabel, Double>> prediction = characterizeCveForVDO(cveDesc, true);
-				for (VDONounGroup vdoNounGroup : VDONounGroup.values()) {
-					Map<VDOLabel, Double> predictionsForNounGroup = prediction.get(vdoNounGroup);
-					for (VDOLabel label : predictionsForNounGroup.keySet()) {
-						VdoCharacteristic vdoCharacteristic = new VdoCharacteristic(vulnerability.getCveId(), label,
-								predictionsForNounGroup.get(label), vdoNounGroup);
-						vulnerability.addVdoCharacteristic(vdoCharacteristic);
-						//logger.info("Added the following VDO Characteristic to {}:\n{}", vulnerability.getCveId(), vdoCharacteristic);
-					}
-					//logger.info("Added VDO Characteristics for {}", vulnerability.getCveId());
+				Map<VDOLabel, Double> prediction = characterizeCveForVDO(vuln.getDescription(), true);
+				for (VDOLabel label : prediction.keySet()) {
+					VdoCharacteristic vdoCharacteristic = new VdoCharacteristic(vuln.getCveId(), label, prediction.get(label));
+					vuln.addVdoCharacteristic(vdoCharacteristic);
+					logger.info("Added the following VDO Characteristic to {}:\n{}", vuln.getCveId(), vdoCharacteristic);
 				}
 
 				// get severity
-				double[] cvssScore = getCvssScoreFromVdoLabels(prediction); // get mean/minimum/maximum/std dev
-				CVSSSeverityClass severity = CVSSSeverityClass.getCVSSSeverityByScore(cvssScore[0]); // use mean
-				CvssScore score = new CvssScore(vulnerability.getCveId(), severity, 0.5, cvssScore[0], 0.5);
-				vulnerability.addCvssScore(score);
+				double[] cvssScore = getCvssScoreFromVdoLabels(prediction.keySet()); // get mean/minimum/maximum/std dev
+				CvssScore score = new CvssScore(vuln.getCveId(), cvssScore[0], 0.5); //cvssScore[0] is median
+				vuln.addCvssScore(score);
 //				logger.info("CVSS Score predicted for {}", vulnerability.getCveId());
-
-				// update list
-				cveList.set(i, vulnerability);
 
 				// log
 				if (totCharacterized % 100 == 0 && totCharacterized > 0) {
-					double percent = (totCharacterized + countBadDescription + countNotChanged) * 1.0 / cveList.size() * 100;
-					logger.info("Characterized {} of {} total CVEs. Skipping {} CVEs: \n[{} bad/null and {} not changed descriptions], {}% done! ", totCharacterized, cveList.size(),
+					double percent = (totCharacterized + countBadDescription + countNotChanged) * 1.0 / cveSet.size() * 100;
+					logger.info("Characterized {} of {} total CVEs. Skipping {} CVEs: \n[{} bad/null and {} not changed descriptions], {}% done! ", totCharacterized, cveSet.size(),
 							(countBadDescription + countNotChanged), countBadDescription, countNotChanged, Math.round(percent));
 				}
 			} catch (Exception e) {
-				logger.error("ERROR: Failure during characterization of CVE: {}\n{}", vulnerability.getCveId(), e);
+				logger.error("ERROR: Failure during characterization of CVE: {}\n{}", vuln.getCveId(), e);
 			}
 
 			totCharacterized++;
 		} // for
 		long seconds = (System.currentTimeMillis() - start) / 1000;
 		double avgTime = seconds * 1.0 / totCharacterized;
-		logger.info("***Characterized {} of total {} CVEs in {} seconds! Avg time(s): {}", totCharacterized, cveList.size(), seconds, avgTime);
+		logger.info("***Characterized {} of total {} CVEs in {} seconds! Avg time(s): {}", totCharacterized, cveSet.size(), seconds, avgTime);
 		logger.info("{} CVEs did not have a good description, and {} CVEs had the same description (after reconciliation) and skipped!", countBadDescription, countNotChanged);
-
-		return cveList;
 	}
 
 	/**
@@ -241,12 +213,11 @@ public class CveCharacterizer {
 	 * @param predictionsForVuln
 	 * @return
 	 */
-	private double[] getCvssScoreFromVdoLabels(Map<VDONounGroup, Map<VDOLabel, Double>> predictionsForVuln) {
+	private double[] getCvssScoreFromVdoLabels(Set<VDOLabel> predictionsForVuln) {
 		// generate partial CVSS vector from VDO prediction
 		String[] cvssVec = partialCvssVectorGenerator.getCVssVector(predictionsForVuln);
 
 		// get CVSS mean/min/max/std dev from Python script
 		return cvssScoreCalculator.getCvssScoreJython(cvssVec);
 	}
-
 }
