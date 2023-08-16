@@ -29,6 +29,9 @@ import org.eclipse.jgit.revwalk.RevCommit;
 import org.junit.Before;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.Test;
+import utils.EnvVarLoader;
+
+import java.io.FileNotFoundException;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -43,18 +46,15 @@ import static org.mockito.Mockito.*;
  * @author Richard Sawh
  */
 public class DatabaseHelperTest {
-    private static final String DATABASE_TYPE = "mysql";
-    private static final String HIKARI_URL = "jdbc:mysql://localhost:3306/nvip?useSSL=false&allowPublicKeyRetrieval=true";
-    private static final String HIKARI_USER = "root";
-    private static final String HIKARI_PASSWORD = System.getenv("HIKARI_PASSWORD");
     private static final String TEST_CVE_ID = "CVE-2023-1001";
 
 
     private static DatabaseHelper databaseHelper;
 
     @Before
-    public void setUp() {
-        databaseHelper = new DatabaseHelper(DATABASE_TYPE, HIKARI_URL, HIKARI_USER, HIKARI_PASSWORD);
+    public void setUp() throws FileNotFoundException {
+        final Map<String, String> vars = EnvVarLoader.loadEnvVarsFromFile("src/test/env.list");
+        databaseHelper = new DatabaseHelper(vars.get("DB_TYPE"), vars.get("HIKARI_URL"), vars.get("HIKARI_USER"), vars.get("HIKARI_PASSWORD"));
     }
 
     @AfterAll

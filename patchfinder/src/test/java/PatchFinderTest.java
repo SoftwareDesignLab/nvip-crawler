@@ -22,13 +22,15 @@
  * SOFTWARE.
  */
 
+import db.DatabaseHelper;
 import model.CpeEntry;
 import model.CpeGroup;
-import org.junit.Ignore;
+import org.junit.Before;
 import org.junit.Test;
-import utils.GitController;
+import utils.EnvVarLoader;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -42,6 +44,11 @@ import static org.mockito.Mockito.*;
  * @author Richard Sawh
  */
 public class PatchFinderTest {
+
+    @Before
+    public void setUp() {
+        PatchFinderEnvVars.initializeEnvVars(true);
+    }
 
     @Test
     public void testFindPatchesMultiThreaded2() {
@@ -95,7 +102,7 @@ public class PatchFinderTest {
         PatchFinder.init();
         try {
             // Call the run method and assert the expected behavior or outcome
-            PatchFinder.run(possiblePatchSources, PatchFinder.cveLimit);
+            assertEquals(24, PatchFinder.run(possiblePatchSources, PatchFinder.cveLimit));
 
             // Assert that the affectedProducts map is empty
             assertEquals(1, possiblePatchSources.size());
@@ -123,13 +130,9 @@ public class PatchFinderTest {
         affectedProducts.put(cveId2, cpeGroup2);
 
         // Call the run method and assert the expected behavior or outcome
-        PatchFinder.run(affectedProducts, PatchFinder.cveLimit);
+        assertEquals(74, PatchFinder.run(affectedProducts, PatchFinder.cveLimit));
 
         // Assert that the affectedProducts map is empty
         assertEquals(2, affectedProducts.size());
     }
-
-
-
-
 }

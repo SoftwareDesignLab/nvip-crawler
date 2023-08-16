@@ -33,6 +33,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
+import static utils.EnvVarLoader.loadEnvVarsFromFile;
+
 /**
  * Environment Variable Initialization class for Patchfinder.
  * Provides static access to all environment variables throughout the program.
@@ -59,7 +61,7 @@ public class PatchFinderEnvVars {
     // Default values for database environment variables
 
     private static String databaseType = "mysql";
-    private static String hikariUrl = "jdbc:mysql://host.docker.internal:3306/nvip?useSSL=false&allowPublicKeyRetrieval=true";
+    private static String hikariUrl = "jdbc:mysql://localhost:3306/nvip?useSSL=false&allowPublicKeyRetrieval=true";
     private static String hikariUser = "root";
     private static String hikariPassword = "root";
 
@@ -72,27 +74,30 @@ public class PatchFinderEnvVars {
 
     // Automatically load env vars
     static{
-        initializeEnvVars();
+        initializeEnvVars(false);
     }
 
     /**
      * Loads environment variables from both env.list file and System.getenv(). If both of these fail, resorts to
      * default values defined above. Prioritizes System.getenv() first and then from file second.
      */
-    public static void initializeEnvVars() {
+    public static void initializeEnvVars(boolean testMode) {
         logger.info("CURRENT PATH --> " + System.getProperty("user.dir"));
-        logger.info("Initializing Environment Variables...");
+        if(testMode) logger.info("Initializing Test Environment Variables...");
+        else logger.info("Initializing Environment Variables...");
 
         Map<String, String> fileProps = null;
         Map<String, String> systemProps = System.getenv();
+        String filePath = envVarPath;
+        if(testMode) filePath = "src/test/" + filePath;
 
         try {
             // Assumes in `nvip-crawler/patchfinder` working directory
-            fileProps = loadEnvVarsFromFile(envVarPath);
+            fileProps = loadEnvVarsFromFile(filePath);
         } catch (FileNotFoundException e){
             // If that path doesn't work, assumes we are in `nvip-crawler` directory and tries new path with `patchfinder` appended to it
             try{
-                String possiblePath = "patchfinder\\" + envVarPath;
+                String possiblePath = "patchfinder\\" + filePath;
                 fileProps = loadEnvVarsFromFile(possiblePath);
             } catch (Exception ignored) {}
         }
@@ -119,42 +124,6 @@ public class PatchFinderEnvVars {
     public static String getRabbitHost() { return rabbitHost; }
     public static String getRabbitUsername() { return rabbitUsername; }
     public static String getRabbitPassword() { return rabbitPassword; }
-
-    /**
-     * Loads environment variables from file into HashMap and returns it.
-     *
-     * @param path path to env.list file
-     * @return map of environment variables
-     */
-    private static Map<String, String> loadEnvVarsFromFile(String path) throws FileNotFoundException {
-        Map<String, String> props = new HashMap<>();
-
-        try {
-            FileReader fileReader = new FileReader(path);
-            BufferedReader reader = new BufferedReader(fileReader);
-
-            // Go through each line
-            String line = reader.readLine();
-            while (line != null) {
-                // If it contains an equals sign, is an environment variable
-                if (line.contains("=")) {
-                    int index = line.indexOf('=');
-                    // Add the env var and its value
-                    props.put(line.substring(0, index), line.substring(index + 1));
-                }
-
-                line = reader.readLine();
-            }
-
-        } catch(FileNotFoundException e){
-            throw e;
-        } catch (IOException e){
-            logger.error("Reading from environment variable file failed with error {}", e.toString());
-        }
-
-        return props;
-
-    }
 
     /**
      * Attempts to fetch all required environment variables from props map safely, logging any

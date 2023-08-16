@@ -34,7 +34,7 @@ public class PatchFinderEnvVarsTest {
 
     @Test
     public void initializeAndGetEnvVarsTest(){
-        PatchFinderEnvVars.initializeEnvVars();
+        PatchFinderEnvVars.initializeEnvVars(true);
 
         // Default values for main environment variables
         assertEquals(20, PatchFinderEnvVars.getCveLimit());
