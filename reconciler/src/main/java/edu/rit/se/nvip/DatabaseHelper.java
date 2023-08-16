@@ -39,7 +39,7 @@ public class DatabaseHelper {
     private static final String INSERT_JT = "INSERT INTO rawdescriptionjt (description_id, raw_description_id) VALUES (?, ?)";
     private static final String INSERT_DESCRIPTION = "INSERT INTO description (description, created_date, gpt_func, cve_id, is_user_generated) VALUES (?, ?, ?, ?, ?)";
     private static final String DELETE_JOB = "DELETE FROM cvejobtrack WHERE cve_id = ?";
-    private static final String INSERT_CVSS = "INSERT INTO cvss (cve_id, create_date, base_score, impact_score) VALUES (?, NOW(), ?, ?)";
+    private static final String INSERT_CVSS = "INSERT INTO cvss (cve_id, create_date, base_score) VALUES (?, NOW(), ?)";
     private static final String INSERT_VDO = "INSERT INTO vdocharacteristic (cve_id, created_date, vdo_label, vdo_noun_group, vdo_confidence, is_active) VALUES (?, NOW(), ?, ?, ?, 1)";
     private static final String UPDATE_VDO_ACTIVE = "UPDATE vdocharacteristic SET is_active=0 WHERE user_id IS NULL";
     private static final String INSERT_CWE = "INSERT INTO weakness (cve_id, cwe_id) VALUES (?, ?)";
@@ -551,8 +551,7 @@ public class DatabaseHelper {
 
     private void populateCVSSInsert(PreparedStatement pstmt, CvssScore cvss) throws SQLException {
         pstmt.setString(1, cvss.getCveId());
-        pstmt.setDouble(2, cvss.getImpactScore());
-        pstmt.setDouble(3, cvss.getSeverityClass().cvssSeverityId); // yes, id not string
+        pstmt.setDouble(2, cvss.getBaseScore());
     }
 
     private void populateVDOInsert(PreparedStatement pstmt, VdoCharacteristic vdo) throws SQLException {
