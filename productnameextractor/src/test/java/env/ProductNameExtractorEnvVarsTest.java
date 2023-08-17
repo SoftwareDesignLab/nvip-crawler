@@ -48,7 +48,7 @@ public class ProductNameExtractorEnvVarsTest {
 
         // Default values for main environment variables
         assertEquals(12, ProductNameExtractorEnvVars.getNumThreads());
-        assertEquals(2, ProductNameExtractorEnvVars.getMaxAttemptsPerPage());
+        assertEquals(5, ProductNameExtractorEnvVars.getMaxAttemptsPerPage());
         assertFalse(ProductNameExtractorEnvVars.isPrettyPrint());
         assertTrue(ProductNameExtractorEnvVars.isTestMode());
         assertEquals("product_dict.json", ProductNameExtractorEnvVars.getProductDictName());
