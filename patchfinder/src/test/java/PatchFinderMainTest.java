@@ -26,6 +26,7 @@ import db.DatabaseHelper;
 import messenger.Messenger;
 import model.CpeGroup;
 import org.junit.Test;
+import patches.PatchFinder;
 
 import java.util.HashMap;
 import java.util.Map;

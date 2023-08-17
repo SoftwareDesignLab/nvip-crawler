@@ -1,4 +1,4 @@
-/**
+package patches; /**
  * Copyright 2023 Rochester Institute of Technology (RIT). Developed with
  * government support under contract 70RSAT19CB0000020 awarded by the United
  * States Department of Homeland Security.
@@ -26,7 +26,8 @@ import model.CpeEntry;
 import model.CpeGroup;
 import org.junit.jupiter.api.Assertions;
 import org.junit.Test;
-import java.io.IOException;
+import patches.PatchUrlFinder;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;

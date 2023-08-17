@@ -1,4 +1,4 @@
-package commits;
+package patches;
 
 /**
  * Copyright 2023 Rochester Institute of Technology (RIT). Developed with

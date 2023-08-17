@@ -1,4 +1,4 @@
-/**
+package env; /**
  * Copyright 2023 Rochester Institute of Technology (RIT). Developed with
  * government support under contract 70RSAT19CB0000020 awarded by the United
  * States Department of Homeland Security.
@@ -25,10 +25,7 @@
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.BufferedReader;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -44,8 +41,8 @@ import static utils.EnvVarLoader.loadEnvVarsFromFile;
  *
  */
 
-public class PatchFinderEnvVars {
-    private static final Logger logger = LogManager.getLogger(PatchFinderEnvVars.class);
+public class FixFinderEnvVars {
+    private static final Logger logger = LogManager.getLogger(FixFinderEnvVars.class);
     private static final String envVarPath = "env.list";
 
     // Default values for main environment variables
@@ -92,12 +89,12 @@ public class PatchFinderEnvVars {
         if(testMode) filePath = "src/test/" + filePath;
 
         try {
-            // Assumes in `nvip-crawler/patchfinder` working directory
+            // Assumes in `nvip-crawler/fixfinder` working directory
             fileProps = loadEnvVarsFromFile(filePath);
         } catch (FileNotFoundException e){
-            // If that path doesn't work, assumes we are in `nvip-crawler` directory and tries new path with `patchfinder` appended to it
+            // If that path doesn't work, assumes we are in `nvip-crawler` directory and tries new path with `fixfinder` appended to it
             try{
-                String possiblePath = "patchfinder\\" + filePath;
+                String possiblePath = "fixfinder\\" + filePath;
                 fileProps = loadEnvVarsFromFile(possiblePath);
             } catch (Exception ignored) {}
         }

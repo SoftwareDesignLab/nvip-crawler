@@ -1,4 +1,4 @@
-/**
+package patches; /**
  * Copyright 2023 Rochester Institute of Technology (RIT). Developed with
  * government support under contract 70RSAT19CB0000020 awarded by the United
  * States Department of Homeland Security.
@@ -23,16 +23,15 @@
  */
 
 import java.io.IOException;
-import java.text.ParseException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import commits.PatchCommit;
-import commits.PatchCommitScraper;
+import env.PatchFinderEnvVars;
+import patches.PatchCommit;
+import patches.PatchCommitScraper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
@@ -218,7 +217,7 @@ public class PatchFinderThread implements Runnable {
 	private void findPatchCommitsFromUrl(ArrayList<PatchCommit> foundPatchCommits, String cve, String patchSource, int commitCount) {
 		// Define page range
 		final int numPags = (int) Math.ceil((double) commitCount / 35);
-		final String baseCommitsUrl = patchSource + "/commits";
+		final String baseCommitsUrl = patchSource + "/patches";
 
 		// Query first page and get HEAD commit
 		try {
