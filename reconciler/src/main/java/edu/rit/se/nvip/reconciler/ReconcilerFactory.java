@@ -36,7 +36,7 @@ public class ReconcilerFactory {
 	public static final String STANFORD_CORE_NLP = "STANFORD_CORE_NLP";
 	public static final String APACHE_OPEN_NLP = "APACHE_OPEN_NLP";
 
-	public static Reconciler createReconciler(String type) {
+	public static Reconciler createReconciler(String type, boolean doAttachModel) {
 
 		switch (type) {
 			case SIMPLE:
@@ -47,12 +47,17 @@ public class ReconcilerFactory {
 				return new StanfordCoreNLPReconciler();
 			case APACHE_OPEN_NLP:
 				ApacheOpenNLPReconciler out = new ApacheOpenNLPReconciler();
-				out.attachModel(new ApacheOpenNLPModel());
+				if(doAttachModel) {
+					out.attachModel(new ApacheOpenNLPModel());
+				}
 				return out;
 			default:
 				return new SimpleReconciler();
 		}
 
+	}
+	public static Reconciler createReconciler(String type) {
+		return createReconciler(type, false);
 	}
 
 }

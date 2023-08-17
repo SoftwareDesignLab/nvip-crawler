@@ -20,6 +20,7 @@ public class ApacheOpenNLPModel {
     String modelPath = "nlp/en-pos-perceptron.bin";
     String sentenceModelPath = "nlp/en-sent.bin";
 
+
     public void initialize() {
         try {
             InputStream modelStream = this.getClass().getClassLoader().getResourceAsStream(modelPath);
@@ -45,5 +46,10 @@ public class ApacheOpenNLPModel {
     public String[] sentDetect(String paragraph) {
         return sentenceDetector.sentDetect(paragraph);
     }
-
+    public void setSentenceDetector(SentenceDetector sen){
+        sentenceDetector = sen;
+    }
+    public void setTagger(POSTaggerME tag){
+        tagger = tag;
+    }
 }

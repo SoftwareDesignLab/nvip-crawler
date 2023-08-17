@@ -200,6 +200,9 @@ public class EntropyBasedCveClassifier extends AbstractCveClassifier {
 	protected Map<String, Integer> getModelData(String label) {
 		return histograms.get(label).getHistogram();
 	}
+	public void setMyMethod(Method me){
+		myMethod = me;
+	}
 
 
 }

@@ -106,7 +106,7 @@ public class MitreCveController {
         }
 
         if (pullDir) {
-            if (gitController.pullRepo())
+            if (gitController.pullRepo(true))
                 logger.info("Pulled git repo at: {} to: {}, now parsing each CVE...", mitreGithubUrl, gitLocalPath);
             else {
                 logger.error("Could not pull git repo at: {} to: {}", mitreGithubUrl, gitLocalPath);
