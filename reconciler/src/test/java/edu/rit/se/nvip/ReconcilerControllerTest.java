@@ -73,7 +73,6 @@ class ReconcilerControllerTest {
         when(mockDbh.insertVdoBatch(anySet())).thenReturn(1);
         doNothing().when(mockMitre).updateMitreTables();
         doNothing().when(mockNvd).updateNvdTables();
-        when(mockChar.characterizeCveList(anyList(), anyInt())).thenReturn(new ArrayList<>());
         mockedDb.when(DatabaseHelper::getInstance).thenReturn(mockDbh);
 
 
