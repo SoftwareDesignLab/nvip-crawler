@@ -262,16 +262,6 @@ public class FilterMetrics {
     }
 
     /**
-     * Helper method for setting a new filter scope
-     * @param filterScope new filter scope
-     */
-    public void setFilterScope(FilterHandler.FilterScope filterScope) {
-        this.filterScope = filterScope;
-        resetFilterStatus();
-        applyFilters();
-    }
-
-    /**
      * Resets all RawVulnerabilities' filter status to NEW
      */
     private void resetFilterStatus() {

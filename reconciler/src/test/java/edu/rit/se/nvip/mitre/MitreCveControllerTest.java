@@ -68,7 +68,7 @@ public class MitreCveControllerTest {
         mitreCveController.setGitController(mockGit);
         mitreCveController.setFile(mockFile);
         String[] strings = new String[2];
-        when(mockGit.pullRepo()).thenReturn(true);
+        when(mockGit.pullRepo(true)).thenReturn(true);
         when(mockFile.exists()).thenReturn(true, false);
         when(mockFile.list()).thenReturn(strings);
 

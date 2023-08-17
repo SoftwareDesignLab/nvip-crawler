@@ -568,4 +568,24 @@ public class DatabaseHelperTest {
         assertEquals(1, set.size());
 
     }
+    @Test
+    public void insertDescriptionTest() throws SQLException {
+        when(res.next()).thenReturn(true);
+        when(res.getInt(anyInt())).thenReturn(1);
+        when(pstmt.getGeneratedKeys()).thenReturn(res);
+        Set<RawVulnerability> set = new HashSet<>();
+        set.add(new RawVulnerability(1, "CVE-2021-1234", "Description", null, null, null, ""));
+        CompositeDescription desc = new CompositeDescription("cve-1", "desc", set);
+
+        dbh.insertDescription(desc);
+
+        verify(conn).setAutoCommit(false);
+        verify(conn).commit();
+        verify(pstmt).executeBatch();
+        verify(pstmt).addBatch();
+        verify(pstmt).setInt(1, 1);
+        verify(pstmt).setInt(2, 1);
+
+
+    }
 }

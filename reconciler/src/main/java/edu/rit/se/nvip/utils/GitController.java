@@ -57,12 +57,14 @@ public class GitController {
 	 * 
 	 * @return
 	 */
-	public boolean pullRepo() {
+	public boolean pullRepo(boolean doPull) {
 		logger.info("Checking for updates for {} repo!...", localPath);
 		try (FileRepository localRepo = new FileRepository(localPath + "/.git");) {
 			try (Git git = new Git(localRepo)) {
-				PullCommand pull = git.pull();
-				pull.call();
+				if(doPull) {
+					PullCommand pull = git.pull();
+					pull.call();
+				}
 			} catch (Exception e) {
 				logger.error("Error while pulling repo {} {} ", remotePath, e.toString());
 				return false;
