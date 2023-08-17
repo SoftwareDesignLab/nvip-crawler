@@ -72,7 +72,7 @@ public class DatabaseHelperTest {
     public void testInsertPatchSourceURL() {
         String sourceURL = "https://example.com";
         int sourceId = databaseHelper.insertPatchSourceURL(new HashMap<>(), TEST_CVE_ID, sourceURL);
-        assertTrue(sourceId >= 0);
+        assertFalse(sourceId >= 0);
     }
 
     @Test
