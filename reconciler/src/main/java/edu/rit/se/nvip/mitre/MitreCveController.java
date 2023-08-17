@@ -53,6 +53,8 @@ public class MitreCveController {
     private String mitreGithubUrl;
     private List<String> localPaths;
     private final String gitLocalPath = "nvip_data/mitre-cve/";
+    private GitController gitController = new GitController(gitLocalPath, mitreGithubUrl);
+    private File f = new File(gitLocalPath);
     private static DatabaseHelper dbh = DatabaseHelper.getInstance();
 
     public MitreCveController() {
@@ -76,7 +78,7 @@ public class MitreCveController {
     public void updateMitreTables(boolean getResults) {
         Set<MitreVulnerability> results = new HashSet<>();
         if(getResults){
-            results = this.getMitreCVEsFromGitRepo();
+            results = this.getMitreCVEsFromGitRepo(true);
         }
         logger.info("{} cves found from MITRE", results.size());
         long numReserved = results.stream().filter(v -> v.getStatus() == MitreVulnerability.MitreStatus.RESERVED).count();
@@ -92,19 +94,15 @@ public class MitreCveController {
      * updates if any. Then it recursively loads all json files in the local repo,
      * parses them and creates a CSV file at the output path.
      */
-    public Set<MitreVulnerability> getMitreCVEsFromGitRepo() {
+    public Set<MitreVulnerability> getMitreCVEsFromGitRepo(boolean getFromFolder) {
         Set<MitreVulnerability> mitreCveMap = new HashSet<>();
-        GitController gitController = new GitController(gitLocalPath, mitreGithubUrl);
         logger.info("Checking local Git CVE repo...");
 
-        // Check if repo is already cloned, if so then just pull the repo for latest changes
-        File f = new File(gitLocalPath);
         boolean pullDir = false;
         try {
             pullDir = f.exists() && (f.list().length > 1); // dir exists and there are some files in it!
         } catch (Exception e) {
             logger.error("ERROR: Directory {} does not exist", gitLocalPath);
-            e.printStackTrace();
         }
 
         if (pullDir) {
@@ -120,20 +118,19 @@ public class MitreCveController {
                 logger.error("Could not clone git repo at: {} to: {}", mitreGithubUrl, gitLocalPath);
             }
         }
-        for(String localPath : localPaths) {
 
+        for (String localPath : localPaths) {
             logger.info("Now parsing MITRE CVEs at {} directory", localPath);
-
             // create json object from .json files
             ArrayList<JsonObject> list = new ArrayList<>();
-            list = getJSONFilesFromGitFolder(new File(localPath), list);
+            if (getFromFolder) {
+                list = getJSONFilesFromGitFolder(new File(localPath), list);
+            }
             logger.info("Collected {} JSON files at {}", list.size(), localPath);
-
             // parse individual json objects
             MitreCveParser mitreCVEParser = new MitreCveParser();
             List<String[]> cveData = mitreCVEParser.parseCVEJSONFiles(list);
             logger.info("Parsed {} JSON files at {}", list.size(), localPath);
-
             // add all CVEs to a map
             for (String[] cve : cveData) {
                 String cveId = cve[0];
@@ -142,7 +139,6 @@ public class MitreCveController {
                 mitreCveMap.add(vuln);
             }
         }
-
         return mitreCveMap;
     }
 
@@ -215,4 +211,6 @@ public class MitreCveController {
     public void setDatabaseHelper(DatabaseHelper dbHelper){
         dbh = dbHelper;
     }
+    public void setGitController(GitController git){ gitController = git;}
+    public void setFile(File file){ f = file;}
 }
