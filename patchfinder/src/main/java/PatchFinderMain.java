@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+import env.PatchFinderEnvVars;
 import messenger.Messenger;
 import model.CpeGroup;
 
@@ -31,6 +32,7 @@ import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import patches.PatchFinder;
 
 /**
  * Main class for the PatchFinder, drives initialization and busy-waiting for jobs

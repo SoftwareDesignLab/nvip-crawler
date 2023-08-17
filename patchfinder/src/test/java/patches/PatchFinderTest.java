@@ -1,4 +1,4 @@
-/**
+package patches; /**
  * Copyright 2023 Rochester Institute of Technology (RIT). Developed with
  * government support under contract 70RSAT19CB0000020 awarded by the United
  * States Department of Homeland Security.
@@ -22,15 +22,14 @@
  * SOFTWARE.
  */
 
-import db.DatabaseHelper;
+import env.PatchFinderEnvVars;
 import model.CpeEntry;
 import model.CpeGroup;
 import org.junit.Before;
 import org.junit.Test;
-import utils.EnvVarLoader;
+import patches.PatchFinder;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ThreadPoolExecutor;
