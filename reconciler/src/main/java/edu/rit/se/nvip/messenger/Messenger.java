@@ -82,9 +82,8 @@ public class Messenger {
 
         } catch (TimeoutException e) {
             logger.error("Error occurred while sending the Reconciler message to RabbitMQ: {}", e.getMessage());
+            return null;
         }
-
-        return null;
     }
 
     /**
@@ -105,22 +104,6 @@ public class Messenger {
     }
 
     /**
-     * Sends the "FINISHED" flag so that the PNE knows there are no more Ids being sent
-     */
-    public void sendPNEFinishMessage() {
-
-        try (Connection connection = factory.newConnection();
-             Channel channel = connection.createChannel()) {
-            channel.queueDeclare(PNE_QUEUE, false, false, false, null);
-            String message = "FINISHED";
-            channel.basicPublish("", PNE_QUEUE, null, message.getBytes(StandardCharsets.UTF_8));
-
-        } catch (TimeoutException | IOException e) {
-            logger.error("Error occurred while sending the PNE message to RabbitMQ: {}", e.getMessage());
-        }
-    }
-
-    /**
      * Parses ids from JsonString
      * @param jsonString
      * @return
@@ -131,7 +114,7 @@ public class Messenger {
             return OM.readValue(jsonString, ArrayList.class);
         } catch (JsonProcessingException e) {
             logger.error("Failed to parse list of ids from json string: {}", e.toString());
-            return new ArrayList<>();
+            return null;
         }
     }
 

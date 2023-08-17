@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.concurrent.TimeoutException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -59,9 +60,31 @@ class MessengerTest {
 
         // Act
         List<String> receivedMessages = messenger.waitForCrawlerMessage(3600);
+        List<String> receivedMessages2 = messenger.waitForCrawlerMessage(-1);
 
         // Assert
         assertEquals(expectedMessages, receivedMessages);
+        assertEquals(expectedMessages, receivedMessages2);
+
+    }
+
+    @Test
+    void verifyTimeoutTest() throws Exception {
+        //Setup
+        Messenger messenger = new Messenger();
+        messenger.setFactory(factoryMock);
+        List<String> expectedMessages = new ArrayList<>();
+        expectedMessages.add("Test message");
+        expectedMessages.add("Test message2");
+
+        //Mocking
+        when(factoryMock.newConnection()).thenReturn(conn);
+        when(conn.createChannel()).thenReturn(channelMock);
+        when(channelMock.queueDeclare(anyString(), anyBoolean(), anyBoolean(), anyBoolean(), any())).thenReturn(null);
+
+        List<String> receivedMessages = messenger.waitForCrawlerMessage(1);
+
+        assertEquals(null, receivedMessages);
 
     }
 
@@ -89,28 +112,6 @@ class MessengerTest {
     }
 
     @Test
-    void sendPNEFinishMessageTest() throws IOException, TimeoutException {
-        // Setup
-        Messenger messenger = new Messenger();
-        messenger.setFactory(factoryMock);
-
-
-        when(factoryMock.newConnection()).thenReturn(conn);
-        when(conn.createChannel()).thenReturn(channelMock);
-
-        // Act
-        messenger.sendPNEFinishMessage();
-
-        // Assert
-        verify(factoryMock).newConnection();
-        verify(conn).createChannel();
-        //verify(channelMock).queueDeclare(eq(PNE_QUEUE), anyBoolean(), anyBoolean(), anyBoolean(), any());
-        verify(channelMock).basicPublish(eq(""), eq(PNE_QUEUE), isNull(), any(byte[].class));
-        verify(channelMock).close();
-        verify(conn).close();
-    }
-
-    @Test
     void parseIdsTest() {
         Messenger messenger = new Messenger();
         String jsonString = "[\"id1\", \"id2\", \"id3\"]";
@@ -120,7 +121,9 @@ class MessengerTest {
         expectedIds.add("id3");
 
         List<String> actualIds = messenger.parseIds(jsonString);
+        List<String> failedToParse = messenger.parseIds("dummy string");
 
         assertEquals(expectedIds, actualIds);
+        assertEquals(null, failedToParse);
     }
 }
