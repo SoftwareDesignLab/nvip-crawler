@@ -53,7 +53,7 @@ public class DatabaseHelperTest {
 
     @Before
     public void setUp() throws FileNotFoundException {
-        final Map<String, String> vars = EnvVarLoader.loadEnvVarsFromFile("patchfinder/src/test/test_env.list");
+        final Map<String, String> vars = EnvVarLoader.loadEnvVarsFromFile("src/test/test_env.list");
         databaseHelper = new DatabaseHelper(vars.get("DB_TYPE"), vars.get("HIKARI_URL"), vars.get("HIKARI_USER"), vars.get("HIKARI_PASSWORD"));
     }
 
