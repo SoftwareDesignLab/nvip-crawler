@@ -80,14 +80,14 @@ public class CveCharacterizerTest {
 		String cveDesc = "7.2 HIGH9.0 HIGHCVE-2020-11544 Ã¢â‚¬â€� An issue was discovered in Project Worlds Official Car Rental System 1. It allows the admin user to run commands on the server with their account because the upload section on the file-manager page contains an arbitrary file upload vulnerability via... read CVE-2020-11544 Published: April 06, 2020; 12:15:13 PM -04:00 CVE-2020-11544read CVE-2020-11544V3.1:7.2 HIGH6.5 MEDIUM";
 		//mock actual calls
 		when(mockPreProcessor.preProcessFile(anyString())).thenReturn("mocked, content");
+		when(mockPreProcessor.preProcessLine(anyString())).thenReturn("mocked, content");
 		when(mockCveClassifierFactory.getCveClassifier(anyString(), anyString(), anyString())).thenReturn(mockClassifier);
 		doNothing().when(mockClassifier).setCveClassifierName(anyString());
 		doNothing().when(mockClassifier).trainMLModel();
 		mockedUtils.when(() -> FileUtils.readFileToString(any(File.class))).thenReturn("{\"key\" : \"value\"}");
 		mockedUtils.when(() -> FileUtils.writeStringToFile(any(File.class), anyString(), anyBoolean())).thenAnswer((Answer<Void>) invocation -> null);
 		when(mockClassifier.predict(anyString(), anyBoolean())).thenReturn(dummyPredictions);
-		when(mockCvssScoreCalculator.getCvssScoreJython(any(String[].class))).thenReturn(dummyDoubles);
-		when(mockPartialCvssVectorGenerator.getCVssVector(anySet())).thenReturn(new String[2]);
+		when(mockPartialCvssVectorGenerator.getCVssVector(anySet())).thenReturn(new String[8]);
 		//create characterizer with the mocks manually injected
 		CveCharacterizer cveCharacterizer = new CveCharacterizer(mockPreProcessor, mockCveClassifierFactory, mockCvssScoreCalculator, mockPartialCvssVectorGenerator,
 				trainingDataInfo[0], trainingDataInfo[1], "ML", "NB");
