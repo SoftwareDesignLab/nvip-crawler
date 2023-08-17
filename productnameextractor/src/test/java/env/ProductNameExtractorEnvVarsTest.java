@@ -50,7 +50,7 @@ public class ProductNameExtractorEnvVarsTest {
         assertEquals(12, ProductNameExtractorEnvVars.getNumThreads());
         assertEquals(5, ProductNameExtractorEnvVars.getMaxAttemptsPerPage());
         assertFalse(ProductNameExtractorEnvVars.isPrettyPrint());
-        assertTrue(ProductNameExtractorEnvVars.isTestMode());
+        assertFalse(ProductNameExtractorEnvVars.isTestMode());
         assertEquals("product_dict.json", ProductNameExtractorEnvVars.getProductDictName());
         assertEquals(1.0, ProductNameExtractorEnvVars.getRefreshInterval());
         assertEquals(14.0, ProductNameExtractorEnvVars.getFullPullInterval());
