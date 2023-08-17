@@ -5,6 +5,7 @@ import edu.rit.se.nvip.DatabaseHelper;
 import edu.rit.se.nvip.model.CompositeVulnerability;
 import edu.rit.se.nvip.model.MitreVulnerability;
 import edu.rit.se.nvip.model.RawVulnerability;
+import edu.rit.se.nvip.utils.GitController;
 import org.apache.commons.io.FileUtils;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -60,6 +61,21 @@ public class MitreCveControllerTest {
         assertEquals(1, list.size());
 
     }
+    @Test
+    public void getMitreCVEsFromGitRepoTest(){
+        GitController mockGit = mock(GitController.class);
+        File mockFile = mock(File.class);
+        mitreCveController.setGitController(mockGit);
+        mitreCveController.setFile(mockFile);
+        String[] strings = new String[2];
+        when(mockGit.pullRepo()).thenReturn(true);
+        when(mockFile.exists()).thenReturn(true, false);
+        when(mockFile.list()).thenReturn(strings);
+
+        mitreCveController.getMitreCVEsFromGitRepo(false);
+        mitreCveController.getMitreCVEsFromGitRepo(false);
+
+    }
 
     @Test
     public void compareWithMitre() {
@@ -85,6 +101,7 @@ public class MitreCveControllerTest {
         vuln4.setMitreVuln(mitreVuln4);
 
         when(mockDbh.attachMitreVulns(any())).thenReturn(reconciledVulns);
+        when(mockDbh.isMitreTableEmpty()).thenReturn(true);
 
         mitreCveController.compareWithMitre(reconciledVulns);
 
