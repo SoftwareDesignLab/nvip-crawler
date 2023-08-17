@@ -22,15 +22,16 @@ import java.util.concurrent.TimeoutException;
 
 public class Messenger {
 
-    private final static String RECONCILER_QUEUE = "CRAWLER_OUT"; //likely needs to be updated
-    private final static String PNE_QUEUE = "RECONCILER_OUT"; //likely needs to be updated
+    private final String inputQueue;
+    private final String outputQueue;
     private static final Logger logger = LogManager.getLogger(DatabaseHelper.class.getSimpleName());
     private static final ObjectMapper OM = new ObjectMapper();
     private ConnectionFactory factory;
 
     public Messenger(){
         // Instantiate with default values
-        this(ReconcilerEnvVars.getRabbitHost(), ReconcilerEnvVars.getRabbitUsername(), ReconcilerEnvVars.getRabbitPassword());
+        this(ReconcilerEnvVars.getRabbitHost(), ReconcilerEnvVars.getRabbitUsername(), ReconcilerEnvVars.getRabbitPassword(),
+                ReconcilerEnvVars.getRabbitQueueIn(), ReconcilerEnvVars.getRabbitQueueOut());
     }
 
     /**
@@ -39,11 +40,13 @@ public class Messenger {
      * @param username username
      * @param password password
      */
-    public Messenger(String host, String username, String password){
+    public Messenger(String host, String username, String password, String inputQueue, String outputQueue){
         factory = new ConnectionFactory();
         factory.setHost(host);
         factory.setUsername(username);
         factory.setPassword(password);
+        this.inputQueue = inputQueue;
+        this.outputQueue = outputQueue;
     }
 
     /**
@@ -64,7 +67,7 @@ public class Messenger {
         logger.info("Waiting for jobs from Crawler...");
         try(Connection connection = factory.newConnection();
             Channel channel = connection.createChannel()){
-            channel.queueDeclare(RECONCILER_QUEUE, false, false, false, null);
+            channel.queueDeclare(inputQueue, false, false, false, null);
 
             BlockingQueue<List<String>> messageQueue = new ArrayBlockingQueue<>(1);
 
@@ -73,7 +76,7 @@ public class Messenger {
                 List<String> parsedIds = parseIds(message);
                 messageQueue.offer(parsedIds);
             };
-            channel.basicConsume(RECONCILER_QUEUE, true, deliverCallback, consumerTag -> { });
+            channel.basicConsume(inputQueue, true, deliverCallback, consumerTag -> { });
             if (rabbitTimeout > 0) {
                 return messageQueue.poll(rabbitTimeout, TimeUnit.SECONDS);
             } else { // negative number means we don't have a timeout and we'll wait as long as we need to
@@ -94,9 +97,9 @@ public class Messenger {
 
         try (Connection connection = factory.newConnection();
              Channel channel = connection.createChannel()) {
-            channel.queueDeclare(PNE_QUEUE, false, false, false, null);
+            channel.queueDeclare(outputQueue, false, false, false, null);
             String message = genJson(ids);
-            channel.basicPublish("", PNE_QUEUE, null, message.getBytes(StandardCharsets.UTF_8));
+            channel.basicPublish("", outputQueue, null, message.getBytes(StandardCharsets.UTF_8));
 
         } catch (TimeoutException | IOException e) {
             logger.error("Error occurred while sending the PNE message to RabbitMQ: {}", e.getMessage());

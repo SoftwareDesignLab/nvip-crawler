@@ -33,6 +33,8 @@ public class ReconcilerEnvVars extends Properties {
     private static String rabbitHost;
     private static String rabbitUsername;
     private static String rabbitPassword;
+    private static String rabbitQueueIn;
+    private static String rabbitQueueOut;
     private static String mitreGithubUrl;
     private static String nvdApiUrl;
 
@@ -151,6 +153,12 @@ public class ReconcilerEnvVars extends Properties {
                     break;
                 case RABBIT_PASSWORD:
                     rabbitPassword = addEnvvarString(envName, envVar, "guest");
+                    break;
+                case RABBIT_QUEUE_IN:
+                    rabbitQueueIn = addEnvvarString(envName, envVar, "CRAWLER_OUT");
+                    break;
+                case RABBIT_QUEUE_OUT:
+                    rabbitQueueOut = addEnvvarString(envName, envVar, "RECONCILER_OUT");
                     break;
                 case MITRE_GITHUB_URL:
                     mitreGithubUrl = addEnvvarString(envName, envVar, "https://github.com/CVEProject/cvelist");
@@ -276,6 +284,8 @@ public class ReconcilerEnvVars extends Properties {
     public static String getRabbitPassword() {
         return rabbitPassword;
     }
+    public static String getRabbitQueueOut() {return rabbitQueueOut;}
+    public static String getRabbitQueueIn() {return rabbitQueueIn;}
     public static String getMitreGithubUrl() {return mitreGithubUrl;}
     public static String getNvdApiUrl() {return nvdApiUrl;}
 
