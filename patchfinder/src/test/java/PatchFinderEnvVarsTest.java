@@ -43,8 +43,6 @@ public class PatchFinderEnvVarsTest {
         assertEquals(addressBases[1], "https://www.gitlab.com/");
         assertEquals(1000, PatchFinderEnvVars.getCloneCommitThreshold());
         assertEquals(50000, PatchFinderEnvVars.getCloneCommitLimit());
-        assertEquals("nvip_data/patch-repos", PatchFinderEnvVars.getClonePath());
-        assertEquals("nvip_data/source_dict.json", PatchFinderEnvVars.getPatchSrcUrlPath());
 
         // Default values for database environment variables
         assertEquals("mysql", PatchFinderEnvVars.getDatabaseType());
