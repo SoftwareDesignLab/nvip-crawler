@@ -48,8 +48,23 @@ class FilterFactoryTest {
     }
 
     @Test
-    void createBlankDescriptionFilter() {
-        Filter filter = FilterFactory.createFilter("BLANK_DESCRIPTION");
-        assertTrue(filter instanceof BlankDescriptionFilter);
+    void createOpenAIFilter() {
+        Filter filter = FilterFactory.createFilter("OPENAI");
+        assertTrue(filter instanceof GPTFilter);
+    }
+    @Test
+    void createIntegerDescrptionFilter() {
+        Filter filter = FilterFactory.createFilter("INTEGER_DESCRIPTION");
+        assertTrue(filter instanceof IntegerDescriptionFilter);
+    }
+    @Test
+    void createMultipleCveDescriptionFilter() {
+        Filter filter = FilterFactory.createFilter("MULTIPLE_CVE_DESCRIPTION");
+        assertTrue(filter instanceof MultipleCveDescriptionsFilter);
+    }
+    @Test
+    void createDescriptionSizeFilter() {
+        Filter filter = FilterFactory.createFilter("DESCRIPTION_SIZE");
+        assertTrue(filter instanceof DescriptionSizeFilter);
     }
 }

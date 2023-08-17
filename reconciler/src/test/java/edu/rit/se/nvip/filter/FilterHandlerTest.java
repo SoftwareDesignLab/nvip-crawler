@@ -3,12 +3,16 @@ package edu.rit.se.nvip.filter;
 import edu.rit.se.nvip.model.RawVulnerability;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class FilterHandlerTest {
+    private FilterReturn filterReturnT;
+    private FilterReturn filterReturnF;
     @Test
     public void runFiltersTest(){
 
@@ -23,13 +27,19 @@ public class FilterHandlerTest {
         rawVulns.add(rawVuln2);
         rawVulns.add(rawVuln3);
 
-        FilterReturn filterReturn = filterHandler.runFilters(rawVulns);
-
+        List<FilterHandler.FilterScope> list = new ArrayList<>();
+        list.add(FilterHandler.FilterScope.LOCAL);
+        list.add(FilterHandler.FilterScope.CUSTOM);
+        list.add(FilterHandler.FilterScope.REMOTE);
+        list.add(FilterHandler.FilterScope.ALL);
+        for(FilterHandler.FilterScope scope : list){
+            filterReturnT = filterHandler.runFilters(rawVulns, scope, true);
+            filterReturnF = filterHandler.runFilters(rawVulns, scope, false);
+        }
         // Verify the filter return values
-        assertEquals(3, filterReturn.getNumIn()); //3 went in
-        assertEquals(3, filterReturn.getNumDistinct());
-        assertEquals(2, filterReturn.getNumPassed()); //2 out of 3 pass
-
+        assertEquals(3, filterReturnT.getNumIn()); //3 went in
+        assertEquals(3, filterReturnT.getNumDistinct());
+        assertEquals(2, filterReturnT.getNumPassed()); //2 out of 3 pass
 
     }
 }

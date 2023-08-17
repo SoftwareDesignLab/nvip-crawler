@@ -23,7 +23,7 @@ class FilterMetricsTest {
         String path = System.getProperty("user.dir") + "\\src\\test\\resources"; //just 1 json
         String path2 = System.getProperty("user.dir") + "\\src\\test\\resources\\multipleJsons"; //2 jsons
 
-        FilterMetrics filterMetrics = genFilterMetrics(path);
+        FilterMetrics filterMetrics = new FilterMetrics(path, new FilterHandler(), FilterHandler.FilterScope.ALL);
         FilterMetrics filterMetrics2 = genFilterMetrics(path2);
 
         assertEquals(1, filterMetrics.getRuns().size()); //should have 1 run
