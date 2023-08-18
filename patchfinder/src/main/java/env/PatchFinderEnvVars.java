@@ -30,7 +30,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-import static utils.EnvVarLoader.loadEnvVarsFromFile;
+import static env.EnvVarLoader.loadEnvVarsFromFile;
 
 /**
  * Environment Variable Initialization class for Patchfinder.

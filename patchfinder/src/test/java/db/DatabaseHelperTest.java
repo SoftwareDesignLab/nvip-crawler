@@ -25,17 +25,15 @@ package db;
  */
 
 import model.CpeGroup;
-import org.eclipse.jgit.revwalk.RevCommit;
 import org.junit.Before;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.Test;
-import utils.EnvVarLoader;
+import env.EnvVarLoader;
 
 import java.io.FileNotFoundException;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.junit.platform.commons.function.Try.success;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
