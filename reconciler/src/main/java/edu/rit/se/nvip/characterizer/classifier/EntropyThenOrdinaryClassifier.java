@@ -41,6 +41,7 @@ import java.util.HashMap;
 public class EntropyThenOrdinaryClassifier extends EntropyBasedCveClassifier {
 	private int numOfTopClassesToConsiderForPrediction = 2;
 	boolean testMultiClassPrediction = false;
+	private OrdinaryCveClassifier ordinaryCveClassifier = new OrdinaryCveClassifier();
 
 	public EntropyThenOrdinaryClassifier(String sCommaSeparatedAttribRows) {
 		super(sCommaSeparatedAttribRows);
@@ -66,7 +67,6 @@ public class EntropyThenOrdinaryClassifier extends EntropyBasedCveClassifier {
 					labels.put(prediction.get(k)[0], 0);
 				}
 
-				OrdinaryCveClassifier ordinaryCveClassifier = new OrdinaryCveClassifier();
 				J48 j48 = new J48();
 
 				ordinaryCveClassifier.resetClassifier(j48);
@@ -74,7 +74,7 @@ public class EntropyThenOrdinaryClassifier extends EntropyBasedCveClassifier {
 				ordinaryCveClassifier.trainMLModel(newInstances);
 				prediction = ordinaryCveClassifier.predict(currentInstance, bPredictMultiple);
 
-				if (logger.isDebugEnabled() && !bPredictMultiple) {
+				if (!bPredictMultiple) {
 					String pred = prediction.get(0)[0];
 					String trueLabel = currentInstance.stringValue(currentInstance.classAttribute());
 					String sCorrect = pred.equalsIgnoreCase(trueLabel) ? "[C]" : "[W]";
@@ -90,14 +90,12 @@ public class EntropyThenOrdinaryClassifier extends EntropyBasedCveClassifier {
 
 		return prediction;
 	}
-	
-	@Override
-	public boolean getTestMultiClassPrediction() {
-		return testMultiClassPrediction;
-	}
 
 	public void setNumOfTopClassesToConsiderForPrediction(int n) {
 		numOfTopClassesToConsiderForPrediction = n;
 	}
 
+	public void setOrdinaryCveClassifier(OrdinaryCveClassifier ord){
+		ordinaryCveClassifier = ord;
+	}
 }

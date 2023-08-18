@@ -24,39 +24,72 @@ package edu.rit.se.nvip.characterizer;
  */
 
 import edu.rit.se.nvip.DatabaseHelper;
+import edu.rit.se.nvip.automatedcvss.CvssScoreCalculator;
+import edu.rit.se.nvip.automatedcvss.PartialCvssVectorGenerator;
+import edu.rit.se.nvip.automatedcvss.preprocessor.CvePreProcessor;
+import edu.rit.se.nvip.characterizer.classifier.AbstractCveClassifier;
+import edu.rit.se.nvip.characterizer.classifier.CveClassifierFactory;
+import edu.rit.se.nvip.characterizer.classifier.OrdinaryCveClassifier;
 import edu.rit.se.nvip.characterizer.enums.VDOLabel;
 import edu.rit.se.nvip.characterizer.enums.VDONounGroup;
 import edu.rit.se.nvip.model.CompositeVulnerability;
 import edu.rit.se.nvip.model.RawVulnerability;
 import edu.rit.se.nvip.utils.CsvUtils;
 import edu.rit.se.nvip.utils.ReconcilerEnvVars;
+import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.MockedConstruction;
+import org.mockito.MockedStatic;
+import org.mockito.stubbing.Answer;
+import weka.classifiers.Classifier;
+import weka.classifiers.bayes.NaiveBayes;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.nio.file.Paths;
 import java.io.File;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mockConstruction;
+import static org.mockito.Mockito.*;
 
 public class CveCharacterizerTest {
 
 	@Test
-	@Ignore
 	public void testCveCharacterization() {
+		//mocks
+		MockedStatic<FileUtils> mockedUtils = mockStatic(FileUtils.class);
+		CvePreProcessor mockPreProcessor = mock(CvePreProcessor.class);
+		CveClassifierFactory mockCveClassifierFactory = mock(CveClassifierFactory.class);
+		CvssScoreCalculator mockCvssScoreCalculator = mock(CvssScoreCalculator.class);
+		PartialCvssVectorGenerator mockPartialCvssVectorGenerator = mock(PartialCvssVectorGenerator.class);
+		OrdinaryCveClassifier mockClassifier = mock(OrdinaryCveClassifier.class);
 		String[] trainingDataInfo = {ReconcilerEnvVars.getTrainingDataDir(), ReconcilerEnvVars.getTrainingData()};
+		ArrayList<String[]> dummyPredictions = new ArrayList<>();
+		dummyPredictions.add(new String[]{"Local", "0.8"});
+		dummyPredictions.add(new String[]{"Read", "0.1"});
+		dummyPredictions.add(new String[]{"Remote", "2.1"});
+		dummyPredictions.add(new String[]{"Write", "1.4"});
+		dummyPredictions.add(new String[]{"Privilege Escalation", "1.5"});
+		dummyPredictions.add(new String[]{"Physical", "1.0"});
+		double[] dummyDoubles = {2.0, 1.0, 3.0, 1.0};
 		// test prediction
 		String cveDesc = "7.2 HIGH9.0 HIGHCVE-2020-11544 Ã¢â‚¬â€� An issue was discovered in Project Worlds Official Car Rental System 1. It allows the admin user to run commands on the server with their account because the upload section on the file-manager page contains an arbitrary file upload vulnerability via... read CVE-2020-11544 Published: April 06, 2020; 12:15:13 PM -04:00 CVE-2020-11544read CVE-2020-11544V3.1:7.2 HIGH6.5 MEDIUM";
+		when(mockPreProcessor.preProcessFile(anyString())).thenReturn("mocked, content");
+		when(mockCveClassifierFactory.getCveClassifier(anyString(), anyString(), anyString())).thenReturn(mockClassifier);
+		doNothing().when(mockClassifier).setCveClassifierName(anyString());
+		doNothing().when(mockClassifier).trainMLModel();
+		mockedUtils.when(() -> FileUtils.readFileToString(any(File.class))).thenReturn("{\"key\" : \"value\"}");
+		mockedUtils.when(() -> FileUtils.writeStringToFile(any(File.class), anyString(), anyBoolean())).thenAnswer((Answer<Void>) invocation -> null);
+		when(mockClassifier.predict(anyString(), anyBoolean())).thenReturn(dummyPredictions);
+		when(mockCvssScoreCalculator.getCvssScoreJython(any(String[].class))).thenReturn(dummyDoubles);
+		when(mockPartialCvssVectorGenerator.getCVssVector(anyMap())).thenReturn(new String[2]);
+		CveCharacterizer cveCharacterizer = new CveCharacterizer(mockPreProcessor, mockCveClassifierFactory, mockCvssScoreCalculator, mockPartialCvssVectorGenerator,
+				trainingDataInfo[0], trainingDataInfo[1], "ML", "NB");
 
-		CveCharacterizer cveCharacterizer = new CveCharacterizer(trainingDataInfo[0], trainingDataInfo[1], "ML", "NB");
+
 
 		//Test characterizeCveForVDO
 		Map<VDONounGroup,Map<VDOLabel, Double>> prediction = cveCharacterizer.characterizeCveForVDO(cveDesc, true);
@@ -64,33 +97,36 @@ public class CveCharacterizerTest {
 
 		prediction = cveCharacterizer.characterizeCveForVDO(cveDesc, false);
 		assertTrue(prediction.size() > 0);
-		try(MockedConstruction<DatabaseHelper> mock = mockConstruction(DatabaseHelper.class)){
-			//String csvPath = "src/test/resources/test-composite-vuln-list.csv";
-			//String csvPath = System.getProperty("user.dir") + "\\src\\main\\resources\\cvedata\\mitre-cve.csv";
-			String csvPath = Paths.get("src","test","resources", "cvedata", "mitre-cve.csv").toAbsolutePath().toString();
 
-			CsvUtils utils = new CsvUtils();
-			List<String[]> data = utils.getDataFromCsv(csvPath);
-			List<String[]> testData = new LinkedList<>();
-			for (int i = 0; i < 10; i++) {
-				testData.add(data.get(i));
-			}
-			// generate vuln list
-			List<CompositeVulnerability> vulnList = new ArrayList<>();
-			for (String[] line : testData) {
-				String cveId = line[0];
-				String description = line[1];
-				if (description.contains("** RESERVED") || description.contains("** REJECT"))
-					continue;
-				CompositeVulnerability vuln = new CompositeVulnerability(new RawVulnerability(1, cveId, description, null, null, null, ""));
+		String csvPath = Paths.get("src","test","resources", "cvedata", "mitre-cve.csv").toAbsolutePath().toString();
 
-				vulnList.add(vuln);
-			}
-
-			List<CompositeVulnerability> newList = cveCharacterizer.characterizeCveList(vulnList, 5000);
-			assertEquals(10, newList.size());
-
+		CsvUtils utils = new CsvUtils();
+		List<String[]> data = utils.getDataFromCsv(csvPath);
+		List<String[]> testData = new LinkedList<>();
+		for (int i = 0; i < 10; i++) {
+			testData.add(data.get(i));
 		}
+		// generate vuln list
+		List<CompositeVulnerability> vulnList = new ArrayList<>();
+		for (String[] line : testData) {
+			String cveId = line[0];
+			String description = line[1];
+			if (description.contains("** RESERVED") || description.contains("** REJECT"))
+				continue;
+			CompositeVulnerability vuln = new CompositeVulnerability(new RawVulnerability(1, cveId, description, null, null, null, ""));
 
+			vulnList.add(vuln);
+		}
+		CompositeVulnerability vuln = new CompositeVulnerability(new RawVulnerability(1, "cve-1", null, null, null, null, ""));
+		vuln.setPotentialSources(new HashSet<>());
+		CompositeVulnerability vuln2 = new CompositeVulnerability(new RawVulnerability(1, "cve-1", "short desc",	null, null, null, ""));
+		vuln2.setPotentialSources(new HashSet<>());
+		vulnList.add(vuln);
+		vulnList.add(vuln2);
+
+		List<CompositeVulnerability> newList = cveCharacterizer.characterizeCveList(vulnList, 5000);
+		assertEquals(12, newList.size());
+
+		mockedUtils.close();
 	}
 }

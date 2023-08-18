@@ -35,12 +35,11 @@ import weka.classifiers.trees.RandomForest;
 import weka.core.Instance;
 import weka.core.Instances;
 
+import javax.swing.text.NumberFormatter;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.text.NumberFormat;
+import java.util.*;
 
 /**
  *
@@ -100,7 +99,6 @@ public class OrdinaryCveClassifier extends AbstractCveClassifier {
 
 			return prediction;
 		}
-
 		if (myInstances.numClasses() == 1) {
 			// we have a unary class, so no need to make a prediction
 			prediction.add(new String[] { myInstances.classAttribute().value(0), "1" });
@@ -170,4 +168,13 @@ public class OrdinaryCveClassifier extends AbstractCveClassifier {
 		return null;
 	}
 
+	public void setMyInstances(Instances instances){
+		myInstances = instances;
+	}
+	public void setClassifier(Classifier newClass){
+		classifier = newClass;
+	}
+	public void setFormatter(NumberFormat format){
+		formatter = format;
+	}
 }
