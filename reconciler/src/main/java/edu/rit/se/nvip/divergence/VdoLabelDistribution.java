@@ -286,6 +286,7 @@ public class VdoLabelDistribution {
 	public String getVdoLabel() {
 		return vdoLabel;
 	}
+	public void setVdoLabel(String vdo){vdoLabel = vdo;}
 
 	public double getEntropy() {
 		return entropy;
