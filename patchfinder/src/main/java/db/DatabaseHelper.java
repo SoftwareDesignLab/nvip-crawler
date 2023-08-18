@@ -55,8 +55,8 @@ public class DatabaseHelper {
 	private final String insertPatchCommitSql = "INSERT INTO patchcommit (source_url_id, cve_id, commit_sha, commit_date, commit_message, uni_diff, timeline, timeToPatch, linesChanged) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);";
 	// Regex101: https://regex101.com/r/9uaTQb/1
 	private final String deletePatchCommitSql = "DELETE FROM patchcommit WHERE commit_sha = ?;";
-
 	private final String getCveSourcesSql = "SELECT cve_id, source_url FROM nvip.rawdescription WHERE source_url != \"\";";
+	private final String getCveSourcesNVDSql = "SELECT cve_id, source_url FROM nvip.nvddata;";
 	public static final Pattern CPE_PATTERN = Pattern.compile("cpe:2\\.3:[aho\\*\\-]:([^:]*):([^:]*):([^:]*):.*");
 
 	/**
@@ -372,5 +372,26 @@ public class DatabaseHelper {
 			logger.error("ERROR: Failed to get CVE sources for CVE ID {}\n{}", cve_id, e.getMessage());
 		}
 		return sources;
+	}
+
+	/**
+	 * Method for getting the source url from nvddata
+	 *
+	 * @param cve_id CVE being processed
+	 * @return source url
+	 */
+	public ArrayList<String> getCveSourcesNVD(String cve_id) {
+		ArrayList<String> sourceURL = new ArrayList<>();
+		try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(getCveSourcesNVDSql)) {
+			pstmt.setString(1, cve_id);
+			ResultSet rs = pstmt.executeQuery();
+			while (rs.next()) {
+				sourceURL.add(rs.getString("source"));
+			}
+			conn.close();
+		} catch (Exception e) {
+			logger.error("ERROR: Failed to get source URL for CVE ID {}\n{}", cve_id, e.getMessage());
+		}
+		return sourceURL;
 	}
 }

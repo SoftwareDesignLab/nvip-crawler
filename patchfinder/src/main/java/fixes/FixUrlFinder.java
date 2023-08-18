@@ -53,15 +53,14 @@ import db.DatabaseHelper;
  */
 // TODO: Make this an abstract class, to be extended/implemented to source data from a specific source
 // TODO: Implement VulnerabilityFixUrlFinder & NvdFixUrlFinder
-public class FixUrlFinder {
-	private static final Logger logger = LogManager.getLogger(FixUrlFinder.class.getName());
-//	private static final ObjectMapper OM = new ObjectMapper();
-	private static DatabaseHelper databaseHelper;
+public abstract class FixUrlFinder {
 
-	// TODO: Implement testConnection method to validate all urls can connect
-	private static boolean testConnection(String address) throws IOException {
+	protected static final Logger logger = LogManager.getLogger(FixUrlFinder.class.getName());
+
+	protected abstract ArrayList<String> run(String cveId) throws IOException;
+
+	protected static boolean testConnection(String address) throws IOException {
 		logger.info("Testing Connection for address: " + address);
-		ArrayList<String> urlList = new ArrayList<>();
 
 		URL url = new URL(address);
 		HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
@@ -73,27 +72,8 @@ public class FixUrlFinder {
 			return true;
 		} catch (Exception e) {
 			logger.error("ERROR: Failed to connect to {}\n{}", address, e);
-			response = -1;
 			return false;
 		}
 	}
 
-
-	//TODO: Move to its own implementation (maybe VulnerabilityFixUrlFinder)
-	public ArrayList<String> run(String cveId) throws IOException {
-		logger.info("Getting Fix URLs for CVE: " + cveId);
-		ArrayList<String> urlList = new ArrayList<>();
-
-		// Get all sources for the CVE
-		ArrayList<String> sources = databaseHelper.getCveSources(cveId);
-
-		// Test each source for a valid connection
-		for (String source : sources) {
-			if (testConnection(source)) {
-				urlList.add(source);
-			}
-		}
-
-		return urlList;
-	}
 }

@@ -65,13 +65,18 @@ public class FixFinder {
 
 		// Init FixUrlFinders
 		logger.info("Initializing FixUrlFinders...");
-		// TODO: Change this to work with multiple URL finders
-		fixURLFinders.add(null);
-		fixURLFinders.add(null);
+
+		// Create instances of your FixUrlFinder implementations
+		VulnerabilityFixUrlFinder vulnerabilityFixUrlFinder = new VulnerabilityFixUrlFinder(databaseHelper);
+		NvdFixUrlFinder nvdFixUrlFinder = new NvdFixUrlFinder(databaseHelper);
+
+		// Add the instances to the fixURLFinders list
+		fixURLFinders.add(vulnerabilityFixUrlFinder);
+		fixURLFinders.add(nvdFixUrlFinder);
+
 		logger.info("Done initializing {} FixUrlFinders", fixURLFinders.size());
 	}
 
 	public static void run() {
-
 	}
 }
