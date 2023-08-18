@@ -144,15 +144,4 @@ public class OrdinaryThenEntropyClassifier extends OrdinaryCveClassifier {
 
 	}
 
-	@Override
-	protected Map<String, Integer> getModelData(String label) {
-		// not applicable
-		return null;
-	}
-
-	@Override
-	public boolean getTestMultiClassPrediction() {
-		return testMultiClassPrediction;
-	}
-
 }

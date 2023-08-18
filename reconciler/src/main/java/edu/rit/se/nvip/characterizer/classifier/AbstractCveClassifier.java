@@ -58,6 +58,7 @@ public abstract class AbstractCveClassifier {
 	protected boolean testMultiClassPrediction = true;
 	protected String cveClassifierName = "AbstractCveClassifier";
 	protected String preProcessedTrainingDataFile = null;
+	private AddValues addValueFilter = new AddValues();
 
 	protected boolean useNGrams = true; // use NGrams while applying StringToWrodVector filter?
 
@@ -114,313 +115,9 @@ public abstract class AbstractCveClassifier {
 	}
 
 	/**
-	 * This methods creates a map to keep track of TP,FP,TN,FNs for each label
-	 * 
-	 * @param instances
-	 * @return
-	 */
-	protected HashMap<String, int[]> getLabels(Instances instances) {
-		HashMap<String, int[]> map = new HashMap<String, int[]>();
-		int classCount = instances.classAttribute().numValues();
-		for (int i = 0; i < classCount; i++) {
-			String label = instances.classAttribute().value(i);
-			map.put(label, new int[] { 0, 0, 0, 0 });
-		}
-
-		return map;
-	}
-
-	/**
-	 * get clas label counts
-	 * 
-	 * @param instances
-	 * @return
-	 */
-	protected HashMap<String, Integer> getLabelCounts(Instances instances) {
-
-		HashMap<String, Integer> map = new HashMap<String, Integer>();
-		int classCount = instances.classAttribute().numValues();
-		for (int i = 0; i < classCount; i++) {
-			String label = instances.classAttribute().value(i);
-			map.put(label, 0);
-		}
-		for (Instance instance : instances) {
-			String label = instance.stringValue(instance.classAttribute());
-			int count = map.get(label);
-			count++;
-			map.put(label, count);
-		}
-
-		return map;
-	}
-
-	/**
-	 * increment true positive count for this label! Counts array: TP,FP,TN,FN
-	 * 
-	 * @param label
-	 * @param map
-	 * @return
-	 */
-	protected HashMap<String, int[]> incrementTrueCount(String trueLabel, String predictedLabel, HashMap<String, int[]> map) {
-
-		for (String keyLabel : map.keySet()) {
-			int[] counts = map.get(keyLabel);
-			// a TP for label X is a TN for label Y
-			if (keyLabel.equalsIgnoreCase(predictedLabel))
-				counts[0] += 1;
-			else
-				counts[2] += 1;
-			map.put(keyLabel, counts);
-		}
-
-		return map;
-	}
-
-	/**
-	 * increment false positive count for this label! Counts array: TP,FP,TN,FN
-	 * 
-	 * @param label
-	 * @param map
-	 * @return
-	 */
-	protected HashMap<String, int[]> incrementFalseCount(String trueLabel, String predictedLabel, HashMap<String, int[]> map) {
-		// a FP for label X is a FN for label Y
-		for (String keyLabel : map.keySet()) {
-			int[] counts = map.get(keyLabel);
-			if (keyLabel.equalsIgnoreCase(predictedLabel))
-				counts[1] += 1;
-			else {
-				if (keyLabel.equalsIgnoreCase(trueLabel))
-					counts[3] += 1;
-			}
-			map.put(keyLabel, counts);
-		}
-
-		return map;
-	}
-
-	/**
-	 * get average metrics: accuracy, precision, recall and f-measure
-	 * 
-	 * Counts array: TP,FP,TN,FN
-	 * 
-	 * @param map
-	 * @return
-	 */
-	protected double[] getAvgMetrics(HashMap<String, int[]> labelCountMap, HashMap<String, Integer> labelClassCountMap) {
-		double precision = 0, recall = 0, f1 = 0;
-		double totPrecision = 0, totRecall = 0, totF1 = 0;
-
-		try {
-			int tp = 0, fp = 0, tn = 0, fn = 0;
-			int totInstanceCount = 0;
-			for (String key : labelCountMap.keySet()) {
-				int[] counts = labelCountMap.get(key);
-				tp = counts[0];
-				fp = counts[1];
-				tn = counts[2];
-				fn = counts[3];
-
-				int classCount = labelClassCountMap.get(key);
-				totInstanceCount += classCount;
-
-				precision = tp * 1.0 / (tp + fp);
-				recall = tp * 1.0 / (tp + fn);
-				f1 = (2 * (precision * recall) / (precision + recall));
-
-				totPrecision += precision * classCount;
-				totRecall += recall * classCount;
-				totF1 += f1 * classCount;
-			}
-
-			precision = totPrecision / totInstanceCount;
-			recall = totRecall / totInstanceCount;
-			f1 = totF1 / totInstanceCount;
-
-		} catch (Exception e) {
-			logger.error(e.toString());
-		}
-		return new double[] { precision, recall, f1 };
-
-	}
-
-
-	/**
-	 * get label index map
-	 * 
-	 * @param labelCountMap
-	 * @return
-	 */
-	private Map<String, Integer> createLabelIndexMap(HashMap<String, int[]> labelCountMap) {
-		Map<String, Integer> labelIndexMap = new HashMap<>();
-		int index = 0;
-		for (String key : labelCountMap.keySet()) {
-			labelIndexMap.put(key, index);
-			index++;
-		}
-		return labelIndexMap;
-
-	}
-
-	/**
-	 * Test leave one out with single and multi-class prediction options for N-folds
-	 * and return classification accuracy
-	 * 
-	 * @param folds
-	 * @param bPredictMultiple
-	 * @param nMaxNumOfClassesToPredict
-	 * @return
-	 */
-	public double nFoldsPrediction(int folds, boolean bPredictMultiple, int nMaxNumOfClassesToPredict) {
-		HashMap<String, int[]> labelCountMap = null;
-		HashMap<String, Integer> labelClassCountMap = null;
-		Map<String, Double> labelMapJaccard = new HashMap<>();
-		try {
-			// reload data
-			myInstances = getInstacesFromCsvString(sCommaSeparatedCsvData, useNGrams);
-
-			labelCountMap = getLabels(myInstances);
-			labelClassCountMap = getLabelCounts(myInstances);
-
-			Map<String, Integer> labelIndexMap = createLabelIndexMap(labelCountMap);
-			int[][] confMatrix = new int[labelIndexMap.size()][labelIndexMap.size()];
-
-			Random rand = new Random(1); // create seeded number generator
-			Instances randData = new Instances(myInstances); // create copy of original data
-			randData.randomize(rand); // randomize data with number generator
-
-			randData.stratify(folds);
-
-			for (int n = 0; n < folds; n++) {
-				Instances train = randData.trainCV(folds, n, rand);
-				Instances test = randData.testCV(folds, n);
-				trainMLModel(train);
-
-				int trueCount = 0, falseCount = 0;
-				// predict instances
-				for (int i = 0; i < test.size(); i++) {
-					Instance instance = test.get(i);
-					ArrayList<String[]> prediction = predict(instance, bPredictMultiple);
-
-					String predictedLabel;
-					String trueLabel = instance.stringValue(instance.classAttribute());
-					if (bPredictMultiple) {
-						boolean isTrue = false;
-						predictedLabel = prediction.get(0)[0];
-						for (int j = 0; j < prediction.size(); j++)
-							if (j == nMaxNumOfClassesToPredict)
-								break;
-							else if (trueLabel.equalsIgnoreCase(prediction.get(j)[0])) {
-								isTrue = true;
-								predictedLabel = prediction.get(j)[0];
-							}
-
-						if (isTrue) {
-							trueCount++;
-							labelCountMap = incrementTrueCount(trueLabel, predictedLabel, labelCountMap); //
-						} else {
-							falseCount++;
-							labelCountMap = incrementFalseCount(trueLabel, predictedLabel, labelCountMap);//
-						}
-
-					} else {
-						// single prediction
-						predictedLabel = prediction.get(0)[0];
-						if (trueLabel.equalsIgnoreCase(predictedLabel)) {
-							trueCount++;
-							labelCountMap = incrementTrueCount(trueLabel, predictedLabel, labelCountMap); //
-						} else {
-							falseCount++;
-							labelCountMap = incrementFalseCount(trueLabel, predictedLabel, labelCountMap);//
-						}
-
-					}
-					// increment conf matrix entry based on the true/predicted labels
-					confMatrix[labelIndexMap.get(trueLabel)][labelIndexMap.get(predictedLabel)]++;
-
-				}
-
-			}
-
-			labelMapJaccard = calculateJaccardMetric(labelIndexMap, confMatrix);
-		} catch (Exception e) {
-			logger.error(e.toString());
-		}
-
-		// print label based accuracies
-		double avgAcc = Double.parseDouble(formatter.format(printLabelBasedMetrics(labelCountMap, bPredictMultiple, nMaxNumOfClassesToPredict, labelClassCountMap, labelMapJaccard)[0]));
-
-		// return overallAccuracy;
-		return avgAcc;
-	}
-
-	/**
-	 * print Jaccard
-	 * 
-	 * @param labelIndexMap
-	 * @param confMatrix
-	 */
-	private Map<String, Double> calculateJaccardMetric(Map<String, Integer> labelIndexMap, int[][] confMatrix) {
-		Map<String, Double> labelMapJaccard = new HashMap<>();
-
-		if (labelIndexMap.size() < 3) // for multi label only
-			return labelMapJaccard;
-
-		StringBuffer sJaccard = new StringBuffer("Jaccard Distances:\n");
-		for (String label : labelIndexMap.keySet()) {
-			int index = labelIndexMap.get(label);
-			int totRow = 0;
-			for (int i = 0; i < labelIndexMap.size(); i++)
-				totRow += confMatrix[index][i];
-
-			int totCol = 0;
-			for (int i = 0; i < labelIndexMap.size(); i++) {
-				if (i != index)
-					totCol += confMatrix[i][index];
-			}
-
-			double jaccard = confMatrix[index][index] * 1.0 / (totRow + totCol);
-
-			labelMapJaccard.put(label, jaccard);
-		}
-
-		return labelMapJaccard;
-
-	}
-
-	/**
-	 * Counts array: TP,FP,TN,FN
-	 * 
-	 * @param labelCountMap
-	 * @param bPredictMultiple
-	 * @param nMaxNumOfClassesToPredict
-	 * @return
-	 */
-	protected double[] printLabelBasedMetrics(HashMap<String, int[]> labelCountMap, boolean bPredictMultiple, int nMaxNumOfClassesToPredict, HashMap<String, Integer> labelClassCountMap, Map<String, Double> labelMapJaccard) {
-		String labelBasedMetrics = "";
-		double[] metrics = getAvgMetrics(labelCountMap, labelClassCountMap);
-		for (String label : labelCountMap.keySet()) {
-			double prec = labelCountMap.get(label)[0] * 1.0 / (labelCountMap.get(label)[0] + labelCountMap.get(label)[1]);
-			double recall = labelCountMap.get(label)[0] * 1.0 / (labelCountMap.get(label)[0] + labelCountMap.get(label)[3]);
-			double f1 = 2 * (prec * recall) / (prec + recall);
-			double jacc = Double.NaN;
-			if (labelMapJaccard != null)
-				jacc = labelMapJaccard.get(label);
-			labelBasedMetrics += (String.format("%20s", label) + "\t-->\t" + formatter.format(prec) + "," + formatter.format(recall) + "," + formatter.format(f1) + "," + formatter.format(jacc) + "\n");
-		}
-		String sAvgAcc = formatter.format(metrics[0]) + "," + formatter.format(metrics[1]) + "," + formatter.format(metrics[2]);
-		labelBasedMetrics += "--------------------------------------------------\n";
-		String singleOrMulti = bPredictMultiple ? "Multi-chance[" + nMaxNumOfClassesToPredict + "]" : "Single-class";
-		labelBasedMetrics += (String.format("%20s", singleOrMulti));
-		labelBasedMetrics += ("\t-->\t" + sAvgAcc + "\n");
-		logger.info("\n" + labelBasedMetrics);
-		return metrics;
-	}
-
-	/**
 	 * get instances that have a label in <labels> hash for training. You must
 	 * exclude current test instance <excludedTestInstance>
-	 * 
+	 *
 	 * @param labels
 	 * @param myInstances
 	 * @return
@@ -436,7 +133,7 @@ public abstract class AbstractCveClassifier {
 
 	/**
 	 * create a weka instance from comma separated string
-	 * 
+	 *
 	 * @param sCommaSeparatedAttribRows
 	 * @param useNGrams                 TODO
 	 * @return
@@ -473,7 +170,7 @@ public abstract class AbstractCveClassifier {
 
 	/**
 	 * Nominal To String Filter
-	 * 
+	 *
 	 * @param myInstances
 	 * @return
 	 */
@@ -493,7 +190,7 @@ public abstract class AbstractCveClassifier {
 
 	/**
 	 * string To Word Vector Filter
-	 * 
+	 *
 	 * @param myInstances
 	 * @param useNGrams   TODO
 	 * @return
@@ -532,7 +229,7 @@ public abstract class AbstractCveClassifier {
 
 	/**
 	 * Create an Instance from a comma separated string
-	 * 
+	 *
 	 * @param sCommaSeparatedAttribs Comma separated string that stores attribs
 	 * @param classIsmissing         sCommaSeparatedAttribs does not include the
 	 *                               class attrib
@@ -557,9 +254,7 @@ public abstract class AbstractCveClassifier {
 					if (sCommaSeparatedAttribs.contains(sToken)) {
 						// binary
 						instanceValues[i] = 1;
-
 					}
-
 				} catch (Exception e) {
 					logger.error("Could not parse " + attribs[i] + ", attrib is nominal?");
 					instanceValues[i] = 0;
@@ -578,41 +273,34 @@ public abstract class AbstractCveClassifier {
 				int nominalAttributeIndex = nominalIndexList.get(i);
 				currentInstance.setValue(nominalAttributeIndex, attribs[nominalAttributeIndex]);
 			}
-
 			if (classIsmissing) {
 				currentInstance.setMissing(0); // set last value as ?
 			} else {
 				String value = attribs[attribs.length - 1]; // get last value from attribs array
-
 				if (myInstances.classAttribute().indexOfValue(value + "") == -1) {
 					// this new class does not exist among the current classes, so add it!!
 					myInstances = addValueToClassAttrib(myInstances, value + "");
 					currentInstance.setDataset(myInstances);
 				}
-
 				int index = myInstances.classAttribute().indexOfValue(value + "");
 				currentInstance.setValue(currentInstance.numAttributes() - 1, index);
 			}
-
 		} catch (Exception e) {
 			logger.error(e.toString());
 			currentInstance = null;
 		}
-
 		return currentInstance;
 	}
 
 	/**
 	 * Add a new class label
-	 * 
+	 *
 	 * @param instances
 	 * @param value
 	 * @return
 	 */
 	protected Instances addValueToClassAttrib(Instances instances, String value) {
-
 		try {
-			AddValues addValueFilter = new AddValues();
 			String classIndex = instances.numAttributes() + ""; // the index starts from 1
 			addValueFilter.setAttributeIndex(classIndex);
 			addValueFilter.setLabels(value);
@@ -624,10 +312,6 @@ public abstract class AbstractCveClassifier {
 			e.printStackTrace();
 		}
 		return instances;
-	}
-
-	public boolean getTestMultiClassPrediction() {
-		return testMultiClassPrediction;
 	}
 
 	public String getCveClassifierName() {
@@ -647,5 +331,9 @@ public abstract class AbstractCveClassifier {
 		} catch (IOException e) {
 			logger.error(e.toString());
 		}
+	}
+	public void setAddValueFilter(AddValues add){
+		addValueFilter = add;
+
 	}
 }
