@@ -173,10 +173,16 @@ public class NvdCveController {
 					String cveId = cve.getString("id");
 					String publishedDate = cve.getString("published");
 					String status = cve.getString("vulnStatus");
+					JSONArray references = cve.getJSONArray("references");
+					List<String> sourceUrls = new ArrayList<>();
+					for (int j = 0; j < references.length(); j++) {
+						final JSONObject reference = references.getJSONObject(j);
+						sourceUrls.add(reference.getString("url"));
+					}
 
 					// Adjust published date substring to be mySql acceptable
 					Timestamp pubTime = Timestamp.valueOf(LocalDateTime.parse(publishedDate, formatter));
-					nvdCves.add(new NvdVulnerability(cveId, pubTime, status));
+					nvdCves.add(new NvdVulnerability(cveId, pubTime, status, sourceUrls));
 				}
 			}
 		} catch (IOException e) {

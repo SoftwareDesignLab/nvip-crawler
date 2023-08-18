@@ -57,6 +57,11 @@ public class DatabaseHelper {
             "ON DUPLICATE KEY UPDATE " +
             "status = input.status, " +
             "last_modified = IF(input.status <> nvddata.status, NOW(), nvddata.last_modified)";
+    // TODO: Implement this SQL statement
+    private static final String UPSERT_NVD_SOURCE_URLS = "INSERT INTO nvdsourceurl (cve_id, source_url) VALUES (?, ?) AS input " +
+            "ON DUPLICATE KEY UPDATE " + // TODO: Does this work with FK?
+            "status = input.status, " +
+            "last_modified = IF(input.status <> nvddata.status, NOW(), nvddata.last_modified)";
     private static final String UPSERT_MITRE = "INSERT INTO mitredata (cve_id, status, last_modified) VALUES (?, ?, NOW()) AS input " +
             "ON DUPLICATE KEY UPDATE " +
             "status = input.status, " +
@@ -424,6 +429,7 @@ public class DatabaseHelper {
 
         try (Connection conn = getConnection();
              PreparedStatement upsertStmt = conn.prepareStatement(UPSERT_NVD);
+             PreparedStatement upsertSourceUrlsStmt = conn.prepareStatement(UPSERT_NVD_SOURCE_URLS);
              PreparedStatement selectStmt = conn.prepareStatement(SELECT_NVD_BY_DATE)) {
             conn.setAutoCommit(false);
             // insert/update all the nvd vulns
@@ -682,21 +688,44 @@ public class DatabaseHelper {
 
         // generate comma separated string of question marks for cve_id candidates
         String questionMarks = IntStream.range(0, vulns.size()).mapToObj(i -> "?").collect(Collectors.joining(","));
-        String query = "SELECT cve_id, published_date, status FROM nvddata WHERE cve_id IN (" + questionMarks + ")";
+        String query = "SELECT nvdsourceurl.cve_id, nvdsourceurl.source_url, nvddata.published_date, nvddata.status\n" +
+                "FROM nvdsourceurl\n" +
+                "JOIN nvddata ON nvdsourceurl.cve_id = nvddata.cve_id\n" +
+                "WHERE nvdsourceurl.cve_id IN (" + questionMarks + ")";
         try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(query)) {
             int i = 0;
             for (CompositeVulnerability v : vulns) {
                 pstmt.setString(++i, v.getCveId());
             }
             ResultSet res = pstmt.executeQuery();
+            boolean createObjects = false;
+            String cveId = null;
+            Map<String, List<String>> sourceMap = new HashMap<>();
             while (res.next()) { // goes through each matching cve_id, creates the NvdVuln and attaches it to the CompVuln
-                String cveId = res.getString("cve_id");
-                NvdVulnerability nvdVuln = new NvdVulnerability(cveId,
-                        res.getTimestamp("published_date"),
-                        res.getString("status"));
-                CompositeVulnerability compVuln = idToVuln.get(cveId);
-                compVuln.setNvdVuln(nvdVuln);
-                out.add(compVuln);
+                // Check if cveId changed (ensures no duplicate objects created)
+                if(cveId != null && !cveId.equals(res.getString("cve_id"))) createObjects = true;
+
+                // Create objects
+                if(createObjects) {
+                    NvdVulnerability nvdVuln = new NvdVulnerability(
+                            cveId,
+                            res.getTimestamp("published_date"),
+                            res.getString("status"),
+                            sourceMap.get(cveId)
+                    );
+                    CompositeVulnerability compVuln = idToVuln.get(cveId);
+                    compVuln.setNvdVuln(nvdVuln);
+                    out.add(compVuln);
+                }
+
+                // Update cveId value
+                cveId = res.getString("cve_id");
+
+                // Create list or add to it as needed
+                List<String> sources = sourceMap.get(cveId);
+                if(sources == null) sources = new ArrayList<>();
+                sources.add(res.getString("source_url"));
+                sourceMap.put(cveId, sources);
             }
         } catch (SQLException ex) {
             logger.error("Error while inserting time gaps");
