@@ -45,9 +45,8 @@ public class PatchFinderMain {
 
     /**
      * Entry point for the PatchFinder, initializes necessary classes and start listening for jobs with RabbitMQ
-     * @param args (unused) program arguments
      */
-    public static void main(String[] args) {
+    public static void run() {
         logger.info("Starting PatchFinder...");
         // Init PatchFinder
         PatchFinder.init();

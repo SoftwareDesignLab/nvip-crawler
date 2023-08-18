@@ -22,31 +22,12 @@ package fixes; /**
  * SOFTWARE.
  */
 
-import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
 import env.FixFinderEnvVars;
-import patches.PatchCommit;
 import db.DatabaseHelper;
-import model.CpeGroup;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.eclipse.jgit.util.FileUtils;
-
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.nio.file.Paths;
-import java.time.DateTimeException;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 /**
  * Main class for collecting CVE Patches within repos that were
@@ -59,7 +40,7 @@ public class FixFinder {
 
 	private static final ObjectMapper OM = new ObjectMapper();
 	private static DatabaseHelper databaseHelper;
-	private static FixUrlFinder fixURLFinder;
+	private static List<FixUrlFinder> fixURLFinders;
 
 	private static final ArrayList<Fix> fixes = new ArrayList<>();
 	protected static int cveLimit = FixFinderEnvVars.getCveLimit();
@@ -82,8 +63,15 @@ public class FixFinder {
 				FixFinderEnvVars.getHikariPassword()
 		);
 
-		// Init PatchUrlFinder
-		logger.info("Initializing PatchUrlFinder...");
-		fixURLFinder = new FixUrlFinder();
+		// Init FixUrlFinders
+		logger.info("Initializing FixUrlFinders...");
+		// TODO: Change this to work with multiple URL finders
+		fixURLFinders.add(null);
+		fixURLFinders.add(null);
+		logger.info("Done initializing {} FixUrlFinders", fixURLFinders.size());
+	}
+
+	public static void run() {
+
 	}
 }
