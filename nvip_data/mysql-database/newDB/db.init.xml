@@ -786,7 +786,30 @@
         <modifyDataType tableName="description" columnName="gpt_func" newDataType="MEDIUMTEXT"/>
     </changeSet>
 
+    <changeSet id="createNvdSourceUrlTable" author="dylan">
+        <createTable tableName="nvdsourceurl">
+            <column name="source_id" type="INT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false" unique="true"/>
+            </column>
+            <column name="cve_id" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="source_url" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
 
+        <createIndex
+                indexName="source_url_id_index"
+                tableName="nvdsourceurl"
+                unique="true">
+            <column name="source_url_id"/>
+        </createIndex>
+
+        <addForeignKeyConstraint baseTableName="nvdsourceurl" baseColumnNames="cve_id"
+                                 referencedTableName="nvddata" referencedColumnNames="cve_id"
+                                 constraintName="nvdsourceurl_cve_id_fk"/>
+    </changeSet>
     
 
 </databaseChangeLog>
