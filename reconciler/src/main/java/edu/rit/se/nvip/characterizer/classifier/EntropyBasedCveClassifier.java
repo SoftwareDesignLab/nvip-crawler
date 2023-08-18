@@ -84,7 +84,6 @@ public class EntropyBasedCveClassifier extends AbstractCveClassifier {
 		int numClassValues = instances.classAttribute().numValues();
 		for (int valIndex = 0; valIndex < numClassValues; valIndex++) {
 			String classValue = instances.classAttribute().value(valIndex);
-			logger.error(instances.classAttribute().toString());
 			histograms.put(classValue, new VdoLabelDistribution(classValue, instances));
 		}
 	}
@@ -200,9 +199,7 @@ public class EntropyBasedCveClassifier extends AbstractCveClassifier {
 	protected Map<String, Integer> getModelData(String label) {
 		return histograms.get(label).getHistogram();
 	}
-	public void setMyMethod(Method me){
-		myMethod = me;
+	public void setHistograms(Map<String, VdoLabelDistribution> histogram){
+		histograms = histogram;
 	}
-
-
 }

@@ -25,15 +25,22 @@ package edu.rit.se.nvip.characterizer.classifier;
 
 import edu.rit.se.nvip.utils.ReconcilerEnvVars;
 import org.junit.Test;
+import weka.classifiers.Classifier;
 import weka.classifiers.meta.Vote;
 import weka.classifiers.trees.RandomForest;
+import weka.core.Attribute;
 import weka.core.Instance;
+import weka.core.Instances;
 import weka.core.SparseInstance;
 
 import java.nio.file.Paths;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class OrdinaryCveClassifierTest {
 
@@ -46,7 +53,11 @@ public class OrdinaryCveClassifierTest {
     }
 
     @Test
-    public void testPredictIncorrectNumAttr() {
+    public void testPredictIncorrectNumAttr() throws Exception {
+        Instances mockInstances = mock(Instances.class);
+        Attribute mockAttr = mock(Attribute.class);
+        Classifier mockClass = mock(Classifier.class);
+        NumberFormat mockFormat = mock(NumberFormat.class);
         String[] trainingDataInfo = {ReconcilerEnvVars.getTrainingDataDir(), ReconcilerEnvVars.getTrainingData()};
         String trainingDataPath = trainingDataInfo[0];
         String trainingDataFiles = trainingDataInfo[1];
@@ -58,10 +69,21 @@ public class OrdinaryCveClassifierTest {
         String preProcessedTrainingDataFile = trainingDataFileName.concat("-processed.csv");
         OrdinaryCveClassifier ordinaryCveClassifier = new OrdinaryCveClassifier(new RandomForest(), preProcessedTrainingDataFile);
 
-        Instance newInstance = new SparseInstance(293);
+        Instance newInstance = new SparseInstance(8492);
+        ordinaryCveClassifier.setMyInstances(mockInstances);
+        when(mockInstances.numAttributes()).thenReturn(8492);
+        when(mockInstances.numClasses()).thenReturn(1, 3);
+        when(mockInstances.classAttribute()).thenReturn(mockAttr);
+        when(mockAttr.value(anyInt())).thenReturn("mock");
+        ArrayList<String[]> prediction = ordinaryCveClassifier.predict(newInstance, false);
+        ordinaryCveClassifier.setClassifier(mockClass);
+        ordinaryCveClassifier.setFormatter(mockFormat);
+        when(mockClass.distributionForInstance(any(Instance.class))).thenReturn(new double[]{0.1, 1.0, 2.0, 0.2});
+        when(mockClass.classifyInstance(any(Instance.class))).thenReturn(1.0);
+        when(mockFormat.format(anyLong())).thenReturn("mock long");
+        ArrayList<String[]> prediction2 = ordinaryCveClassifier.predict(newInstance, false);
+        assertEquals(1, prediction.size());
+        assertEquals(1, prediction2.size());
 
-        ArrayList<String[]> prediction = ordinaryCveClassifier.predict(newInstance, true);
-
-        assertEquals(0, prediction.size());
     }
 }

@@ -23,12 +23,22 @@
  */
 package edu.rit.se.nvip.characterizer.classifier;
 
+import edu.rit.se.nvip.divergence.VdoLabelDistribution;
 import edu.rit.se.nvip.utils.ReconcilerEnvVars;
+import jnr.ffi.annotations.In;
 import org.junit.Test;
+import weka.core.Instance;
 
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class EntropyThenOrdinaryClassifierTest {
 
@@ -49,4 +59,42 @@ public class EntropyThenOrdinaryClassifierTest {
 
         assertEquals(entropyBasedCveClassifier.histograms.size(), 4);
     }
+
+    @Test
+    public void testClassify(){
+        Instance mockInstance = mock(Instance.class);
+        Map<String, VdoLabelDistribution> mockHistograms = mock(Map.class);
+        OrdinaryCveClassifier mockOrd = mock(OrdinaryCveClassifier.class);
+        String[] trainingDataInfo = {ReconcilerEnvVars.getTrainingDataDir(), ReconcilerEnvVars.getTrainingData()};
+        String trainingDataPath = trainingDataInfo[0];
+        String trainingDataFiles = trainingDataInfo[1];
+        String[] trainingDataFileArr = trainingDataFiles.split(",");
+        String trainingDataFileName = trainingDataFileArr[0];
+        trainingDataFileName = Paths.get(trainingDataPath).resolve(trainingDataFileName).toString();
+
+        // pre-process training data and store it
+        String preProcessedTrainingDataFile = trainingDataFileName.concat("-processed.csv");
+        Map<String, VdoLabelDistribution> mockMap = new HashMap<>();
+        VdoLabelDistribution vdo = mock(VdoLabelDistribution.class);
+        VdoLabelDistribution vdo2 = mock(VdoLabelDistribution.class);
+        mockMap.put("1", vdo);
+        mockMap.put("2", vdo2);
+
+        EntropyThenOrdinaryClassifier entropyBasedCveClassifier = new EntropyThenOrdinaryClassifier(preProcessedTrainingDataFile);
+        entropyBasedCveClassifier.setHistograms(mockHistograms);
+        when(mockHistograms.values()).thenReturn(mockMap.values());
+        entropyBasedCveClassifier.setNumOfTopClassesToConsiderForPrediction(1);
+        when(vdo.calculateKLDivergence(any(VdoLabelDistribution.class))).thenReturn(1.0, 1.00001);
+        when(vdo2.calculateKLDivergence(any(VdoLabelDistribution.class))).thenReturn(2.0, 1.0);
+        ArrayList<String[]> prediction = entropyBasedCveClassifier.classify(mockInstance, true);
+        when(mockInstance.numAttributes()).thenReturn(1);
+        when(mockOrd.predict(any(Instance.class), anyBoolean())).thenReturn(prediction);
+        entropyBasedCveClassifier.setOrdinaryCveClassifier(mockOrd);
+
+        ArrayList<String[]> prediction2 = entropyBasedCveClassifier.classify(mockInstance, true);
+
+        assertEquals(2, prediction.size());
+        assertEquals(2, prediction2.size());
+    }
+
 }
