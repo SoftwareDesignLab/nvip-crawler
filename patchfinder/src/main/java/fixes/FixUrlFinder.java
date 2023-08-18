@@ -23,6 +23,8 @@ package fixes; /**
  */
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import env.FixFinderEnvVars;
+import env.PatchFinderEnvVars;
 import model.CpeGroup;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -35,12 +37,14 @@ import org.jsoup.select.Elements;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
+import db.DatabaseHelper;
 
 /**
  * Responsible for finding possible patch source URLs for the FixFinder
@@ -50,9 +54,45 @@ import java.util.regex.Pattern;
 public class FixUrlFinder {
 	private static final Logger logger = LogManager.getLogger(FixUrlFinder.class.getName());
 //	private static final ObjectMapper OM = new ObjectMapper();
+	private static DatabaseHelper databaseHelper;
 
 	// TODO: Implement testConnection method to validate all urls can connect
+	private boolean testConnection(String address) throws IOException {
+		logger.info("Testing Connection for address: " + address);
+		ArrayList<String> urlList = new ArrayList<>();
+
+		URL url = new URL(address);
+		HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+		int response;
+
+		try {
+			response = urlConnection.getResponseCode();
+			logger.info("Response Code: " + response);
+			return true;
+		} catch (Exception e) {
+			logger.error("ERROR: Failed to connect to {}\n{}", address, e);
+			response = -1;
+			return false;
+		}
+	}
+
 
 	//TODO: Implement getFixUrls method to leverage DatabaseHelper getCveSources,
 	// then call testConnection to only return valid urls
+	public ArrayList<String> getFixUrls(String cveId) throws IOException {
+		logger.info("Getting Fix URLs for CVE: " + cveId);
+		ArrayList<String> urlList = new ArrayList<>();
+
+		// Get all sources for the CVE
+		ArrayList<String> sources = databaseHelper.getCveSources(cveId);
+
+		// Test each source for a valid connection
+		for (String source : sources) {
+			if (testConnection(source)) {
+				urlList.add(source);
+			}
+		}
+
+		return urlList;
+	}
 }
