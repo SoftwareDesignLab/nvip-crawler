@@ -51,13 +51,15 @@ import db.DatabaseHelper;
  *
  * @author Dylan Mulligan
  */
+// TODO: Make this an abstract class, to be extended/implemented to source data from a specific source
+// TODO: Implement VulnerabilityFixUrlFinder & NvdFixUrlFinder
 public class FixUrlFinder {
 	private static final Logger logger = LogManager.getLogger(FixUrlFinder.class.getName());
 //	private static final ObjectMapper OM = new ObjectMapper();
 	private static DatabaseHelper databaseHelper;
 
 	// TODO: Implement testConnection method to validate all urls can connect
-	private boolean testConnection(String address) throws IOException {
+	private static boolean testConnection(String address) throws IOException {
 		logger.info("Testing Connection for address: " + address);
 		ArrayList<String> urlList = new ArrayList<>();
 
@@ -77,9 +79,8 @@ public class FixUrlFinder {
 	}
 
 
-	//TODO: Implement getFixUrls method to leverage DatabaseHelper getCveSources,
-	// then call testConnection to only return valid urls
-	public ArrayList<String> getFixUrls(String cveId) throws IOException {
+	//TODO: Move to its own implementation (maybe VulnerabilityFixUrlFinder)
+	public ArrayList<String> run(String cveId) throws IOException {
 		logger.info("Getting Fix URLs for CVE: " + cveId);
 		ArrayList<String> urlList = new ArrayList<>();
 
