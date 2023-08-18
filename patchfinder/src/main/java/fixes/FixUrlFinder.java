@@ -49,6 +49,10 @@ import java.util.regex.Pattern;
  */
 public class FixUrlFinder {
 	private static final Logger logger = LogManager.getLogger(FixUrlFinder.class.getName());
-	private static final ObjectMapper OM = new ObjectMapper();
+//	private static final ObjectMapper OM = new ObjectMapper();
 
+	// TODO: Implement testConnection method to validate all urls can connect
+
+	//TODO: Implement getFixUrls method to leverage DatabaseHelper getCveSources,
+	// then call testConnection to only return valid urls
 }
