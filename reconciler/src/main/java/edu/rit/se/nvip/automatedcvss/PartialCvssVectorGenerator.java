@@ -26,6 +26,10 @@ package edu.rit.se.nvip.automatedcvss;
 import edu.rit.se.nvip.characterizer.enums.VDOLabel;
 import edu.rit.se.nvip.characterizer.enums.VDONounGroup;
 
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -147,4 +151,47 @@ public class PartialCvssVectorGenerator {
 		return vectorCvss;
 	}
 
+	/**
+	 * Brute forces all possible output vectors
+	 * @param args
+	 */
+	public static void main(String[] args) {
+		Set<VDOLabel> enumSet = new HashSet<>(Arrays.asList(VDOLabel.values()));
+		Set<VDOLabel> currentSubset = new HashSet<>();
+		Set<String> outputs = new HashSet<>();
+		// recursively compute all outputs over the power set of vdolabel
+		evaluateSubset(outputs, new PartialCvssVectorGenerator(), enumSet, currentSubset);
+		System.out.println(outputs.size());
+		System.out.println(enumSet.size());
+		String outputPath = "nvip_data/cvss/vector_outputs.csv";
+		try {
+			FileWriter writer = new FileWriter(outputPath);
+			for (String output : outputs) {
+				writer.append(output.substring(0, output.length() - 1)); // remove trailing commas
+				writer.append("\n");
+			}
+			writer.flush();
+			writer.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	private static void evaluateSubset(Set<String> outputs, PartialCvssVectorGenerator f, Set<VDOLabel> remainingSet, Set<VDOLabel> currentSubset) {
+		if (remainingSet.isEmpty()) {
+			StringBuilder sb = new StringBuilder();
+			for (String s : f.getCVssVector(currentSubset)) {
+				sb.append(s);
+				sb.append(",");
+			}
+			outputs.add(sb.toString());
+			return;
+		}
+		VDOLabel element = remainingSet.iterator().next();
+		remainingSet.remove(element);
+		evaluateSubset(outputs, f, remainingSet, currentSubset);
+		currentSubset.add(element);
+		evaluateSubset(outputs, f, remainingSet, currentSubset);
+		currentSubset.remove(element);
+		remainingSet.add(element);
+	}
 }

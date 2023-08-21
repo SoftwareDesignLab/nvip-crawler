@@ -23,6 +23,8 @@
  */
 package edu.rit.se.nvip.automatedcvss;
 
+import com.opencsv.CSVReader;
+import edu.rit.se.nvip.model.CVSSVector;
 import edu.rit.se.nvip.utils.ReconcilerEnvVars;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -30,7 +32,13 @@ import org.python.core.PyList;
 import org.python.core.PyObject;
 import org.python.util.PythonInterpreter;
 
+import java.io.FileReader;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * 
@@ -39,10 +47,10 @@ import java.util.Arrays;
  */
 public class CvssScoreCalculator {
 	private Logger logger = LogManager.getLogger(getClass().getSimpleName());
-	private final ReconcilerEnvVars envVars = new ReconcilerEnvVars();
 	String pythonPyFile = "evaluateCVSSpartialsv2.0.py"; // new version
 	String pythonMethodName = "get_cvss_for_partial";
 	PyObject pyFunction = null;
+	Map<CVSSVector, Double> scoreTable;
 
 	/**
 	 * Initialize Python Interpreter and get a reference to the <pythonMethodName>
@@ -69,7 +77,7 @@ public class CvssScoreCalculator {
 			logger.info("Done! Derived a reference to the python function " + pythonMethodName + " in " + pythonPyFile);
 
 		myPythonInterpreter.close();
-
+		this.scoreTable = loadScoreTable();
 	}
 
 	/**
@@ -167,4 +175,32 @@ public class CvssScoreCalculator {
 		return new double[] { median, meanMinMax[1], meanMinMax[2], standardDev };
 	}
 
+	/**
+	 * New (august 2023) way of computing cvss scores. The previous methodology would check a cvss vector against a large dataset and return the median matching score.
+	 * This method loads a precomputed map from cvss vector -> score for a simple lookup instead.
+	 * @return map from cvss vector to median score among matching NVD vulnerabilities
+	 */
+	private Map<CVSSVector, Double> loadScoreTable() {
+		Map<CVSSVector, Double> out = new HashMap<>();
+		Path mapPath = Paths.get(ReconcilerEnvVars.getDataDir(), "cvss", "cvss_map.csv");
+		try (CSVReader reader = new CSVReader(new FileReader(mapPath.toFile()))) {
+			String[] line;
+			while ((line=reader.readNext()) != null) {
+				out.put(new CVSSVector(line[0]), Double.parseDouble(line[1]));
+			}
+		} catch (IOException e) {
+			logger.error("Error while loading CVSS score map");
+			logger.error(e);
+		}
+		return out;
+	}
+
+	/**
+	 * New (august 2023) way of computing cvss scores. The previous methodology would check a cvss vector against a large dataset and return the median matching score.
+	 * @param cvssVector An array of symbols derived from VDO labels, see PartialCvssVectorGenerator.java
+	 * @return the median score of all matching vulnerabilities in an NVD dataset
+	 */
+	public double lookupCvssScore(String[] cvssVector) {
+		return this.scoreTable.get(new CVSSVector(cvssVector));
+	}
 }
