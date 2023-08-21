@@ -799,17 +799,14 @@
             </column>
         </createTable>
 
-        <createIndex
-                indexName="source_url_id_index"
-                tableName="nvdsourceurl"
-                unique="true">
-            <column name="source_url_id"/>
-        </createIndex>
-
         <addForeignKeyConstraint baseTableName="nvdsourceurl" baseColumnNames="cve_id"
                                  referencedTableName="nvddata" referencedColumnNames="cve_id"
                                  constraintName="nvdsourceurl_cve_id_fk"/>
     </changeSet>
-    
+
+    <changeSet  id="addUniqueConstraintNvdSourceUrl" author="dylan">
+        <addUniqueConstraint tableName="nvdsourceurl" columnNames="cve_id, source_url" constraintName="uk_nvdsourceurl_cve_id_source_url"/>
+    </changeSet>
+
 
 </databaseChangeLog>
