@@ -237,6 +237,7 @@ public class CveCharacterizer {
 		String[] cvssVec = partialCvssVectorGenerator.getCVssVector(predictionsForVuln);
 
 		// get CVSS median/min/max/std dev from Python script, return median
-		return cvssScoreCalculator.getCvssScoreJython(cvssVec)[0];
+		// return cvssScoreCalculator.getCvssScoreJython(cvssVec)[0]; // old way of doing it
+		return cvssScoreCalculator.lookupCvssScore(cvssVec); // should return same number as the old way but doesn't rely on python
 	}
 }
