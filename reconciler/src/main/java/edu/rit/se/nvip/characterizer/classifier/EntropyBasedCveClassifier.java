@@ -27,6 +27,7 @@ import edu.rit.se.nvip.divergence.VdoLabelDistribution;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import weka.core.DenseInstance;
 import weka.core.Instance;
 import weka.core.Instances;
 
@@ -201,5 +202,64 @@ public class EntropyBasedCveClassifier extends AbstractCveClassifier {
 	}
 	public void setHistograms(Map<String, VdoLabelDistribution> histogram){
 		histograms = histogram;
+	}
+	public void setMyMethod(Method method){
+		myMethod = method;
+	}
+	protected Instance createInstanceFromCommaSeparatedAttribs(String sCommaSeparatedAttribs, boolean classIsmissing) {
+
+		DenseInstance currentInstance;
+		try {
+
+			String[] attribs = sCommaSeparatedAttribs.split(",");
+			int numberOfAttribs = myInstances.numAttributes();
+			double[] instanceValues = new double[numberOfAttribs];
+
+			// set numeric attribs: store nominal attrib indexes
+			ArrayList<Integer> nominalIndexList = new ArrayList<>();
+
+			for (int i = 1; i < numberOfAttribs - 1; i++) {
+
+				try {
+					String sToken = myInstances.attribute(i).name();
+					if (sCommaSeparatedAttribs.contains(sToken)) {
+						// binary
+						instanceValues[i] = 1;
+					}
+				} catch (Exception e) {
+					logger.error("Could not parse " + attribs[i] + ", attrib is nominal?");
+					instanceValues[i] = 0;
+					nominalIndexList.add(i);
+				}
+			}
+
+			currentInstance = new DenseInstance(1.0, instanceValues);
+			currentInstance.setDataset(myInstances);
+
+			/**
+			 * assign non numeric values if the index of non-numeric attrib is 3, the 3th
+			 * index of currentInstance becomes attrib[3]
+			 */
+			for (int i = 0; i < nominalIndexList.size(); i++) {
+				int nominalAttributeIndex = nominalIndexList.get(i);
+				currentInstance.setValue(nominalAttributeIndex, attribs[nominalAttributeIndex]);
+			}
+			if (classIsmissing) {
+				currentInstance.setMissing(0); // set last value as ?
+			} else {
+				String value = attribs[attribs.length - 1]; // get last value from attribs array
+				if (myInstances.classAttribute().indexOfValue(value + "") == -1) {
+					// this new class does not exist among the current classes, so add it!!
+					myInstances = addValueToClassAttrib(myInstances, value + "");
+					currentInstance.setDataset(myInstances);
+				}
+				int index = myInstances.classAttribute().indexOfValue(value + "");
+				currentInstance.setValue(currentInstance.numAttributes() - 1, index);
+			}
+		} catch (Exception e) {
+			logger.error(e.toString());
+			currentInstance = null;
+		}
+		return currentInstance;
 	}
 }

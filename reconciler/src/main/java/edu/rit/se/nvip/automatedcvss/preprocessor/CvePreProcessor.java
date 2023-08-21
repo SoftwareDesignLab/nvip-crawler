@@ -146,10 +146,6 @@ public class CvePreProcessor {
 			}
 			logger.info("Preprocessed " + lineCount + " items at " + filePath);
 			return sBuffer.toString();
-		} catch (FileNotFoundException e) {
-			logger.error("Error during pre-processing " + filePath + "! Details: " + e);
-		} catch (IOException e) {
-			logger.error("Error during pre-processing " + filePath + "! Details: " + e);
 		} catch (Exception e) {
 			logger.error("Error during pre-processing " + filePath + "! Details: " + e);
 		} finally {

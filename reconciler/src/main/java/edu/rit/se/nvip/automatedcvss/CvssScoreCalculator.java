@@ -43,16 +43,16 @@ public class CvssScoreCalculator {
 	String pythonPyFile = "evaluateCVSSpartialsv2.0.py"; // new version
 	String pythonMethodName = "get_cvss_for_partial";
 	PyObject pyFunction = null;
-
+	PythonInterpreter myPythonInterpreter = new PythonInterpreter();
 	/**
 	 * Initialize Python Interpreter and get a reference to the <pythonMethodName>
 	 * method
 	 */
-	public CvssScoreCalculator() {
+	public CvssScoreCalculator(PythonInterpreter pythonInt) {
+		myPythonInterpreter = pythonInt;
 		logger.info("Initializing PythonInterpreter for " + pythonMethodName + " in " + pythonPyFile);
 
 		// change the directory and execute the .py script
-		PythonInterpreter myPythonInterpreter = new PythonInterpreter();
 		String workingDir = ReconcilerEnvVars.getDataDir() + "/cvss/";
 		logger.info("Importing os for jython...");
 		myPythonInterpreter.exec("import os");
@@ -70,6 +70,9 @@ public class CvssScoreCalculator {
 
 		myPythonInterpreter.close();
 
+	}
+	public CvssScoreCalculator() {
+		this(new PythonInterpreter());
 	}
 
 	/**
@@ -166,5 +169,4 @@ public class CvssScoreCalculator {
 
 		return new double[] { median, meanMinMax[1], meanMinMax[2], standardDev };
 	}
-
 }

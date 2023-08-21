@@ -38,4 +38,5 @@ public abstract class AsyncFilter extends Filter {
             updateFilterStatus(vuln);
         }
     }
+
 }
