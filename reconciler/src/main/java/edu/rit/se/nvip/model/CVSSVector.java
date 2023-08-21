@@ -12,6 +12,10 @@ public class CVSSVector {
         this.partialCvssVector = commaSeparatedCvsVector.split(",");
     }
 
+    public String[] toStringArray() {
+        return partialCvssVector;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
