@@ -175,6 +175,12 @@ public class PartialCvssVectorGenerator {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		CvssScoreCalculator calc = new CvssScoreCalculator();
+		for (String output : outputs) {
+			if (calc.lookupCvssScore(output.split(",")) != calc.getCvssScoreJython(output.split(","))[0]) {
+				System.out.println(output);
+			}
+		}
 	}
 	private static void evaluateSubset(Set<String> outputs, PartialCvssVectorGenerator f, Set<VDOLabel> remainingSet, Set<VDOLabel> currentSubset) {
 		if (remainingSet.isEmpty()) {
