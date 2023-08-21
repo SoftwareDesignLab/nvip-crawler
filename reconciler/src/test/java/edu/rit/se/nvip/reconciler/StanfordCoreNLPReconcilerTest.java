@@ -12,6 +12,9 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.junit.Assert.*;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class StanfordCoreNLPReconcilerTest {
 
@@ -75,12 +78,15 @@ public class StanfordCoreNLPReconcilerTest {
         boolean result5 = reconciler.reconcileDescriptions(existingDescription4, newDescription4, existingSourceDomains4, newSourceDomain4);
         assertTrue(result5);
 
+        Map<String, Integer> mockMap = mock(Map.class);
         // Test case 5: Different descriptions, existing description satisfies reconciliation conditions
         String existingDescription5 = "Existing description with more diverse language parts.";
         String newDescription5 = "New description.";
         Set<String> existingSourceDomains5 = new HashSet<>();
         String newSourceDomain5 = "example.com";
-
+        existingSourceDomains5.add("mock");
+        reconciler.setKnownCveSources(mockMap);
+        when(mockMap.containsKey(anyString())).thenReturn(true);
         boolean result6 = reconciler.reconcileDescriptions(existingDescription5, newDescription5, existingSourceDomains5, newSourceDomain5);
         assertFalse(result6);
     }

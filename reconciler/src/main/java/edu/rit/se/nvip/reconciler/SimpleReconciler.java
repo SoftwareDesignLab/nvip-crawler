@@ -27,6 +27,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -80,5 +81,8 @@ public class SimpleReconciler extends PairwiseChoosingReconciler {
 		} else {
 			return updateDescription;
 		}
+	}
+	public void setKnownCveSources(Map<String, Integer> map){
+		knownCveSources = map;
 	}
 }
