@@ -7,7 +7,13 @@ import edu.rit.se.nvip.model.NvdVulnerability;
 import edu.rit.se.nvip.model.RawVulnerability;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
+import org.mockito.MockedConstruction;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.sql.Timestamp;
 import java.util.HashSet;
 import java.util.Set;
@@ -18,11 +24,14 @@ import static org.mockito.Mockito.*;
 
 class NvdCveControllerTest {
 
-    private final NvdCveController nvdCveController = new NvdCveController();
+    private NvdCveController nvdCveController;
     @Mock
     DatabaseHelper mockDbh = mock(DatabaseHelper.class);
     @Test
-    void compareWithNvd() {
+    void compareWithNvd() throws IOException {
+
+        nvdCveController = new NvdCveController();
+
         nvdCveController.setDatabaseHelper(mockDbh);
 
         Set<CompositeVulnerability> reconciledVulns = new HashSet<>();
@@ -59,7 +68,9 @@ class NvdCveControllerTest {
     }
 
     @Test
-    void updateNvdTables() {
+    void updateNvdTables() throws IOException {
+        nvdCveController = new NvdCveController();
+
         nvdCveController.setDatabaseHelper(mockDbh);
 
         Set<NvdVulnerability> mockResults = new HashSet<>();
@@ -71,5 +82,45 @@ class NvdCveControllerTest {
 
         verify(mockDbh).upsertNvdData(anySet());
         verify(mockDbh).backfillNvdTimegaps(anySet());
+    }
+
+    @Test
+    void fetchCvesFromNvdTest() throws IOException {
+        nvdCveController = new NvdCveController();
+        BufferedReader mockBR = mock(BufferedReader.class);
+        URL mockURL = mock(URL.class);
+        HttpURLConnection mockConn = mock(HttpURLConnection.class);
+        InputStream mockInput = mock(InputStream.class);
+        when(mockURL.openConnection()).thenReturn(mockConn);
+        doNothing().when(mockConn).setRequestMethod(anyString());
+        doNothing().when(mockConn).setRequestProperty(anyString(), anyString());
+        when(mockConn.getResponseCode()).thenReturn(200);
+        when(mockConn.getInputStream()).thenReturn(mockInput);
+        doNothing().when(mockConn).disconnect();
+        nvdCveController.setBr(mockBR);
+        String jsonString =
+                "{" +
+                "   \"vulnerabilities\": [" +
+                "       {" +
+                "           \"cve\": {" +
+                "               \"id\": \"CVE-2023-1234\"," +
+                "               \"published\": \"2023-08-21T12:34:56.789\"," +
+                "               \"vulnStatus\": \"open\"" +
+                "           }" +
+                "       }," +
+                "       {" +
+                "           \"cve\": {" +
+                "               \"id\": \"CVE-2023-5678\"," +
+                "               \"published\": \"2023-08-15T08:00:00.123\"," +
+                "               \"vulnStatus\": \"closed\"" +
+                "           }" +
+                "       }" +
+                "   ]" +
+                "}";
+        when(mockBR.readLine()).thenReturn(jsonString, null);
+        nvdCveController.setUrl(mockURL);
+        Set<NvdVulnerability> set = nvdCveController.fetchCvesFromNvd("mock");
+
+        assertEquals(2, set.size());
     }
 }

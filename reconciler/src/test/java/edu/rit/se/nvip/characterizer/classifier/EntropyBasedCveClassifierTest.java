@@ -23,6 +23,7 @@
  */
 package edu.rit.se.nvip.characterizer.classifier;
 
+import edu.rit.se.nvip.divergence.VdoLabelDistribution;
 import edu.rit.se.nvip.utils.ReconcilerEnvVars;
 import org.junit.Test;
 import edu.rit.se.nvip.automatedcvss.preprocessor.CvePreProcessor;
@@ -35,6 +36,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.mock;
 
 public class EntropyBasedCveClassifierTest {
 
@@ -69,7 +71,6 @@ public class EntropyBasedCveClassifierTest {
         String preProcessedTrainingDataFile = trainingDataFileName.concat("-processed.csv");
 
         EntropyBasedCveClassifier entropyBasedCveClassifier = new EntropyBasedCveClassifier(preProcessedTrainingDataFile);
-
         Instance newInstance = new SparseInstance(293);
         ArrayList newList = entropyBasedCveClassifier.predict(newInstance, false);
         assertEquals(0, newList.size());
@@ -100,5 +101,26 @@ public class EntropyBasedCveClassifierTest {
         prediction.put(vdoNounGroup, predictionFromClassifier);
 
         assertEquals(1, prediction.size());
+    }
+    @Test
+    public void testClassify(){
+        String[] trainingDataInfo = {ReconcilerEnvVars.getTrainingDataDir(), ReconcilerEnvVars.getTrainingData()};
+        String trainingDataPath = trainingDataInfo[0];
+        String trainingDataFiles = trainingDataInfo[1];
+        String[] trainingDataFileArr = trainingDataFiles.split(",");
+        String trainingDataFileName = trainingDataFileArr[0];
+        trainingDataFileName = Paths.get(trainingDataPath).resolve(trainingDataFileName).toString();
+
+        // pre-edu.rit.se.nvip.process training data and store it
+        String preProcessedTrainingDataFile = trainingDataFileName.concat("-processed.csv");
+
+        EntropyBasedCveClassifier entropyBasedCveClassifier = new EntropyBasedCveClassifier(preProcessedTrainingDataFile);
+        Map<String, VdoLabelDistribution> map = new HashMap<>();
+        Instance currentInstance = entropyBasedCveClassifier.createInstanceFromCommaSeparatedAttribs("mock,attr", true);
+        map.put("mock", new VdoLabelDistribution(currentInstance));
+        entropyBasedCveClassifier.setMyMethod(EntropyBasedCveClassifier.Method.JS_DIVERGENCE);
+        entropyBasedCveClassifier.setHistograms(map);
+        entropyBasedCveClassifier.classify(currentInstance, true);
+
     }
 }

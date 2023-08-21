@@ -28,6 +28,7 @@ import edu.rit.se.nvip.model.CompositeVulnerability;
 import edu.rit.se.nvip.model.NvdVulnerability;
 import edu.rit.se.nvip.reconciler.Reconciler;
 import edu.rit.se.nvip.utils.ReconcilerEnvVars;
+import org.apache.http.HttpConnection;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.JSONArray;
@@ -35,6 +36,7 @@ import org.json.JSONObject;
 
 import java.io.*;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
@@ -58,27 +60,20 @@ public class NvdCveController {
 	private final String endDate;
 	private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS");
 	private String nvdApiUrl;
-
-
-	/**
-	 * for testing NVD CVE pull
-	 * @param args
-	 */
-	public static void main(String[] args) {
-		NvdCveController nvd = new NvdCveController();
-		nvd.updateNvdTables(true);
-	}
+	private HttpURLConnection conn;
+	private URL url;
+	private BufferedReader br;
 
 
 	/**
 	 * Constructor for NvdCveController
 	 * Sets today and last month's times on construction
 	 */
-	public NvdCveController() {
+	public NvdCveController() throws IOException {
 		this(ReconcilerEnvVars.getNvdApiUrl(), LocalDateTime.now().minusDays(30), LocalDateTime.now());
 	}
 
-	public NvdCveController(String nvdApiUrl, LocalDateTime startDate, LocalDateTime endDate) {
+	public NvdCveController(String nvdApiUrl, LocalDateTime startDate, LocalDateTime endDate) throws IOException {
 		this.nvdApiUrl = nvdApiUrl;
 		this.startDate = startDate.format(formatter);
 		this.endDate = endDate.format(formatter);
@@ -143,11 +138,13 @@ public class NvdCveController {
 	 * @param nvdUrl
 	 * @return
 	 */
-	private Set<NvdVulnerability> fetchCvesFromNvd(String nvdUrl) {
+	public Set<NvdVulnerability> fetchCvesFromNvd(String nvdUrl) {
 		Set<NvdVulnerability> nvdCves = new HashSet<>();
 		try {
-			URL url = new URL(nvdUrl);
-			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+			if(url == null){
+				url = new URL(nvdUrl);
+			}
+			conn = (HttpURLConnection) url.openConnection();
 			conn.setRequestMethod("GET");
 			conn.setRequestProperty("Accept", "application/json");
 
@@ -156,8 +153,9 @@ public class NvdCveController {
 				throw new RuntimeException("Failed : HTTP error code : " + conn.getResponseCode());
 			} else {
 
-				BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
-
+				if(br == null) {
+					br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
+				}
 				StringBuilder responseBuilder = new StringBuilder();
 				String output;
 				while ((output = br.readLine()) != null) {
@@ -189,5 +187,13 @@ public class NvdCveController {
 	}
 	public void setDatabaseHelper(DatabaseHelper dbHelper){
 		dbh = dbHelper;
+	}
+
+	public void setUrl(URL nvdUrl){
+		url = nvdUrl;
+	}
+
+	public void setBr(BufferedReader bfr){
+		br = bfr;
 	}
 }
