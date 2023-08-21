@@ -4,10 +4,15 @@ package edu.rit.se.nvip.reconciler;
 import org.junit.Test;
 
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
+import static com.google.common.base.CharMatcher.any;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class SimpleReconcilerTest {
 
@@ -18,6 +23,7 @@ public class SimpleReconcilerTest {
      */
     @Test
     public void testReconcileDescriptions() {
+        Map<String, Integer> mockMap = mock(Map.class);
         SimpleReconciler reconciler = new SimpleReconciler();
 
         // Test case 1: existing source is known, new source is unknown
@@ -52,8 +58,10 @@ public class SimpleReconcilerTest {
         String existingDescription4 = "Longer description";
         String newDescription4 = "Short description";
         Set<String> existingSourceDomains4 = new HashSet<>();
+        existingSourceDomains4.add("mock string");
         String newSourceDomain4 = "Unknown Source";
-
+        reconciler.setKnownCveSources(mockMap);
+        when(mockMap.containsKey(anyString())).thenReturn(true);
         boolean result4 = reconciler.reconcileDescriptions(existingDescription4, newDescription4, existingSourceDomains4, newSourceDomain4);
         assertFalse(result4); // Should not update description
     }
