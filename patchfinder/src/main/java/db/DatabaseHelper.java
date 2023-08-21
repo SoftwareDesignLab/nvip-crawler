@@ -52,11 +52,11 @@ public class DatabaseHelper {
 	private final String getExistingSourceUrlsSql = "SELECT source_url, source_url_id FROM patchsourceurl";
 	private final String getExistingPatchCommitsSql = "SELECT commit_sha FROM patchcommit";
 	private final String insertPatchSourceURLSql = "INSERT INTO patchsourceurl (cve_id, source_url) VALUES (?, ?);";
-	private final String insertPatchCommitSql = "INSERT INTO patchcommit (source_url_id, cve_id, commit_sha, commit_date, commit_message, uni_diff, timeline, timeToPatch, linesChanged) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);";
+	private final String insertPatchCommitSql = "INSERT INTO patchcommit (source_url_id, cve_id, commit_sha, commit_date, commit_message, uni_diff, timeline, time_to_patch, lines_changed) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);";
 	// Regex101: https://regex101.com/r/9uaTQb/1
 	private final String deletePatchCommitSql = "DELETE FROM patchcommit WHERE commit_sha = ?;";
 	private final String getCveSourcesSql = "SELECT cve_id, source_url FROM nvip.rawdescription WHERE source_url != \"\";";
-	private final String getCveSourcesNVDSql = "SELECT cve_id, source_url FROM nvip.nvddata;";
+	private final String getCveSourcesNVDSql = "SELECT cve_id, source_url FROM nvip.nvdsourceurl;";
 	public static final Pattern CPE_PATTERN = Pattern.compile("cpe:2\\.3:[aho\\*\\-]:([^:]*):([^:]*):([^:]*):.*");
 
 	/**
@@ -138,6 +138,10 @@ public class DatabaseHelper {
 		dataSource.close();
 		config = null;
 	}
+
+	//
+	// PATCHES
+	//
 
 	/**
 	 * Deletes a patchcommit from the database given a commit SHA
@@ -315,7 +319,7 @@ public class DatabaseHelper {
 		try (Connection connection = getConnection();
 			 PreparedStatement pstmt = connection.prepareStatement(insertPatchCommitSql);
 			 PreparedStatement pstmtExistingCommit = connection.prepareStatement("SELECT commit_sha FROM patchcommit WHERE commit_sha = ? LIMIT 1");
-			 PreparedStatement pstmtUpdateCommit = connection.prepareStatement("UPDATE patchcommit SET commit_date = ?, commit_message = ?, uni_diff = ?, timeline = ?, timeToPatch = ?, linesChanged = ? WHERE commit_sha = ?")
+			 PreparedStatement pstmtUpdateCommit = connection.prepareStatement("UPDATE patchcommit SET commit_date = ?, commit_message = ?, uni_diff = ?, timeline = ?, time_to_patch = ?, lines_changed = ? WHERE commit_sha = ?")
 		) {
 			// Check if the commit URL already exists in the database
 			pstmtExistingCommit.setString(1, commitSha);
@@ -358,7 +362,6 @@ public class DatabaseHelper {
 		}
 	}
 
-	// TODO: Implement getCveSources to pull all entries from rawdescription that have a source mapped to a CVE-ID
 	public ArrayList<String> getCveSources(String cve_id) {
 		ArrayList<String> sources = new ArrayList<>();
 		try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(getCveSourcesSql)) {
@@ -372,6 +375,251 @@ public class DatabaseHelper {
 			logger.error("ERROR: Failed to get CVE sources for CVE ID {}\n{}", cve_id, e.getMessage());
 		}
 		return sources;
+	}
+
+	//
+	// Fixes
+	//
+
+	/**
+	 * Gets a map of CVEs -> existing fix source urls from the database
+	 * @return a map of CVEs -> existing fix source urls
+	 */
+	public Map<String, Integer> getExistingFixSourceUrls() {
+		final Map<String, Integer> urls = new HashMap<>();
+
+		try (Connection connection = getConnection();
+			 // TODO: Implement SQL statement
+			 PreparedStatement pstmt = connection.prepareStatement(getExistingFixSourceUrlsSql)) {
+			ResultSet rs = pstmt.executeQuery();
+			while(rs.next()) { urls.put(rs.getString(1), rs.getInt(2)); }
+		} catch (Exception e) {
+			logger.error(e.toString());
+		}
+
+		return urls;
+	}
+
+	// TODO: Do we need fix equivalents of these methods?
+//	/**
+//	 * Deletes a patchcommit from the database given a commit SHA
+//	 * @param commitSha the commit SHA to delete
+//	 */
+//	public void deletePatchCommit(String commitSha) {
+//		try (Connection connection = getConnection();
+//			 PreparedStatement pstmt = connection.prepareStatement(deletePatchCommitSql)) {
+//			pstmt.setString(1, commitSha);
+//			pstmt.executeUpdate();
+//		} catch (Exception e) {
+//			logger.error(e.toString());
+//		}
+//	}
+//
+//	/**
+//	 * Gets a map of CVEs -> existing source urls from the database
+//	 * @return a map of CVEs -> existing source urls
+//	 */
+//	public Map<String, Integer> getExistingSourceUrls() {
+//		final Map<String, Integer> urls = new HashMap<>();
+//
+//		try (Connection connection = getConnection();
+//			 PreparedStatement pstmt = connection.prepareStatement(getExistingSourceUrlsSql)) {
+//			ResultSet rs = pstmt.executeQuery();
+//			while(rs.next()) { urls.put(rs.getString(1), rs.getInt(2)); }
+//		} catch (Exception e) {
+//			logger.error(e.toString());
+//		}
+//
+//		return urls;
+//	}
+//
+//	/**
+//	 * Gets a set of existing patch commit SHAs from the database
+//	 * @return a set of existing patch commit SHAs
+//	 */
+//	public Set<String> getExistingPatchCommitShas() {
+//		final Set<String> urls = new HashSet<>();
+//
+//		try (Connection connection = getConnection();
+//			 PreparedStatement pstmt = connection.prepareStatement(getExistingPatchCommitsSql)) {
+//			ResultSet rs = pstmt.executeQuery();
+//			while(rs.next()) { urls.add(rs.getString(1)); }
+//		} catch (Exception e) {
+//			logger.error(e.toString());
+//		}
+//
+//		return urls;
+//	}
+//
+//	/**
+//	 * Collects a map of CPEs with their correlated CVE and Vuln ID used for
+//	 * collecting patches given a list of CVE ids.
+//	 *
+//	 * @param cveIds CVEs to get affected products for
+//	 * @return a map of affected products
+//	 */
+//	public Map<String, CpeGroup> getAffectedProducts(List<String> cveIds) {
+//		Map<String, CpeGroup> affectedProducts = new HashMap<>();
+//		// Prepare statement
+//		try (Connection conn = getConnection();
+//			 PreparedStatement getAll = conn.prepareStatement(selectAffectedProductsSql);
+//			 PreparedStatement getById = conn.prepareStatement(selectAffectedProductsByIdsSql)
+//		) {
+//			// Execute correct statement and get result set
+//			ResultSet res = null;
+//			if(cveIds == null) {
+//				res = getAll.executeQuery();
+//				parseAffectedProducts(affectedProducts, res);
+//			}
+//			else {
+//				for (String cveId : cveIds) {
+//					getById.setString(1, cveId);
+//					res = getById.executeQuery();
+//					parseAffectedProducts(affectedProducts, res);
+//				}
+//			}
+//
+//		} catch (Exception e) {
+//			logger.error("ERROR: Failed to generate affected products map: {}", e.toString());
+//		}
+//
+//		return affectedProducts;
+//	}
+//
+//	/**
+//	 * Parses affected product data from the ResultSet into CpeGroup objects in the affectedProducts map.
+//	 *
+//	 * @param affectedProducts output map of CVE ids -> products
+//	 * @param res result set from database query
+//	 * @throws SQLException if a SQL error occurs
+//	 */
+//	private void parseAffectedProducts(Map<String, CpeGroup> affectedProducts, ResultSet res) throws SQLException {
+//		// Parse results
+//		while (res.next()) {
+//			// Extract cveId and cpe from result
+//			final String cveId = res.getString("cve_id");
+//			final String cpe = res.getString("cpe");
+//
+//			// Extract product name and version from cpe
+//			final Matcher m = CPE_PATTERN.matcher(cpe);
+//			if(!m.find()) {
+//				logger.warn("Invalid cpe '{}' could not be parsed, skipping product", cpe);
+//				continue;
+//			}
+//			final String vendor = m.group(1);
+//			final String name = m.group(2);
+//			final String version = m.group(3);
+//			final CpeEntry entry = new CpeEntry(name, version, cpe);
+//
+//			// If we already have this cveId stored, add specific version
+//			if (affectedProducts.containsKey(cveId)) {
+//				affectedProducts.get(cveId).addVersion(entry);
+//			} else {
+//				final CpeGroup group = new CpeGroup(vendor, name);
+//				group.addVersion(entry);
+//				affectedProducts.put(cveId, group);
+//			}
+//		}
+//	}
+
+	/**
+	 * Inserts given source URL into the fix source table
+	 *
+	 * @param existingSourceUrls map of CVE ids -> the id of the source url
+	 * @param cve_id CVE being processed
+	 * @param sourceURL source url to insert
+	 * @return generated primary key (or existing key)
+	 */
+	public int insertFixSourceURL(Map<String, Integer> existingSourceUrls, String cve_id, String sourceURL) {
+		// Check if source already exists
+		if(existingSourceUrls.containsKey(sourceURL)) {
+			// Get and return id from map
+			return existingSourceUrls.get(sourceURL);
+		} else { // Otherwise, insert and return generated id
+			// TODO: Implement SQL statement
+			try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(insertFixSourceURLSql, Statement.RETURN_GENERATED_KEYS)) {
+				pstmt.setString(1, cve_id);
+				pstmt.setString(2, sourceURL);
+				pstmt.executeUpdate();
+
+				final ResultSet rs = pstmt.getGeneratedKeys();
+				int generatedKey = 0;
+				if (rs.next()) generatedKey = rs.getInt(1);
+				else throw new SQLException("Could not retrieve key of newly created record, it may not have been inserted");
+
+				conn.close();
+				logger.info("Inserted FixURL: " + sourceURL);
+				existingSourceUrls.put(sourceURL, generatedKey);
+				return generatedKey;
+			} catch (Exception e) {
+				logger.error("ERROR: Failed to insert fix source with URL {} for CVE ID {}\n{}", sourceURL,
+						cve_id, e.getMessage());
+				return -1;
+			}
+		}
+	}
+
+	// TODO: Implement
+	/**
+	 * Method for inserting a fix into the fixes table
+	 *
+	 * @param sourceId id of the source url
+	 * @param commitSha commit SHA
+	 * @param commitDate commit date
+	 * @param commitMessage commit message
+	 * @param uniDiff unified diff String
+	 * @param timeLine timeline list of String objects
+	 * @param timeToPatch time from CVE release -> patch release
+	 * @param linesChanged number of lines changed
+	 * @throws IllegalArgumentException if given source id is invalid (sourceId < 0)
+	 */
+	public void insertFix(int sourceId, String cveId, String commitSha, java.util.Date commitDate, String commitMessage, String uniDiff, List<String> timeLine, String timeToPatch, int linesChanged) throws IllegalArgumentException {
+//		if (sourceId < 0) throw new IllegalArgumentException("Invalid source id provided, ensure id is non-negative");
+//
+//		try (Connection connection = getConnection();
+//			 PreparedStatement pstmt = connection.prepareStatement(insertPatchCommitSql);
+//			 PreparedStatement pstmtExistingCommit = connection.prepareStatement("SELECT commit_sha FROM patchcommit WHERE commit_sha = ? LIMIT 1");
+//			 PreparedStatement pstmtUpdateCommit = connection.prepareStatement("UPDATE patchcommit SET commit_date = ?, commit_message = ?, uni_diff = ?, timeline = ?, time_to_patch = ?, lines_changed = ? WHERE commit_sha = ?")
+//		) {
+//			// Check if the commit URL already exists in the database
+//			pstmtExistingCommit.setString(1, commitSha);
+//			ResultSet existingCommitResult = pstmtExistingCommit.executeQuery();
+//
+//			if (existingCommitResult.next()) {
+//				// Existing commit found
+//				logger.warn("Patch commit '{}' already exists in the database", commitSha);
+//
+//				// Perform the appropriate action for existing entries (diff, replace, ignore)
+//				// Here, we are updating the existing commit with the new information
+//				pstmtUpdateCommit.setDate(1, new java.sql.Date(commitDate.getTime()));
+//				pstmtUpdateCommit.setString(2, commitMessage);// TODO: Fix data truncation error
+//				pstmtUpdateCommit.setString(3, uniDiff);
+//				pstmtUpdateCommit.setString(4, timeLine.toString());
+//				pstmtUpdateCommit.setString(5, timeToPatch);
+//				pstmtUpdateCommit.setInt(6, linesChanged);
+//				pstmtUpdateCommit.setString(7, commitSha);
+//				pstmtUpdateCommit.executeUpdate();
+//
+//				logger.info("Existing patch commit updated: {}", commitSha);
+//			} else {
+//				// Insert the new patch commit
+//				pstmt.setInt(1, sourceId);
+//				pstmt.setString(2, cveId);
+//				pstmt.setString(3, commitSha);
+//				pstmt.setDate(4, new java.sql.Date(commitDate.getTime()));
+//				pstmt.setString(5, commitMessage);
+//				pstmt.setString(6, uniDiff);
+//				pstmt.setString(7, timeLine.toString());
+//				pstmt.setString(8, timeToPatch);
+//				pstmt.setInt(9, linesChanged);
+//				pstmt.executeUpdate();
+//
+//				logger.info("New patch commit inserted: {}", commitSha);
+//			}
+//		} catch (Exception e) {
+//			logger.error("ERROR: Failed to insert/update patch commit from source {}: {}", commitSha, e);
+//			throw new IllegalArgumentException(e);
+//		}
 	}
 
 	/**
