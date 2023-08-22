@@ -38,7 +38,7 @@ public class ReconcilerController {
         }catch(IOException e){
             logger.error("Error constructing NvdCveController");
         }
-        this.mitreController = new MitreCveController();
+        this.mitreController = new MitreCveController(true);
     }
 
     public void main(Set<String> jobs) {

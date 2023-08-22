@@ -24,7 +24,7 @@ import static org.mockito.Mockito.*;
 
 public class MitreCveControllerTest {
 
-    private final MitreCveController mitreCveController = new MitreCveController();
+    private final MitreCveController mitreCveController = new MitreCveController(false);
     @Mock
     DatabaseHelper mockDbh = mock(DatabaseHelper.class);
     //verifies update tables works correctly with mocks for database methods
