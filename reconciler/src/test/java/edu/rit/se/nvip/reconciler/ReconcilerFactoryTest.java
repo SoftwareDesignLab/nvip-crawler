@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class ReconcilerFactoryTest {
 
+    //verifies we cna create any reconciler from the factory using its string
     @Test
     void createReconciler() {
         Reconciler simple = ReconcilerFactory.createReconciler("SIMPLE");

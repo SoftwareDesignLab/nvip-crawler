@@ -14,6 +14,9 @@ class NvdCveParserTest {
 
     private final NvdCveParser parser = new NvdCveParser();
 
+    /**
+     * tests that we can parse CVEs and get their reference
+     */
     @Test
     public void testParseCVEs() {
         // Create a sample JSON array for testing

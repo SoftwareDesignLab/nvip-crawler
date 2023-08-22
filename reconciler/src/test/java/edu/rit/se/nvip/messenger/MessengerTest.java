@@ -36,6 +36,7 @@ class MessengerTest {
         System.setOut(new PrintStream(outputStream));
     }
 
+    //assures we can receive messages from rabbit
     @Test
     void waitForCrawlerMessageTest() throws Exception {
         //Setup
@@ -68,6 +69,7 @@ class MessengerTest {
 
     }
 
+    //assures timeout works as expected
     @Test
     void verifyTimeoutTest() throws Exception {
         //Setup
@@ -87,7 +89,7 @@ class MessengerTest {
         assertEquals(null, receivedMessages);
 
     }
-
+    //makes sure we can send messages to the PNE
     @Test
     void sendPNEMessageTest() throws IOException, TimeoutException {
         // Setup
@@ -111,6 +113,7 @@ class MessengerTest {
         verify(conn).close();
     }
 
+    //verifies we can properly parse IDs that come in from rabbit
     @Test
     void parseIdsTest() {
         Messenger messenger = new Messenger();

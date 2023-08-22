@@ -22,12 +22,6 @@ public class StanfordCoreNLPReconcilerTest {
     private static StanfordCoreNLPReconciler reconciler;
 
 
-    /*
-
-   Not exactly complete... probably will have to switch to using a model like ApacheOpenNLPReconcilerTest
-
-    */
-
     @BeforeClass
     public static void setUp() {
         pipeline = new StanfordCoreNLP(PropertiesUtils.asProperties(
@@ -90,6 +84,8 @@ public class StanfordCoreNLPReconcilerTest {
         boolean result6 = reconciler.reconcileDescriptions(existingDescription5, newDescription5, existingSourceDomains5, newSourceDomain5);
         assertFalse(result6);
     }
+
+    //verifies doc lang parts works correctly
     @Test
     public void docLangPartsTest() {
         String text = "Time to test a sentence!";

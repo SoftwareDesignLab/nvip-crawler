@@ -11,6 +11,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class CWETest {
 
+    //verifies you can add a parent id correctly
+
     @Test
     void addParentId() {
         CWE cwe = new CWE(1, "cwe", "desc");
@@ -20,7 +22,7 @@ class CWETest {
         List<Integer> list = new ArrayList<>(cwe.getParentIds());
         assertEquals(parent.getId(), list.get(0));
     }
-
+    //verifies you can add a child correctly
     @Test
     void addChild() {
         CWE cwe = new CWE(1, "cwe", "desc");
@@ -30,7 +32,7 @@ class CWETest {
         List<CWE> list = new ArrayList<>(cwe.getChildren());
         assertEquals(child.getId(), list.get(0).getId());
     }
-
+    //verifies you can add a parent correctly
     @Test
     void addParent() {
         CWE cwe = new CWE(1, "cwe", "desc");
@@ -40,7 +42,8 @@ class CWETest {
         List<CWE> list = new ArrayList<>(cwe.getParent());
         assertEquals(parent.getId(), list.get(0).getId());
     }
-
+    //verifies you can generate a family if you are given CWEs with parent ids assigned.
+    //works sort of like constructforest for cweforest but this just sets children and parents
     @Test
     void generateFamily() {
         CWE cwe = new CWE(1, "cwe", "desc");

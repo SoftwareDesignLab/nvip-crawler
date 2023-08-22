@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 class StemmerTest {
-
+    //confirms the stemmer add functionality
     @Test
     void addTest() {
         Stemmer stemmer = new Stemmer();
@@ -23,6 +23,7 @@ class StemmerTest {
     }
     @Test
     void stemTest() {
+        //Makes sure words are stemmed correctly, prints are to confirm outputs
         Stemmer stemmer = new Stemmer();
 
         String[] words = {

@@ -29,6 +29,9 @@ import static org.junit.Assert.assertTrue;
 
 class FilterFactoryTest {
 
+    /**
+     * This test just makes sure you can create filters given their name from the filter factory class
+     */
     @Test
     void createSimpleFilter() {
         Filter filter = FilterFactory.createFilter("SIMPLE");

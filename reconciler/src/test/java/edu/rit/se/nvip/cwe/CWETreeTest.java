@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class CWETreeTest {
 
+    //verifies subtrees are added correctly
     @Test
     void addSubtree() {
         CWE root = new CWE(1, "1", "desc");
@@ -18,6 +19,8 @@ class CWETreeTest {
 
     }
 
+    //verifies that the maximum amount of children is found properly
+    //where the maximum amount of children is grabbed from the CWE that has the most children
     @Test
     void maxChildren() {
         CWE root = new CWE(1, "1", "desc");

@@ -27,6 +27,9 @@ ReconcilerTest {
     private final Timestamp dummyMod;
     private final Timestamp dummyCreate;
 
+    /**
+     * tests all reconciler methods
+     */
     ReconcilerTest() {
         this.dummyCveId = "CVE-xxxx-xxx";
         this.dummyId = 1;

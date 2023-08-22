@@ -13,7 +13,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 class CvssScoreCalculatorTest {
-
+    //Tests getting the CVSS score given an array of strings indicating different metrics. Also tested the mean median min and max were found correctly
     private PythonInterpreter mockPython = mock(PythonInterpreter.class);
     private PyObject pyObj = mock(PyObject.class);
     private PyList pyList = mock(PyList.class);

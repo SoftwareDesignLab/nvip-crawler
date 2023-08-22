@@ -12,6 +12,7 @@ import static org.junit.Assert.assertEquals;
 
 public class MitreCveParserTest {
 
+    //verifies that the parse cve json files method can parse a given list of jsons
     @Test
     public void parseCVEJSONFiles() {
         MitreCveParser mitreCveParser = new MitreCveParser();

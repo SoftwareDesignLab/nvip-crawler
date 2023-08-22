@@ -33,6 +33,8 @@ class GitControllerTest {
 
     @Mock
     private FileRepository fileRepositoryMock = mock(FileRepository.class);
+
+    //verifies you can pull a repo without actually pulling it
     @Test
     void pullRepoTest() throws GitAPIException {
         when(fileRepositoryMock.getWorkTree()).thenReturn(new File("path/to/local/repo"));
@@ -42,6 +44,7 @@ class GitControllerTest {
         assertTrue(result); // Assert the expected behavior
     }
 
+    //verifies you can clone a repo without actually cloning it
     @Test
     void cloneRepoTest() throws GitAPIException {
         MockedStatic<Git> mocked = mockStatic(Git.class);

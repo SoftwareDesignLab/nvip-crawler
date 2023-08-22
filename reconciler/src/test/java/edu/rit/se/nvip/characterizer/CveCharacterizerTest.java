@@ -67,6 +67,7 @@ public class CveCharacterizerTest {
 		PartialCvssVectorGenerator mockPartialCvssVectorGenerator = mock(PartialCvssVectorGenerator.class);
 		OrdinaryCveClassifier mockClassifier = mock(OrdinaryCveClassifier.class);
 		String[] trainingDataInfo = {ReconcilerEnvVars.getTrainingDataDir(), ReconcilerEnvVars.getTrainingData()};
+		//dummy predictions
 		ArrayList<String[]> dummyPredictions = new ArrayList<>();
 		dummyPredictions.add(new String[]{"Local", "0.8"});
 		dummyPredictions.add(new String[]{"Read", "0.1"});
@@ -77,6 +78,7 @@ public class CveCharacterizerTest {
 		double[] dummyDoubles = {2.0, 1.0, 3.0, 1.0};
 		// test prediction
 		String cveDesc = "7.2 HIGH9.0 HIGHCVE-2020-11544 Ã¢â‚¬â€� An issue was discovered in Project Worlds Official Car Rental System 1. It allows the admin user to run commands on the server with their account because the upload section on the file-manager page contains an arbitrary file upload vulnerability via... read CVE-2020-11544 Published: April 06, 2020; 12:15:13 PM -04:00 CVE-2020-11544read CVE-2020-11544V3.1:7.2 HIGH6.5 MEDIUM";
+		//mock actual calls
 		when(mockPreProcessor.preProcessFile(anyString())).thenReturn("mocked, content");
 		when(mockCveClassifierFactory.getCveClassifier(anyString(), anyString(), anyString())).thenReturn(mockClassifier);
 		doNothing().when(mockClassifier).setCveClassifierName(anyString());
@@ -86,6 +88,7 @@ public class CveCharacterizerTest {
 		when(mockClassifier.predict(anyString(), anyBoolean())).thenReturn(dummyPredictions);
 		when(mockCvssScoreCalculator.getCvssScoreJython(any(String[].class))).thenReturn(dummyDoubles);
 		when(mockPartialCvssVectorGenerator.getCVssVector(anyMap())).thenReturn(new String[2]);
+		//create characterizer with the mocks manually injected
 		CveCharacterizer cveCharacterizer = new CveCharacterizer(mockPreProcessor, mockCveClassifierFactory, mockCvssScoreCalculator, mockPartialCvssVectorGenerator,
 				trainingDataInfo[0], trainingDataInfo[1], "ML", "NB");
 
@@ -117,6 +120,7 @@ public class CveCharacterizerTest {
 
 			vulnList.add(vuln);
 		}
+		//added 2 vulns with null desc and short desc to reach more code coverage
 		CompositeVulnerability vuln = new CompositeVulnerability(new RawVulnerability(1, "cve-1", null, null, null, null, ""));
 		vuln.setPotentialSources(new HashSet<>());
 		CompositeVulnerability vuln2 = new CompositeVulnerability(new RawVulnerability(1, "cve-1", "short desc",	null, null, null, ""));

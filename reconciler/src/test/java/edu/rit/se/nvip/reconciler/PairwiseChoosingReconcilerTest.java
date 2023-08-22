@@ -23,6 +23,9 @@ class PairwiseChoosingReconcilerTest {
     private final Timestamp dummyMod;
     private final Timestamp dummyCreate;
 
+    /**
+     * verifies that the parise wise choosing reconciler methods work as intended
+     */
     PairwiseChoosingReconcilerTest() {
         this.dummyCveId = "CVE-xxxx-xxx";
         this.dummyId = 1;

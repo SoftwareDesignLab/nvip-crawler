@@ -12,6 +12,7 @@ class AsyncFilterTest {
     private RawVulnerability genRawVuln(int id) {
         return new RawVulnerability(id, "", "description"+id, null, null, null, "" );
     }
+    //verifies that you can filter using the async filter
     @Test
     void filterAllTest() {
         Set<RawVulnerability> rawVulns = new HashSet<>();

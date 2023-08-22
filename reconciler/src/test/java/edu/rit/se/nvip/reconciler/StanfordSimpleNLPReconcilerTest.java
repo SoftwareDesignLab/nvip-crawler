@@ -15,6 +15,8 @@ import static org.mockito.Mockito.when;
 public class StanfordSimpleNLPReconcilerTest {
 
     private StanfordSimpleNLPReconciler stanfordSimpleNLPReconciler = new StanfordSimpleNLPReconciler();
+
+    //verifies we can properly reconcile descriptions given different scenarios where descs are null/short, etc
     @Test
     void reconcileDescriptions() {
         Map<String, Integer> mockMap = mock(Map.class);

@@ -27,6 +27,7 @@ class NvdCveControllerTest {
     private NvdCveController nvdCveController;
     @Mock
     DatabaseHelper mockDbh = mock(DatabaseHelper.class);
+    //verifies compare with Nvd properly compares Nvd vulns
     @Test
     void compareWithNvd() throws IOException {
 
@@ -67,6 +68,7 @@ class NvdCveControllerTest {
         //current structure says on ANALYZED Nvd Vulns are considered in Nvd
     }
 
+    //verifies update Nvd tables works, mocked Dbh
     @Test
     void updateNvdTables() throws IOException {
         nvdCveController = new NvdCveController();
@@ -84,6 +86,7 @@ class NvdCveControllerTest {
         verify(mockDbh).backfillNvdTimegaps(anySet());
     }
 
+    //verifies we can fetch Cves, created a mock jsonString that mocks what would be returned from actually fetching
     @Test
     void fetchCvesFromNvdTest() throws IOException {
         nvdCveController = new NvdCveController();

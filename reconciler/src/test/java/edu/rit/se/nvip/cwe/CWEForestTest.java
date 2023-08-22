@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class CWEForestTest {
 
+    //verifies that the forest is constructed and that parents/children are assigned correctly
     @Test
     void constructForest() {
         CWEForest forest = new CWEForest();

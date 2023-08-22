@@ -18,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 class OrdinaryThenEntropyClassifierTest {
-
+    //tests that the train model function works with the training data info
     @Test
     void trainMLModel() {
         String[] trainingDataInfo = {ReconcilerEnvVars.getTrainingDataDir(), ReconcilerEnvVars.getTrainingData()};
@@ -38,6 +38,7 @@ class OrdinaryThenEntropyClassifierTest {
 
     }
 
+    //tests the predict method to make sure there are 2 strings in the array
     @Test
     void predict() {
         String[] trainingDataInfo = {ReconcilerEnvVars.getTrainingDataDir(), ReconcilerEnvVars.getTrainingData()};
@@ -52,10 +53,11 @@ class OrdinaryThenEntropyClassifierTest {
 
         OrdinaryThenEntropyClassifier ordinaryThenEntropyClassifier = new OrdinaryThenEntropyClassifier(new Vote(), preProcessedTrainingDataFile);
 
-        ordinaryThenEntropyClassifier.predict("test,test", false);
+        assertEquals(2, ordinaryThenEntropyClassifier.predict("test,test", false).size());
 
     }
 
+    //tests the classify method to make sure there are 2 strings in the array
     @Test
     void classify() {
         String[] trainingDataInfo = {ReconcilerEnvVars.getTrainingDataDir(), ReconcilerEnvVars.getTrainingData()};
@@ -75,6 +77,7 @@ class OrdinaryThenEntropyClassifierTest {
         assertEquals(2,  ordinaryThenEntropyClassifier.classify(new Vote(), currentInstance, false).size());
     }
 
+    //tests that the createInstance function properly creates and instance
     @Test
     void createInstanceFromCommaSeparatedAttribsTest() throws Exception {
         AddValues mockAddValues = mock(AddValues.class);
