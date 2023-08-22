@@ -72,24 +72,6 @@ class NvdCveControllerTest {
     @Test
     void updateNvdTables() throws IOException {
         nvdCveController = new NvdCveController();
-
-        nvdCveController.setDatabaseHelper(mockDbh);
-
-        Set<NvdVulnerability> mockResults = new HashSet<>();
-
-        when(mockDbh.upsertNvdData(anySet())).thenReturn(mockResults);
-        when(mockDbh.backfillNvdTimegaps(anySet())).thenReturn(1);
-
-        nvdCveController.updateNvdTables(false);
-
-        verify(mockDbh).upsertNvdData(anySet());
-        verify(mockDbh).backfillNvdTimegaps(anySet());
-    }
-
-    //verifies we can fetch Cves, created a mock jsonString that mocks what would be returned from actually fetching
-    @Test
-    void fetchCvesFromNvdTest() throws IOException {
-        nvdCveController = new NvdCveController();
         BufferedReader mockBR = mock(BufferedReader.class);
         URL mockURL = mock(URL.class);
         HttpURLConnection mockConn = mock(HttpURLConnection.class);
@@ -103,27 +85,35 @@ class NvdCveControllerTest {
         nvdCveController.setBr(mockBR);
         String jsonString =
                 "{" +
-                "   \"vulnerabilities\": [" +
-                "       {" +
-                "           \"cve\": {" +
-                "               \"id\": \"CVE-2023-1234\"," +
-                "               \"published\": \"2023-08-21T12:34:56.789\"," +
-                "               \"vulnStatus\": \"open\"" +
-                "           }" +
-                "       }," +
-                "       {" +
-                "           \"cve\": {" +
-                "               \"id\": \"CVE-2023-5678\"," +
-                "               \"published\": \"2023-08-15T08:00:00.123\"," +
-                "               \"vulnStatus\": \"closed\"" +
-                "           }" +
-                "       }" +
-                "   ]" +
-                "}";
+                        "   \"vulnerabilities\": [" +
+                        "       {" +
+                        "           \"cve\": {" +
+                        "               \"id\": \"CVE-2023-1234\"," +
+                        "               \"published\": \"2023-08-21T12:34:56.789\"," +
+                        "               \"vulnStatus\": \"open\"" +
+                        "           }" +
+                        "       }," +
+                        "       {" +
+                        "           \"cve\": {" +
+                        "               \"id\": \"CVE-2023-5678\"," +
+                        "               \"published\": \"2023-08-15T08:00:00.123\"," +
+                        "               \"vulnStatus\": \"closed\"" +
+                        "           }" +
+                        "       }" +
+                        "   ]" +
+                        "}";
         when(mockBR.readLine()).thenReturn(jsonString, null);
         nvdCveController.setUrl(mockURL);
-        Set<NvdVulnerability> set = nvdCveController.fetchCvesFromNvd("mock");
+        nvdCveController.setDatabaseHelper(mockDbh);
 
-        assertEquals(2, set.size());
+        Set<NvdVulnerability> mockResults = new HashSet<>();
+
+        when(mockDbh.upsertNvdData(anySet())).thenReturn(mockResults);
+        when(mockDbh.backfillNvdTimegaps(anySet())).thenReturn(1);
+
+        nvdCveController.updateNvdTables();
+
+        verify(mockDbh).upsertNvdData(anySet());
+        verify(mockDbh).backfillNvdTimegaps(anySet());
     }
 }

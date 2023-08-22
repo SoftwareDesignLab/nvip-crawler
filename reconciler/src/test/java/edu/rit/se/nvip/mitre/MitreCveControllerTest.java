@@ -9,6 +9,7 @@ import edu.rit.se.nvip.utils.GitController;
 import org.apache.commons.io.FileUtils;
 import org.junit.Test;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 
@@ -16,6 +17,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
@@ -24,7 +26,7 @@ import static org.mockito.Mockito.*;
 
 public class MitreCveControllerTest {
 
-    private final MitreCveController mitreCveController = new MitreCveController(false);
+    private final MitreCveController mitreCveController = new MitreCveController();
     @Mock
     DatabaseHelper mockDbh = mock(DatabaseHelper.class);
     //verifies update tables works correctly with mocks for database methods
@@ -37,13 +39,23 @@ public class MitreCveControllerTest {
         mockResults.add(mockVulnerability1);
         mockResults.add(mockVulnerability2);
         mockResults.add(mockVulnerability3);
-
+        GitController mockGit = mock(GitController.class);
+        File mockFile = mock(File.class);
+        mitreCveController.setGitController(mockGit);
+        mitreCveController.setFile(mockFile);
+        String[] strings = new String[2];
+        when(mockGit.pullRepo()).thenReturn(true);
+        when(mockFile.exists()).thenReturn(true, false);
+        when(mockFile.list()).thenReturn(strings);
+        List<String> dummyPaths = new ArrayList<>();
+        dummyPaths.add("src/test/resources/mitreCveControllerTestJson/");
+        mitreCveController.setLocalPaths(dummyPaths);
         
         mitreCveController.setDatabaseHelper(mockDbh);
         when(mockDbh.upsertMitreData(anySet())).thenReturn(mockResults);
         when(mockDbh.backfillMitreTimegaps(anySet())).thenReturn(1);
 
-        mitreCveController.updateMitreTables(false);
+        mitreCveController.updateMitreTables();
 
         verify(mockDbh).upsertMitreData(anySet());
         verify(mockDbh).backfillMitreTimegaps(anySet());
@@ -61,22 +73,6 @@ public class MitreCveControllerTest {
         mitreCveController.getJSONFilesFromGitFolder(file, list);
 
         assertEquals(1, list.size());
-
-    }
-    //verifies you can get CVEs from the repo, mocked actual pull requests
-    @Test
-    public void getMitreCVEsFromGitRepoTest(){
-        GitController mockGit = mock(GitController.class);
-        File mockFile = mock(File.class);
-        mitreCveController.setGitController(mockGit);
-        mitreCveController.setFile(mockFile);
-        String[] strings = new String[2];
-        when(mockGit.pullRepo(true)).thenReturn(true);
-        when(mockFile.exists()).thenReturn(true, false);
-        when(mockFile.list()).thenReturn(strings);
-
-        mitreCveController.getMitreCVEsFromGitRepo(false);
-        mitreCveController.getMitreCVEsFromGitRepo(false);
 
     }
 
@@ -112,5 +108,14 @@ public class MitreCveControllerTest {
         verify(mockDbh).attachMitreVulns(any());
 
         //Output should be 2 in Mitre 2 not in Mitre 1 Reserved 2 Public
+    }
+
+    @Test
+    public void initializeTest(){
+        MockedStatic<DatabaseHelper> mockedDb = mockStatic(DatabaseHelper.class);
+        mockedDb.when(DatabaseHelper::getInstance).thenReturn(mockDbh);
+        when(mockDbh.isMitreTableEmpty()).thenReturn(false);
+        mitreCveController.initialize();
+        mockedDb.close();
     }
 }

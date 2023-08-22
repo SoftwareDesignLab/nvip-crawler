@@ -57,17 +57,17 @@ public class MitreCveController {
     private File f = new File(gitLocalPath);
     private static DatabaseHelper dbh;
 
-    public MitreCveController(boolean checkTable) {
-
+    public MitreCveController() {
         this.mitreGithubUrl = ReconcilerEnvVars.getMitreGithubUrl();
+    }
+
+    public void initialize(){
         //if it is the first run do them all otherwise only run the last 2 years
-        boolean firstRun = false;
-        if(checkTable){
-            dbh = DatabaseHelper.getInstance();
-            firstRun = dbh.isMitreTableEmpty();
-        }
+
+        dbh = DatabaseHelper.getInstance();
+
         List<String> list = new ArrayList<>();
-        if(firstRun){
+        if(dbh.isMitreTableEmpty()){
             list.add("nvip_data/mitre-cve/" );
         }else{
             // Getting the year as a string
@@ -78,11 +78,9 @@ public class MitreCveController {
         this.localPaths = list;
     }
 
-    public void updateMitreTables(boolean getResults) {
-        Set<MitreVulnerability> results = new HashSet<>();
-        if(getResults){
-            results = this.getMitreCVEsFromGitRepo(true);
-        }
+    public void updateMitreTables() {
+        Set<MitreVulnerability> results = getMitreCVEsFromGitRepo();
+
         logger.info("{} cves found from MITRE", results.size());
         long numReserved = results.stream().filter(v -> v.getStatus() == MitreVulnerability.MitreStatus.RESERVED).count();
         logger.info("Found {} reserved CVEs from MITRE", numReserved);
@@ -97,7 +95,7 @@ public class MitreCveController {
      * updates if any. Then it recursively loads all json files in the local repo,
      * parses them and creates a CSV file at the output path.
      */
-    public Set<MitreVulnerability> getMitreCVEsFromGitRepo(boolean getFromFolder) {
+    private Set<MitreVulnerability> getMitreCVEsFromGitRepo() {
         Set<MitreVulnerability> mitreCveMap = new HashSet<>();
         logger.info("Checking local Git CVE repo...");
 
@@ -109,7 +107,7 @@ public class MitreCveController {
         }
 
         if (pullDir) {
-            if (gitController.pullRepo(true))
+            if (gitController.pullRepo())
                 logger.info("Pulled git repo at: {} to: {}, now parsing each CVE...", mitreGithubUrl, gitLocalPath);
             else {
                 logger.error("Could not pull git repo at: {} to: {}", mitreGithubUrl, gitLocalPath);
@@ -126,9 +124,9 @@ public class MitreCveController {
             logger.info("Now parsing MITRE CVEs at {} directory", localPath);
             // create json object from .json files
             ArrayList<JsonObject> list = new ArrayList<>();
-            if (getFromFolder) {
-                list = getJSONFilesFromGitFolder(new File(localPath), list);
-            }
+
+            list = getJSONFilesFromGitFolder(new File(localPath), list);
+
             logger.info("Collected {} JSON files at {}", list.size(), localPath);
             // parse individual json objects
             MitreCveParser mitreCVEParser = new MitreCveParser();
@@ -216,4 +214,7 @@ public class MitreCveController {
     }
     public void setGitController(GitController git){ gitController = git;}
     public void setFile(File file){ f = file;}
+    public void setLocalPaths(List<String> list){
+        localPaths = list;
+    }
 }

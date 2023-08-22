@@ -15,15 +15,20 @@ public class ReconcilerMain {
     private static final Logger logger = LogManager.getLogger(ReconcilerMain.class);
 
     public static final Map<String, Object> envVars = new HashMap<>();
-    private static DatabaseHelper dbh = DatabaseHelper.getInstance();
+    private static DatabaseHelper dbh;
     private static ReconcilerController rc = new ReconcilerController();
     private Messenger messenger = new Messenger();
 
     public void main(String[] args) throws Exception {
+        initialize();
         main();
     }
+    public void initialize(){
+         dbh = DatabaseHelper.getInstance();
+    }
     public void main() {
-        if (!DatabaseHelper.getInstance().testDbConnection()) {
+        rc.initialize();
+        if (!dbh.testDbConnection()) {
             logger.error("Error in database connection! Please check if the database configured in DB Envvars is up and running!");
             System.exit(1);
         }
