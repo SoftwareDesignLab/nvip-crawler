@@ -115,9 +115,7 @@ public class CveCharacterizer {
 			}
 
 		} catch (Exception e) {
-			logger.error("An error occurred while training a classifier for CVE Characterizer! NVIP will not crash but " +
-							"CVE Characterizer will NOT work properly. Check your training data at {}\nException: {}",
-					trainingDataPath, e.getMessage());
+			logger.error("An error occurred while training a classifier for CVE Characterizer! NVIP will not crash but CVE Characterizer will NOT work properly. Check your training data at {}\nException: {}", trainingDataPath, e.getMessage());
 		}
 	}
 

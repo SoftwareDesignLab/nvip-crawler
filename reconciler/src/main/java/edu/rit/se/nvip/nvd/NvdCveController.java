@@ -55,7 +55,7 @@ import java.util.stream.Collectors;
 public class NvdCveController {
 	private final Logger logger = LogManager.getLogger(NvdCveController.class);
 
-	private static DatabaseHelper dbh = DatabaseHelper.getInstance();
+	private static DatabaseHelper dbh;
 	private final String startDate;
 	private final String endDate;
 	private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS");
@@ -69,16 +69,18 @@ public class NvdCveController {
 	 * Constructor for NvdCveController
 	 * Sets today and last month's times on construction
 	 */
-	public NvdCveController() throws IOException {
+	public NvdCveController() {
 		this(ReconcilerEnvVars.getNvdApiUrl(), LocalDateTime.now().minusDays(30), LocalDateTime.now());
 	}
 
-	public NvdCveController(String nvdApiUrl, LocalDateTime startDate, LocalDateTime endDate) throws IOException {
+	public NvdCveController(String nvdApiUrl, LocalDateTime startDate, LocalDateTime endDate) {
 		this.nvdApiUrl = nvdApiUrl;
 		this.startDate = startDate.format(formatter);
 		this.endDate = endDate.format(formatter);
 	}
-
+	public void initialize(){
+		dbh = DatabaseHelper.getInstance();
+	}
 	public Set<CompositeVulnerability> compareWithNvd(Set<CompositeVulnerability> reconciledVulns) {
 		Set<CompositeVulnerability> affected = dbh.attachNvdVulns(reconciledVulns); // returns the compvulns that got an nvdvuln attached
 		int inNvd = (int) reconciledVulns.stream().filter(CompositeVulnerability::isInNvd).count(); // let the compvuln decide for itself if it's in nvd
@@ -120,12 +122,10 @@ public class NvdCveController {
 		return affected;
 	}
 
-	public void updateNvdTables(boolean doFetch) {
-		Set<NvdVulnerability> nvdCves = new HashSet<>();
-		if(doFetch) {
-			nvdCves = fetchCvesFromNvd(nvdApiUrl.replaceAll("<StartDate>", this.startDate)
-					.replaceAll("<EndDate>", this.endDate));
-		}
+	public void updateNvdTables() {
+		Set<NvdVulnerability> nvdCves = fetchCvesFromNvd(nvdApiUrl.replaceAll("<StartDate>", this.startDate)
+				.replaceAll("<EndDate>", this.endDate));
+
 		logger.info("Grabbed {} cves from NVD for the past month", nvdCves.size());
 		Set<NvdVulnerability> toBackfill = dbh.upsertNvdData(nvdCves); // return the ones that were inserted/updated
 		logger.info("Inserted {} new CVEs from NVD into NVD Database Table", toBackfill.size());
@@ -138,7 +138,7 @@ public class NvdCveController {
 	 * @param nvdUrl
 	 * @return
 	 */
-	public Set<NvdVulnerability> fetchCvesFromNvd(String nvdUrl) {
+	private Set<NvdVulnerability> fetchCvesFromNvd(String nvdUrl) {
 		Set<NvdVulnerability> nvdCves = new HashSet<>();
 		try {
 			if(url == null){

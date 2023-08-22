@@ -1,3 +1,6 @@
 {
-  "key": "value"
+  "cveMetaData": {
+    "cveId": "CVE-2023-12345",
+    "state": "reserved"
+  }
 }

@@ -45,6 +45,7 @@ public class GitController {
 
 	private String localPath;
 	private String remotePath;
+	private Git git;
 
 	public GitController(String localPath, String remotePath) {
 		super();
@@ -57,18 +58,14 @@ public class GitController {
 	 * 
 	 * @return
 	 */
-	public boolean pullRepo(boolean doPull) {
+	public boolean pullRepo() {
 		logger.info("Checking for updates for {} repo!...", localPath);
 		try (FileRepository localRepo = new FileRepository(localPath + "/.git");) {
-			try (Git git = new Git(localRepo)) {
-				if(doPull) {
-					PullCommand pull = git.pull();
-					pull.call();
-				}
-			} catch (Exception e) {
-				logger.error("Error while pulling repo {} {} ", remotePath, e.toString());
-				return false;
+			if(git == null){
+				git = new Git(localRepo);
 			}
+			PullCommand pull = git.pull();
+			pull.call();
 		} catch (Exception e) {
 			logger.error("Error while initializing FileRepository for {}: {} ", remotePath, e.toString());
 			return false;
@@ -108,4 +105,7 @@ public class GitController {
 		return true;
 	}
 
+	public void setGit(Git g){
+		git = g;
+	}
 }

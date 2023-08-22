@@ -28,17 +28,14 @@ public class ReconcilerController {
     private NvdCveController nvdController;
     private MitreCveController mitreController;
 
-    public ReconcilerController() {
+
+    public void initialize(){
         this.dbh = DatabaseHelper.getInstance();
         filterHandler = new FilterHandler(ReconcilerEnvVars.getFilterList());
         this.reconciler = ReconcilerFactory.createReconciler(ReconcilerEnvVars.getReconcilerType());
         this.reconciler.setKnownCveSources(ReconcilerEnvVars.getKnownSourceMap());
-        try {
-            this.nvdController = new NvdCveController();
-        }catch(IOException e){
-            logger.error("Error constructing NvdCveController");
-        }
-        this.mitreController = new MitreCveController(true);
+        this.nvdController = new NvdCveController();
+        this.mitreController = new MitreCveController();
     }
 
     public void main(Set<String> jobs) {
@@ -208,8 +205,8 @@ public class ReconcilerController {
     }
 
     private void updateNvdMitre() {
-        nvdController.updateNvdTables(true);
-        mitreController.updateMitreTables(true);
+        nvdController.updateNvdTables();
+        mitreController.updateMitreTables();
     }
     private Set<CompositeVulnerability> attachNvdMitre(Set<CompositeVulnerability> newVulns) {
         Set<CompositeVulnerability> affected = new HashSet<>();

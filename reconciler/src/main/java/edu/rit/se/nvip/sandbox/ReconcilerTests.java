@@ -31,6 +31,7 @@ public class ReconcilerTests {
         List<RawVulnerability> run1 = new ArrayList<>();
         List<RawVulnerability> run2 = new ArrayList<>();
         ReconcilerController recCon = new ReconcilerController();
+        recCon.initialize();
         if (previouslyPassedHighPrio > 0){
             prevPassedHigh = genRawVulns(previouslyPassedHighPrio, true, false);
             run1.addAll(prevPassedHigh);

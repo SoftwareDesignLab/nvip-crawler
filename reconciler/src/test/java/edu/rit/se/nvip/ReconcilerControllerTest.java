@@ -31,6 +31,7 @@ class ReconcilerControllerTest {
         //create mocks
         ReconcilerController rc = new ReconcilerController();
         MockedStatic<ReconcilerEnvVars> mockedEnvVars = mockStatic(ReconcilerEnvVars.class);
+        MockedStatic<DatabaseHelper> mockedDb = mockStatic(DatabaseHelper.class);
         DatabaseHelper mockDbh = mock(DatabaseHelper.class);
         FilterHandler mockFH = mock(FilterHandler.class);
         Reconciler mockRecon = mock(Reconciler.class);
@@ -57,6 +58,7 @@ class ReconcilerControllerTest {
         rawVulns.add(raw1);
         rawVulns.add(raw2);
         CompositeVulnerability vuln = new CompositeVulnerability(raw);
+
         when(mockDbh.getRawVulnerabilities(anyString())).thenReturn(rawVulns);
         when(mockDbh.getCompositeVulnerability(anyString())).thenReturn(vuln);
         when(mockFH.runFilters(anySet())).thenReturn(mockFR);
@@ -68,9 +70,10 @@ class ReconcilerControllerTest {
         when(mockDbh.insertRun(any(RunStats.class))).thenReturn(1);
         when(mockDbh.insertCvssBatch(anySet())).thenReturn(1);
         when(mockDbh.insertVdoBatch(anySet())).thenReturn(1);
-        doNothing().when(mockMitre).updateMitreTables(anyBoolean());
-        doNothing().when(mockNvd).updateNvdTables(anyBoolean());
+        doNothing().when(mockMitre).updateMitreTables();
+        doNothing().when(mockNvd).updateNvdTables();
         when(mockChar.characterizeCveList(anyList(), anyInt())).thenReturn(new ArrayList<>());
+        mockedDb.when(DatabaseHelper::getInstance).thenReturn(mockDbh);
 
 
         //actually run the code
@@ -82,5 +85,6 @@ class ReconcilerControllerTest {
         rc.main(jobs);
 
         mockedEnvVars.close();
+        mockedDb.close();
     }
 }
