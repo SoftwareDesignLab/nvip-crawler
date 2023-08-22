@@ -16,11 +16,6 @@ import static org.mockito.Mockito.when;
 
 public class SimpleReconcilerTest {
 
-    /*
-
-    Not exactly complete... probably will have to switch to using a model like ApacheOpenNLPReconcilerTest
-
-     */
     @Test
     public void testReconcileDescriptions() {
         Map<String, Integer> mockMap = mock(Map.class);

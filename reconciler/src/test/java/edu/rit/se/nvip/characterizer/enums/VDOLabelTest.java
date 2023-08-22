@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class VDOLabelTest {
 
+    //simply verifies that you can get a VDOLabel from its name
     @Test
     void getVdoLabel() {
         for(VDOLabel vdo : VDOLabel.values()){

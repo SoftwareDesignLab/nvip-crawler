@@ -27,6 +27,7 @@ public class MitreCveControllerTest {
     private final MitreCveController mitreCveController = new MitreCveController();
     @Mock
     DatabaseHelper mockDbh = mock(DatabaseHelper.class);
+    //verifies update tables works correctly with mocks for database methods
     @Test
     public void updateMitreTables() {
         Set<MitreVulnerability> mockResults = new HashSet<>();
@@ -50,6 +51,7 @@ public class MitreCveControllerTest {
 
     }
 
+    //verifies you can get jsons from a given file, a mock file was made in the resources folder
     @Test
     public void getJSONFilesFromGitFolder() throws IOException {
         ArrayList<JsonObject> list = new ArrayList<>();
@@ -61,6 +63,7 @@ public class MitreCveControllerTest {
         assertEquals(1, list.size());
 
     }
+    //verifies you can get CVEs from the repo, mocked actual pull requests
     @Test
     public void getMitreCVEsFromGitRepoTest(){
         GitController mockGit = mock(GitController.class);
@@ -77,6 +80,7 @@ public class MitreCveControllerTest {
 
     }
 
+    //verifies that the compare with mitre method can properly compare mitre vulns based on their status
     @Test
     public void compareWithMitre() {
         mitreCveController.setDatabaseHelper(mockDbh);

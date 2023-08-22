@@ -39,7 +39,7 @@ import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 
 public class EntropyBasedCveClassifierTest {
-
+    //tests to make sure model is loaded correctly
     @Test
     public void testTrainMLModel() {
         String[] trainingDataInfo = {ReconcilerEnvVars.getTrainingDataDir(), ReconcilerEnvVars.getTrainingData()};
@@ -57,7 +57,7 @@ public class EntropyBasedCveClassifierTest {
 
         assertEquals(entropyBasedCveClassifier.histograms.size(), 4);
     }
-
+    //tests the predict method to make sure it works given the training data info with wrong number of attributes in the instance
     @Test
     public void testPredictIncorrectNumAttributes() {
         String[] trainingDataInfo = {ReconcilerEnvVars.getTrainingDataDir(), ReconcilerEnvVars.getTrainingData()};
@@ -76,6 +76,7 @@ public class EntropyBasedCveClassifierTest {
         assertEquals(0, newList.size());
     }
 
+    //tests predict
     @Test
     public void testPredict() {
         String[] trainingDataInfo = {ReconcilerEnvVars.getTrainingDataDir(), ReconcilerEnvVars.getTrainingData()};
@@ -102,6 +103,7 @@ public class EntropyBasedCveClassifierTest {
 
         assertEquals(1, prediction.size());
     }
+    //tests classify and allows for tests with the Method being JS_DIVERGENCE
     @Test
     public void testClassify(){
         String[] trainingDataInfo = {ReconcilerEnvVars.getTrainingDataDir(), ReconcilerEnvVars.getTrainingData()};

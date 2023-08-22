@@ -13,6 +13,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class CveClassifierFactoryTest {
 
+    //Confirms classifiers get set correctly for OrdinaryCveClassifiers
     @Test
     void getCveClassifier() {
         String[] trainingDataInfo = {ReconcilerEnvVars.getTrainingDataDir(), ReconcilerEnvVars.getTrainingData()};

@@ -11,21 +11,18 @@ import org.mockito.configuration.IMockitoConfiguration;
 import java.io.InputStream;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 class ApacheOpenNLPModelTest {
     @Mock
     SentenceDetector mockDetector = mock(SentenceDetector.class);
     private ApacheOpenNLPModel apacheOpenNLPModel = new ApacheOpenNLPModel();
 
-    @Test
-    void initialize(){
-
-        //apacheOpenNLPModel.initialize();
-
-    }
+    /**
+     * verifies that sent Detect and tag methods both work as expected
+     */
     @Test
     void tag() {
         POSTaggerME mockTagger = mock(POSTaggerME.class);
@@ -33,6 +30,7 @@ class ApacheOpenNLPModelTest {
         String sample = "test string";
         String[] response = sample.split(" ");
         apacheOpenNLPModel.tag(response);
+        verify(mockTagger).tag(any(String[].class));
     }
 
     @Test
@@ -42,5 +40,6 @@ class ApacheOpenNLPModelTest {
         String[] response = sample.split(" ");
         when(mockDetector.sentDetect(anyString())).thenReturn(response);
         apacheOpenNLPModel.sentDetect(sample);
+        verify(mockDetector).sentDetect(anyString());
     }
 }

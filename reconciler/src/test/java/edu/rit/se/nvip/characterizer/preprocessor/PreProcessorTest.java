@@ -46,6 +46,7 @@ public class PreProcessorTest {
 		assertTrue(sTemp.contains(output));
 	}
 
+	//tests that the line can be processed correctly NOTE: there is a space at the end "\n"
 	@Test
 	public void preProcessLineTest(){
 		String testLine = "A test line for the pre processor ";
@@ -56,6 +57,7 @@ public class PreProcessorTest {
 		assertEquals("a test line for the pre processor ", result2);
 	}
 
+	//tests that a file can be processed in the same manner
 	@Test
 	public void preProcessFileTest(){
 		//

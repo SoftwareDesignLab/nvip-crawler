@@ -15,6 +15,7 @@ import static org.mockito.Mockito.*;
 
 class ReconcilerMainTest {
 
+    //verifies that the main can properly get jobs and process them for the reconciler controller, this tests both rabbit and db
     @Test
     void mainTest() throws Exception {
         ReconcilerMain main = new ReconcilerMain();
