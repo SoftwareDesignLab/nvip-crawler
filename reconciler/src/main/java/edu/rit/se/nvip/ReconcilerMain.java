@@ -15,32 +15,40 @@ public class ReconcilerMain {
     private static final Logger logger = LogManager.getLogger(ReconcilerMain.class);
 
     public static final Map<String, Object> envVars = new HashMap<>();
-    private static final DatabaseHelper dbh = DatabaseHelper.getInstance();
+    private static DatabaseHelper dbh = DatabaseHelper.getInstance();
+    private static ReconcilerController rc = new ReconcilerController();
+    private Messenger messenger = new Messenger();
 
-    public static void main(String[] args) throws Exception {
+    public void main(String[] args) throws Exception {
+        main();
+    }
+    public void main() {
         if (!DatabaseHelper.getInstance().testDbConnection()) {
             logger.error("Error in database connection! Please check if the database configured in DB Envvars is up and running!");
             System.exit(1);
         }
         ReconcilerEnvVars.loadVars();
-        ReconcilerController rc = new ReconcilerController();
         switch(ReconcilerEnvVars.getInputMode()){
             case "db":
                 logger.info("Using Database for acquiring jobs");
                 Set<String> jobs = dbh.getJobs();
                 if (jobs == null){
                     logger.error("No Jobs found in database");
-                    System.exit(0);
+                    break;
                 }
                 rc.main(jobs);
                 break;
             case "rabbit":
                 logger.info("Using Rabbit for acquiring jobs");
-                Messenger messenger = new Messenger();
                 while (true) {
-                    List<String> jobsList = messenger.waitForCrawlerMessage(ReconcilerEnvVars.getRabbitTimeout());
+                    List<String> jobsList;
+                    try {
+                        jobsList = messenger.waitForCrawlerMessage(ReconcilerEnvVars.getRabbitTimeout());
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
                     if (jobsList == null) {
-                        logger.info("Timeout reached with no jobs from rabbit");
+                        logger.error("Timeout reached with no jobs from rabbit");
                         break;
                     }
                     rc.main(new HashSet<>(jobsList));
@@ -51,5 +59,14 @@ public class ReconcilerMain {
                 }
         }
 
+    }
+    public void setController(ReconcilerController r){
+        rc = r;
+    }
+    public void setDatabaseHelper(DatabaseHelper db){
+        dbh = db;
+    }
+    public void setMessenger(Messenger m){
+        messenger = m;
     }
 }

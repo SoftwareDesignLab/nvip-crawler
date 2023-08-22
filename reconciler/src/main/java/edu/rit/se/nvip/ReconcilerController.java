@@ -20,13 +20,13 @@ import java.util.stream.Collectors;
 
 public class ReconcilerController {
     private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
-    private final DatabaseHelper dbh;
-    private final Reconciler reconciler;
-    private final FilterHandler filterHandler;
-    private final Messenger messenger = new Messenger();
+    private DatabaseHelper dbh;
+    private Reconciler reconciler;
+    private FilterHandler filterHandler;
+    private Messenger messenger = new Messenger();
     private CveCharacterizer cveCharacterizer;
     private NvdCveController nvdController;
-    private final MitreCveController mitreController;
+    private MitreCveController mitreController;
 
     public ReconcilerController() {
         this.dbh = DatabaseHelper.getInstance();
@@ -92,14 +92,16 @@ public class ReconcilerController {
         dbh.insertRun(new RunStats(reconciledVulns));
 
         logger.info("Starting characterization");
-        //wait for characterizer task to complete
-        try {
-            cveCharacterizer = futureCharacterizer.get();
-        } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
-        }
         //run characterizer
         if (ReconcilerEnvVars.getDoCharacterization()) {
+            //wait for characterizer task to complete
+            try {
+                if(cveCharacterizer == null) {
+                    cveCharacterizer = futureCharacterizer.get();
+                }
+            } catch (InterruptedException | ExecutionException e) {
+                throw new RuntimeException(e);
+            }
             characterizeCVEs(reconciledVulns);
             Set<CompositeVulnerability> recharacterized = reconciledVulns.stream()
                     .filter(CompositeVulnerability::isRecharacterized).collect(Collectors.toSet());
@@ -216,8 +218,25 @@ public class ReconcilerController {
         return affected;
     }
 
-    public static void main(String[] args) {
-        //new NvdCveController().updateNvdTables();
-        new MitreCveController().updateMitreTables(true);
+    public void setDbh(DatabaseHelper db){
+        dbh = db;
+    }
+    public void setReconciler(Reconciler rc){
+        reconciler = rc;
+    }
+    public void setFilterHandler(FilterHandler fh){
+        filterHandler = fh;
+    }
+    public void setMessenger(Messenger m){
+        messenger = m;
+    }
+    public void setNvdController(NvdCveController nvd){
+        nvdController = nvd;
+    }
+    public void setMitreController(MitreCveController mit){
+        mitreController = mit;
+    }
+    public void setCveCharacterizer(CveCharacterizer ch){
+        cveCharacterizer = ch;
     }
 }
