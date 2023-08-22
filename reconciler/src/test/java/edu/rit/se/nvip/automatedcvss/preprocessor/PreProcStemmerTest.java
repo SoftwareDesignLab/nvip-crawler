@@ -8,6 +8,7 @@ class PreProcStemmerTest {
 
     @Test
     void setNextPreProcessor() {
+        //not much to test here, but confirmed the settor works as expected
         PreProcStemmer preProcStemmer = new PreProcStemmer();
 
         PreProcessor pre = preProcStemmer.setNextPreProcessor(new PreProcStemmer());

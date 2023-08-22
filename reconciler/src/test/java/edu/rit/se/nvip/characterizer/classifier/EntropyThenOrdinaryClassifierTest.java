@@ -42,6 +42,7 @@ import static org.mockito.Mockito.when;
 
 public class EntropyThenOrdinaryClassifierTest {
 
+    //tests that the train model function works with the training data info
     @Test
     public void testTrainMLModel() {
         String[] trainingDataInfo = {ReconcilerEnvVars.getTrainingDataDir(), ReconcilerEnvVars.getTrainingData()};
@@ -59,7 +60,7 @@ public class EntropyThenOrdinaryClassifierTest {
 
         assertEquals(entropyBasedCveClassifier.histograms.size(), 4);
     }
-
+    //tests the classify method to make sure there are 2 strings in the array for each prediction
     @Test
     public void testClassify(){
         Instance mockInstance = mock(Instance.class);

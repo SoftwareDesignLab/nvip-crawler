@@ -13,6 +13,7 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.*;
 
 class PartialCvssVectorGeneratorTest {
+    //Tests several different CVSS Vector cases.
     @Test
     void getCVssVectorTest1(){
         PartialCvssVectorGenerator partial = new PartialCvssVectorGenerator();

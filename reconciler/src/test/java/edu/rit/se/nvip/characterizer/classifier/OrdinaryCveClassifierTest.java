@@ -44,6 +44,7 @@ import static org.mockito.Mockito.when;
 
 public class OrdinaryCveClassifierTest {
 
+//test to make sure you can properly change the classifier if wanted
     @Test
     public void testResetClassifier() {
         OrdinaryCveClassifier ordinaryCveClassifier = new OrdinaryCveClassifier();
@@ -52,8 +53,9 @@ public class OrdinaryCveClassifierTest {
         assertEquals(ordinaryCveClassifier.classifier.getClass(), RandomForest.class);
     }
 
+    //tests the predict method
     @Test
-    public void testPredictIncorrectNumAttr() throws Exception {
+    public void testPredict() throws Exception {
         Instances mockInstances = mock(Instances.class);
         Attribute mockAttr = mock(Attribute.class);
         Classifier mockClass = mock(Classifier.class);

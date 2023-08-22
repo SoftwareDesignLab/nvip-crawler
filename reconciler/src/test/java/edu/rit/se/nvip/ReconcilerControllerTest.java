@@ -23,8 +23,12 @@ import static org.mockito.Mockito.*;
 
 class ReconcilerControllerTest {
 
+    /**
+     * lots of mocks but this  verifies that everything is being called correctly for the reconciler controller
+     */
     @Test
     void mainTest() {
+        //create mocks
         ReconcilerController rc = new ReconcilerController();
         MockedStatic<ReconcilerEnvVars> mockedEnvVars = mockStatic(ReconcilerEnvVars.class);
         DatabaseHelper mockDbh = mock(DatabaseHelper.class);
@@ -43,6 +47,7 @@ class ReconcilerControllerTest {
         rc.setMitreController(mockMitre);
         rc.setCveCharacterizer(mockChar);
 
+        //create mock functionality
         mockedEnvVars.when(ReconcilerEnvVars::getDoCharacterization).thenReturn(true);
         Set<RawVulnerability> rawVulns = new HashSet<>();
         RawVulnerability raw = new RawVulnerability(1, "", "description1", null, null, null, "");
@@ -68,6 +73,7 @@ class ReconcilerControllerTest {
         when(mockChar.characterizeCveList(anyList(), anyInt())).thenReturn(new ArrayList<>());
 
 
+        //actually run the code
         Set<String> jobs = new HashSet<>();
         jobs.add("CVE-2023-1");
         jobs.add("CVE-2023-2");

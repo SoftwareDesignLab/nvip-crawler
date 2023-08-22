@@ -10,6 +10,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class ReconcilerEnvVarsTest {
 
+    //verifies you can getenv vars from the env.list file
     @Test
     void testGetters() {
         String path = System.getProperty("user.dir") + "\\src\\test\\resources\\dummyENV.list";

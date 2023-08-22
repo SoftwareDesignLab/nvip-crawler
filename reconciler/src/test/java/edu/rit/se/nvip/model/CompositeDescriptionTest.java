@@ -20,6 +20,9 @@ class CompositeDescriptionTest {
     private final long dummyMillis;
     private final Clock mockClock;
 
+    /**
+     * verifies all methods from composite description work as intended
+     */
     CompositeDescriptionTest() {
         this.dummyId = 1;
         this.dummyCveId = "CVE-xxxx-xxx";
