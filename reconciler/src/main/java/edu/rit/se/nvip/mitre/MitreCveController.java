@@ -57,22 +57,24 @@ public class MitreCveController {
     private File f = new File(gitLocalPath);
     private static DatabaseHelper dbh = DatabaseHelper.getInstance();
 
-    public MitreCveController() {
+    public MitreCveController(boolean checkTable) {
 
         this.mitreGithubUrl = ReconcilerEnvVars.getMitreGithubUrl();
         //if it is the first run do them all otherwise only run the last 2 years
-        if(dbh.isMitreTableEmpty()){
-            List<String> list = new ArrayList<>();
+        boolean firstRun = false;
+        if(checkTable){
+            firstRun = dbh.isMitreTableEmpty();
+        }
+        List<String> list = new ArrayList<>();
+        if(firstRun){
             list.add("nvip_data/mitre-cve/" );
-            this.localPaths = list;
         }else{
-            List<String> list = new ArrayList<>();
             // Getting the year as a string
             String currentYear = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy"));
             list.add("nvip_data/mitre-cve/" + currentYear);
             list.add("nvip_data/mitre-cve/" + (Integer.parseInt(currentYear)-1));
-            this.localPaths = list;
         }
+        this.localPaths = list;
     }
 
     public void updateMitreTables(boolean getResults) {
