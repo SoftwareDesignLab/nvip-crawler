@@ -28,10 +28,7 @@ import edu.rit.se.nvip.characterizer.enums.VDONounGroup;
 
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -152,22 +149,24 @@ public class PartialCvssVectorGenerator {
 	}
 
 	/**
-	 * Brute forces all possible output vectors
+	 * Brute forces all possible output vectors, stores in a csv.
+	 * this is not maintained code.
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		Set<VDOLabel> enumSet = new HashSet<>(Arrays.asList(VDOLabel.values()));
-		Set<VDOLabel> currentSubset = new HashSet<>();
-		Set<String> outputs = new HashSet<>();
+		Set<VDOLabel> enumSet = new LinkedHashSet<>(Arrays.asList(VDOLabel.values()));
+		Set<VDOLabel> currentSubset = new LinkedHashSet<>();
+		Set<String> outputs = new LinkedHashSet<>();
 		// recursively compute all outputs over the power set of vdolabel
 		evaluateSubset(outputs, new PartialCvssVectorGenerator(), enumSet, currentSubset);
+		outputs = outputs.stream().map(s->s.substring(0,s.length()-1)).collect(Collectors.toSet()); //remove trailing commas
 		System.out.println(outputs.size());
 		System.out.println(enumSet.size());
 		String outputPath = "nvip_data/cvss/vector_outputs.csv";
 		try {
 			FileWriter writer = new FileWriter(outputPath);
 			for (String output : outputs) {
-				writer.append(output.substring(0, output.length() - 1)); // remove trailing commas
+				writer.append(output);
 				writer.append("\n");
 			}
 			writer.flush();
@@ -175,10 +174,14 @@ public class PartialCvssVectorGenerator {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		// compare old and new cvss methods
 		CvssScoreCalculator calc = new CvssScoreCalculator();
 		for (String output : outputs) {
-			if (calc.lookupCvssScore(output.split(",")) != calc.getCvssScoreJython(output.split(","))[0]) {
-				System.out.println(output);
+			double old = calc.getCvssScoreJython(output.split(","))[0];
+			double imp = calc.lookupCvssScore(output.split(","));
+			System.out.printf("%.3f, %.3f\n", old, imp);
+			if (old != imp) {
+				System.out.println("MISMATCH");
 			}
 		}
 	}
