@@ -55,7 +55,7 @@ public class MitreCveController {
     private final String gitLocalPath = "nvip_data/mitre-cve/";
     private GitController gitController = new GitController(gitLocalPath, mitreGithubUrl);
     private File f = new File(gitLocalPath);
-    private static DatabaseHelper dbh = DatabaseHelper.getInstance();
+    private static DatabaseHelper dbh;
 
     public MitreCveController(boolean checkTable) {
 
@@ -63,6 +63,7 @@ public class MitreCveController {
         //if it is the first run do them all otherwise only run the last 2 years
         boolean firstRun = false;
         if(checkTable){
+            dbh = DatabaseHelper.getInstance();
             firstRun = dbh.isMitreTableEmpty();
         }
         List<String> list = new ArrayList<>();
