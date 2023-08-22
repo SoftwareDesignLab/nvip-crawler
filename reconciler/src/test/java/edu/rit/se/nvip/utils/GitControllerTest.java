@@ -38,8 +38,14 @@ class GitControllerTest {
     @Test
     void pullRepoTest() throws GitAPIException {
         when(fileRepositoryMock.getWorkTree()).thenReturn(new File("path/to/local/repo"));
+        Git mockGit = mock(Git.class);
+        PullCommand mockPull = mock(PullCommand.class);
+        PullResult mockRes = mock(PullResult.class);
+        gitController.setGit(mockGit);
+        when(mockGit.pull()).thenReturn(mockPull);
+        when(mockPull.call()).thenReturn(mockRes);
 
-        boolean result = gitController.pullRepo(false);
+        boolean result = gitController.pullRepo();
 
         assertTrue(result); // Assert the expected behavior
     }
@@ -63,5 +69,6 @@ class GitControllerTest {
         boolean result = gitController.cloneRepo();
 
         assertTrue(result); // Assert the expected behavior
+        mocked.close();
     }
 }
