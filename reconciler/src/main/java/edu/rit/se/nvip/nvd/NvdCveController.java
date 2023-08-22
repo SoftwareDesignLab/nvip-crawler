@@ -78,7 +78,7 @@ public class NvdCveController {
 		this.startDate = startDate.format(formatter);
 		this.endDate = endDate.format(formatter);
 	}
-	public void initialize(){
+	public void createDatabaseInstance(){
 		dbh = DatabaseHelper.getInstance();
 	}
 	public Set<CompositeVulnerability> compareWithNvd(Set<CompositeVulnerability> reconciledVulns) {

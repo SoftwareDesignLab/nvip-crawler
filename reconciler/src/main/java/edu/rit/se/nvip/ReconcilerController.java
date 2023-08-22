@@ -34,8 +34,14 @@ public class ReconcilerController {
         filterHandler = new FilterHandler(ReconcilerEnvVars.getFilterList());
         this.reconciler = ReconcilerFactory.createReconciler(ReconcilerEnvVars.getReconcilerType());
         this.reconciler.setKnownCveSources(ReconcilerEnvVars.getKnownSourceMap());
-        this.nvdController = new NvdCveController();
-        this.mitreController = new MitreCveController();
+        if(nvdController == null) {
+            this.nvdController = new NvdCveController();
+            this.nvdController.createDatabaseInstance();
+        }
+        if(mitreController == null) {
+            this.mitreController = new MitreCveController();
+            this.mitreController.initializeController();
+        }
     }
 
     public void main(Set<String> jobs) {

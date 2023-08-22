@@ -19,11 +19,12 @@ public class ReconcilerMain {
     private static ReconcilerController rc = new ReconcilerController();
     private Messenger messenger = new Messenger();
 
-    public void main(String[] args) throws Exception {
-        initialize();
-        main();
+    public static void main(String[] args) throws Exception {
+        ReconcilerMain main = new ReconcilerMain();
+        main.createDatabaseInstance();
+        main.main();
     }
-    public void initialize(){
+    public void createDatabaseInstance(){
          dbh = DatabaseHelper.getInstance();
     }
     public void main() {

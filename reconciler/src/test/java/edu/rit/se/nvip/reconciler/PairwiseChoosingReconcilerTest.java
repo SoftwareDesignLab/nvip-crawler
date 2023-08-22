@@ -62,7 +62,7 @@ class PairwiseChoosingReconcilerTest {
         return new Timestamp(dummyMillis + nHours*3600L*1000);
     }
 
-    private PairwiseChoosingReconciler dummyRec(boolean dummyReturn) {
+    private PairwiseChoosingReconciler dummyRec (boolean dummyReturn) {
         return new PairwiseChoosingReconciler() {
             @Override
             public boolean reconcileDescriptions(String existingDescription, String newDescription, Set<String> existingSourceDomains, String newSourceDomain) {

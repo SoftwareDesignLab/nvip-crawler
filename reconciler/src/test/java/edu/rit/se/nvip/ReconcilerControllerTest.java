@@ -10,6 +10,7 @@ import edu.rit.se.nvip.model.RawVulnerability;
 import edu.rit.se.nvip.model.RunStats;
 import edu.rit.se.nvip.nvd.NvdCveController;
 import edu.rit.se.nvip.reconciler.Reconciler;
+import edu.rit.se.nvip.reconciler.ReconcilerFactory;
 import edu.rit.se.nvip.utils.ReconcilerEnvVars;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
@@ -86,5 +87,20 @@ class ReconcilerControllerTest {
 
         mockedEnvVars.close();
         mockedDb.close();
+    }
+
+    @Test
+    public void initTest(){
+        ReconcilerController rc = new ReconcilerController();
+        DatabaseHelper mockDb = mock(DatabaseHelper.class);
+        Reconciler mockRecon = mock(Reconciler.class);
+        MockedStatic<DatabaseHelper> mockedDB = mockStatic(DatabaseHelper.class);
+        MockedStatic<ReconcilerFactory> mockedRF = mockStatic(ReconcilerFactory.class);
+
+        mockedDB.when(DatabaseHelper::getInstance).thenReturn(mockDb);
+        mockedRF.when(() -> ReconcilerFactory.createReconciler(anyString())).thenReturn(mockRecon);
+        doNothing().when(mockRecon).setKnownCveSources(anyMap());
+
+        rc.initialize();
     }
 }
