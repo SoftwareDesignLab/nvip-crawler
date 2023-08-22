@@ -48,7 +48,7 @@ import java.util.*;
  *
  */
 public class CveCharacterizer {
-	private Logger logger = LogManager.getLogger(CveCharacterizer.class.getSimpleName());
+private Logger logger = LogManager.getLogger(CveCharacterizer.class.getSimpleName());
 	private final Map<VDONounGroup, AbstractCveClassifier> nounGroupToClassifier = new HashMap<>();
 
 	/**

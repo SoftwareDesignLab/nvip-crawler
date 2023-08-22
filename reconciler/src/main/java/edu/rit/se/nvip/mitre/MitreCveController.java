@@ -61,7 +61,7 @@ public class MitreCveController {
         this.mitreGithubUrl = ReconcilerEnvVars.getMitreGithubUrl();
     }
 
-    public void initialize(){
+    public void initializeController(){
         //if it is the first run do them all otherwise only run the last 2 years
 
         dbh = DatabaseHelper.getInstance();
