@@ -2,17 +2,17 @@
  * Copyright 2023 Rochester Institute of Technology (RIT). Developed with
  * government support under contract 70RSAT19CB0000020 awarded by the United
  * States Department of Homeland Security.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -28,14 +28,7 @@ import edu.rit.se.nvip.characterizer.enums.VDONounGroup;
 
 import java.io.FileWriter;
 import java.io.IOException;
-<<<<<<< HEAD
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-=======
 import java.util.*;
->>>>>>> origin/cvss-mods
 import java.util.stream.Collectors;
 
 /**
@@ -49,13 +42,13 @@ public class PartialCvssVectorGenerator {
 	 * A partial CVSS vector is a list like ["P", "X", "X", "X", "X", "H", "H",
 	 * "H"], where each item in the list represents the values of AV, AC, PR, UI, S,
 	 * C, I, A, respectively
-	 * 
+	 *
 	 * AV: Attack Vector, AC: Attack Complexity, PR: Privilege Required, S: Scope,
 	 * UI: User Interaction, C: Confidentiality, I: Integrity, A: Availability.
-	 * 
+	 *
 	 * Note: Right now we do not have any mapping for: PR, UI, S fields of the CVSS
 	 * vector
-	 * 
+	 *
 	 * @param predictionsForVuln: Predictions for each VDO noun group. The value of
 	 *                            the map is ArrayList<String[]> to store the label
 	 *                            and confidence for each noun group value.
@@ -75,7 +68,7 @@ public class PartialCvssVectorGenerator {
 				/**
 				 * Attack Vector (AV)* Network (AV:N), Adjacent (AV:A), Local (AV:L), Physical
 				 * (AV:P)
-				 * 
+				 *
 				 */
 				if (predictionsForNounGroup.contains(VDOLabel.REMOTE))
 					vectorCvss[0] = "N";
@@ -91,7 +84,7 @@ public class PartialCvssVectorGenerator {
 			} else if (vdoNounGroup == VDONounGroup.IMPACT_METHOD) {
 				/**
 				 * Attack Complexity (AC)* Low (AC:L)High (AC:H)
-				 * 
+				 *
 				 */
 				if (predictionsForNounGroup.contains(VDOLabel.MAN_IN_THE_MIDDLE))
 					vectorCvss[1] = "H"; // if there is MitM impact then, we assume attack complexity is High
@@ -102,27 +95,27 @@ public class PartialCvssVectorGenerator {
 
 				/**
 				 * ******************* CONFIDENTIALITY **************************
-				 * 
+				 *
 				 * (Privilege Escalation && (len(Logical Impact)==1 || Read || Indirect
 				 * Disclosure)) -> C: H
-				 * 
+				 *
 				 * Read || Indirect Disclosure-> C: LH
-				 * 
+				 *
 				 * ******************* INTEGRITY **************************
-				 * 
+				 *
 				 * (Privilege Escalation && (len(Logical Impact)==1) || Write || Resource
 				 * Removal)) -> I: H
-				 * 
+				 *
 				 * Write || Resource Removal -> I: LH
-				 * 
-				 * 
+				 *
+				 *
 				 * ******************* AVAILABILITY **************************
-				 * 
+				 *
 				 * (Privilege Escalation && (len(Logical Impact)==1 || Service Interrupt)) -> A:
 				 * H
-				 * 
+				 *
 				 * Service Interrupt -> A:LH
-				 * 
+				 *
 				 */
 				if (predictionsForNounGroup.contains(VDOLabel.PRIVILEGE_ESCALATION)
 						&& (predictionsForNounGroup.size() == 1 || predictionsForNounGroup.contains(VDOLabel.READ) || predictionsForNounGroup.contains(VDOLabel.INDIRECT_DISCLOSURE))
@@ -156,17 +149,6 @@ public class PartialCvssVectorGenerator {
 	}
 
 	/**
-<<<<<<< HEAD
-	 * Brute forces all possible output vectors
-	 * @param args
-	 */
-	public static void main(String[] args) {
-		Set<VDOLabel> enumSet = new HashSet<>(Arrays.asList(VDOLabel.values()));
-		Set<VDOLabel> currentSubset = new HashSet<>();
-		Set<String> outputs = new HashSet<>();
-		// recursively compute all outputs over the power set of vdolabel
-		evaluateSubset(outputs, new PartialCvssVectorGenerator(), enumSet, currentSubset);
-=======
 	 * Brute forces all possible output vectors, stores in a csv.
 	 * this is not maintained code.
 	 * @param args
@@ -178,18 +160,13 @@ public class PartialCvssVectorGenerator {
 		// recursively compute all outputs over the power set of vdolabel
 		evaluateSubset(outputs, new PartialCvssVectorGenerator(), enumSet, currentSubset);
 		outputs = outputs.stream().map(s->s.substring(0,s.length()-1)).collect(Collectors.toSet()); //remove trailing commas
->>>>>>> origin/cvss-mods
 		System.out.println(outputs.size());
 		System.out.println(enumSet.size());
 		String outputPath = "nvip_data/cvss/vector_outputs.csv";
 		try {
 			FileWriter writer = new FileWriter(outputPath);
 			for (String output : outputs) {
-<<<<<<< HEAD
-				writer.append(output.substring(0, output.length() - 1)); // remove trailing commas
-=======
 				writer.append(output);
->>>>>>> origin/cvss-mods
 				writer.append("\n");
 			}
 			writer.flush();
@@ -197,12 +174,6 @@ public class PartialCvssVectorGenerator {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-<<<<<<< HEAD
-		CvssScoreCalculator calc = new CvssScoreCalculator();
-		for (String output : outputs) {
-			if (calc.lookupCvssScore(output.split(",")) != calc.getCvssScoreJython(output.split(","))[0]) {
-				System.out.println(output);
-=======
 		// compare old and new cvss methods
 		CvssScoreCalculator calc = new CvssScoreCalculator();
 		for (String output : outputs) {
@@ -211,7 +182,6 @@ public class PartialCvssVectorGenerator {
 			System.out.printf("%.3f, %.3f\n", old, imp);
 			if (old != imp) {
 				System.out.println("MISMATCH");
->>>>>>> origin/cvss-mods
 			}
 		}
 	}
