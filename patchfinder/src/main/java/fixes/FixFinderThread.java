@@ -55,7 +55,7 @@ public class FixFinderThread implements Runnable {
 	 */
 	@Override
 	public void run() {
-
+		// TODO: This
 	}
 
 }

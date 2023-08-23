@@ -92,6 +92,9 @@ public class PatchFinderThread implements Runnable {
 			}
 		}
 
+		//TODO: Instead of collecting patch commits for a final insertion, change getPatchCommits
+		// to addAndInsertPatchCommits, so they program is not dependant on run completion
+
 		// Add found commits to total list after finished
 		PatchFinder.getPatchCommits().addAll(foundPatchCommits); // TODO: This may be causing race conditions
 

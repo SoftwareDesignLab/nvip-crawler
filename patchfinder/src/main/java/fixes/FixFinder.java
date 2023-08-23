@@ -66,17 +66,14 @@ public class FixFinder {
 		// Init FixUrlFinders
 		logger.info("Initializing FixUrlFinders...");
 
-		// Create instances of your FixUrlFinder implementations
-		VulnerabilityFixUrlFinder vulnerabilityFixUrlFinder = new VulnerabilityFixUrlFinder(databaseHelper);
-		NvdFixUrlFinder nvdFixUrlFinder = new NvdFixUrlFinder(databaseHelper);
-
 		// Add the instances to the fixURLFinders list
-		fixURLFinders.add(vulnerabilityFixUrlFinder);
-		fixURLFinders.add(nvdFixUrlFinder);
+		fixURLFinders.add(new VulnerabilityFixUrlFinder());
+		fixURLFinders.add(new NvdFixUrlFinder());
 
 		logger.info("Done initializing {} FixUrlFinders", fixURLFinders.size());
 	}
 
 	public static void run() {
+		// TODO: This
 	}
 }
