@@ -29,5 +29,5 @@ package fixes;
  * Model class for fixes found by fixfinder
  */
 public class Fix {
-
+    // TODO: This
 }

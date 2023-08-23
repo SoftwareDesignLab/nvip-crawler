@@ -8,13 +8,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class NvdFixUrlFinder extends FixUrlFinder {
-
-    private static DatabaseHelper databaseHelper;
     private static final Logger logger = LogManager.getLogger(VulnerabilityFixUrlFinder.class.getName());
 
-    public NvdFixUrlFinder(DatabaseHelper databaseHelper) {
-        NvdFixUrlFinder.databaseHelper = databaseHelper;
-    }
+    public NvdFixUrlFinder() { }
 
 
     @Override
@@ -23,7 +19,7 @@ public class NvdFixUrlFinder extends FixUrlFinder {
         ArrayList<String> urlList = new ArrayList<>();
 
         //get all sources for the cve
-        ArrayList<String> sources = databaseHelper.getCveSourcesNVD(cveId);
+        ArrayList<String> sources = FixFinder.getDatabaseHelper().getCveSourcesNVD(cveId);
 
         //test each source for a valid connection
         for (String source : sources) {
