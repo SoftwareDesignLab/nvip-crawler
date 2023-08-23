@@ -25,7 +25,7 @@ package edu.rit.se.nvip.crawler;
 
 import edu.rit.se.nvip.crawler.htmlparser.AbstractCveParser;
 import edu.rit.se.nvip.crawler.htmlparser.CveParserFactory;
-import edu.rit.se.nvip.crawler.SeleniumDriver;
+import edu.rit.se.nvip.crawler.selenium.SeleniumDriver;
 
 import edu.uci.ics.crawler4j.crawler.Page;
 import edu.uci.ics.crawler4j.crawler.WebCrawler;

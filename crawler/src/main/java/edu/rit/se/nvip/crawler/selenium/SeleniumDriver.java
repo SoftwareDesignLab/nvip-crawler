@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package edu.rit.se.nvip.crawler;
+package edu.rit.se.nvip.crawler.selenium;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -45,6 +45,8 @@ import org.openqa.selenium.interactions.MoveTargetOutOfBoundsException;
 
 import java.util.Map;
 import java.util.HashMap;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.time.Duration;
 
 /**
@@ -60,6 +62,7 @@ public class SeleniumDriver {
 	private static final int MAX_ACTION_TRIES = 3;
 
 	private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
+    private Lock lock = new ReentrantLock();
 	private WebDriver driver;
 	private Actions actions;
 
@@ -71,6 +74,10 @@ public class SeleniumDriver {
 	public WebDriver getDriver(){
 		return driver;
 	}
+
+    public Lock getLock() {
+        return lock;
+    }
 
 	public static WebDriver startDynamicWebDriver() {
 		System.setProperty("webdriver.chrome.silentOutput", "true");
@@ -124,6 +131,9 @@ public class SeleniumDriver {
                 break;
             } catch (TimeoutException e) {
                 logger.info("Retrying page get...");
+                tries++;
+            } catch (WebDriverException | NoSuchSessionException e) {
+                logger.warn("Driver crashed, restarting...");
                 tries++;
             }
         }
