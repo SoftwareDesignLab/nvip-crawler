@@ -373,7 +373,6 @@ public class DatabaseHelper {
 			while (rs.next()) {
 				sources.add(rs.getString("source"));
 			}
-			conn.close();
 		} catch (Exception e) {
 			logger.error("ERROR: Failed to get CVE sources for CVE ID {}\n{}", cve_id, e.getMessage());
 		}
@@ -616,7 +615,6 @@ public class DatabaseHelper {
 			while (rs.next()) {
 				sourceURL.add(rs.getString("source"));
 			}
-			conn.close();
 		} catch (Exception e) {
 			logger.error("ERROR: Failed to get source URL for CVE ID {}\n{}", cve_id, e.getMessage());
 		}

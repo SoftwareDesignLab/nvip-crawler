@@ -29,6 +29,7 @@ import env.FixFinderEnvVars;
 import db.DatabaseHelper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import java.util.*;
 
 /**
@@ -51,7 +52,7 @@ public class FixFinder {
 	public static DatabaseHelper getDatabaseHelper() { return databaseHelper; }
 
 	/**
-	 * Initialize the Fixfinder and its subcomponents
+	 * Initialize the FixFinder and its subcomponents
 	 */
 	public static void init() {
 		logger.info("Initializing FixFinder...");
@@ -69,6 +70,7 @@ public class FixFinder {
 		logger.info("Initializing FixUrlFinders...");
 
 		// Add the instances to the fixURLFinders list
+		fixURLFinders = new ArrayList<>();
 		fixURLFinders.add(new VulnerabilityFixUrlFinder());
 		fixURLFinders.add(new NvdFixUrlFinder());
 
