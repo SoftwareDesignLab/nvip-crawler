@@ -42,6 +42,8 @@ import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.ElementNotInteractableException;
 import org.openqa.selenium.interactions.MoveTargetOutOfBoundsException;
+import org.openqa.selenium.WebDriverException;
+import org.openqa.selenium.NoSuchSessionException;;
 
 import java.util.Map;
 import java.util.HashMap;
@@ -77,6 +79,14 @@ public class SeleniumDriver {
 
     public Lock getLock() {
         return lock;
+    }
+
+    public boolean tryObtainLock() {
+        return lock.tryLock();
+    }
+
+    public void unlock() {
+        lock.unlock();
     }
 
 	public static WebDriver startDynamicWebDriver() {
@@ -132,8 +142,11 @@ public class SeleniumDriver {
             } catch (TimeoutException e) {
                 logger.info("Retrying page get...");
                 tries++;
-            } catch (WebDriverException | NoSuchSessionException e) {
+            } catch (WebDriverException e) {
                 logger.warn("Driver crashed, restarting...");
+                deleteAllCookies();
+                driver.close();
+                driver = startDynamicWebDriver();
                 tries++;
             }
         }

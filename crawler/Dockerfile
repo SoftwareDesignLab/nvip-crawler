@@ -24,7 +24,7 @@ ADD resources /usr/local/lib/resources
 VOLUME /usr/local/lib/output
 ADD output /usr/local/lib/output
 
-COPY ../nvip_data /usr/local/lib/nvip_data
+# COPY ../nvip_data /usr/local/lib/nvip_data
 COPY --from=builder /home/app/target/nvip_lib /usr/local/lib/nvip_lib
 COPY --from=builder /home/app/target/crawler-1.0.jar /usr/local/lib/crawler-1.0.jar
 

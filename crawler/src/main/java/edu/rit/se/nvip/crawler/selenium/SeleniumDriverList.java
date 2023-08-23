@@ -28,8 +28,6 @@ import org.apache.logging.log4j.Logger;
 
 import edu.rit.se.nvip.crawler.selenium.SeleniumDriver;
 
-import java.util.concurrent.locks.Lock;
-
 public class SeleniumDriverList {
 	SeleniumDriver drivers[] = null;
 
@@ -38,12 +36,12 @@ public class SeleniumDriverList {
 	}
 
 	public SeleniumDriver getAvailableDriver() {
-		for(SeleniumDriver driver : drivers) {
-			Lock lock = driver.getLock();
-
-			if (lock.tryLock())
-			{
-			    return driver;
+		synchronized (drivers) {
+			for(SeleniumDriver driver : drivers) {
+				if (driver.tryObtainLock())
+				{
+				    return driver;
+				}
 			}
 		}
 		return null;
