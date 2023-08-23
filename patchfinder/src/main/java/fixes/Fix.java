@@ -34,36 +34,32 @@ import java.util.ArrayList;
  *
  */
 public class Fix {
-    private final String fix_id;
+    private final String cve_id;
     private final String fix_url;
     private final String fix_description;
-    private final String source_url_id;
     //store the source urls
     private final ArrayList<String> source_urls;
 
     /**
      * Model class for fix objects
      *
-     * @param fix_id         the ID of the fix
+     * @param cve_id         the ID of the cve
      * @param fix_url        the URL of the fix
      * @param fix_description the description of the fix
-     * @param source_url_id  the ID of the source URL
      * @param source_urls    the source URLs
      */
-    public Fix(String fix_id, String fix_url, String fix_description, String source_url_id, ArrayList<String> source_urls) {
-        super();
-        this.fix_id = fix_id;
+    public Fix(String cve_id, String fix_url, String fix_description, ArrayList<String> source_urls) {
+        this.cve_id = cve_id;
         this.fix_url = fix_url;
         this.fix_description = fix_description;
-        this.source_url_id = source_url_id;
         this.source_urls = source_urls;
     }
 
     /**
-     * @return the fix_id
+     * @return the cve_id
      */
-    public String getFix_id() {
-        return fix_id;
+    public String getCve_id() {
+        return cve_id;
     }
 
     /**
@@ -78,13 +74,6 @@ public class Fix {
      */
     public String getFix_description() {
         return fix_description;
-    }
-
-    /**
-     * @return the source_url_id
-     */
-    public String getSource_url_id() {
-        return source_url_id;
     }
 
     /**
@@ -117,7 +106,7 @@ public class Fix {
      * @return the fix as a string
      */
     public String toString() {
-        return "Fix [fix_id=" + fix_id + ", fix_url=" + fix_url + ", fix_description=" + fix_description
-                + ", source_url_id=" + source_url_id + ", source_urls=" + source_urls + "]";
+        return "Fix [cve_id=" + cve_id + ", fix_url=" + fix_url + ", fix_description=" + fix_description
+                + ", source_urls=" + source_urls + "]";
     }
 }
