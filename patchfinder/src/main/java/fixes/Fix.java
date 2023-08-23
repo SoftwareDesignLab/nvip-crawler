@@ -26,8 +26,19 @@ package fixes;
 
 
 /**
- * Model class for fixes found by fixfinder
+ * Model class for fixes found by FixFinder
+ *
+ * @author Paul Vickers
+ *
  */
 public class Fix {
-    // TODO: This
+    private String cveID;
+    private String fixDescription;
+    private String sourceURL;
+
+    public Fix(String cveID, String fixDescription, String sourceURL){
+        this.cveID = cveID;
+        this.fixDescription = fixDescription;
+        this.sourceURL = sourceURL;
+    }
 }
