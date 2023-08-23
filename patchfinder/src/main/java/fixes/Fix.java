@@ -32,24 +32,24 @@ import java.util.ArrayList;
  */
 public class Fix {
     private final String cve_id;
-    private final String fix_url;
+    private final String fix_id;
     private final String fix_description;
-    //store the source urls
-    private final ArrayList<String> source_urls;
+    private final String source_url_id;
+    private final ArrayList<String> source_urls = new ArrayList<>();
 
     /**
      * Model class for fix objects
      *
      * @param cve_id         the ID of the cve
-     * @param fix_url        the URL of the fix
+     * @param fix_id        the URL of the fix
      * @param fix_description the description of the fix
-     * @param source_urls    the source URLs
+     * @param source_url_id    the source URLs
      */
-    public Fix(String cve_id, String fix_url, String fix_description, ArrayList<String> source_urls) {
+    public Fix(String cve_id, String fix_id, String fix_description, String source_url_id) {
         this.cve_id = cve_id;
-        this.fix_url = fix_url;
+        this.fix_id = fix_id;
         this.fix_description = fix_description;
-        this.source_urls = source_urls;
+        this.source_url_id = source_url_id;
     }
 
     /**
@@ -62,8 +62,8 @@ public class Fix {
     /**
      * @return the fix_url
      */
-    public String getFix_url() {
-        return fix_url;
+    public String getFix_id() {
+        return fix_id;
     }
 
     /**
@@ -103,7 +103,7 @@ public class Fix {
      * @return the fix as a string
      */
     public String toString() {
-        return "Fix [cve_id=" + cve_id + ", fix_url=" + fix_url + ", fix_description=" + fix_description
+        return "Fix [cve_id=" + cve_id + ", fix_url=" + fix_id + ", fix_description=" + fix_description
                 + ", source_urls=" + source_urls + "]";
     }
 }
