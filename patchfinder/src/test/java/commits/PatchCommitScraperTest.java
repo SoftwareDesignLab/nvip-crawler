@@ -1,3 +1,5 @@
+package commits;
+
 /**
  * Copyright 2023 Rochester Institute of Technology (RIT). Developed with
  * government support under contract 70RSAT19CB0000020 awarded by the United
@@ -21,7 +23,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package commits;
 
 import org.junit.Assert;
 import org.junit.jupiter.api.Assertions;
@@ -36,11 +37,12 @@ import java.util.regex.Pattern;
 
 import static org.junit.Assert.fail;
 
-//@RunWith(MockitoJUnitRunner.class)
+/**
+ * Unit tests for PatchCommitScraper class
+ *
+ * @author Richard Sawh
+ */
 public class PatchCommitScraperTest {
-    private PatchCommitScraper patchCommitScraper;
-    private static final Pattern[] patchPatterns = new Pattern[] {Pattern.compile("vulnerability|Vulnerability|vuln|Vuln|VULN[ #]*([0-9]+)")};
-
 
     @Test
     public void testParseCommits_NoCommitsFound() {

@@ -38,14 +38,14 @@ import java.util.ArrayList;
 import java.util.stream.Collectors;
 
 /**
- * Char2vec class for words embedding into 1D-vector on a character level
+ * Char2Vector class for words embedding into 1D-vector on a character level
  * Uses a Keras model taken from https://hackernoon.com/chars2vec-character-based-language-model-for-handling-real-world-texts-with-spelling-errors-and-a3e4053a147d
  *
  * @author Igor Khokhlov
  *
  */
 
-public class Char2vec {
+public class Char2Vector {
 	//Supported symbols
 	private final char[] dict = {'!', '"', '#', '$', '%', '&', '\'', '(', ')', '*', '+', ',', '-', '.',
             '/', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ':', ';', '<',
@@ -68,7 +68,7 @@ public class Char2vec {
 	 * @param modelConfigPath Model config file path (json file)
 	 * @param modelWeightsPath Model weights' path (h5 file)
 	 */	
-	public Char2vec(String modelConfigPath, String modelWeightsPath) {
+	public Char2Vector(String modelConfigPath, String modelWeightsPath) {
 		super();
 
 		try {
@@ -92,7 +92,7 @@ public class Char2vec {
 	}
 		
 	/**
-	 * Preprocess the word into the INDArray understanble by char2vec model
+	 * Preprocess the word into the INDArray understandable by Char2Vector model
 	 * 
 	 * @param wordToVec input word
 	 * @return features array that can be fed into the model

@@ -1,6 +1,6 @@
 # ---       DB VARS       ---
 DB_TYPE=mysql
-HIKARI_URL=jdbc:mysql://host.docker.internal:3306/nvip?useSSL=false&allowPublicKeyRetrieval=true
+HIKARI_URL=jdbc:mysql://localhost:3306/nvip?useSSL=false&allowPublicKeyRetrieval=true
 HIKARI_USER=root
 HIKARI_PASSWORD=root
 

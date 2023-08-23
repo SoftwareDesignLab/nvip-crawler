@@ -1,3 +1,5 @@
+package commits;
+
 /**
  * Copyright 2023 Rochester Institute of Technology (RIT). Developed with
  * government support under contract 70RSAT19CB0000020 awarded by the United
@@ -21,9 +23,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package commits;
 
-import org.eclipse.jgit.revwalk.RevCommit;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -32,7 +32,11 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-
+/**
+ * Unit tests for PatchCommit class
+ *
+ * @author Richard Sawh
+ */
 public class PatchCommitTest {
 
     @Test

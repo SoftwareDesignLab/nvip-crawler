@@ -39,7 +39,6 @@ import java.net.URL;
 import java.util.*;
 import java.util.regex.Pattern;
 
-
 /**
  * Responsible for finding possible patch source URLs for the PatchFinder
  *

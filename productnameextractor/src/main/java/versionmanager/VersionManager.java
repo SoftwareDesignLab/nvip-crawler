@@ -135,7 +135,7 @@ public class VersionManager {
                     afterFlag = false;
                 }
 
-                //If word is "before", "after", or "through", sets appropriate flag
+            //If word is "before", "after", or "through", sets appropriate flag
             } else if (versionWord.equals("before")) {
                 beforeFlag = true;
             } else if (versionWord.equals("after")) {
@@ -143,13 +143,13 @@ public class VersionManager {
             } else if (versionWord.equals("through")) {
                 throughFlag = true;
 
-                //Handles "1.8 to 4.2", "prior to 3.4", "prior 1.3"
+            //Handles "1.8 to 4.2", "prior to 3.4", "prior 1.3"
             } else if (versionWord.equals("prior")) {
                 beforeFlag = true;
             } else if (versionWord.equals("to") && !beforeFlag) {
                 throughFlag = true;
 
-                //Handles "6.3.1 and earlier" "6.3.1 version and prior versions" as well as after and later
+            //Handles "6.3.1 and earlier" "6.3.1 version and prior versions" as well as after and later
             } else if (versionWord.equals("and")) {
                 try {
                     if (versionWords[i + 1].equals("earlier") || versionWords[i + 1].equals("prior")) {
@@ -181,7 +181,7 @@ public class VersionManager {
                     break;
                 }
 
-                //Handles "between 1.5 and 2.8" case
+            //Handles "between 1.5 and 2.8" case
             } else if (versionWord.equals("between")) {
                 String version1 = null;
                 String version2 = null;
@@ -220,7 +220,8 @@ public class VersionManager {
                 } catch (IndexOutOfBoundsException e) {
                     break;
                 }
-                //Handles "3.9+" case
+
+            //Handles "3.9+" case
             } else if (versionWord.endsWith("+")) {
                 versionWord = versionWord.replace("+", "");
                 //"3.9.x+" becomes "3.9+"
@@ -231,7 +232,7 @@ public class VersionManager {
                     addRangeFromString("after " + versionWord);
                 }
 
-                //Handles "<1.2.4" case and "<, 1.2.4" case where 1.2.4 is the next word in line
+            //Handles "<1.2.4" case and "<, 1.2.4" case where 1.2.4 is the next word in line
             } else if (versionWord.startsWith("<")) {
                 //"<2.x" becomes "<2.9"
                 if (versionWord.endsWith(".x")) {
@@ -243,7 +244,7 @@ public class VersionManager {
                     beforeFlag = true;
                 }
 
-                //Handles ">1.2.4" case and ">, 1.2.4" case where 1.2.4 is the next word in line
+            //Handles ">1.2.4" case and ">, 1.2.4" case where 1.2.4 is the next word in line
             } else if (versionWord.startsWith(">")) {
                 //>2.x becomes >2
                 if (versionWord.endsWith(".x")) {
@@ -255,8 +256,8 @@ public class VersionManager {
                     afterFlag = true;
                 }
 
-                //Have to make sure "before 5.x" becomes "before 5.9"
-                //and standalone "8.2.x" works where "8.2.x" becomes 8.2 through 8.2.9
+            //Have to make sure "before 5.x" becomes "before 5.9"
+            //and standalone "8.2.x" works where "8.2.x" becomes 8.2 through 8.2.9
             } else if (versionWord.endsWith(".x")) {
                 String removedX = versionWord.substring(0, versionWord.length() - 2);
                 String replacedX = removedX + ".9";
@@ -288,7 +289,7 @@ public class VersionManager {
                     }
                     throughFlag = false;
 
-                    //Standalone "5.x" version becomes "5.0 through 5.9"
+                //Standalone "5.x" version becomes "5.0 through 5.9"
                 } else {
                     if(isVersion(removedX) && isVersion(replacedX)){
                         addRangeFromString(removedX + " through " + replacedX);

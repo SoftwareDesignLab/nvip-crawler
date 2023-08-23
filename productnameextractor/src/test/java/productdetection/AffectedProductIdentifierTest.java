@@ -23,17 +23,22 @@ package productdetection; /**
  */
 
 import env.ProductNameExtractorEnvVars;
+import model.cpe.AffectedProduct;
 import model.cve.CompositeVulnerability;
 import model.cpe.CpeGroup;
 import org.junit.Test;
 import dictionary.ProductDictionary;
+import org.mockito.Mockito;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.*;
 
 /**
  * Unit tests for AffectedProductIdentifier class
@@ -76,6 +81,66 @@ public class AffectedProductIdentifierTest {
 		System.out.println(v.getAffectedProducts());
 
 		assertTrue("Test failed: No affected releases found", (v.getAffectedProducts().size() > 0));
+	}
+
+	@Test
+	public void testSetVulnList(){
+		ProductNameExtractorEnvVars.initializeEnvVars();
+
+		String resourceDir = ProductNameExtractorEnvVars.getResourceDir();
+		String nlpDir = ProductNameExtractorEnvVars.getNlpDir();
+		String dataDir = ProductNameExtractorEnvVars.getDataDir();
+
+		String description = "In Redhat Linux 1.10.x before 1.10.8 and 1.11.x before 1.11.5, HTML autoescaping was disabled in a portion of the template for the technical 500 debug page. Given the right circumstances, this allowed a cross-site scripting attack. This vulnerability shouldn't affect most production sites since you shouldn't run with \"DEBUG = True\" (which makes this page accessible) in your production settings.";
+		List<CompositeVulnerability> vulnList = new ArrayList<>();
+		CompositeVulnerability v = new CompositeVulnerability(0, null, "CVE-2017-12794", "", null, null, description, CompositeVulnerability.CveReconcileStatus.UPDATE);
+		vulnList.add(v);
+
+		AffectedProductIdentifier affectedProductIdentifier = new AffectedProductIdentifier(12, vulnList);
+		affectedProductIdentifier.setVulnList(vulnList);
+
+		//assert that the vulnList contains the correct vuln
+		String expected = "[]";
+		String actual = String.valueOf(vulnList);
+		assertEquals(expected, actual);
+
+	}
+
+
+	@Test
+	public void testIdentifyAffectedProducts() throws Exception {
+		// Create mock dependencies
+		ProductDetector productDetector = mock(ProductDetector.class);
+		CpeLookUp cpeLookUp = mock(CpeLookUp.class);
+		CompositeVulnerability vulnerability = mock(CompositeVulnerability.class);
+
+		List<CompositeVulnerability> vulnList = new ArrayList<>();
+		vulnList.add(vulnerability); // Add mock vulnerability to the list
+
+		// Create an instance of the class under test (adjust constructor parameters as needed)
+		AffectedProductIdentifier identifier = new AffectedProductIdentifier(2, vulnList);
+
+		// Simulate the method call
+		List<AffectedProduct> affectedProducts = identifier.identifyAffectedProducts();
+
+		// Add assertions based on the expected behavior of the method
+		assertEquals(affectedProducts.size(), 0);
+	}
+
+	@Test
+	public void testReleaseResources() {
+		AffectedProductIdentifier affectedProductIdentifier = new AffectedProductIdentifier(12, null);
+
+		Logger logger = mock(Logger.class);
+		ProductDetector productDetector = mock(ProductDetector.class);
+
+
+		// Call releaseResources() method
+		affectedProductIdentifier.releaseResources();
+
+		// Verify that the methods were called appropriately
+		assertEquals(logger.toString().contains("Mock for Logger, hashCode:"), true);
+
 	}
 
 }

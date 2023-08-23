@@ -28,7 +28,6 @@ package model.cpe;
  * ClassifiedWord class for results of words classification in the CVE description into "Software Name", "Software Version", and "Others"
  *
  * Enumeration WordType
- *
  * SOFTWARE_NAME
  * SOFTWARE_VERSION
  * OTHER

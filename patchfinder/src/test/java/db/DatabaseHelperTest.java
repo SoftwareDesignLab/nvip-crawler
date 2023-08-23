@@ -1,10 +1,37 @@
 package db;
 
+/**
+ * Copyright 2023 Rochester Institute of Technology (RIT). Developed with
+ * government support under contract 70RSAT19CB0000020 awarded by the United
+ * States Department of Homeland Security.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 import model.CpeGroup;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.junit.Before;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.Test;
+import utils.EnvVarLoader;
+
+import java.io.FileNotFoundException;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -13,19 +40,21 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
+/**
+ * Unit tests for DatabaseHelper class
+ *
+ * @author Richard Sawh
+ */
 public class DatabaseHelperTest {
-    private static final String DATABASE_TYPE = "mysql";
-    private static final String HIKARI_URL = "jdbc:mysql://localhost:3306/nvip?useSSL=false&allowPublicKeyRetrieval=true";
-    private static final String HIKARI_USER = "root";
-    private static final String HIKARI_PASSWORD = System.getenv("HIKARI_PASSWORD");
     private static final String TEST_CVE_ID = "CVE-2023-1001";
 
 
     private static DatabaseHelper databaseHelper;
 
     @Before
-    public void setUp() {
-        databaseHelper = new DatabaseHelper(DATABASE_TYPE, HIKARI_URL, HIKARI_USER, HIKARI_PASSWORD);
+    public void setUp() throws FileNotFoundException {
+        final Map<String, String> vars = EnvVarLoader.loadEnvVarsFromFile("src/test/test_env.list");
+        databaseHelper = new DatabaseHelper(vars.get("DB_TYPE"), vars.get("HIKARI_URL"), vars.get("HIKARI_USER"), vars.get("HIKARI_PASSWORD"));
     }
 
     @AfterAll

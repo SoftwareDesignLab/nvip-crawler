@@ -105,9 +105,12 @@ public class PatchFinder {
 	 * Find patches for a given map of affected products
 	 * @param affectedProducts map of products to find patches for
 	 * @throws IOException if an IO error occurs while attempting to find patches
+	 *
+	 * @return number of successfully imported patch commits
 	 */
-	public static void run(Map<String, CpeGroup> affectedProducts, int cveLimit) throws IOException {
+	public static int run(Map<String, CpeGroup> affectedProducts, int cveLimit) throws IOException {
 		final long totalStart = System.currentTimeMillis();
+		int successfulInserts = 0;
 
 		// Attempt to find source urls from pre-written file (ensure file existence/freshness)
 		final Map<String, ArrayList<String>> possiblePatchURLs = getSourceDict();
@@ -156,7 +159,7 @@ public class PatchFinder {
 			);
 		} else {
 			logger.warn("No sources found for {} CVE(s)", possiblePatchURLs.size());
-			return;
+			return successfulInserts;
 		}
 
 
@@ -216,8 +219,10 @@ public class PatchFinder {
 				}
 			}
 
+			successfulInserts = patchCommits.size() - failedInserts - existingInserts;
+
 			logger.info("Successfully inserted {} patch commits into the database in {} seconds ({} failed {} already existed)",
-					patchCommits.size() - failedInserts - existingInserts,
+					successfulInserts,
 					(System.currentTimeMillis() - insertPatchesStart) / 1000,
 					failedInserts,
 					existingInserts
@@ -232,6 +237,8 @@ public class PatchFinder {
 				Math.min(cveLimit, affectedProducts.size()),
 				delta
 		);
+
+		return successfulInserts;
 	}
 
 	/**
