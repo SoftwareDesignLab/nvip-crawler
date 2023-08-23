@@ -51,24 +51,25 @@ public class FixFinderThread implements Runnable {
 	}
 
 	/**
-	 * Used for cloning, crawling, and deleting product repos to find patch commits
+	 * The run method is meant for the thread to execute the other functions and to find the fixes in the sources using jsoup.
 	 */
 	// TODO: this class will mostly be used for delegation. For the url passed in, it will be checked to see which parser
 	//  should be used to handle scraping data. I've implemented a basic abstract class and the NVD specific parser as an example.
 	@Override
 	public void run() {
+		// TODO: This
 
-		AbstractFixParser parser = null;
+	}
 
-		// Check to see if we have a parser for the specific domain already (will be way more in the future than just nvd)
-		if(url.contains("nvd.nist.gov")){
-			parser = new NVDParser(url);
+	/**
+	 * This method is used to find the fixes from the source using jsoup.
+	 * @param source
+	 * @param cve
+	 * @param foundPatchCommits
+	 */
+	private void findFixesFromSource(ArrayList<PatchCommit> foundPatchCommits, String cve, String source) {
+		//TODO: This
 
-		// If no above domains were recognized, then we use generic parser to try to find a fix?
-		}else parser = new GenericParser(url);
-
-		// After determining correct parser, parse the web page for the description and set it
-		this.description = parser.parseWebPage();
 	}
 
 }
