@@ -24,40 +24,51 @@ package fixes;
  * SOFTWARE.
  */
 
-import env.FixFinderEnvVars;
-import patches.PatchCommit;
-import patches.PatchCommitScraper;
+import fixes.parsers.AbstractFixParser;
+import fixes.parsers.GenericParser;
+import fixes.parsers.NVDParser;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.eclipse.jgit.revwalk.RevWalk;
-import org.jsoup.Connection;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
-import utils.GitController;
-
-import java.io.IOException;
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
- * Runnable thread class for multithreaded patch finder
+ * Runnable thread class for multithreaded FixFinder
  *
- * Used for finding patches from sources defined in a provided list
+ * Used for finding fixes from a provided source
  *
  * @author Dylan Mulligan
+ * @author Paul Vickers
  */
 public class FixFinderThread implements Runnable {
 	private static final Logger logger = LogManager.getLogger(FixFinder.class.getName());
+	private final String url;
+	private String description;
+
+	// Get the extracted fix description
+	public String getDescription(){ return description; }
+
+	public FixFinderThread(String url){
+		this.url = url;
+	}
 
 	/**
 	 * Used for cloning, crawling, and deleting product repos to find patch commits
 	 */
+	// TODO: this class will mostly be used for delegation. For the url passed in, it will be checked to see which parser
+	//  should be used to handle scraping data. I've implemented a basic abstract class and the NVD specific parser as an example.
 	@Override
 	public void run() {
-		// TODO: This
+
+		AbstractFixParser parser = null;
+
+		// Check to see if we have a parser for the specific domain already (will be way more in the future than just nvd)
+		if(url.contains("nvd.nist.gov")){
+			parser = new NVDParser(url);
+
+		// If no above domains were recognized, then we use generic parser to try to find a fix?
+		}else parser = new GenericParser(url);
+
+		// After determining correct parser, parse the web page for the description and set it
+		this.description = parser.parseWebPage();
 	}
 
 }
