@@ -53,11 +53,23 @@ public class FixFinderThread implements Runnable {
 	private static final Logger logger = LogManager.getLogger(FixFinder.class.getName());
 
 	/**
-	 * Used for cloning, crawling, and deleting product repos to find patch commits
+	 * The run method is meant for the thread to execute the other functions and to find the fixes in the sources using jsoup.
 	 */
 	@Override
 	public void run() {
 		// TODO: This
+
+	}
+
+	/**
+	 * This method is used to find the fixes from the source using jsoup.
+	 * @param source
+	 * @param cve
+	 * @param foundPatchCommits
+	 */
+	private void findFixesFromSource(ArrayList<PatchCommit> foundPatchCommits, String cve, String source) {
+		//TODO: This
+
 	}
 
 }
