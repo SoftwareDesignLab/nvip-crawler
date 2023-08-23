@@ -80,7 +80,7 @@ class openAiMessageHandler:
             self.wait_for_limiters(request)
             self.requestExecutor.submit(lambda: self.send_request(request))
 
-    def send_request(self, request):
+    def send_request(self, request): #sends rabbit requests
         # RabbitMQ configuration for the output queue
         rabbitmq_host = 'localhost'  # host.docker.internal
         output_queue = 'openai_responses'
