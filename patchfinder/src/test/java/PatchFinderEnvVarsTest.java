@@ -34,7 +34,7 @@ public class PatchFinderEnvVarsTest {
 
     @Test
     public void initializeAndGetEnvVarsTest(){
-        PatchFinderEnvVars.initializeEnvVars(true);
+        PatchFinderEnvVars.initializeEnvVars();
 
         // Default values for main environment variables
         assertEquals(20, PatchFinderEnvVars.getCveLimit());
@@ -43,6 +43,8 @@ public class PatchFinderEnvVarsTest {
         assertEquals(addressBases[1], "https://www.gitlab.com/");
         assertEquals(1000, PatchFinderEnvVars.getCloneCommitThreshold());
         assertEquals(50000, PatchFinderEnvVars.getCloneCommitLimit());
+        assertEquals("patchfinder/src/main/resources/patch-repos", PatchFinderEnvVars.getClonePath());
+        assertEquals("patchfinder/src/main/resources/source_dict.json", PatchFinderEnvVars.getPatchSrcUrlPath());
 
         // Default values for database environment variables
         assertEquals("mysql", PatchFinderEnvVars.getDatabaseType());
@@ -52,7 +54,7 @@ public class PatchFinderEnvVarsTest {
 
         // Default values for RabbitMQ environment variables
         assertEquals(60, PatchFinderEnvVars.getRabbitPollInterval());
-        assertEquals("host.docker.internal", PatchFinderEnvVars.getRabbitHost());
+        assertEquals("localhost", PatchFinderEnvVars.getRabbitHost());
         assertEquals("guest", PatchFinderEnvVars.getRabbitUsername());
         assertEquals("guest", PatchFinderEnvVars.getRabbitPassword());
 

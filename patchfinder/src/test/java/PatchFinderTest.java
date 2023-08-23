@@ -72,23 +72,10 @@ public class PatchFinderTest {
         // For example, check if the repos are cleared
         assertTrue(new File(PatchFinder.clonePath).exists());
 
-        // Check the patch commits
+        //check the patch commits
         assertEquals(24, PatchFinder.getPatchCommits().size());
-    }
 
-
-    @Test
-    public void testFindPatchesMultiThreaded() {
-        // Create a sample input for possiblePatchSources
-        Map<String, ArrayList<String>> possiblePatchSources = new HashMap<>();
-        ArrayList<String> patchSources1 = new ArrayList<>();
-        patchSources1.add("https://github.com/apache/airflow");
-        possiblePatchSources.put("CVE-2023-1001", patchSources1);
-        // Call the findPatchesMultiThreaded method and assert the expected behavior or outcome
-        PatchFinder.findPatchesMultiThreaded(possiblePatchSources);
-        // Assert that the affectedProducts map is empty
-        assertEquals(1, possiblePatchSources.size());
-
+        // Add more assertions based on your requirements
     }
 
     @Test

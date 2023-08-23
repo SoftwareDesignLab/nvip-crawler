@@ -1,0 +1,92 @@
+version: '3.8'
+
+services:
+  crawler:
+    image: ghcr.io/softwaredesignlab/nvip-crawler:latest
+    depends_on:
+      liquibase-migrations:
+        condition: service_completed_successfully
+      taskmanager:
+        condition: service_started
+      email:
+        condition: service_started
+    build: ./crawler
+    volumes:
+      - 'crawler-output:/usr/local/lib/output'
+      - 'exploit-repo:/usr/local/lib/nvip_data/exploit-repo'
+      - 'mitre-cve:/usr/local/lib/nvip_data/mitre-cve'
+    env_file:
+      - ./nvip-docker.env
+#    deploy:
+#      resources:
+#        limits:
+#          memory: 10G
+
+  patchfinder:
+    image: ghcr.io/softwaredesignlab/nvip-patchfinder:latest
+    depends_on:
+      - crawler
+    build: ./patchfinder
+#    volumes:
+#      - ''
+    env_file:
+      - ./nvip-docker.env
+
+  productnameextractor:
+    image: ghcr.io/softwaredesignlab/nvip-productnameextractor:latest
+    depends_on:
+      - crawler
+    build: ./productnameextractor
+#    volumes:
+#      - ''
+    env_file:
+      - ./nvip-docker.env
+
+  reconciler:
+    image: ghcr.io/softwaredesignlab/nvip-reconciler:latest
+    depends_on:
+      - crawler
+    build: ./reconciler
+#    volumes:
+#      - ''
+    env_file:
+      - ./nvip-docker.env
+
+  mysql:
+    image: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: nvip
+    healthcheck:
+      test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost" ]
+      timeout: 20s
+      retries: 10
+
+  liquibase-migrations:
+    depends_on:
+      mysql:
+        condition: service_healthy
+    image: liquibase/liquibase
+    environment:
+      INSTALL_MYSQL: true
+      LIQUIBASE_SEARCH_PATH: '/liquibase/changelog/'
+      LIQUIBASE_COMMAND_URL: 'jdbc:mysql://mysql:3306/nvip?useSSL=false&allowPublicKeyRetrieval=true'
+    volumes:
+      - ./nvip_data/mysql-database/newDB/:/liquibase/changelog/
+    command: --defaults-file=/liquibase/changelog/liquibase.properties update
+
+  taskmanager:
+    image: rabbitmq:3.9-management
+    ports:
+      - '8080:15672'
+
+  email:
+    image: mailhog/mailhog
+
+volumes:
+  exploit-repo:
+  mitre-cve:
+  crawler-output:
+
+networks:
+  nvip_network:
