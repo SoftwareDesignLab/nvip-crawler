@@ -1,4 +1,6 @@
-package fixes; /**
+package fixes;
+
+/**
  * Copyright 2023 Rochester Institute of Technology (RIT). Developed with
  * government support under contract 70RSAT19CB0000020 awarded by the United
  * States Department of Homeland Security.
@@ -51,8 +53,7 @@ import db.DatabaseHelper;
  *
  * @author Dylan Mulligan
  */
-// TODO: Make this an abstract class, to be extended/implemented to source data from a specific source
-// TODO: Implement VulnerabilityFixUrlFinder & NvdFixUrlFinder
+
 public abstract class FixUrlFinder {
 
 	protected static final Logger logger = LogManager.getLogger(FixUrlFinder.class.getName());
