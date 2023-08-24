@@ -35,13 +35,13 @@ import java.util.List;
  *
  * @author Dylan Mulligan
  */
-public class FixFinderMain {
+public class FixFinderMain extends Thread {
     private final static Logger logger = LogManager.getLogger(FixFinderMain.class);
 
     /**
      * Entry point for the FixFinder, initializes necessary classes and start listening for jobs with RabbitMQ
      */
-    public static void run() {
+    public void run() {
         logger.info("Starting FixFinder...");
 
         // Init FixFinder
@@ -60,7 +60,7 @@ public class FixFinderMain {
         }
     }
 
-    private static void runDb() {
+    private void runDb() {
         // Just for testing
         List<String> cveIds = new ArrayList<>();
         cveIds.add("CVE-2022-2967");
@@ -72,11 +72,11 @@ public class FixFinderMain {
         }
     }
 
-    private static void runRabbit() {
+    private void runRabbit() {
         // TODO: RabbitMQ integration, wait until PoC is accepted to complete this
     }
 
     public static void main(String[] args) {
-        run();
+//        run();
     }
 }
