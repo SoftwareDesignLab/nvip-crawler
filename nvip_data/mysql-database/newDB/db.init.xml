@@ -804,11 +804,25 @@
                                  constraintName="nvdsourceurl_cve_id_fk"/>
     </changeSet>
 
-    <changeSet  id="addUniqueConstraintNvdSourceUrl" author="dylan">
+    <changeSet id="addUniqueConstraintNvdSourceUrl" author="dylan">
         <addUniqueConstraint tableName="nvdsourceurl" columnNames="cve_id, source_url" constraintName="uk_nvdsourceurl_cve_id_source_url"/>
     </changeSet>
 
-    <changeSet  id="createFixesTable" author="dylan">
+    <changeSet id="createFixSourceUrlTable" author="dylan">
+        <createTable tableName="fixsourceurl">
+            <column name="source_url_id" type="INT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false" unique="true"/>
+            </column>
+            <column name="cve_id" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="source_url" type="VARCHAR(500)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="createFixesTable" author="dylan">
         <createTable tableName="fixes">
             <column name="fix_id" type="INT" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false" unique="true"/>
@@ -816,7 +830,7 @@
             <column name="cve_id" type="VARCHAR(20)">
                 <constraints nullable="false"/>
             </column>
-            <column name="fix_description" type="VARCHAR(500)">
+            <column name="fix_description" type="VARCHAR(1000)">
                 <constraints nullable="false"/>
             </column>
             <column name="source_url_id" type="INT">
@@ -825,11 +839,11 @@
         </createTable>
 
         <addForeignKeyConstraint baseTableName="fixes" baseColumnNames="source_url_id"
-                                 referencedTableName="nvdsourceurl" referencedColumnNames="source_id"
+                                 referencedTableName="fixsourceurl" referencedColumnNames="source_url_id"
                                  constraintName="fixes_source_url_id_fk"/>
     </changeSet>
 
-    <changeSet  id="increaseNvdSourceUrlSize" author="dylan">
+    <changeSet id="increaseNvdSourceUrlSize" author="dylan">
         <modifyDataType columnName="source_url"
                         newDataType="VARCHAR(500)"
                         schemaName="nvip"
