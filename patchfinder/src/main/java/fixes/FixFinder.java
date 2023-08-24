@@ -30,6 +30,7 @@ import db.DatabaseHelper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -42,12 +43,13 @@ public class FixFinder {
 	private static final Logger logger = LogManager.getLogger(FixFinder.class.getName());
 	private static final ObjectMapper OM = new ObjectMapper();
 	private static DatabaseHelper databaseHelper;
-	private static List<FixUrlFinder> fixURLFinders;
+	private static final List<FixUrlFinder> fixURLFinders = new ArrayList<>();
 	private static final ArrayList<Fix> fixes = new ArrayList<>();
 	protected static int cveLimit = FixFinderEnvVars.getCveLimit();
 	protected static int maxThreads = FixFinderEnvVars.getMaxThreads();
 
 	public static DatabaseHelper getDatabaseHelper() { return databaseHelper; }
+	public static ArrayList<Fix> getFixes() { return fixes; }
 
 	/**
 	 * Initialize the FixFinder and its subcomponents
@@ -68,7 +70,6 @@ public class FixFinder {
 		logger.info("Initializing FixUrlFinders...");
 
 		// Add the instances to the fixURLFinders list
-		fixURLFinders = new ArrayList<>();
 		fixURLFinders.add(new VulnerabilityFixUrlFinder());
 		fixURLFinders.add(new NvdFixUrlFinder());
 
@@ -96,5 +97,17 @@ public class FixFinder {
 			FixFinderThread thread = new FixFinderThread(cveId, cveToUrls.get(cveId));
 			thread.run();
 		}
+
+		// After all threads have been run, insert found fixes into database
+		for(Fix fix : fixes){
+			try{
+				// TODO: fix this method and update database schema (ask dylan/dylan do this)
+				databaseHelper.insertFix(fix);
+			} catch (Exception e) {
+				logger.error("Error occured while inserting fix for CVE {} into database!", fix.getCveId());
+			}
+		}
+
+
 	}
 }

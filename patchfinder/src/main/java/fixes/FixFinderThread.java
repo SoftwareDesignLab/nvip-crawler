@@ -66,12 +66,15 @@ public class FixFinderThread implements Runnable {
 	 * Delegates each URL to its own specific parser or generic parser if no specific one has
 	 * been created for it (yet).
 	 *
-	 * For each URL, uses the parser to extract fixes and stores them in the list.
+	 * For each URL, uses the parser to extract fixes and stores them in the static list from FixFinder class.
 	 */
 	@Override
 	public void run() {
 		// TODO: This
 
+		// TODO: Create/finish parsers for web pages to find fix info. I already have the NVD one somewhat created for
+		//  the vulnerability CVE-2022-2967 (see FixFinderMain), finish that or I will so that we can actually have our
+		//  first working cve with a fix found.
 		for(String url : urls) {
 
 			AbstractFixParser parser;
@@ -83,7 +86,9 @@ public class FixFinderThread implements Runnable {
 			// If no above domains were recognized, then we use generic parser to try to find a fix?
 			} else parser = new GenericParser(cveId, url);
 
-			fixes = parser.parseWebPage();
+			// Add all fixes found to the static list defined in FixFinder
+			FixFinder.getFixes().addAll(parser.parseWebPage());
+
 			logger.info("{} fixes found for CVE {}", fixes.size(), cveId);
 		}
 

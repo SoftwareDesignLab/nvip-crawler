@@ -27,8 +27,8 @@ package fixes;
 /**
  * Model class for fixes found by FixFinder
  *
+ * @author Richard Sawh
  * @author Paul Vickers
- *
  */
 public class Fix {
     private final String cveId;
@@ -49,18 +49,14 @@ public class Fix {
     }
 
     /**
-     * @return the cve_id
+     * @return cveId
      */
-    public String getCve_id() {
-        return cveId;
-    }
+    public String getCveId() { return cveId; }
 
     /**
-     * @return the fix_description
+     * @return fixDescription
      */
-    public String getFix_description() {
-        return fixDescription;
-    }
+    public String getFixDescription() { return fixDescription; }
 
     /**
      * @return the fix as a string
