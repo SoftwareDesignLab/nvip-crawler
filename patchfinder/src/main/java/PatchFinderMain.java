@@ -40,7 +40,6 @@ import patches.PatchFinder;
  * @author Dylan Mulligan
  */
 public class PatchFinderMain {
-    private final static boolean devMode = false;
     private final static Logger logger = LogManager.getLogger(PatchFinderMain.class);
 
     /**
@@ -51,39 +50,51 @@ public class PatchFinderMain {
         // Init PatchFinder
         PatchFinder.init();
 
-        // If dev mode, pull directly from db
-        if(devMode) {
-            // Fetch affectedProducts from db
-            Map<String, CpeGroup> affectedProducts = PatchFinder.getDatabaseHelper().getAffectedProducts(null);
-            final int affectedProductsCount = affectedProducts.values().stream().map(CpeGroup::getVersionsCount).reduce(0, Integer::sum);
-            logger.info("Successfully got {} CVEs mapped to {} affected products from the database", affectedProducts.size(), affectedProductsCount);
+        // Determine run mode and start PatchFinder
+        switch (PatchFinderEnvVars.getInputMode()) {
+            default:
+            case "db":
+                runDb();
+                break;
+            case "rabbit":
+                runRabbit();
+                break;
+        }
+    }
+
+    private static void runDb() {
+        // Fetch affectedProducts from db
+        Map<String, CpeGroup> affectedProducts = PatchFinder.getDatabaseHelper().getAffectedProducts(null);
+        final int affectedProductsCount = affectedProducts.values().stream().map(CpeGroup::getVersionsCount).reduce(0, Integer::sum);
+        logger.info("Successfully got {} CVEs mapped to {} affected products from the database", affectedProducts.size(), affectedProductsCount);
+        try {
+            PatchFinder.run(affectedProducts, PatchFinderEnvVars.getCveLimit());
+        } catch (IOException e) {
+            logger.error("A fatal error attempting to complete jobs: {}", e.toString());
+        }
+    }
+
+    private static void runRabbit() {
+        // Start busy-wait loop
+        final Messenger rabbitMQ = new Messenger(
+                PatchFinderEnvVars.getRabbitHost(),
+                PatchFinderEnvVars.getRabbitUsername(),
+                PatchFinderEnvVars.getRabbitPassword()
+        );
+        logger.info("Starting busy-wait loop for jobs...");
+        while(true) {
             try {
-                PatchFinder.run(affectedProducts, PatchFinderEnvVars.getCveLimit());
-            } catch (IOException e) {
-                logger.error("A fatal error attempting to complete jobs: {}", e.toString());
-            }
-        } else {
-            // Start busy-wait loop
-            final Messenger rabbitMQ = new Messenger(
-                    PatchFinderEnvVars.getRabbitHost(),
-                    PatchFinderEnvVars.getRabbitUsername(),
-                    PatchFinderEnvVars.getRabbitPassword()
-            );
-            logger.info("Starting busy-wait loop for jobs...");
-            while(true) {
-                try {
-                    // Wait and get jobs
-                    final List<String> jobs = rabbitMQ.waitForProductNameExtractorMessage(PatchFinderEnvVars.getRabbitPollInterval());
+                // Wait and get jobs
+                final List<String> jobs = rabbitMQ.waitForProductNameExtractorMessage(PatchFinderEnvVars.getRabbitPollInterval());
 
-                    // If null is returned, either and error occurred or intentional program quit
-                    if(jobs == null) break;
+                // If null is returned, either and error occurred or intentional program quit
+                if(jobs == null) break;
 
-                    // Otherwise, run received jobs
-                    PatchFinder.run(jobs);
-                } catch (IOException | InterruptedException e) {
-                    logger.error("A fatal error occurred during job waiting: {}", e.toString());
-                    break;
-                }
+                // Otherwise, run received jobs
+                PatchFinder.run(jobs);
+            } catch (IOException | InterruptedException e) {
+                logger.error("A fatal error occurred during job waiting: {}", e.toString());
+                break;
             }
         }
     }

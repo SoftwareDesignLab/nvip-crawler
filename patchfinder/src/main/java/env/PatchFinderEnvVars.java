@@ -47,6 +47,7 @@ public class PatchFinderEnvVars {
 
     // Default values for main environment variables
 
+    private static String inputMode = "db";
     private static int cveLimit = 20;
     private static String[] addressBases = {"https://www.github.com/", "https://www.gitlab.com/"};
     private static int maxThreads = 10;
@@ -121,6 +122,7 @@ public class PatchFinderEnvVars {
     public static String getRabbitHost() { return rabbitHost; }
     public static String getRabbitUsername() { return rabbitUsername; }
     public static String getRabbitPassword() { return rabbitPassword; }
+    public static String getInputMode() { return inputMode; }
 
     /**
      * Attempts to fetch all required environment variables from props map safely, logging any
@@ -133,6 +135,14 @@ public class PatchFinderEnvVars {
      * @param fileProps map of environment variables read from file
      */
     private static void fetchEnvVars(Map<String, String> systemProps, Map<String, String> fileProps) {
+
+        if(systemProps.containsKey("INPUT_MODE")) {
+            inputMode = systemProps.get("INPUT_MODE");
+            logger.info("Setting INPUT_MODE to {}", inputMode);
+        } else if (fileProps.containsKey("INPUT_MODE")) {
+            inputMode = fileProps.get("INPUT_MODE");
+            logger.info("Setting INPUT_MODE to {}", inputMode);
+        } else logger.warn("Could not fetch INPUT_MODE from env vars, defaulting to {}", inputMode);
 
         if(systemProps.containsKey("CVE_LIMIT")) {
             cveLimit = Integer.parseInt(systemProps.get("CVE_LIMIT"));
