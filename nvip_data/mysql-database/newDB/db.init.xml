@@ -829,5 +829,12 @@
                                  constraintName="fixes_source_url_id_fk"/>
     </changeSet>
 
+    <changeSet  id="increaseNvdSourceUrlSize" author="dylan">
+        <modifyDataType columnName="source_url"
+                        newDataType="VARCHAR(500)"
+                        schemaName="nvip"
+                        tableName="nvdsourceurl"/>
+    </changeSet>
+
 
 </databaseChangeLog>

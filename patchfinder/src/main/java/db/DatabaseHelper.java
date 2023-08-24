@@ -57,7 +57,7 @@ public class DatabaseHelper {
 	private final String deletePatchCommitSql = "DELETE FROM patchcommit WHERE commit_sha = ?;";
 	private final String getCveSourcesSql = "SELECT cve_id, source_url FROM nvip.rawdescription WHERE source_url != \"\";";
 	private final String getCveSourcesNVDSql = "SELECT cve_id, source_url FROM nvip.nvdsourceurl WHERE cve_id = ?;";
-	private final String insertFixSourceURLSql = "INSERT INTO fixes (cve_id, source_url) VALUES (?, ?);";
+	private final String insertFixSourceURLSql = "INSERT INTO fixsourceurl (cve_id, source_url) VALUES (?, ?);";
 	private final String getExistingFixSourceUrlsSql = "SELECT source_url FROM fixes;";
 	private final String insertFixSql = "INSERT INTO fixes (fix_id, cve_id, fix_description, source_url_id) VALUES (?, ?, ?, ?);";
 	public static final Pattern CPE_PATTERN = Pattern.compile("cpe:2\\.3:[aho\\*\\-]:([^:]*):([^:]*):([^:]*):.*");
@@ -559,7 +559,6 @@ public class DatabaseHelper {
 		}
 	}
 
-	// TODO: Implement
 	/**
 	 * Method for inserting a fix into the fixes table
 	 * Should also check for duplicates
