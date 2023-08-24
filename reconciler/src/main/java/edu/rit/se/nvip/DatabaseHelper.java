@@ -57,7 +57,7 @@ public class DatabaseHelper {
             "ON DUPLICATE KEY UPDATE " +
             "status = input.status, " +
             "last_modified = IF(input.status <> nvddata.status, NOW(), nvddata.last_modified)";
-    private static final String INSERT_NVD_SOURCE_URLS = "INSERT INTO nvdsourceurl (cve_id, source_url) VALUES (?, ?) as input" +
+    private static final String INSERT_NVD_SOURCE_URLS = "INSERT INTO nvdsourceurl (cve_id, source_url) VALUES (?, ?) AS input " +
             "ON DUPLICATE KEY UPDATE " +
             "cve_id = input.cve_id";
     private static final String UPSERT_MITRE = "INSERT INTO mitredata (cve_id, status, last_modified) VALUES (?, ?, NOW()) AS input " +
@@ -443,8 +443,8 @@ public class DatabaseHelper {
                     insertSourceUrlsStmt.addBatch();
                 }
             }
-            insertSourceUrlsStmt.executeBatch();
             upsertStmt.executeBatch();
+            insertSourceUrlsStmt.executeBatch();
             // identify which ones actually were inserted/changed and are "in nvd" by grabbing all modified within last 10 minutes
             ResultSet res = selectStmt.executeQuery();
             while (res.next()) {
