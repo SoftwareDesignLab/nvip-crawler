@@ -24,32 +24,16 @@ package fixes;
  * SOFTWARE.
  */
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import env.FixFinderEnvVars;
-import env.PatchFinderEnvVars;
-import model.CpeGroup;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.eclipse.jgit.api.LsRemoteCommand;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.regex.Pattern;
-import db.DatabaseHelper;
 
 /**
- * Responsible for finding possible patch source URLs for the FixFinder
+ * Abstract class responsible for finding possible fix source URLs for the FixFinder.
  *
  * @author Dylan Mulligan
  */

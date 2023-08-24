@@ -30,45 +30,62 @@ import fixes.parsers.NVDParser;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.List;
+
 /**
- * Runnable thread class for multithreaded FixFinder
- *
- * Used for finding fixes from a provided source
+ * Runnable thread class for multithreaded FixFinder. Used for finding fixes for CVEs from sources.
  *
  * @author Dylan Mulligan
  * @author Paul Vickers
+ *
+ * TODO: make it use futures or whatever
  */
 public class FixFinderThread implements Runnable {
 	private static final Logger logger = LogManager.getLogger(FixFinder.class.getName());
-	private final String url;
-	private String description;
+	private final String cveId;
+	private final List<String> urls;
+	private List<Fix> fixes;
 
-	// Get the extracted fix description
-	public String getDescription(){ return description; }
+	// Get list of fixes
+	public List<Fix> getFixes(){ return fixes; }
 
-	public FixFinderThread(String url){
-		this.url = url;
+	/**
+	 * Constructor for FixFinderThread. Takes in a CVE and URLs which store possible fixes for the vulnerability.
+	 *
+	 * @param cveId CVE to find fixes for
+	 * @param urls Possible URLs to be scraped that may contain fixes
+	 */
+	public FixFinderThread(String cveId, List<String> urls){
+		this.cveId = cveId;
+		this.urls = urls;
 	}
 
 	/**
-	 * Used for cloning, crawling, and deleting product repos to find patch commits
+	 * Run method used to iterate through all the possible fix URLs for the CVE.
+	 *
+	 * Delegates each URL to its own specific parser or generic parser if no specific one has
+	 * been created for it (yet).
+	 *
+	 * For each URL, uses the parser to extract fixes and stores them in the list.
 	 */
-	// TODO: this class will mostly be used for delegation. For the url passed in, it will be checked to see which parser
-	//  should be used to handle scraping data. I've implemented a basic abstract class and the NVD specific parser as an example.
 	@Override
 	public void run() {
 
-		AbstractFixParser parser = null;
+		for(String url : urls) {
 
-		// Check to see if we have a parser for the specific domain already (will be way more in the future than just nvd)
-		if(url.contains("nvd.nist.gov")){
-			parser = new NVDParser(url);
+			AbstractFixParser parser;
 
-		// If no above domains were recognized, then we use generic parser to try to find a fix?
-		}else parser = new GenericParser(url);
+			// Check to see if we have a parser for the specific domain already (will be way more in the future than just nvd)
+			if (url.contains("nvd.nist.gov")) {
+				parser = new NVDParser(cveId, url);
 
-		// After determining correct parser, parse the web page for the description and set it
-		this.description = parser.parseWebPage();
+				// If no above domains were recognized, then we use generic parser to try to find a fix?
+			} else parser = new GenericParser(cveId, url);
+
+			fixes = parser.parseWebPage();
+			logger.info("{} fixes found for CVE {}", fixes.size(), cveId);
+		}
+
 	}
 
 }
