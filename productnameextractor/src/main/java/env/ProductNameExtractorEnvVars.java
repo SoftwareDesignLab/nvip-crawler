@@ -47,6 +47,8 @@ public class ProductNameExtractorEnvVars {
 
     // Default values for main environment variables
 
+    private static String inputMode = "db";
+    private static int cveLimit = 500;
     private static int numThreads = 12;
     private static String resourceDir = "nvip_data";
     private static String dataDir = "data";
@@ -144,6 +146,8 @@ public class ProductNameExtractorEnvVars {
     public static String getRabbitHost() { return rabbitHost; }
     public static String getRabbitUsername() { return rabbitUsername; }
     public static String getRabbitPassword() { return rabbitPassword; }
+    public static String getInputMode() { return inputMode; }
+    public static int getCveLimit() { return cveLimit; }
 
     /**
      * Loads environment variables from file into HashMap and returns it.
@@ -200,6 +204,22 @@ public class ProductNameExtractorEnvVars {
             rabbitPollInterval = Integer.parseInt(fileProps.get("RABBIT_POLL_INTERVAL"));
             logger.info("Setting RABBIT_POLL_INTERVAL to {} seconds", rabbitPollInterval);
         } else logger.warn("Could not fetch RABBIT_POLL_INTERVAL from env vars, defaulting to {} seconds", rabbitPollInterval);
+
+        if(systemProps.containsKey("INPUT_MODE")) {
+            inputMode = systemProps.get("INPUT_MODE");
+            logger.info("Setting INPUT_MODE to {} days", inputMode);
+        } else if (fileProps.containsKey("INPUT_MODE")) {
+            inputMode = fileProps.get("INPUT_MODE");
+            logger.info("Setting INPUT_MODE to {} days", inputMode);
+        } else logger.warn("Could not fetch INPUT_MODE from env vars, defaulting to {}", inputMode);
+
+        if(systemProps.containsKey("CVE_LIMIT")) {
+            cveLimit = Integer.parseInt(systemProps.get("CVE_LIMIT"));
+            logger.info("Setting CVE_LIMIT to {} attempts", cveLimit);
+        } else if (fileProps.containsKey("CVE_LIMIT")) {
+            cveLimit = Integer.parseInt(fileProps.get("CVE_LIMIT"));
+            logger.info("Setting CVE_LIMIT to {} attempts", cveLimit);
+        } else logger.warn("Could not fetch CVE_LIMIT from env vars, defaulting to {} attempts", cveLimit);
 
         if(systemProps.containsKey("NUM_THREADS")) {
             numThreads = Integer.parseInt(systemProps.get("NUM_THREADS"));
