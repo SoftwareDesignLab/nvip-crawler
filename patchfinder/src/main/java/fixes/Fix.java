@@ -31,79 +31,42 @@ import java.util.ArrayList;
  * Model class for fixes found by FixFinder
  */
 public class Fix {
-    private final String cve_id;
-    private final String fix_id;
-    private final String fix_description;
-    private final String source_url_id;
-    private final ArrayList<String> source_urls = new ArrayList<>();
+    private final String cveId;
+    private final String fixDescription;
+    private final String sourceUrl;
 
     /**
      * Model class for fix objects
      *
-     * @param cve_id         the ID of the cve
-     * @param fix_id        the URL of the fix
-     * @param fix_description the description of the fix
-     * @param source_url_id    the source URLs
+     * @param cveId         the ID of the cve
+     * @param fixDescription the description of the fix
+     * @param sourceUrl    the source URL
      */
-    public Fix(String cve_id, String fix_id, String fix_description, String source_url_id) {
-        this.cve_id = cve_id;
-        this.fix_id = fix_id;
-        this.fix_description = fix_description;
-        this.source_url_id = source_url_id;
+    public Fix(String cveId, String fixDescription, String sourceUrl) {
+        this.cveId = cveId;
+        this.fixDescription = fixDescription;
+        this.sourceUrl = sourceUrl;
     }
 
     /**
      * @return the cve_id
      */
     public String getCve_id() {
-        return cve_id;
-    }
-
-    /**
-     * @return the fix_url
-     */
-    public String getFix_id() {
-        return fix_id;
+        return cveId;
     }
 
     /**
      * @return the fix_description
      */
     public String getFix_description() {
-        return fix_description;
-    }
-
-    /**
-     * @return the source_urls
-     */
-    public ArrayList<String> getSource_urls() {
-        return source_urls;
-    }
-
-    /**
-     * @return the source_urls as a string
-     */
-    public String getSource_urls_string() {
-        String source_urls_string = "";
-        for (String source_url : source_urls) {
-            source_urls_string += source_url + "\n";
-        }
-        return source_urls_string;
-    }
-
-    /**
-     * set the source_urls
-     */
-    public void setSource_urls(ArrayList<String> source_urls) {
-        this.source_urls.clear();
-        this.source_urls.addAll(source_urls);
+        return fixDescription;
     }
 
     /**
      * @return the fix as a string
      */
     public String toString() {
-        return "Fix [cve_id=" + cve_id + ", fix_url=" + fix_id + ", fix_description=" + fix_description
-                + ", source_urls=" + source_urls + "]";
+        return "Fix [cve_id=" + cveId + ", fix_description=" + fixDescription
+                + ", source_url=" + sourceUrl + "]";
     }
 }
