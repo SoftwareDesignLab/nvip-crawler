@@ -58,7 +58,7 @@ public class DatabaseHelper {
 	private final String getCveSourcesSql = "SELECT cve_id, source_url FROM nvip.rawdescription WHERE source_url != \"\";";
 	private final String getCveSourcesNVDSql = "SELECT cve_id, source_url FROM nvip.nvdsourceurl WHERE cve_id = ?;";
 	private final String insertFixSourceURLSql = "INSERT INTO fixsourceurl (cve_id, source_url) VALUES (?, ?);";
-	private final String getExistingFixSourceUrlsSql = "SELECT source_url FROM fixes;";
+	private final String getExistingFixSourceUrlsSql = "SELECT cve_id, source_url FROM fixsourceurl;";
 	private final String insertFixSql = "INSERT INTO fixes (fix_id, cve_id, fix_description, source_url_id) VALUES (?, ?, ?, ?);";
 	public static final Pattern CPE_PATTERN = Pattern.compile("cpe:2\\.3:[aho\\*\\-]:([^:]*):([^:]*):([^:]*):.*");
 
@@ -387,18 +387,27 @@ public class DatabaseHelper {
 	 * Gets a map of CVEs -> existing fix source urls from the database
 	 * @return a map of CVEs -> existing fix source urls
 	 */
-	public Map<String, Integer> getExistingFixSourceUrls() {
-		final Map<String, Integer> urls = new HashMap<>();
+	public Map<String, List<String>> getExistingFixSourceUrls() {
+		final Map<String, List<String>> urlMap = new HashMap<>();
 
 		try (Connection connection = getConnection();
 			 PreparedStatement pstmt = connection.prepareStatement(getExistingFixSourceUrlsSql)) {
 			ResultSet rs = pstmt.executeQuery();
-			while(rs.next()) { urls.put(rs.getString(1), rs.getInt(2)); }
+			while(rs.next()) {
+				final String cveId = rs.getString(1);
+				final String url = rs.getString(2);
+				if(urlMap.containsKey(cveId)) urlMap.get(cveId).add(url);
+				else {
+					final List<String> urls = new ArrayList<>();
+					urls.add(url);
+					urlMap.put(cveId, urls);
+				}
+			}
 		} catch (Exception e) {
 			logger.error(e.toString());
 		}
 
-		return urls;
+		return urlMap;
 	}
 
 	// TODO: Do we need fix equivalents of these methods?
