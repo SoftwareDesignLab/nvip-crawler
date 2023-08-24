@@ -59,6 +59,7 @@ public class DatabaseHelper {
 	private final String getCveSourcesNVDSql = "SELECT cve_id, source_url FROM nvip.nvdsourceurl WHERE cve_id = ?;";
 	private final String insertFixSourceURLSql = "INSERT INTO fixsourceurl (cve_id, source_url) VALUES (?, ?);";
 	private final String getExistingFixSourceUrlsSql = "SELECT cve_id, source_url FROM fixsourceurl;";
+	private final String getFixSourceUrlSql = "SELECT source_url FROM fixsourceurl WHERE cve_id = ?;";
 	private final String insertFixSql = "INSERT INTO fixes (fix_id, cve_id, fix_description, source_url_id) VALUES (?, ?, ?, ?);";
 	public static final Pattern CPE_PATTERN = Pattern.compile("cpe:2\\.3:[aho\\*\\-]:([^:]*):([^:]*):([^:]*):.*");
 
@@ -396,6 +397,33 @@ public class DatabaseHelper {
 			while(rs.next()) {
 				final String cveId = rs.getString(1);
 				final String url = rs.getString(2);
+				if(urlMap.containsKey(cveId)) urlMap.get(cveId).add(url);
+				else {
+					final List<String> urls = new ArrayList<>();
+					urls.add(url);
+					urlMap.put(cveId, urls);
+				}
+			}
+		} catch (Exception e) {
+			logger.error(e.toString());
+		}
+
+		return urlMap;
+	}
+
+	/**
+	 * Gets a map of CVEs -> existing fix source urls from the database
+	 * @return a map of CVEs -> existing fix source urls
+	 */
+	public Map<String, List<String>> getFixSourceUrl(String cveId) {
+		final Map<String, List<String>> urlMap = new HashMap<>();
+
+		try (Connection connection = getConnection();
+			 PreparedStatement pstmt = connection.prepareStatement(getFixSourceUrlSql)) {
+			pstmt.setString(1, cveId);
+			ResultSet rs = pstmt.executeQuery();
+			while(rs.next()) {
+				final String url = rs.getString(1);
 				if(urlMap.containsKey(cveId)) urlMap.get(cveId).add(url);
 				else {
 					final List<String> urls = new ArrayList<>();
