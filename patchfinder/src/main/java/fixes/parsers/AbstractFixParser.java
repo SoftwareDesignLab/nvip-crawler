@@ -1,17 +1,21 @@
 package fixes.parsers;
 
+import fixes.Fix;
+
+import java.util.List;
+
 /**
  * Abstract class for FixFinder HTMl Parsers
  */
 public abstract class AbstractFixParser {
+    protected final String cveId;
     protected final String url;
 
-    public AbstractFixParser(String url){
+    public AbstractFixParser(String cveId, String url){
+        this.cveId = cveId;
         this.url = url;
     }
 
-    // Returns the description of the fix found. Subject to change.
-    // TODO: Should this instead return a list of fixes? My current thoughts are that
-    //  we return the fix description and that gets matched to the cveid to be created into fix objects which then get inserted
-    public abstract String parseWebPage();
+    // Returns a list of fixes found from web page.
+    public abstract List<Fix> parseWebPage();
 }

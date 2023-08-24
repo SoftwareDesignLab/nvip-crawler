@@ -1,14 +1,18 @@
 package fixes.parsers;
 
+import fixes.Fix;
+
+import java.util.List;
+
 public class GenericParser extends AbstractFixParser{
 
-    public GenericParser(String url){
-        super(url);
+    public GenericParser(String cveId, String url){
+        super(cveId, url);
     }
 
     //TODO: implement some day
     @Override
-    public String parseWebPage() {
+    public List<Fix> parseWebPage() {
         return null;
     }
 }

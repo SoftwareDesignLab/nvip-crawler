@@ -33,18 +33,16 @@ import org.apache.logging.log4j.Logger;
 import java.util.*;
 
 /**
- * Main class for collecting CVE Patches within repos that were
- * previously collected from the PatchURLFinder class
+ * Main class for FixFinder initialization and handles multithreaded
+ * processing for finding and extracting fixes.
  *
  * @author Dylan Mulligan
  */
 public class FixFinder {
 	private static final Logger logger = LogManager.getLogger(FixFinder.class.getName());
-
 	private static final ObjectMapper OM = new ObjectMapper();
 	private static DatabaseHelper databaseHelper;
 	private static List<FixUrlFinder> fixURLFinders;
-
 	private static final ArrayList<Fix> fixes = new ArrayList<>();
 	protected static int cveLimit = FixFinderEnvVars.getCveLimit();
 	protected static int maxThreads = FixFinderEnvVars.getMaxThreads();
@@ -77,7 +75,26 @@ public class FixFinder {
 		logger.info("Done initializing {} FixUrlFinders", fixURLFinders.size());
 	}
 
-	public static void run() {
-		// TODO: This
+	// TODO: at some point, need to figure out how we are going to get input for which cves to find fixes
+	// 	right now, just doing a list of cveIds
+	public static void run(List<String> cveIds) {
+		Map<String, List<String>> cveToUrls = new HashMap<>();
+
+		for(String cveId : cveIds){
+			try {
+				for(FixUrlFinder finder : fixURLFinders){
+					cveToUrls.put(cveId, finder.run(cveId));
+				}
+
+			} catch (Exception e) {
+				logger.info("Ran into error while finding URLs: {}", e.toString());
+			}
+		}
+
+		// TODO: handle multithreading correctly with futures ?
+		for(String cveId : cveToUrls.keySet()){
+			FixFinderThread thread = new FixFinderThread(cveId, cveToUrls.get(cveId));
+			thread.run();
+		}
 	}
 }

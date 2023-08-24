@@ -1,41 +1,48 @@
 package fixes.parsers;
 
+import fixes.Fix;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * HTML parser for NVD web pages
+ * TODO: put enums in for tags ex. "Patch"
  */
 public class NVDParser extends AbstractFixParser{
-    public NVDParser(String url){
-        super(url);
+    public NVDParser(String cveId, String url){
+        super(cveId, url);
     }
 
     // TODO: finish this (paul)
     @Override
-    public String parseWebPage() {
-        String fixDescription = "";
+    public List<Fix> parseWebPage() {
+        List<String> fixSources = new ArrayList<>();
 
         Document doc;
         try {
             doc = Jsoup.connect(url).get();
-            Element table = doc.select("div[id=vulnHyperlinksPanel]").first().select("table[class=table table-striped table-condensed table-bordered detail-table]").first();
-            Elements urls = table.select("a");
+            Elements rows = doc.select("div[id=vulnHyperlinksPanel]").first().select("table").first().select("tbody").select("tr");
 
-            for(Element e : urls){
-                System.out.println("Possible url: " + e.text());
+            for(Element row : rows){
+                String url = row.select("a").text();
+                Elements spans = row.select("span.badge");
+                for(Element span: spans){
+                    if(span.text().equalsIgnoreCase("Patch")) fixSources.add(url);
+                }
             }
 
         } catch (IOException e) {
-            doc = null;
             throw new RuntimeException(e);
         }
 
+        System.out.println(fixSources);
 
-        return fixDescription;
+        return null;
     }
 }

@@ -24,9 +24,6 @@ package fixes;
  * SOFTWARE.
  */
 
-
-import java.util.ArrayList;
-
 /**
  * Model class for fixes found by FixFinder
  *
