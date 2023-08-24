@@ -79,7 +79,7 @@ public class FixFinderThread implements Runnable {
 			if (url.contains("nvd.nist.gov")) {
 				parser = new NVDParser(cveId, url);
 
-				// If no above domains were recognized, then we use generic parser to try to find a fix?
+			// If no above domains were recognized, then we use generic parser to try to find a fix?
 			} else parser = new GenericParser(cveId, url);
 
 			fixes = parser.parseWebPage();
