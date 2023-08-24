@@ -27,6 +27,7 @@ package db;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import com.zaxxer.hikari.pool.HikariPool.PoolInitializationException;
+import fixes.Fix;
 import model.CpeEntry;
 import model.CpeGroup;
 import org.apache.logging.log4j.LogManager;
@@ -614,39 +615,35 @@ public class DatabaseHelper {
 	/**
 	 * Method for inserting a fix into the fixes table
 	 * Should also check for duplicates
-	 * @param fix_id id of the fix
-	 * @param cve_id CVE being processed
-	 * @param fix_description description of the fix
-	 * @param source_url_id id of the source url
-	 * @throws IllegalArgumentException if given source id is invalid (sourceId < 0)
+	 *
+	 * @param fix Fix object to be inserted
 	 */
-	public void insertFix(int fix_id, int cve_id, String fix_description, int source_url_id) throws IllegalArgumentException, SQLException {
-		if (source_url_id < 0) throw new IllegalArgumentException("Invalid source id provided, ensure id is non-negative");
+	public void insertFix(Fix fix) throws SQLException {
+		String cveId = fix.getCveId();
 
-		try (Connection connection = getConnection();
-			 PreparedStatement pstmt = connection.prepareStatement(insertFixSql);
-			 PreparedStatement pstmtExistingCommit = connection.prepareStatement("SELECT fix_id FROM fixes WHERE fix_id = ? LIMIT 1");
-			 PreparedStatement pstmtUpdateFix = connection.prepareStatement("SELECT fix_id FROM fixes WHERE fix_id = ? AND fix_description = ? LIMIT 1");
-		) {
-			// Check if the fix already exists
-			pstmtExistingCommit.setInt(1, cve_id);
-			ResultSet rs = pstmtExistingCommit.executeQuery();
-			if (rs.next()) {
-				logger.info("Fix already exists for CVE ID {}", cve_id);
-				//updateFix(fix_id, cve_id, fix_description, source_url_id);
-				pstmtUpdateFix.setInt(1, fix_id);
-				pstmtUpdateFix.setString(2, fix_description);
-				rs = pstmtUpdateFix.executeQuery();
-			} else {
-				// Insert the fix
-				pstmt.setInt(1, fix_id);
-				pstmt.setInt(2, cve_id);
-				pstmt.setString(3, fix_description);
-				pstmt.setInt(4, source_url_id);
-				pstmt.executeUpdate();
-				logger.info("Inserted fix for CVE ID {}", cve_id);
-			}
-		}
+		// TODO: fix this once database schema is updated (fixsourceurl table deleted, fixes stores sourceurl string)
+//		try (Connection connection = getConnection();
+//			 PreparedStatement pstmt = connection.prepareStatement(insertFixSql);
+//			 PreparedStatement pstmtExistingCommit = connection.prepareStatement("SELECT fix_id FROM fixes WHERE fix_id = ? LIMIT 1");
+//			 PreparedStatement pstmtUpdateFix = connection.prepareStatement("SELECT fix_id FROM fixes WHERE fix_id = ? AND fix_description = ? LIMIT 1");
+//		) {
+//			// Check if the fix already exists
+//			pstmtExistingCommit.setString(1, cveId);
+//			ResultSet rs = pstmtExistingCommit.executeQuery();
+//			if (rs.next()) {
+//				logger.info("Fix already exists for CVE ID {}", cveId);
+//				//updateFix(fix_id, cve_id, fix_description, source_url_id);
+//				pstmtUpdateFix.setString(2, fix_description);
+//				rs = pstmtUpdateFix.executeQuery();
+//			} else {
+//				// Insert the fix
+//				pstmt.setString(2, cveId);
+//				pstmt.setString(3, fix_description);
+//				pstmt.setInt(4, source_url_id);
+//				pstmt.executeUpdate();
+//				logger.info("Inserted fix for CVE ID {}", cveId);
+//			}
+//		}
 
 
 
