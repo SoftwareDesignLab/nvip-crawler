@@ -47,6 +47,7 @@ public class FixFinderEnvVars {
 
     // Default values for main environment variables
 
+    private static String inputMode = "";
     private static int cveLimit = 20;
     private static String[] addressBases = {"https://www.github.com/", "https://www.gitlab.com/"};
     private static int maxThreads = 10;
@@ -121,6 +122,7 @@ public class FixFinderEnvVars {
     public static String getRabbitHost() { return rabbitHost; }
     public static String getRabbitUsername() { return rabbitUsername; }
     public static String getRabbitPassword() { return rabbitPassword; }
+    public static String getInputMode() { return inputMode; }
 
     /**
      * Attempts to fetch all required environment variables from props map safely, logging any
@@ -133,6 +135,14 @@ public class FixFinderEnvVars {
      * @param fileProps map of environment variables read from file
      */
     private static void fetchEnvVars(Map<String, String> systemProps, Map<String, String> fileProps) {
+
+        if(systemProps.containsKey("FF_INPUT_MODE")) {
+            inputMode = systemProps.get("FF_INPUT_MODE");
+            logger.info("Setting FF_INPUT_MODE to {}", inputMode);
+        } else if (fileProps.containsKey("FF_INPUT_MODE")) {
+            inputMode = fileProps.get("FF_INPUT_MODE");
+            logger.info("Setting FF_INPUT_MODE to {}", inputMode);
+        } else logger.warn("Could not fetch FF_INPUT_MODE from env vars, defaulting to {}", inputMode);
 
         if(systemProps.containsKey("CVE_LIMIT")) {
             cveLimit = Integer.parseInt(systemProps.get("CVE_LIMIT"));

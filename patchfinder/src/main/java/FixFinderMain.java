@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+import env.FixFinderEnvVars;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import fixes.FixFinder;
@@ -46,6 +47,20 @@ public class FixFinderMain {
         // Init FixFinder
         FixFinder.init();
 
+        // Determine run mode and start PatchFinder
+        switch (FixFinderEnvVars.getInputMode()) {
+            case "db":
+                runDb();
+                break;
+            case "rabbit":
+                runRabbit();
+                break;
+            default:
+                logger.info("Skipping FixFinder as input mode is not set to a valid value... Set to a valid value to enable it.");
+        }
+    }
+
+    private static void runDb() {
         // Just for testing
         List<String> cveIds = new ArrayList<>();
         cveIds.add("CVE-2022-2967");
@@ -55,6 +70,10 @@ public class FixFinderMain {
         } catch (Exception e) {
             logger.error("A fatal error attempting to complete jobs: {}", e.toString());
         }
+    }
+
+    private static void runRabbit() {
+        // TODO: RabbitMQ integration, wait until PoC is accepted to complete this
     }
 
     public static void main(String[] args) {
