@@ -144,13 +144,13 @@ public class PatchFinderEnvVars {
      */
     private static void fetchEnvVars(Map<String, String> systemProps, Map<String, String> fileProps) {
 
-        if(systemProps.containsKey("INPUT_MODE")) {
-            inputMode = systemProps.get("INPUT_MODE");
-            logger.info("Setting INPUT_MODE to {}", inputMode);
-        } else if (fileProps.containsKey("INPUT_MODE")) {
-            inputMode = fileProps.get("INPUT_MODE");
-            logger.info("Setting INPUT_MODE to {}", inputMode);
-        } else logger.warn("Could not fetch INPUT_MODE from env vars, defaulting to {}", inputMode);
+        if(systemProps.containsKey("PF_INPUT_MODE")) {
+            inputMode = systemProps.get("PF_INPUT_MODE");
+            logger.info("Setting PF_INPUT_MODE to {}", inputMode);
+        } else if (fileProps.containsKey("PF_INPUT_MODE")) {
+            inputMode = fileProps.get("PF_INPUT_MODE");
+            logger.info("Setting PF_INPUT_MODE to {}", inputMode);
+        } else logger.warn("Could not fetch PF_INPUT_MODE from env vars, defaulting to {}", inputMode);
 
         if(systemProps.containsKey("CVE_LIMIT")) {
             cveLimit = Integer.parseInt(systemProps.get("CVE_LIMIT"));
