@@ -39,13 +39,13 @@ import patches.PatchFinder;
  *
  * @author Dylan Mulligan
  */
-public class PatchFinderMain {
+public class PatchFinderMain extends Thread {
     private final static Logger logger = LogManager.getLogger(PatchFinderMain.class);
 
     /**
      * Entry point for the PatchFinder, initializes necessary classes and start listening for jobs with RabbitMQ
      */
-    public static void run() {
+    public void run() {
         logger.info("Starting PatchFinder...");
         // Init PatchFinder
         PatchFinder.init();
@@ -62,7 +62,7 @@ public class PatchFinderMain {
         }
     }
 
-    private static void runDb() {
+    private void runDb() {
         // Fetch affectedProducts from db
         Map<String, CpeGroup> affectedProducts = PatchFinder.getDatabaseHelper().getAffectedProducts(null);
         final int affectedProductsCount = affectedProducts.values().stream().map(CpeGroup::getVersionsCount).reduce(0, Integer::sum);
@@ -74,7 +74,7 @@ public class PatchFinderMain {
         }
     }
 
-    private static void runRabbit() {
+    private void runRabbit() {
         // Start busy-wait loop
         final Messenger rabbitMQ = new Messenger(
                 PatchFinderEnvVars.getRabbitHost(),
