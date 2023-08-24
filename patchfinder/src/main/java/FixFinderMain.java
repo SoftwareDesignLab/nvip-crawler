@@ -26,7 +26,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import fixes.FixFinder;
 
-import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Main class for the FixFinder, drives initialization and busy-waiting for jobs
@@ -41,13 +42,22 @@ public class FixFinderMain {
      */
     public static void run() {
         logger.info("Starting FixFinder...");
+
         // Init FixFinder
         FixFinder.init();
 
+        // Just for testing
+        List<String> cveIds = new ArrayList<>();
+        cveIds.add("CVE-2022-2967");
+
         try {
-            FixFinder.run();
+            FixFinder.run(cveIds);
         } catch (Exception e) {
             logger.error("A fatal error attempting to complete jobs: {}", e.toString());
         }
+    }
+
+    public static void main(String[] args) {
+        run();
     }
 }

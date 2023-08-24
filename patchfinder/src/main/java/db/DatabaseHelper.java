@@ -56,6 +56,7 @@ public class DatabaseHelper {
 	// Regex101: https://regex101.com/r/9uaTQb/1
 	private final String deletePatchCommitSql = "DELETE FROM patchcommit WHERE commit_sha = ?;";
 	private final String getCveSourcesSql = "SELECT cve_id, source_url FROM nvip.rawdescription WHERE source_url != \"\";";
+	private final String getSpecificCveSourcesSql = "SELECT cve_id, source_url FROM nvip.rawdescription WHERE source_url != \"\" AND cve_id = ?;";
 	private final String getCveSourcesNVDSql = "SELECT cve_id, source_url FROM nvip.nvdsourceurl WHERE cve_id = ?;";
 	private final String insertFixSourceURLSql = "INSERT INTO fixsourceurl (cve_id, source_url) VALUES (?, ?);";
 	private final String getExistingFixSourceUrlsSql = "SELECT cve_id, source_url FROM fixsourceurl;";
@@ -373,6 +374,20 @@ public class DatabaseHelper {
 			ResultSet rs = pstmt.executeQuery();
 			while (rs.next()) {
 				sources.add(rs.getString("source"));
+			}
+		} catch (Exception e) {
+			logger.error("ERROR: Failed to get CVE sources for CVE ID {}\n{}", cve_id, e.getMessage());
+		}
+		return sources;
+	}
+
+	public ArrayList<String> getSpecificCveSources(String cve_id) {
+		ArrayList<String> sources = new ArrayList<>();
+		try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(getSpecificCveSourcesSql)) {
+			pstmt.setString(1, cve_id);
+			ResultSet rs = pstmt.executeQuery();
+			while (rs.next()) {
+				sources.add(rs.getString("source_url"));
 			}
 		} catch (Exception e) {
 			logger.error("ERROR: Failed to get CVE sources for CVE ID {}\n{}", cve_id, e.getMessage());

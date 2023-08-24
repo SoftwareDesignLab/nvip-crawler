@@ -21,7 +21,6 @@ public class NvdFixUrlFinder extends FixUrlFinder {
                 urlList.add(source);
             }
         }
-
         return urlList;
     }
 }
