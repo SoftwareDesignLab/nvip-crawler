@@ -203,11 +203,8 @@ public class ProductNameExtractorMain {
      * Main method for the Product Name Extractor
      *
      * Determines which vulnerabilities to process within the Product Name Extractor
-     * whether that be via RabbitMQ job pipeline or test mode and extracts affected products
+     * whether that be via RabbitMQ job pipeline, test mode, or dev mode and extracts affected products
      * from them, inserting those into the database. Then sends jobs to the NVIP Patchfinder.
-     *
-     * By default, the program will wait idly until jobs are received from the NVIP Reconciler
-     * or a 'TERMINATE' message is received which will close the program.
      *
      * @param args (unused) program arguments
      *
@@ -229,11 +226,12 @@ public class ProductNameExtractorMain {
                 rabbitMain(databaseHelper);
                 break;
             case "test":
-                testMain(databaseHelper);
+                testMain();
                 break;
         }
     }
 
+    // If in Database mode, grab CVE limit number of CVEs from the database and process those
     private static void dbMain(DatabaseHelper databaseHelper) {
         List<CompositeVulnerability> vulnList = databaseHelper.getAllCompositeVulnerabilities(ProductNameExtractorEnvVars.getCveLimit());
 
@@ -315,7 +313,7 @@ public class ProductNameExtractorMain {
     }
 
     // If in test mode, create manual vulnerability list
-    private static void testMain(DatabaseHelper databaseHelper) {
+    private static void testMain() {
         List<CompositeVulnerability> vulnList;
         logger.info("Test mode enabled, creating test vulnerability list...");
         vulnList = createTestVulnList();
