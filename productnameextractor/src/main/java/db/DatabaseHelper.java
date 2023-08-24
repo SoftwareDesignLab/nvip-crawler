@@ -226,7 +226,7 @@ public class DatabaseHelper {
 
 				int vulnCount = 0;
 				// Iterate over result set until there are no results left or vulnCount >= maxVulnerabilities
-				while (rs.next() && (maxVulnerabilities == 0 || vulnCount < maxVulnerabilities)) {
+				while (rs.next() && (maxVulnerabilities <= 0 || vulnCount < maxVulnerabilities)) {
 					vulnId = rs.getInt("vuln_id");
 					cveId = rs.getString("cve_id");
 					description = rs.getString("description");

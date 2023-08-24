@@ -215,11 +215,11 @@ public class ProductNameExtractorEnvVars {
 
         if(systemProps.containsKey("CVE_LIMIT")) {
             cveLimit = Integer.parseInt(systemProps.get("CVE_LIMIT"));
-            logger.info("Setting CVE_LIMIT to {} attempts", cveLimit);
+            logger.info("Setting CVE_LIMIT to {}", cveLimit);
         } else if (fileProps.containsKey("CVE_LIMIT")) {
             cveLimit = Integer.parseInt(fileProps.get("CVE_LIMIT"));
-            logger.info("Setting CVE_LIMIT to {} attempts", cveLimit);
-        } else logger.warn("Could not fetch CVE_LIMIT from env vars, defaulting to {} attempts", cveLimit);
+            logger.info("Setting CVE_LIMIT to {}", cveLimit);
+        } else logger.warn("Could not fetch CVE_LIMIT from env vars, defaulting to {}", cveLimit);
 
         if(systemProps.containsKey("NUM_THREADS")) {
             numThreads = Integer.parseInt(systemProps.get("NUM_THREADS"));

@@ -199,38 +199,6 @@ public class ProductNameExtractorMain {
 
     }
 
-    /**
-     * Main method for the Product Name Extractor
-     *
-     * Determines which vulnerabilities to process within the Product Name Extractor
-     * whether that be via RabbitMQ job pipeline, test mode, or dev mode and extracts affected products
-     * from them, inserting those into the database. Then sends jobs to the NVIP Patchfinder.
-     *
-     * @param args (unused) program arguments
-     *
-     */
-    public static void main(String[] args) {
-
-        // Initialize Database Helper and Product Dictionary
-        DatabaseHelper databaseHelper = new DatabaseHelper(databaseType, hikariUrl, hikariUser, hikariPassword);
-        ProductDictionary.initializeProductDict();
-
-        String inputMode = ProductNameExtractorEnvVars.getInputMode();
-
-        switch (inputMode) {
-            default:
-            case "db":
-                dbMain(databaseHelper);
-                break;
-            case "rabbit":
-                rabbitMain(databaseHelper);
-                break;
-            case "test":
-                testMain();
-                break;
-        }
-    }
-
     // If in Database mode, grab CVE limit number of CVEs from the database and process those
     private static void dbMain(DatabaseHelper databaseHelper) {
         List<CompositeVulnerability> vulnList = databaseHelper.getAllCompositeVulnerabilities(ProductNameExtractorEnvVars.getCveLimit());
@@ -328,5 +296,37 @@ public class ProductNameExtractorMain {
 
         logger.info("Printing test results...");
         writeTestResults(vulnList);
+    }
+
+    /**
+     * Main method for the Product Name Extractor
+     *
+     * Determines which vulnerabilities to process within the Product Name Extractor
+     * whether that be via RabbitMQ job pipeline, test mode, or dev mode and extracts affected products
+     * from them, inserting those into the database. Then sends jobs to the NVIP Patchfinder.
+     *
+     * @param args (unused) program arguments
+     *
+     */
+    public static void main(String[] args) {
+
+        // Initialize Database Helper and Product Dictionary
+        DatabaseHelper databaseHelper = new DatabaseHelper(databaseType, hikariUrl, hikariUser, hikariPassword);
+        ProductDictionary.initializeProductDict();
+
+        String inputMode = ProductNameExtractorEnvVars.getInputMode();
+
+        switch (inputMode) {
+            default:
+            case "db":
+                dbMain(databaseHelper);
+                break;
+            case "rabbit":
+                rabbitMain(databaseHelper);
+                break;
+            case "test":
+                testMain();
+                break;
+        }
     }
 }
