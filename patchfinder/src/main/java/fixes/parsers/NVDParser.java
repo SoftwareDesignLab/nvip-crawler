@@ -55,7 +55,6 @@ public class NVDParser extends AbstractFixParser{
             AbstractFixParser parser = FixFinderThread.findCorrectParser(cveId, fixSource);
             fixes.addAll(parser.parseWebPage());
         }
-        System.out.println(fixSources);
 
         return fixes;
     }

@@ -75,14 +75,8 @@ public class FixFinderThread implements Runnable {
 
 		for (String url : urls) {
 			CompletableFuture<List<Fix>> future = CompletableFuture.supplyAsync(() -> {
-				AbstractFixParser parser;
 
-				// Check to see if we have a parser for the specific domain already (will be way more in the future than just nvd)
-				if (url.contains("nvd.nist.gov")) {
-					parser = new NVDParser(cveId, url);
-				} else {
-					parser = new GenericParser(cveId, url);
-				}
+				AbstractFixParser parser = findCorrectParser(cveId, url);
 
 				try{
 					return parser.parseWebPage();
@@ -128,6 +122,7 @@ public class FixFinderThread implements Runnable {
 	 */
 	public static AbstractFixParser findCorrectParser(String cveId, String url){
 		AbstractFixParser parser;
+
 		if(url.contains("nvd.nist.gov")) parser = new NVDParser(cveId, url);
 		else if(url.contains("cisa.gov")) parser = new CISAParser(cveId, url);
 		else parser = new GenericParser(cveId, url);
