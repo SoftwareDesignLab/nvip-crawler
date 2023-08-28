@@ -51,6 +51,11 @@ public class CrawlerMain {
             logger.error("Error in database connection! Please check if the database configured in DB Envvars is up and running!");
             System.exit(1);
         }
+
+        if (!this.testMQConnection()) {
+            logger.error("ERROR: Failed to connect to RabbitMQ esrver on {} via port {}", dataVars.get("mqHost"), dataVars.get("mqPort"));
+            System.exit(1);
+        }
     }
 
     /**
@@ -198,9 +203,9 @@ public class CrawlerMain {
         String refreshNvdList = System.getenv("NVIP_REFRESH_NVD_LIST");
         String nvdUrl = System.getenv("NVIP_NVD_URL");
         String reconcilerMethod = System.getenv("NVIP_RECONCILER_METHOD");
-        String mqHost = System.getenv("MQ_HOST");
-        String mqPort = System.getenv("MQ_PORT");
-        String mqQueueName = System.getenv("MQ_QUEUE_NAME");
+        String mqHost = System.getenv("RABBIT_HOST");
+        String mqPort = System.getenv("RABBIT_PORT");
+        String mqQueueName = System.getenv("RABBIT_QUEUE_NAME");
 
         addEnvvarString(CrawlerMain.dataVars,"dataDir", dataDir, "nvip_data",
                 "WARNING: Data Directory not defined in NVIP_DATA_DIR, using ./nvip_data as default");
@@ -212,12 +217,12 @@ public class CrawlerMain {
                 "WARNING: Reconciler Method not defined in NVIP_RECONCILER_METHOD, using APACHE_OPEN_NLP as default");
 
         addEnvvarString(CrawlerMain.dataVars,"mqHost", mqHost, "localhost",
-                "WARNING: MQ Host not defined in MQ_HOST, using 'localhost' as default");
+                "WARNING: MQ Host not defined in RABBIT_HOST, using 'localhost' as default");
         addEnvvarInt(CrawlerMain.dataVars,"mqPort", mqPort, 5762,
-                "WARNING: MQ Port not defined in MQ_PORT, using 5762 as default",
-                "MQ_PORT");
+                "WARNING: MQ Port not defined in RABBIT_PORT, using 5762 as default",
+                "RABBIT_PORT");
         addEnvvarString(CrawlerMain.dataVars,"mqQueueName", mqQueueName, "raw_data_queue",
-                "WARNING: MQ Queue Name not defined in MQ_QUEUE_NAME, using 'raw_data_queue' as default");
+                "WARNING: MQ Queue Name not defined in RABBIT_QUEUE_NAME, using 'raw_data_queue' as default");
 
     }
 
@@ -566,6 +571,17 @@ public class CrawlerMain {
         } catch (Exception ex) {
             logger.error("ERROR: Failed to send message to MQ server on {} via port {}", dataVars.get("mqHost"),
                     dataVars.get("mqPort"));
+        }
+    }
+
+    private boolean testMQConnection() {
+        ConnectionFactory factory = new ConnectionFactory();
+        factory.setHost(dataVars.get("mqHost") + "");
+        factory.setPort((int) dataVars.get("mqPort"));
+        try (Connection connection = factory.newConnection()){
+            return true;
+        } catch (Exception e) {
+            return false;
         }
     }
 }
