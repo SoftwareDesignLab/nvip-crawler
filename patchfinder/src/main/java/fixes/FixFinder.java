@@ -104,7 +104,7 @@ public class FixFinder {
 				// TODO: fix this method and update database schema (ask dylan/dylan do this)
 				databaseHelper.insertFix(fix);
 			} catch (Exception e) {
-				logger.error("Error occured while inserting fix for CVE {} into database!", fix.getCveId());
+				logger.error("Error occurred while inserting fix for CVE {} into database!", fix.getCveId());
 			}
 		}
 

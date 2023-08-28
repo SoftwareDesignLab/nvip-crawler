@@ -25,11 +25,13 @@ package fixes;
  */
 
 import fixes.parsers.AbstractFixParser;
+import fixes.parsers.CISAParser;
 import fixes.parsers.GenericParser;
 import fixes.parsers.NVDParser;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -50,7 +52,8 @@ public class FixFinderThread implements Runnable {
 	public List<Fix> getFixes(){ return fixes; }
 
 	/**
-	 * Constructor for FixFinderThread. Takes in a CVE and URLs which store possible fixes for the vulnerability.
+	 * Constructor for FixFinderThread. Takes in a CVE and a list of URLs
+	 * to webpages which should be parsed for possible fixes for the vulnerability.
 	 *
 	 * @param cveId CVE to find fixes for
 	 * @param urls Possible URLs to be scraped that may contain fixes
@@ -60,14 +63,6 @@ public class FixFinderThread implements Runnable {
 		this.urls = urls;
 	}
 
-	/**
-	 * Run method used to iterate through all the possible fix URLs for the CVE.
-	 *
-	 * Delegates each URL to its own specific parser or generic parser if no specific one has
-	 * been created for it (yet).
-	 *
-	 * For each URL, uses the parser to extract fixes and stores them in the static list from FixFinder class.
-	 */
 	@Override
 	public void run() {
 
@@ -76,21 +71,37 @@ public class FixFinderThread implements Runnable {
 		//  first working cve with a fix found.
 		for(String url : urls) {
 
-			AbstractFixParser parser;
-
-			// Check to see if we have a parser for the specific domain already (will be way more in the future than just nvd)
-			if (url.contains("nvd.nist.gov")) {
-				parser = new NVDParser(cveId, url);
-
-			// If no above domains were recognized, then we use generic parser to try to find a fix?
-			} else parser = new GenericParser(cveId, url);
+			AbstractFixParser parser = findCorrectParser(cveId, url);
 
 			// Add all fixes found to the static list defined in FixFinder
-			FixFinder.getFixes().addAll(parser.parseWebPage());
+			try{
+				FixFinder.getFixes().addAll(parser.parseWebPage());
+			} catch (IOException e){
+				logger.error("Error occurred while parsing URL {} for CVE {}", url, cveId);
+			}
+
 
 			logger.info("{} fixes found for CVE {}", fixes.size(), cveId);
 		}
 
+	}
+
+	/**
+	 * Delegation method to determine which parser should be used to find fixes from the given url.
+	 *
+	 * @param cveId CVE ID for which fixes may be found
+	 * @param url URL to page which will be parsed
+	 * @return Correct parser to be used
+	 *
+	 * TODO: make this return more than just nvd/cisa etc, will come as we make more parsers
+	 */
+	public static AbstractFixParser findCorrectParser(String cveId, String url){
+		AbstractFixParser parser;
+		if(url.contains("nvd.nist.gov")) parser = new NVDParser(cveId, url);
+		else if(url.contains("cisa.gov")) parser = new CISAParser(cveId, url);
+		else parser = new GenericParser(cveId, url);
+
+		return parser;
 	}
 
 }

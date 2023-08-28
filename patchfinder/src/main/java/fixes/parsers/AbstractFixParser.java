@@ -2,6 +2,7 @@ package fixes.parsers;
 
 import fixes.Fix;
 
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -11,11 +12,11 @@ public abstract class AbstractFixParser {
     protected final String cveId;
     protected final String url;
 
-    public AbstractFixParser(String cveId, String url){
+    protected AbstractFixParser(String cveId, String url){
         this.cveId = cveId;
         this.url = url;
     }
 
     // Returns a list of fixes found from web page.
-    public abstract List<Fix> parseWebPage();
+    public abstract List<Fix> parseWebPage() throws IOException;
 }
