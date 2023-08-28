@@ -31,6 +31,7 @@ import fixes.parsers.NVDParser;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -91,7 +92,13 @@ public class FixFinderThread implements Runnable {
 					parser = new GenericParser(cveId, url);
 				}
 
-				return parser.parseWebPage();
+				try{
+					return parser.parseWebPage();
+				} catch(IOException e){
+					logger.error("Error occurred while parsing url {} for CVE {}", url, cveId);
+					return null;
+				}
+
 			});
 
 			futures.add(future);
