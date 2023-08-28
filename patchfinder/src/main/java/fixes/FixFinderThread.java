@@ -31,8 +31,10 @@ import fixes.parsers.NVDParser;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Runnable thread class for multithreaded FixFinder. Used for finding fixes for CVEs from sources.
@@ -65,26 +67,47 @@ public class FixFinderThread implements Runnable {
 
 	@Override
 	public void run() {
-		// TODO: This
-
 		// TODO: Create/finish parsers for web pages to find fix info. I already have the NVD one somewhat created for
 		//  the vulnerability CVE-2022-2967 (see FixFinderMain), finish that or I will so that we can actually have our
 		//  first working cve with a fix found.
-		for(String url : urls) {
+		List<CompletableFuture<List<Fix>>> futures = new ArrayList<>();
 
-			AbstractFixParser parser = findCorrectParser(cveId, url);
+		for (String url : urls) {
+			CompletableFuture<List<Fix>> future = CompletableFuture.supplyAsync(() -> {
+				AbstractFixParser parser;
 
-			// Add all fixes found to the static list defined in FixFinder
-			try{
-				FixFinder.getFixes().addAll(parser.parseWebPage());
+				// Check to see if we have a parser for the specific domain already (will be way more in the future than just nvd)
+				if (url.contains("nvd.nist.gov")) {
+					parser = new NVDParser(cveId, url);
+				} else {
+					parser = new GenericParser(cveId, url);
+				}
+
+				return parser.parseWebPage();
+			});
+
+			futures.add(future);
+		}
+
+		// Wait for all futures to complete and collect their results
+		List<Fix> allFixes = new ArrayList<>();
+		for (CompletableFuture<List<Fix>> future : futures) {
+			try {
+				allFixes.addAll(future.get());
+			} catch (InterruptedException | ExecutionException e) {
+				// Handle exceptions as needed
+				e.printStackTrace();
+			}
+		}
+
+		// Add all fixes found to the static list defined in FixFinder
+		try{
+				FixFinder.getFixes().addAll(allFixes);
 			} catch (IOException e){
 				logger.error("Error occurred while parsing URL {} for CVE {}", url, cveId);
 			}
 
-
-			logger.info("{} fixes found for CVE {}", fixes.size(), cveId);
-		}
-
+		logger.info("{} fixes found for CVE {}", allFixes.size(), cveId);
 	}
 
 	/**
