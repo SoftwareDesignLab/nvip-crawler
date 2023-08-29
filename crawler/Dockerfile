@@ -15,8 +15,8 @@ RUN apt-get update \
     && apt-get install -y libglib2.0-0 libnss3 libxcb1
 
 RUN apt-get install -y wget
-RUN wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-RUN apt-get install -y ./google-chrome-stable_current_amd64.deb
+RUN wget -q https://dl.google.com/linux/direct/google-chrome-stable_115.0.5790.98-1_amd64.deb
+RUN apt-get install -y ./google-chrome-stable_115.0.5790.98-1_amd64.deb
 
 VOLUME /usr/local/lib/resources
 ADD resources /usr/local/lib/resources
