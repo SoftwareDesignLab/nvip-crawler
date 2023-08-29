@@ -79,7 +79,6 @@ public class GitController {
 	 * @return
 	 */
 	public boolean cloneRepo() {
-		Git git = null;
 		File localFileDir;
 		try {
 			logger.info("{} repository does not exist! Cloning repo now, this will take some time, please wait!...", localPath);
@@ -88,19 +87,17 @@ public class GitController {
 			cloneCommand.setURI(remotePath);
 			cloneCommand.setDirectory(localFileDir);
 			cloneCommand.call();
-
-			git = Git.open(localFileDir);
-			StoredConfig config = git.getRepository().getConfig();
-			config.setString("branch", "master", "merge", "refs/heads/master");
-			config.setString("branch", "master", "remote", "origin");
-			config.setString("remote", "origin", "fetch", "+refs/heads/*:refs/remotes/origin/*");
-			config.setString("remote", "origin", "url", remotePath);
-			config.save();
+			try (Git git = Git.open(localFileDir)) {
+				StoredConfig config = git.getRepository().getConfig();
+				config.setString("branch", "master", "merge", "refs/heads/master");
+				config.setString("branch", "master", "remote", "origin");
+				config.setString("remote", "origin", "fetch", "+refs/heads/*:refs/remotes/origin/*");
+				config.setString("remote", "origin", "url", remotePath);
+				config.save();
+			}
 		} catch (Exception e) {
 			logger.error("Error while cloning repo at: " + remotePath + ", " + e.toString());
 			return false;
-		} finally {
-			git.close();
 		}
 		return true;
 	}

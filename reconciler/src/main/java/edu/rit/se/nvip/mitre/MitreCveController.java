@@ -104,6 +104,7 @@ public class MitreCveController {
             pullDir = f.exists() && (f.list().length > 1); // dir exists and there are some files in it!
         } catch (Exception e) {
             logger.error("ERROR: Directory {} does not exist", gitLocalPath);
+            return mitreCveMap;
         }
 
         if (pullDir) {
@@ -111,12 +112,14 @@ public class MitreCveController {
                 logger.info("Pulled git repo at: {} to: {}, now parsing each CVE...", mitreGithubUrl, gitLocalPath);
             else {
                 logger.error("Could not pull git repo at: {} to: {}", mitreGithubUrl, gitLocalPath);
+                return mitreCveMap;
             }
         } else {
             if (gitController.cloneRepo())
                 logger.info("Cloned git repo at: {} to: {}, now parsing each CVE...", mitreGithubUrl, gitLocalPath);
             else {
                 logger.error("Could not clone git repo at: {} to: {}", mitreGithubUrl, gitLocalPath);
+                return mitreCveMap;
             }
         }
 
