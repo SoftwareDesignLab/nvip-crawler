@@ -47,7 +47,7 @@ import java.util.concurrent.*;
  * @author Dylan Mulligan
  */
 public class Messenger {
-    private final static String INPUT_QUEUE = "PNE_OUT";
+    private final String inputQueue;
     private static final Logger logger = LogManager.getLogger(DatabaseHelper.class.getSimpleName());
     private static final ObjectMapper OM = new ObjectMapper();
     private ConnectionFactory factory;
@@ -58,11 +58,12 @@ public class Messenger {
      * @param username RabbitMQ username
      * @param password RabbitMQ password
      */
-    public Messenger(String host, String username, String password) {
+    public Messenger(String host, String username, String password, String inputQueue) {
         this.factory = new ConnectionFactory();
         factory.setHost(host);
         factory.setUsername(username);
         factory.setPassword(password);
+        this.inputQueue = inputQueue;
     }
 
     public void setFactory(ConnectionFactory factory) {
@@ -84,7 +85,7 @@ public class Messenger {
             try(Connection connection = factory.newConnection();
                 Channel channel = connection.createChannel()){
 
-                channel.queueDeclare(INPUT_QUEUE, false, false, false, null);
+                channel.queueDeclare(inputQueue, false, false, false, null);
 
                 BlockingQueue<List<String>> messageQueue = new ArrayBlockingQueue<>(1);
 
@@ -93,7 +94,7 @@ public class Messenger {
                     List<String> parsedIds = parseIds(message);
                     if(parsedIds.size() > 0 && !messageQueue.offer(parsedIds)) logger.error("Job response could not be added to message queue");
                 };
-                channel.basicConsume(INPUT_QUEUE, true, deliverCallback, consumerTag -> { });
+                channel.basicConsume(inputQueue, true, deliverCallback, consumerTag -> { });
 
                 logger.info("Polling message queue...");
                 cveIds = messageQueue.poll(pollInterval, TimeUnit.SECONDS);

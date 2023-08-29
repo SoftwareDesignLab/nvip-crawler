@@ -52,8 +52,8 @@ import java.util.concurrent.*;
  * @author Steven Shadders
  */
 public class Messenger {
-    private final static String INPUT_QUEUE = "RECONCILER_OUT";
-    private final static String OUTPUT_QUEUE = "PNE_OUT";
+    private final String inputQueue;
+    private final String outputQueue;
     private static final Logger logger = LogManager.getLogger(Messenger.class.getSimpleName());
     private static final ObjectMapper OM = new ObjectMapper();
     private ConnectionFactory factory;
@@ -63,7 +63,9 @@ public class Messenger {
         this(
                 ProductNameExtractorEnvVars.getRabbitHost(),
                 ProductNameExtractorEnvVars.getRabbitUsername(),
-                ProductNameExtractorEnvVars.getRabbitPassword()
+                ProductNameExtractorEnvVars.getRabbitPassword(),
+                ProductNameExtractorEnvVars.getRabbitInputQueue(),
+                ProductNameExtractorEnvVars.getRabbitOutputQueue()
         );
     }
 
@@ -73,11 +75,13 @@ public class Messenger {
      * @param username username
      * @param password password
      */
-    public Messenger(String host, String username, String password){
+    public Messenger(String host, String username, String password, String inputQueue, String outputQueue){
         factory = new ConnectionFactory();
         factory.setHost(host);
         factory.setUsername(username);
         factory.setPassword(password);
+        this.inputQueue = inputQueue;
+        this.outputQueue = outputQueue;
     }
 
     /**
@@ -108,7 +112,7 @@ public class Messenger {
             try(Connection connection = factory.newConnection();
                 Channel channel = connection.createChannel()){
 
-                channel.queueDeclare(INPUT_QUEUE, false, false, false, null);
+                channel.queueDeclare(inputQueue, false, false, false, null);
 
                 BlockingQueue<List<String>> messageQueue = new ArrayBlockingQueue<>(1);
 
@@ -129,7 +133,7 @@ public class Messenger {
 
                 };
 
-                channel.basicConsume(INPUT_QUEUE, true, deliverCallback, consumerTag -> { });
+                channel.basicConsume(inputQueue, true, deliverCallback, consumerTag -> { });
 
                 logger.info("Polling message queue...");
                 cveIds = messageQueue.poll(pollInterval, TimeUnit.SECONDS);
@@ -158,9 +162,9 @@ public class Messenger {
 
         try (Connection connection = factory.newConnection();
              Channel channel = connection.createChannel()) {
-            channel.queueDeclare(OUTPUT_QUEUE, false, false, false, null);
+            channel.queueDeclare(outputQueue, false, false, false, null);
             String message = genJson(cveIds);
-            channel.basicPublish("", OUTPUT_QUEUE, null, message.getBytes(StandardCharsets.UTF_8));
+            channel.basicPublish("", outputQueue, null, message.getBytes(StandardCharsets.UTF_8));
 
         } catch (TimeoutException | IOException e) {
             logger.error("Error occurred while sending the PNE message to RabbitMQ: {}", e.getMessage());
@@ -174,9 +178,9 @@ public class Messenger {
     public void sendPatchFinderFinishMessage() {
         try (Connection connection = factory.newConnection();
              Channel channel = connection.createChannel()) {
-            channel.queueDeclare(OUTPUT_QUEUE, false, false, false, null);
+            channel.queueDeclare(outputQueue, false, false, false, null);
             String message = "FINISHED";
-            channel.basicPublish("", OUTPUT_QUEUE, null, message.getBytes(StandardCharsets.UTF_8));
+            channel.basicPublish("", outputQueue, null, message.getBytes(StandardCharsets.UTF_8));
 
         } catch (TimeoutException | IOException e) {
             logger.error("Error occurred while sending the PNE message to RabbitMQ: {}", e.getMessage());

@@ -84,6 +84,8 @@ public class ProductNameExtractorEnvVars {
     private static String rabbitHost = "host.docker.internal";
     private static String rabbitUsername = "guest";
     private static String rabbitPassword = "guest";
+    private static String rabbitInputQueue = "RECONCILER_OUT";
+    private static String rabbitOutputQueue = "PNE_OUT";
 
     // Automatically load env vars
     static{
@@ -144,6 +146,8 @@ public class ProductNameExtractorEnvVars {
     public static String getRabbitHost() { return rabbitHost; }
     public static String getRabbitUsername() { return rabbitUsername; }
     public static String getRabbitPassword() { return rabbitPassword; }
+    public static String getRabbitInputQueue() { return rabbitInputQueue; }
+    public static String getRabbitOutputQueue() { return rabbitOutputQueue; }
 
     /**
      * Loads environment variables from file into HashMap and returns it.
@@ -359,6 +363,22 @@ public class ProductNameExtractorEnvVars {
             rabbitPassword = fileProps.get("RABBIT_PASSWORD");
             logger.info("Setting RABBIT_PASSWORD to {}", rabbitPassword);
         } else logger.warn("Could not fetch RABBIT_PASSWORD from env vars, defaulting to {}", rabbitPassword);
+
+        if(systemProps.containsKey("PNE_INPUT_QUEUE")) {
+            rabbitInputQueue = systemProps.get("PNE_INPUT_QUEUE");
+            logger.info("Setting PNE_INPUT_QUEUE to {}", rabbitInputQueue);
+        } else if (fileProps.containsKey("PNE_INPUT_QUEUE")) {
+            rabbitInputQueue = fileProps.get("PNE_INPUT_QUEUE");
+            logger.info("Setting PNE_INPUT_QUEUE to {}", rabbitInputQueue);
+        } else logger.warn("Could not fetch PNE_INPUT_QUEUE from env vars, defaulting to {}", rabbitInputQueue);
+
+        if(systemProps.containsKey("PNE_OUTPUT_QUEUE")) {
+            rabbitOutputQueue = systemProps.get("PNE_OUTPUT_QUEUE");
+            logger.info("Setting PNE_OUTPUT_QUEUE to {}", rabbitOutputQueue);
+        } else if (fileProps.containsKey("PNE_OUTPUT_QUEUE")) {
+            rabbitOutputQueue = fileProps.get("PNE_OUTPUT_QUEUE");
+            logger.info("Setting PNE_OUTPUT_QUEUE to {}", rabbitOutputQueue);
+        } else logger.warn("Could not fetch PNE_OUTPUT_QUEUE from env vars, defaulting to {}", rabbitOutputQueue);
 
     }
 

@@ -55,6 +55,6 @@ public class PatchFinderEnvVarsTest {
         assertEquals("host.docker.internal", PatchFinderEnvVars.getRabbitHost());
         assertEquals("guest", PatchFinderEnvVars.getRabbitUsername());
         assertEquals("guest", PatchFinderEnvVars.getRabbitPassword());
-
+        assertEquals("PNE_OUT", PatchFinderEnvVars.getRabbitInputQueue());
     }
 }
