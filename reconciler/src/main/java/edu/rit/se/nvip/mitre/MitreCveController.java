@@ -50,15 +50,16 @@ import java.util.stream.Collectors;
 public class MitreCveController {
     private static final Logger logger = LogManager.getLogger(MitreCveController.class);
 
-    private String mitreGithubUrl;
+    private final String mitreGithubUrl;
     private List<String> localPaths;
     private final String gitLocalPath = "nvip_data/mitre-cve/";
-    private GitController gitController = new GitController(gitLocalPath, mitreGithubUrl);
+    private GitController gitController;
     private File f = new File(gitLocalPath);
     private static DatabaseHelper dbh;
 
     public MitreCveController() {
         this.mitreGithubUrl = ReconcilerEnvVars.getMitreGithubUrl();
+        this.gitController = new GitController(gitLocalPath, mitreGithubUrl);
     }
 
     public void initializeController(){
