@@ -205,7 +205,7 @@ public class CrawlerMain {
         String reconcilerMethod = System.getenv("NVIP_RECONCILER_METHOD");
         String mqHost = System.getenv("RABBIT_HOST");
         String mqPort = System.getenv("RABBIT_PORT");
-        String mqQueueName = System.getenv("RABBIT_QUEUE_NAME");
+        String mqQueueName = System.getenv("CRAWLER_OUTPUT_QUEUE");
 
         addEnvvarString(CrawlerMain.dataVars,"dataDir", dataDir, "nvip_data",
                 "WARNING: Data Directory not defined in NVIP_DATA_DIR, using ./nvip_data as default");
@@ -221,7 +221,7 @@ public class CrawlerMain {
         addEnvvarInt(CrawlerMain.dataVars,"mqPort", mqPort, 5762,
                 "WARNING: MQ Port not defined in RABBIT_PORT, using 5762 as default",
                 "RABBIT_PORT");
-        addEnvvarString(CrawlerMain.dataVars,"mqQueueName", mqQueueName, "raw_data_queue",
+        addEnvvarString(CrawlerMain.dataVars,"mqQueueName", mqQueueName, "CRAWLER_OUT",
                 "WARNING: MQ Queue Name not defined in RABBIT_QUEUE_NAME, using 'raw_data_queue' as default");
 
     }

@@ -154,10 +154,10 @@ public class ReconcilerEnvVars extends Properties {
                 case RABBIT_PASSWORD:
                     rabbitPassword = addEnvvarString(envName, envVar, "guest");
                     break;
-                case RABBIT_QUEUE_IN:
+                case RECONCILER_INPUT_QUEUE:
                     rabbitQueueIn = addEnvvarString(envName, envVar, "CRAWLER_OUT");
                     break;
-                case RABBIT_QUEUE_OUT:
+                case RECONCILER_OUTPUT_QUEUE:
                     rabbitQueueOut = addEnvvarString(envName, envVar, "RECONCILER_OUT");
                     break;
                 case MITRE_GITHUB_URL:

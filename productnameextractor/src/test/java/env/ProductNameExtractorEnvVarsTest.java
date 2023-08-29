@@ -78,6 +78,8 @@ public class ProductNameExtractorEnvVarsTest {
         assertEquals("host.docker.internal", ProductNameExtractorEnvVars.getRabbitHost());
         assertEquals("guest", ProductNameExtractorEnvVars.getRabbitUsername());
         assertEquals("guest", ProductNameExtractorEnvVars.getRabbitPassword());
+        assertEquals("RECONCILER_OUT", ProductNameExtractorEnvVars.getRabbitInputQueue());
+        assertEquals("PNE_OUT", ProductNameExtractorEnvVars.getRabbitOutputQueue());
 
     }
 }

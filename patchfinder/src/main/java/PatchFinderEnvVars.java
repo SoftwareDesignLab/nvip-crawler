@@ -71,6 +71,7 @@ public class PatchFinderEnvVars {
     private static String rabbitHost = "host.docker.internal";
     private static String rabbitUsername = "guest";
     private static String rabbitPassword = "guest";
+    private static String rabbitInputQueue = "PNE_OUT";
 
     // Automatically load env vars
     static{
@@ -124,6 +125,7 @@ public class PatchFinderEnvVars {
     public static String getRabbitHost() { return rabbitHost; }
     public static String getRabbitUsername() { return rabbitUsername; }
     public static String getRabbitPassword() { return rabbitPassword; }
+    public static String getRabbitInputQueue() { return rabbitInputQueue; }
 
     /**
      * Attempts to fetch all required environment variables from props map safely, logging any
@@ -279,6 +281,14 @@ public class PatchFinderEnvVars {
             rabbitPassword = fileProps.get("RABBIT_PASSWORD");
             logger.info("Setting RABBIT_PASSWORD to {}", rabbitPassword);
         } else logger.warn("Could not fetch RABBIT_PASSWORD from env vars, defaulting to {}", rabbitPassword);
+
+        if(systemProps.containsKey("PF_INPUT_QUEUE")) {
+            rabbitInputQueue = systemProps.get("PF_INPUT_QUEUE");
+            logger.info("Setting PF_INPUT_QUEUE to {}", rabbitInputQueue);
+        } else if (fileProps.containsKey("PF_INPUT_QUEUE")) {
+            rabbitInputQueue = fileProps.get("PF_INPUT_QUEUE");
+            logger.info("Setting PF_INPUT_QUEUE to {}", rabbitInputQueue);
+        } else logger.warn("Could not fetch PF_INPUT_QUEUE from env vars, defaulting to {}", rabbitInputQueue);
 
     }
 }

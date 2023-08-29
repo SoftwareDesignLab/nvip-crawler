@@ -66,7 +66,8 @@ public class PatchFinderMain {
             final Messenger rabbitMQ = new Messenger(
                     PatchFinderEnvVars.getRabbitHost(),
                     PatchFinderEnvVars.getRabbitUsername(),
-                    PatchFinderEnvVars.getRabbitPassword()
+                    PatchFinderEnvVars.getRabbitPassword(),
+                    PatchFinderEnvVars.getRabbitInputQueue()
             );
             logger.info("Starting busy-wait loop for jobs...");
             while(true) {
