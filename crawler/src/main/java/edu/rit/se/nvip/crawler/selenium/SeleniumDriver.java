@@ -103,6 +103,7 @@ public class SeleniumDriver {
 		options.addArguments("--disable-extensions");
 		options.addArguments("--disable-web-security");
 		options.addArguments("--disable-application-cache");
+        options.setBinary("/chrome-linux64/chrome");
 		Map<String, Object> timeouts = new HashMap<>();
 		timeouts.put("implicit", 20);
 		timeouts.put("pageLoad", 15000);

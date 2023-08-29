@@ -12,11 +12,14 @@ RUN mvn package -Dmaven.test.skip=true
 FROM openjdk:11-jre-slim
 
 RUN apt-get update \
-    && apt-get install -y libglib2.0-0 libnss3 libxcb1
+    && apt-get install -y libglib2.0-0 libnss3 libxcb1 wget unzip
 
-RUN apt-get install -y wget
-RUN wget -q https://dl.google.com/linux/direct/google-chrome-stable_115.0.5790.98-1_amd64.deb
-RUN apt-get install -y ./google-chrome-stable_115.0.5790.98-1_amd64.deb
+RUN wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+RUN apt-get install -y ./google-chrome-stable_current_amd64.deb
+# RUN apt-get install -y $(apt-cache depends google-chrome-stable | grep Depends | sed "s/.*ends:\ //" | tr '\n' ' ')
+
+RUN wget -q https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/114.0.5735.133/linux64/chrome-linux64.zip
+RUN unzip chrome-linux64.zip
 
 VOLUME /usr/local/lib/resources
 ADD resources /usr/local/lib/resources
