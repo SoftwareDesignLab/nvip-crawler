@@ -155,7 +155,7 @@ public class CrawlerMain {
         addEnvvarString(CrawlerMain.crawlerVars,"outputDir", outputDir, "output/crawlers",
                 "WARNING: Crawler output path not defined in NVIP_OUTPUT_DIR, using default path: output/crawlers");
 
-        addEnvvarString(CrawlerMain.crawlerVars,"seedFileDir", seedFileDir, "crawler/resources/url-sources/nvip-seeds.txt",
+        addEnvvarString(CrawlerMain.crawlerVars,"seedFileDir", seedFileDir, "resources/url-sources/nvip-seeds.txt",
                 "WARNING: Crawler seed file path not defined in NVIP_SEED_URLS, using default path: " + "resources/url-sources/nvip-seeds.txt");
 
         addEnvvarString(CrawlerMain.crawlerVars,"whitelistFileDir", whitelistFileDir, "crawler/resources/url-sources/nvip-whitelist.txt",
@@ -207,8 +207,8 @@ public class CrawlerMain {
         String mqPort = System.getenv("RABBIT_PORT");
         String mqQueueName = System.getenv("CRAWLER_OUTPUT_QUEUE");
 
-        addEnvvarString(CrawlerMain.dataVars,"dataDir", dataDir, "nvip_data",
-                "WARNING: Data Directory not defined in NVIP_DATA_DIR, using ./nvip_data as default");
+        addEnvvarString(CrawlerMain.dataVars,"dataDir", dataDir, "resources",
+                "WARNING: Data Directory not defined in NVIP_DATA_DIR, using ./resources as default");
         addEnvvarBool(CrawlerMain.dataVars, "refreshNvdList", refreshNvdList, true,
                 "WARNING: Refresh NVD List not defined in NVIP_REFRESH_NVD_LIST, setting true for default");
         addEnvvarString(CrawlerMain.dataVars, "nvdUrl", nvdUrl, "https://services.nvd.nist.gov/rest/json/cves/2.0?pubStartDate=<StartDate>&pubEndDate=<EndDate>",
