@@ -867,5 +867,19 @@
                         tableName="nvdsourceurl"/>
     </changeSet>
 
+    <changeSet id="dropFixSourceUrl" author="dylan">
+        <dropForeignKeyConstraint  baseTableName="fixes" constraintName="fixes_source_url_id_fk"/>
+        <dropTable tableName="fixsourceurl" cascadeConstraints="true" />
+    </changeSet>
+
+    <changeSet id="addSourceUrlColumnFixTable" author="dylan">
+        <dropColumn tableName="fixes" columnName="source_url_id"/>
+        <addColumn tableName="fixes">
+            <column name="source_url" type="VARCHAR(500)">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
 
 </databaseChangeLog>
