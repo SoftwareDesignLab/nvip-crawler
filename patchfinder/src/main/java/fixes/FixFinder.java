@@ -32,6 +32,10 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Main class for FixFinder initialization and handles multithreaded
@@ -80,10 +84,12 @@ public class FixFinder {
 	// 	right now, just doing a list of cveIds
 	public static void run(List<String> cveIds) {
 		Map<String, List<String>> cveToUrls = new HashMap<>();
+		ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors()); // Adjust the thread pool size as needed
+		List<Future<?>> futures = new ArrayList<>();
 
-		for(String cveId : cveIds){
+		for (String cveId : cveIds) {
 			try {
-				for(FixUrlFinder finder : fixURLFinders){
+				for (FixUrlFinder finder : fixURLFinders) {
 					cveToUrls.put(cveId, finder.run(cveId));
 				}
 
@@ -92,19 +98,38 @@ public class FixFinder {
 			}
 		}
 
-		// TODO: handle multithreading correctly with futures ?
-		for(String cveId : cveToUrls.keySet()){
-			FixFinderThread thread = new FixFinderThread(cveId, cveToUrls.get(cveId));
-			thread.run();
+		for (String cveId : cveToUrls.keySet()) {
+			Future<?> future = executorService.submit(() -> {
+				FixFinderThread thread = new FixFinderThread(cveId, cveToUrls.get(cveId));
+				thread.run();
+			});
+			futures.add(future);
 		}
 
-		// After all threads have been run, insert found fixes into database
-		for(Fix fix : fixes){
-			try{
-				// TODO: fix this method and update database schema (ask dylan/dylan do this)
+		// Wait for all threads to complete
+		for (Future<?> future : futures) {
+			try {
+				future.get(); // This will block until the thread is finished
+			} catch (Exception e) {
+				logger.error("Error occurred while executing a thread: {}", e.toString());
+			}
+		}
+
+		executorService.shutdown();
+
+		try {
+			executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+		} catch (InterruptedException e) {
+			logger.error("ExecutorService was interrupted: {}", e.toString());
+		}
+
+		// After all threads have been run, insert found fixes into the database
+		for (Fix fix : fixes) {
+			try {
+				// TODO: fix this method and update database schema (ask dylan/dylan to do this)
 				databaseHelper.insertFix(fix);
 			} catch (Exception e) {
-				logger.error("Error occured while inserting fix for CVE {} into database!", fix.getCveId());
+				logger.error("Error occurred while inserting fix for CVE {} into the database!", fix.getCveId());
 			}
 		}
 
