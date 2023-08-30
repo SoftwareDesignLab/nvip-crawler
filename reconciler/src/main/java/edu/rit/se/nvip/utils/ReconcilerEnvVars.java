@@ -20,7 +20,6 @@ public class ReconcilerEnvVars extends Properties {
     private static int rabbitTimeout;
     private static List<String> filterList;
     private static String reconcilerType;
-    private static List<String> processorList;
     private static List<String> knownSources;
     private static String openAIKey;
     private static String trainingDataDir;
@@ -114,9 +113,6 @@ public class ReconcilerEnvVars extends Properties {
                     break;
                 case RECONCILER_TYPE:
                     reconcilerType = addEnvvarString(envName, envVar, "SIMPLE");
-                    break;
-                case PROCESSOR_LIST:
-                    processorList = addEnvvarListString(envName, getListFromString(envVar), "SIMPLE");
                     break;
                 case KNOWN_SOURCES:
                     knownSources = addEnvvarListString(envName, getListFromString(envVar), "packetstorm,tenable,oval.cisecurity,exploit-db,securityfocus,kb.cert,securitytracker,talosintelligence,gentoo,vmware,bugzilla,seclists,anquanke");
@@ -226,10 +222,6 @@ public class ReconcilerEnvVars extends Properties {
 
     public static String getReconcilerType() {
         return reconcilerType;
-    }
-
-    public static List<String> getProcessorList() {
-        return processorList;
     }
 
     public static List<String> getKnownSources() {
