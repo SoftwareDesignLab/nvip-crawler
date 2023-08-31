@@ -30,7 +30,7 @@ import edu.rit.se.nvip.model.RawVulnerability;
  *
  * @author jqm4954@rit.edu
  */
-public class DescriptionSizeFilter extends Filter{
+public class DescriptionSizeFilter implements Filter{
     @Override
     public boolean passesFilter(RawVulnerability rawVuln) {
         String description = rawVuln.getDescription();

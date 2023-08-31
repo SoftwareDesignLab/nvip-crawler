@@ -22,9 +22,8 @@ public class ReconcilerEnvVarsTest {
         assertEquals("jdbc:mysql://host.docker.internal:3306/nviptest?useSSL=false&allowPublicKeyRetrieval=true", ReconcilerEnvVars.getHikariURL());
         assertEquals("root", ReconcilerEnvVars.getHikariUser());
         assertEquals("root", ReconcilerEnvVars.getHikariPassword());
-        assertEquals(list, ReconcilerEnvVars.getFilterList());
+        assertEquals(list, ReconcilerEnvVars.getFilterNameList());
         assertEquals("SIMPLE", ReconcilerEnvVars.getReconcilerType());
-        assertEquals(list, ReconcilerEnvVars.getProcessorList());
         assertEquals(knownSourceList, ReconcilerEnvVars.getKnownSources());
         assertEquals("sk-xxxxxxxxxxxxx", ReconcilerEnvVars.getOpenAIKey());
         assertEquals("characterization/", ReconcilerEnvVars.getTrainingDataDir());

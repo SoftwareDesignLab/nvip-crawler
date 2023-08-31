@@ -15,11 +15,9 @@ import edu.rit.se.nvip.utils.ReconcilerEnvVars;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 class ReconcilerControllerTest {
@@ -43,7 +41,7 @@ class ReconcilerControllerTest {
         CveCharacterizer mockChar = mock(CveCharacterizer.class);
         rc.setDbh(mockDbh);
         rc.setReconciler(mockRecon);
-        rc.setFilterHandler(mockFH);
+        rc.setFilterChain(mockFH);
         rc.setMessenger(mockMes);
         rc.setNvdController(mockNvd);
         rc.setMitreController(mockMitre);

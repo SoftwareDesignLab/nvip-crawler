@@ -32,7 +32,7 @@ import java.util.regex.Pattern;
  *
  * @author jqm4954@rit.edu
  */
-public class MultipleCveDescriptionsFilter extends Filter{
+public class MultipleCveDescriptionsFilter implements Filter{
     @Override
     public boolean passesFilter(RawVulnerability rawVuln) {
         String description = rawVuln.getDescription();

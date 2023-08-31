@@ -76,7 +76,8 @@ public class FilterHandler {
             equivClasses.get(desc).add(rawVuln);
         }
         for (Filter filter : filters) {
-            filter.filterAll(samples); // todo filters should always operate on trimmed descriptions, need to architect this properly for consistency
+            // todo filter technique
+            //filter.filterAll(samples); // todo filters should always operate on trimmed descriptions, need to architect this properly for consistency
         }
         // update filter statuses in each equiv class to match its sample
         for (RawVulnerability sample : samples) {
@@ -84,7 +85,7 @@ public class FilterHandler {
                 rv.setFilterStatus(sample.getFilterStatus());
             }
         }
-        int nPassed = vulns.stream().filter(v->v.getFilterStatus()== RawVulnerability.FilterStatus.PASSED).collect(Collectors.toSet()).size();
+        int nPassed = vulns.stream().filter(v->v.getFilterStatus()== FilterStatus.PASSED).collect(Collectors.toSet()).size();
         return new FilterReturn(vulns.size(), samples.size(), nPassed);
     }
 

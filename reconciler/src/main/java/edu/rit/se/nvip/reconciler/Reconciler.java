@@ -29,6 +29,7 @@ import java.util.stream.Stream;
 
 import edu.rit.se.nvip.DatabaseHelper;
 import edu.rit.se.nvip.model.RawVulnerability;
+import edu.rit.se.nvip.model.SourceType;
 import edu.rit.se.nvip.model.Vulnerability;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -166,7 +167,7 @@ public abstract class Reconciler {
 
 	private List<RawVulnerability> extractUserSources(Set<RawVulnerability> rawVulns) {
 		List<RawVulnerability> out = rawVulns.stream()
-				.filter(v->v.getSourceType()== RawVulnerability.SourceType.USER)
+				.filter(v->v.getSourceType()== SourceType.USER)
 				.sorted(Comparator.comparing(Vulnerability::getCreateDate).reversed())
 				.collect(Collectors.toList());
 		out.forEach(rawVulns::remove);

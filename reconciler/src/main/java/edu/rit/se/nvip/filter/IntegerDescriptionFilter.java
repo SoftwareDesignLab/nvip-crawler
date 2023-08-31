@@ -32,7 +32,7 @@ import java.util.regex.Pattern;
  *
  * @author jqm4954@rit.edu
  */
-public class IntegerDescriptionFilter extends Filter{
+public class IntegerDescriptionFilter implements Filter{
     @Override
     public boolean passesFilter(RawVulnerability rawVuln) {
         String description = rawVuln.getDescription();

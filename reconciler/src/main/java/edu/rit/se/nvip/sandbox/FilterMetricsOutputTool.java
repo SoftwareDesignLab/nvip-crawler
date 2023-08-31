@@ -4,6 +4,7 @@ import edu.rit.se.nvip.filter.Filter;
 import edu.rit.se.nvip.filter.FilterFactory;
 import edu.rit.se.nvip.filter.FilterHandler;
 import edu.rit.se.nvip.model.RawVulnerability;
+import edu.rit.se.nvip.model.SourceType;
 import edu.rit.se.nvip.utils.metrics.CrawlerRun;
 import edu.rit.se.nvip.utils.metrics.FilterMetrics;
 
@@ -19,7 +20,7 @@ import java.util.Map;
 
 public class FilterMetricsOutputTool {
     private FilterMetrics currentFilterMetrics;
-    private Map<CrawlerRun, Map<RawVulnerability.SourceType, Integer>> sourceDist;
+    private Map<CrawlerRun, Map<SourceType, Integer>> sourceDist;
     private Map<CrawlerRun, FilterMetrics.FilterStats> numFiltered;
     private Map<CrawlerRun, Double> proportionPassed;
     private Map<CrawlerRun, Integer> newVulnsPerRun;
@@ -59,9 +60,9 @@ public class FilterMetricsOutputTool {
             totalPassed += numFiltered.get(currentRun).getPassedFilters();
             joRun.add("Proportion Passed", df.format(proportionPassed.get(currentRun)));
             joRun.add("New Vulns", newVulnsPerRun.get(currentRun));
-            Map<RawVulnerability.SourceType, Integer> sourceMap = sourceDist.get(currentRun);
+            Map<SourceType, Integer> sourceMap = sourceDist.get(currentRun);
             JsonObjectBuilder joSource = Json.createObjectBuilder();
-            for (RawVulnerability.SourceType currentSource: sourceMap.keySet()) {
+            for (SourceType currentSource: sourceMap.keySet()) {
                 joSource.add(currentSource.getType(), sourceMap.get(currentSource));
             }
             joRun.add("Source Distribution", joSource);

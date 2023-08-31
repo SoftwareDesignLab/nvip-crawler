@@ -1,5 +1,7 @@
 package edu.rit.se.nvip.model;
 
+import edu.rit.se.nvip.filter.FilterStatus;
+
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -13,7 +15,7 @@ public class VulnSetWrapper {
 
     public boolean hasPassedHighPrio() {
         for (RawVulnerability v : vulns) {
-            if (v.getFilterStatus() == RawVulnerability.FilterStatus.PASSED && v.isHighPriority()) {
+            if (v.getFilterStatus() == FilterStatus.PASSED && v.isHighPriority()) {
                 return true;
             }
         }
@@ -37,9 +39,9 @@ public class VulnSetWrapper {
     public int setNewToUneval() {
         int out = 0;
         for (RawVulnerability v : vulns) {
-            if (v.getFilterStatus() == RawVulnerability.FilterStatus.NEW) {
+            if (v.getFilterStatus() == FilterStatus.NEW) {
                 out++;
-                v.setFilterStatus(RawVulnerability.FilterStatus.UNEVALUATED);
+                v.setFilterStatus(FilterStatus.UNEVALUATED);
             }
         }
         return out;
@@ -53,6 +55,6 @@ public class VulnSetWrapper {
         // if a vuln was changed, it was unfiltered before and thus hasn't been considered for prior reconciliation
         // then take the changed ones and pick out the passed vulns
         // don't need to worry about prio here because nothing gets filtered in this run that we don't want to use
-        return toUpdate().stream().filter(v -> v.getFilterStatus() == RawVulnerability.FilterStatus.PASSED).collect(Collectors.toSet());
+        return toUpdate().stream().filter(v -> v.getFilterStatus() == FilterStatus.PASSED).collect(Collectors.toSet());
     }
 }

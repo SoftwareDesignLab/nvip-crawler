@@ -2,6 +2,7 @@ package edu.rit.se.nvip.sandbox;
 
 import edu.rit.se.nvip.ReconcilerController;
 import edu.rit.se.nvip.model.RawVulnerability;
+import edu.rit.se.nvip.model.SourceType;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -78,11 +79,11 @@ public class ReconcilerTests {
     private RawVulnerability genRawVuln(int id, boolean isHighPrio, boolean isFailing){
         ids++;
         if (isHighPrio && isFailing){
-            return new RawVulnerability(id, "CVE-2023-"+id, "CVE-2023-"+id, new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis()), "www.google.com/"+ids, RawVulnerability.SourceType.CNA.getType(), 0);
+            return new RawVulnerability(id, "CVE-2023-"+id, "CVE-2023-"+id, new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis()), "www.google.com/"+ids, SourceType.CNA.getType(), 0);
         }else if(isHighPrio){
-            return new RawVulnerability(id, "CVE-2023-"+id, "Test description that will pass filters"+ids, new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis()), "www.google.com/"+ids, RawVulnerability.SourceType.CNA.getType(), 0);
+            return new RawVulnerability(id, "CVE-2023-"+id, "Test description that will pass filters"+ids, new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis()), "www.google.com/"+ids, SourceType.CNA.getType(), 0);
         }else if(isFailing){
-            return new RawVulnerability(id, "CVE-2023-"+id, "CVE-2023-"+id, new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis()), "www.google.com/"+ids, RawVulnerability.SourceType.OTHER.getType(), 0);
+            return new RawVulnerability(id, "CVE-2023-"+id, "CVE-2023-"+id, new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis()), "www.google.com/"+ids, SourceType.OTHER.getType(), 0);
         }
         return new RawVulnerability(id, "CVE-2023-"+id, "Test description that will pass filters"+ids, new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis()), "www.google.com/"+ids);
     }

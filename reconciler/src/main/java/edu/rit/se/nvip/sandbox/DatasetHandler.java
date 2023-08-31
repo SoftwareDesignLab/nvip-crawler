@@ -2,6 +2,7 @@ package edu.rit.se.nvip.sandbox;
 
 import edu.rit.se.nvip.filter.Filter;
 import edu.rit.se.nvip.filter.FilterFactory;
+import edu.rit.se.nvip.filter.FilterStatus;
 import edu.rit.se.nvip.filter.GPTFilter;
 import edu.rit.se.nvip.model.RawVulnerability;
 import edu.rit.se.nvip.model.VulnSetWrapper;
@@ -123,9 +124,9 @@ public class DatasetHandler {
         Set<RawVulnerability> rejected = new HashSet<>();
         Set<RawVulnerability> unFiltered = rawVulns;
         for (Filter filter: filters) {
-            Set<RawVulnerability> currentRejected = filter.filterAllAndSplit(unFiltered);
-            rejected.addAll(currentRejected);
-            unFiltered.removeAll(currentRejected);
+//            Set<RawVulnerability> currentRejected = filter.filterAllAndSplit(unFiltered); // todo filter technique
+//            rejected.addAll(currentRejected);
+//            unFiltered.removeAll(currentRejected);
         }
 
         System.out.println("Total: " + jArray.size());
@@ -167,8 +168,8 @@ public class DatasetHandler {
         if (removeLocalFiltered) {
             Set<RawVulnerability> currentRejected;
             for (Filter filter: filters) {
-                currentRejected = filter.filterAllAndSplit(unFiltered);
-                unFiltered.removeAll(currentRejected);
+                //currentRejected = filter.filterAllAndSplit(unFiltered); // todo filter technique
+                //unFiltered.removeAll(currentRejected);
             }
         }
 
@@ -184,7 +185,7 @@ public class DatasetHandler {
         Set<RawVulnerability> rejected = new HashSet<>();
 
         System.out.println("Total for GPT filter: " + remoteTotalCount);
-        rejected.addAll(gptFilter.filterAllAndSplit(filterSet));
+        //rejected.addAll(gptFilter.filterAllAndSplit(filterSet)); // todo filter technique
 
         System.out.println("Total: " + remoteTotalCount);
         System.out.println("Rejected: " + rejected.size());
@@ -337,7 +338,7 @@ public class DatasetHandler {
             equivClasses.get(desc).add(rawVuln);
         }
         for (Filter filter : filters) {
-            filter.filterAll(samples);
+            // filter.filterAll(samples); // todo filter technique
         }
         // update filter statuses in each equiv class to match its sample
         for (RawVulnerability sample : samples) {
@@ -345,7 +346,7 @@ public class DatasetHandler {
                 rv.setFilterStatus(sample.getFilterStatus());
             }
         }
-        int numPassed = firstWaveVulns.stream().filter(v->v.getFilterStatus() == RawVulnerability.FilterStatus.PASSED).collect(Collectors.toSet()).size();
+        int numPassed = firstWaveVulns.stream().filter(v->v.getFilterStatus() == FilterStatus.PASSED).collect(Collectors.toSet()).size();
         System.out.println("Total in json: " + jArray.size());
         System.out.println("Total in first wave: " + firstWaveVulns.size());
         System.out.println("Accepted: " + numPassed);
@@ -363,7 +364,7 @@ public class DatasetHandler {
             equivClasses2.get(desc).add(rawVuln);
         }
         for (Filter filter : filters) {
-            filter.filterAll(samples2);
+            //filter.filterAll(samples2); // todo filter technique
         }
         // update filter statuses in each equiv class to match its sample
         for (RawVulnerability sample : samples2) {
@@ -371,7 +372,7 @@ public class DatasetHandler {
                 rv.setFilterStatus(sample.getFilterStatus());
             }
         }
-        int numPassed2 = secondWaveVulns.stream().filter(v->v.getFilterStatus() == RawVulnerability.FilterStatus.PASSED).collect(Collectors.toSet()).size();
+        int numPassed2 = secondWaveVulns.stream().filter(v->v.getFilterStatus() == FilterStatus.PASSED).collect(Collectors.toSet()).size();
         System.out.println("Total in json: " + jArray.size());
         System.out.println("Total in second wave: " + secondWaveVulns.size());
         System.out.println("Accepted: " + numPassed2);

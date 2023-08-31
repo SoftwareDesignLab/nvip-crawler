@@ -1,8 +1,7 @@
 package edu.rit.se.nvip;
 
 import edu.rit.se.nvip.characterizer.CveCharacterizer;
-import edu.rit.se.nvip.filter.FilterHandler;
-import edu.rit.se.nvip.filter.FilterReturn;
+import edu.rit.se.nvip.filter.*;
 import edu.rit.se.nvip.messenger.Messenger;
 import edu.rit.se.nvip.mitre.MitreCveController;
 import edu.rit.se.nvip.model.*;
@@ -13,7 +12,6 @@ import edu.rit.se.nvip.utils.ReconcilerEnvVars;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
@@ -22,7 +20,7 @@ public class ReconcilerController {
     private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
     private DatabaseHelper dbh;
     private Reconciler reconciler;
-    private FilterHandler filterHandler;
+    private FilterChain filterChain;
     private Messenger messenger = new Messenger();
     private CveCharacterizer cveCharacterizer;
     private NvdCveController nvdController;
@@ -31,7 +29,7 @@ public class ReconcilerController {
 
     public void initialize(){
         this.dbh = DatabaseHelper.getInstance();
-        filterHandler = new FilterHandler(ReconcilerEnvVars.getFilterList());
+        filterChain = new FilterChain(ReconcilerEnvVars.getFilterList(), true, true);
         this.reconciler = ReconcilerFactory.createReconciler(ReconcilerEnvVars.getReconcilerType());
         this.reconciler.setKnownCveSources(ReconcilerEnvVars.getKnownSourceMap());
         if(nvdController == null) {
@@ -159,28 +157,17 @@ public class ReconcilerController {
 
     private CompositeVulnerability handleReconcilerJob(String cveId) {
         // pull data
-        Set<RawVulnerability> rawVulns = dbh.getRawVulnerabilities(cveId);
-        int rawCount = rawVulns.size();
-        VulnSetWrapper wrapper = new VulnSetWrapper(rawVulns);
-        // mark new vulns as unevaluated
-        int newRawCount = wrapper.setNewToUneval();
+        Set<RawVulnerability> allRawVulns = dbh.getRawVulnerabilities(cveId);
+        int rawCount = allRawVulns.size();
         // get an existing vuln from prior reconciliation if one exists
         CompositeVulnerability existing = dbh.getCompositeVulnerability(cveId);
         // filter in waves by priority
-        FilterReturn firstWaveReturn = filterHandler.runFilters(wrapper.firstFilterWave()); //high prio sources
-        FilterReturn secondWaveReturn = filterHandler.runFilters(wrapper.secondFilterWave()); //either empty or low prio depending on filter status of high prio sources
-        // update the filter status in the db for new and newly evaluated vulns
-        dbh.updateFilterStatus(wrapper.toUpdate());
-        logger.info("{} raw vulnerabilities with CVE ID {} were found and {} were new.\n" +
-                        "The first wave of filtering passed {} out of {} new high priority sources.\n" +
-                        "The second wave of filtering passed {} out of {} new backup low priority sources.\n" +
-                        "In total, {} distinct descriptions were explicitly filtered.",
-                rawCount, cveId, newRawCount,
-                firstWaveReturn.numPassed, firstWaveReturn.numIn,
-                secondWaveReturn.numPassed, secondWaveReturn.numIn,
-                firstWaveReturn.numDistinct + secondWaveReturn.numDistinct);
+        Set<RawVulnerability> newRaw = allRawVulns.stream().filter(v->v.getFilterStatus()==FilterStatus.NEW).collect(Collectors.toSet());
+        Set<RawVulnerability> oldRaw = allRawVulns.stream().filter(v->!newRaw.contains(v)).collect(Collectors.toSet());
+        Map<RawVulnerability, FilterResult> filterResults = filterChain.runFilters(newRaw, oldRaw);
+        Set<RawVulnerability> toReconcile = newRaw.stream().filter(v->filterResults.get(v).getStatus()==FilterStatus.PASSED).collect(Collectors.toSet());
         // reconcile
-        CompositeVulnerability out = reconciler.reconcile(existing, wrapper.toReconcile());
+        CompositeVulnerability out = reconciler.reconcile(existing, toReconcile);
 
         if (out == null){
             return null;
@@ -188,7 +175,7 @@ public class ReconcilerController {
 
         // link all the rawvulns to the compvuln, regardless of filter/reconciliation status
         // we do this because publish dates and mod dates should be determined by all sources, not just those with good descriptions
-        out.setPotentialSources(rawVulns);
+        out.setPotentialSources(allRawVulns);
 
         dbh.insertOrUpdateVulnerabilityFull(out);
 
@@ -222,8 +209,9 @@ public class ReconcilerController {
     public void setReconciler(Reconciler rc){
         reconciler = rc;
     }
-    public void setFilterHandler(FilterHandler fh){
-        filterHandler = fh;
+    public void setFilterChain(FilterHandler fh){
+        //filterChain = fh;
+        // todo change type
     }
     public void setMessenger(Messenger m){
         messenger = m;

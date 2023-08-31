@@ -2,6 +2,7 @@ package edu.rit.se.nvip.metrics;
 
 import edu.rit.se.nvip.filter.FilterHandler;
 import edu.rit.se.nvip.model.RawVulnerability;
+import edu.rit.se.nvip.model.SourceType;
 import edu.rit.se.nvip.utils.metrics.CrawlerRun;
 import edu.rit.se.nvip.utils.metrics.FilterMetrics;
 import org.junit.jupiter.api.Test;
@@ -63,13 +64,13 @@ class FilterMetricsTest {
         String path = System.getProperty("user.dir") + "\\src\\test\\resources";
         FilterMetrics filterMetrics = genFilterMetrics(path);
 
-        Map<CrawlerRun, Map<RawVulnerability.SourceType, Integer>> distribution = filterMetrics.sourceTypeDistribution();
+        Map<CrawlerRun, Map<SourceType, Integer>> distribution = filterMetrics.sourceTypeDistribution();
 
         List<CrawlerRun> runs = filterMetrics.getRuns();
 
-        Map<RawVulnerability.SourceType, Integer> otherMap = distribution.get(runs.get(0));
+        Map<SourceType, Integer> otherMap = distribution.get(runs.get(0));
 
-        assertEquals(3, otherMap.get(RawVulnerability.SourceType.OTHER)); //should be 3 OTHERs
+        assertEquals(3, otherMap.get(SourceType.OTHER)); //should be 3 OTHERs
 
 
     }

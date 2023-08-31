@@ -1,6 +1,8 @@
 package edu.rit.se.nvip.utils.metrics;
 
+import edu.rit.se.nvip.filter.FilterStatus;
 import edu.rit.se.nvip.model.RawVulnerability;
+import edu.rit.se.nvip.model.SourceType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -36,8 +38,8 @@ public class CrawlerRun {
         return previous.stream().filter(p -> p.generalEquals(candidate)).collect(Collectors.toSet()).size() == 0;
     }
 
-    public Map<RawVulnerability.SourceType, Integer> sourceTypeDistribution() {
-        Map<RawVulnerability.SourceType, Integer> map = new HashMap<>(); // for every run make a new map
+    public Map<SourceType, Integer> sourceTypeDistribution() {
+        Map<SourceType, Integer> map = new HashMap<>(); // for every run make a new map
         int cna = 0; //initialize source variables
         int sa = 0;
         int third_party = 0;
@@ -46,24 +48,24 @@ public class CrawlerRun {
         //for each raw vuln that exists in the run
         for (RawVulnerability vuln : vulns) {
             //get the source type and increase the value of that source type
-            if (vuln.getSourceType() == RawVulnerability.SourceType.CNA){
+            if (vuln.getSourceType() == SourceType.CNA){
                 cna++;
-            }else if (vuln.getSourceType() == RawVulnerability.SourceType.SA){
+            }else if (vuln.getSourceType() == SourceType.SA){
                 sa++;
-            }else if (vuln.getSourceType() == RawVulnerability.SourceType.THIRD_PARTY) {
+            }else if (vuln.getSourceType() == SourceType.THIRD_PARTY) {
                 third_party++;
-            }else if (vuln.getSourceType() == RawVulnerability.SourceType.BUG_BOUNTY){
+            }else if (vuln.getSourceType() == SourceType.BUG_BOUNTY){
                 bug_bounty++;
-            }else if (vuln.getSourceType() == RawVulnerability.SourceType.OTHER){
+            }else if (vuln.getSourceType() == SourceType.OTHER){
                 other++;
             }
         }
         //put the values in the map SourceType, Amount of sources from that type
-        map.put(RawVulnerability.SourceType.CNA, cna);
-        map.put(RawVulnerability.SourceType.SA, sa);
-        map.put(RawVulnerability.SourceType.THIRD_PARTY, third_party);
-        map.put(RawVulnerability.SourceType.BUG_BOUNTY, bug_bounty);
-        map.put(RawVulnerability.SourceType.OTHER, other);
+        map.put(SourceType.CNA, cna);
+        map.put(SourceType.SA, sa);
+        map.put(SourceType.THIRD_PARTY, third_party);
+        map.put(SourceType.BUG_BOUNTY, bug_bounty);
+        map.put(SourceType.OTHER, other);
         return map;
     }
 
@@ -72,13 +74,13 @@ public class CrawlerRun {
 
         for(RawVulnerability vuln : vulns){ //for each vuln in the run
 
-            if (vuln.getFilterStatus() == RawVulnerability.FilterStatus.UNEVALUATED || vuln.getFilterStatus() == RawVulnerability.FilterStatus.NEW){ //if it's NEW or UNEVALUATED we consider it not filtered
+            if (vuln.getFilterStatus() == FilterStatus.UNEVALUATED || vuln.getFilterStatus() == FilterStatus.NEW){ //if it's NEW or UNEVALUATED we consider it not filtered
                 filterStats.increaseNotFiltered();
             }
-            else if (vuln.getFilterStatus() == RawVulnerability.FilterStatus.PASSED){ //if it passed then it filtered
+            else if (vuln.getFilterStatus() == FilterStatus.PASSED){ //if it passed then it filtered
                 filterStats.increasePassedFilters();
             }
-            else if (vuln.getFilterStatus() == RawVulnerability.FilterStatus.FAILED){ //if it failed then it failed to fully filter
+            else if (vuln.getFilterStatus() == FilterStatus.FAILED){ //if it failed then it failed to fully filter
                 filterStats.increaseFailedFilters();
             }
 
@@ -111,7 +113,7 @@ public class CrawlerRun {
 
     public void resetFilterStatus() {
         for (RawVulnerability vuln : vulns) {
-            vuln.setFilterStatus(RawVulnerability.FilterStatus.NEW);
+            vuln.setFilterStatus(FilterStatus.NEW);
         }
     }
 

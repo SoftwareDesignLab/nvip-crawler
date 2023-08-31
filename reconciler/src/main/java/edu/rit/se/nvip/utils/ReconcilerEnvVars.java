@@ -1,5 +1,7 @@
 package edu.rit.se.nvip.utils;
 
+import edu.rit.se.nvip.filter.Filter;
+import edu.rit.se.nvip.filter.FilterFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -7,6 +9,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class ReconcilerEnvVars extends Properties {
 
@@ -216,8 +219,12 @@ public class ReconcilerEnvVars extends Properties {
     public static String getInputMode() {return inputMode;}
 
     public static int getRabbitTimeout() {return rabbitTimeout;}
-    public static List<String> getFilterList() {
+    public static List<String> getFilterNameList() {
         return filterList;
+    }
+
+    public static List<Filter> getFilterList() {
+        return filterList.stream().map(FilterFactory::createFilter).collect(Collectors.toList());
     }
 
     public static String getReconcilerType() {

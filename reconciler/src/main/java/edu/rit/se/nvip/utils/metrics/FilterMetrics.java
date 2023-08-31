@@ -6,6 +6,7 @@ import com.google.gson.JsonParser;
 import edu.rit.se.nvip.filter.Filter;
 import edu.rit.se.nvip.filter.FilterHandler;
 import edu.rit.se.nvip.model.RawVulnerability;
+import edu.rit.se.nvip.model.SourceType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import java.text.ParseException;
@@ -216,10 +217,10 @@ public class FilterMetrics {
         return runMap;
     }
 
-    public Map<CrawlerRun, Map<RawVulnerability.SourceType, Integer>> sourceTypeDistribution() {
-        Map<CrawlerRun, Map<RawVulnerability.SourceType, Integer>> typeDistributionMap = new HashMap<>();
+    public Map<CrawlerRun, Map<SourceType, Integer>> sourceTypeDistribution() {
+        Map<CrawlerRun, Map<SourceType, Integer>> typeDistributionMap = new HashMap<>();
         for(CrawlerRun run: runs) {
-            Map<RawVulnerability.SourceType, Integer> map = run.sourceTypeDistribution();
+            Map<SourceType, Integer> map = run.sourceTypeDistribution();
             typeDistributionMap.put(run, map);
         }
         return typeDistributionMap;

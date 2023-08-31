@@ -3,7 +3,7 @@ package edu.rit.se.nvip.filter;
 import edu.rit.se.nvip.model.RawVulnerability;
 import edu.rit.se.nvip.openai.GPTFilterModel;
 
-public class GPTFilter extends AsyncFilter {
+public class GPTFilter implements Filter {
     private GPTFilterModel model;
     private static long tokenTotal = 0;
     private static int processed = 0;
