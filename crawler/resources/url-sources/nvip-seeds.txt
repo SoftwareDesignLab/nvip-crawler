@@ -1,3 +1,4 @@
+http://nginx.org/en/security_advisories.html/
 http://oxnan.com/
 http://support.zte.com.cn/support/news/NewsMain.aspx/
 http://svn.apache.org/viewvc/tomcat/site/trunk/docs/?pathrev=1907857/
@@ -124,6 +125,7 @@ https://enterprise.github.com/releases/
 https://erpnext.com/security/references/
 https://evs.com/services/cyber-security/security-bulletins/
 https://excellium-services.com/cert-xlm-advisory/
+https://fluidattacks.com/advisories/
 https://forums.ivanti.com/s/searchallcontent?language=en_US#t=All&sort=date%20descending&f:@sfkbknowledgearticletypec=[Security%20Advisory]
 https://friends-of-presta.github.io/security-advisories/
 https://gitbook.seguranca-informatica.pt/cve-and-exploits/cves/chiyu-iot-devices/
@@ -657,6 +659,7 @@ https://www.trustwave.com/en-us/resources/blogs/spiderlabs-blog/
 https://www.twcert.org.tw/en/lp-139-2.html/
 https://www.uipath.com/legal/trust-and-security/security-advisories/
 https://www.unisoc.com/en_us/secy/announcement/
+https://www.usom.gov.tr/tehdit.html/
 https://www.vandyke.com/support/advisory/index.html/
 https://www.veritas.com/content/support/en_US/security/
 https://www.villageb.io/security-advisory/
