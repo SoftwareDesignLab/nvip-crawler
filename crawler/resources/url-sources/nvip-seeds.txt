@@ -44,6 +44,7 @@ https://bugs.eclipse.org/bugs/buglist.cgi?quicksearch=cve
 https://bugs.gentoo.org/buglist.cgi?bug_status=__open__&component=Vulnerabilities&product=Gentoo%20Security
 https://bugs.gentoo.org/buglist.cgi?quicksearch=CVE
 https://bugzilla.redhat.com/buglist.cgi?component=vulnerability&product=Security%20Response
+https://bugzilla.suse.com/buglist.cgi?bug_status=UNCONFIRMED&bug_status=NEW&bug_status=CONFIRMED&bug_status=IN_PROGRESS&f0=OP&f1=OP&f10=alias&f11=short_desc&f12=status_whiteboard&f13=content&f14=CP&f15=CP&f16=OP&f17=OP&f18=product&f19=component&f2=product&f20=alias&f21=short_desc&f22=status_whiteboard&f23=content&f24=CP&f25=CP&f3=CP&f4=CP&f5=OP&f6=OP&f7=product&f8=component&f9=keywords&j1=OR&j17=OR&j6=OR&limit=0&o10=substring&o11=substring&o12=substring&o13=matches&o18=substring&o19=substring&o2=substring&o20=substring&o21=substring&o22=substring&o23=matches&o7=substring&o8=substring&o9=substring&order=changeddate%20DESC%2Cbug_status%2Cpriority%2Cassigned_to%2Cbug_id&product=SUSE%20Security%20Incidents&query_format=advanced&v10=Security&v11=Security&v12=Security&v13=%22Security%22&v18=Incidents&v19=Incidents&v2=SUSE&v20=Incidents&v21=Incidents&v22=Incidents&v23=%22Incidents%22&v7=Security&v8=Security&v9=Security
 https://buildings.honeywell.com/us/en/brands/our-brands/security/support-and-resources/product-resources/eol-and-security-notices/
 https://bulletin.iese.de/
 https://camel.apache.org/security/
@@ -144,7 +145,6 @@ https://erpnext.com/security/references/
 https://evs.com/services/cyber-security/security-bulletins/
 https://excellium-services.com/cert-xlm-advisory/
 https://fluidattacks.com/advisories/
-https://forums.ivanti.com/s/searchallcontent?language=en_US#t=All&sort=date%20descending&f:@sfkbknowledgearticletypec=[Security%20Advisory]
 https://friends-of-presta.github.io/security-advisories/
 https://gitbook.seguranca-informatica.pt/cve-and-exploits/cves/chiyu-iot-devices/
 https://gitee.com/opengauss/security/issues?assignee_id=&author_id=&branch=&collaborator_ids=&issue_search=&label_ids=&label_text=&milestone_id=&priority=&private_issue=&program_id=&project_type=&scope=&single_label_id=&single_label_text=&sort=&state=all&target_project=
@@ -164,6 +164,7 @@ https://github.com/binary-husky/gpt_academic/security/
 https://github.com/bytecodealliance/wasmtime/security/advisories/
 https://github.com/c-ares/c-ares/security/advisories/
 https://github.com/Ch0pin/security-advisories/security/
+https://github.com/chipsalliance/Caliptra/security/
 https://github.com/chunklhit/cve/tree/master/TRENDNet/TEW-820AP/
 https://github.com/cilium/cilium/security/advisories/
 https://github.com/ckan/ckan-docker-base/security/
@@ -202,6 +203,7 @@ https://github.com/kiwitcms/Kiwi/security/
 https://github.com/kubernetes/kubernetes/issues?utf8=✓&q=is%3Aissue+label%3Aarea%2Fsecurity+in%3Atitle+CVE
 https://github.com/kyverno/kyverno/security/advisories/
 https://github.com/l4rRyxz/CVE-Disclosures/tree/main/
+https://github.com/langchain-ai/langchain/issues?q=cve
 https://github.com/LianKee/SO-CVEs/tree/main/CVEs/
 https://github.com/M19O/Security-Advisories/tree/main/
 https://github.com/mage-ai/mage-ai/security/
@@ -231,9 +233,11 @@ https://github.com/pkp/pkp-lib/issues?q=is%3Aissue+cve+
 https://github.com/planetlabs/planet-client-python/security/advisories/
 https://github.com/pterodactyl/wings/security/advisories/
 https://github.com/QubesOS/qubes-secpack/tree/master/QSBs/
+https://github.com/radareorg/radare2/issues?q=cve
 https://github.com/rancher/rancher/security/advisories/
 https://github.com/reactphp/http/security/advisories/
 https://github.com/RIOT-OS/RIOT/security/advisories/
+https://github.com/roundcube/roundcubemail/issues?q=CVE
 https://github.com/saleor/saleor/security/advisories/
 https://github.com/socketio/engine.io/security/advisories/
 https://github.com/spf13/viper/security/advisories/
@@ -243,6 +247,9 @@ https://github.com/tgstation/tgstation-server/security/advisories/
 https://github.com/TryGhost/Ghost/security/
 https://github.com/vapor/postgres-nio/security/advisories/
 https://github.com/vyperlang/vyper/security/advisories/
+https://github.com/WrenSecurity/wrenam/security/
+https://github.com/WrenSecurity/wrends/security/
+https://github.com/WrenSecurity/wrenidm/security/
 https://github.com/WWBN/AVideo/security/
 https://github.com/xerial/snappy-java/security/advisories/
 https://github.com/xerial/sqlite-jdbc/security/advisories/
@@ -261,6 +268,7 @@ https://grafana.com/security/security-advisories/
 https://groups.google.com/a/bytecodealliance.org/g/sec-announce/
 https://groups.google.com/g/akka-security/
 https://groups.google.com/g/gnark-announce?pli=1
+https://groups.google.com/g/kubernetes-security-announce/
 https://groups.google.com/g/libarchive-announce/
 https://gsmcnamara.github.io/CVE/disclosures/
 https://hackandpwn.com/
@@ -297,6 +305,7 @@ https://kb.isc.org/docs/search?query=cve&searchType=articles
 https://kb.juniper.net/InfoCenter/index?page=content&channel=SECURITY_ADVISORIES
 https://kb.pulsesecure.net/?atype=sa
 https://knowledge.hitachivantara.com/Security/
+https://knowledgebase.macrium.com/display/KNOW80/Macrium+Reflect+KnowledgeBase
 https://kubernetes.io/docs/reference/issues-security/official-cve-feed/
 https://labs.cyberark.com/cyberark-labs-security-advisories/
 https://labs.f-secure.com/advisories/
@@ -323,6 +332,7 @@ https://lists.fedoraproject.org/archives/search?count=100&q=cve&mlist=package-an
 https://lists.gnupg.org/pipermail/gnupg-announce/
 https://lists.nongnu.org/archive/html/
 https://lists.opensuse.org/archives/list/security-announce@lists.opensuse.org/
+https://lists.x.org/archives/xorg-announce/
 https://lkml.org/lkml/last100/
 https://lldpd.github.io/security.html/
 https://lucabarile.github.io/Blog/blog.html/
@@ -380,6 +390,7 @@ https://python-security.readthedocs.io/
 https://research.splunk.com/detections/
 https://resources.genetec.com/security-advisories/
 https://rockwellautomation.custhelp.com/app/answers/answer_view/a_id/54102/loc/en_us/
+https://roundcube.net/news/
 https://rushbnt.github.io/posts/
 https://samsungtvbounty.com/securityUpdates/
 https://search-guard.com/cve-advisory/
@@ -480,6 +491,7 @@ https://trust.zscaler.com/security-advisories/
 https://trustedcomputinggroup.org/about/security/
 https://tuleap.net/plugins/tracker/?tracker=140
 https://typo3.org/help/security-advisories/
+https://ubuntu.com/security/cves/
 https://ubuntu.com/security/notices/
 https://umbraco.com/trust-center/security-and-umbraco/how-to-get-informed-about-security-advisories/history-of-umbraco-security-advisories/
 https://unify.com/en/support/security-advisories/
@@ -550,6 +562,7 @@ https://www.cyber.gc.ca/en/alerts-advisories/
 https://www.dahuasecurity.com/support/cybersecurity/annoucementNotice/
 https://www.debian.org/lts/security/
 https://www.debian.org/security/#DSAS/
+https://www.debian.org/security/2023/
 https://www.dell.com/support/security/en-us/
 https://www.digi.com/resources/security
 https://www.djangoproject.com/weblog/2023/
@@ -610,6 +623,7 @@ https://www.incibe.es/incibe-cert/alerta-temprana/vulnerabilidades/
 https://www.intel.com/content/www/us/en/security-center/default.html/
 https://www.iot83.com/security/
 https://www.ivanti.com/blog/topics/security-advisory/
+https://www.jenkins.io/security/advisories/
 https://www.jetbrains.com/privacy-security/issues-fixed/
 https://www.jfrog.com/confluence/display/JFROG/JFrog+Security+Advisories/
 https://www.jfrog.com/confluence/display/RTF/Fixed+Security+Vulnerabilities/
@@ -736,6 +750,7 @@ https://www.synopsys.com/blogs/software-security/?s=security+advisory/
 https://www.talend.com/security/incident-response/
 https://www.tcpdump.org/public-cve-list.txt/
 https://www.teamviewer.com/en/trust-center/security-bulletins/
+https://www.tenable.com/security/
 https://www.themissinglink.com.au/security-advisories/
 https://www.tibco.com/services/support/advisories/
 https://www.tigera.io/security-bulletins/
@@ -746,6 +761,7 @@ https://www.trustwave.com/en-us/resources/blogs/spiderlabs-blog/
 https://www.twcert.org.tw/en/lp-139-2.html/
 https://www.uipath.com/legal/trust-and-security/security-advisories/
 https://www.unisoc.com/en_us/secy/announcement/
+https://www.usom.gov.tr/bildirim/
 https://www.usom.gov.tr/tehdit.html/
 https://www.vandyke.com/support/advisory/index.html/
 https://www.veritas.com/content/support/en_US/security/
@@ -767,6 +783,7 @@ https://www.xpdfreader.com/security-fixes.html/
 https://www.xylem.com/en-us/about-xylem/cybersecurity/advisories/?page=1&pagesize=24&categories=1324/
 https://www.yealink.com/en/trust-center/security-advisories/
 https://www.yokogawa.com/library/resources/white-papers/yokogawa-security-advisory-report-list/
+https://www.yokogawa.com/ymi/important-notice-about-the-product/
 https://www.yubico.com/support/issue-rating-system/security-advisories/
 https://www.zabbix.com/security_advisories/
 https://www.zeroscience.mk/en/vulnerabilities/
