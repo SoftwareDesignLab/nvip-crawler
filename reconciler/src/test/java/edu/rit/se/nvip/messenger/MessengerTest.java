@@ -53,15 +53,15 @@ class MessengerTest {
         doAnswer(invocation -> {
             Object[] args = invocation.getArguments();
             DeliverCallback callback = (DeliverCallback) args[2];
-            String jsonMessage = "[\"Test message\", \"Test message2\"]";
+            String jsonMessage = "{\"cveIds\":[\"Test message\", \"Test message2\"],\"override\":false}";
             byte[] body = jsonMessage.getBytes();
             callback.handle("", new Delivery(null, null, body));
             return null;
         }).when(channelMock).basicConsume(anyString(), anyBoolean(), any(DeliverCallback.class), (CancelCallback) any());
 
         // Act
-        List<String> receivedMessages = messenger.waitForCrawlerMessage(3600);
-        List<String> receivedMessages2 = messenger.waitForCrawlerMessage(-1);
+        List<String> receivedMessages = messenger.waitForCrawlerMessage(3600).getCveIds();
+        List<String> receivedMessages2 = messenger.waitForCrawlerMessage(-1).getCveIds();
 
         // Assert
         assertEquals(expectedMessages, receivedMessages);
@@ -84,7 +84,7 @@ class MessengerTest {
         when(conn.createChannel()).thenReturn(channelMock);
         when(channelMock.queueDeclare(anyString(), anyBoolean(), anyBoolean(), anyBoolean(), any())).thenReturn(null);
 
-        List<String> receivedMessages = messenger.waitForCrawlerMessage(1);
+        ReconcilerInputMessage receivedMessages = messenger.waitForCrawlerMessage(1);
 
         assertEquals(null, receivedMessages);
 
@@ -117,16 +117,16 @@ class MessengerTest {
     @Test
     void parseIdsTest() {
         Messenger messenger = new Messenger();
-        String jsonString = "[\"id1\", \"id2\", \"id3\"]";
+        String jsonString = "{\"cveIds\":[\"id1\", \"id2\", \"id3\"], \"override\":false}";
         List<String> expectedIds = new ArrayList<>();
         expectedIds.add("id1");
         expectedIds.add("id2");
         expectedIds.add("id3");
 
-        List<String> actualIds = messenger.parseIds(jsonString);
-        List<String> failedToParse = messenger.parseIds("dummy string");
+        ReconcilerInputMessage actualIds = messenger.parseIds(jsonString);
+        ReconcilerInputMessage failedToParse = messenger.parseIds("dummy string");
 
-        assertEquals(expectedIds, actualIds);
+        assertEquals(expectedIds, actualIds.getCveIds());
         assertEquals(null, failedToParse);
     }
 }

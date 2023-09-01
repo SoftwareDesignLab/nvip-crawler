@@ -48,7 +48,7 @@ public class ReconcilerTests {
         runSet.add("CVE-2023-12345");
         if (!run1.isEmpty()){
             //run the crawler
-            recCon.main(runSet);
+            recCon.main(runSet, false);
         }
 
         if (numNewHighPrioPassing > 0){
@@ -73,7 +73,7 @@ public class ReconcilerTests {
             dbh.insertRawVuln(raw);
         }
         //run the crawler
-        recCon.main(runSet);
+        recCon.main(runSet, false);
     }
 
     private RawVulnerability genRawVuln(int id, boolean isHighPrio, boolean isFailing){

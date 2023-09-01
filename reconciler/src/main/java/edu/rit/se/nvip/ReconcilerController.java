@@ -8,6 +8,7 @@ import edu.rit.se.nvip.model.*;
 import edu.rit.se.nvip.nvd.NvdCveController;
 import edu.rit.se.nvip.reconciler.Reconciler;
 import edu.rit.se.nvip.reconciler.ReconcilerFactory;
+import edu.rit.se.nvip.reconciler.VulnBuilder;
 import edu.rit.se.nvip.utils.ReconcilerEnvVars;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -42,8 +43,8 @@ public class ReconcilerController {
         }
     }
 
-    public void main(Set<String> jobs) {
-        logger.info(jobs.size() + " jobs found for reconciliation");
+    public void main(Set<String> cveIds, boolean userOverride) {
+        logger.info(cveIds.size() + " jobs found for reconciliation");
         Set<CompositeVulnerability> reconciledVulns = new HashSet<>();
 
 
@@ -55,10 +56,10 @@ public class ReconcilerController {
 
         //set up reconcile job tasks, map from cve id to future
         Map<String, Future<CompositeVulnerability>> futures = new HashMap<>();
-        for (String job : jobs) {
-            ReconcileTask task = new ReconcileTask(job);
+        for (String cveId : cveIds) {
+            ReconcileTask task = new ReconcileTask(cveId, userOverride);
             Future<CompositeVulnerability> future = executor.submit(task);
-            futures.put(job, future);
+            futures.put(cveId, future);
         }
         executor.shutdown();
         //waits for reconcile jobs
@@ -116,17 +117,19 @@ public class ReconcilerController {
 
 
     private class ReconcileTask implements Callable<CompositeVulnerability> {
-        private final String job;
-        public ReconcileTask(String job) {
-            this.job = job;
+        private final String cveId;
+        private final boolean userOverride;
+        public ReconcileTask(String cveId, boolean userOverride) {
+            this.cveId = cveId;
+            this.userOverride = userOverride;
         }
 
         @Override
         public CompositeVulnerability call() {
             try {
-                return handleReconcilerJob(job);
+                return handleReconcilerJob(cveId, userOverride);
             } catch (Exception ex) {
-                logger.error("Eror encountered while reconciling {}", job);
+                logger.error("Error encountered while reconciling {}", cveId);
                 logger.error(ex);
                 return null;
             }
@@ -155,22 +158,27 @@ public class ReconcilerController {
         cveCharacterizer.characterizeCveList(crawledVulnerabilitySet, ReconcilerEnvVars.getCharacterizationLimit());
     }
 
-    private CompositeVulnerability handleReconcilerJob(String cveId) {
+    private CompositeVulnerability handleReconcilerJob(String cveId, boolean userOverride) {
         // pull data
         Set<RawVulnerability> allRawVulns = dbh.getRawVulnerabilities(cveId);
         int rawCount = allRawVulns.size();
         // get an existing vuln from prior reconciliation if one exists
         CompositeVulnerability existing = dbh.getCompositeVulnerability(cveId);
-        // filter in waves by priority
-        Set<RawVulnerability> newRaw = allRawVulns.stream().filter(v->v.getFilterStatus()==FilterStatus.NEW).collect(Collectors.toSet());
-        Set<RawVulnerability> oldRaw = allRawVulns.stream().filter(v->!newRaw.contains(v)).collect(Collectors.toSet());
-        Map<RawVulnerability, FilterResult> filterResults = filterChain.runFilters(newRaw, oldRaw);
-        Set<RawVulnerability> toReconcile = newRaw.stream().filter(v->filterResults.get(v).getStatus()==FilterStatus.PASSED).collect(Collectors.toSet());
-        // reconcile
-        CompositeVulnerability out = reconciler.reconcile(existing, toReconcile);
-
-        if (out == null){
-            return null;
+        // run filters and reconcile
+        VulnBuilder vb = new VulnBuilder(existing);
+        CompositeVulnerability out;
+        if (userOverride) {
+            Optional<RawVulnerability> mostRecentUserSource = allRawVulns.stream()
+                    .filter(v->v.getSourceType()==SourceType.USER)
+                    .max(Comparator.comparing(RawVulnerability::getCreateDate));
+            if (mostRecentUserSource.isPresent()) {
+                out = vb.overrideWithUser(mostRecentUserSource.get());
+            } else {
+                logger.error("A user override job was initiated but no user source could be found");
+                return null;
+            }
+        } else {
+            out = vb.filterAndBuild(allRawVulns, filterChain, reconciler);
         }
 
         // link all the rawvulns to the compvuln, regardless of filter/reconciliation status

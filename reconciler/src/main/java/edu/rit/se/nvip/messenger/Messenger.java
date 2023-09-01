@@ -63,18 +63,18 @@ public class Messenger {
      * @return
      * @throws Exception
      */
-    public List<String> waitForCrawlerMessage(int rabbitTimeout) throws Exception {
+    public ReconcilerInputMessage waitForCrawlerMessage(int rabbitTimeout) throws Exception {
         logger.info("Waiting for jobs from Crawler...");
         try(Connection connection = factory.newConnection();
             Channel channel = connection.createChannel()){
             channel.queueDeclare(inputQueue, false, false, false, null);
 
-            BlockingQueue<List<String>> messageQueue = new ArrayBlockingQueue<>(1);
+            BlockingQueue<ReconcilerInputMessage> messageQueue = new ArrayBlockingQueue<>(1);
 
             DeliverCallback deliverCallback = (consumerTag, delivery) -> {
                 String message = new String(delivery.getBody(), StandardCharsets.UTF_8);
-                List<String> parsedIds = parseIds(message);
-                messageQueue.offer(parsedIds);
+                ReconcilerInputMessage inputMessage = parseIds(message);
+                messageQueue.offer(inputMessage);
             };
             channel.basicConsume(inputQueue, true, deliverCallback, consumerTag -> { });
             if (rabbitTimeout > 0) {
@@ -111,11 +111,9 @@ public class Messenger {
      * @param jsonString
      * @return
      */
-    @SuppressWarnings("unchecked")
-    public List<String> parseIds(String jsonString) {
+    public ReconcilerInputMessage parseIds(String jsonString) {
         try {
-            logger.info("incoming cve list: {}", jsonString);
-            return OM.readValue(jsonString, ArrayList.class);
+            return OM.readValue(jsonString, ReconcilerInputMessage.class);
         } catch (JsonProcessingException e) {
             logger.error("Failed to parse list of ids from json string: {}", e.toString());
             return null;

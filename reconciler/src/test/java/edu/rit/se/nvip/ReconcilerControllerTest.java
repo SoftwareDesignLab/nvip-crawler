@@ -80,7 +80,7 @@ class ReconcilerControllerTest {
         jobs.add("CVE-2023-2");
         jobs.add("CVE-2023-3");
         jobs.add("CVE-2023-4");
-        rc.main(jobs);
+        rc.main(jobs, false);
 
         mockedEnvVars.close();
         mockedDb.close();

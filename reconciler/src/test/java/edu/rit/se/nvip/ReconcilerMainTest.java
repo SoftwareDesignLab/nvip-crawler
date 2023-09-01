@@ -1,6 +1,7 @@
 package edu.rit.se.nvip;
 
 import edu.rit.se.nvip.messenger.Messenger;
+import edu.rit.se.nvip.messenger.ReconcilerInputMessage;
 import edu.rit.se.nvip.utils.ReconcilerEnvVars;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
@@ -36,8 +37,8 @@ class ReconcilerMainTest {
         mockedEnvVars.when(ReconcilerEnvVars::getInputMode).thenReturn("db");
         when(mockDb.testDbConnection()).thenReturn(true);
         when(mockDb.getJobs()).thenReturn(jobs);
-        when(mockMes.waitForCrawlerMessage(anyInt())).thenReturn(jobsList);
-        doNothing().when(mockCon).main(anySet());
+        when(mockMes.waitForCrawlerMessage(anyInt())).thenReturn(new ReconcilerInputMessage(jobsList, false));
+        doNothing().when(mockCon).main(anySet(), anyBoolean());
         //test for db
         main.main();
 

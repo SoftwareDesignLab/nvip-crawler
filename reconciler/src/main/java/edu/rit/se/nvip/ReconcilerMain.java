@@ -2,6 +2,7 @@ package edu.rit.se.nvip;
 
 import edu.rit.se.nvip.characterizer.CveCharacterizer;
 import edu.rit.se.nvip.messenger.Messenger;
+import edu.rit.se.nvip.messenger.ReconcilerInputMessage;
 import edu.rit.se.nvip.model.CompositeVulnerability;
 import edu.rit.se.nvip.model.RawVulnerability;
 import edu.rit.se.nvip.utils.ReconcilerEnvVars;
@@ -42,22 +43,22 @@ public class ReconcilerMain {
                     logger.error("No Jobs found in database");
                     break;
                 }
-                rc.main(jobs);
+                rc.main(jobs, false);
                 break;
             case "rabbit":
                 logger.info("Using Rabbit for acquiring jobs");
                 while (true) {
-                    List<String> jobsList;
+                    ReconcilerInputMessage input;
                     try {
-                        jobsList = messenger.waitForCrawlerMessage(ReconcilerEnvVars.getRabbitTimeout());
+                        input = messenger.waitForCrawlerMessage(ReconcilerEnvVars.getRabbitTimeout());
                     } catch (Exception e) {
                         throw new RuntimeException(e);
                     }
-                    if (jobsList == null) {
+                    if (input == null) {
                         logger.error("Timeout reached with no jobs from rabbit");
                         break;
                     }
-                    rc.main(new HashSet<>(jobsList));
+                    rc.main(new HashSet<>(input.getCveIds()), input.isUserOverride());
                     // if we've set a rabbit timeout then we're implicitly only running once - should replace this with a new envvar
                     if (ReconcilerEnvVars.getRabbitTimeout() >= 0) {
                         break;
