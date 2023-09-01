@@ -1,10 +1,12 @@
 package edu.rit.se.nvip.reconciler;
 
+import edu.rit.se.nvip.model.CompositeDescription;
 import edu.rit.se.nvip.model.CompositeVulnerability;
 import edu.rit.se.nvip.model.RawVulnerability;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Intermediate abstract reconciler guaranteeing the UPDATE_ONE_BY_ONE strategy and implementing all other strategies by breaking down into pairwise decisions.
@@ -14,19 +16,19 @@ import java.util.Set;
 public abstract class PairwiseChoosingReconciler extends Reconciler {
 
     @Override
-    public MergeStrategy getMergeStrategy(CompositeVulnerability existingVuln, Set<RawVulnerability> newVulns) {
+    public MergeStrategy getMergeStrategy(CompositeDescription existingDesc, Set<RawVulnerability> newVulns) {
         return MergeStrategy.UPDATE_ONE_BY_ONE;
     }
 
     @Override
-    public String singleUpdateDescription(CompositeVulnerability oldVuln, RawVulnerability newVuln) {
-        if (oldVuln == null) {
+    public String singleUpdateDescription(CompositeDescription oldDesc, RawVulnerability newVuln) {
+        if (oldDesc == null) {
             return newVuln.getDescription();
         }
-        if (reconcileDescriptions(oldVuln.getDescription(), newVuln.getDescription(), oldVuln.getSources(), newVuln.getSourceUrl())) {
+        if (reconcileDescriptions(oldDesc.getDescription(), newVuln.getDescription(), oldDesc.getSourceUrls(), newVuln.getSourceUrl())) {
             return newVuln.getDescription();
         }
-        return oldVuln.getDescription();
+        return oldDesc.getDescription();
     }
 
     @Override
@@ -35,15 +37,15 @@ public abstract class PairwiseChoosingReconciler extends Reconciler {
     }
 
     @Override
-    public String bulkUpdateDescription(CompositeVulnerability existingVuln, Set<RawVulnerability> vulns) {
+    public String bulkUpdateDescription(CompositeDescription existingDesc, Set<RawVulnerability> vulns) {
         String runningDescription;
         Set<String> usedSources = new HashSet<>();
-        if (existingVuln == null) {
+        if (existingDesc == null) {
             runningDescription = null;
         }
         else {
-            runningDescription = existingVuln.getDescription();
-            usedSources.addAll(existingVuln.getSources());
+            runningDescription = existingDesc.getDescription();
+            usedSources.addAll(existingDesc.getSourceUrls());
         }
         for (RawVulnerability raw : vulns) {
             usedSources.add(raw.getSourceUrl());

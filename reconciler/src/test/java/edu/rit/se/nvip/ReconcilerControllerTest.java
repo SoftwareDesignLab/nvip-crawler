@@ -5,6 +5,7 @@ import edu.rit.se.nvip.filter.FilterHandler;
 import edu.rit.se.nvip.filter.FilterReturn;
 import edu.rit.se.nvip.messenger.Messenger;
 import edu.rit.se.nvip.mitre.MitreCveController;
+import edu.rit.se.nvip.model.CompositeDescription;
 import edu.rit.se.nvip.model.CompositeVulnerability;
 import edu.rit.se.nvip.model.RawVulnerability;
 import edu.rit.se.nvip.model.RunStats;
@@ -62,7 +63,7 @@ class ReconcilerControllerTest {
         when(mockDbh.getCompositeVulnerability(anyString())).thenReturn(vuln);
         when(mockFH.runFilters(anySet())).thenReturn(mockFR);
         doNothing().when(mockDbh).updateFilterStatus(anySet());
-        when(mockRecon.reconcile(any(CompositeVulnerability.class), anySet())).thenReturn(vuln);
+        when(mockRecon.reconcile(any(CompositeDescription.class), anySet())).thenReturn(vuln.getSystemDescription());
         when(mockDbh.insertOrUpdateVulnerabilityFull(any(CompositeVulnerability.class))).thenReturn(1);
         doNothing().when(mockMes).sendPNEMessage(anyList());
         when(mockDbh.insertTimeGapsForNewVulns(anySet())).thenReturn(1);

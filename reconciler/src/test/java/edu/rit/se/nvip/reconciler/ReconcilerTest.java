@@ -70,12 +70,12 @@ ReconcilerTest {
         return new Reconciler() {
 
             @Override
-            public MergeStrategy getMergeStrategy(CompositeVulnerability existingVuln, Set<RawVulnerability> newVulns) {
+            public MergeStrategy getMergeStrategy(CompositeDescription existingDesc, Set<RawVulnerability> newVulns) {
                 return mergeStrategy;
             }
 
             @Override
-            public String bulkUpdateDescription(CompositeVulnerability exitingVuln, Set<RawVulnerability> newVulns) {
+            public String bulkUpdateDescription(CompositeDescription exitingVuln, Set<RawVulnerability> newVulns) {
                 return "";
             }
 
@@ -85,7 +85,7 @@ ReconcilerTest {
             }
 
             @Override
-            public String singleUpdateDescription(CompositeVulnerability oldVuln, RawVulnerability newVuln) {
+            public String singleUpdateDescription(CompositeDescription oldVuln, RawVulnerability newVuln) {
                 return "";
             }
         };
@@ -103,11 +103,8 @@ ReconcilerTest {
         Reconciler rec = dummyReconciler(Reconciler.MergeStrategy.UPDATE_ONE_BY_ONE);
         CompositeVulnerability existing = genVuln();
         Set<RawVulnerability> newRaws = genRawVulns(2, 4);
-        CompositeVulnerability reconciled = rec.reconcile(existing, newRaws);
-        reconciled.setPotentialSources(newRaws);
+        CompositeDescription reconciled = rec.reconcile(existing.getSystemDescription(), newRaws);
         assertTrue(equivalentBuildStrings("((((1,2),3),4),5)", reconciled.getBuildString()));
-        assertEquals(offset(-5), reconciled.getPublishDate());
-        assertEquals(offset(5), reconciled.getLastModifiedDate());
     }
 
     @Test
@@ -115,11 +112,8 @@ ReconcilerTest {
         Reconciler rec = dummyReconciler(Reconciler.MergeStrategy.UPDATE_ONE_BY_ONE);
         CompositeVulnerability existing = null;
         Set<RawVulnerability> newRaws = genRawVulns(2, 4);
-        CompositeVulnerability reconciled = rec.reconcile(existing, newRaws);
-        reconciled.setPotentialSources(newRaws);
+        CompositeDescription reconciled = rec.reconcile(existing.getSystemDescription(), newRaws);
         assertTrue(equivalentBuildStrings("(4,5)", reconciled.getBuildString()));
-        assertEquals(offset(-5), reconciled.getPublishDate());
-        assertEquals(offset(5), reconciled.getLastModifiedDate());
     }
 
     @Test
@@ -127,11 +121,8 @@ ReconcilerTest {
         Reconciler rec = dummyReconciler(Reconciler.MergeStrategy.UPDATE_BULK);
         CompositeVulnerability existing = genVuln();
         Set<RawVulnerability> newRaws = genRawVulns(4, 4);
-        CompositeVulnerability reconciled = rec.reconcile(existing, newRaws);
-        reconciled.setPotentialSources(newRaws);
+        CompositeDescription reconciled = rec.reconcile(existing.getSystemDescription(), newRaws);
         assertTrue(equivalentBuildStrings("(((1,2),3),4,5,6,7)", reconciled.getBuildString()));
-        assertEquals(offset(-7), reconciled.getPublishDate());
-        assertEquals(offset(7), reconciled.getLastModifiedDate());
     }
 
     @Test
@@ -139,11 +130,8 @@ ReconcilerTest {
         Reconciler rec = dummyReconciler(Reconciler.MergeStrategy.RESYNTH);
         CompositeVulnerability existing = genVuln();
         Set<RawVulnerability> newRaws = genRawVulns(4, 4);
-        CompositeVulnerability reconciled = rec.reconcile(existing, newRaws);
-        reconciled.setPotentialSources(newRaws);
+        CompositeDescription reconciled = rec.reconcile(existing.getSystemDescription(), newRaws);
         assertTrue(equivalentBuildStrings("(1,2,3,4,5,6,7)", reconciled.getBuildString()));
-        assertEquals(offset(-7), reconciled.getPublishDate());
-        assertEquals(offset(7), reconciled.getLastModifiedDate());
     }
 
     @Test
@@ -151,10 +139,7 @@ ReconcilerTest {
         Reconciler rec = dummyReconciler(Reconciler.MergeStrategy.RESYNTH);
         CompositeVulnerability existing = null;
         Set<RawVulnerability> newRaws = genRawVulns(4, 4);
-        CompositeVulnerability reconciled = rec.reconcile(existing, newRaws);
-        reconciled.setPotentialSources(newRaws);
+        CompositeDescription reconciled = rec.reconcile(existing.getSystemDescription(), newRaws);
         assertTrue(equivalentBuildStrings("(4,5,6,7)", reconciled.getBuildString()));
-        assertEquals(offset(-7), reconciled.getPublishDate());
-        assertEquals(offset(7), reconciled.getLastModifiedDate());
     }
 }

@@ -4,6 +4,7 @@ import edu.rit.se.nvip.filter.Filter;
 import edu.rit.se.nvip.filter.FilterChain;
 import edu.rit.se.nvip.filter.FilterResult;
 import edu.rit.se.nvip.filter.FilterStatus;
+import edu.rit.se.nvip.model.CompositeDescription;
 import edu.rit.se.nvip.model.CompositeVulnerability;
 import edu.rit.se.nvip.model.RawVulnerability;
 import edu.rit.se.nvip.model.SourceType;
@@ -18,22 +19,25 @@ public class VulnBuilder {
 
     private Logger logger = LogManager.getLogger(getClass().getSimpleName());
     private CompositeVulnerability existing;
+    private CompositeDescription existingDesc;
     Set<RawVulnerability> allSources;
     RawVulnerability userSource;
 
     public VulnBuilder(CompositeVulnerability existing) {
         this.existing = existing;
+        this.existingDesc = existing == null ? null : existing.getSystemDescription();
     }
 
     public CompositeVulnerability filterAndBuild(Set<RawVulnerability> allSources, FilterChain filterChain, Reconciler reconciler) {
         this.allSources = allSources;
         Set<RawVulnerability> newPassedSources = runFiltersOnScrapedSources(filterChain);
-        return reconciler.reconcile(existing, newPassedSources);
+        CompositeDescription desc = reconciler.reconcile(existingDesc, newPassedSources);
+        return null;
     }
 
     public CompositeVulnerability overrideWithUser(RawVulnerability userSource) {
         this.userSource = userSource;
-        // todo complete
+        userSource.setFilterStatus(FilterStatus.PASSED);
         return null;
     }
     private Set<RawVulnerability> runFiltersOnScrapedSources(FilterChain filterChain) {

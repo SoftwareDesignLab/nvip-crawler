@@ -125,6 +125,10 @@ public class CompositeDescription {
         return this.sources;
     }
 
+    public Set<String> getSourceUrls() {
+        return this.sources.stream().map(RawVulnerability::getSourceUrl).collect(Collectors.toSet());
+    }
+
     public boolean usesHighPrio() {
         for (RawVulnerability vuln : sources) {
             if (vuln.isHighPriority()) return true;

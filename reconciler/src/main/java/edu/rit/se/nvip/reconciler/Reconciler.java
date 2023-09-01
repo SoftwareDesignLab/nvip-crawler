@@ -28,13 +28,10 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import edu.rit.se.nvip.DatabaseHelper;
-import edu.rit.se.nvip.model.RawVulnerability;
-import edu.rit.se.nvip.model.SourceType;
-import edu.rit.se.nvip.model.Vulnerability;
+import edu.rit.se.nvip.model.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import edu.rit.se.nvip.model.CompositeVulnerability;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
 /**
@@ -62,99 +59,61 @@ public abstract class Reconciler {
 	/**
 	 * Merges information from RawVulnerabilities into a CompositeVulnerability. Date reconciliation is trivially order-based
 	 * and happens internally within the CompostiteVulnerability class
-	 * @param existingVuln A (possibly null) CompositeVulnerability
+	 * @param existingDesc A (possibly null) CompositeVulnerability
 	 * @param newVulns A non-null list of RawVulnerabilities with the same CVE-XXX-XXXX identifier as the existingVuln. Filter status will not be checked here, and all rawvulns are assumed to be equal priority
 	 * @return A CompositeVulnerability containing merged and updated information
 	 */
-	public CompositeVulnerability reconcile(CompositeVulnerability existingVuln, Set<RawVulnerability> newVulns) {
+	public CompositeDescription reconcile(CompositeDescription existingDesc, Set<RawVulnerability> newVulns) {
 		if (newVulns.isEmpty()) {
-			return existingVuln;
-			// todo handle the case where we have no passed rawvulns and no existingvuln but still want to report something
-		}
-		// take the user edits out of the newVulns set and apply the most recent one
-		List<RawVulnerability> newUserEdits = extractUserSources(newVulns); // sorted by newest created date first
-		if (!newUserEdits.isEmpty()) {
-			RawVulnerability latestNewUserEdit = newUserEdits.get(0);
-			// a user edit should guarantee that existingVuln exists, but just in case...
-			if (existingVuln == null) {
-				logger.warn("Attempt to reconcile a user edit for a nonexistent CVE {}", latestNewUserEdit.getCveId());
-				return null;
-			}
-			existingVuln.applyUserEdit(latestNewUserEdit);
-			// if the only new sources were user sources then they were all removed and the list is empty
-			// if there are no additional non-user sources, then short-circuit a return
-			if (newVulns.isEmpty()) {
-				return existingVuln;
-			}
-			// if there are also new non-user sources, store a copy of the composite user description and then continue reconciling on top of it
-			else {
-				DatabaseHelper.getInstance().insertDescription(existingVuln.getSystemDescription());
-			}
+			return existingDesc;
 		}
 		// if the existing vuln only uses low prio sources and the new ones are high prio, we dump the old sources and rebuild
-		if (existingVuln != null && !existingVuln.usesHighPrio() && hasHighPrio(newVulns)) {
-			existingVuln.resetDescription();
+		CompositeDescription workingDescription;
+		if (existingDesc == null || !existingDesc.usesHighPrio() && hasHighPrio(newVulns)) {
+			workingDescription = new CompositeDescription((RawVulnerability) null); // todo proper empty constructor
 		}
-		CompositeVulnerability reconciledVuln = null;
+		else {
+			workingDescription = existingDesc; //todo copy?
+		}
+		CompositeDescription reconciledDesc = null;
 		// TODO figure out what to do if a new rawvulnerability is an updated version of one of the existing sources, right now nothing special happens
-		switch (getMergeStrategy(existingVuln, newVulns)) {
+		switch (getMergeStrategy(workingDescription, newVulns)) {
 			case RESYNTH:
-				reconciledVuln = resynthHandler(existingVuln, newVulns);
+				reconciledDesc = resynthHandler(workingDescription, newVulns);
 				break;
 			case UPDATE_ONE_BY_ONE:
-				reconciledVuln = oneByOneHandler(existingVuln, newVulns);
+				reconciledDesc = oneByOneHandler(workingDescription, newVulns);
 				break;
 			case UPDATE_BULK:
-				// existing should never be null in this case, but we'll clean up the extending class's mistake anyway
-				if (existingVuln == null) {
-					reconciledVuln = resynthHandler(null, newVulns);
-				} else {
-					reconciledVuln = bulkHandler(existingVuln, newVulns);
-				}
+				reconciledDesc = bulkHandler(workingDescription, newVulns);
 				break;
 			default:
 				break;
 		}
-		return reconciledVuln;
+		return reconciledDesc;
 	}
 
-	private CompositeVulnerability resynthHandler(CompositeVulnerability existingVuln, Set<RawVulnerability> newVulns) {
-		Set<RawVulnerability> totalRawList;
-		if (existingVuln == null) {
-			totalRawList = newVulns;
-		} else {
-			totalRawList = Stream.concat(existingVuln.getComponents().stream(), newVulns.stream()).collect(Collectors.toSet());
-		}
+	private CompositeDescription resynthHandler(CompositeDescription existingDesc, Set<RawVulnerability> newVulns) {
+		Set<RawVulnerability> totalRawList = Stream.concat(existingDesc.getSources().stream(), newVulns.stream()).collect(Collectors.toSet());
 		String reconciledDescription = synthDescriptionFromScratch(totalRawList);
-		if (existingVuln == null) {
-			return CompositeVulnerability.fromSet(newVulns, reconciledDescription);
-		}
-		existingVuln.updateSystemDescription(reconciledDescription, newVulns, true);
-		return existingVuln;
+		existingDesc.addSourcesAndResynth(reconciledDescription, newVulns);
+		return existingDesc;
 	}
 
-	private CompositeVulnerability oneByOneHandler(CompositeVulnerability existingVuln, Set<RawVulnerability> newVulns) {
-		CompositeVulnerability reconciledVuln = existingVuln;
-		Set<RawVulnerability> vulnsToUse = new HashSet<>(newVulns);
-		// if nothing already existed then make a compvuln from one of the newvulns and remove it from the set
-		if (reconciledVuln == null) {
-			Iterator<RawVulnerability> it = vulnsToUse.iterator();
-			reconciledVuln = new CompositeVulnerability(it.next());
-			it.remove();
-		}
-		for (RawVulnerability vuln : vulnsToUse) {
-			String runningDescription = singleUpdateDescription(reconciledVuln, vuln);
+	private CompositeDescription oneByOneHandler(CompositeDescription existingDesc, Set<RawVulnerability> newVulns) {
+		for (RawVulnerability vuln : newVulns) {
+			String runningDescription = singleUpdateDescription(existingDesc, vuln);
 			Set<RawVulnerability> dummySet = new HashSet<>();
 			dummySet.add(vuln);
-			reconciledVuln.updateSystemDescription(runningDescription, dummySet, false);
+			existingDesc.addSources(runningDescription, dummySet);
 		}
-		return reconciledVuln;
+		return existingDesc;
 	}
 
-	private CompositeVulnerability bulkHandler(@NonNull CompositeVulnerability existingVuln, Set<RawVulnerability> newVulns) {
-		String bulkUpdatedDescription = bulkUpdateDescription(existingVuln, newVulns);
-		existingVuln.updateSystemDescription(bulkUpdatedDescription, newVulns, false);
-		return existingVuln;
+	private CompositeDescription bulkHandler(CompositeDescription existingDesc, Set<RawVulnerability> newVulns) {
+		String bulkUpdatedDescription = bulkUpdateDescription(existingDesc, newVulns);
+		existingDesc.addSources(bulkUpdatedDescription, newVulns);
+		return existingDesc;
 	}
 
 	protected static boolean hasHighPrio(Set<RawVulnerability> rawVulns) {
@@ -181,19 +140,19 @@ public abstract class Reconciler {
 	 * RESYNTH means to split apart the existing into its components and treat them on equal footing with the new sources, so the output is f(e1, e2, e3, n1, n2, n3)
 	 * UPDATE_BULK means to regard the merge as an update, but all new vulns should be on equal footing, so the output is f(E, n1, n2, n3). THIS SHOULD NEVER BE RETURNED IF existingVuln IS NULL!!!
 	 * What actually happens in the implementation of each case is up to the implementer, but from the abstract perspective the buildstring will reflect the merge strategy
-	 * @param existingVuln A (possibly null) existing composite vulnerability
+	 * @param existingDesc A (possibly null) existing composite vulnerability
 	 * @param newVulns A non-null list of new raw vulnerabilities to merge
 	 * @return The merge strategy to follow
 	 */
-	public abstract MergeStrategy getMergeStrategy(CompositeVulnerability existingVuln, Set<RawVulnerability> newVulns);
+	public abstract MergeStrategy getMergeStrategy(CompositeDescription existingDesc, Set<RawVulnerability> newVulns);
 
 	/**
 	 * Merge descriptions using the UPDATE_BULK merge, i.e. the outcome is treated f(E, n1, n2, n3, ...)
-	 * @param exitingVuln Existing NON-NULL composite vulnerability
+	 * @param existingDesc Existing NON-NULL composite vulnerability
 	 * @param newVulns list of new raw vulnerabilities
 	 * @return reconciled string description
 	 */
-	public abstract String bulkUpdateDescription(CompositeVulnerability exitingVuln, Set<RawVulnerability> newVulns);
+	public abstract String bulkUpdateDescription(CompositeDescription existingDesc, Set<RawVulnerability> newVulns);
 
 	/**
 	 * Merge descriptions using the RESYNTH merge, i.e. the outcome is treated as f(v1, v2, v3, ...)
@@ -208,5 +167,5 @@ public abstract class Reconciler {
 	 * @param newVuln non-null new raw vulnerability
 	 * @return reconciled string description
 	 */
-	public abstract String singleUpdateDescription(CompositeVulnerability oldVuln, RawVulnerability newVuln);
+	public abstract String singleUpdateDescription(CompositeDescription oldVuln, RawVulnerability newVuln);
 }
