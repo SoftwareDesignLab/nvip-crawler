@@ -84,7 +84,7 @@ class CompositeDescriptionTest {
         Assertions.assertEquals(0, compDes.getId());
         Assertions.assertEquals("description1", compDes.getDescription());
         Assertions.assertEquals(dummyCreateDate, compDes.getCreatedDate());
-        Assertions.assertEquals("1", compDes.getBuildString());
+        Assertions.assertEquals("(1)", compDes.getBuildString());
         Assertions.assertEquals(1, compDes.getSources().size());
     }
 
