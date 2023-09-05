@@ -59,7 +59,7 @@ public class DatabaseHelper {
 	private final String getCveSourcesSql = "SELECT cve_id, source_url FROM nvip.rawdescription WHERE source_url != \"\";";
 	private final String getSpecificCveSourcesSql = "SELECT cve_id, source_url FROM nvip.rawdescription WHERE source_url != \"\" AND cve_id = ?;";
 	private final String getCveSourcesNVDSql = "SELECT cve_id, source_url FROM nvip.nvdsourceurl WHERE cve_id = ?;";
-	// TODO: fixsourceurl table is redundant, move source_url column to fixes table and update this code
+	// TODO: fixsourceurl table is deprecated, url is stored directly in fixes table now, rework SQL statements accordingly
 	private final String insertFixSourceURLSql = "INSERT INTO fixsourceurl (cve_id, source_url) VALUES (?, ?);";
 	private final String getExistingFixSourceUrlsSql = "SELECT cve_id, source_url FROM fixsourceurl;";
 	private final String getFixSourceUrlSql = "SELECT source_url FROM fixsourceurl WHERE cve_id = ?;";
