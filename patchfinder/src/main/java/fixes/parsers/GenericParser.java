@@ -32,7 +32,10 @@ import java.util.List;
 /**
  * FixParser implementation that aims to scrape a url from an "unknown" domain
  * via determining, generically, what fix information is on the page. Unlike the other
- * FixParser implementations,
+ * FixParser implementations, this parser does not correlate to a specific domain, and
+ * may make use of much more "fuzzy logic" to determine if a page contains fix information
+ * and what that information may be. It also may produce incorrect or incomplete fix
+ * information as a result of the lack of deterministic methods of collection.
  *
  * @author Paul Vickers
  */
