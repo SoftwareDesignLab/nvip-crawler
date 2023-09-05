@@ -34,7 +34,7 @@ public class CompositeDescription {
         this.cveId = cveId;
         this.description = description;
         this.createdDate = createdDate;
-        this.descriptionTree = new DescriptionTree(buildString);
+        this.descriptionTree = new DescriptionTree(buildString, sources);
         this.sources = sources;
     }
 
@@ -43,8 +43,12 @@ public class CompositeDescription {
         this.cveId = cveId;
         this.description = description;
         setCreateDateCurrent();
-        this.descriptionTree = new DescriptionTree(null, sources.stream().map(DescriptionTree::new).collect(Collectors.toList()));
+        this.descriptionTree = new DescriptionTree(new ArrayList<>(sources));
         this.sources = new HashSet<>(sources);
+    }
+
+    public CompositeDescription(String cveId) {
+        this(cveId, "", new HashSet<>());
     }
 
     /**
@@ -56,7 +60,7 @@ public class CompositeDescription {
         this.cveId = newSingleSource.getCveId();
         this.description = newSingleSource.getDescription();
         setCreateDateCurrent();
-        this.descriptionTree = new DescriptionTree(newSingleSource.getIdString());
+        this.descriptionTree = new DescriptionTree(newSingleSource);
         Set<RawVulnerability> vulnSet = new HashSet<>();
         vulnSet.add(newSingleSource);
         this.sources = vulnSet;
@@ -91,7 +95,7 @@ public class CompositeDescription {
 
     public String getBuildString() {
         if (descriptionTree == null) {
-            return "";
+            return "()";
         }
         return this.descriptionTree.toString();
     }
@@ -102,14 +106,14 @@ public class CompositeDescription {
 
     public void addSources(String description, Set<RawVulnerability> rawVulns) {
         this.sources.addAll(rawVulns);
-        this.descriptionTree = new DescriptionTree(this.descriptionTree, rawVulns.stream().map(DescriptionTree::new).collect(Collectors.toList()));
+        this.descriptionTree.addTopSiblings(new ArrayList<>(rawVulns));
         this.description = description;
         setCreateDateCurrent();
     }
 
     public void addSourcesAndResynth(String description, Set<RawVulnerability> rawVulns) {
         this.sources.addAll(rawVulns);
-        this.descriptionTree = new DescriptionTree(null, this.sources.stream().map(DescriptionTree::new).collect(Collectors.toList()));
+        this.descriptionTree = new DescriptionTree(new ArrayList<>(sources));
         this.description = description;
         setCreateDateCurrent();
     }
@@ -117,7 +121,7 @@ public class CompositeDescription {
     public void reset() {
         this.sources.clear();
         this.description = "";
-        this.descriptionTree = null;
+        this.descriptionTree = new DescriptionTree();
         setCreateDateCurrent();
     }
 
@@ -148,119 +152,5 @@ public class CompositeDescription {
     public CompositeDescription duplicate() {
         return new CompositeDescription(0, this.cveId, this.description, getCurrentTime(),
                 this.getBuildString(), new HashSet<>(this.sources));
-    }
-
-    /**
-     * Models the build tree for a description.
-     */
-    protected static class DescriptionTree {
-        private int rawDescriptionId = 0;
-        private List<DescriptionTree> children;
-        private static final char SEPARATOR = ',';
-        private static final char OPEN_PAREN = '(';
-        private static final char CLOSE_PAREN = ')';
-
-        /**
-         * Makes a new tree consisting of an existing tree and a list of siblings.
-         * Uses 2 args instead of just one list for convenience because of how these will be used
-         * @param tree leftmost tree
-         * @param siblings more siblings, inserted left to right
-         */
-        public DescriptionTree(DescriptionTree tree, List<DescriptionTree> siblings) {
-            this.children = new ArrayList<>();
-            if (tree != null) {
-                this.children.add(tree);
-            }
-            this.children.addAll(siblings);
-        }
-
-        /**
-         * Constructs the tree from a string representation as matching a toString() output
-         * @param buildString string representation of the tree. e.g. (((id1, id2), id3, id4), id5)
-         */
-        public DescriptionTree(String buildString) {
-            this.children = new ArrayList<>();
-            if (buildString.charAt(0) == OPEN_PAREN) {
-                int count = 0;
-                int start = 1;
-                for (int i = 1; i < buildString.length(); i++) {
-                    char c = buildString.charAt(i);
-                    if (c == OPEN_PAREN) {
-                        count++;
-                    } else if (c == CLOSE_PAREN) {
-                        count--;
-                    } else if (c == SEPARATOR && count == 0) {
-                        String part = buildString.substring(start, i);
-                        DescriptionTree child = new DescriptionTree(part);
-                        addChild(child);
-                        start = i + 1;
-                    }
-                }
-                String lastPart = buildString.substring(start, buildString.length() - 1);
-                DescriptionTree lastChild = new DescriptionTree(lastPart);
-                addChild(lastChild);
-            } else {
-                this.rawDescriptionId = Integer.parseInt(buildString);
-            }
-        }
-
-        /**
-         * Builds a description tree from a single raw vulnerability (i.e. the output is a single node)
-         * @param rawVuln
-         */
-        public DescriptionTree(RawVulnerability rawVuln) {
-            this.rawDescriptionId = rawVuln.getId();
-            this.children = new ArrayList<>();
-        }
-
-        private void addChild(DescriptionTree child) {
-            this.children.add(child);
-        }
-
-        public int size() {
-            if (children.size() == 0) {
-                return 0;
-            }
-            return children.stream().mapToInt(DescriptionTree::size).sum();
-        }
-
-        @Override
-        public String toString() {
-            if (children.size() == 0) {
-                return String.valueOf(rawDescriptionId);
-            }
-            return OPEN_PAREN + children.stream().map(DescriptionTree::toString).collect(Collectors.joining("" + SEPARATOR)) + CLOSE_PAREN;
-        }
-
-        public boolean equalUpToOrder(DescriptionTree that) {
-            if (this.size() == 0) {
-                if (that.size() == 0) {
-                    return this.rawDescriptionId == that.rawDescriptionId;
-                }
-                return false;
-            }
-            if (this.children.size() != that.children.size()) {
-                return false;
-            }
-            Set<DescriptionTree> matchedOtherChildren = new HashSet<>();
-            for (DescriptionTree child : this.children) {
-                boolean matched = false;
-                for (DescriptionTree otherChild : that.children) {
-                    if (child.equalUpToOrder(otherChild) && !matchedOtherChildren.contains(otherChild)) {
-                        matchedOtherChildren.add(otherChild);
-                        matched = true;
-                        break;
-                    }
-                }
-                if (!matched) {return false;}
-            }
-            return true;
-        }
-    }
-
-    public static boolean equivalentBuildStrings(String s1, String s2) {
-        DescriptionTree tree1 = new DescriptionTree(s1);
-        DescriptionTree tree2 = new DescriptionTree(s2);
-        return tree1.equalUpToOrder(tree2);
     }
 }

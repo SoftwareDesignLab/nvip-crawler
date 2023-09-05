@@ -67,13 +67,14 @@ public abstract class Reconciler {
 		if (newVulns.isEmpty()) {
 			return existingDesc;
 		}
+		String cveId = newVulns.iterator().next().getCveId();
 		// if the existing vuln only uses low prio sources and the new ones are high prio, we dump the old sources and rebuild
 		CompositeDescription workingDescription;
 		if (existingDesc == null || !existingDesc.usesHighPrio() && hasHighPrio(newVulns)) {
-			workingDescription = new CompositeDescription((RawVulnerability) null); // todo proper empty constructor
+			workingDescription = new CompositeDescription(cveId);
 		}
 		else {
-			workingDescription = existingDesc; //todo copy?
+			workingDescription = existingDesc.duplicate();
 		}
 		CompositeDescription reconciledDesc = null;
 		// TODO figure out what to do if a new rawvulnerability is an updated version of one of the existing sources, right now nothing special happens
