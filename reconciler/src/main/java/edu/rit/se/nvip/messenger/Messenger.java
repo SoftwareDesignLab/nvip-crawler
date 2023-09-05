@@ -114,6 +114,7 @@ public class Messenger {
     @SuppressWarnings("unchecked")
     public List<String> parseIds(String jsonString) {
         try {
+            logger.info("incoming cve list: {}", jsonString);
             return OM.readValue(jsonString, ArrayList.class);
         } catch (JsonProcessingException e) {
             logger.error("Failed to parse list of ids from json string: {}", e.toString());

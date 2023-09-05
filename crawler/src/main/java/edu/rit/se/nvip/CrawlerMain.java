@@ -564,6 +564,8 @@ public class CrawlerMain {
             channel.queueDeclare(queueName, false, false, false, null);
             logger.info("Queue '{}' created successfully.", queueName);
             channel.basicPublish("", queueName, null, cveArray.toJSONString().getBytes());
+            logger.info("outgoing cve message: {}", cveArray.toJSONString());
+            logger.info(cveArray.toJSONString().getBytes());
             logger.info("Message to Reconciler sent successfully.");
 
             channel.close();
