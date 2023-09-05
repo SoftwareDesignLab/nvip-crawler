@@ -24,7 +24,7 @@ package fixes;
  * SOFTWARE.
  */
 
-import fixes.parsers.AbstractFixParser;
+import fixes.parsers.FixParser;
 import fixes.parsers.CISAParser;
 import fixes.parsers.GenericParser;
 import fixes.parsers.NVDParser;
@@ -84,7 +84,7 @@ public class FixFinderThread implements Runnable {
 		for (String url : urls) {
 			CompletableFuture<List<Fix>> future = CompletableFuture.supplyAsync(() -> {
 
-				AbstractFixParser parser = findCorrectParser(cveId, url);
+				FixParser parser = findCorrectParser(cveId, url);
 
 				try{
 					return parser.parseWebPage();
@@ -124,8 +124,8 @@ public class FixFinderThread implements Runnable {
 	 *
 	 * TODO: make this return more than just nvd/cisa etc, will come as we make more parsers
 	 */
-	public static AbstractFixParser findCorrectParser(String cveId, String url){
-		AbstractFixParser parser;
+	public static FixParser findCorrectParser(String cveId, String url){
+		FixParser parser;
 
 		if(url.contains("nvd.nist.gov")) parser = new NVDParser(cveId, url);
 		else if(url.contains("cisa.gov")) parser = new CISAParser(cveId, url);

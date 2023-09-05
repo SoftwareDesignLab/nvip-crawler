@@ -27,10 +27,12 @@ package fixes;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import env.FixFinderEnvVars;
 import db.DatabaseHelper;
+import fixes.urlfinders.FixUrlFinder;
+import fixes.urlfinders.NvdFixUrlFinder;
+import fixes.urlfinders.VulnerabilityFixUrlFinder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;

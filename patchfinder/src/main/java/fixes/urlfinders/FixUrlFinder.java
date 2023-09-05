@@ -1,4 +1,4 @@
-package fixes;
+package fixes.urlfinders;
 
 /**
  * Copyright 2023 Rochester Institute of Technology (RIT). Developed with
@@ -24,46 +24,41 @@ package fixes;
  * SOFTWARE.
  */
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.ArrayList;
+
 /**
- * Model class for fixes found by FixFinder
+ * Abstract class responsible for finding possible fix source URLs for the FixFinder.
  *
  * @author Dylan Mulligan
- * @author Richard Sawh
- * @author Paul Vickers
  */
-public class Fix {
-    private final String cveId;
-    private final String fixDescription;
-    private final String sourceUrl;
 
-    /**
-     * Model class for fix objects
-     *
-     * @param cveId         the ID of the cve
-     * @param fixDescription the description of the fix
-     * @param sourceUrl    the source URL
-     */
-    public Fix(String cveId, String fixDescription, String sourceUrl) {
-        this.cveId = cveId;
-        this.fixDescription = fixDescription;
-        this.sourceUrl = sourceUrl;
-    }
+public abstract class FixUrlFinder {
 
-    /**
-     * @return cveId
-     */
-    public String getCveId() { return cveId; }
+	protected static final Logger logger = LogManager.getLogger(FixUrlFinder.class.getName());
 
-    /**
-     * @return fixDescription
-     */
-    public String getFixDescription() { return fixDescription; }
+	public abstract ArrayList<String> run(String cveId) throws IOException;
 
-    /**
-     * @return the fix as a string
-     */
-    public String toString() {
-        return "Fix [cve_id=" + cveId + ", fix_description=" + fixDescription
-                + ", source_url=" + sourceUrl + "]";
-    }
+	protected static boolean testConnection(String address) throws IOException {
+		logger.info("Testing Connection for address: " + address);
+
+		URL url = new URL(address);
+		HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+		int response;
+
+		try {
+			response = urlConnection.getResponseCode();
+			logger.info("Response Code: " + response);
+			return true;
+		} catch (Exception e) {
+			logger.error("ERROR: Failed to connect to {}\n{}", address, e);
+			return false;
+		}
+	}
+
 }

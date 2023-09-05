@@ -1,4 +1,4 @@
-package fixes;
+package fixes.urlfinders;
 
 /**
  * Copyright 2023 Rochester Institute of Technology (RIT). Developed with
@@ -24,46 +24,34 @@ package fixes;
  * SOFTWARE.
  */
 
+import fixes.FixFinder;
+
+import java.io.IOException;
+import java.util.ArrayList;
+
 /**
- * Model class for fixes found by FixFinder
+ *  Implementation of FixUrlFinder for CVEs collected from NVD
  *
- * @author Dylan Mulligan
- * @author Richard Sawh
- * @author Paul Vickers
+ *  @author Richard Sawh
  */
-public class Fix {
-    private final String cveId;
-    private final String fixDescription;
-    private final String sourceUrl;
+public class NvdFixUrlFinder extends FixUrlFinder {
 
-    /**
-     * Model class for fix objects
-     *
-     * @param cveId         the ID of the cve
-     * @param fixDescription the description of the fix
-     * @param sourceUrl    the source URL
-     */
-    public Fix(String cveId, String fixDescription, String sourceUrl) {
-        this.cveId = cveId;
-        this.fixDescription = fixDescription;
-        this.sourceUrl = sourceUrl;
-    }
+    public NvdFixUrlFinder() { }
 
-    /**
-     * @return cveId
-     */
-    public String getCveId() { return cveId; }
+    @Override
+    public ArrayList<String> run(String cveId) throws IOException {
+        logger.info("Getting fixes for CVE: {}", cveId);
+        ArrayList<String> urlList = new ArrayList<>();
 
-    /**
-     * @return fixDescription
-     */
-    public String getFixDescription() { return fixDescription; }
+        // Get all sources for the cve
+        ArrayList<String> sources = FixFinder.getDatabaseHelper().getCveSourcesNVD(cveId);
 
-    /**
-     * @return the fix as a string
-     */
-    public String toString() {
-        return "Fix [cve_id=" + cveId + ", fix_description=" + fixDescription
-                + ", source_url=" + sourceUrl + "]";
+        // Test each source for a valid connection
+        for (String source : sources) {
+            if (testConnection(source)) {
+                urlList.add(source);
+            }
+        }
+        return urlList;
     }
 }

@@ -8,6 +8,34 @@ The Patch Finder component of NVIP identifies possible patches for products affe
 - Product repos are cloned in the resources folder, then deleted after use
 > **NOTE:** This component relies directly on the affected product data from the product name extractor and should be run after affected product data is populated in the database.
 
+## Fix Finder Subcomponent
+The Fix Finder is a subcomponent of the Patch Finder, as its goals are very similar and it is modeled
+directly after the way that the PatchFinder collects and stores data. There are two main stages to the Fix
+Finding process: 1) Collect the urls that will be scraped for fixes (done primarily by the FixUrlFinders),
+and 2) Scrape the collected urls for vulnerability mitigation information relevant to the CVE/CPE being analyzed
+(done primarily by the FixParsers).
+- Done:
+  - Database structure to hold found fixes and their sources.
+  - API code to transport Fix data to the front-end
+  - Basic abstract FixUrlFinder & FixParser implementations, these should serve as templates for all 
+  host-specific implementations.
+  - FixFinderEnvVars is done, with the structure for any additional necessary environment variables
+  - Isolated Fix Finder component can be toggled with a single environment variable, FF_INPUT_MODE
+  - Basic threading/futures implementation for scraping (FixFinderThread)
+- WIP:
+  - The way we source urls should be improved to include as many "good" sources as possible,
+  "good" referring to reputation / completeness / chance of finding fixes.
+  - The way we scrape urls needs further development and possibly further ideation to ensure
+  we are getting the right data, as quickly as possible.
+    - The parser system has been adapted from the Crawler htmlparser package and is more of a PoC 
+    of how we could collect this data, if we find a better way, go for it.
+    - A "GenericParser" class that is able to attempt to scrape fix information from a host that 
+    we do not explicitly have a parser implementation for.
+    - The database might even benefit from storing the parser which was used for each found fix,
+    similar to the way the crawler functions with its own parsers.
+  - Once this system is functioning smoothly for one/several hosts, the main development cost
+  should be to create new parsers (increasing the amount of domains we can parse "perfectly").
+
 ## System Requirements
 
 * Patch Finder requires at least Java version 8.
@@ -194,6 +222,10 @@ If you want to run it locally without Docker, the program will attempt to automa
 
 ### Patch Finder Variables
 
+* **PF_INPUT_MODE**: Method of input for Patch Finder jobs, either 'db' or 'rabbit'.
+  - Default value: `db`
+  
+
 * **CVE_LIMIT**: The limit for CVEs to be processed by the Patch Finder during runtime.
   - Default value: `20`
 
@@ -221,3 +253,10 @@ If you want to run it locally without Docker, the program will attempt to automa
 
 * **PATCH_SRC_URL_PATH**: Path to the dictionary containing possible patch sources.
   - Default value: `nvip_data/source_dict.json`
+
+
+### Fix Finder Variables
+
+* **FF_INPUT_MODE**: Method of input for Fix Finder jobs, either 'db' or 'rabbit'. A value not equal to these
+* options will disable the fixfinder. (Default value will not run the Fix Finder)
+  - Default value: ` `

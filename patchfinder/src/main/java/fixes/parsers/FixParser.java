@@ -1,4 +1,4 @@
-package fixes;
+package fixes.parsers;
 
 /**
  * Copyright 2023 Rochester Institute of Technology (RIT). Developed with
@@ -24,41 +24,25 @@ package fixes;
  * SOFTWARE.
  */
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import fixes.Fix;
 
 import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.util.ArrayList;
+import java.util.List;
 
 /**
- * Abstract class responsible for finding possible fix source URLs for the FixFinder.
+ * Abstract class for FixFinder HTMl Parsers
  *
- * @author Dylan Mulligan
+ * @author Paul Vickers
  */
+public abstract class FixParser {
+    protected final String cveId;
+    protected final String url;
 
-public abstract class FixUrlFinder {
+    protected FixParser(String cveId, String url){
+        this.cveId = cveId;
+        this.url = url;
+    }
 
-	protected static final Logger logger = LogManager.getLogger(FixUrlFinder.class.getName());
-
-	protected abstract ArrayList<String> run(String cveId) throws IOException;
-
-	protected static boolean testConnection(String address) throws IOException {
-		logger.info("Testing Connection for address: " + address);
-
-		URL url = new URL(address);
-		HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
-		int response;
-
-		try {
-			response = urlConnection.getResponseCode();
-			logger.info("Response Code: " + response);
-			return true;
-		} catch (Exception e) {
-			logger.error("ERROR: Failed to connect to {}\n{}", address, e);
-			return false;
-		}
-	}
-
+    // Returns a list of fixes found from web page.
+    public abstract List<Fix> parseWebPage() throws IOException;
 }
