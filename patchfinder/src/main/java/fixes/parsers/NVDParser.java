@@ -76,7 +76,7 @@ public class NVDParser extends FixParser {
 
         // For each URL with the "Patch" tag, find the correct parser for it and add the fixes found for that URL
         for(String fixSource : fixSources){
-            FixParser parser = FixFinderThread.findCorrectParser(cveId, fixSource);
+            FixParser parser = FixParser.getParser(cveId, fixSource);
             fixes.addAll(parser.parseWebPage());
         }
 

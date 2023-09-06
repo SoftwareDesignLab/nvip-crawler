@@ -84,9 +84,9 @@ public class FixFinderThread implements Runnable {
 		for (String url : urls) {
 			CompletableFuture<List<Fix>> future = CompletableFuture.supplyAsync(() -> {
 
-				FixParser parser = findCorrectParser(cveId, url);
 
 				try{
+					FixParser parser = FixParser.getParser(cveId, url);
 					return parser.parseWebPage();
 				} catch(IOException e){
 					logger.error("Error occurred while parsing url {} for CVE {}", url, cveId);
@@ -113,25 +113,6 @@ public class FixFinderThread implements Runnable {
 		FixFinder.getFixes().addAll(allFixes);
 
 		logger.info("{} fixes found for CVE {}", allFixes.size(), cveId);
-	}
-
-	/**
-	 * Delegation method to determine which parser should be used to find fixes from the given url.
-	 *
-	 * @param cveId CVE ID for which fixes may be found
-	 * @param url URL to page which will be parsed
-	 * @return Correct parser to be used
-	 *
-	 * TODO: make this return more than just nvd/cisa etc, will come as we make more parsers
-	 */
-	public static FixParser findCorrectParser(String cveId, String url){
-		FixParser parser;
-
-		if(url.contains("nvd.nist.gov")) parser = new NVDParser(cveId, url);
-		else if(url.contains("cisa.gov")) parser = new CISAParser(cveId, url);
-		else parser = new GenericParser(cveId, url);
-
-		return parser;
 	}
 
 }

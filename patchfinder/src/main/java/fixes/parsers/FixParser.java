@@ -27,6 +27,8 @@ package fixes.parsers;
 import fixes.Fix;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.List;
 
 /**
@@ -45,4 +47,39 @@ public abstract class FixParser {
 
     // Returns a list of fixes found from web page.
     public abstract List<Fix> parseWebPage() throws IOException;
+
+    /**
+     * Delegation method to determine which parser should be used to find fixes from the given url.
+     *
+     * @param cveId CVE ID for which fixes may be found
+     * @param url URL to page which will be parsed
+     * @return Correct parser to be used
+     *
+     * TODO: make this return more than just nvd/cisa etc, will come as we make more parsers
+     */
+    public static FixParser getParser(String cveId, String url) throws MalformedURLException {
+        // Objectify url for domain extraction
+        final URL urlObj = new URL(url);
+        // Extract domain
+        final String domain = urlObj.getHost();
+
+        // Create generic parser that will be used for all unknown urls
+        FixParser parser;
+
+        // Choose parser based on domain
+        switch (domain) {
+            case "nvd.nist.gov":
+                parser = new NVDParser(cveId, url);
+                break;
+            case "cisa.gov":
+                parser = new CISAParser(cveId, url);
+                break;
+            default:
+                parser = new GenericParser(cveId, url);
+                break;
+        }
+
+        // Return chosen parser instance
+        return parser;
+    }
 }
