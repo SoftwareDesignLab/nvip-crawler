@@ -203,18 +203,18 @@ public class DatabaseHelper {
 
     /**
      *
-     * @param rejectedRawVulns
+     * @param rawVulns
      */
-    public void updateFilterStatus(Set<RawVulnerability> rejectedRawVulns) {
+    public void updateFilterStatus(Set<RawVulnerability> rawVulns) {
         try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(UPDATE_FILTER_STATUS)) {
-            for (RawVulnerability vuln : rejectedRawVulns) {
+            for (RawVulnerability vuln : rawVulns) {
                 pstmt.setInt(1, vuln.getFilterStatus().value);
                 pstmt.setInt(2, vuln.getId());
                 pstmt.addBatch();
             }
             pstmt.executeBatch();
         } catch (SQLException ex) {
-            logger.error("Error marking rawdescriptions as garbage");
+            logger.error("Error updating rawdescription filter status");
             logger.error(ex);
         }
     }
@@ -278,19 +278,10 @@ public class DatabaseHelper {
      * @param vuln composite vulnerability
      * @return 1 if inserted/updated, 0 if skipped, -1 if error
      */
-    public int insertOrUpdateVulnerabilityFull(CompositeVulnerability vuln) {
-        boolean isUpdate;
-        switch (vuln.getReconciliationStatus()) {
-            case UPDATED:
-                isUpdate = true;
-                break;
-            case NEW:
-                isUpdate = false;
-                break;
-            default:
-                return 0;
-        }
-
+    public int insertOrUpdateVulnerabilityFull(CompositeVulnerability vuln, boolean deleteFromJobTrack) {
+        CompositeVulnerability.ReconciliationStatus recStatus = vuln.getReconciliationStatus();
+        // yes, even UNCHANGED should be an update because UNCHANGED just refers to the description. dates might still be different
+        boolean isUpdate = recStatus != CompositeVulnerability.ReconciliationStatus.NEW;
 
         try (Connection conn = getConnection();
              PreparedStatement descriptionStatement = conn.prepareStatement(INSERT_DESCRIPTION, Statement.RETURN_GENERATED_KEYS);
@@ -299,24 +290,27 @@ public class DatabaseHelper {
              PreparedStatement jobStatement = conn.prepareStatement(DELETE_JOB)) {
             // handle all these atomically
             conn.setAutoCommit(false);
-            // insert into description table
-            populateDescriptionInsert(descriptionStatement, vuln.getSystemDescription());
-            descriptionStatement.executeUpdate();
-            // get generated description id
-            ResultSet rs = descriptionStatement.getGeneratedKeys();
-            if (rs.next()) {
-                vuln.setDescriptionId(rs.getInt(1));
-            } else {
-                // Pretty sure an exception would have been thrown by now anyway, but just in case...
-                logger.error("ERROR: Failure in inserting to the description table");
-                throw new SQLException();
+            // if it's UNCHANGED then none of the new sources contributed to the composite description, so no insertion needs to happen in description or rawdescriptionjt
+            if (recStatus != CompositeVulnerability.ReconciliationStatus.UNCHANGED) {
+                // insert into description table
+                populateDescriptionInsert(descriptionStatement, vuln.getCompositeDescription());
+                descriptionStatement.executeUpdate();
+                // get generated description id
+                ResultSet rs = descriptionStatement.getGeneratedKeys();
+                if (rs.next()) {
+                    vuln.setDescriptionId(rs.getInt(1));
+                } else {
+                    // Pretty sure an exception would have been thrown by now anyway, but just in case...
+                    logger.error("ERROR: Failure in inserting to the description table");
+                    throw new SQLException();
+                }
+                // batch insert into joint table
+                for (RawVulnerability rawVuln : vuln.getDescriptionComponents()) {
+                    populateJTInsert(jtStatement, vuln.getCompositeDescription(), rawVuln);
+                    jtStatement.addBatch();
+                }
+                jtStatement.executeBatch();
             }
-            // batch insert into joint table
-            for (RawVulnerability rawVuln : vuln.getComponents()) {
-                populateJTInsert(jtStatement, vuln.getSystemDescription(), rawVuln);
-                jtStatement.addBatch();
-            }
-            jtStatement.executeBatch();
             // insert/update into vulnerability table
             if (isUpdate) {
                 populateVulnUpdate(vulnStatement, vuln);
@@ -324,9 +318,11 @@ public class DatabaseHelper {
                 populateVulnInsert(vulnStatement, vuln);
             }
             vulnStatement.executeUpdate();
-            // remove job
-            populateJobDelete(jobStatement, vuln);
-            jobStatement.executeUpdate();
+            if (deleteFromJobTrack) {
+                // remove job from cvejobtrack if applicable
+                populateJobDelete(jobStatement, vuln);
+                jobStatement.executeUpdate();
+            }
             // execute atomically
             conn.commit();
         } catch (SQLException ex) {

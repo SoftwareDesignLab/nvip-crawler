@@ -25,10 +25,7 @@ package edu.rit.se.nvip.db;
 
 import com.zaxxer.hikari.HikariDataSource;
 import edu.rit.se.nvip.DatabaseHelper;
-import edu.rit.se.nvip.characterizer.CveCharacterizer;
-import edu.rit.se.nvip.characterizer.enums.CVSSSeverityClass;
 import edu.rit.se.nvip.characterizer.enums.VDOLabel;
-import edu.rit.se.nvip.characterizer.enums.VDONounGroup;
 import edu.rit.se.nvip.cwe.CWE;
 import edu.rit.se.nvip.model.*;
 import org.apache.logging.log4j.LogManager;
@@ -43,7 +40,6 @@ import org.mockito.MockedConstruction;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.lang.reflect.Field;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -253,10 +249,10 @@ public class DatabaseHelperTest {
             rawVulns.add(rawVuln);
 
             CompositeVulnerability vuln = new CompositeVulnerability(rawVuln);
-            vuln.setPotentialSources(rawVulns);
+            vuln.setAllSources(rawVulns);
 
             // Call the method to be tested
-            int result = dbh.insertOrUpdateVulnerabilityFull(vuln);
+            int result = dbh.insertOrUpdateVulnerabilityFull(vuln, false);
 
 
             // Assert the result

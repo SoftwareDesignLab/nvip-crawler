@@ -76,20 +76,20 @@ class PairwiseChoosingReconcilerTest {
         PairwiseChoosingReconciler rec = dummyRec(false);
         Reconciler.MergeStrategy strategy = rec.getMergeStrategy(null, null);
         assertEquals(Reconciler.MergeStrategy.UPDATE_ONE_BY_ONE, strategy);
-        strategy = rec.getMergeStrategy(genVuln().getSystemDescription(), genRawVulns(3, 4));
+        strategy = rec.getMergeStrategy(genVuln().getCompositeDescription(), genRawVulns(3, 4));
         assertEquals(Reconciler.MergeStrategy.UPDATE_ONE_BY_ONE, strategy);
     }
 
     @Test
     void singleUpdateDescription() {
         PairwiseChoosingReconciler rec = dummyRec(false);
-        String desc = rec.singleUpdateDescription(genVuln().getSystemDescription(), genRawVuln(4));
+        String desc = rec.singleUpdateDescription(genVuln().getCompositeDescription(), genRawVuln(4));
         assertEquals(dummyDescription, desc);
         desc = rec.singleUpdateDescription(null, genRawVuln(4));
         assertEquals("description4", desc);
 
         rec = dummyRec(true);
-        desc = rec.singleUpdateDescription(genVuln().getSystemDescription(), genRawVuln(4));
+        desc = rec.singleUpdateDescription(genVuln().getCompositeDescription(), genRawVuln(4));
         assertEquals("description4", desc);
         desc = rec.singleUpdateDescription(null, genRawVuln(4));
         assertEquals("description4", desc);
@@ -108,13 +108,13 @@ class PairwiseChoosingReconcilerTest {
     @Test
     void bulkUpdateDescription() {
         PairwiseChoosingReconciler rec = dummyRec(false);
-        String desc = rec.bulkUpdateDescription(genVuln().getSystemDescription(), genRawVulns(3, 4));
+        String desc = rec.bulkUpdateDescription(genVuln().getCompositeDescription(), genRawVulns(3, 4));
         assertEquals(dummyDescription, desc);
         desc = rec.bulkUpdateDescription(null, genRawVulns(3, 4));
         assertEquals("description4", desc);
 
         rec = dummyRec(true);
-        desc = rec.bulkUpdateDescription(genVuln().getSystemDescription(), genRawVulns(3, 4));
+        desc = rec.bulkUpdateDescription(genVuln().getCompositeDescription(), genRawVulns(3, 4));
         assertEquals("description6", desc);
         desc = rec.bulkUpdateDescription(null, genRawVulns(3, 4));
         assertEquals("description6", desc);

@@ -1,6 +1,5 @@
 package edu.rit.se.nvip.reconciler;
 
-import edu.rit.se.nvip.filter.Filter;
 import edu.rit.se.nvip.filter.FilterChain;
 import edu.rit.se.nvip.filter.FilterResult;
 import edu.rit.se.nvip.filter.FilterStatus;
@@ -18,31 +17,66 @@ import java.util.stream.Collectors;
 public class VulnBuilder {
 
     private Logger logger = LogManager.getLogger(getClass().getSimpleName());
+    private String cveId;
     private CompositeVulnerability existing;
     private CompositeDescription existingDesc;
     Set<RawVulnerability> allSources;
-    RawVulnerability userSource;
 
-    public VulnBuilder(CompositeVulnerability existing) {
+    public VulnBuilder(String cveId, CompositeVulnerability existing, Set<RawVulnerability> allSources) {
+        this.cveId = cveId;
         this.existing = existing;
-        this.existingDesc = existing == null ? null : existing.getSystemDescription();
-    }
-
-    public CompositeVulnerability filterAndBuild(Set<RawVulnerability> allSources, FilterChain filterChain, Reconciler reconciler) {
+        this.existingDesc = existing == null ? null : existing.getCompositeDescription();
         this.allSources = allSources;
-        Set<RawVulnerability> newPassedSources = runFiltersOnScrapedSources(filterChain);
-        CompositeDescription desc = reconciler.reconcile(existingDesc, newPassedSources);
-        return null;
     }
 
-    public CompositeVulnerability overrideWithUser(RawVulnerability userSource) {
-        this.userSource = userSource;
-        userSource.setFilterStatus(FilterStatus.PASSED);
-        return null;
+    public CompositeVulnerability filterAndBuild(FilterChain filterChain, Reconciler reconciler) {
+        Set<RawVulnerability> newPassedSources = runFiltersOnScrapedSources(filterChain);
+        CompositeDescription desc = reconciler.reconcile(cveId, existingDesc, newPassedSources);
+        CompositeVulnerability out = new CompositeVulnerability(desc, allSources);
+        if (existing == null) {
+            out.setRecStatus(CompositeVulnerability.ReconciliationStatus.NEW);
+        } else if (existingDesc.equals(desc)) {
+            // that equals call should be checking if the description strings are equal and the buildstrings are equal up to order
+            // technically the compvuln's date fields might have been changed by this whole process, but that doesn't matter for this status
+            out.setRecStatus(CompositeVulnerability.ReconciliationStatus.UNCHANGED);
+        } else {
+            out.setRecStatus(CompositeVulnerability.ReconciliationStatus.UPDATED);
+        }
+        return out;
     }
+
+    public CompositeVulnerability overrideWithUser() throws VulnBuilderException {
+        if (existing == null) {
+            throw new VulnBuilderException("The existing composite vulnerability is null and thus cannot be overridden");
+        }
+        // pull out the NEW raw vulnerabilities created from a USER
+        // in a normal scenario there should only be 1, but it's possible 2 users make edits close enough in time that
+        // the second one ends up in the db before the reconciler can process the first
+        List<RawVulnerability> newUserSources = allSources.stream()
+                .filter(v->v.getSourceType()==SourceType.USER && v.getFilterStatus() == FilterStatus.NEW)
+                .sorted(Comparator.comparing(RawVulnerability::getCreateDate))
+                .collect(Collectors.toList());
+        if (newUserSources.size() == 0) {
+            throw new VulnBuilderException("No new user sources were found");
+        }
+        if (newUserSources.size() > 1) {
+            logger.warn("Multiple new user sources were found, the most recent one will be applied");
+        }
+        // mark all new user sources as passed because we trust our users
+        newUserSources.forEach(v->v.setFilterStatus(FilterStatus.PASSED));
+        // take the newest one by creation date and use it as an override
+        RawVulnerability newestUserSource = newUserSources.get(newUserSources.size()-1);
+        CompositeDescription userDesc = existingDesc.duplicate();
+        userDesc.addUserSource(newestUserSource);
+        CompositeVulnerability out = new CompositeVulnerability(userDesc, allSources);
+        out.setRecStatus(CompositeVulnerability.ReconciliationStatus.UPDATED);
+        return out;
+    }
+
     private Set<RawVulnerability> runFiltersOnScrapedSources(FilterChain filterChain) {
         Set<RawVulnerability> newSources = filterByFilterStatus(allSources, FilterStatus.NEW);
         Set<RawVulnerability> existingSources = filterToSet(allSources, rv->!newSources.contains(rv));
+        newSources.removeAll(filterBySourceType(newSources, SourceType.USER)); // not our problem to deal with new user sources
         Map<RawVulnerability, FilterResult> newSourceToFilterStatus = filterChain.runFilters(newSources, existingSources);
         sortByPrio(newSourceToFilterStatus.keySet()).forEach(rv->updateFilterStatus(rv, newSourceToFilterStatus.get(rv)));
         return filterByFilterStatus(newSourceToFilterStatus.keySet(), FilterStatus.PASSED);
@@ -82,6 +116,12 @@ public class VulnBuilder {
 
     private static List<RawVulnerability> sortByPrio(Collection<RawVulnerability> vulns) {
         return vulns.stream().sorted(Comparator.comparingInt(RawVulnerability::getSourcePriority).reversed()).collect(Collectors.toList());
+    }
+
+    public static class VulnBuilderException extends Exception {
+        public VulnBuilderException(String message) {
+            super();
+        }
     }
 
 }

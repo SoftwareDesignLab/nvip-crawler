@@ -23,29 +23,20 @@ package edu.rit.se.nvip.characterizer;
  * SOFTWARE.
  */
 
-import edu.rit.se.nvip.DatabaseHelper;
 import edu.rit.se.nvip.automatedcvss.CvssScoreCalculator;
 import edu.rit.se.nvip.automatedcvss.PartialCvssVectorGenerator;
 import edu.rit.se.nvip.automatedcvss.preprocessor.CvePreProcessor;
-import edu.rit.se.nvip.characterizer.classifier.AbstractCveClassifier;
 import edu.rit.se.nvip.characterizer.classifier.CveClassifierFactory;
 import edu.rit.se.nvip.characterizer.classifier.OrdinaryCveClassifier;
 import edu.rit.se.nvip.characterizer.enums.VDOLabel;
-import edu.rit.se.nvip.characterizer.enums.VDONounGroup;
 import edu.rit.se.nvip.model.CompositeVulnerability;
 import edu.rit.se.nvip.model.RawVulnerability;
 import edu.rit.se.nvip.utils.CsvUtils;
 import edu.rit.se.nvip.utils.ReconcilerEnvVars;
 import org.apache.commons.io.FileUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.junit.Ignore;
 import org.junit.Test;
-import org.mockito.MockedConstruction;
 import org.mockito.MockedStatic;
 import org.mockito.stubbing.Answer;
-import weka.classifiers.Classifier;
-import weka.classifiers.bayes.NaiveBayes;
 
 import java.util.*;
 import java.nio.file.Paths;
@@ -123,9 +114,9 @@ public class CveCharacterizerTest {
 
 		//added 2 vulns with null desc and short desc to reach more code coverage
 		CompositeVulnerability vuln = new CompositeVulnerability(new RawVulnerability(1, "cve-1", null, null, null, null, ""));
-		vuln.setPotentialSources(new HashSet<>());
+		vuln.setAllSources(new HashSet<>());
 		CompositeVulnerability vuln2 = new CompositeVulnerability(new RawVulnerability(1, "cve-1", "short desc",	null, null, null, ""));
-		vuln2.setPotentialSources(new HashSet<>());
+		vuln2.setAllSources(new HashSet<>());
 		vulnSet.add(vuln);
 		vulnSet.add(vuln2);
 

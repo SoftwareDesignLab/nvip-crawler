@@ -161,31 +161,24 @@ public class ReconcilerController {
     private CompositeVulnerability handleReconcilerJob(String cveId, boolean userOverride) {
         // pull data
         Set<RawVulnerability> allRawVulns = dbh.getRawVulnerabilities(cveId);
-        int rawCount = allRawVulns.size();
         // get an existing vuln from prior reconciliation if one exists
         CompositeVulnerability existing = dbh.getCompositeVulnerability(cveId);
-        // run filters and reconcile
-        VulnBuilder vb = new VulnBuilder(existing);
+        // run filters and reconcile, or try a user override
+        VulnBuilder vb = new VulnBuilder(cveId, existing, allRawVulns);
         CompositeVulnerability out;
         if (userOverride) {
-            Optional<RawVulnerability> mostRecentUserSource = allRawVulns.stream()
-                    .filter(v->v.getSourceType()==SourceType.USER)
-                    .max(Comparator.comparing(RawVulnerability::getCreateDate));
-            if (mostRecentUserSource.isPresent()) {
-                out = vb.overrideWithUser(mostRecentUserSource.get());
-            } else {
-                logger.error("A user override job was initiated but no user source could be found");
+            try {
+                out = vb.overrideWithUser();
+            } catch (VulnBuilder.VulnBuilderException ex) {
+                logger.error("An error occurred while attempting a user override for cve {}\n{}", cveId, ex.getMessage());
                 return null;
             }
         } else {
-            out = vb.filterAndBuild(allRawVulns, filterChain, reconciler);
+            out = vb.filterAndBuild(filterChain, reconciler);
         }
+        dbh.updateFilterStatus(out.getChangedSources());
 
-        // link all the rawvulns to the compvuln, regardless of filter/reconciliation status
-        // we do this because publish dates and mod dates should be determined by all sources, not just those with good descriptions
-        out.setPotentialSources(allRawVulns);
-
-        dbh.insertOrUpdateVulnerabilityFull(out);
+        dbh.insertOrUpdateVulnerabilityFull(out, ReconcilerEnvVars.getInputMode().equals("db"));
 
         logger.info("Finished job for cveId " + out.getCveId());
 

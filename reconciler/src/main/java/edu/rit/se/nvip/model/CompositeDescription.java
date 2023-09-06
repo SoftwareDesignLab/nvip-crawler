@@ -111,6 +111,14 @@ public class CompositeDescription {
         setCreateDateCurrent();
     }
 
+    public void addUserSource(RawVulnerability vuln) {
+        this.sources.add(vuln);
+        this.descriptionTree.addTopSibling(vuln);
+        this.description = vuln.getDescription();
+        this.isUserGenerated = true;
+        setCreateDateCurrent();
+    }
+
     public void addSourcesAndResynth(String description, Set<RawVulnerability> rawVulns) {
         this.sources.addAll(rawVulns);
         this.descriptionTree = new DescriptionTree(new ArrayList<>(sources));
@@ -140,6 +148,10 @@ public class CompositeDescription {
         return false;
     }
 
+    public int highestPrio() {
+        return sources.stream().map(RawVulnerability::getSourcePriority).max(Integer::compareTo).orElse(-1);
+    }
+
     public boolean isUserGenerated() {
         return this.isUserGenerated;
     }
@@ -150,7 +162,21 @@ public class CompositeDescription {
 
     // Cloneable interface is annoying with final fields, doing this instead
     public CompositeDescription duplicate() {
-        return new CompositeDescription(0, this.cveId, this.description, getCurrentTime(),
+        return new CompositeDescription(id, this.cveId, this.description, getCurrentTime(),
                 this.getBuildString(), new HashSet<>(this.sources));
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        CompositeDescription that = (CompositeDescription) o;
+        return Objects.equals(description, that.description) && Objects.equals(cveId, that.cveId) &&
+                this.descriptionTree.equalUpToOrder(that.descriptionTree);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(description, cveId);
     }
 }

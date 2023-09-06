@@ -105,8 +105,8 @@ ReconcilerTest {
         CompositeVulnerability existing = genVuln();
         Set<RawVulnerability> newRaws = genRawVulns(2, 4);
         Set<RawVulnerability> allRaws = new HashSet<>(newRaws);
-        allRaws.addAll(existing.getSystemDescription().getSources());
-        CompositeDescription reconciled = rec.reconcile(existing.getSystemDescription(), newRaws);
+        allRaws.addAll(existing.getCompositeDescription().getSources());
+        CompositeDescription reconciled = rec.reconcile(dummyCveId, existing.getCompositeDescription(), newRaws);
         assertTrue(equivalentBuildStrings("((((1,2),3),4),5)", reconciled.getBuildString(), allRaws));
     }
 
@@ -115,7 +115,7 @@ ReconcilerTest {
         Reconciler rec = dummyReconciler(Reconciler.MergeStrategy.UPDATE_ONE_BY_ONE);
         CompositeVulnerability existing = null;
         Set<RawVulnerability> newRaws = genRawVulns(2, 4);
-        CompositeDescription reconciled = rec.reconcile(null, newRaws);
+        CompositeDescription reconciled = rec.reconcile(dummyCveId, null, newRaws);
         assertTrue(equivalentBuildStrings("(4,5)", reconciled.getBuildString(), newRaws));
     }
 
@@ -125,8 +125,8 @@ ReconcilerTest {
         CompositeVulnerability existing = genVuln();
         Set<RawVulnerability> newRaws = genRawVulns(4, 4);
         Set<RawVulnerability> allRaws = new HashSet<>(newRaws);
-        allRaws.addAll(existing.getSystemDescription().getSources());
-        CompositeDescription reconciled = rec.reconcile(existing.getSystemDescription(), newRaws);
+        allRaws.addAll(existing.getCompositeDescription().getSources());
+        CompositeDescription reconciled = rec.reconcile(dummyCveId, existing.getCompositeDescription(), newRaws);
         assertTrue(equivalentBuildStrings("(((1,2),3),4,5,6,7)", reconciled.getBuildString(), allRaws));
     }
 
@@ -136,8 +136,8 @@ ReconcilerTest {
         CompositeVulnerability existing = genVuln();
         Set<RawVulnerability> newRaws = genRawVulns(4, 4);
         Set<RawVulnerability> allRaws = new HashSet<>(newRaws);
-        allRaws.addAll(existing.getSystemDescription().getSources());
-        CompositeDescription reconciled = rec.reconcile(existing.getSystemDescription(), newRaws);
+        allRaws.addAll(existing.getCompositeDescription().getSources());
+        CompositeDescription reconciled = rec.reconcile(dummyCveId, existing.getCompositeDescription(), newRaws);
         assertTrue(equivalentBuildStrings("(1,2,3,4,5,6,7)", reconciled.getBuildString(), allRaws));
     }
 
@@ -146,7 +146,7 @@ ReconcilerTest {
         Reconciler rec = dummyReconciler(Reconciler.MergeStrategy.RESYNTH);
         CompositeVulnerability existing = null;
         Set<RawVulnerability> newRaws = genRawVulns(4, 4);
-        CompositeDescription reconciled = rec.reconcile(null, newRaws);
+        CompositeDescription reconciled = rec.reconcile(dummyCveId, null, newRaws);
         assertTrue(equivalentBuildStrings("(4,5,6,7)", reconciled.getBuildString(), newRaws));
     }
 }

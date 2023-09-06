@@ -184,7 +184,7 @@ public class CveCharacterizer {
 			try {
 				if (vuln.getDescription() == null || vuln.getDescription().length() < 50) {
 					countBadDescription++;
-					logger.warn("WARNING: BAD or SHORT Description '{}' for {} at {}, skipping characterization", vuln.getDescription(), vuln.getCveId(), vuln.getSourceURLs());
+					logger.warn("WARNING: BAD or SHORT Description '{}' for {} at {}, skipping characterization", vuln.getDescription(), vuln.getCveId(), vuln.getSources());
 					continue;
 				}
 				if (vuln.getReconciliationStatus() == CompositeVulnerability.ReconciliationStatus.UNCHANGED) {

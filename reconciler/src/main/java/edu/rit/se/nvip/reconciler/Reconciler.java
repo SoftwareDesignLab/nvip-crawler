@@ -27,12 +27,9 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import edu.rit.se.nvip.DatabaseHelper;
 import edu.rit.se.nvip.model.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import org.checkerframework.checker.nullness.qual.NonNull;
 
 /**
  * Abstract class for Cve reconciliation and validation
@@ -63,18 +60,15 @@ public abstract class Reconciler {
 	 * @param newVulns A non-null list of RawVulnerabilities with the same CVE-XXX-XXXX identifier as the existingVuln. Filter status will not be checked here, and all rawvulns are assumed to be equal priority
 	 * @return A CompositeVulnerability containing merged and updated information
 	 */
-	public CompositeDescription reconcile(CompositeDescription existingDesc, Set<RawVulnerability> newVulns) {
+	public CompositeDescription reconcile(String cveId, CompositeDescription existingDesc, Set<RawVulnerability> newVulns) {
+		CompositeDescription workingDescription = existingDesc == null ? new CompositeDescription(cveId) : existingDesc.duplicate();
 		if (newVulns.isEmpty()) {
-			return existingDesc;
+			return workingDescription;
 		}
-		String cveId = newVulns.iterator().next().getCveId();
+		// todo envvar for system overrideing user
 		// if the existing vuln only uses low prio sources and the new ones are high prio, we dump the old sources and rebuild
-		CompositeDescription workingDescription;
-		if (existingDesc == null || !existingDesc.usesHighPrio() && hasHighPrio(newVulns)) {
+		if (workingDescription.highestPrio() <  highestPrio(newVulns)) {
 			workingDescription = new CompositeDescription(cveId);
-		}
-		else {
-			workingDescription = existingDesc.duplicate();
 		}
 		CompositeDescription reconciledDesc = null;
 		// TODO figure out what to do if a new rawvulnerability is an updated version of one of the existing sources, right now nothing special happens
@@ -117,21 +111,12 @@ public abstract class Reconciler {
 		return existingDesc;
 	}
 
-	protected static boolean hasHighPrio(Set<RawVulnerability> rawVulns) {
+	protected static int highestPrio(Set<RawVulnerability> rawVulns) {
 		// when the new vulns hit the reconciler we can assume they're equal priority, so just check the first one
 		for (RawVulnerability v : rawVulns) {
-			return v.isHighPriority();
+			return v.getSourcePriority();
 		}
-		return false;
-	}
-
-	private List<RawVulnerability> extractUserSources(Set<RawVulnerability> rawVulns) {
-		List<RawVulnerability> out = rawVulns.stream()
-				.filter(v->v.getSourceType()== SourceType.USER)
-				.sorted(Comparator.comparing(Vulnerability::getCreateDate).reversed())
-				.collect(Collectors.toList());
-		out.forEach(rawVulns::remove);
-		return out;
+		return -1;
 	}
 
 	/**

@@ -21,6 +21,9 @@ public enum SourceType {
         return this.type;
     }
     public static SourceType get(String sourceType) {
+        if (sourceType == null) {
+            return OTHER;
+        }
         if (sourceType.startsWith("usersource")) {
             return USER;
         }
