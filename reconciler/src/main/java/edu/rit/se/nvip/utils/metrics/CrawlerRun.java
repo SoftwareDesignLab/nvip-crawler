@@ -13,7 +13,7 @@ public class CrawlerRun {
     private Set<RawVulnerability> vulns;
     private int runId;
     private Date runDate;
-    private static final Logger logger = LogManager.getLogger(FilterMetrics.class.getSimpleName());
+    private static final Logger logger = LogManager.getLogger(CrawlerRun.class.getSimpleName());
     public CrawlerRun(Set<RawVulnerability> vulns, int runId, Date runDate) {
         this.vulns = vulns;
         this.runId = runId;
@@ -69,8 +69,8 @@ public class CrawlerRun {
         return map;
     }
 
-    public FilterMetrics.FilterStats numFiltered() {
-        FilterMetrics.FilterStats filterStats = new FilterMetrics.FilterStats(); //create a new stat tracker
+    public FilterStats numFiltered() {
+        FilterStats filterStats = new FilterStats(); //create a new stat tracker
 
         for(RawVulnerability vuln : vulns){ //for each vuln in the run
 
@@ -94,7 +94,7 @@ public class CrawlerRun {
     }
 
     public double proportionPassed() {
-        FilterMetrics.FilterStats stats = this.numFiltered();
+        FilterStats stats = this.numFiltered();
         if (stats.getTotalFiltered() == 0){ //case for if there are no vulnerabilities that were filtered
             logger.error("Trying to divide by 0 because Total Vulns filtered is 0");
             return 0;
@@ -115,6 +115,55 @@ public class CrawlerRun {
         for (RawVulnerability vuln : vulns) {
             vuln.setFilterStatus(FilterStatus.NEW);
         }
+    }
+
+
+    public static class FilterStats {
+        /*
+
+        NEW FILTER STATS INNER CLASS USED IN numFiltered() TO TRACK CERTAIN FILTER STATS
+        CHECKS TO SEE HOW MANY PASSED, HOW MANY FAILED, HOW MANY TOTAL VULNS, HOW MANY TOTAL WERE FILTERED, AND HOW MANY WERE NOT FILTERED
+
+         */
+        private int notFiltered;
+        private int passedFilters;
+        private int failedFilters;
+        private int totalVulns;
+        private int totalFiltered;
+
+        public FilterStats() {
+            this.notFiltered = 0;
+            this.passedFilters = 0;
+            this.failedFilters = 0;
+            this.totalVulns = 0;
+            this.totalFiltered = 0;
+        }
+        public int getPassedFilters(){ return this.passedFilters;}
+        public int getTotalFiltered(){ return this.totalFiltered;}
+        public int getTotalVulns(){ return this.totalVulns;}
+        public int getTotalFailed(){ return this.failedFilters;}
+        public int getTotalNotFiltered(){ return this.notFiltered;}
+
+        public void increaseNotFiltered() {
+            this.notFiltered++;
+        }
+
+        public void increasePassedFilters() {
+            this.passedFilters++;
+        }
+
+        public void increaseFailedFilters() {
+            this.failedFilters++;
+        }
+
+        public void increaseTotalVulns() {
+            this.totalVulns++;
+        }
+
+        public void increaseTotalFiltered() {
+            this.totalFiltered++;
+        }
+
     }
 
 }

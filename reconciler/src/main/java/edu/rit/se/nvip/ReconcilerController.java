@@ -30,7 +30,8 @@ public class ReconcilerController {
 
     public void initialize(){
         this.dbh = DatabaseHelper.getInstance();
-        filterChain = new FilterChain(ReconcilerEnvVars.getFilterList(), true, true);
+        filterChain = new FilterChain(FilterChain.localFilters(), true, true);
+        filterChain.appendFilters(ReconcilerEnvVars.getFilterList());
         this.reconciler = ReconcilerFactory.createReconciler(ReconcilerEnvVars.getReconcilerType());
         this.reconciler.setKnownCveSources(ReconcilerEnvVars.getKnownSourceMap());
         if(nvdController == null) {
@@ -210,9 +211,8 @@ public class ReconcilerController {
     public void setReconciler(Reconciler rc){
         reconciler = rc;
     }
-    public void setFilterChain(FilterHandler fh){
-        //filterChain = fh;
-        // todo change type
+    public void setFilterChain(FilterChain fc){
+        filterChain = fc;
     }
     public void setMessenger(Messenger m){
         messenger = m;

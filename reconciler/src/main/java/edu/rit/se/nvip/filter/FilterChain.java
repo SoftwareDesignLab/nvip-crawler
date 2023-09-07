@@ -12,6 +12,10 @@ public class FilterChain {
     private final boolean optimizeWithCaching;
     private final boolean optimizeWithPriority;
 
+    public FilterChain() {
+        this(new ArrayList<>(), false, false);
+    }
+
     public FilterChain(List<Filter> filterList, boolean optimizeWithCaching, boolean optimizeWithPriority) {
         this.filterList = filterList;
         this.optimizeWithCaching = optimizeWithCaching;
@@ -26,6 +30,16 @@ public class FilterChain {
         filterList.add(new MultipleCveDescriptionsFilter());
         filterList.add(new DescriptionSizeFilter());
         return filterList;
+    }
+
+    public FilterChain appendFilter(Filter filter) {
+        this.filterList.add(filter);
+        return this;
+    }
+
+    public FilterChain appendFilters(List<Filter> filters) {
+        this.filterList.addAll(filters);
+        return this;
     }
 
     public FilterResult applyFilters(RawVulnerability vuln) {
@@ -98,6 +112,7 @@ public class FilterChain {
 
         for (RawVulnerability vuln : newVulnColl) {
             // if we've already seen a passing vuln of higher priority, don't bother running filters
+            // todo consider how to exclude user sources from this priority calc
             if (optimizeWithPriority && vuln.getSourcePriority() < highestPrioPassing) {
                 vulnToStatus.put(vuln, new FilterResult(FilterStatus.UNEVALUATED, null));
                 continue;

@@ -1,8 +1,8 @@
 package edu.rit.se.nvip;
 
 import edu.rit.se.nvip.characterizer.CveCharacterizer;
-import edu.rit.se.nvip.filter.FilterHandler;
-import edu.rit.se.nvip.filter.FilterReturn;
+import edu.rit.se.nvip.filter.FilterChain;
+import edu.rit.se.nvip.filter.FilterResult;
 import edu.rit.se.nvip.messenger.Messenger;
 import edu.rit.se.nvip.mitre.MitreCveController;
 import edu.rit.se.nvip.model.CompositeDescription;
@@ -16,7 +16,9 @@ import edu.rit.se.nvip.utils.ReconcilerEnvVars;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import static org.mockito.Mockito.*;
@@ -33,16 +35,16 @@ class ReconcilerControllerTest {
         MockedStatic<ReconcilerEnvVars> mockedEnvVars = mockStatic(ReconcilerEnvVars.class);
         MockedStatic<DatabaseHelper> mockedDb = mockStatic(DatabaseHelper.class);
         DatabaseHelper mockDbh = mock(DatabaseHelper.class);
-        FilterHandler mockFH = mock(FilterHandler.class);
+        FilterChain mockFC = mock(FilterChain.class);
         Reconciler mockRecon = mock(Reconciler.class);
-        FilterReturn mockFR = mock(FilterReturn.class);
+        Map<RawVulnerability, FilterResult> frMap = new HashMap<>();
         Messenger mockMes = mock(Messenger.class);
         MitreCveController mockMitre = mock(MitreCveController.class);
         NvdCveController mockNvd = mock(NvdCveController.class);
         CveCharacterizer mockChar = mock(CveCharacterizer.class);
         rc.setDbh(mockDbh);
         rc.setReconciler(mockRecon);
-        rc.setFilterChain(mockFH);
+        rc.setFilterChain(mockFC);
         rc.setMessenger(mockMes);
         rc.setNvdController(mockNvd);
         rc.setMitreController(mockMitre);
@@ -61,7 +63,7 @@ class ReconcilerControllerTest {
 
         when(mockDbh.getRawVulnerabilities(anyString())).thenReturn(rawVulns);
         when(mockDbh.getCompositeVulnerability(anyString())).thenReturn(vuln);
-        when(mockFH.runFilters(anySet())).thenReturn(mockFR);
+        when(mockFC.runFilters(anySet())).thenReturn(frMap);
         doNothing().when(mockDbh).updateFilterStatus(anySet());
         when(mockRecon.reconcile(anyString(), any(CompositeDescription.class), anySet())).thenReturn(vuln.getCompositeDescription());
         when(mockDbh.insertOrUpdateVulnerabilityFull(any(CompositeVulnerability.class), anyBoolean())).thenReturn(1);

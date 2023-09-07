@@ -17,13 +17,8 @@ class SimpleFilterTest {
     @Test
     void passesFilter() {
         Filter filter = new SimpleFilter();
-        Set<RawVulnerability> vulns = new HashSet<>();
         for (int i = 0; i < 10; i++) {
-            vulns.add(genRawVuln(i));
+            assertTrue(filter.passesFilter(genRawVuln(i)));
         }
-        // todo yeah i know i just broke this, need to compile
-        Set<RawVulnerability> filtered = null;//filter.filterAllAndSplit(vulns);
-        assertEquals(0, filtered.size());
-        assertEquals(10, vulns.size());
     }
 }
