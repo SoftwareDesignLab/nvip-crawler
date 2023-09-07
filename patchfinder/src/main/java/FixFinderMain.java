@@ -57,13 +57,14 @@ public class FixFinderMain extends Thread {
                 break;
             default:
                 logger.info("Skipping FixFinder as input mode is not set to a valid value... Set to a valid value to enable it.");
+                break;
         }
     }
 
     private void runDb() {
         // Just for testing
         List<String> cveIds = new ArrayList<>();
-        cveIds.add("CVE-2022-2967");
+        cveIds.add("CVE-2022-27911");
 
         try {
             FixFinder.run(cveIds);

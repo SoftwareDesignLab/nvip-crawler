@@ -112,7 +112,7 @@ public class FixFinderThread implements Runnable {
 		// Add all fixes found to the static list defined in FixFinder
 		FixFinder.getFixes().addAll(allFixes);
 
-		logger.info("{} fixes found for CVE {}", allFixes.size(), cveId);
+		logger.info("{} fixes found for CVE: {}", allFixes.size(), cveId);
 	}
 
 }

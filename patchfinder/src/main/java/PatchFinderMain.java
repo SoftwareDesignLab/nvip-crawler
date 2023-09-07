@@ -52,12 +52,14 @@ public class PatchFinderMain extends Thread {
 
         // Determine run mode and start PatchFinder
         switch (PatchFinderEnvVars.getInputMode()) {
-            default:
             case "db":
                 runDb();
                 break;
             case "rabbit":
                 runRabbit();
+                break;
+            default:
+                logger.info("Skipping PatchFinder as input mode is not set to a valid value... Set to a valid value to enable it.");
                 break;
         }
     }
