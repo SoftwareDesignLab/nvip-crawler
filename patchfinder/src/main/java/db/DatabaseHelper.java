@@ -622,7 +622,7 @@ public class DatabaseHelper {
 	public void insertFix(Fix fix) throws SQLException {
 		String cveId = fix.getCveId();
 
-		// TODO: fix this once database schema is updated (fixsourceurl table deleted, fixes stores sourceurl string)
+		// TODO: Update this code to work with new schema
 //		try (Connection connection = getConnection();
 //			 PreparedStatement pstmt = connection.prepareStatement(insertFixSql);
 //			 PreparedStatement pstmtExistingCommit = connection.prepareStatement("SELECT fix_id FROM fixes WHERE fix_id = ? LIMIT 1");

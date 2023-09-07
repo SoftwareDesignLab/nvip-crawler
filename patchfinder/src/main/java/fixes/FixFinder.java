@@ -79,7 +79,7 @@ public class FixFinder {
 		fixURLFinders.add(new VulnerabilityFixUrlFinder());
 		fixURLFinders.add(new NvdFixUrlFinder());
 
-		logger.info("Done initializing {} FixUrlFinders", fixURLFinders.size());
+		logger.info("Done initializing {} FixUrlFinders: {}", fixURLFinders.size(), fixURLFinders);
 	}
 
 	// TODO: at some point, need to figure out how we are going to get input for which cves to find fixes
@@ -90,14 +90,23 @@ public class FixFinder {
 		List<Future<?>> futures = new ArrayList<>();
 
 		for (String cveId : cveIds) {
+			final List<String> sourceUrls = new ArrayList<>();
 			try {
 				for (FixUrlFinder finder : fixURLFinders) {
-					cveToUrls.put(cveId, finder.run(cveId));
+					final int prevUrlsNum = sourceUrls.size();
+					sourceUrls.addAll(finder.run(cveId));
+					logger.info("{} found {} potential fix urls for CVE: {}",
+							finder.getClass().getSimpleName(),
+							sourceUrls.size() - prevUrlsNum,
+							cveId
+					);
 				}
 
 			} catch (Exception e) {
 				logger.info("Ran into error while finding URLs: {}", e.toString());
 			}
+
+			cveToUrls.put(cveId, sourceUrls);
 		}
 
 		for (String cveId : cveToUrls.keySet()) {
@@ -111,6 +120,7 @@ public class FixFinder {
 		// Wait for all threads to complete
 		for (Future<?> future : futures) {
 			try {
+				// TODO: Fix NullPointerException here
 				future.get(); // This will block until the thread is finished
 			} catch (Exception e) {
 				logger.error("Error occurred while executing a thread: {}", e.toString());

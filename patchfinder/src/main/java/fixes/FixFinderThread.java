@@ -108,7 +108,7 @@ public class FixFinderThread implements Runnable {
 				logger.error("Error occurred while parsing URL {} for CVE {}", url, cveId);
 			}
 
-		logger.info("{} fixes found for CVE {}", allFixes.size(), cveId);
+		logger.info("{} fixes found for CVE: {}", allFixes.size(), cveId);
 	}
 
 }
