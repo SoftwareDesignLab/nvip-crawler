@@ -86,17 +86,17 @@ public class VulnBuilder {
         switch(fr.getStatus()) {
             case UNEVALUATED:
                 logger.info("CVE {} from source {} with vuln_id {} was skipped by NVIP's filtering system due to being a low priority source",
-                        rv.getCveId(), rv.getSourceUrl(), rv.getVulnID());
+                        rv.getCveId(), rv.getSourceUrl(), rv.getId());
             case PASSED:
                 logger.info("CVE {} from source {} with vuln_id {} passed all NVIP quality filters",
-                        rv.getCveId(), rv.getSourceUrl(), rv.getVulnID());
+                        rv.getCveId(), rv.getSourceUrl(), rv.getId());
             case FAILED:
                 if (fr.getFailedAt() == null) {
                     logger.info("CVE {} from source {} with vuln_id {} was rejected by NVIP's filters because its data is equivalent to a previously rejected source",
-                            rv.getCveId(), rv.getSourceUrl(), rv.getVulnID());
+                            rv.getCveId(), rv.getSourceUrl(), rv.getId());
                 } else {
                     logger.info("CVE {} from source {} with vuln_id {} was rejected by NVIP's filters at the {} stage.",
-                            rv.getCveId(), rv.getSourceUrl(), rv.getVulnID(), fr.getFailedAt());
+                            rv.getCveId(), rv.getSourceUrl(), rv.getId(), fr.getFailedAt());
                 }
         }
         rv.setFilterStatus(fr.getStatus());
