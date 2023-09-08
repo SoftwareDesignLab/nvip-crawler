@@ -1,6 +1,7 @@
 package edu.rit.se.nvip.filter;
 
 import edu.rit.se.nvip.model.RawVulnerability;
+import edu.rit.se.nvip.model.SourceType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -105,6 +106,7 @@ public class FilterChain {
 
         int highestPrioPassing = existingVulns.stream()
                 .filter(v->v.getFilterStatus() == FilterStatus.PASSED)
+                .filter(v->v.getSourceType() != SourceType.USER)
                 .map(RawVulnerability::getSourcePriority)
                 .max(Integer::compareTo).orElse(-1);
 
@@ -112,7 +114,6 @@ public class FilterChain {
 
         for (RawVulnerability vuln : newVulnColl) {
             // if we've already seen a passing vuln of higher priority, don't bother running filters
-            // todo consider how to exclude user sources from this priority calc
             if (optimizeWithPriority && vuln.getSourcePriority() < highestPrioPassing) {
                 vulnToStatus.put(vuln, new FilterResult(FilterStatus.UNEVALUATED, null));
                 continue;
