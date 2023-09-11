@@ -53,7 +53,8 @@ public abstract class FixUrlFinder {
 
 		try {
 			response = urlConnection.getResponseCode();
-			logger.info("Response Code: " + response);
+			// Don't print OK responses, only when this is not the case
+			if(response != 200) logger.info("Response Code: " + response);
 			return true;
 		} catch (Exception e) {
 			logger.error("ERROR: Failed to connect to {}\n{}", address, e);
