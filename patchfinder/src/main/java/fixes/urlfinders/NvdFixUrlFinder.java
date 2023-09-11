@@ -48,10 +48,18 @@ public class NvdFixUrlFinder extends FixUrlFinder {
 
         // Test each source for a valid connection
         for (String source : sources) {
+            // Test reported source
             if (testConnection(source)) {
                 urlList.add(source);
             }
         }
+
+        // Test NVD direct cve page
+        final String directSource = "https://nvd.nist.gov/vuln/detail/" + cveId;
+        if(testConnection(directSource)) {
+            urlList.add(directSource);
+        }
+
         return urlList;
     }
 }

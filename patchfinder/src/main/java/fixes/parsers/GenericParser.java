@@ -26,6 +26,7 @@ package fixes.parsers;
 
 import fixes.Fix;
 
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -48,6 +49,6 @@ public class GenericParser extends FixParser {
     //TODO: implement some day
     @Override
     public List<Fix> parseWebPage() {
-        return null;
+        return new ArrayList<>();
     }
 }

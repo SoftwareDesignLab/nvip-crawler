@@ -32,6 +32,7 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.io.IOException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -41,7 +42,30 @@ import java.util.List;
  * @author Paul Vickers
  */
 public class NVDParser extends FixParser {
-    public static final String PATCH = "Patch";
+    // Enumeration of desired tags related to collected resources from NVD pages (direct sources)
+    private enum RESOURCE_TAGS {
+        PATCH("Patch"), // Hyperlink relates directly to patch information
+        VENDOR_ADVISORY("Vendor Advisory"); // Hyperlink relates to an advisory host
+
+        private final String name;
+        RESOURCE_TAGS(String name) {
+            this.name = name;
+        }
+
+        /**
+         * Safe valueOf method that relates tag name (i.e. "Vendor Advisory") to the correct member
+         * @param name name of resource tag
+         * @return correlated tag object, or null if not found
+         */
+        public static RESOURCE_TAGS fromString(String name) {
+            for (RESOURCE_TAGS tag : RESOURCE_TAGS.values()) {
+                if (tag.name.equalsIgnoreCase(name)) {
+                    return tag;
+                }
+            }
+            return null;
+        }
+    }
 
     public NVDParser(String cveId, String url){
         super(cveId, url);
@@ -59,7 +83,8 @@ public class NVDParser extends FixParser {
         List<Fix> fixes = new ArrayList<>();
 
         // Connect to NVD page using Jsoup
-        Document doc = Jsoup.connect(url).get();
+        // TODO: Log parsing across all parsers in a nice way
+        Document doc = Jsoup.parse(new URL(url), 10000);
 
         // Isolate the HTML for the references table
         Elements rows = doc.select("div[id=vulnHyperlinksPanel]").first().select("table").first().select("tbody").select("tr");
@@ -69,12 +94,14 @@ public class NVDParser extends FixParser {
         for(Element row : rows){
             String url = row.select("a").text();
             Elements spans = row.select("span.badge");
+            // Check all resource tags
             for(Element span: spans){
-                if(span.text().equalsIgnoreCase(PATCH)) fixSources.add(url);
+                // Add url if the tag matches any whitelisted tag
+                if(RESOURCE_TAGS.fromString(span.text()) != null) fixSources.add(url);
             }
         }
 
-        // For each URL with the "Patch" tag, find the correct parser for it and add the fixes found for that URL
+        // For each URL, find the correct parser for it and add the fixes found for that URL
         for(String fixSource : fixSources){
             FixParser parser = FixParser.getParser(cveId, fixSource);
             fixes.addAll(parser.parseWebPage());

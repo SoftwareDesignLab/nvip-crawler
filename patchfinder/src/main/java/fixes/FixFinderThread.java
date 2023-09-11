@@ -81,7 +81,8 @@ public class FixFinderThread implements Runnable {
 					FixParser parser = FixParser.getParser(cveId, url);
 					return parser.parseWebPage();
 				} catch(IOException e){
-					logger.error("Error occurred while parsing url {} for CVE {}", url, cveId);
+					logger.error("Error occurred while parsing url {} for CVE {}: {}", url, cveId, e.toString());
+					e.printStackTrace();
 					return null;
 				}
 
@@ -94,7 +95,11 @@ public class FixFinderThread implements Runnable {
 		List<Fix> allFixes = new ArrayList<>();
 		for (CompletableFuture<List<Fix>> future : futures) {
 			try {
-				allFixes.addAll(future.get());
+				// Get results of the future
+				final List<Fix> fixes = future.get();
+				// Ensure no null values are allowed past here
+				if(fixes != null) allFixes.addAll(fixes);
+				else logger.warn("Future returned null");
 			} catch (InterruptedException | ExecutionException e) {
 				// Handle exceptions as needed
 				e.printStackTrace();
