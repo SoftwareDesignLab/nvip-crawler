@@ -69,6 +69,7 @@ public class PatchFinderEnvVars {
 
     private static int rabbitPollInterval = 60;
     private static String rabbitHost = "host.docker.internal";
+    private static int rabbitPort = 5672;
     private static String rabbitUsername = "guest";
     private static String rabbitPassword = "guest";
     private static String rabbitInputQueue = "PNE_OUT";
@@ -123,6 +124,7 @@ public class PatchFinderEnvVars {
     public static String getHikariPassword() { return hikariPassword; }
     public static int getRabbitPollInterval() { return rabbitPollInterval; }
     public static String getRabbitHost() { return rabbitHost; }
+    public static int getRabbitPort() {return rabbitPort;}
     public static String getRabbitUsername() { return rabbitUsername; }
     public static String getRabbitPassword() { return rabbitPassword; }
     public static String getRabbitInputQueue() { return rabbitInputQueue; }
@@ -265,6 +267,14 @@ public class PatchFinderEnvVars {
             rabbitHost = fileProps.get("RABBIT_HOST");
             logger.info("Setting RABBIT_HOST to {}", rabbitHost);
         } else logger.warn("Could not fetch RABBIT_HOST from env vars, defaulting to {}", rabbitHost);
+
+        if(systemProps.containsKey("RABBIT_PORT")) {
+            rabbitPort = Integer.parseInt(systemProps.get("RABBIT_PORT"));
+            logger.info("Setting RABBIT_PORT to {}", rabbitPort);
+        } else if (fileProps.containsKey("RABBIT_PORT")) {
+            rabbitPort = Integer.parseInt(fileProps.get("RABBIT_PORT"));
+            logger.info("Setting RABBIT_PORT to {}", rabbitPort);
+        } else logger.warn("Could not fetch RABBIT_PORT from env vars, defaulting to {}", rabbitPort);
 
         if(systemProps.containsKey("RABBIT_USERNAME")) {
             rabbitUsername = systemProps.get("RABBIT_USERNAME");
