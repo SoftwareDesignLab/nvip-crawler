@@ -205,6 +205,8 @@ public class CrawlerMain {
         String reconcilerMethod = System.getenv("NVIP_RECONCILER_METHOD");
         String mqHost = System.getenv("RABBIT_HOST");
         String mqPort = System.getenv("RABBIT_PORT");
+        String mqUsername = System.getenv("RABBIT_USERNAME");
+        String mqPassword = System.getenv("RABBIT_PASSWORD");
         String mqQueueName = System.getenv("CRAWLER_OUTPUT_QUEUE");
 
         addEnvvarString(CrawlerMain.dataVars,"dataDir", dataDir, "resources",
@@ -221,6 +223,10 @@ public class CrawlerMain {
         addEnvvarInt(CrawlerMain.dataVars,"mqPort", mqPort, 5762,
                 "WARNING: MQ Port not defined in RABBIT_PORT, using 5762 as default",
                 "RABBIT_PORT");
+        addEnvvarString(CrawlerMain.dataVars,"mqUsername", mqUsername, "guest",
+                "WARNING: MQ Username not defined in RABBIT_USERNAME, using 'guest' as default");
+        addEnvvarString(CrawlerMain.dataVars,"mqPassword", mqPassword, "guest",
+                "WARNING: MQ Password not defined in RABBIT_PASSWORD, using 'guest' as default");
         addEnvvarString(CrawlerMain.dataVars,"mqQueueName", mqQueueName, "CRAWLER_OUT",
                 "WARNING: MQ Queue Name not defined in RABBIT_QUEUE_NAME, using 'raw_data_queue' as default");
 
@@ -556,6 +562,8 @@ public class CrawlerMain {
             ConnectionFactory factory = new ConnectionFactory();
             factory.setHost(dataVars.get("mqHost") + "");
             factory.setPort((int) dataVars.get("mqPort"));
+            factory.setUsername(dataVars.get("mqUsername")+"");
+            factory.setPassword(dataVars.get("mqPassword")+"");
             Connection connection = factory.newConnection();
             Channel channel = connection.createChannel();
 
@@ -580,6 +588,8 @@ public class CrawlerMain {
         ConnectionFactory factory = new ConnectionFactory();
         factory.setHost(dataVars.get("mqHost") + "");
         factory.setPort((int) dataVars.get("mqPort"));
+        factory.setUsername(dataVars.get("mqUsername")+"");
+        factory.setPassword(dataVars.get("mqPassword")+"");
         try (Connection connection = factory.newConnection()){
             return true;
         } catch (Exception e) {
