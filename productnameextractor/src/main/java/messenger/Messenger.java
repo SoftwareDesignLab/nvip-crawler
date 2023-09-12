@@ -62,6 +62,7 @@ public class Messenger {
         // Instantiate with default values
         this(
                 ProductNameExtractorEnvVars.getRabbitHost(),
+                ProductNameExtractorEnvVars.getRabbitPort(),
                 ProductNameExtractorEnvVars.getRabbitUsername(),
                 ProductNameExtractorEnvVars.getRabbitPassword(),
                 ProductNameExtractorEnvVars.getRabbitInputQueue(),
@@ -75,9 +76,10 @@ public class Messenger {
      * @param username username
      * @param password password
      */
-    public Messenger(String host, String username, String password, String inputQueue, String outputQueue){
+    public Messenger(String host, int port, String username, String password, String inputQueue, String outputQueue){
         factory = new ConnectionFactory();
         factory.setHost(host);
+        factory.setPort(port);
         factory.setUsername(username);
         factory.setPassword(password);
         this.inputQueue = inputQueue;
