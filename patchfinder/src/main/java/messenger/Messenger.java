@@ -58,9 +58,10 @@ public class Messenger {
      * @param username RabbitMQ username
      * @param password RabbitMQ password
      */
-    public Messenger(String host, String username, String password, String inputQueue) {
+    public Messenger(String host, int port, String username, String password, String inputQueue) {
         this.factory = new ConnectionFactory();
         factory.setHost(host);
+        factory.setPort(port);
         factory.setUsername(username);
         factory.setPassword(password);
         this.inputQueue = inputQueue;
