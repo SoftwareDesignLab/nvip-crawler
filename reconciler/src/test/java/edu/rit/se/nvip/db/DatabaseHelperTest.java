@@ -351,10 +351,9 @@ public class DatabaseHelperTest {
         int res = dbh.insertVdoBatch(vulns);
 
         verify(conn).setAutoCommit(false);
-        verify(pstmt).executeUpdate();
+        verify(pstmt, times(2)).executeUpdate();
         verify(pstmt, times(2)).addBatch();
-        verify(pstmt).setString(1, vuln1.getVdoCharacteristics().get(0).getCveId());
-        verify(pstmt).setString(1, vuln2.getVdoCharacteristics().get(0).getCveId());
+        verify(pstmt, times(2)).setString(1, vuln1.getVdoCharacteristics().get(0).getCveId());
         verify(pstmt, times(2)).setString(2, vuln1.getVdoCharacteristics().get(0).getVdoLabel().vdoLabelName);
         verify(pstmt, times(2)).setString(3, vuln1.getVdoCharacteristics().get(0).getVdoNounGroup().vdoNameForUI);
         verify(pstmt, times(2)).setDouble(4, 1.0);

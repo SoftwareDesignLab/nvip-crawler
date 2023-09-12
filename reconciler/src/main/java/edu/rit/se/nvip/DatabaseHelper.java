@@ -41,7 +41,7 @@ public class DatabaseHelper {
     private static final String DELETE_JOB = "DELETE FROM cvejobtrack WHERE cve_id = ?";
     private static final String INSERT_CVSS = "INSERT INTO cvss (cve_id, create_date, base_score) VALUES (?, NOW(), ?)";
     private static final String INSERT_VDO = "INSERT INTO vdocharacteristic (cve_id, created_date, vdo_label, vdo_noun_group, vdo_confidence, is_active) VALUES (?, NOW(), ?, ?, ?, 1)";
-    private static final String UPDATE_VDO_ACTIVE = "UPDATE vdocharacteristic SET is_active=0 WHERE user_id IS NULL";
+    private static final String UPDATE_VDO_ACTIVE = "UPDATE vdocharacteristic SET is_active=0 WHERE user_id IS NULL AND cve_id = ?";
     private static final String INSERT_CWE = "INSERT INTO weakness (cve_id, cwe_id) VALUES (?, ?)";
     private static final String DELETE_CWE = "DELETE FROM weakness WHERE cve_id = ?";
     private static final String MITRE_COUNT = "SELECT COUNT(*) AS num_rows FROM mitredata;";
@@ -506,11 +506,12 @@ public class DatabaseHelper {
         try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(INSERT_VDO);
              PreparedStatement activeStmt = conn.prepareStatement(UPDATE_VDO_ACTIVE)) {
             conn.setAutoCommit(false);
-            activeStmt.executeUpdate(); // set is_active to 0 for all the old system-generated vdo rows, leave user rows alone and let the API review endpoint handle those
             for (CompositeVulnerability vuln : vulns) {
                 if (!vuln.isRecharacterized() || vuln.getVdoCharacteristics() == null) {
                     continue;
                 }
+                activeStmt.setString(1, vuln.getCveId());
+                activeStmt.executeUpdate(); // set is_active to 0 for all the old system-generated vdo rows, leave user rows alone and let the API review endpoint handle those
                 for (VdoCharacteristic vdo : vuln.getVdoCharacteristics()) {
                     populateVDOInsert(pstmt, vdo);
                     pstmt.addBatch();
