@@ -30,7 +30,7 @@ public class Messenger {
 
     public Messenger(){
         // Instantiate with default values
-        this(ReconcilerEnvVars.getRabbitHost(), ReconcilerEnvVars.getRabbitUsername(), ReconcilerEnvVars.getRabbitPassword(),
+        this(ReconcilerEnvVars.getRabbitHost(), ReconcilerEnvVars.getRabbitPort(), ReconcilerEnvVars.getRabbitUsername(), ReconcilerEnvVars.getRabbitPassword(),
                 ReconcilerEnvVars.getRabbitQueueIn(), ReconcilerEnvVars.getRabbitQueueOut());
     }
 
@@ -40,9 +40,10 @@ public class Messenger {
      * @param username username
      * @param password password
      */
-    public Messenger(String host, String username, String password, String inputQueue, String outputQueue){
+    public Messenger(String host, int port, String username, String password, String inputQueue, String outputQueue){
         factory = new ConnectionFactory();
         factory.setHost(host);
+        factory.setPort(port);
         factory.setUsername(username);
         factory.setPassword(password);
         this.inputQueue = inputQueue;
