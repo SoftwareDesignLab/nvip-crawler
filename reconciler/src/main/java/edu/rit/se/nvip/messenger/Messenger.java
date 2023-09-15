@@ -13,6 +13,8 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -46,6 +48,17 @@ public class Messenger {
         factory.setPort(port);
         factory.setUsername(username);
         factory.setPassword(password);
+
+        try {
+            factory.useSslProtocol();
+        } catch (NoSuchAlgorithmException e) {
+            logger.error(e.getMessage());
+            throw new RuntimeException(e);
+        } catch (KeyManagementException e) {
+            logger.error(e.getMessage());
+            throw new RuntimeException(e);
+        }
+
         this.inputQueue = inputQueue;
         this.outputQueue = outputQueue;
     }
@@ -87,6 +100,9 @@ public class Messenger {
         } catch (TimeoutException e) {
             logger.error("Error occurred while sending the Reconciler message to RabbitMQ: {}", e.getMessage());
             return null;
+        } catch (IOException e) {
+            logger.error(e.getMessage());
+            throw new RuntimeException(e);
         }
     }
 
