@@ -26,8 +26,8 @@ public class CvssScoreTest {
     @Test
     public void testCvssScoreToString() {
         CvssScore obj = new CvssScore("cve_id", 0, 1, "impact_score", 2);
-        String ref = "CvssScore [cveId=" + "cve_id" + ", baseSeverity=" + 0 + ", severityConfidence=" + 1.0 
-            + ", impactScore=" + "impact_score" + ", impactConfidence=" + 2.0 + "]";
+        String ref = "CvssScore(cveId=" + "cve_id" + ", severityId=" + 0 + ", severityConfidence=" + 1.0
+            + ", impactScore=" + "impact_score" + ", impactConfidence=" + 2.0 + ")";
 
         assertEquals(obj.toString(), ref);
     }

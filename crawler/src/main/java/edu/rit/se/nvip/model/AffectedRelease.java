@@ -23,11 +23,14 @@
  */
 package edu.rit.se.nvip.model;
 
+import lombok.Data;
+
 /**
  * 
  * @author axoeec
  *
  */
+@Data
 public class AffectedRelease {
 
 	private final int id;
@@ -59,53 +62,4 @@ public class AffectedRelease {
 		this.releaseDate = a.releaseDate;
 		this.version = a.version;
 	}
-
-	public int getId() {
-		return id;
-	}
-
-	public String getCveId() {
-		return cveId;
-	}
-
-	public String getCpe() {
-		return cpe;
-	}
-
-	public String getReleaseDate() {
-		return releaseDate;
-	}
-
-	public String getVersion() {
-		return version;
-	}
-
-	public void setVersion(String version) {
-		this.version = version;
-	}
-
-	public void setCveId(String cveId) {
-		this.cveId = cveId;
-	}
-
-	public void setReleaseDate(String releaseDate) {
-		this.releaseDate = releaseDate;
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (!(obj instanceof AffectedRelease))
-			return false;
-		AffectedRelease other = (AffectedRelease) obj;
-		if(this.cveId == null || other.cveId == null){
-			return other.cpe.equals(this.cpe);
-		}
-		return other.cveId.equals(this.cveId) && other.cpe.equals(this.cpe);
-	}
-
-	@Override
-	public String toString() {
-		return "AffectedRelease [cveId=" + cveId + ", cpe=" + cpe + ", releaseDate=" + releaseDate + ", version=" + version + "]";
-	}
-
 }
