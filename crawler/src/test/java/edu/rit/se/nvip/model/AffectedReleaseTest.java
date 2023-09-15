@@ -30,7 +30,7 @@ public class AffectedReleaseTest {
     @Test
     public void testAffectedReleaseToString() {
         AffectedRelease obj = new AffectedRelease(0, "cve_id", "cpe", "release_date", "version");
-        String ref = "AffectedRelease [cveId=" + "cve_id" + ", cpe=" + "cpe" + ", releaseDate=" + "release_date" + ", version=" + "version" + "]";
+        String ref = "AffectedRelease(id=0, cveId=" + "cve_id" + ", cpe=" + "cpe" + ", releaseDate=" + "release_date" + ", version=" + "version" + ")";
         assertEquals(obj.toString(), ref);
     }
 

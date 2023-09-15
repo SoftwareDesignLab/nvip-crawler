@@ -24,7 +24,7 @@ public class VdoCharacteristicTest {
     @Test
     public void testVdoToString() {
         VdoCharacteristic obj = new VdoCharacteristic("cve_id", 0, 1, 2);
-        String ref = "VdoCharacteristic [cveId=" + "cve_id" + ", vdoLabel=" + 0 + ", vdoConfidence=" + 1.0 + "]";
+        String ref = "VdoCharacteristic(cveId=" + "cve_id" + ", vdoLabelId=" + 0 + ", vdoConfidence=" + 1.0 + ", vdoNounGroupId=2)";
         assertEquals(obj.toString(), ref);
     }
 }

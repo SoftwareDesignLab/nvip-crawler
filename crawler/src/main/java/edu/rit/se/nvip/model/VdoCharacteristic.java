@@ -23,11 +23,14 @@
  */
 package edu.rit.se.nvip.model;
 
+import lombok.Data;
+
 /**
  * 
  * @author axoeec
  *
  */
+@Data
 public class VdoCharacteristic {
 	private String cveId;
 	private final int vdoLabelId;
@@ -41,30 +44,4 @@ public class VdoCharacteristic {
 		this.vdoConfidence = vdoConfidence;
 		this.vdoNounGroupId = vdoNounGroupId;
 	}
-
-	public String getCveId() {
-		return cveId;
-	}
-
-	public void setCveId(String cveId) {
-		this.cveId = cveId;
-	}
-
-	public double getVdoConfidence() {
-		return vdoConfidence;
-	}
-
-	public int getVdoLabelId() {
-		return vdoLabelId;
-	}
-
-	public int getVdoNounGroupId() {
-		return vdoNounGroupId;
-	}
-
-	@Override
-	public String toString() {
-		return "VdoCharacteristic [cveId=" + cveId + ", vdoLabel=" + vdoLabelId + ", vdoConfidence=" + vdoConfidence + "]";
-	}
-
 }

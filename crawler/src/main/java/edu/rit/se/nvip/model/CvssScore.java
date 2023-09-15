@@ -23,11 +23,14 @@
  */
 package edu.rit.se.nvip.model;
 
+import lombok.Data;
+
 /**
  * 
  * @author axoeec
  *
  */
+@Data
 public class CvssScore {
 	private String cveId;
 	private final int severityId;
@@ -44,34 +47,4 @@ public class CvssScore {
 		this.impactScore = impactScore;
 		this.impactConfidence = impactConfidence;
 	}
-
-	public String getCveId() {
-		return cveId;
-	}
-
-	public void setCveId(String cveId) {
-		this.cveId = cveId;
-	}
-
-	public int getSeverityId() {
-		return severityId;
-	}
-
-	public double getSeverityConfidence() {
-		return severityConfidence;
-	}
-
-	public String getImpactScore() {
-		return impactScore;
-	}
-
-	public double getImpactConfidence() {
-		return impactConfidence;
-	}
-
-	@Override
-	public String toString() {
-		return "CvssScore [cveId=" + cveId + ", baseSeverity=" + severityId + ", severityConfidence=" + severityConfidence + ", impactScore=" + impactScore + ", impactConfidence=" + impactConfidence + "]";
-	}
-
 }

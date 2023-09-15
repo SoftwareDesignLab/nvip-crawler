@@ -23,11 +23,14 @@
  */
 package edu.rit.se.nvip.model;
 
+import lombok.Data;
+
 /**
  * 
  * @author axoeec
  *
  */
+@Data
 public class VulnSource {
 	String cveId;
 	String url;
@@ -36,42 +39,4 @@ public class VulnSource {
 		this.cveId = cveId;
 		this.url = url;
 	}
-
-	public String getCveId() {
-		return cveId;
-	}
-
-	public void setCveId(String cveId) {
-		this.cveId = cveId;
-	}
-
-	public String getUrl() {
-		return url;
-	}
-
-	public void setUrl(String url) {
-		this.url = url;
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		// null?
-		if (obj == null)
-			return false;
-
-		// different instance?
-		if (!(obj instanceof VulnSource))
-			return false;
-
-		// same instance, check URLs?
-		return getUrl().equalsIgnoreCase(((VulnSource) obj).getUrl());
-	}
-
-	@Override
-	public int hashCode() {
-		if (getUrl() == null)
-			return 0;
-		return getUrl().hashCode();
-	}
-
 }

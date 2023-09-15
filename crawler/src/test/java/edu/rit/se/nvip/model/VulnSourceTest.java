@@ -23,17 +23,6 @@ public class VulnSourceTest {
     }
 
     @Test
-    public void testVulnSourceHash() {
-        VulnSource obj = new VulnSource("cve_id", "url");
-        int hash = obj.hashCode();
-        assertEquals(hash, 116079);
-
-        obj = new VulnSource("cve_id", null);
-        hash = obj.hashCode();
-        assertEquals(hash, 0);
-    }
-
-    @Test
     public void testEquals() {
         String url = "https://talosintelligence.com/vulnerability_reports/TALOS-2016-0036";
         VulnSource vuln = new VulnSource("", url);

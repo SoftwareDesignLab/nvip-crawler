@@ -23,10 +23,13 @@
  */
 package edu.rit.se.nvip.model;
 
+import lombok.Data;
+
 /**
  * @author axoeec
  *
  */
+@Data
 public class NvipSource {
 	int sourceId;
 	String url;
@@ -39,33 +42,8 @@ public class NvipSource {
 		this.httpStatus = httpStatus;
 	}
 
-	public void setSourceId(int sourceId) {
-		this.sourceId = sourceId;
-	}
-
-	public int getSourceId() {
-		return this.sourceId;
-	}
-
-	public String getUrl() {
-		return url;
-	}
-
-	public String getDescription() {
-		return description;
-	}
-
 	@Override
 	public String toString() {
 		return httpStatus + ": " + url;
 	}
-
-	public int getHttpStatus() {
-		return httpStatus;
-	}
-
-	public void setDescription(String description) {
-		this.description = description;
-	}
-
 }
