@@ -37,6 +37,8 @@ import env.ProductNameExtractorEnvVars;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -82,6 +84,15 @@ public class Messenger {
         factory.setPort(port);
         factory.setUsername(username);
         factory.setPassword(password);
+
+        try {
+            factory.useSslProtocol();
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        } catch (KeyManagementException e) {
+            throw new RuntimeException(e);
+        }
+
         this.inputQueue = inputQueue;
         this.outputQueue = outputQueue;
     }

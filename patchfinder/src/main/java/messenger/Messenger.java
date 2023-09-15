@@ -37,6 +37,8 @@ import org.apache.logging.log4j.Logger;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
@@ -64,6 +66,15 @@ public class Messenger {
         factory.setPort(port);
         factory.setUsername(username);
         factory.setPassword(password);
+
+        try {
+            factory.useSslProtocol();
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        } catch (KeyManagementException e) {
+            throw new RuntimeException(e);
+        }
+
         this.inputQueue = inputQueue;
     }
 

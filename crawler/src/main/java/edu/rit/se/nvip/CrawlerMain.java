@@ -24,8 +24,11 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.lang.reflect.Modifier;
+
 
 public class CrawlerMain {
 
@@ -564,6 +567,15 @@ public class CrawlerMain {
             factory.setPort((int) dataVars.get("mqPort"));
             factory.setUsername(dataVars.get("mqUsername")+"");
             factory.setPassword(dataVars.get("mqPassword")+"");
+
+            try {
+                factory.useSslProtocol();
+            } catch (NoSuchAlgorithmException e) {
+                throw new RuntimeException(e);
+            } catch (KeyManagementException e) {
+                throw new RuntimeException(e);
+            }
+
             Connection connection = factory.newConnection();
             Channel channel = connection.createChannel();
 
@@ -590,6 +602,15 @@ public class CrawlerMain {
         factory.setPort((int) dataVars.get("mqPort"));
         factory.setUsername(dataVars.get("mqUsername")+"");
         factory.setPassword(dataVars.get("mqPassword")+"");
+
+        try {
+            factory.useSslProtocol();
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        } catch (KeyManagementException e) {
+            throw new RuntimeException(e);
+        }
+
         try (Connection connection = factory.newConnection()){
             return true;
         } catch (Exception e) {
