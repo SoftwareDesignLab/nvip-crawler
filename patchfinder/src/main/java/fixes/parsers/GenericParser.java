@@ -25,6 +25,7 @@ package fixes.parsers;
  */
 
 import fixes.Fix;
+import org.jsoup.select.Elements;
 
 import java.util.List;
 
@@ -38,10 +39,31 @@ import java.util.List;
  * information as a result of the lack of deterministic methods of collection.
  *
  * @author Paul Vickers
+ * @author Dylan Mulligan
  */
 public class GenericParser extends FixParser {
+    private enum FIX_WORDS {
+        FIX,
+        MITIGATE,
+        MITIGATION,
+        RESOLVE,
+        RESOLUTION;
 
-    protected GenericParser(String cveId, String url){
+        /**
+         * Determines if given word is a valid member of this enum.
+         *
+         * @param word word to test
+         * @return whether the word is a valid member of this enum
+         */
+        public static boolean hasWord(String word) {
+            try {
+                FIX_WORDS.valueOf(word.toUpperCase());
+                return true;
+            } catch (Exception ignored) { return false; }
+        }
+    }
+
+    protected GenericParser(String cveId, String url) {
         super(cveId, url);
     }
 
@@ -49,6 +71,14 @@ public class GenericParser extends FixParser {
     // said information with a high confidence of accuracy
     @Override
     protected List<Fix> parseWebPage() {
+        final Elements headerObjects = this.DOM.select("h1, h2, h3");
+        final List<String> headerTexts = headerObjects.eachText();
+        for (String headerText: headerTexts) {
+            if(FIX_WORDS.hasWord(headerText)) {
+                // Select this section's content
+                logger.info("Fix found!");
+            }
+        }
         return this.fixes;
     }
 }
