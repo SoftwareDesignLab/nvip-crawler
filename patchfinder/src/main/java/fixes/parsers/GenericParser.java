@@ -26,7 +26,6 @@ package fixes.parsers;
 
 import fixes.Fix;
 
-import java.util.ArrayList;
 import java.util.List;
 
 
@@ -46,7 +45,8 @@ public class GenericParser extends FixParser {
         super(cveId, url);
     }
 
-    //TODO: implement some day
+    //TODO: Implement logic to determine the location of the desired content (fix information) and collect/store
+    // said information with a high confidence of accuracy
     @Override
     protected List<Fix> parseWebPage() {
         return this.fixes;
