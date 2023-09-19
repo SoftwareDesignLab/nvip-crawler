@@ -42,7 +42,7 @@ import java.util.List;
  */
 public class GenericParser extends FixParser {
 
-    public GenericParser(String cveId, String url){
+    protected GenericParser(String cveId, String url){
         super(cveId, url);
     }
 

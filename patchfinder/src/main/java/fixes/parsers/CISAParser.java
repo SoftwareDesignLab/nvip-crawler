@@ -41,7 +41,7 @@ import java.util.List;
  */
 public class CISAParser extends FixParser {
 
-    public CISAParser(String cveId, String url){
+    protected CISAParser(String cveId, String url){
         super(cveId, url);
     }
 
