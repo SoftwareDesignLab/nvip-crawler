@@ -40,6 +40,7 @@ import java.util.List;
  * HTML parser for NVD web pages
  *
  * @author Paul Vickers
+ * @author Dylan Mulligan
  */
 public class NVDParser extends FixParser {
     // Enumeration of desired tags related to collected resources from NVD pages (direct sources)

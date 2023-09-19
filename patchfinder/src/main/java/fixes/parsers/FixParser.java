@@ -40,9 +40,10 @@ import java.util.List;
  * Abstract class for FixFinder HTMl Parsers
  *
  * @author Paul Vickers
+ * @author Dylan Mulligan
  */
 public abstract class FixParser {
-    private final static Logger logger = LogManager.getLogger();
+    protected final static Logger logger = LogManager.getLogger();
     protected final String cveId;
     protected final String url;
 
@@ -71,6 +72,8 @@ public abstract class FixParser {
         return this.fixes;
     }
 
+    //TODO: Remove this throws unless we really need it, as URL interaction has been
+    // moved to parse() and the IOExceptions are handled there
     protected abstract List<Fix> parseWebPage() throws IOException;
 
     /**
