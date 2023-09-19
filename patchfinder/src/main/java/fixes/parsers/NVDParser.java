@@ -67,7 +67,7 @@ public class NVDParser extends FixParser {
         }
     }
 
-    public NVDParser(String cveId, String url){
+    protected NVDParser(String cveId, String url){
         super(cveId, url);
     }
 
