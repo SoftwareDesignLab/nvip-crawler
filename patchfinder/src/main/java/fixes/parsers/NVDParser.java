@@ -105,7 +105,7 @@ public class NVDParser extends FixParser {
         // For each URL, find the correct parser for it and add the fixes found for that URL
         for(String fixSource : fixSources){
             FixParser parser = FixParser.getParser(cveId, fixSource);
-            fixes.addAll(parser.parseWebPage());
+            fixes.addAll(parser.parse());
         }
 
         return fixes;

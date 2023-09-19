@@ -54,7 +54,7 @@ public class RedhatParser extends FixParser {
 
     // TODO: Will return two fixes, one for solutions and one for security, duplicates are a possibility
     @Override
-    public List<Fix> parseWebPage() throws IOException {
+    protected List<Fix> parseWebPage() throws IOException {
         List<Fix> fixes = new ArrayList<>();
 
         if (url.contains("/solutions/")){
@@ -70,7 +70,7 @@ public class RedhatParser extends FixParser {
 //            fixes.add(getResolutionFix(solutionsLink));
 
         }
-        
+
         return fixes;
     }
 
