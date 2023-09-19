@@ -46,7 +46,7 @@ public class CISAParser extends FixParser {
     }
 
     @Override
-    public List<Fix> parseWebPage() throws IOException {
+    protected List<Fix> parseWebPage() throws IOException {
         List<Fix> fixes = new ArrayList<>();
 
         Document doc = Jsoup.connect(url).get();

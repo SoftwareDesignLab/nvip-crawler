@@ -48,7 +48,7 @@ public class GenericParser extends FixParser {
 
     //TODO: implement some day
     @Override
-    public List<Fix> parseWebPage() {
+    protected List<Fix> parseWebPage() {
         return new ArrayList<>();
     }
 }

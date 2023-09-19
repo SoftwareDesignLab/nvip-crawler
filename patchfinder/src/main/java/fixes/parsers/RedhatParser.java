@@ -13,7 +13,7 @@ public class RedhatParser extends FixParser {
     }
 
     @Override
-    public List<Fix> parseWebPage() throws IOException {
+    protected List<Fix> parseWebPage() throws IOException {
         return new ArrayList<>();
     }
 }
