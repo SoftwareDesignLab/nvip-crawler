@@ -47,13 +47,9 @@ public class CISAParser extends FixParser {
 
     @Override
     protected List<Fix> parseWebPage() throws IOException {
-        List<Fix> fixes = new ArrayList<>();
+        Elements headers = this.DOM.select("div[id=1-full__main]").first().select("h");
 
-        Document doc = Jsoup.connect(url).get();
-
-        Elements headers = doc.select("div[id=1-full__main]").first().select("h");
-
-        return fixes;
+        return this.fixes;
     }
 
 
