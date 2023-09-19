@@ -25,10 +25,15 @@ package fixes.parsers;
  */
 
 import fixes.Fix;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -37,16 +42,36 @@ import java.util.List;
  * @author Paul Vickers
  */
 public abstract class FixParser {
+    private final static Logger logger = LogManager.getLogger();
     protected final String cveId;
     protected final String url;
+
+    protected List<Fix> fixes;
+    protected Document DOM;
 
     protected FixParser(String cveId, String url){
         this.cveId = cveId;
         this.url = url;
     }
 
-    // Returns a list of fixes found from web page.
-    public abstract List<Fix> parseWebPage() throws IOException;
+    public List<Fix> parse() {
+        // Init list for storing fixes
+        this.fixes = new ArrayList<>();
+
+        // Attempt to parse page and store returned Document object
+        try {
+            this.DOM = Jsoup.parse(new URL(url), 10000);
+            this.fixes.addAll(this.parseWebPage());
+        }
+        catch (IOException e) {
+            logger.warn("Failed to parse url '{}': {}", url, e.toString());
+        }
+
+        // Call abstract method implementation based on instance
+        return this.fixes;
+    }
+
+    protected abstract List<Fix> parseWebPage() throws IOException;
 
     /**
      * Delegation method to determine which parser should be used to find fixes from the given url.
@@ -55,7 +80,6 @@ public abstract class FixParser {
      * @param url URL to page which will be parsed
      * @return Correct parser to be used
      *
-     * TODO: make this return more than just nvd/cisa etc, will come as we make more parsers
      */
     public static FixParser getParser(String cveId, String url) throws MalformedURLException {
         // Objectify url for domain extraction

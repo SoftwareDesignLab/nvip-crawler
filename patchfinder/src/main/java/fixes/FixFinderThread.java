@@ -87,7 +87,7 @@ public class FixFinderThread implements Runnable {
 
 				try{
 					FixParser parser = FixParser.getParser(cveId, url);
-					return parser.parseWebPage();
+					return parser.parse();
 				} catch(IOException e){
 					logger.error("Error occurred while parsing url {} for CVE {}: {}", url, cveId, e.toString());
 					e.printStackTrace();
