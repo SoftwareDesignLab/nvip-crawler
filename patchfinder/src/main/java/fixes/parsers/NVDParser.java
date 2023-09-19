@@ -45,7 +45,10 @@ public class NVDParser extends FixParser {
     // Enumeration of desired tags related to collected resources from NVD pages (direct sources)
     private enum RESOURCE_TAGS {
         PATCH("Patch"), // Hyperlink relates directly to patch information
-        VENDOR_ADVISORY("Vendor Advisory"); // Hyperlink relates to an advisory host
+        VENDOR_ADVISORY("Vendor Advisory"), // Hyperlink relates to an advisory host
+        THIRD_PARTY_ADVISORY("Third Party Advisory"), // Hyperlink relates to a third-party advisory host
+        EXPLOIT("Exploit"), // Hyperlink relates to exploit information
+        ISSUE_TRACKING("Issue Tracking"); // Hyperlink relates to an issue tracking host
 
         private final String name;
         RESOURCE_TAGS(String name) {
@@ -58,10 +61,8 @@ public class NVDParser extends FixParser {
          * @return correlated tag object, or null if not found
          */
         public static RESOURCE_TAGS fromString(String name) {
-            for (RESOURCE_TAGS tag : RESOURCE_TAGS.values()) {
-                if (tag.name.equalsIgnoreCase(name)) {
-                    return tag;
-                }
+            for(RESOURCE_TAGS tag : RESOURCE_TAGS.values()) {
+                if(tag.name.equalsIgnoreCase(name)) return tag;
             }
             return null;
         }
