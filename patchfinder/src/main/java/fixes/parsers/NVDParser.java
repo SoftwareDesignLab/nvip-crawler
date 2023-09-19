@@ -81,14 +81,8 @@ public class NVDParser extends FixParser {
      */
     @Override
     public List<Fix> parseWebPage() throws IOException{
-        List<Fix> fixes = new ArrayList<>();
-
-        // Connect to NVD page using Jsoup
-        // TODO: Log parsing across all parsers in a nice way
-        Document doc = Jsoup.parse(new URL(url), 10000);
-
         // Isolate the HTML for the references table
-        Elements rows = doc.select("div[id=vulnHyperlinksPanel]").first().select("table").first().select("tbody").select("tr");
+        Elements rows = this.DOM.select("div[id=vulnHyperlinksPanel]").first().select("table").first().select("tbody").select("tr");
 
         // For each URL stored in the table, if it has a "Patch" badge associated with it, add it to fixSources
         List<String> fixSources = new ArrayList<>();
@@ -105,9 +99,9 @@ public class NVDParser extends FixParser {
         // For each URL, find the correct parser for it and add the fixes found for that URL
         for(String fixSource : fixSources){
             FixParser parser = FixParser.getParser(cveId, fixSource);
-            fixes.addAll(parser.parse());
+            this.fixes.addAll(parser.parse());
         }
 
-        return fixes;
+        return this.fixes;
     }
 }
