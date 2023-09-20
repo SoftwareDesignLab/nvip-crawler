@@ -38,6 +38,7 @@ import java.util.List;
  * Implementation of FixUrlFinder for CVEs collected from NVD
  *
  * @author Paul Vickers
+ * @author Dylan Mulligan
  */
 public class CISAParser extends FixParser {
 
