@@ -61,14 +61,21 @@ public abstract class FixParser {
 
         // Attempt to parse page and store returned Document object
         try {
+            logger.info("{} is parsing url '{}'...", getClass().getSimpleName(), url);
             this.DOM = Jsoup.parse(new URL(url), 10000);
-            this.fixes.addAll(this.parseWebPage());
+            // Call abstract method implementation based on instance
+            this.parseWebPage();
         }
         catch (IOException e) {
             logger.warn("Failed to parse url '{}': {}", url, e.toString());
         }
 
-        // Call abstract method implementation based on instance
+        // Log fix finding results
+        final int numFixes = this.fixes.size();
+        if(numFixes > 0)
+            logger.info("{} found {} fixes from url '{}'", getClass().getSimpleName(), numFixes, url);
+
+        // Return collected fixes
         return this.fixes;
     }
 
