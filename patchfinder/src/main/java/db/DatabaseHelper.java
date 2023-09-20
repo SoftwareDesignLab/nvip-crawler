@@ -59,11 +59,8 @@ public class DatabaseHelper {
 	private final String getCveSourcesSql = "SELECT cve_id, source_url FROM nvip.rawdescription WHERE source_url != \"\";";
 	private final String getSpecificCveSourcesSql = "SELECT cve_id, source_url FROM nvip.rawdescription WHERE source_url != \"\" AND cve_id = ?;";
 	private final String getCveSourcesNVDSql = "SELECT cve_id, source_url FROM nvip.nvdsourceurl WHERE cve_id = ?;";
-	// TODO: fixsourceurl table is deprecated, url is stored directly in fixes table now, rework SQL statements accordingly
-	private final String insertFixSourceURLSql = "INSERT INTO fixsourceurl (cve_id, source_url) VALUES (?, ?);";
-	private final String getExistingFixSourceUrlsSql = "SELECT cve_id, source_url FROM fixsourceurl;";
-	private final String getFixSourceUrlSql = "SELECT source_url FROM fixsourceurl WHERE cve_id = ?;";
-	private final String insertFixSql = "INSERT INTO fixes (fix_id, cve_id, fix_description, source_url_id) VALUES (?, ?, ?, ?);";
+	private final String insertFixSql = "INSERT INTO fixes (cve_id, fix_description, source_url) VALUES (?, ?, ?);";
+	private final String getCvesSql = "SELECT cve_id FROM vulnerability LIMIT ?;";
 	public static final Pattern CPE_PATTERN = Pattern.compile("cpe:2\\.3:[aho\\*\\-]:([^:]*):([^:]*):([^:]*):.*");
 
 	/**
@@ -401,216 +398,18 @@ public class DatabaseHelper {
 	// Fixes
 	//
 
-	/**
-	 * Gets a map of CVEs -> existing fix source urls from the database
-	 * @return a map of CVEs -> existing fix source urls
-	 */
-	public Map<String, List<String>> getExistingFixSourceUrls() {
-		final Map<String, List<String>> urlMap = new HashMap<>();
-
-		try (Connection connection = getConnection();
-			 PreparedStatement pstmt = connection.prepareStatement(getExistingFixSourceUrlsSql)) {
+	public List<String> getCves(int cveLimit) {
+		ArrayList<String> cves = new ArrayList<>();
+		try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(getCvesSql)) {
+			pstmt.setInt(1, cveLimit);
 			ResultSet rs = pstmt.executeQuery();
-			while(rs.next()) {
-				final String cveId = rs.getString(1);
-				final String url = rs.getString(2);
-				if(urlMap.containsKey(cveId)) urlMap.get(cveId).add(url);
-				else {
-					final List<String> urls = new ArrayList<>();
-					urls.add(url);
-					urlMap.put(cveId, urls);
-				}
+			while (rs.next()) {
+				cves.add(rs.getString("cve_id"));
 			}
 		} catch (Exception e) {
-			logger.error(e.toString());
+			logger.error("ERROR: Failed to get CVEs: {}", e.toString());
 		}
-
-		return urlMap;
-	}
-
-	/**
-	 * Gets a map of CVEs -> existing fix source urls from the database
-	 * @return a map of CVEs -> existing fix source urls
-	 */
-	public Map<String, List<String>> getFixSourceUrl(String cveId) {
-		final Map<String, List<String>> urlMap = new HashMap<>();
-
-		try (Connection connection = getConnection();
-			 PreparedStatement pstmt = connection.prepareStatement(getFixSourceUrlSql)) {
-			pstmt.setString(1, cveId);
-			ResultSet rs = pstmt.executeQuery();
-			while(rs.next()) {
-				final String url = rs.getString(1);
-				if(urlMap.containsKey(cveId)) urlMap.get(cveId).add(url);
-				else {
-					final List<String> urls = new ArrayList<>();
-					urls.add(url);
-					urlMap.put(cveId, urls);
-				}
-			}
-		} catch (Exception e) {
-			logger.error(e.toString());
-		}
-
-		return urlMap;
-	}
-
-	// TODO: Do we need fix equivalents of these methods?
-//	/**
-//	 * Deletes a patchcommit from the database given a commit SHA
-//	 * @param commitSha the commit SHA to delete
-//	 */
-//	public void deletePatchCommit(String commitSha) {
-//		try (Connection connection = getConnection();
-//			 PreparedStatement pstmt = connection.prepareStatement(deletePatchCommitSql)) {
-//			pstmt.setString(1, commitSha);
-//			pstmt.executeUpdate();
-//		} catch (Exception e) {
-//			logger.error(e.toString());
-//		}
-//	}
-//
-//	/**
-//	 * Gets a map of CVEs -> existing source urls from the database
-//	 * @return a map of CVEs -> existing source urls
-//	 */
-//	public Map<String, Integer> getExistingSourceUrls() {
-//		final Map<String, Integer> urls = new HashMap<>();
-//
-//		try (Connection connection = getConnection();
-//			 PreparedStatement pstmt = connection.prepareStatement(getExistingSourceUrlsSql)) {
-//			ResultSet rs = pstmt.executeQuery();
-//			while(rs.next()) { urls.put(rs.getString(1), rs.getInt(2)); }
-//		} catch (Exception e) {
-//			logger.error(e.toString());
-//		}
-//
-//		return urls;
-//	}
-//
-//	/**
-//	 * Gets a set of existing patch commit SHAs from the database
-//	 * @return a set of existing patch commit SHAs
-//	 */
-//	public Set<String> getExistingPatchCommitShas() {
-//		final Set<String> urls = new HashSet<>();
-//
-//		try (Connection connection = getConnection();
-//			 PreparedStatement pstmt = connection.prepareStatement(getExistingPatchCommitsSql)) {
-//			ResultSet rs = pstmt.executeQuery();
-//			while(rs.next()) { urls.add(rs.getString(1)); }
-//		} catch (Exception e) {
-//			logger.error(e.toString());
-//		}
-//
-//		return urls;
-//	}
-//
-//	/**
-//	 * Collects a map of CPEs with their correlated CVE and Vuln ID used for
-//	 * collecting patches given a list of CVE ids.
-//	 *
-//	 * @param cveIds CVEs to get affected products for
-//	 * @return a map of affected products
-//	 */
-//	public Map<String, CpeGroup> getAffectedProducts(List<String> cveIds) {
-//		Map<String, CpeGroup> affectedProducts = new HashMap<>();
-//		// Prepare statement
-//		try (Connection conn = getConnection();
-//			 PreparedStatement getAll = conn.prepareStatement(selectAffectedProductsSql);
-//			 PreparedStatement getById = conn.prepareStatement(selectAffectedProductsByIdsSql)
-//		) {
-//			// Execute correct statement and get result set
-//			ResultSet res = null;
-//			if(cveIds == null) {
-//				res = getAll.executeQuery();
-//				parseAffectedProducts(affectedProducts, res);
-//			}
-//			else {
-//				for (String cveId : cveIds) {
-//					getById.setString(1, cveId);
-//					res = getById.executeQuery();
-//					parseAffectedProducts(affectedProducts, res);
-//				}
-//			}
-//
-//		} catch (Exception e) {
-//			logger.error("ERROR: Failed to generate affected products map: {}", e.toString());
-//		}
-//
-//		return affectedProducts;
-//	}
-//
-//	/**
-//	 * Parses affected product data from the ResultSet into CpeGroup objects in the affectedProducts map.
-//	 *
-//	 * @param affectedProducts output map of CVE ids -> products
-//	 * @param res result set from database query
-//	 * @throws SQLException if a SQL error occurs
-//	 */
-//	private void parseAffectedProducts(Map<String, CpeGroup> affectedProducts, ResultSet res) throws SQLException {
-//		// Parse results
-//		while (res.next()) {
-//			// Extract cveId and cpe from result
-//			final String cveId = res.getString("cve_id");
-//			final String cpe = res.getString("cpe");
-//
-//			// Extract product name and version from cpe
-//			final Matcher m = CPE_PATTERN.matcher(cpe);
-//			if(!m.find()) {
-//				logger.warn("Invalid cpe '{}' could not be parsed, skipping product", cpe);
-//				continue;
-//			}
-//			final String vendor = m.group(1);
-//			final String name = m.group(2);
-//			final String version = m.group(3);
-//			final CpeEntry entry = new CpeEntry(name, version, cpe);
-//
-//			// If we already have this cveId stored, add specific version
-//			if (affectedProducts.containsKey(cveId)) {
-//				affectedProducts.get(cveId).addVersion(entry);
-//			} else {
-//				final CpeGroup group = new CpeGroup(vendor, name);
-//				group.addVersion(entry);
-//				affectedProducts.put(cveId, group);
-//			}
-//		}
-//	}
-
-	/**
-	 * Inserts given source URL into the fix source table
-	 *
-	 * @param existingSourceUrls map of CVE ids -> the id of the source url
-	 * @param cve_id CVE being processed
-	 * @param sourceURL source url to insert
-	 * @return generated primary key (or existing key)
-	 */
-	public int insertFixSourceURL(Map<String, Integer> existingSourceUrls, String cve_id, String sourceURL) {
-		// Check if source already exists
-		if(existingSourceUrls.containsKey(sourceURL)) {
-			// Get and return id from map
-			return existingSourceUrls.get(sourceURL);
-		} else { // Otherwise, insert and return generated id
-			try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(insertFixSourceURLSql, Statement.RETURN_GENERATED_KEYS)) {
-				pstmt.setString(1, cve_id);
-				pstmt.setString(2, sourceURL);
-				pstmt.executeUpdate();
-
-				final ResultSet rs = pstmt.getGeneratedKeys();
-				int generatedKey = 0;
-				if (rs.next()) generatedKey = rs.getInt(1);
-				else throw new SQLException("Could not retrieve key of newly created record, it may not have been inserted");
-
-				conn.close();
-				logger.info("Inserted FixURL: " + sourceURL);
-				existingSourceUrls.put(sourceURL, generatedKey);
-				return generatedKey;
-			} catch (Exception e) {
-				logger.error("ERROR: Failed to insert fix source with URL {} for CVE ID {}\n{}", sourceURL,
-						cve_id, e.getMessage());
-				return -1;
-			}
-		}
+		return cves;
 	}
 
 	/**
@@ -618,36 +417,35 @@ public class DatabaseHelper {
 	 * Should also check for duplicates
 	 *
 	 * @param fix Fix object to be inserted
+	 *
+	 * @return 0 for success, 1 for error, 2 for duplicate entry
 	 */
-	public void insertFix(Fix fix) throws SQLException {
+	public int insertFix(Fix fix) throws SQLException {
 		String cveId = fix.getCveId();
+		String fixDescription = fix.getFixDescription();
+		String sourceUrl = fix.getSourceUrl();
 
-		// TODO: Update this code to work with new schema
-//		try (Connection connection = getConnection();
-//			 PreparedStatement pstmt = connection.prepareStatement(insertFixSql);
-//			 PreparedStatement pstmtExistingCommit = connection.prepareStatement("SELECT fix_id FROM fixes WHERE fix_id = ? LIMIT 1");
-//			 PreparedStatement pstmtUpdateFix = connection.prepareStatement("SELECT fix_id FROM fixes WHERE fix_id = ? AND fix_description = ? LIMIT 1");
-//		) {
-//			// Check if the fix already exists
-//			pstmtExistingCommit.setString(1, cveId);
-//			ResultSet rs = pstmtExistingCommit.executeQuery();
-//			if (rs.next()) {
-//				logger.info("Fix already exists for CVE ID {}", cveId);
-//				//updateFix(fix_id, cve_id, fix_description, source_url_id);
-//				pstmtUpdateFix.setString(2, fix_description);
-//				rs = pstmtUpdateFix.executeQuery();
-//			} else {
-//				// Insert the fix
-//				pstmt.setString(2, cveId);
-//				pstmt.setString(3, fix_description);
-//				pstmt.setInt(4, source_url_id);
-//				pstmt.executeUpdate();
-//				logger.info("Inserted fix for CVE ID {}", cveId);
-//			}
-//		}
-
-
-
+		try (Connection connection = getConnection();
+			 PreparedStatement pstmt = connection.prepareStatement(insertFixSql)
+		) {
+			// Insert the fix
+			pstmt.setString(1, cveId);
+			pstmt.setString(2, fixDescription);
+			pstmt.setString(3, sourceUrl);
+			pstmt.executeUpdate();
+			logger.info("Inserted fix for CVE ID {}", cveId);
+		} catch (SQLIntegrityConstraintViolationException e) {
+			// Check if error relates to duplicate entries, if so, return 2
+			if(e.getMessage().startsWith("Duplicate")) return 2;
+			// Otherwise, report error and return 1
+			else {
+				logger.error("Failed to insert Fix: {}", e.toString());
+				e.printStackTrace();
+				return 1;
+			}
+		}
+		// If statement execution was successful, return 0
+		return 0;
 	}
 
 	/**

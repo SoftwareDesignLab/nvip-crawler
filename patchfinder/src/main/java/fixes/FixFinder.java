@@ -136,15 +136,37 @@ public class FixFinder {
 		}
 
 		// After all threads have been run, insert found fixes into the database
+		int existingInserts = 0;
+		int failedInserts = 0;
+
 		for (Fix fix : fixes) {
 			try {
-				// TODO: fix this method and update database schema (ask dylan/dylan to do this)
-				databaseHelper.insertFix(fix);
+				final int result = databaseHelper.insertFix(fix);
+
+				// Result of operation, 0 for OK, 1 for error, 2 for already exists
+				switch (result) {
+					case 2:
+						existingInserts++;
+						break;
+					case 1:
+						failedInserts++;
+						break;
+					default:
+						break;
+				}
 			} catch (Exception e) {
-				logger.error("Error occurred while inserting fix for CVE {} into the database!", fix.getCveId());
+				logger.error("Error occurred while inserting fix for CVE {} into the database: {}",
+						fix.getCveId(),
+						e.toString()
+				);
 			}
 		}
 
-
+		logger.info("Successfully inserted {} patch commits into the database ({} failed, {} already existed)",
+				fixes.size() - failedInserts - existingInserts,
+//				(System.currentTimeMillis() - insertPatchesStart) / 1000,
+				failedInserts,
+				existingInserts
+		);
 	}
 }

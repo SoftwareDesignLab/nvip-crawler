@@ -44,26 +44,32 @@ public class Fix {
      * @param sourceUrl    the source URL
      */
     public Fix(String cveId, String fixDescription, String sourceUrl) {
+        // Validate arguments
+        if(cveId == null || cveId.length() == 0)
+            throw new IllegalArgumentException("Illegal value for cveId, ensure it is not null or an empty string");
+        if(sourceUrl == null || sourceUrl.length() == 0)
+            throw new IllegalArgumentException("Illegal value for sourceUrl, ensure it is not null or an empty string");
+
+        // Set values
         this.cveId = cveId;
         this.fixDescription = fixDescription;
         this.sourceUrl = sourceUrl;
     }
 
-    /**
-     * @return cveId
-     */
-    public String getCveId() { return cveId; }
+    // Getters
 
-    /**
-     * @return fixDescription
-     */
-    public String getFixDescription() { return fixDescription; }
+    public String getCveId() { return this.cveId; }
+    public String getFixDescription() { return this.fixDescription; }
+    public String getSourceUrl() { return this.sourceUrl; }
 
     /**
      * @return the fix as a string
      */
     public String toString() {
-        return "Fix [cve_id=" + cveId + ", fix_description=" + fixDescription
-                + ", source_url=" + sourceUrl + "]";
+        return String.format("Fix [cve_id=%s, fix_description=%s, source_url=%s]",
+                cveId,
+                fixDescription,
+                sourceUrl
+        );
     }
 }
