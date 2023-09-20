@@ -55,6 +55,9 @@ public class FixFinderMain extends Thread {
             case "rabbit":
                 runRabbit();
                 break;
+            case "dev":
+                runDev();
+                break;
             default:
                 logger.info("Skipping FixFinder as input mode is not set to a valid value... Set to a valid value to enable it.");
                 break;
@@ -62,9 +65,9 @@ public class FixFinderMain extends Thread {
     }
 
     private void runDb() {
-        // Just for testing
-        List<String> cveIds = new ArrayList<>();
-        cveIds.add("CVE-2022-0847");
+        // Fetch cves from db
+        List<String> cveIds = new ArrayList<>(FixFinder.getDatabaseHelper().getCves(FixFinderEnvVars.getCveLimit()));
+        logger.info("Successfully got {} CVEs from the database", cveIds.size());
 
         try {
             FixFinder.run(cveIds);
@@ -75,6 +78,19 @@ public class FixFinderMain extends Thread {
 
     private void runRabbit() {
         // TODO: RabbitMQ integration, wait until PoC is accepted to complete this
+        throw new UnsupportedOperationException();
+    }
+
+    private void runDev() {
+        // Manually enter CVEs for development
+        List<String> cveIds = new ArrayList<>();
+        cveIds.add("CVE-2022-0847");
+
+        try {
+            FixFinder.run(cveIds);
+        } catch (Exception e) {
+            logger.error("A fatal error attempting to complete jobs: {}", e.toString());
+        }
     }
 
     public static void main(String[] args) {

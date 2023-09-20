@@ -60,6 +60,7 @@ public class DatabaseHelper {
 	private final String getSpecificCveSourcesSql = "SELECT cve_id, source_url FROM nvip.rawdescription WHERE source_url != \"\" AND cve_id = ?;";
 	private final String getCveSourcesNVDSql = "SELECT cve_id, source_url FROM nvip.nvdsourceurl WHERE cve_id = ?;";
 	private final String insertFixSql = "INSERT INTO fixes (cve_id, fix_description, source_url) VALUES (?, ?, ?);";
+	private final String getCvesSql = "SELECT cve_id FROM vulnerability LIMIT ?;";
 	public static final Pattern CPE_PATTERN = Pattern.compile("cpe:2\\.3:[aho\\*\\-]:([^:]*):([^:]*):([^:]*):.*");
 
 	/**
@@ -396,6 +397,20 @@ public class DatabaseHelper {
 	//
 	// Fixes
 	//
+
+	public List<String> getCves(int cveLimit) {
+		ArrayList<String> cves = new ArrayList<>();
+		try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(getCvesSql)) {
+			pstmt.setInt(1, cveLimit);
+			ResultSet rs = pstmt.executeQuery();
+			while (rs.next()) {
+				cves.add(rs.getString("cve_id"));
+			}
+		} catch (Exception e) {
+			logger.error("ERROR: Failed to get CVEs: {}", e.toString());
+		}
+		return cves;
+	}
 
 	/**
 	 * Method for inserting a fix into the fixes table
