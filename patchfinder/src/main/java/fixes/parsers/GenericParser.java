@@ -25,6 +25,7 @@ package fixes.parsers;
  */
 
 import fixes.Fix;
+import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.util.List;
@@ -71,12 +72,21 @@ public class GenericParser extends FixParser {
     // said information with a high confidence of accuracy
     @Override
     protected List<Fix> parseWebPage() {
-        final Elements headerObjects = this.DOM.select("h1, h2, h3");
-        final List<String> headerTexts = headerObjects.eachText();
-        for (String headerText: headerTexts) {
-            if(FIX_WORDS.hasWord(headerText)) {
-                // Select this section's content
-                logger.info("Fix found!");
+        final Elements headerObjects = this.DOM.select("h1, h2, h3, h4, h5");
+        for (Element e : headerObjects) {
+            for (String headerWord : e.text().split(" ")) {
+                if(FIX_WORDS.hasWord(headerWord)) {
+                    logger.info("Fix found!");
+                    // Determine elements relevant to section
+                    final Element nextSibling = e.nextElementSibling();
+
+                    // Select this section's content
+                    if(nextSibling != null) {
+                        // Store collected data in a new Fix object and add to list of found fixes
+                        this.fixes.add(new Fix(cveId, nextSibling.text(), url));
+                    }
+
+                }
             }
         }
         return this.fixes;

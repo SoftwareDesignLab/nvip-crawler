@@ -137,12 +137,13 @@ public class FixFinder {
 
 		// After all threads have been run, insert found fixes into the database
 		for (Fix fix : fixes) {
-			try {
-				// TODO: fix this method and update database schema (ask dylan/dylan to do this)
-				databaseHelper.insertFix(fix);
-			} catch (Exception e) {
-				logger.error("Error occurred while inserting fix for CVE {} into the database!", fix.getCveId());
-			}
+			logger.info(fix);
+//			try {
+//				// TODO: fix this method and update database schema (ask dylan/dylan to do this)
+//				databaseHelper.insertFix(fix);
+//			} catch (Exception e) {
+//				logger.error("Error occurred while inserting fix for CVE {} into the database!", fix.getCveId());
+//			}
 		}
 
 

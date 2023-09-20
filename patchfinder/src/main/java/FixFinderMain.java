@@ -64,10 +64,8 @@ public class FixFinderMain extends Thread {
     private void runDb() {
         // Just for testing
         List<String> cveIds = new ArrayList<>();
-//        cveIds.add("CVE-2022-27911");
-//        cveIds.add("CVE-2023-30367");
-//        cveIds.add("CVE-2020-12352");
-        cveIds.add("CVE-2022-40982");
+        cveIds.add("CVE-2022-27911");
+        cveIds.add("CVE-2023-30367");
 
         try {
             FixFinder.run(cveIds);
