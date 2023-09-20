@@ -881,5 +881,7 @@
         </addColumn>
     </changeSet>
 
+3    <!-- TODO: Add fixes unique index  -->
+
 
 </databaseChangeLog>
