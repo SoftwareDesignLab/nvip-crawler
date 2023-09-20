@@ -6,8 +6,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class RedHatBugzillaParser extends RedHatParser{
-    protected RedHatBugzillaParser(String cveId, String url){
+public class RedhatBugzillaParser extends RedhatParser {
+    protected RedhatBugzillaParser(String cveId, String url){
         super(cveId, url);
     }
 

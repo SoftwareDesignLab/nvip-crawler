@@ -1,5 +1,4 @@
 package fixes.parsers;
-
 /**
  * Copyright 2023 Rochester Institute of Technology (RIT). Developed with
  * government support under contract 70RSAT19CB0000020 awarded by the United
@@ -25,53 +24,25 @@ package fixes.parsers;
  */
 
 import fixes.Fix;
-import org.jsoup.Connection;
-import org.jsoup.Jsoup;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import org.jsoup.nodes.Document;
-import java.net.URL;
 
-/**
- * HTML parser for redhat web pages
- */
-public class RedHatParser extends FixParser{
-    protected RedHatParser(String cveId, String url){
+public class RedhatSolutionsParser extends RedhatParser {
+
+    protected RedhatSolutionsParser(String cveId, String url){
         super(cveId, url);
     }
 
-    protected List<Fix> parseWebPage() throws IOException{
-        throw new UnsupportedOperationException();
-    }
-
     /**
-     * Delegates and parses the specified webpage using the RedHat Sub classes
-     * @return list of all found fixes
+     * Specific implementation for the redhat solutions page
+     * @return resolution data
      */
     @Override
-    public List<Fix> parse(){
-        this.fixes = new ArrayList<>();
-
-        RedHatParser parser;
-        if (url.contains("/solutions/") || url.contains("bugzilla.")) {
-            if (url.contains("/solutions/")){
-                parser = new RedHatSolutionsParser(cveId, url);
-            } else {
-                parser = new RedHatBugzillaParser(cveId, url);
-            }
-            try {
-                parser.DOM = Jsoup.parse(new URL(url), 10000);
-                this.fixes.addAll(parser.parseWebPage());
-            } catch (IOException e) {
-                logger.warn("Failed to parse url '{}': {}", url, e.toString());
-            }
-        }
-//        } else if (url.contains("/security/")) {
-//            //TODO: Find way to get the DOM for security page
-//        }
-
-        return this.fixes;
+    protected List<Fix> parseWebPage(){
+        List<Fix> newFixes = new ArrayList<>();
+        String resolution = this.DOM.select("section[class=field_kcs_resolution_txt]").select("p").text();
+        newFixes.add(new Fix(cveId, resolution, url));
+        return newFixes;
     }
 }
