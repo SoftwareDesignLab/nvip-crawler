@@ -1,4 +1,5 @@
 package fixes.parsers;
+
 /**
  * Copyright 2023 Rochester Institute of Technology (RIT). Developed with
  * government support under contract 70RSAT19CB0000020 awarded by the United
@@ -24,22 +25,51 @@ package fixes.parsers;
  */
 
 import fixes.Fix;
-import org.jsoup.Connection;
 import org.jsoup.Jsoup;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import org.jsoup.nodes.Document;
 import java.net.URL;
 
-public class RedHatSecurityParser extends RedHatParser{
-
-    protected RedHatSecurityParser(String cveId, String url){
+/**
+ * HTML parser for redhat web pages
+ */
+public class RedhatParser extends FixParser{
+    protected RedhatParser(String cveId, String url){
         super(cveId, url);
     }
 
+    protected List<Fix> parseWebPage() throws IOException{
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * Delegates and parses the specified webpage using the RedHat Sub classes
+     * @return list of all found fixes
+     */
     @Override
-    protected List<Fix> parseWebPage() throws IOException {
-        return null;
+    public List<Fix> parse(){
+        this.fixes = new ArrayList<>();
+
+        RedhatParser parser;
+        if (url.contains("/solutions/") || url.contains("bugzilla.")) {
+            if (url.contains("/solutions/")){
+                parser = new RedhatSolutionsParser(cveId, url);
+            } else {
+                parser = new RedhatBugzillaParser(cveId, url);
+            }
+            try {
+                parser.DOM = Jsoup.parse(new URL(url), 10000);
+                this.fixes.addAll(parser.parseWebPage());
+            } catch (IOException e) {
+                logger.warn("Failed to parse url '{}': {}", url, e.toString());
+            }
+        }
+//        } else if (url.contains("/security/")) {
+//            //TODO: Find way to get the DOM for security page
+//        }
+
+        return this.fixes;
     }
 }

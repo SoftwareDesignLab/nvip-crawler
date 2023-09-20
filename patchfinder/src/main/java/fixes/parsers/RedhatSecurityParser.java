@@ -24,29 +24,18 @@ package fixes.parsers;
  */
 
 import fixes.Fix;
-import org.jsoup.Connection;
-import org.jsoup.Jsoup;
+
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
-import org.jsoup.nodes.Document;
-import java.net.URL;
 
-public class RedHatSolutionsParser extends RedHatParser{
+public class RedhatSecurityParser extends RedhatParser {
 
-    protected RedHatSolutionsParser(String cveId, String url){
+    protected RedhatSecurityParser(String cveId, String url){
         super(cveId, url);
     }
 
-    /**
-     * Specific implementation for the redhat solutions page
-     * @return resolution data
-     */
     @Override
-    protected List<Fix> parseWebPage(){
-        List<Fix> newFixes = new ArrayList<>();
-        String resolution = this.DOM.select("section[class=field_kcs_resolution_txt]").select("p").text();
-        newFixes.add(new Fix(cveId, resolution, url));
-        return newFixes;
+    protected List<Fix> parseWebPage() throws IOException {
+        return null;
     }
 }
