@@ -60,7 +60,7 @@
 				<artifactId>liquibase-maven-plugin</artifactId>
 				<version>4.23.0</version>
 				<configuration>
-					<propertyFile>nvip_data/mysql-database/newDB/liquibase.properties</propertyFile>
+					<propertyFile>/nvip_data/mysql-database/newDB/liquibase.properties</propertyFile>
 					<!-- turn off prompt for non-local db since this does run in headless environments -->
 					<promptOnNonLocalDatabase>false</promptOnNonLocalDatabase>
 				</configuration>
