@@ -51,7 +51,7 @@ public class GenericParser extends FixParser {
         RESOLUTION;
 
         /**
-         * Determines if given word is a valid member of this enum.
+         * Determines if given word is a valid member of this enum (case-insensitive).
          *
          * @param word word to test
          * @return whether the word is a valid member of this enum
@@ -72,21 +72,50 @@ public class GenericParser extends FixParser {
     // said information with a high confidence of accuracy
     @Override
     protected List<Fix> parseWebPage() {
+        // Select header objects to be potential anchors
         final Elements headerObjects = this.DOM.select("h1, h2, h3, h4, h5");
+
+        // Run header words through FIX_WORDS enum, only selecting headers containing a valid member
+
+        // Iterate over header objects
         for (Element e : headerObjects) {
+            boolean fixFound = false;
+            // Split text on spaces and check each word.
             for (String headerWord : e.text().split(" ")) {
+                // Check if word is a member of FIX_WORDS (case-insensitive)
                 if(FIX_WORDS.hasWord(headerWord)) {
-                    logger.info("Fix found!");
-                    // Determine elements relevant to section
-                    final Element nextSibling = e.nextElementSibling();
-
-                    // Select this section's content
-                    if(nextSibling != null) {
-                        // Store collected data in a new Fix object and add to list of found fixes
-                        this.fixes.add(new Fix(cveId, nextSibling.text(), url));
-                    }
-
+                    fixFound = true;
+                    break;
                 }
+            }
+
+            // If a potential fix was found, attempt to find the description of the fix from related elements
+            if(fixFound) {
+                // Create container for relevant elements
+                final Elements relatedElements = new Elements();
+
+                // Attempt to get next sibling, store if found
+                final Element nextSibling = e.nextElementSibling();
+                if(nextSibling != null) relatedElements.add(nextSibling);
+
+                // Add all found child objects
+                relatedElements.addAll(e.children());
+
+                // Iterate over selected objects and remove ones not likely to be a part of the fix description
+                // NOTE: We expect some descriptions to be stored in one element, but others are equally
+                //likely to be split among multiple elements. A good example is hyperlinks, which often
+                //divide sections of a body of text into multiple elements, which need to be combined.
+
+
+
+                // Concatenate selected element texts
+                final StringBuilder fixDescription = new StringBuilder();
+                for (Element selectedElement : relatedElements) {
+                    fixDescription.append(selectedElement.text()).append(" ");
+                }
+                // If data was found, store in a new Fix object and add to list of found fixes
+                if(fixDescription.length() > 0)
+                    this.fixes.add(new Fix(cveId, fixDescription.toString(), url));
             }
         }
         return this.fixes;
