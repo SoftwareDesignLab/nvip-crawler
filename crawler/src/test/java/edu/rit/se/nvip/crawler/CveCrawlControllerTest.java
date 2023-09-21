@@ -19,7 +19,6 @@ public class CveCrawlControllerTest {
         List<String> whiteList = new ArrayList<>();
         whiteList.add("https://www.jenkins.io/security/advisory");
 
-        CveCrawlController controller = new CveCrawlController();
         HashMap<String, Object> vars = new HashMap<>();
         vars.put("outputDir", "output/crawlers");
         vars.put("crawlerPoliteness", 3000);
@@ -27,7 +26,9 @@ public class CveCrawlControllerTest {
         vars.put("depth", 1);
         vars.put("enableReport", false);
         vars.put("crawlerNum", 1);
-        HashMap<String, ArrayList<RawVulnerability>> map = controller.crawl(urls, whiteList, vars);
+
+        CveCrawlController controller = new CveCrawlController(urls, whiteList, vars);
+        HashMap<String, ArrayList<RawVulnerability>> map = controller.crawl();
 
         assertTrue(map.size() > 0);
     }
