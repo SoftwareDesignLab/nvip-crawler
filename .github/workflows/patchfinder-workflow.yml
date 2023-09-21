@@ -57,9 +57,9 @@ jobs:
 
       - name: Initialize DB
         env:
-          LIQUIBASE_URL: ${{ env.HIKARI_URL }}
-          LIQUIBASE_USER: ${{ env.HIKARI_USER }}
-          LIQUIBASE_PASS: ${{ env.HIKARI_PASSWORD }}
+          LIQUIBASE_COMMAND_URL: ${{ env.HIKARI_URL }}
+          LIQUIBASE_COMMAND_USERNAME: ${{ env.HIKARI_USER }}
+          LIQUIBASE_COMMAND_PASSWORD: ${{ env.HIKARI_PASSWORD }}
         run: |
           mysql -e 'CREATE DATABASE nvip;' -u${{ env.HIKARI_USER }} -p${{ env.HIKARI_PASSWORD }} 
           mvn liquibase:update --no-transfer-progress

@@ -53,9 +53,9 @@ jobs:
       # Setup MySQL DB for tests that require connection (Might not need this)
       - name: Initialize Database
         env:
-          LIQUIBASE_URL: ${{ env.HIKARI_URL }}
-          LIQUIBASE_USER: ${{ env.HIKARI_USER }}
-          LIQUIBASE_PASS: ${{ env.HIKARI_PASSWORD }}
+          LIQUIBASE_COMMAND_URL: ${{ env.HIKARI_URL }}
+          LIQUIBASE_COMMAND_USERNAME: ${{ env.HIKARI_USER }}
+          LIQUIBASE_COMMAND_PASSWORD: ${{ env.HIKARI_PASSWORD }}
         run: |
           sudo /etc/init.d/mysql start
           mysql -e 'CREATE DATABASE ${{ env.DB_NAME }};' -u${{ env.HIKARI_USER }} -p${{ env.HIKARI_PASSWORD }}
