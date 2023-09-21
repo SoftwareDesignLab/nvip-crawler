@@ -63,7 +63,6 @@ public class PyPAYamlFile {
     private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
     public PyPAYamlFile(File f) {
         try {
-
             InputStream inputStream = Files.newInputStream(f.toPath());
             Yaml yaml = new Yaml();
             Map<String, Object> data = yaml.load(inputStream);

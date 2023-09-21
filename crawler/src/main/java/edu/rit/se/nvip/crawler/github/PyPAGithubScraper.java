@@ -78,14 +78,19 @@ public class PyPAGithubScraper {
                     continue;
                 }
                 for (File file : files ) {
-                    //logger.info("Parsing file: " + file.getName());
-                    PyPAYamlFile parsedFile = new PyPAYamlFile(file);
-                    ArrayList<String> cvesInFile = parsedFile.getCves();
-                    for (String c : cvesInFile) {
-                        vulnMap.put(c, (new RawVulnerability(
-                                "", c, parsedFile.getPublished(), parsedFile.getModified(), parsedFile.getDetails(), "PyPA"
-                        )));
+
+                    try {
+                        PyPAYamlFile parsedFile = new PyPAYamlFile(file);
+                        ArrayList<String> cvesInFile = parsedFile.getCves();
+                        for (String c : cvesInFile) {
+                            vulnMap.put(c, (new RawVulnerability(
+                                    "", c, parsedFile.getPublished(), parsedFile.getModified(), parsedFile.getDetails(), "PyPA"
+                            )));
+                        }
+                    } catch (NullPointerException e){
+                        logger.warn("Unable to parse {}: {}", file.getName(), e.getMessage());
                     }
+
                 }
             }
         }
