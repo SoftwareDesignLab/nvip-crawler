@@ -32,8 +32,14 @@ public class Messenger {
 
     public Messenger(){
         // Instantiate with default values
-        this(ReconcilerEnvVars.getRabbitHost(), ReconcilerEnvVars.getRabbitPort(), ReconcilerEnvVars.getRabbitUsername(), ReconcilerEnvVars.getRabbitPassword(),
-                ReconcilerEnvVars.getRabbitQueueIn(), ReconcilerEnvVars.getRabbitQueueOut());
+        this(
+                ReconcilerEnvVars.getRabbitHost(),
+                ReconcilerEnvVars.getRabbitVHost(),
+                ReconcilerEnvVars.getRabbitPort(),
+                ReconcilerEnvVars.getRabbitUsername(),
+                ReconcilerEnvVars.getRabbitPassword(),
+                ReconcilerEnvVars.getRabbitQueueIn(),
+                ReconcilerEnvVars.getRabbitQueueOut());
     }
 
     /**
@@ -42,9 +48,11 @@ public class Messenger {
      * @param username username
      * @param password password
      */
-    public Messenger(String host, int port, String username, String password, String inputQueue, String outputQueue){
+    public Messenger(String host, String vhost, int port, String username, String password, String inputQueue, String outputQueue){
+        logger.info("Creating RabbitMQ Connection to following url: {}:{}/{}", host, port, vhost);
         factory = new ConnectionFactory();
         factory.setHost(host);
+        factory.setVirtualHost(vhost);
         factory.setPort(port);
         factory.setUsername(username);
         factory.setPassword(password);

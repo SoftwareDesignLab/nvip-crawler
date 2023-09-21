@@ -31,6 +31,7 @@ public class ReconcilerEnvVars extends Properties {
     private static String dataDir;
     private static int doCharacterization;
     private static String rabbitHost;
+    private static String rabbitVHost;
     private static int rabbitPort;
     private static String rabbitUsername;
     private static String rabbitPassword;
@@ -148,6 +149,9 @@ public class ReconcilerEnvVars extends Properties {
                     break;
                 case RABBIT_HOST:
                     rabbitHost = addEnvvarString(envName, envVar, "localhost");
+                    break;
+                case RABBIT_VHOST:
+                    rabbitVHost = addEnvvarString(envName, envVar, "/");
                     break;
                 case RABBIT_PORT:
                     rabbitPort = addEnvvarInt(envName, Integer.parseInt(envVar), 5672);
@@ -281,6 +285,9 @@ public class ReconcilerEnvVars extends Properties {
     }
     public static String getRabbitHost() {
         return rabbitHost;
+    }
+    public static String getRabbitVHost() {
+        return rabbitVHost;
     }
     public static int getRabbitPort() {return rabbitPort;}
     public static String getRabbitUsername() {
