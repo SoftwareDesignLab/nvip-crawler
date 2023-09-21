@@ -28,6 +28,7 @@ import fixes.Fix;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -73,51 +74,78 @@ public class GenericParser extends FixParser {
     @Override
     protected List<Fix> parseWebPage() {
         // Select header objects to be potential anchors
-        final Elements headerObjects = this.DOM.select("h1, h2, h3, h4, h5");
+        final Elements headerElements = this.DOM.select("h1, h2, h3, h4, h5");
+
 
         // Run header words through FIX_WORDS enum, only selecting headers containing a valid member
 
+        // Create container for description elements
+        final Elements descriptionElements = new Elements();
+
         // Iterate over header objects
-        for (Element e : headerObjects) {
-            boolean fixFound = false;
+        for (Element e : headerElements) {
             // Split text on spaces and check each word.
             for (String headerWord : e.text().split(" ")) {
                 // Check if word is a member of FIX_WORDS (case-insensitive)
                 if(FIX_WORDS.hasWord(headerWord)) {
-                    fixFound = true;
+                    // Find and store description elements related to the current header
+                    descriptionElements.addAll(findDescriptionElements(e));
+
+                    // Filter out elements deemed not part of the fix description
+                    filterDescriptionElements(descriptionElements);
+
+                    // Concatenate remaining element texts
+                    final StringBuilder fixDescription = new StringBuilder();
+                    for (Element selectedElement : descriptionElements) {
+                        fixDescription.append(selectedElement.text()).append(" ");
+                    }
+
+                    // If data was found, store in a new Fix object and add to list of found fixes
+                    if(fixDescription.length() > 0)
+                        this.fixes.add(new Fix(cveId, fixDescription.toString(), url));
+
+                    // Skip to next header
                     break;
                 }
             }
+        }
 
-            // If a potential fix was found, attempt to find the description of the fix from related elements
-            if(fixFound) {
-                // Create container for relevant elements
-                final Elements relatedElements = new Elements();
+        return this.fixes;
+    }
 
-                // Attempt to get next sibling, store if found
-                final Element nextSibling = e.nextElementSibling();
-                if(nextSibling != null) relatedElements.add(nextSibling);
+    private Elements findDescriptionElements(Element e) {
+        final Elements elements = new Elements();
+        // Attempt to get next sibling, store if found
+        final Element nextSibling = e.nextElementSibling();
+        if(nextSibling != null) elements.add(nextSibling);
 
-                // Add all found child objects
-                relatedElements.addAll(e.children());
+        // Add all found child objects
+        elements.addAll(e.children());
 
-                // Iterate over selected objects and remove ones not likely to be a part of the fix description
-                // NOTE: We expect some descriptions to be stored in one element, but others are equally
-                //likely to be split among multiple elements. A good example is hyperlinks, which often
-                //divide sections of a body of text into multiple elements, which need to be combined.
+        return elements;
+    }
 
+    /**
+     * Iterate over selected objects and remove ones not likely to be a part of the fix description
+     * NOTE: We expect some descriptions to be stored in one element, but others are equally
+     * likely to be split among multiple elements. A good example is hyperlinks, which often
+     * divide sections of a body of text into multiple elements, which need to be combined.
+     *
+     * @param elements elements to filter
+     */
+    private void filterDescriptionElements(Elements elements) {
+        // Init list to store elements that will be removed from the given list
+        final List<Element> elementsToRemove = new ArrayList<>();
 
-
-                // Concatenate selected element texts
-                final StringBuilder fixDescription = new StringBuilder();
-                for (Element selectedElement : relatedElements) {
-                    fixDescription.append(selectedElement.text()).append(" ");
-                }
-                // If data was found, store in a new Fix object and add to list of found fixes
-                if(fixDescription.length() > 0)
-                    this.fixes.add(new Fix(cveId, fixDescription.toString(), url));
+        // Iterate over elements and add ones marked for removal to the list
+        for (Element e : elements) {
+            // TODO: Implement filter
+            if(false) {
+                elementsToRemove.add(e);
             }
         }
-        return this.fixes;
+
+        // Remove marked elements
+        elements.removeAll(elementsToRemove);
     }
 }
