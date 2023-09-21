@@ -57,7 +57,7 @@ public class MessengerTest {
         when(connectionMock.createChannel()).thenReturn(channelMock);
 
         // Create a Messenger instance with the mock ConnectionFactory
-        Messenger messenger = new Messenger("localhost", 5672,"guest", "guest", "RECONCILER_OUT", "PNE_OUT");
+        Messenger messenger = new Messenger("localhost", "/", 5672,"guest", "guest", "RECONCILER_OUT", "PNE_OUT");
         messenger.setFactory(factoryMock);
 
         // Create a message queue and a message to be received
@@ -95,7 +95,7 @@ public class MessengerTest {
 
     @Test
     public void testParseIds_ValidJsonString() {
-        Messenger messenger = new Messenger("localhost", 5672,"guest", "guest", "RECONCILER_OUT", "PNE_OUT");
+        Messenger messenger = new Messenger("localhost", "/", 5672,"guest", "guest", "RECONCILER_OUT", "PNE_OUT");
         String jsonString = "[\"id1\",\"id2\",\"id3\"]";
         List<String> expectedIds = Arrays.asList("id1", "id2", "id3");
 
@@ -106,7 +106,7 @@ public class MessengerTest {
 
     @Test
     public void testParseIds_InvalidJsonString() {
-        Messenger messenger = new Messenger("localhost", 5672,"guest", "guest", "RECONCILER_OUT", "PNE_OUT");
+        Messenger messenger = new Messenger("localhost", "/", 5672,"guest", "guest", "RECONCILER_OUT", "PNE_OUT");
         String jsonString = "invalidJsonString";
 
         List<String> actualIds = messenger.parseIds(jsonString);
@@ -178,7 +178,7 @@ public class MessengerTest {
     @Test
     public void testMain(){
         //timeout after 15 seconds
-        Messenger messenger = new Messenger("localhost", 5672,"guest", "guest", "RECONCILER_OUT", "PNE_OUT");
+        Messenger messenger = new Messenger("localhost", "/", 5672,"guest", "guest", "RECONCILER_OUT", "PNE_OUT");
 
         //create a thread to run the messenger
         Thread thread = new Thread(new Runnable() {
