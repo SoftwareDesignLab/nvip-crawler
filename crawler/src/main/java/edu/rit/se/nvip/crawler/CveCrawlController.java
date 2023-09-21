@@ -49,16 +49,23 @@ public class CveCrawlController {
     private static final Logger logger = LogManager.getLogger(CveCrawlController.class.getSimpleName());
     private final HashMap<String, ArrayList<RawVulnerability>> cveHashMapAll = new HashMap<>();
 
+    private final List<String> urls;
+    private final List<String> whiteList;
+    private final Map<String, Object> crawlerVars;
+
+    public CveCrawlController(List<String> urls, List<String> whiteList, Map<String, Object> crawlerVars) {
+        this.urls = urls;
+        this.whiteList = whiteList;
+        this.crawlerVars = crawlerVars;
+    }
+
     /**
      * Prepare Crawlers and begin crawling
      * return all raw vulnerability data found
-     * @param urls
-     * @param whiteList
      * @return
      * @throws Exception
      */
-    public HashMap<String, ArrayList<RawVulnerability>> crawl(List<String> urls, List<String> whiteList,
-                                                                    Map<String, Object> crawlerVars) throws Exception {
+    public HashMap<String, ArrayList<RawVulnerability>> crawl() throws Exception {
 
         // Prepare Crawler W/ Configuration
         CrawlConfig config1 = new CrawlConfig();

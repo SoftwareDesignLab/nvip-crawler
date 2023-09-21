@@ -1,6 +1,7 @@
 package edu.rit.se.nvip;
 
 import com.rabbitmq.client.*;
+import com.rometools.utils.IO;
 import edu.rit.se.nvip.crawler.CveCrawlController;
 import edu.rit.se.nvip.crawler.github.PyPAGithubScraper;
 import edu.rit.se.nvip.model.RawVulnerability;
@@ -16,12 +17,7 @@ import org.apache.logging.log4j.Logger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.KeyManagementException;
@@ -33,22 +29,35 @@ import java.lang.reflect.Modifier;
 public class CrawlerMain {
 
     private static final Logger logger = LogManager.getLogger(CrawlerMain.class);
-    private static DatabaseHelper databaseHelper = null;
-    private static final Map<String, Object> crawlerVars = new HashMap<>();
-    private static final Map<String, Object> dataVars = new HashMap<>();
+    private final DatabaseHelper databaseHelper;
+    private final Map<String, Object> crawlerVars = new HashMap<>();
+    private final Map<String, Object> dataVars = new HashMap<>();
     private static Map<String, String> sourceTypes = null;
 
-    public CrawlerMain() {
+    public CrawlerMain(DatabaseHelper databaseHelper){
+        this.databaseHelper = databaseHelper;
+    }
+
+    /**
+     * Update NVD table, run crawler, prepare run stats and insert
+     * @param args
+     */
+    public static void main(String[] args) {
+        UtilHelper.initLog4j();
+
+        // get sources from the seeds file or the database
+        DatabaseHelper databaseHelper = DatabaseHelper.getInstance();
+
+        CrawlerMain crawlerMain = new CrawlerMain(databaseHelper);
+        crawlerMain.run();
+    }
+
+    public void run(){
         this.prepareCrawlerVars();
         this.prepareDataVars();
 
-        UtilHelper.initLog4j();
-
         // check required data directories
         checkDataDirs();
-
-        // get sources from the seeds file or the database
-        databaseHelper = DatabaseHelper.getInstance();
 
         if (!databaseHelper.testDbConnection()) {
             logger.error("Error in database connection! Please check if the database configured in DB Envvars is up and running!");
@@ -56,19 +65,13 @@ public class CrawlerMain {
         }
 
         if (!this.testMQConnection()) {
-            logger.error("ERROR: Failed to connect to RabbitMQ esrver on {} via port {}", dataVars.get("mqHost"), dataVars.get("mqPort"));
+            logger.error("ERROR: Failed to connect to RabbitMQ server on {}:{}/{}",
+                    dataVars.get("mqHost"),
+                    dataVars.get("mqVirtualHost"),
+                    dataVars.get("mqPort"));
             System.exit(1);
         }
-    }
 
-    /**
-     * Update NVD table, run crawler, prepare run stats and insert
-     * @param args
-     */
-    public static void main(String[] args) throws Exception {
-
-        // Initialize Crawler, check if it's in testmode
-        CrawlerMain crawlerMain = new CrawlerMain();
         boolean crawlerTestMode = (boolean) crawlerVars.get("testMode");
         if (crawlerTestMode)
             logger.info("Starting Crawler IN TEST MODE using {}",
@@ -85,11 +88,34 @@ public class CrawlerMain {
         // Get CVEs from Python GitHub
         HashMap<String, RawVulnerability> pyCves = new HashMap<>();
         if (!crawlerTestMode)
-             pyCves = crawlerMain.getCvesFromPythonGitHub();
+            pyCves = getCvesFromPythonGitHub();
 
         // Crawler
         long crawlStartTime = System.currentTimeMillis();
-        HashMap<String, ArrayList<RawVulnerability>> crawledCVEs = crawlerMain.crawlCVEs();
+
+        List<String> whiteList = new ArrayList<>();
+        File whiteListFile = new File((String) crawlerVars.get("whitelistFileDir"));
+        try (Scanner reader = new Scanner(whiteListFile)){
+            while(reader.hasNextLine())
+            {
+                String domain = reader.nextLine();
+                if (domain.length() > 5) {
+                    //logger.info("Added {} to whitelist", domain);
+                    whiteList.add(domain);
+                }
+            }
+        } catch (FileNotFoundException e) {
+            logger.error("Unable to read whitelist file");
+            throw new RuntimeException(e);
+        }
+
+        HashMap<String, ArrayList<RawVulnerability>> crawledCVEs = null;
+        try {
+            crawledCVEs = crawlCVEs(whiteList);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
         long crawlEndTime = System.currentTimeMillis();
         logger.info("Crawler Finished\nTime: {} seconds", (crawlEndTime - crawlStartTime) / 1000.0);
 
@@ -130,7 +156,7 @@ public class CrawlerMain {
         } else {
             // Update the source types for the found CVEs and insert new entries into the rawdescriptions table
             logger.info("Done! Preparing to insert all raw data found in this run!");
-            crawlerMain.insertRawCVEsAndPrepareMessage(crawledCVEs);
+            insertRawCVEsAndPrepareMessage(crawledCVEs);
             logger.info("Raw data inserted and Message sent successfully!");
         }
 
@@ -155,44 +181,44 @@ public class CrawlerMain {
         String testMode = System.getenv("NVIP_CRAWLER_TEST_MODE");
         String testOutputDir = System.getenv("NVIP_TEST_OUTPUT_DIR");
 
-        addEnvvarString(CrawlerMain.crawlerVars,"outputDir", outputDir, "output/crawlers",
+        addEnvvarString(crawlerVars,"outputDir", outputDir, "output/crawlers",
                 "WARNING: Crawler output path not defined in NVIP_OUTPUT_DIR, using default path: output/crawlers");
 
-        addEnvvarString(CrawlerMain.crawlerVars,"seedFileDir", seedFileDir, "resources/url-sources/nvip-seeds.txt",
+        addEnvvarString(crawlerVars,"seedFileDir", seedFileDir, "resources/url-sources/nvip-seeds.txt",
                 "WARNING: Crawler seed file path not defined in NVIP_SEED_URLS, using default path: " + "resources/url-sources/nvip-seeds.txt");
 
-        addEnvvarString(CrawlerMain.crawlerVars,"whitelistFileDir", whitelistFileDir, "crawler/resources/url-sources/nvip-whitelist.txt",
+        addEnvvarString(crawlerVars,"whitelistFileDir", whitelistFileDir, "crawler/resources/url-sources/nvip-whitelist.txt",
                 "WARNING: Crawler whitelist file path not defined in NVIP_WHITELIST_URLS, using default path: resources/url-sources/nvip-whitelist.txt");
 
-        addEnvvarString(CrawlerMain.crawlerVars,"sourceTypeFileDir", sourceTypeFileDir, "crawler/resources/url-sources/nvip-source-types.txt",
+        addEnvvarString(crawlerVars,"sourceTypeFileDir", sourceTypeFileDir, "crawler/resources/url-sources/nvip-source-types.txt",
                 "WARNING: Crawler whitelist file path not defined in NVIP_SOURCE_TYPES, using default path: resources/url-sources/nvip-source-types.txt");
 
-        addEnvvarBool(CrawlerMain.crawlerVars,"enableGitHub", enableGitHub, false,
+        addEnvvarBool(crawlerVars,"enableGitHub", enableGitHub, false,
                 "WARNING: CVE GitHub Enabler not defined in NVIP_ENABLE_GITHUB, allowing CVE GitHub pull on default");
 
-        addEnvvarInt(CrawlerMain.crawlerVars,"crawlerPoliteness", crawlerPoliteness, 3000,
+        addEnvvarInt(crawlerVars,"crawlerPoliteness", crawlerPoliteness, 3000,
                 "WARNING: Crawler Politeness is not defined, using 3000 as default value",
                 "NVIP_CRAWLER_POLITENESS");
 
-        addEnvvarInt(CrawlerMain.crawlerVars,"maxPages", maxPages, 3000,
+        addEnvvarInt(crawlerVars,"maxPages", maxPages, 3000,
                 "WARNING: Crawler Max Pages not defined in NVIP_CRAWLER_MAX_PAGES, using 3000 as default value",
                 "NVIP_CRAWLER_MAX_PAGES");
 
-        addEnvvarInt(CrawlerMain.crawlerVars,"depth", depth, 1,
+        addEnvvarInt(crawlerVars,"depth", depth, 1,
                 "WARNING: Crawler Depth not defined in NVIP_CRAWLER_DEPTH, using 1 as default value",
                 "NVIP_CRAWLER_DEPTH");
 
-        addEnvvarBool(CrawlerMain.crawlerVars,"enableReport", enableReport, true,
+        addEnvvarBool(crawlerVars,"enableReport", enableReport, true,
                 "WARNING: Crawler Report Enabling not defined in NVIP_CRAWLER_REPORT_ENABLE, allowing report by default");
 
-        addEnvvarInt(CrawlerMain.crawlerVars,"crawlerNum", crawlerNum, 10,
+        addEnvvarInt(crawlerVars,"crawlerNum", crawlerNum, 10,
                 "WARNING: Number of Crawlers not defined in NVIP_NUM_OF_CRAWLER, using 10 as default value",
                 "NVIP_NUM_OF_CRAWLER");
 
-        addEnvvarBool(CrawlerMain.crawlerVars,"testMode", testMode, false,
+        addEnvvarBool(crawlerVars,"testMode", testMode, false,
                 "WARNING: Crawler Test Mode not defined in NVIP_CRAWLER_TEST_MODE, using false as default value");
 
-        addEnvvarString(CrawlerMain.crawlerVars,"testOutputDir", testOutputDir, "output",
+        addEnvvarString(crawlerVars,"testOutputDir", testOutputDir, "output",
                 "WARNING: Crawler test output dir path not defined in NVIP_TEST_OUTPUT_DIR, using default path: output");
     }
 
@@ -207,30 +233,33 @@ public class CrawlerMain {
         String nvdUrl = System.getenv("NVIP_NVD_URL");
         String reconcilerMethod = System.getenv("NVIP_RECONCILER_METHOD");
         String mqHost = System.getenv("RABBIT_HOST");
+        String mqVirtualHost = System.getenv("RABBIT_VHOST");
         String mqPort = System.getenv("RABBIT_PORT");
         String mqUsername = System.getenv("RABBIT_USERNAME");
         String mqPassword = System.getenv("RABBIT_PASSWORD");
         String mqQueueName = System.getenv("CRAWLER_OUTPUT_QUEUE");
 
-        addEnvvarString(CrawlerMain.dataVars,"dataDir", dataDir, "resources",
+        addEnvvarString(dataVars,"dataDir", dataDir, "resources",
                 "WARNING: Data Directory not defined in NVIP_DATA_DIR, using ./resources as default");
-        addEnvvarBool(CrawlerMain.dataVars, "refreshNvdList", refreshNvdList, true,
+        addEnvvarBool(dataVars, "refreshNvdList", refreshNvdList, true,
                 "WARNING: Refresh NVD List not defined in NVIP_REFRESH_NVD_LIST, setting true for default");
-        addEnvvarString(CrawlerMain.dataVars, "nvdUrl", nvdUrl, "https://services.nvd.nist.gov/rest/json/cves/2.0?pubStartDate=<StartDate>&pubEndDate=<EndDate>",
+        addEnvvarString(dataVars, "nvdUrl", nvdUrl, "https://services.nvd.nist.gov/rest/json/cves/2.0?pubStartDate=<StartDate>&pubEndDate=<EndDate>",
                 "WARNING: NVD URL is not defined in NVIP_NVD_URL, setting NVD 2.0 API URL as default");
-        addEnvvarString(CrawlerMain.dataVars,"reconcilerMethod", reconcilerMethod, "APACHE_OPEN_NLP",
+        addEnvvarString(dataVars,"reconcilerMethod", reconcilerMethod, "APACHE_OPEN_NLP",
                 "WARNING: Reconciler Method not defined in NVIP_RECONCILER_METHOD, using APACHE_OPEN_NLP as default");
 
-        addEnvvarString(CrawlerMain.dataVars,"mqHost", mqHost, "localhost",
+        addEnvvarString(dataVars,"mqHost", mqHost, "localhost",
                 "WARNING: MQ Host not defined in RABBIT_HOST, using 'localhost' as default");
-        addEnvvarInt(CrawlerMain.dataVars,"mqPort", mqPort, 5762,
+        addEnvvarInt(dataVars,"mqPort", mqPort, 5762,
                 "WARNING: MQ Port not defined in RABBIT_PORT, using 5762 as default",
                 "RABBIT_PORT");
-        addEnvvarString(CrawlerMain.dataVars,"mqUsername", mqUsername, "guest",
+        addEnvvarString(dataVars,"mqVirtualHost", mqVirtualHost, "/",
+                "WARNING: MQ VirutalHost not defined in RABBIT_VHOST, using '/' as default");
+        addEnvvarString(dataVars,"mqUsername", mqUsername, "guest",
                 "WARNING: MQ Username not defined in RABBIT_USERNAME, using 'guest' as default");
-        addEnvvarString(CrawlerMain.dataVars,"mqPassword", mqPassword, "guest",
+        addEnvvarString(dataVars,"mqPassword", mqPassword, "guest",
                 "WARNING: MQ Password not defined in RABBIT_PASSWORD, using 'guest' as default");
-        addEnvvarString(CrawlerMain.dataVars,"mqQueueName", mqQueueName, "CRAWLER_OUT",
+        addEnvvarString(dataVars,"mqQueueName", mqQueueName, "CRAWLER_OUT",
                 "WARNING: MQ Queue Name not defined in RABBIT_QUEUE_NAME, using 'raw_data_queue' as default");
 
     }
@@ -378,7 +407,7 @@ public class CrawlerMain {
      *
      * @return
      */
-    protected HashMap<String, ArrayList<RawVulnerability>> crawlCVEs() throws Exception {
+    protected HashMap<String, ArrayList<RawVulnerability>> crawlCVEs(List<String> whiteList ) throws Exception {
         /**
          * Crawl CVE from CNAs
          */
@@ -387,21 +416,9 @@ public class CrawlerMain {
         logger.info("Starting the NVIP crawl process now to look for CVEs at {} locations with {} threads...",
                 urls.size(), crawlerVars.get("crawlerNum"));
 
-        CveCrawlController crawlerController = new CveCrawlController();
+        CveCrawlController crawlerController = new CveCrawlController(urls, whiteList, crawlerVars);
 
-        ArrayList<String> whiteList = new ArrayList<>();
-
-        File whiteListFile = new File((String) crawlerVars.get("whitelistFileDir"));
-        Scanner reader = new Scanner(whiteListFile);
-        while (reader.hasNextLine()) {
-            String domain = reader.nextLine();
-            if (domain.length() > 5) {
-                //logger.info("Added {} to whitelist", domain);
-                whiteList.add(domain);
-            }
-        }
-
-        return crawlerController.crawl(urls, whiteList, crawlerVars);
+        return crawlerController.crawl();
     }
 
 
@@ -417,7 +434,7 @@ public class CrawlerMain {
         return cvePyPAGitHub;
     }
 
-    private static void cvesToJson(HashMap<String, ArrayList<RawVulnerability>> crawledCVEs){
+    private void cvesToJson(HashMap<String, ArrayList<RawVulnerability>> crawledCVEs){
         GsonBuilder builder = new GsonBuilder(); 
         builder.setPrettyPrinting(); 
         StringBuilder sb = new StringBuilder();
@@ -438,12 +455,12 @@ public class CrawlerMain {
 
     }
 
-    private static int cvesToCsv(HashMap<String, ArrayList<RawVulnerability>> crawledCVEs){
+    private int cvesToCsv(HashMap<String, ArrayList<RawVulnerability>> crawledCVEs){
         int lineCount = 0;
         CSVWriter writer = null;
-        String filepath = (String) crawlerVars.get("testOutputDir") + "/test_output.csv";
 
         try {
+            String filepath = (String) crawlerVars.get("testOutputDir") + "/test_output.csv";
             logger.info("Writing to CSV: {}", filepath);
             FileWriter fileWriter = new FileWriter(filepath, false);
             writer = new CSVWriter(fileWriter, '\t', CSVWriter.NO_QUOTE_CHARACTER, CSVWriter.NO_ESCAPE_CHARACTER, CSVWriter.DEFAULT_LINE_END);
@@ -462,7 +479,7 @@ public class CrawlerMain {
             }
 
             writer.close();
-        } catch (IOException e) {
+        } catch (IOException | NullPointerException e) {
             logger.error("Exception while writing list to CSV file!" + e);
             return 0;
         }
@@ -473,7 +490,7 @@ public class CrawlerMain {
     /**
      * Util method used for mapping source types to each CVE source
      */
-    private static void createSourceTypeMap(){
+    private void createSourceTypeMap(){
         if (sourceTypes == null)
             sourceTypes = new HashMap<>();
         try {
@@ -503,7 +520,7 @@ public class CrawlerMain {
      * Util method used for updating source types for found CVEs
      * @param crawledCves
      */
-    private static void updateSourceTypes(HashMap<String, ArrayList<RawVulnerability>> crawledCves){
+    private void updateSourceTypes(HashMap<String, ArrayList<RawVulnerability>> crawledCves){
         // Prepare source types mapping
         createSourceTypeMap();
 
@@ -564,6 +581,7 @@ public class CrawlerMain {
             // Create a connection to the RabbitMQ server and create the channel
             ConnectionFactory factory = new ConnectionFactory();
             factory.setHost(dataVars.get("mqHost") + "");
+            factory.setVirtualHost(dataVars.get("mqVirtualHost")+"");
             factory.setPort((int) dataVars.get("mqPort"));
             factory.setUsername(dataVars.get("mqUsername")+"");
             factory.setPassword(dataVars.get("mqPassword")+"");
@@ -599,6 +617,7 @@ public class CrawlerMain {
     private boolean testMQConnection() {
         ConnectionFactory factory = new ConnectionFactory();
         factory.setHost(dataVars.get("mqHost") + "");
+        factory.setVirtualHost(dataVars.get("mqVirtualHost")+"");
         factory.setPort((int) dataVars.get("mqPort"));
         factory.setUsername(dataVars.get("mqUsername")+"");
         factory.setPassword(dataVars.get("mqPassword")+"");
