@@ -93,6 +93,5 @@ jobs:
 
       - name: Build and Push Docker Image for Crawler
         run: |
-          cd crawler
-          docker build . -t nvip-crawler-sub:dev -t ghcr.io/softwaredesignlab/nvip-crawler-sub:dev
+          docker build . -f crawler/Dockerfile -t nvip-crawler-sub:dev -t ghcr.io/softwaredesignlab/nvip-crawler-sub:dev
           docker push ghcr.io/softwaredesignlab/nvip-crawler-sub:dev     

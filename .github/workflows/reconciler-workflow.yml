@@ -70,5 +70,5 @@ jobs:
       - name: Build and Push Docker Image for Reconciler
         run: |
           cd reconciler
-          docker build . -t nvip-reconciler:dev -t ghcr.io/softwaredesignlab/nvip-reconciler:dev
+          docker build . -f reconciler/Dockerfile -t nvip-reconciler:dev -t ghcr.io/softwaredesignlab/nvip-reconciler:dev
           docker push ghcr.io/softwaredesignlab/nvip-reconciler:dev  
