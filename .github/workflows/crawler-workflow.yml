@@ -62,7 +62,7 @@ jobs:
 
       - name: Run Liquibase Update
         run: |
-          mvn liquibase:update
+          mvn liquibase:update --projects=crawler
 
       - name: Test Crawler
         run: |
