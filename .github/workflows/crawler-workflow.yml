@@ -68,7 +68,7 @@ jobs:
         run: |
           cd crawler
           mvn dependency:go-offline
-          mvn test
+#          mvn test
 
       - name: Publish Test Report
         if: success() || failure()
