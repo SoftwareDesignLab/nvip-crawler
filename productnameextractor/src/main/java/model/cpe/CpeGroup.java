@@ -24,6 +24,7 @@ package model.cpe;
  * SOFTWARE.
  */
 
+import lombok.Data;
 import opennlp.tools.tokenize.WhitespaceTokenizer;
 
 import java.util.HashMap;
@@ -33,7 +34,7 @@ import java.util.HashMap;
  * @author Igor Khokhlov
  *
  */
-
+@Data
 public class CpeGroup {
 	private final String vendor;
 	private final String product;
@@ -56,10 +57,6 @@ public class CpeGroup {
 		this.groupID = vendor+":"+product;
 		this.commonTitle = commonTitle;
 		this.versions = versions;
-	}
-	
-	public String getCommonTitle() {
-		return commonTitle;
 	}
 	
 	/**
@@ -92,44 +89,5 @@ public class CpeGroup {
 				commonTitle=newCommonTitle.substring(0, newCommonTitle.length()-1);
 			}
 		}
-	}
-
-	public HashMap<String, CpeEntry> getVersions() {
-		return versions;
-	}
-
-	public String getVendor() {
-		return vendor;
-	}
-	public String getProduct() {
-		return product;
-	}
-	public String getGroupID() {
-		return groupID;
-	}
-
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((groupID == null) ? 0 : groupID.hashCode());
-		return result;
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		CpeGroup other = (CpeGroup) obj;
-		if (groupID == null) {
-			return other.groupID == null;
-		}
-		if(!groupID.equals(other.groupID))
-			return false;
-		return versions.equals(other.versions);
 	}
 }
