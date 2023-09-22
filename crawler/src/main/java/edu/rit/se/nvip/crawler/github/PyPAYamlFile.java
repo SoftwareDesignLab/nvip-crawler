@@ -23,6 +23,7 @@
  */
 package edu.rit.se.nvip.crawler.github;
 
+import lombok.Data;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.nd4j.shade.yaml.snakeyaml.Yaml;
@@ -33,59 +34,59 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
+@Data
 public class PyPAYamlFile {
 
     // PYSEC ID found at top of file
-    private String id;
+    private final String id;
 
     // Vuln description
-    private String details;
+    private final String details;
+
+    // Publish date
+    private final String published;
+
+    // Last modified date
+    private final String modified;
 
     // Affected Array of Obj
     // TODO: proper access methods and types
-    private ArrayList<Object> affected;
+    //private final List<Object> affected;
 
     // Array of { type: String, url: String } objects
     // TODO: proper access methods
-    private ArrayList<LinkedHashMap<String, String>> references;
+    //private final ArrayList<LinkedHashMap<String, String>> references;
 
     // Array of vuln aliases (CVE IDs located in here)
-    private ArrayList<String> aliases = new ArrayList<>();
+    private final List<String> aliases;
 
-    // Last modified date
-    private String modified;
+    private static final Logger logger = LogManager.getLogger(PyPAYamlFile.class.getSimpleName());
 
-    // Publish date
-    private String published;
+    public static PyPAYamlFile from(File f) {
 
-    private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
-    public PyPAYamlFile(File f) {
+        Map<String, Object> data;
         try {
             InputStream inputStream = Files.newInputStream(f.toPath());
             Yaml yaml = new Yaml();
-            Map<String, Object> data = yaml.load(inputStream);
-            this.id = data.get("id").toString();
-            this.details = data.get("details").toString();
-            this.affected = (ArrayList<Object>) data.get("affected");
-            this.references = (ArrayList<LinkedHashMap<String, String>>) data.get("references");
-            this.aliases = data.get("aliases") == null ? new ArrayList<>() : (ArrayList<String>) data.get("aliases");
-            this.modified = data.get("modified").toString();
-            this.published = data.get("published").toString();
-
+            data = yaml.load(inputStream);
         } catch (IOException fe) {
             logger.error("YAML Parser I/O exception for file: " + f.getName());
+            return null;
         }
+
+        String id = data.getOrDefault("id", "").toString();
+        String details = data.getOrDefault("details", "").toString();
+        String modified = data.getOrDefault("modified", "").toString();
+        String published = data.getOrDefault("published", "").toString();
+//        List<Object> affected = (ArrayList<Object>) data.get("affected");
+//        ArrayList<LinkedHashMap<String, String>> references = (ArrayList<LinkedHashMap<String, String>>) data.get("references");
+        List<String> aliases = data.get("aliases") == null ? new ArrayList<>() : (ArrayList<String>) data.get("aliases");
+
+        return new PyPAYamlFile(id, details, published, modified, aliases);
     }
-
-    public String getDetails() { return this.details; }
-
-    public String getModified() { return this.modified; }
-
-    public String getPublished() { return this.published; }
-
-    public String getId() { return this.id; }
 
     /**
      * access aliases and search for any alias that contains a CVE id

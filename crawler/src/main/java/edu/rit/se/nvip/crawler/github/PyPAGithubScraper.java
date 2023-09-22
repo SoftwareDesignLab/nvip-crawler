@@ -80,7 +80,7 @@ public class PyPAGithubScraper {
                 for (File file : files ) {
 
                     try {
-                        PyPAYamlFile parsedFile = new PyPAYamlFile(file);
+                        PyPAYamlFile parsedFile = PyPAYamlFile.from(file);
                         ArrayList<String> cvesInFile = parsedFile.getCves();
                         for (String c : cvesInFile) {
                             vulnMap.put(c, (new RawVulnerability(
