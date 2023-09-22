@@ -12,6 +12,11 @@ on:
       - main
       - dev
       - 'cicd/**'
+    paths-ignore:
+      - crawler
+      - exploitfinder
+      - productnameextractor
+      - reconciler
 
 env:
   AWS_REGION: 'us-east-1'
