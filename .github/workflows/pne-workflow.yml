@@ -89,10 +89,10 @@ jobs:
           check_name: PNE Test Report
 
   # Deploy product extractor component project to container registry
-  deploy-product-extractor:
+  staging-deploy:
     runs-on: ubuntu-latest
     needs: build-test-product-extractor
-    if: ${{ success() && github.ref == 'refs/heads/dev' }}
+    if: ${{ success() && github.ref == 'refs/heads/main' }}
     steps:
       - uses: actions/checkout@v3
 
@@ -121,3 +121,36 @@ jobs:
           cd productnameextractor
           docker build . -f productnameextractor/Dockerfile -t nvip-product-extractor:dev -t ghcr.io/softwaredesignlab/nvip-product-extractor:dev
           docker push ghcr.io/softwaredesignlab/nvip-product-extractor:dev
+
+  # Deploy product extractor component project to container registry
+  production-deploy:
+    runs-on: ubuntu-latest
+    needs: staging-deploy
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # Pull large files (w2v model) so they're in the container
+      - name: Pull file from S3 bucket
+        run: |
+          cd productnameextractor/nvip_data/data
+          aws s3 cp s3://binaries-for-crawler/w2v_model_250.bin . 
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Push Docker Image for Product Extractor
+        run: |
+          cd productnameextractor
+          docker build . -f productnameextractor/Dockerfile -t nvip-product-extractor -t ghcr.io/softwaredesignlab/nvip-product-extractor
+          docker push ghcr.io/softwaredesignlab/nvip-product-extractor
