@@ -24,12 +24,15 @@ package model.cpe;
  * SOFTWARE.
  */
 
+import lombok.Data;
+
 /**
  * This class is for CPE items
  * @author Igor Khokhlov
  *
  */
 
+@Data
 public class CpeEntry {
 
 	private String title, version, update, cpeID, platform;
@@ -46,86 +49,6 @@ public class CpeEntry {
 	// For ProductNameExtractor
 	public CpeEntry(String title, String version, String cpeID) {
 		this(title, version, "", cpeID, "");
-	}
-
-	public String getTitle() {
-		return title;
-	}
-
-	public void setTitle(String title) {
-		this.title = title;
-	}
-
-	public String getVersion() {
-		return version;
-	}
-
-	public void setVersion(String version) {
-		this.version = version;
-	}
-
-	public String getUpdate() {
-		return update;
-	}
-
-	public void setUpdate(String update) {
-		this.update = update;
-	}
-
-	public String getCpeID() {
-		return cpeID;
-	}
-
-	public void setCpeID(String cpeID) {
-		this.cpeID = cpeID;
-	}
-
-	public String getPlatform() {
-		return platform;
-	}
-
-	public void setPlatform(String platform) {
-		this.platform = platform;
-	}
-
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((cpeID == null) ? 0 : cpeID.hashCode());
-		result = prime * result + ((title == null) ? 0 : title.hashCode());
-		result = prime * result + ((update == null) ? 0 : update.hashCode());
-		result = prime * result + ((version == null) ? 0 : version.hashCode());
-		return result;
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		CpeEntry other = (CpeEntry) obj;
-		if (cpeID == null) {
-			if (other.cpeID != null)
-				return false;
-		} else if (!cpeID.equals(other.cpeID))
-			return false;
-		if (title == null) {
-			if (other.title != null)
-				return false;
-		} else if (!title.equals(other.title))
-			return false;
-		if (update == null) {
-			if (other.update != null)
-				return false;
-		} else if (!update.equals(other.update))
-			return false;
-		if (version == null) {
-			return other.version == null;
-		} else return version.equals(other.version);
 	}
 
 	@Override
