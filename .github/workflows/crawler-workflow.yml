@@ -77,10 +77,11 @@ jobs:
           check_name: Crawler Test Report
 
   # Deploy crawler component project to container registry
-  deploy-crawler:
+  staging-deploy:
     runs-on: ubuntu-latest
+    environment: staging
     needs: build-test-crawler
-    if: ${{ success() && github.ref == 'refs/heads/dev' }}
+    if: ${{ success() && github.ref == 'refs/heads/main' }}
     steps:
       - uses: actions/checkout@v3
 
@@ -93,5 +94,25 @@ jobs:
 
       - name: Build and Push Docker Image for Crawler
         run: |
-          docker build . -f crawler/Dockerfile -t nvip-crawler-sub:dev -t ghcr.io/softwaredesignlab/nvip-crawler-sub:dev
-          docker push ghcr.io/softwaredesignlab/nvip-crawler-sub:dev     
+          docker build . -f crawler/Dockerfile -t nvip-crawler:staging -t ghcr.io/softwaredesignlab/nvip-crawler:staging
+          docker push ghcr.io/softwaredesignlab/nvip-crawler:staging
+
+  # Deploy crawler component project to container registry
+  production-deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    needs: staging-deploy
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Push Docker Image for Crawler
+        run: |
+          docker build . -f crawler/Dockerfile -t nvip-crawler -t ghcr.io/softwaredesignlab/nvip-crawler
+          docker push ghcr.io/softwaredesignlab/nvip-crawler
