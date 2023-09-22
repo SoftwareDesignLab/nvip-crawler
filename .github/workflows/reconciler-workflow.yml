@@ -46,10 +46,10 @@ jobs:
           check_name: Reconciler Test Report
 
   # Deploy reconciler component project to container registry
-  deploy-reconciler:
+  staging-deploy:
     runs-on: ubuntu-latest
     needs: build-test-reconciler
-    if: ${{ success() && github.ref == 'refs/heads/dev' }}
+    if: ${{ success() && github.ref == 'refs/heads/main' }}
     steps:
       - uses: actions/checkout@v3
 
@@ -72,3 +72,31 @@ jobs:
           cd reconciler
           docker build . -f reconciler/Dockerfile -t nvip-reconciler:dev -t ghcr.io/softwaredesignlab/nvip-reconciler:dev
           docker push ghcr.io/softwaredesignlab/nvip-reconciler:dev  
+
+
+  # Deploy reconciler component project to container registry
+  production-deploy:
+    runs-on: ubuntu-latest
+    needs: staging-deploy
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Push Docker Image for Reconciler
+        run: |
+          cd reconciler
+          docker build . -f reconciler/Dockerfile -t nvip-reconciler -t ghcr.io/softwaredesignlab/nvip-reconciler
+          docker push ghcr.io/softwaredesignlab/nvip-reconciler 
