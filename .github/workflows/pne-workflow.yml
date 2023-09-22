@@ -13,10 +13,10 @@ on:
       - dev
       - 'cicd/**'
     paths-ignore:
-      - crawler
-      - exploitfinder
-      - patchfinder
-      - reconciler
+      - 'crawler/**'
+      - 'exploitfinder/**'
+      - 'patchfinder/**'
+      - 'reconciler/**'
 
 env:
   AWS_REGION: 'us-east-1'
