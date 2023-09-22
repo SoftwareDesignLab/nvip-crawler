@@ -12,6 +12,11 @@ on:
       - main
       - dev
       - 'cicd/**'
+    paths-ignore:
+      - productnameextractor
+      - exploitfinder
+      - patchfinder
+      - crawler
 
 env:
   AWS_REGION: 'us-east-1'
@@ -75,6 +80,7 @@ jobs:
   # Deploy reconciler component project to container registry
   production-deploy:
     runs-on: ubuntu-latest
+    environment: production
     needs: staging-deploy
     steps:
       - uses: actions/checkout@v3

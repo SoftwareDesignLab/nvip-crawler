@@ -12,6 +12,11 @@ on:
       - main
       - dev
       - 'cicd/**'
+    paths-ignore:
+      - crawler
+      - exploitfinder
+      - patchfinder
+      - reconciler
 
 env:
   AWS_REGION: 'us-east-1'
@@ -124,6 +129,7 @@ jobs:
   # Deploy product extractor component project to container registry
   production-deploy:
     runs-on: ubuntu-latest
+    environment: production
     needs: staging-deploy
     steps:
       - uses: actions/checkout@v3
@@ -150,5 +156,5 @@ jobs:
 
       - name: Build and Push Docker Image for Product Extractor
         run: |
-          docker build . -f productnameextractor/Dockerfile -t nvip-product-extractor -t ghcr.io/softwaredesignlab/nvip-product-extractor
-          docker push ghcr.io/softwaredesignlab/nvip-product-extractor
+          docker build . -f productnameextractor/Dockerfile -t nvip-productnameextractor -t ghcr.io/softwaredesignlab/nvip-productnameextractor
+          docker push ghcr.io/softwaredesignlab/nvip-productnameextractor

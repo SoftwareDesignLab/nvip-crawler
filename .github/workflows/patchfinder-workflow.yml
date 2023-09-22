@@ -111,6 +111,7 @@ jobs:
     # Deploy patchfinder component project to container registry
   production-deploy:
     runs-on: ubuntu-latest
+    environment: production
     needs: staging-deploy
     steps:
       - uses: actions/checkout@v3
