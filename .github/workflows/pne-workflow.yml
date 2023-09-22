@@ -118,7 +118,6 @@ jobs:
 
       - name: Build and Push Docker Image for Product Extractor
         run: |
-          cd productnameextractor
           docker build . -f productnameextractor/Dockerfile -t nvip-product-extractor:dev -t ghcr.io/softwaredesignlab/nvip-product-extractor:dev
           docker push ghcr.io/softwaredesignlab/nvip-product-extractor:dev
 
@@ -151,6 +150,5 @@ jobs:
 
       - name: Build and Push Docker Image for Product Extractor
         run: |
-          cd productnameextractor
           docker build . -f productnameextractor/Dockerfile -t nvip-product-extractor -t ghcr.io/softwaredesignlab/nvip-product-extractor
           docker push ghcr.io/softwaredesignlab/nvip-product-extractor

@@ -100,7 +100,6 @@ jobs:
 
       - name: Build and Push Docker Image for Patchfinder
         run: |
-          cd patchfinder
           docker build . -f patchfinder/Dockerfile -t nvip-patchfinder:dev -t ghcr.io/softwaredesignlab/nvip-patchfinder:dev
           docker push ghcr.io/softwaredesignlab/nvip-patchfinder:dev
 
@@ -127,6 +126,6 @@ jobs:
 
       - name: Build and Push Docker Image for Patchfinder
         run: |
-          cd patchfinder
           docker build . -f patchfinder/Dockerfile -t nvip-patchfinder -t ghcr.io/softwaredesignlab/nvip-patchfinder
           docker push ghcr.io/softwaredesignlab/nvip-patchfinder
+
