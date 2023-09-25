@@ -274,6 +274,7 @@ https://libreswan.org/security/
 https://liferay.dev/portal/security/known-vulnerabilities/
 https://line.github.io/security-advisory-blog/advisory/
 https://linksys-sh.com/security-advisory/
+https://lists.debian.org/debian-lts-announce/
 https://lists.gnupg.org/pipermail/gnupg-announce/
 https://lists.nongnu.org/archive/html/
 https://lists.opensuse.org/archives/list/security-announce@lists.opensuse.org/
@@ -424,7 +425,6 @@ https://umbraco.com/trust-center/security-and-umbraco/how-to-get-informed-about-
 https://unify.com/en/support/security-advisories/
 https://us.hikvision.com/en/support-resources/cybersecurity-center/security-notices/
 https://vaadin.com/security/
-https://vulncheck.com/advisories/
 https://web.mit.edu/kerberos/advisories/
 https://web.mit.edu/kerberos/historical.html/
 https://webkitgtk.org/security/
@@ -481,9 +481,9 @@ https://www.couchbase.com/blog/category/security/?ref=blog-menu/
 https://www.crestron.com/Security/Security_Advisories/
 https://www.crowdstrike.com/security-advisories/
 https://www.cryptnetix.com/
-https://www.cvedetails.com/browse-by-date.php/
 https://www.cyber.gc.ca/en/alerts-advisories/
 https://www.dahuasecurity.com/support/cybersecurity/annoucementNotice/
+https://www.debian.org/lts/security/
 https://www.debian.org/security/#DSAS/
 https://www.dell.com/support/security/en-us/
 https://www.digi.com/resources/security
@@ -639,6 +639,7 @@ https://www.strongdm.com/security/advisories/
 https://www.strongswan.org/blog/
 https://www.sudo.ws/security/advisories/
 https://www.supermicro.com/en/support/security_center#!advisories/
+https://www.suse.com/security/cve/
 https://www.suse.com/support/update/
 https://www.swascan.com/blog/
 https://www.swift.org/support/security.html#security-updates/
@@ -680,8 +681,6 @@ https://www.xylem.com/en-us/about-xylem/cybersecurity/advisories/?page=1&pagesiz
 https://www.yokogawa.com/library/resources/white-papers/yokogawa-security-advisory-report-list/
 https://www.yubico.com/support/issue-rating-system/security-advisories/
 https://www.zabbix.com/security_advisories/
-https://www.zerodayinitiative.com/advisories/published/
-https://www.zerodayinitiative.com/advisories/upcoming/
 https://www.zeroscience.mk/en/vulnerabilities/
 https://www.zigor.com/list-of-vulnerabilities/
 https://www.zscaler.com/security-advisories/
