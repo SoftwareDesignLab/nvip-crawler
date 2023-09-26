@@ -90,7 +90,7 @@ https://danrevah.github.io/
 https://developer.arm.com/Arm%20Security%20Center/
 https://developer.joomla.org/security-centre.html/
 https://developers.ibexa.co/security-advisories/
-https://device.harmonyos.com/en/docs/security/update/security-bulletins-overview-0000001155006471/
+https://device.harmonyos.com/en/docs/security/update/security-bulletins-overview-0000001155006471
 https://devolutions.net/security/advisories/
 https://dhis2.org/security/vulnerabilities/
 https://discuss.elastic.co/c/announcements/security-announcements/31/
@@ -126,7 +126,6 @@ https://enterprise.github.com/releases/
 https://erpnext.com/security/references/
 https://evs.com/services/cyber-security/security-bulletins/
 https://excellium-services.com/cert-xlm-advisory/
-https://fluidattacks.com/advisories/
 https://forums.ivanti.com/s/searchallcontent?language=en_US#t=All&sort=date%20descending&f:@sfkbknowledgearticletypec=[Security%20Advisory]
 https://friends-of-presta.github.io/security-advisories/
 https://gitbook.seguranca-informatica.pt/cve-and-exploits/cves/chiyu-iot-devices/
@@ -219,6 +218,7 @@ https://github.com/TryGhost/Ghost/security/
 https://github.com/vapor/postgres-nio/security/advisories/
 https://github.com/vyperlang/vyper/security/advisories/
 https://github.com/WWBN/AVideo/security/
+https://github.com/xerial/snappy-java/security/advisories/
 https://github.com/xerial/sqlite-jdbc/security/advisories/
 https://github.com/xibosignage/xibo-cms/security/advisories/
 https://github.com/xwiki/xwiki-platform/security/advisories/
@@ -289,6 +289,7 @@ https://moodle.org/mod/forum/view.php?id=7128/
 https://msrc-blog.microsoft.com/
 https://msrc.microsoft.com/update-guide/vulnerability/
 https://my.f5.com/manage/s/
+https://my.f5.com/manage/s/article/K000135479
 https://na.panasonic.com/us/support/computers-tablets-handhelds-security-updates/
 https://new.siemens.com/global/en/products/services/cert.html#SecurityPublications/
 https://nifi.apache.org/security.html/
@@ -437,6 +438,7 @@ https://www.42gears.com/security-and-compliance/
 https://www.absolute.com/platform/security-information/vulnerability-archive/
 https://www.al-enterprise.com/en/search#t=resources&sort=relevancy&f:language=[en]&f:content-type=[Content%20Type%2FTechnical%20Documentation%2FSecurity%20advisory]/
 https://www.amd.com/en/corporate/product-security/
+https://www.amd.com/en/resources/product-security.html#security
 https://www.ami.com/security-center/
 https://www.anquanke.com/search?s=CVE/
 https://www.apache.org/security/projects.html/
@@ -459,6 +461,7 @@ https://www.bentley.com/legal/common-vulnerability-exposure-program/
 https://www.beyondsecurity.com/resources/vulnerabilities/
 https://www.bitdefender.com/support/security-advisories/
 https://www.blacklanternsecurity.com/cves.html/
+https://www.bluetooth.com/learn-about-bluetooth/key-attributes/bluetooth-security/reporting-security/
 https://www.boschsecurity.com/xc/en/support/product-security/security-advisories.html/
 https://www.broadcom.com/support/fibre-channel-networking/security-advisories/
 https://www.broadcom.com/support/security-center/definitions?pid=5aa80d2f72a8e/
@@ -506,15 +509,18 @@ https://www.esri.com/arcgis-blog/?s=#&tag=cve/
 https://www.esri.com/arcgis-blog/?s=#&tag=cve&tag=security/
 https://www.facebook.com/security/
 https://www.fastly.com/security-advisories/
+https://www.festo.com/us/en/search/?tab=SUPPORT_PORTAL&q=FestoSecurityAdvisory&documentTypeGroup=EXPERT_KNOWLEDGE&documentTypes=&supportPortalQ=
 https://www.forescout.com/blog/
 https://www.fortiguard.com/psirt/
 https://www.foxit.com/support/security-bulletins.html/
+https://www.frauscher.com/en/psirt
 https://www.freebsd.org/
 https://www.freebsd.org/security/advisories/
 https://www.ge.com/gas-power/products/digital-and-controls/cybersecurity/security-advisories/
 https://www.gehealthcare.com/security/
 https://www.ghostccamm.com/blog/
 https://www.global.toshiba/ww/cybersecurity/corporate/psirt.html/
+https://www.gov.il/en/Departments/faq/cve_advisories
 https://www.gov.il/en/departments/faq/cve_advisories/
 https://www.greenrocketsecurity.com/resources/security-updates/
 https://www.hanwhavision.com/en/support/cybersecurity/
@@ -592,6 +598,7 @@ https://www.papercut.com/search/?q=CVE/
 https://www.pega.com/trust/security-bulletins/
 https://www.philips.com/a-w/security/security-advisories/
 https://www.phoenix.com/product-security/
+https://www.phoenixcontact.com/en-pc/psirt
 https://www.php.net/ChangeLog-7.php/
 https://www.postgresql.org/support/security/
 https://www.productsecurity.jnj.com/advisories.html/
@@ -656,6 +663,7 @@ https://www.tibco.com/services/support/advisories/
 https://www.tigera.io/security-bulletins/
 https://www.tp-link.com/us/press/security-advisory/
 https://www.trendmicro.com/vinfo/us/threat-encyclopedia/vulnerability/notable-vulnerabilities-advisories/
+https://www.trumpf.com/en_US/meta/security-with-trumpf/security-advisories/
 https://www.trustwave.com/en-us/resources/blogs/spiderlabs-blog/
 https://www.twcert.org.tw/en/lp-139-2.html/
 https://www.uipath.com/legal/trust-and-security/security-advisories/
@@ -671,6 +679,7 @@ https://www.watchguard.com/wgrd-psirt/advisories/
 https://www.welivesecurity.com/papers/threat-reports/
 https://www.westerndigital.com/support/productsecurity/
 https://www.whatsapp.com/security/advisories/
+https://www.wibu.com/support/security-advisories.html
 https://www.wibu.com/us/support/security-advisories.html/
 https://www.wireshark.org/security/
 https://www.withsecure.com/en/support/security-advisories/
