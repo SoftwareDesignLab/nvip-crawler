@@ -4,6 +4,7 @@ http://support.zte.com.cn/support/news/NewsMain.aspx/
 http://svn.apache.org/viewvc/tomcat/site/trunk/docs/?pathrev=1907857/
 http://www.slackware.com/security/
 http://www.squid-cache.org/Advisories/
+http://xenbits.xen.org/xsa/
 https://about.gitea.com/security/
 https://access.redhat.com/security/security-updates/#/cve/
 https://access.redhat.com/security/security-updates/#/security-advisories/
@@ -336,7 +337,6 @@ https://search-guard.com/cve-advisory/
 https://sec-consult.com/vulnerability-lab/
 https://sec.cloudapps.cisco.com/security/center/publicationListing.x/
 https://sec.cloudapps.cisco.com/security/center/resources/security_vulnerability_policy.html#sa/
-https://seclists.org/oss-sec/
 https://security-advisory.acronis.com/advisories/
 https://security-tracker.debian.org/tracker/
 https://security.business.xerox.com/en-us/documents/bulletins/
@@ -413,7 +413,7 @@ https://syncope.apache.org/security/
 https://tailscale.com/security-bulletins/
 https://takeonme.org/cve.html/
 https://talosintelligence.com/vulnerability_reports/
-https://tomcat.apache.org/security/
+https://tomcat.apache.org/security-jk.html
 https://trust.mi.com/misrc/bulletins?tab=advisory/
 https://trust.okta.com/security-advisories/
 https://trust.zscaler.com/security-advisories/
