@@ -35,7 +35,7 @@ import java.net.URL;
 /**
  * HTML parser for redhat web pages
  */
-public class RedhatParser extends FixParser{
+public class RedhatParser extends FixParser {
     protected RedhatParser(String cveId, String url){
         super(cveId, url);
     }
@@ -50,9 +50,15 @@ public class RedhatParser extends FixParser{
      */
     @Override
     public List<Fix> parse(){
+        // Init fixes list
         this.fixes = new ArrayList<>();
 
-        RedhatParser parser;
+        // Delegate to correct sub-parser
+        // Parser : URL
+        // RedhatSolutionsParser : <url>
+        // RedhatBugzillaParser : <url>
+        // RedhatSecurityParser : <url>
+        final RedhatParser parser;
         if (url.contains("/solutions/") || url.contains("bugzilla.")) {
             if (url.contains("/solutions/")){
                 parser = new RedhatSolutionsParser(cveId, url);

@@ -95,10 +95,7 @@ public class GenericParser extends FixParser {
                     filterDescriptionElements(descriptionElements);
 
                     // Concatenate remaining element texts
-                    final StringBuilder fixDescription = new StringBuilder();
-                    for (Element selectedElement : descriptionElements) {
-                        fixDescription.append(selectedElement.text()).append(" ");
-                    }
+                    final String fixDescription = String.join(" ", descriptionElements.eachText());
 
                     // If data was found, store in a new Fix object and add to list of found fixes
                     if(fixDescription.length() > 0)
