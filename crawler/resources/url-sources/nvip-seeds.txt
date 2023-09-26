@@ -92,7 +92,7 @@ https://danrevah.github.io/
 https://developer.arm.com/Arm%20Security%20Center/
 https://developer.joomla.org/security-centre.html/
 https://developers.ibexa.co/security-advisories/
-https://device.harmonyos.com/en/docs/security/update/security-bulletins-overview-0000001155006471/
+https://device.harmonyos.com/en/docs/security/update/security-bulletins-overview-0000001155006471
 https://devolutions.net/security/advisories/
 https://dhis2.org/security/vulnerabilities/
 https://discuss.elastic.co/c/announcements/security-announcements/31/
@@ -129,6 +129,7 @@ https://erpnext.com/security/references/
 https://evs.com/services/cyber-security/security-bulletins/
 https://excellium-services.com/cert-xlm-advisory/
 https://fluidattacks.com/advisories/
+https://forums.ivanti.com/s/searchallcontent?language=en_US#t=All&sort=date%20descending&f:@sfkbknowledgearticletypec=[Security%20Advisory]
 https://friends-of-presta.github.io/security-advisories/
 https://gitbook.seguranca-informatica.pt/cve-and-exploits/cves/chiyu-iot-devices/
 https://gitee.com/opengauss/security/issues?assignee_id=&author_id=&branch=&collaborator_ids=&issue_search=&label_ids=&label_text=&milestone_id=&priority=&private_issue=&program_id=&project_type=&scope=&single_label_id=&single_label_text=&sort=&state=all&target_project=
