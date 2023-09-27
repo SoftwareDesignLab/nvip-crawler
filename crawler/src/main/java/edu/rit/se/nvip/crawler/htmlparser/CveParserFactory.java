@@ -40,30 +40,30 @@ public class CveParserFactory {
 			return new NullParser();
 		}
 
-		if (sPageUrl.contains("https://github.com/advisories/"))
-			return new GitHubAdvisoryParser("github", driver);
+		if (sPageUrl.contains("https://github.com/advisories/") || sPageUrl.contains("github.com/advisories"))
+			return new GitHubAdvisoryParser(driver);
 
 		if (sPageUrl.contains("tenable.com") && !sPageUrl.contains("blog")) {
 			if (sPageUrl.contains("security"))
-				return new TenableSecurityParser("tenable");
+				return new TenableSecurityParser();
 			else
-				return new TenableCveParser("tenable");
+				return new TenableCveParser();
 		}
 		else if (sPageUrl.contains("exploit-db") && sPageUrl.contains("exploits"))
-			return new ExploitDBParser("exploit-db");
+			return new ExploitDBParser();
 		else if (sPageUrl.contains("kb.cert"))
-			return new KbCertCveParser("kb.cert");
+			return new KbCertCveParser();
 		else if (sPageUrl.contains("packetstorm"))
-			return new PacketStormParser("packetstorm");
+			return new PacketStormParser();
 		else if (sPageUrl.contains("talosintelligence"))
-			return new TalosIntelligenceParser("talosintelligence");
+			return new TalosIntelligenceParser();
 
 		// all gentoo pages in this if statement
 		else if (sPageUrl.contains("gentoo")) {
 			if (sPageUrl.contains("bugs"))
-				return new BugsGentooParser("gentoo");
+				return new BugsGentooParser();
 			else if (sPageUrl.contains("security"))
-				return new SecurityGentooParser("gentoo");
+				return new SecurityGentooParser();
 			else if (sPageUrl.contains("news"))
 				return new NullParser();
 			else if (sPageUrl.contains("blogs"))
@@ -72,91 +72,89 @@ public class CveParserFactory {
 				return new GenericCveParser("nat_available", driver);
 		}
 		else if (sPageUrl.contains("vmware") && sPageUrl.contains("advisories"))
-			return new VMWareAdvisoriesParser("vmware");
+			return new VMWareAdvisoriesParser();
 		else if (sPageUrl.contains("bugzilla"))
-			return new BugzillaParser("bugzilla");
+			return new BugzillaParser();
 		else if (sPageUrl.contains("anquanke"))
-			return new AnquankeParser("anquanke");
+			return new AnquankeParser();
 		else if (sPageUrl.contains("seclists"))
-			return new SeclistsParser("seclists");
+			return new SeclistsParser();
 		else if (sPageUrl.contains("redhat") && sPageUrl.contains("security")) {
 			if (sPageUrl.contains("security-updates"))
-				return new SecurityRedHatParser("redhat");
+				return new SecurityRedHatParser();
 			else if (sPageUrl.contains("cve"))
-				return new RedHatParser("redhat");
+				return new RedHatParser();
 		}
 		else if (sPageUrl.contains("bosch") && sPageUrl.contains("security-advisories"))
-			return new BoschSecurityParser("bosch");
+			return new BoschSecurityParser();
 		else if (sPageUrl.contains("cloud.google") && sPageUrl.contains("bulletins"))
-			return new GoogleCloudParser("google");
+			return new GoogleCloudParser();
 		else if (sPageUrl.contains("atlassian"))
-			return new AtlassianParser("atlassian");
+			return new AtlassianParser();
 		else if (sPageUrl.contains("mend.io"))
-			return new MendParser("mend.io");
+			return new MendParser();
 		else if (sPageUrl.contains("autodesk"))
-			return new AutodeskParser("autodesk");
+			return new AutodeskParser();
 		else if (sPageUrl.contains("jenkins.io"))
-			return new JenkinsParser("jenkins.io");
+			return new JenkinsParser();
 		else if (sPageUrl.contains("coresecurity"))
-			return new CoreParser("coresecurity");
+			return new CoreParser();
 		else if (sPageUrl.contains("mozilla"))
-			return new MozillaParser("mozilla");
+			return new MozillaParser();
 		else if (sPageUrl.contains("intel"))
-			return new IntelParser("intel");
+			return new IntelParser();
 		else if (sPageUrl.contains("msrc"))
-			return new MicrosoftParser("msrc");
+			return new MicrosoftParser();
 		else if (sPageUrl.contains("trustwave"))
-			return new TrustWaveParser("trustwave");
+			return new TrustWaveParser();
 		else if (sPageUrl.contains("zerodayinitiative"))
 			return new TrendMicroParser("zerodayinitiative");
 		else if (sPageUrl.contains("tibco"))
-			return new TibcoParser("tibco");
+			return new TibcoParser();
 		else if (sPageUrl.contains("android"))
-			return new AndroidParser("android");
+			return new AndroidParser();
 		else if (sPageUrl.contains("huntr"))
-			return new HuntrParser("huntr");
+			return new HuntrParser();
 		else if (sPageUrl.contains("jvn"))
-			return new JVNParser("jvn");
-		else if (sPageUrl.contains("github.com/advisories"))
-			return new GitHubAdvisoryParser("github.com/advisories", driver);
+			return new JVNParser();
 		else if (sPageUrl.contains("curl"))
-			return new CurlParser("curl");
+			return new CurlParser();
 		else if (sPageUrl.contains("snyk.io"))
-			return new SnykParser("snyk.io");
+			return new SnykParser();
 		else if (sPageUrl.contains("acronis"))
-			return new AcronisParser("acronis");
+			return new AcronisParser();
 		else if (sPageUrl.contains("veritas"))
-			return new VeritasParser("veritas");
+			return new VeritasParser();
 		else if (sPageUrl.contains("adobe"))
-			return new AdobeParser("adobe");
+			return new AdobeParser();
 		else if (sPageUrl.contains("aliasrobotics"))
-			return new AliasRoboParser("aliasrobotics");
+			return new AliasRoboParser();
 		else if (sPageUrl.contains("amperecomputing.com/products/product-security"))
-			return new AmpereRootParser("amperecomputing.com/products/product-security");
+			return new AmpereRootParser();
 		else if (sPageUrl.contains("arubanetworks"))
-			return new ArubaParser("arubanetworks");
+			return new ArubaParser();
 		else if (sPageUrl.contains("cybersecurityworks"))
-			return new ZeroDaysParser("cybersecurityworks");
+			return new ZeroDaysParser();
 		else if (sPageUrl.contains("dragos"))
-			return new DragosParser("dragos");
+			return new DragosParser();
 		else if (sPageUrl.contains("cyberark"))
-			return new CyberArkRootParser("cyberark");
+			return new CyberArkRootParser();
 		else if (sPageUrl.contains("dotcms"))
-			return new DotCMSParser("dotcms");
+			return new DotCMSParser();
 		else if (sPageUrl.contains("pandorafms"))
-			return new PandoraFMSRootParser("pandorafms");
+			return new PandoraFMSRootParser();
 		else if (sPageUrl.contains("libreoffice"))
-			return new LibreOfficeParser("libreoffice");
+			return new LibreOfficeParser();
 		else if (sPageUrl.contains("samba.org"))
-			return new SambaParser("samba.org");
+			return new SambaParser();
 		else if (sPageUrl.contains("asustor"))
-			return new AsustorParser("asustor");
+			return new AsustorParser();
 		else if (sPageUrl.contains("abb.com"))
-			return new ABBParser("abb.com");
+			return new ABBParser();
 		else if (sPageUrl.contains("eaton"))
-			return new EatonParser("eaton");
+			return new EatonParser();
 		else if (sPageUrl.contains("arista"))
-			return new AristaParser("arista");
+			return new AristaParser();
 		else if (sPageUrl.contains("nvidia"))
 			return new ParseTable("nvidia", driver);
 

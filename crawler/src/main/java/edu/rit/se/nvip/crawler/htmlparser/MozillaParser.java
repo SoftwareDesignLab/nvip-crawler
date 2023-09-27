@@ -35,6 +35,11 @@ import java.time.LocalDate;
 
 public class MozillaParser extends AbstractCveParser {
 
+    public static final String DOMAIN_NAME = "mozilla";
+
+    public MozillaParser() {
+        sourceDomainName = DOMAIN_NAME;
+    }
 
     /**
      * Parse advisories listed to mozilla.org/en-US/security/advisories

@@ -44,7 +44,12 @@ import java.util.Set;
  *
  */
 public class PacketStormParser extends AbstractCveParser {
-	
+	public static final String DOMAIN_NAME = "packetstorm";
+
+	public PacketStormParser(){
+		sourceDomainName = DOMAIN_NAME;
+	}
+
 	public PacketStormParser(String domainName) {
 		sourceDomainName = domainName;
 	}

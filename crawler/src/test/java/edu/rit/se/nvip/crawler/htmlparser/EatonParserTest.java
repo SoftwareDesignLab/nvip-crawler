@@ -9,11 +9,13 @@ import static junit.framework.TestCase.*;
 
 public class EatonParserTest extends AbstractParserTest {
 
+    EatonParser parser = new EatonParser();
+
     @Test
     public void testEatonDownloadAndParse() {
         String html = safeReadHtml("src/test/resources/test-eaton.html");
 //        String html = QuickCveCrawler.getContentFromDynamicPage("https://www.eaton.com/content/dam/eaton/company/news-insights/cybersecurity/security-bulletins/wibu-systems-ag-codemeter-vulnerabilities-eaton-security-bulletin.pdf", null);
-        List<RawVulnerability> list = crawler.parseWebPage(
+        List<RawVulnerability> list = parser.parseWebPage(
                 "https://www.eaton.com/content/dam/eaton/company/news-insights/cybersecurity/security-bulletins/wibu-systems-ag-codemeter-vulnerabilities-eaton-security-bulletin.pdf",
                 html
         );

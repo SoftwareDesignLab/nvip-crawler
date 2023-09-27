@@ -23,41 +23,39 @@
  */
 package edu.rit.se.nvip.crawler.htmlparser;
 
-import edu.rit.se.nvip.crawler.CveCrawler;
 import edu.rit.se.nvip.model.RawVulnerability;
 import edu.rit.se.nvip.crawler.SeleniumDriver;
 
-import org.junit.Test;
-import org.junit.BeforeClass;
-import org.junit.AfterClass;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
-import java.util.ArrayList;
 
-import static junit.framework.TestCase.assertTrue;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 /**
  * Test RedHat Parser
  */
+@ExtendWith(MockitoExtension.class)
 public class RedHatParserTest extends AbstractParserTest {
-    static SeleniumDriver driver;
 
-    @BeforeClass
-    public static void setupWebDriver(){
-        driver = new SeleniumDriver();
-    }
+	@Mock SeleniumDriver driver;
 
-    @AfterClass
-    public static void destroyWebDriver(){
-        if(driver != null) driver.tryDiverQuit();
-    }
+	@InjectMocks RedHatParser parser = new RedHatParser();
 
 	@Test
 	public void testRedHat() {
-		RedHatParser parser = new RedHatParser("redhat");
+		String html = safeReadHtml("src/test/resources/test-redhat-security-3.html");
 
-		String html = parser.grabDynamicHTML("https://access.redhat.com/security/cve/cve-2023-25725", driver);
+		when(driver.tryPageGet("https://access.redhat.com/security/cve/cve-2023-25725"))
+				.thenReturn(html);
+
+		html = parser.grabDynamicHTML("https://access.redhat.com/security/cve/cve-2023-25725", driver);
 
 		List<RawVulnerability> list = parser.parseWebPage("https://access.redhat.com/security/cve/cve-2023-25725", html);
 

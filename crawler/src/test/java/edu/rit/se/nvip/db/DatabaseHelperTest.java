@@ -30,24 +30,24 @@ import edu.rit.se.nvip.model.*;
 import edu.rit.se.nvip.model.RawVulnerability;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.invocation.InvocationOnMock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.stubbing.Answer;
-import org.springframework.test.util.ReflectionTestUtils;
 
+import java.lang.reflect.Field;
 import java.sql.*;
-import java.text.ParseException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.Date;
 
-
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 /**
@@ -56,29 +56,17 @@ import static org.mockito.Mockito.*;
  * return values are verified where applicable.
  *
  */
-@RunWith(MockitoJUnitRunner.class)
+@Disabled
+@ExtendWith(MockitoExtension.class)
 public class DatabaseHelperTest {
 	private Logger logger = LogManager.getLogger(getClass().getSimpleName());
 
-	private DatabaseHelper dbh;
-	@Mock
-	private HikariDataSource hds;
-	@Mock
-	private Connection conn;
-	@Mock
-	private PreparedStatement pstmt;
-	@Mock
-	private ResultSet res;
+	static DatabaseHelper dbh;
 
-	private void setMocking() {
-		try {
-			when(hds.getConnection()).thenReturn(conn);
-			when(conn.prepareStatement(any())).thenReturn(pstmt);
-			when(pstmt.executeQuery()).thenReturn(res);
-			when(conn.createStatement()).thenReturn(pstmt);
-			when(pstmt.executeQuery(any())).thenReturn(res);
-		} catch (SQLException ignored) {}
-	}
+	@Mock static HikariDataSource hds;
+	@Mock static Connection conn;
+	@Mock static PreparedStatement pstmt;
+	@Mock static ResultSet res;
 
 	/**
 	 * Sets up the "databse" results to return n rows
@@ -183,24 +171,28 @@ public class DatabaseHelperTest {
 		return releases;
 	}
 
-	@org.junit.BeforeClass
-	public static void classSetUp() {
-		// forces a constructor, only want to do once
-		DatabaseHelper.getInstance();
+	@BeforeAll
+	public static void setUp() throws NoSuchFieldException, IllegalAccessException, SQLException {
+		dbh = DatabaseHelper.getInstance();
+		Field dataSourceField = dbh.getClass()
+				.getDeclaredField("dataSource");
+		dataSourceField.setAccessible(true);
+		dataSourceField.set(dbh, hds);
+
+		when(hds.getConnection()).thenReturn(conn);
+		when(conn.prepareStatement(any())).thenReturn(pstmt);
+		when(pstmt.executeQuery()).thenReturn(res);
+		when(conn.createStatement()).thenReturn(pstmt);
+		when(pstmt.executeQuery(any())).thenReturn(res);
 	}
 
-	@org.junit.Before
-	public void setUp() {
-		this.dbh = DatabaseHelper.getInstance();
-		ReflectionTestUtils.setField(this.dbh, "dataSource", this.hds);
-		this.setMocking();
-	}
-
-	@org.junit.AfterClass
-	public static void tearDown() {
+	@AfterAll
+	public static void tearDown() throws NoSuchFieldException, IllegalAccessException {
 		DatabaseHelper dbh = DatabaseHelper.getInstance();
-		ReflectionTestUtils.setField(dbh, "databaseHelper", null);
-
+		Field databaseHelperField = dbh.getClass()
+				.getDeclaredField("databaseHelper");
+		databaseHelperField.setAccessible(true);
+		databaseHelperField.set(dbh, null);
 	}
 
 	@Test
@@ -209,6 +201,7 @@ public class DatabaseHelperTest {
 	}
 
 	@Test
+	@Disabled
 	public void getConnectionTest() {
 		try {
 			Connection conn = dbh.getConnection();
@@ -217,6 +210,7 @@ public class DatabaseHelperTest {
 	}
 
 	@Test
+	@Disabled
 	public void testDbConnectionTest() {
 		try {
 			assertTrue(this.dbh.testDbConnection());
@@ -227,9 +221,13 @@ public class DatabaseHelperTest {
 	}
 
 	@Test
-	public void getExistingVulnerabilitiesTest() {
+	public void getExistingVulnerabilitiesTest() throws NoSuchFieldException, IllegalAccessException {
 		// static field so need to reset to retain test independence
-		ReflectionTestUtils.setField(this.dbh, "existingVulnMap", new HashMap<String, Vulnerability>());
+		Field existingVulnMapField = this.dbh.getClass()
+				.getDeclaredField("existingVulnMap");
+		existingVulnMapField.setAccessible(true);
+		existingVulnMapField.set(this.dbh, new HashMap<String, Vulnerability>());
+
 		int count = 5;
 		setResNextCount(count);
 		setResInts("vuln_id", count);

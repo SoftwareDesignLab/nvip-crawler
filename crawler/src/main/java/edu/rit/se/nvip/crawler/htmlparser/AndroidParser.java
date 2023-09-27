@@ -34,6 +34,12 @@ import java.util.List;
 
 public class AndroidParser extends AbstractCveParser {
 
+    public static final String DOMAIN_NAME = "android";
+
+    public AndroidParser() {
+        sourceDomainName = DOMAIN_NAME;
+    }
+
     /**
      * Parse bulletins listed to source.android.com/docs/security/bulletin/
      * @param domainName - android domain

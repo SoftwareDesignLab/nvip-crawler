@@ -35,6 +35,16 @@ import java.util.List;
 
 public class AcronisParser extends AbstractCveParser {
 
+    public static final String DOMAIN_NAME = "acronis";
+
+    /**
+     * Parse advisories listed to security-advisory.acronis.com/advisories
+     * @param domainName - acronis domain
+     */
+    public AcronisParser() {
+        sourceDomainName = AcronisParser.DOMAIN_NAME;
+    }
+
     /**
      * Parse advisories listed to security-advisory.acronis.com/advisories
      * @param domainName - acronis domain

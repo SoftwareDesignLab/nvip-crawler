@@ -34,6 +34,12 @@ import java.util.List;
 
 public class SnykParser extends AbstractCveParser {
 
+    public static final String DOMAIN_NAME = "snyk.io";
+
+    public SnykParser() {
+        sourceDomainName = DOMAIN_NAME;
+    }
+
     /**
      * Parse advisories listed to security.snyk.io/vuln/3
      * @param domainName - snyk domain

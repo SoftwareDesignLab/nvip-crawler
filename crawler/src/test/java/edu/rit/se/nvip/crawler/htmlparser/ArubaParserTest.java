@@ -33,10 +33,12 @@ import static junit.framework.TestCase.assertFalse;
 
 public class ArubaParserTest extends AbstractParserTest {
 
+    ArubaParser parser = new ArubaParser();
+
     @Test
     public void testArubaSingle() {
         String html = safeReadHtml("src/test/resources/test-aruba-single.html");
-        List<RawVulnerability> list = crawler.parseWebPage(
+        List<RawVulnerability> list = parser.parseWebPage(
                 "https://www.arubanetworks.com/assets/alert/ARUBA-PSA-2022-011.txt",
                 html
         );
@@ -52,7 +54,7 @@ public class ArubaParserTest extends AbstractParserTest {
     @Test
     public void testArubaMultiple() {
         String html = safeReadHtml("src/test/resources/test-aruba-multiple.html");
-        List<RawVulnerability> list = crawler.parseWebPage(
+        List<RawVulnerability> list = parser.parseWebPage(
                 "https://www.arubanetworks.com/assets/alert/ARUBA-PSA-2023-003.txt",
                 html
         );

@@ -10,10 +10,12 @@ import static junit.framework.TestCase.assertTrue;
 
 public class ABBParserTest extends AbstractParserTest {
 
+    ABBParser parser = new ABBParser();
+
     @Test
     public void testABBDownloadAndParse() {
         String html = safeReadHtml("src/test/resources/test-abb.html");
-        List<RawVulnerability> list = crawler.parseWebPage(
+        List<RawVulnerability> list = parser.parseWebPage(
                 "https://search.abb.com/library/Download.aspx?DocumentID=7PAA007893&LanguageCode=en&DocumentPartId=&Action=Launch",
                 html
         );

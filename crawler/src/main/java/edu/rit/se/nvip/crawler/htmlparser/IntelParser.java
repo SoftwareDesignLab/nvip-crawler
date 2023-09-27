@@ -34,6 +34,12 @@ import java.util.List;
 
 public class IntelParser extends AbstractCveParser {
 
+    public static final String DOMAIN_NAME = "intel";
+
+    public IntelParser() {
+        sourceDomainName = DOMAIN_NAME;
+    }
+
     /**
      * Parse advisories listed to intel.com/content/www/us/en/security-center/default.html
      * Ex: <a href="https://www.intel.com/content/www/us/en/security-center/advisory/intel-sa-00714.html">...</a>

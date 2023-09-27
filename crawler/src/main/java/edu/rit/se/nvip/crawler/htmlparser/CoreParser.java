@@ -36,6 +36,12 @@ import java.util.Set;
 
 public class CoreParser extends AbstractCveParser {
 
+    public static final String DOMAIN_NAME = "coresecurity";
+
+    public CoreParser() {
+        sourceDomainName = DOMAIN_NAME;
+    }
+
     /**
      * Parse advisories listed to coresecurity.com/core-labs/advisories
      * Ex: <a href="https://www.coresecurity.com/core-labs/advisories/pydio-cells-204-multiple-vulnerabilities">...</a>

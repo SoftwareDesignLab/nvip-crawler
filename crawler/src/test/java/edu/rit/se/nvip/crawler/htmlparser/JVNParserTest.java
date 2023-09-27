@@ -33,10 +33,12 @@ import static org.junit.Assert.*;
 
 public class JVNParserTest extends AbstractParserTest {
 
+    JVNParser parser = new JVNParser();
+
     @Test
     public void testJVN1() {
         String html = safeReadHtml("src/test/resources/test-jvn-1.html");
-        List<RawVulnerability> list = crawler.parseWebPage(
+        List<RawVulnerability> list = parser.parseWebPage(
                 "https://jvn.jp/jp/JVN11257333/index.html",
                 html
         );
@@ -54,7 +56,7 @@ public class JVNParserTest extends AbstractParserTest {
     @Test
     public void testJVN2() {
         String html = safeReadHtml("src/test/resources/test-jvn-2.html");
-        List<RawVulnerability> list = crawler.parseWebPage(
+        List<RawVulnerability> list = parser.parseWebPage(
                 "https://jvn.jp/vu/JVNVU99322074/index.html",
                 html
         );
@@ -72,7 +74,7 @@ public class JVNParserTest extends AbstractParserTest {
     @Test
     public void testJVN3() {
         String html = safeReadHtml("src/test/resources/test-jvn-3.html");
-        List<RawVulnerability> list = crawler.parseWebPage(
+        List<RawVulnerability> list = parser.parseWebPage(
                 "https://jvn.jp/vu/JVNVU90224831/index.html",
                 html
         );

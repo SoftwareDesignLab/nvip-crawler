@@ -8,10 +8,13 @@ import java.util.List;
 import static junit.framework.TestCase.*;
 
 public class PandoraFMSParserTest extends AbstractParserTest {
+
+    PandoraFMSRootParser parser = new PandoraFMSRootParser();
+
     @Test
     public void testPandoraFMSParser() {
         String html = safeReadHtml("src/test/resources/test-pandorafms.html");
-        List<RawVulnerability> list = crawler.parseWebPage(
+        List<RawVulnerability> list = parser.parseWebPage(
                 "https://pandorafms.com/en/security/common-vulnerabilities-and-exposures/",
                 html
         );

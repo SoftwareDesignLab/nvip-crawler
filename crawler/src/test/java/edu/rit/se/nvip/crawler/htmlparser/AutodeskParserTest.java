@@ -23,27 +23,29 @@
  */
 package edu.rit.se.nvip.crawler.htmlparser;
 
-import edu.rit.se.nvip.crawler.CveCrawler;
 import edu.rit.se.nvip.model.RawVulnerability;
 import edu.rit.se.nvip.crawler.SeleniumDriver;
 
-import org.junit.Test;
-import org.junit.BeforeClass;
-import org.junit.AfterClass;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
-import java.util.ArrayList;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
+
+@ExtendWith(MockitoExtension.class)
 public class AutodeskParserTest extends AbstractParserTest{
-    static SeleniumDriver driver;
+
+    @Mock static SeleniumDriver driver;
+
+    AutodeskParser parser = new AutodeskParser();
 
     @Test
     public void testAutodesk() {
-        AutodeskParser parser  = new AutodeskParser("autodesk");
-        String html = parser.grabDynamicHTML("https://autodesk.com/trust/security-advisories/adsk-sa-2022-0017", driver);
-        // String html = safeReadHtml("src/test/resources/test-autodesk-table-multi.html");
+        String html = safeReadHtml("src/test/resources/test-autodesk-table-multi.html");
         List<RawVulnerability> list = parser.parseWebPage("autodesk", html);
         assertEquals(18, list.size());
         RawVulnerability vuln = getVulnerability(list, "CVE-2021-45960");
@@ -61,7 +63,7 @@ public class AutodeskParserTest extends AbstractParserTest{
     @Test
     public void testAutodeskMulti() {
         String html = safeReadHtml("src/test/resources/test-autodesk-multi-desc.html");
-        List<RawVulnerability> list = new AutodeskParser("autodesk").parseWebPage("autodesk", html);
+        List<RawVulnerability> list = parser.parseWebPage("autodesk", html);
         assertEquals(4, list.size());
         RawVulnerability vuln = getVulnerability(list, "CVE-2022-33890");
         assertNotNull(vuln);
@@ -70,15 +72,4 @@ public class AutodeskParserTest extends AbstractParserTest{
         assertEquals("2022-12-14 00:00:00", vuln.getPublishDate());
         assertEquals("2022-12-14 00:00:00", vuln.getLastModifiedDate());
     }
-
-    @BeforeClass
-    public static void setupWebDriver(){
-        driver = new SeleniumDriver();
-    }
-
-    @AfterClass
-    public static void destroyWebDriver(){
-        if(driver != null) driver.tryDiverQuit();
-    }
-
 }

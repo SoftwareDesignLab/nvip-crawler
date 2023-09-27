@@ -13,6 +13,12 @@ import java.util.Set;
 
 public class AsustorParser extends AbstractCveParser {
 
+    public static final String DOMAIN_NAME = "asustor";
+
+    public AsustorParser() {
+        sourceDomainName = DOMAIN_NAME;
+    }
+
     /**
      * Parse advisories listed to asustor.com/security/security_advisory
      * @param domainName - asustor.com domain,

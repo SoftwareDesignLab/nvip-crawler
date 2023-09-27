@@ -11,6 +11,12 @@ import java.util.List;
 
 public class SambaParser extends AbstractCveParser {
 
+    public static final String DOMAIN_NAME = "samba.org";
+
+    public SambaParser() {
+        sourceDomainName = DOMAIN_NAME;
+    }
+
     /**
      * Parse advisories in announcements column
      * listed to samba.org/samba/history/security.html

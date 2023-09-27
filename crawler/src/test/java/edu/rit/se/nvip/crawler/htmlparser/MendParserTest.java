@@ -37,28 +37,18 @@ import java.util.List;
 import java.util.ArrayList;
 
 import static junit.framework.TestCase.*;
+import static org.mockito.Mockito.*;
 
 /**
  * Test MendParser, verify proper CVE extraction
  */
 public class MendParserTest extends AbstractParserTest{
-    static SeleniumDriver driver;
-
-    @BeforeClass
-    public static void setupWebDriver(){
-        driver = new SeleniumDriver();
-    }
-
-    @AfterClass
-    public static void destroyWebDriver(){
-        if(driver != null) driver.tryDiverQuit();
-    }
+    MendParser parser = new MendParser();
 
     @Test
     public void testMend() {
-        CveCrawler crawler = getCrawler();
         String html = safeReadHtml("src/test/resources/test-mend.html");
-        List<RawVulnerability> list = crawler.parseWebPage(
+        List<RawVulnerability> list = parser.parseWebPage(
                 "https://www.mend.io/vulnerability-database/CVE-2023-22736",
                 html
         );
@@ -70,13 +60,11 @@ public class MendParserTest extends AbstractParserTest{
     }
 
     @Test
-    public void testMend2() {
-        MendParser parser = new MendParser("mend");
-        String html = parser.grabDynamicHTML("https://www.mend.io/vulnerability-database/CVE-2013-6646", driver);
-        List<RawVulnerability> list = new MendParser("mend").parseWebPage(
-                "https://www.mend.io/vulnerability-database/CVE-2013-6646",
-                html
-        );
-        assertEquals(1, list.size());
+    public void testGrabDynamicHTML() {
+        SeleniumDriver seleniumDriver = mock(SeleniumDriver.class);
+
+        parser.grabDynamicHTML("https://www.mend.io/vulnerability-database/CVE-2013-6646", seleniumDriver);
+
+        verify(seleniumDriver).tryPageGet("https://www.mend.io/vulnerability-database/CVE-2013-6646");
     }
 }

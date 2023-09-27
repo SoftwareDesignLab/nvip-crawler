@@ -11,6 +11,12 @@ import java.util.regex.Pattern;
 
 public class EatonParser extends AbstractCveParser {
 
+    public static final String DOMAIN_NAME = "eaton";
+
+    public EatonParser() {
+        sourceDomainName = DOMAIN_NAME;
+    }
+
     /**
      * parse advisories listed to eaton.com/us/en-us/company/news-insights/cybersecurity/security-notifications.html
      * @param domainName - eaton domain

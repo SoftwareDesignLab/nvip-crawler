@@ -9,11 +9,13 @@ import static junit.framework.TestCase.*;
 
 public class DragosParserTest extends AbstractParserTest {
 
+    DragosParser parser = new DragosParser();
+
     // test a dragos page where there are no CVE IDs available
     @Test
     public void testDragosNA() {
         String html = safeReadHtml("src/test/resources/test-dragos-na.html");
-        List<RawVulnerability> list = crawler.parseWebPage(
+        List<RawVulnerability> list = parser.parseWebPage(
                 "https://www.dragos.com/advisory/yokogawa-centum-vp-dcs-his/",
                 html
         );
@@ -23,7 +25,7 @@ public class DragosParserTest extends AbstractParserTest {
     @Test
     public void testDragosMultiple() {
         String html = safeReadHtml("src/test/resources/test-dragos-mult.html");
-        List<RawVulnerability> list = crawler.parseWebPage(
+        List<RawVulnerability> list = parser.parseWebPage(
                 "https://www.dragos.com/advisory/automation-directs-directlogic-06-plc-c-more-ea9-hmi-and-ecom-ethernet-module/",
                 html
         );

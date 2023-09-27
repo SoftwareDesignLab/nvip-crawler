@@ -9,10 +9,12 @@ import static junit.framework.TestCase.*;
 
 public class CyberArkParserTest extends AbstractParserTest {
 
+    CyberArkRootParser parser = new CyberArkRootParser();
+
     @Test
     public void testCyberArkRootParser() {
         String html = safeReadHtml("src/test/resources/test-cyberark.html");
-        List<RawVulnerability> list = crawler.parseWebPage(
+        List<RawVulnerability> list = parser.parseWebPage(
                 "https://labs.cyberark.com/cyberark-labs-security-advisories/",
                 html
         );

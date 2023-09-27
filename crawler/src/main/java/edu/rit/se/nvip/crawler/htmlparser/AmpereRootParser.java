@@ -35,6 +35,12 @@ import java.util.List;
 
 public class AmpereRootParser extends AbstractCveParser {
 
+    public static final String DOMAIN_NAME = "amperecomputing.com/products/product-security";
+
+    public AmpereRootParser() {
+        sourceDomainName = DOMAIN_NAME;
+    }
+
     /**
      * Parse bulletin table in ampere product security page
      * @param rootDomain - amperecomputing.com/products/product-security

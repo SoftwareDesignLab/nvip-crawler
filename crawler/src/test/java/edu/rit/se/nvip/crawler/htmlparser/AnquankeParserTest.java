@@ -11,10 +11,12 @@ import static org.junit.Assert.assertTrue;
 
 public class AnquankeParserTest extends AbstractParserTest {
 
+    AnquankeParser parser = new AnquankeParser();
+
     @Test
     public void testAnquankeParser() {
         String html = safeReadHtml("src/test/resources/test-anquanke.html");
-        List<RawVulnerability> list = crawler.parseWebPage(
+        List<RawVulnerability> list = parser.parseWebPage(
                 "https://www.anquanke.com/post/id/210200",
                 html
         );

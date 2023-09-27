@@ -25,6 +25,7 @@ package edu.rit.se.nvip.crawler.htmlparser;
 
 import edu.rit.se.nvip.crawler.CveCrawler;
 import edu.rit.se.nvip.model.RawVulnerability;
+import edu.rit.se.nvip.model.Vulnerability;
 import org.apache.commons.io.FileUtils;
 import org.junit.BeforeClass;
 import org.junit.AfterClass;
@@ -40,19 +41,6 @@ import java.util.List;
 import static org.junit.Assert.fail;
 
 public abstract class AbstractParserTest {
-
-    protected static CveCrawler crawler;
-
-    @BeforeClass
-    public static void crawlerInit() {
-        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss");
-        LocalDateTime now = LocalDateTime.now();
-        crawler = new CveCrawler(new ArrayList<>(), "output/crawlers/reports/report" + dtf.format(now) + ".txt");
-    }
-
-    protected CveCrawler getCrawler() {
-        return crawler;
-    }
 
     protected static String safeReadHtml(String path) {
         String html = null;
@@ -70,10 +58,5 @@ public abstract class AbstractParserTest {
             if (vuln.getCveId().equalsIgnoreCase(cveID))
                 return vuln;
         return null;
-    }
-
-    @AfterClass
-    public static void destroyCrawler(){
-        crawler.getSeleniumDriver().tryDiverQuit();
     }
 }

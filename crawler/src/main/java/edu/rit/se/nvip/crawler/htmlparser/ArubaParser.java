@@ -34,6 +34,12 @@ import java.util.Set;
 
 public class ArubaParser extends AbstractCveParser {
 
+    public static final String DOMAIN_NAME = "arubanetworks";
+
+    public ArubaParser() {
+        sourceDomainName = DOMAIN_NAME;
+    }
+
     /**
      * Parse text listed to Aruba bulletin arubanetworks.com/support-services/security-bulletins/
      * @param domainName - arubanetworks domain

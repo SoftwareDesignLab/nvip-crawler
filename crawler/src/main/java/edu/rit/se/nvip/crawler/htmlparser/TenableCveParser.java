@@ -49,6 +49,11 @@ import java.time.LocalDate;
 public class TenableCveParser extends AbstractCveParser {
 
 	private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
+	public static final String DOMAIN_NAME = "tenable";
+
+	public TenableCveParser() {
+		sourceDomainName = DOMAIN_NAME;
+	}
 
 	public TenableCveParser(String domainName) {
 		sourceDomainName = domainName;

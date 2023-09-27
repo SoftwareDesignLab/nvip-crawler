@@ -33,6 +33,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class CurlParserTest extends AbstractParserTest {
 
+    CurlParser parser = new CurlParser();
+
     @Test
     public void testCurl0() {
         //https://curl.se/docs/CVE-2023-23916.html
