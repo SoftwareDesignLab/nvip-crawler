@@ -92,7 +92,7 @@ https://danrevah.github.io/
 https://developer.arm.com/Arm%20Security%20Center/
 https://developer.joomla.org/security-centre.html/
 https://developers.ibexa.co/security-advisories/
-https://device.harmonyos.com/en/docs/security/update/security-bulletins-overview-0000001155006471
+https://device.harmonyos.com/en/docs/security/update/security-bulletins-overview-0000001155006471/
 https://devolutions.net/security/advisories/
 https://dhis2.org/security/vulnerabilities/
 https://discuss.elastic.co/c/announcements/security-announcements/31/
