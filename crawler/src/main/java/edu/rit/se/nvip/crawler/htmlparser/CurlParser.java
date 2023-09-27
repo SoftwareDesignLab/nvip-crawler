@@ -38,7 +38,13 @@ import java.time.LocalDate;
 
 public class CurlParser extends AbstractCveParser {
 
+    public static final String DOMAIN_NAME = "curl";
+
     private final SimpleDateFormat sdf_out = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+
+    public CurlParser() {
+        sourceDomainName = DOMAIN_NAME;
+    }
 
     public CurlParser(String domainName) {
         sourceDomainName = domainName;

@@ -23,17 +23,27 @@
  */
 package edu.rit.se.nvip.crawler.htmlparser;
 
+import edu.rit.se.nvip.crawler.SeleniumDriver;
 import edu.rit.se.nvip.model.RawVulnerability;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 
-import static junit.framework.TestCase.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.*;
 
+
+@ExtendWith(MockitoExtension.class)
 public class GitHubAdvisoryParserTest extends AbstractParserTest {
 
+    @Mock SeleniumDriver driver;
+
+    @InjectMocks
+    static GitHubAdvisoryParser parser;
 
     /**
      * Test page with 1 CVE and contains an Impact description section
@@ -41,7 +51,10 @@ public class GitHubAdvisoryParserTest extends AbstractParserTest {
     @Test
     public void testGitHubAdvisories1() {
         String html = safeReadHtml("src/test/resources/test-github-1.html");
-        List<RawVulnerability> list = crawler.parseWebPage(
+        when(driver.tryPageGet("https://github.com/advisories/GHSA-xm67-587q-r2vw"))
+                .thenReturn(html);
+
+        List<RawVulnerability> list = parser.parseWebPage(
                 "https://github.com/advisories/GHSA-xm67-587q-r2vw",
                 html
         );
@@ -60,7 +73,10 @@ public class GitHubAdvisoryParserTest extends AbstractParserTest {
     @Test
     public void testGitHubAdvisories2() {
         String html = safeReadHtml("src/test/resources/test-github-2.html");
-        List<RawVulnerability> list = crawler.parseWebPage(
+        when(driver.tryPageGet("https://github.com/advisories/GHSA-wxfj-84xf-7gxv"))
+                .thenReturn(html);
+
+        List<RawVulnerability> list = parser.parseWebPage(
                 "https://github.com/advisories/GHSA-wxfj-84xf-7gxv",
                 html
         );
@@ -78,7 +94,9 @@ public class GitHubAdvisoryParserTest extends AbstractParserTest {
     @Test
     public void testGitHubAdvisories3() {
         String html = safeReadHtml("src/test/resources/test-github-3.html");
-        List<RawVulnerability> list = crawler.parseWebPage(
+        when(driver.tryPageGet("https://github.com/advisories/GHSA-mrrw-grhq-86gf"))
+                .thenReturn(null);
+        List<RawVulnerability> list = parser.parseWebPage(
                 "https://github.com/advisories/GHSA-mrrw-grhq-86gf",
                 html
         );

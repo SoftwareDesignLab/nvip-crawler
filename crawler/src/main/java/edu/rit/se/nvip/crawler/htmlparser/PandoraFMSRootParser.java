@@ -11,6 +11,12 @@ import java.util.List;
 
 public class PandoraFMSRootParser extends AbstractCveParser {
 
+    public static final String DOMAIN_NAME = "pandorafms";
+
+    public PandoraFMSRootParser() {
+        sourceDomainName = DOMAIN_NAME;
+    }
+
     /**
      * Parse advisories listed to pandorafms.com/en/security/common-vulnerabilities-and-exposures/
      * @param domainName - pandorafms domain

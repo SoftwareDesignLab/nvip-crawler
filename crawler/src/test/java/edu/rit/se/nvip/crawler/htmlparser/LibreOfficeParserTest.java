@@ -9,10 +9,12 @@ import static junit.framework.TestCase.*;
 
 public class LibreOfficeParserTest extends AbstractParserTest {
 
+    LibreOfficeParser parser = new LibreOfficeParser();
+
     @Test
     public void testLibreOfficeParser() {
         String html = safeReadHtml("src/test/resources/test-libreoffice.html");
-        List<RawVulnerability> list = crawler.parseWebPage(
+        List<RawVulnerability> list = parser.parseWebPage(
                 "https://www.libreoffice.org/about-us/security/advisories/cve-2019-9850/",
                 html
         );

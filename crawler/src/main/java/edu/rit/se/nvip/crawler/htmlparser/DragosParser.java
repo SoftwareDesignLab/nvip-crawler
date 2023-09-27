@@ -10,6 +10,12 @@ import java.util.List;
 
 public class DragosParser extends AbstractCveParser {
 
+    public static final String DOMAIN_NAME = "dragos";
+
+    public DragosParser() {
+        sourceDomainName = DOMAIN_NAME;
+    }
+
     /**
      * Parse advisories listed to dragos.com/advisories
      * @param domainName dragos domain

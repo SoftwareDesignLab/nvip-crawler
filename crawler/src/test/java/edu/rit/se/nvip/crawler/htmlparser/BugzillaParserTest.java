@@ -33,6 +33,8 @@ import edu.rit.se.nvip.model.RawVulnerability;
 
 public class BugzillaParserTest extends AbstractParserTest {
 
+	BugzillaParser parser = new BugzillaParser();
+
 	@Test
 	public void testBugzillaOldPage() {
 		String html = safeReadHtml("src/test/resources/test-bugzilla-cvedetail.html");

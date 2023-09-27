@@ -40,7 +40,13 @@ import java.util.Set;
  *
  */
 public class VMWareAdvisoriesParser extends AbstractCveParser {
-	
+
+	public static final String DOMAIN_NAME = "vmware";
+
+	public VMWareAdvisoriesParser() {
+		sourceDomainName = DOMAIN_NAME;
+	}
+
 	public VMWareAdvisoriesParser(String domainName) {
 		sourceDomainName = domainName;
 	}

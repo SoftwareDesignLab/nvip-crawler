@@ -32,7 +32,6 @@ import org.jsoup.select.Elements;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 
 public class AtlassianParser extends AbstractCveParser {
 
@@ -40,6 +39,12 @@ public class AtlassianParser extends AbstractCveParser {
     private ArrayList<String> cvesOnPage = new ArrayList<>();
     private String lastModifiedDate;
     private String publishDate;
+
+    public static final String DOMAIN_NAME = "atlassian";
+
+    public AtlassianParser() {
+        sourceDomainName = DOMAIN_NAME;
+    }
 
     /**
      * Parse advisories listed to atlassian.com/trust/security/advisories

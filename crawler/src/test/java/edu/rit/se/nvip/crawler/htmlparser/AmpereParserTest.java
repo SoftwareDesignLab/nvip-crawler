@@ -33,10 +33,12 @@ import static junit.framework.TestCase.assertTrue;
 
 public class AmpereParserTest extends AbstractParserTest {
 
+    AmpereRootParser parser = new AmpereRootParser();
+
     @Test
     public void testAmpere() {
         String html = safeReadHtml("src/test/resources/test-ampere.html");
-        List<RawVulnerability> list = crawler.parseWebPage(
+        List<RawVulnerability> list = parser.parseWebPage(
                 "https://amperecomputing.com/products/product-security",
                 html
         );

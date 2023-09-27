@@ -13,6 +13,12 @@ import java.util.regex.Pattern;
 
 public class ABBParser extends AbstractCveParser {
 
+    public static final String DOMAIN_NAME = "abb.com";
+
+    public ABBParser() {
+        sourceDomainName = DOMAIN_NAME;
+    }
+
     /**
      * Parse root advisories page listed to global.abb/group/en/technology/cyber-security/alerts-and-notifications
      * Individual pages links to pdf files, download and parse those

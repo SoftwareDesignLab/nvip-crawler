@@ -11,12 +11,13 @@ import static org.junit.Assert.assertTrue;
 
 public class DotCMSParserTest extends AbstractParserTest {
 
+    DotCMSParser parser = new DotCMSParser();
 
     // CVE: (link)
     @Test
     public void testDotCMSParser1() {
         String html = safeReadHtml("src/test/resources/test-dotcms1.html");
-        List<RawVulnerability> list = crawler.parseWebPage(
+        List<RawVulnerability> list = parser.parseWebPage(
                 "https://www.dotcms.com/security/SI-54",
                 html
         );
@@ -32,7 +33,7 @@ public class DotCMSParserTest extends AbstractParserTest {
     @Test
     public void testDotCMSParser2() {
         String html = safeReadHtml("src/test/resources/test-dotcms2.html");
-        List<RawVulnerability> list = crawler.parseWebPage(
+        List<RawVulnerability> list = parser.parseWebPage(
                 "https://www.dotcms.com/security/SI-67",
                 html
         );
@@ -48,7 +49,7 @@ public class DotCMSParserTest extends AbstractParserTest {
     @Test
     public void testDotCMSParserNone() {
         String html = safeReadHtml("src/test/resources/test-dotcms-none.html");
-        List<RawVulnerability> list = crawler.parseWebPage(
+        List<RawVulnerability> list = parser.parseWebPage(
                 "https://www.dotcms.com/security/SI-53",
                 html
         );

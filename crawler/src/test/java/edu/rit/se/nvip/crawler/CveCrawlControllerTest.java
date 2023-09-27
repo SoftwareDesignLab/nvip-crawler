@@ -1,16 +1,19 @@
 package edu.rit.se.nvip.crawler;
 
 import edu.rit.se.nvip.model.RawVulnerability;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
+
 
 public class CveCrawlControllerTest {
 
+    @Disabled("Integration test that needs to be refactored: Should not crawl the web!")
     @Test
     public void CveCrawlControllerTest() throws Exception {
         List<String> urls = new ArrayList<>();

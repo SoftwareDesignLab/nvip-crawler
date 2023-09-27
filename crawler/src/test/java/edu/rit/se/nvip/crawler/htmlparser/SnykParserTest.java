@@ -33,10 +33,12 @@ import static org.junit.Assert.assertTrue;
 
 public class SnykParserTest extends AbstractParserTest {
 
+    SnykParser parser = new SnykParser();
+
     @Test
     public void testSnykCve() {
         String html = safeReadHtml("src/test/resources/test-snyk.html");
-        List<RawVulnerability> list = crawler.parseWebPage(
+        List<RawVulnerability> list = parser.parseWebPage(
                 "https://security.snyk.io/vuln/SNYK-RUST-CRANELIFTCODEGEN-3357941",
                 html
         );
@@ -50,7 +52,7 @@ public class SnykParserTest extends AbstractParserTest {
     @Test
     public void testSnykNoCve() {
         String html = safeReadHtml("src/test/resources/test-snyk-no.html");
-        List<RawVulnerability> list = crawler.parseWebPage(
+        List<RawVulnerability> list = parser.parseWebPage(
                 "https://security.snyk.io/vuln/SNYK-PYTHON-BINGCHILLING2-3358386",
                 html
         );
@@ -60,7 +62,7 @@ public class SnykParserTest extends AbstractParserTest {
     @Test
     public void testSnykCveDetailed() {
         String html = safeReadHtml("src/test/resources/test-snyk-details.html");
-        List<RawVulnerability> list = crawler.parseWebPage(
+        List<RawVulnerability> list = parser.parseWebPage(
                 "https://security.snyk.io/vuln/SNYK-PHP-MOODLEMOODLE-3356645",
                 html
         );

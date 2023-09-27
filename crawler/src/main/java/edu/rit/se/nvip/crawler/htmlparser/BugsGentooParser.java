@@ -39,7 +39,13 @@ import java.util.regex.Pattern;
  *
  */
 public class BugsGentooParser extends AbstractCveParser {
-	
+
+	public static final String DOMAIN_NAME = "gentoo";
+
+	public BugsGentooParser() {
+		sourceDomainName = DOMAIN_NAME;
+	}
+
 	public BugsGentooParser(String domainName) {
 		sourceDomainName = domainName;
 	}

@@ -42,6 +42,12 @@ import java.util.List;
 
 public class SecurityRedHatParser extends AbstractCveParser {
 
+    public static final String DOMAIN_NAME = "redhat";
+
+    public SecurityRedHatParser() {
+        sourceDomainName = DOMAIN_NAME;
+    }
+
     public SecurityRedHatParser(String domainName) {
 		sourceDomainName = domainName;
 	}

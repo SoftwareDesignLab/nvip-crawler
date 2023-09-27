@@ -34,6 +34,8 @@ import static org.junit.Assert.assertTrue;
 
 public class TrustWaveParserTest extends AbstractParserTest {
 
+    TrustWaveParser parser = new TrustWaveParser();
+
     /**
      * 1 CVE on a blog post test
      */
@@ -42,7 +44,7 @@ public class TrustWaveParserTest extends AbstractParserTest {
         // QuickCveCrawler q = new QuickCveCrawler();
         // String html = q.getContentFromUrl("https://www.trustwave.com/en-us/resources/blogs/spiderlabs-blog/cve-2022-37461-two-reflected-xss-vulnerabilities-in-canon-medicals-vitrea-view/");
         String html = safeReadHtml("src/test/resources/test-trustwave-single.html");
-        List<RawVulnerability> list = crawler.parseWebPage(
+        List<RawVulnerability> list = parser.parseWebPage(
                 "https://www.trustwave.com/en-us/resources/blogs/spiderlabs-blog/cve-2022-37461-two-reflected-xss-vulnerabilities-in-canon-medicals-vitrea-view/",
                 html
         );
@@ -60,7 +62,7 @@ public class TrustWaveParserTest extends AbstractParserTest {
     @Test
     public void testTrustWaveDouble() {
         String html = safeReadHtml("src/test/resources/test-trustwave-double.html");
-        List<RawVulnerability> list = crawler.parseWebPage(
+        List<RawVulnerability> list = parser.parseWebPage(
                 "https://www.trustwave.com/en-us/resources/blogs/spiderlabs-blog/denial-of-service-and-rce-in-openssl-30-cve-2022-3786-and-cve-2022-3602/",
                 html
         );
@@ -85,7 +87,7 @@ public class TrustWaveParserTest extends AbstractParserTest {
     @Test
     public void testTrustWaveTriple() {
         String html = safeReadHtml("src/test/resources/test-trustwave-triple.html");
-        List<RawVulnerability> list = crawler.parseWebPage(
+        List<RawVulnerability> list = parser.parseWebPage(
                 "https://www.trustwave.com/en-us/resources/blogs/spiderlabs-blog/oracle-sbc-multiple-security-vulnerabilities-leading-to-unauthorized-access-and-denial-of-service/",
                 html
         );
@@ -118,7 +120,7 @@ public class TrustWaveParserTest extends AbstractParserTest {
     @Test
     public void testTrustWaveNoCVE() {
         String html = safeReadHtml("src/test/resources/test-trustwave-no.html");
-        List<RawVulnerability> list = crawler.parseWebPage(
+        List<RawVulnerability> list = parser.parseWebPage(
                 "https://www.trustwave.com/en-us/resources/blogs/spiderlabs-blog/network-map-nmap-meets-chatgpt/",
                 html
         );
@@ -132,7 +134,7 @@ public class TrustWaveParserTest extends AbstractParserTest {
     @Test
     public void testTrustWaveNoCVE2() {
         String html = safeReadHtml("src/test/resources/test-trustwave-no2.html");
-        List<RawVulnerability> list = crawler.parseWebPage(
+        List<RawVulnerability> list = parser.parseWebPage(
                 "https://www.trustwave.com/en-us/resources/blogs/spiderlabs-blog/vulnerability-causing-deletion-of-all-users-in-crushftp-admin-area/",
                 html
         );

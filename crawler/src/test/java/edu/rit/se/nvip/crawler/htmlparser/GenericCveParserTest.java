@@ -23,38 +23,28 @@
  */
 package edu.rit.se.nvip.crawler.htmlparser;
 
-import edu.rit.se.nvip.crawler.CveCrawler;
 import edu.rit.se.nvip.model.RawVulnerability;
 import edu.rit.se.nvip.model.Vulnerability;
 import edu.rit.se.nvip.crawler.SeleniumDriver;
 
 import org.apache.commons.io.IOUtils;
-
-import org.junit.Test;
-import org.junit.BeforeClass;
-import org.junit.AfterClass;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.ArrayList;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 public class GenericCveParserTest extends AbstractParserTest {
 	static GenericCveParser parser;
-	static SeleniumDriver driver;
 
-	@BeforeClass
+	@BeforeAll
     public static void setupWebDriver(){
-        driver = new SeleniumDriver();
-        parser = new GenericCveParser("nat_available", driver);
-    }
-
-    @AfterClass
-    public static void destroyWebDriver(){
-        if(driver != null) driver.tryDiverQuit();
+        parser = new GenericCveParser("nat_available", mock(SeleniumDriver.class));
     }
 	
 	@Test

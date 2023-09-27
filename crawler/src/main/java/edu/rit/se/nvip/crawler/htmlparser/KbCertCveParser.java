@@ -44,6 +44,12 @@ import java.util.regex.Pattern;
  */
 public class KbCertCveParser extends AbstractCveParser {
 
+	public static final String DOMAIN_NAME = "kb.cert";
+
+	public KbCertCveParser() {
+		sourceDomainName = DOMAIN_NAME;
+	}
+
 	public KbCertCveParser(String domainName) {
 		sourceDomainName = domainName;
 	}

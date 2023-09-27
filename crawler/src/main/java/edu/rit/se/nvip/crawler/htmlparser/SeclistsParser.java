@@ -45,6 +45,12 @@ import java.util.*;
 public class SeclistsParser extends AbstractCveParser {
 	private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
 
+	public static final String DOMAIN_NAME = "seclists";
+
+	public SeclistsParser() {
+		sourceDomainName = DOMAIN_NAME;
+	}
+
 	public SeclistsParser(String domainName) {
 		sourceDomainName = domainName;
 	}

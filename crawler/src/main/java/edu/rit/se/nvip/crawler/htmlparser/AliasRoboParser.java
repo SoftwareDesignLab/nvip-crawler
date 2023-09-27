@@ -35,6 +35,12 @@ import java.time.LocalDate;
 
 public class AliasRoboParser extends AbstractCveParser {
 
+    public static final String DOMAIN_NAME = "aliasrobotics";
+
+    public AliasRoboParser() {
+        sourceDomainName = DOMAIN_NAME;
+    }
+
     /**
      * Parse advisories listed to github.com/aliasrobotics/RVD/issues
      * @param domainName - github alias domain

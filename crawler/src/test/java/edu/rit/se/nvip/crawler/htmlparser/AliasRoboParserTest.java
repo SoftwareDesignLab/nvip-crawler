@@ -34,12 +34,13 @@ import static org.junit.Assert.assertTrue;
 
 public class AliasRoboParserTest extends AbstractParserTest {
 
+    AliasRoboParser parser = new AliasRoboParser();
 
     // issue in what looks like JSON obj notation
     @Test
     public void testAliasObj() {
         String html = safeReadHtml("src/test/resources/test-alias-obj.html");
-        List<RawVulnerability> list = crawler.parseWebPage(
+        List<RawVulnerability> list = parser.parseWebPage(
                 "https://github.com/aliasrobotics/RVD/issues/3347",
                 html
         );
@@ -56,7 +57,7 @@ public class AliasRoboParserTest extends AbstractParserTest {
     @Test
     public void testAlias() {
         String html = safeReadHtml("src/test/resources/test-alias.html");
-        List<RawVulnerability> list = crawler.parseWebPage(
+        List<RawVulnerability> list = parser.parseWebPage(
                 "https://github.com/aliasrobotics/RVD/issues/3337",
                 html
         );
@@ -73,7 +74,7 @@ public class AliasRoboParserTest extends AbstractParserTest {
     @Test
     public void testAliasNone() {
         String html = safeReadHtml("src/test/resources/test-alias-no.html");
-        List<RawVulnerability> list = crawler.parseWebPage(
+        List<RawVulnerability> list = parser.parseWebPage(
                 "https://github.com/aliasrobotics/RVD/issues/3343",
                 html
         );

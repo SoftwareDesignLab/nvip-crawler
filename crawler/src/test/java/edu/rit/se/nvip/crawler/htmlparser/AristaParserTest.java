@@ -11,10 +11,12 @@ import static org.junit.Assert.assertTrue;
 
 public class AristaParserTest extends AbstractParserTest {
 
+    AristaParser parser = new AristaParser();
+
     @Test
     public void testAristaSingle() {
         String html = safeReadHtml("src/test/resources/test-arista-single.html");
-        List<RawVulnerability> list = crawler.parseWebPage(
+        List<RawVulnerability> list = parser.parseWebPage(
                 "https://www.arista.com/en/support/advisories-notices/security-advisory/17022-security-advisory-0083",
                 html
         );
@@ -30,7 +32,7 @@ public class AristaParserTest extends AbstractParserTest {
     @Test
     public void testAristaMultiple() {
         String html = safeReadHtml("src/test/resources/test-arista-multiple.html");
-        List<RawVulnerability> list = crawler.parseWebPage(
+        List<RawVulnerability> list = parser.parseWebPage(
                 "https://www.arista.com/en/support/advisories-notices/security-advisory/15484-security-advisory-0077",
                 html
         );

@@ -36,6 +36,12 @@ import java.util.stream.Collectors;
 
 public class JenkinsParser extends AbstractCveParser {
 
+    public static final String DOMAIN_NAME = "jenkins.io";
+
+    public JenkinsParser() {
+        sourceDomainName = DOMAIN_NAME;
+    }
+
     /**
      * Parse advisories listed to jenkins.io/security/advisories
      * Ex: <a href="https://www.jenkins.io/security/advisory/2022-06-30/">...</a>

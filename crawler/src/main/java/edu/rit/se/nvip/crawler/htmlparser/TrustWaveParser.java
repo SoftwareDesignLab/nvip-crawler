@@ -34,6 +34,12 @@ import java.util.List;
 
 public class TrustWaveParser extends AbstractCveParser {
 
+    public static final String DOMAIN_NAME = "trustwave";
+
+    public TrustWaveParser() {
+        sourceDomainName = DOMAIN_NAME;
+    }
+
     /**
      * Parse advisories listed to trustwave.com/en-us/resources/blogs/spiderlabs-blog/
      * @param domainName - trustwave domain

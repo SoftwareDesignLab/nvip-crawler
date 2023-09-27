@@ -11,6 +11,12 @@ import java.util.List;
 
 public class CyberArkRootParser extends AbstractCveParser {
 
+    public static final String DOMAIN_NAME = "cyberark";
+
+    public CyberArkRootParser() {
+        sourceDomainName = DOMAIN_NAME;
+    }
+
     /**
      * Parse bulletin table in ampere product security page
      * @param rootDomain - labs.cyberark.com/cyberark-labs-security-advisories/

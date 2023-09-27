@@ -36,6 +36,12 @@ import java.util.Set;
 
 public class JVNParser extends AbstractCveParser {
 
+    public static final String DOMAIN_NAME = "jvn";
+
+    public JVNParser() {
+        sourceDomainName = DOMAIN_NAME;
+    }
+
     /**
      * Parse advisories listed to jvn.jp site
      * @param domainName - jvn domain

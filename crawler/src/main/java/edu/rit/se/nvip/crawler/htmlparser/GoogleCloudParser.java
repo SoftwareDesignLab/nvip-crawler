@@ -43,6 +43,12 @@ import java.util.regex.Pattern;
 
 public class GoogleCloudParser extends AbstractCveParser {
 
+    public static final String DOMAIN_NAME = "google";
+
+    public GoogleCloudParser() {
+        sourceDomainName = DOMAIN_NAME;
+    }
+
 	public GoogleCloudParser(String domainName) {
 		sourceDomainName = domainName;
 	}

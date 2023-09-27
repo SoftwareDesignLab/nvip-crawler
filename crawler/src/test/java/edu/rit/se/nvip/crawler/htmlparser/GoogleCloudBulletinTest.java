@@ -43,12 +43,13 @@ import static junit.framework.TestCase.assertTrue;
  */
 public class GoogleCloudBulletinTest extends AbstractParserTest {
 
+    GoogleCloudParser parser = new GoogleCloudParser();
+
     @Test
     public void testGoogleCloudsecurityBulletinParser() throws IOException {
 
-        CveCrawler crawler = getCrawler();
         String html = FileUtils.readFileToString(new File("src/test/resources/test-google-cloud-bulletin.html"), StandardCharsets.US_ASCII);
-        List<RawVulnerability> list = crawler.parseWebPage("https://cloud.google.com/support/bulletins", html);
+        List<RawVulnerability> list = parser.parseWebPage("https://cloud.google.com/support/bulletins", html);
 
         assertEquals(52, list.size());
 

@@ -10,10 +10,12 @@ import static org.junit.Assert.*;
 
 public class AsustorParserTest extends AbstractParserTest {
 
+    AsustorParser parser = new AsustorParser();
+
     @Test
     public void testAsustorParserNone() {
         String html = safeReadHtml("src/test/resources/test-asustor-none.html");
-        List<RawVulnerability> list = crawler.parseWebPage(
+        List<RawVulnerability> list = parser.parseWebPage(
                 "https://www.asustor.com/security/security_advisory_detail?id=9",
                 html
         );
@@ -23,7 +25,7 @@ public class AsustorParserTest extends AbstractParserTest {
     @Test
     public void testAsustorParserSingle() {
         String html = safeReadHtml("src/test/resources/test-asustor-single.html");
-        List<RawVulnerability> list = crawler.parseWebPage(
+        List<RawVulnerability> list = parser.parseWebPage(
                 "https://www.asustor.com/security/security_advisory_detail?id=4",
                 html
         );
@@ -38,7 +40,7 @@ public class AsustorParserTest extends AbstractParserTest {
     @Test
     public void testAsustorParserMultiple() {
         String html = safeReadHtml("src/test/resources/test-asustor-multiple.html");
-        List<RawVulnerability> list = crawler.parseWebPage(
+        List<RawVulnerability> list = parser.parseWebPage(
                 "https://www.asustor.com/security/security_advisory_detail?id=20",
                 html
         );

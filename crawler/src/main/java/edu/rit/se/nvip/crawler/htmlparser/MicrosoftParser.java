@@ -34,6 +34,12 @@ import java.time.LocalDate;
 
 public class MicrosoftParser extends AbstractCveParser {
 
+    public static final String DOMAIN_NAME = "msrc";
+
+    public MicrosoftParser() {
+        sourceDomainName = DOMAIN_NAME;
+    }
+
     /**
      * Parse advisories listed to msrc.microsoft.com/update-guide/vulnerability
      * @param domainName - msrc domain

@@ -34,6 +34,12 @@ import java.util.List;
 
 public class AdobeParser extends AbstractCveParser {
 
+    public static final String DOMAIN_NAME = "adobe";
+
+    public AdobeParser() {
+        sourceDomainName = DOMAIN_NAME;
+    }
+
     /**
      * Parse advisories listed to helpx.adobe.com/security.html
      * @param domainName - adobe domain
