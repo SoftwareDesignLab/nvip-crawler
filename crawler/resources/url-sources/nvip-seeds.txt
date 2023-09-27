@@ -11,6 +11,7 @@ https://access.redhat.com/security/security-updates/#/security-advisories/
 https://advisories.checkpoint.com/advisories/
 https://advisories.mageia.org/index.html/
 https://advisories.octopus.com/
+https://advisories.softiron.cloud/
 https://advisories.stormshield.eu/
 https://advisory.dualvs.com/
 https://airbus-seclab.github.io/
@@ -50,6 +51,7 @@ https://census-labs.com/news/category/advisories/
 https://censys.io/category/blog/
 https://cert.europa.eu/publications/security-advisories/2023/
 https://cert.pl/cve/
+https://cert.pl/en/cve/
 https://cert.vde.com/en/advisories/
 https://cfengine.com/tags/cve/
 https://checkmk.com/werks?search=cve&product=cmk&cmk_version%5B%5D=2.2&level%5B%5D=1&level%5B%5D=2&level%5B%5D=3&class%5B%5D=feature&class%5B%5D=fix&class%5B%5D=security&edition%5B%5D=cre&edition%5B%5D=cee&edition%5B%5D=cme/
@@ -248,6 +250,7 @@ https://help.talend.com/r/en-US/Talend-Products-CVEs/Talend-Products-CVEs/
 https://helpx.adobe.com/security.html/
 https://herolab.usd.de/en/security-advisories/
 https://huntr.dev/bounties/hacktivity/
+https://ict.co/help-support/security-advisories/
 https://ikiwiki.info/security/
 https://industrial.softing.com/services/security-information.html/
 https://irssi.org/security/
@@ -284,6 +287,7 @@ https://lldpd.github.io/security.html/
 https://lucabarile.github.io/Blog/blog.html/
 https://lutrasecurity.com/en/articles/
 https://mail.gnome.org/archives/distributor-list/
+https://mail.python.org/archives/list/security-announce@python.org/latest
 https://mattermost.com/security-updates/
 https://moodle.org/mod/forum/view.php?id=7128/
 https://msrc-blog.microsoft.com/
@@ -401,6 +405,7 @@ https://support.norton.com/sp/static/external/tools/security-advisories.html/
 https://support.pentaho.com/hc/en-us/sections/360010039791-Security-Updates/
 https://support.pingidentity.com/s/global-search/%40uri#q=cve&t=All&sort=relevancy&numberOfResults=25/
 https://support.pingidentity.com/s/global-search/%40uri#q=security%20advisory&t=All&sort=relevancy&numberOfResults=25/
+https://support.purestorage.com/Pure_Security/Security_Bulletins
 https://support.rhinomobility.com/security/releases/
 https://support.ruckuswireless.com/security_bulletins/
 https://support.sas.com/en/security-bulletins.html/
@@ -437,9 +442,11 @@ https://www.3ds.com/vulnerability/advisories/
 https://www.42gears.com/security-and-compliance/
 https://www.absolute.com/platform/security-information/vulnerability-archive/
 https://www.al-enterprise.com/en/search#t=resources&sort=relevancy&f:language=[en]&f:content-type=[Content%20Type%2FTechnical%20Documentation%2FSecurity%20advisory]/
+https://www.algosec.com/resources/guide/algosec-security-center/#:~:text=05-,Security%20advisories,-List%20of%20CVEs
 https://www.amd.com/en/corporate/product-security/
 https://www.amd.com/en/resources/product-security.html#security
 https://www.ami.com/security-center/
+https://www.analog.com/en/support/technical-support/product-security-response-center.html
 https://www.anquanke.com/search?s=CVE/
 https://www.apache.org/security/projects.html/
 https://www.archerirm.community/t5/forums/searchpage/tab/message?advanced=false&allow_punctuation=false&q=CVE/
@@ -466,6 +473,7 @@ https://www.boschsecurity.com/xc/en/support/product-security/security-advisories
 https://www.broadcom.com/support/fibre-channel-networking/security-advisories/
 https://www.broadcom.com/support/security-center/definitions?pid=5aa80d2f72a8e/
 https://www.broadcom.com/support/security-center/protection-bulletin/
+https://www.canon-europe.com/psirt/advisory-information
 https://www.cert-in.org.in/
 https://www.cisa.gov/known-exploited-vulnerabilities-catalog/
 https://www.cisa.gov/news-events/cybersecurity-advisories
@@ -579,6 +587,7 @@ https://www.netrise.io/security/advisories/
 https://www.netscout.com/securityadvisories/
 https://www.netskope.com/company/security-compliance-and-assurance/security-advisories-and-disclosures/
 https://www.ni.com/en-us/support/documentation/supplemental/11/available-critical-and-security-updates-for-ni-software.html/
+https://www.nokia.com/about-us/security-and-privacy/product-security-advisory/
 https://www.nrc.gov/reading-rm/doc-collections/gen-comm/security-advisories/index.html/
 https://www.nvidia.com/en-us/security/
 https://www.offensity.com/en/blog/
