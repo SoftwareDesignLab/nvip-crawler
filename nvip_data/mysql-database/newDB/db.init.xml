@@ -864,7 +864,55 @@
         </addColumn>
     </changeSet>
 
-    <!-- TODO: Add fixes unique index  -->
+    <!-- TODO: Make sure this is right  -->
+    <changeSet id="addFixesUniqueIndex" author="dylan">
+        <createIndex tableName="fixes" indexName="cve_source_index" unique="true">
+            <column name="cve_id"/>
+            <column name="source_url"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="recreateExploitTable" author="dylan">
+        <dropTable tableName="exploit"/>
+        <createTable tableName="exploit" >
+            <column name="id" autoIncrement="true" type="SERIAL">
+                <constraints primaryKey="true" nullable="false" unique="true"/>
+            </column>
+            <column name="name" type="VARCHAR(750)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="TEXT">
+                <constraints nullable="true"/>
+            </column>
+            <column name="example_file" type="VARCHAR(100)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="author" type="VARCHAR(750)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="date_published" type="DATE">
+                <constraints nullable="true"/>
+            </column>
+            <column name="is_repo" type="TINYINT(1)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="source" type="VARCHAR(500)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="date_created" type="VARCHAR(50)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="download_failed" type="TINYINT(1)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="cve_id" type="VARCHAR(20)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="source_url" type="VARCHAR(1000)">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+    </changeSet>
 
 
 </databaseChangeLog>
