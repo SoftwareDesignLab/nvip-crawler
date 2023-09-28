@@ -107,11 +107,7 @@ public class FixFinderThread implements Runnable {
 		}
 
 		// Add all fixes found to the static list defined in FixFinder
-		try{
-				FixFinder.getFixes().addAll(allFixes);
-			} catch (IOException e){
-				logger.error("Error occurred while parsing URL {} for CVE {}", url, cveId);
-			}
+		FixFinder.getFixes().addAll(allFixes);
 
 		logger.info("{} fixes found for CVE: {}", allFixes.size(), cveId);
 	}
