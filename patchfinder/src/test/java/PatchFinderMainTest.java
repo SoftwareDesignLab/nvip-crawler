@@ -76,7 +76,7 @@ public class PatchFinderMainTest {
          CountDownLatch latch = new CountDownLatch(1);
             new Thread(() -> {
                 try {
-                    PatchFinderMain.run();
+                    new PatchFinderMain().start();
                 } catch (Exception e) {
                     fail("Exception thrown: " + e.getMessage());
                 }

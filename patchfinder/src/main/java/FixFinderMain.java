@@ -41,6 +41,7 @@ public class FixFinderMain extends Thread {
     /**
      * Entry point for the FixFinder, initializes necessary classes and start listening for jobs with RabbitMQ
      */
+    @Override
     public void run() {
         logger.info("Starting FixFinder...");
 

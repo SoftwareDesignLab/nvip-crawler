@@ -45,6 +45,7 @@ public class PatchFinderMain extends Thread {
     /**
      * Entry point for the PatchFinder, initializes necessary classes and start listening for jobs with RabbitMQ
      */
+    @Override
     public void run() {
         logger.info("Starting PatchFinder...");
         // Init PatchFinder
