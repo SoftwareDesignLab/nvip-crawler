@@ -133,6 +133,7 @@ public class PatchFinderEnvVars {
     public static String getRabbitPassword() { return rabbitPassword; }
     public static String getRabbitInputQueue() { return rabbitInputQueue; }
     public static String getInputMode() { return inputMode; }
+    public static String getInputMode() { return inputMode; }
 
     /**
      * Attempts to fetch all required environment variables from props map safely, logging any

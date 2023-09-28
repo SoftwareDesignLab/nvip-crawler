@@ -6,7 +6,11 @@ logs
 *.iml
 
 # Class outputs
-*/target/*
+/target/
+/crawler/target/
+/reconciler/target/
+/patchfinder/target/
+/productnameextractor/target/
 /productnameextractor/nvip_data/data/test_results.csv
 
 # Large files

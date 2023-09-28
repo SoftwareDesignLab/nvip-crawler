@@ -786,23 +786,6 @@
         <modifyDataType tableName="description" columnName="gpt_func" newDataType="MEDIUMTEXT"/>
     </changeSet>
 
-    <changeSet id="remove-redundant-user-key" author="memeee">
-        <dropUniqueConstraint constraintName="user_id" tableName="user"/>
-    </changeSet>
-
-    <changeSet id="remove-redundant-role-key" author="memeee">
-        <dropUniqueConstraint constraintName="role_id" tableName="role"/>
-    </changeSet>
-
-    <changeSet id="remove-redundant-permission-key" author="memeee">
-        <dropUniqueConstraint constraintName="permission_id" tableName="permission"/>
-    </changeSet>
-
-    <changeSet id="remove-redundant-cvss-column" author="memeee">
-        <dropColumn tableName="cvss" columnName="base_score"/>
-        <renameColumn tableName="cvss" oldColumnName="impact_score" newColumnName="base_score" columnDataType="DOUBLE"/>
-    </changeSet>
-
     <changeSet id="createNvdSourceUrlTable" author="dylan">
         <createTable tableName="nvdsourceurl">
             <column name="source_id" type="INT" autoIncrement="true">
@@ -819,6 +802,22 @@
         <addForeignKeyConstraint baseTableName="nvdsourceurl" baseColumnNames="cve_id"
                                  referencedTableName="nvddata" referencedColumnNames="cve_id"
                                  constraintName="nvdsourceurl_cve_id_fk"/>
+    </changeSet>
+    <changeSet id="remove-redundant-user-key" author="memeee">
+        <dropUniqueConstraint constraintName="user_id" tableName="user"/>
+    </changeSet>
+
+    <changeSet id="remove-redundant-role-key" author="memeee">
+        <dropUniqueConstraint constraintName="role_id" tableName="role"/>
+    </changeSet>
+
+    <changeSet id="remove-redundant-permission-key" author="memeee">
+        <dropUniqueConstraint constraintName="permission_id" tableName="permission"/>
+    </changeSet>
+
+    <changeSet id="remove-redundant-cvss-column" author="memeee">
+        <dropColumn tableName="cvss" columnName="base_score"/>
+        <renameColumn tableName="cvss" oldColumnName="impact_score" newColumnName="base_score" columnDataType="DOUBLE"/>
     </changeSet>
 
     <changeSet id="addUniqueConstraintNvdSourceUrl" author="dylan">

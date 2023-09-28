@@ -66,6 +66,14 @@ public class FixFinderThread implements Runnable {
 		this.urls = urls;
 	}
 
+	/**
+	 * Run method used to iterate through all the possible fix URLs for the CVE.
+	 *
+	 * Delegates each URL to its own specific parser or generic parser if no specific one has
+	 * been created for it (yet).
+	 *
+	 * For each URL, uses the parser to extract fixes and stores them in the static list from FixFinder class.
+	 */
 	@Override
 	public void run() {
 		// TODO: Create/finish parsers for web pages to find fix info. I already have the NVD one somewhat created for
