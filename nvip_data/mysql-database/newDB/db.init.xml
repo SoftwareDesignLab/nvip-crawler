@@ -989,4 +989,227 @@
             ADD UNIQUE uk_rawdescription_cve_domain (cve_id, description_hash(255), domain(32));
         </sql>
     </changeSet>
+
+    <changeSet id="split-vdo-table" author="memeee">
+        <createTable tableName="vdoset">
+            <column name="vdo_set_id" type="int" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="cve_id" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_date" type="DATETIME">
+                <constraints nullable="false"/>
+            </column>
+            <column name="user_id" type="int">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="vdoset"
+                baseColumnNames="user_id"
+                referencedTableName="user"
+                referencedColumnNames="user_id"
+                constraintName="vdo_set_user_id_fk"/>
+        <addForeignKeyConstraint
+                baseTableName="vdoset"
+                baseColumnNames="cve_id"
+                referencedTableName="vulnerability"
+                referencedColumnNames="cve_id"
+                constraintName="vdo_set_cve_id_fk"/>
+        <sql>
+            CREATE TEMPORARY TABLE TempGrouping (
+            group_id INT AUTO_INCREMENT PRIMARY KEY,
+            vdo_characteristic_id INT,
+            cve_id VARCHAR(20),
+            created_date DATETIME
+            );
+            INSERT INTO TempGrouping (vdo_characteristic_id, cve_id, created_date)
+            SELECT vdo_characteristic_id, cve_id, created_date
+            FROM (
+            SELECT vdo_characteristic_id, cve_id, created_date,
+            @prev_timestamp AS prev_timestamp,
+            @prev_cve_id AS prev_cve_id,
+            @prev_timestamp := created_date,
+            @prev_cve_id := cve_id
+            FROM vdocharacteristic
+            ORDER BY cve_id, created_date, vdo_characteristic_id
+            ) AS sub
+            WHERE
+            prev_cve_id IS NULL OR
+            prev_cve_id != cve_id OR
+            TIMESTAMPDIFF(SECOND, prev_timestamp, created_date) > 10;
+        </sql>
+        <sql>
+            INSERT INTO `vdoset` (cve_id, created_date, user_id)
+            SELECT vc.cve_id, MIN(vc.created_date), user_id
+            FROM `vdocharacteristic` vc
+            JOIN TempGrouping tg ON vc.vdo_characteristic_id = tg.vdo_characteristic_id
+            GROUP BY vc.cve_id, group_id, vc.user_id;
+        </sql>
+        <addColumn tableName="vdocharacteristic">
+            <column name="vdo_set_id" type="INT"/>
+        </addColumn>
+        <addForeignKeyConstraint
+                baseTableName="vdocharacteristic"
+                baseColumnNames="vdo_set_id"
+                referencedTableName="vdoset"
+                referencedColumnNames="vdo_set_id"
+                constraintName="vdo_characteristic_vdo_set_id_fk"/>
+        <sql>
+            UPDATE vdocharacteristic vc
+            JOIN TempGrouping tg ON vc.cve_id = tg.cve_id
+            AND vc.created_date BETWEEN tg.created_date AND DATE_ADD(tg.created_date, INTERVAL 10 SECOND)
+            SET vc.vdo_set_id = tg.group_id;
+        </sql>
+        <sql>
+            DROP TEMPORARY TABLE TempGrouping;
+        </sql>
+    </changeSet>
+
+    <changeSet id="split-affectedproduct-table" author="memeee">
+        <createTable tableName="cpeset">
+            <column name="cpe_set_id" type="int" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="cve_id" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_date" type="DATETIME">
+                <constraints nullable="false"/>
+            </column>
+            <column name="user_id" type="int">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="cpeset"
+                baseColumnNames="user_id"
+                referencedTableName="user"
+                referencedColumnNames="user_id"
+                constraintName="cpe_set_user_id_fk"/>
+        <addForeignKeyConstraint
+                baseTableName="cpeset"
+                baseColumnNames="cve_id"
+                referencedTableName="vulnerability"
+                referencedColumnNames="cve_id"
+                constraintName="cpe_set_cve_id_fk"/>
+        <sql>
+            INSERT INTO cpeset (cve_id, created_date)
+            SELECT DISTINCT cve_id, NOW()
+            FROM affectedproduct;
+        </sql>
+        <addColumn tableName="affectedproduct">
+            <column name="cpe_set_id" type="INT"/>
+        </addColumn>
+        <addForeignKeyConstraint
+                baseTableName="affectedproduct"
+                baseColumnNames="cpe_set_id"
+                referencedTableName="cpeset"
+                referencedColumnNames="cpe_set_id"
+                constraintName="affected_product_cpe_set_id_fk"/>
+        <sql>
+            UPDATE affectedproduct ap
+            JOIN cpeset cs ON ap.cve_id = cs.cve_id
+            SET ap.cpe_set_id = cs.cpe_set_id;
+        </sql>
+    </changeSet>
+
+    <changeSet id="split-vulnerability-table" author="memeee">
+        <createTable tableName="vulnerabilityversion">
+            <column name="vuln_version_id" type="int" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="cve_id" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description_id" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="vdo_set_id" type="int">
+                <constraints nullable="true"/>
+            </column>
+            <column name="cpe_set_id" type="int">
+                <constraints nullable="true"/>
+            </column>
+            <column name="created_date" type="DATETIME">
+                <constraints nullable="false"/>
+            </column>
+            <column name="published_date" type="DATETIME">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_modified_date" type="DATETIME">
+                <constraints nullable="false"/>
+            </column>
+            <column name="user_id" type="int">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+        <addForeignKeyConstraint
+                baseTableName="vulnerabilityversion"
+                baseColumnNames="cve_id"
+                referencedTableName="vulnerability"
+                referencedColumnNames="cve_id"
+                constraintName="vuln_version_cve_id_fk"/>
+        <addForeignKeyConstraint
+                baseTableName="vulnerabilityversion"
+                baseColumnNames="description_id"
+                referencedTableName="description"
+                referencedColumnNames="description_id"
+                constraintName="vuln_version_description_id_fk"/>
+        <addForeignKeyConstraint
+                baseTableName="vulnerabilityversion"
+                baseColumnNames="vdo_set_id"
+                referencedTableName="vdoset"
+                referencedColumnNames="vdo_set_id"
+                constraintName="vuln_version_vdo_set_id_fk"/>
+        <addForeignKeyConstraint
+                baseTableName="vulnerabilityversion"
+                baseColumnNames="cpe_set_id"
+                referencedTableName="cpeset"
+                referencedColumnNames="cpe_set_id"
+                constraintName="vuln_version_cpe_set_id_fk"/>
+        <sql>
+            INSERT INTO vulnerabilityversion (cve_id, description_id, created_date, published_date, last_modified_date)
+            SELECT cve_id, description_id, created_date, published_date, last_modified_date
+            FROM vulnerability v ORDER BY v.created_date ASC;
+        </sql>
+        <addColumn tableName="vulnerability">
+            <column name="vuln_version_id" type="INT"/>
+        </addColumn>
+        <sql>
+            UPDATE vulnerability v
+            JOIN vulnerabilityversion vv ON v.cve_id = vv.cve_id
+            SET v.vuln_version_id = vv.vuln_version_id;
+        </sql>
+        <addForeignKeyConstraint
+                baseTableName="vulnerability"
+                baseColumnNames="vuln_version_id"
+                referencedTableName="vulnerabilityversion"
+                referencedColumnNames="vuln_version_id"
+                constraintName="vuln_vuln_version_id_fk"/>
+        <sql>
+            CREATE TEMPORARY TABLE LatestVdoSetDates AS (
+            SELECT cve_id, MAX(created_date) as mcd
+            FROM vdoset
+            GROUP BY cve_id
+            );
+            UPDATE vulnerabilityversion vv
+            JOIN (
+            SELECT vs.vdo_set_id, vs.cve_id
+            FROM vdoset vs
+            JOIN LatestVdoSetDates ld ON vs.cve_id = ld.cve_id AND vs.created_date = ld.mcd
+            ) AS sub ON vv.cve_id = sub.cve_id
+            SET vv.vdo_set_id = sub.vdo_set_id
+        </sql>
+        <sql>
+            UPDATE vulnerabilityversion vv
+            JOIN cpeset cs ON vv.cve_id = cs.cve_id
+            SET vv.cpe_set_id = cs.cpe_set_id;
+        </sql>
+
+    </changeSet>
+
 </databaseChangeLog>
