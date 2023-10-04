@@ -404,8 +404,8 @@ public class DatabaseHelperTest {
     @Test
     public void backfillNvdTimegapsTest() throws SQLException {
         Set<NvdVulnerability> nvdVulns = new HashSet<>();
-        NvdVulnerability vuln = new NvdVulnerability("cve-1", new Timestamp(System.currentTimeMillis()), "Analyzed");
-        NvdVulnerability vuln2 = new NvdVulnerability("cve-2", new Timestamp(System.currentTimeMillis()), "Received");
+        NvdVulnerability vuln = new NvdVulnerability("cve-1", new Timestamp(System.currentTimeMillis()), "Analyzed", null);
+        NvdVulnerability vuln2 = new NvdVulnerability("cve-2", new Timestamp(System.currentTimeMillis()), "Received", null);
         nvdVulns.add(vuln);
         nvdVulns.add(vuln2);
 
@@ -445,7 +445,7 @@ public class DatabaseHelperTest {
         CompositeVulnerability vuln2 = new CompositeVulnerability(new RawVulnerability(1, "CVE-2023-2222", "desc", offset(-1), offset(1), offset(-10), "example.com"));
 
         MitreVulnerability mVuln = new MitreVulnerability("cve-1", "Public");
-        NvdVulnerability nVuln = new NvdVulnerability("cve-1", new Timestamp(System.currentTimeMillis()), "Analyzed");
+        NvdVulnerability nVuln = new NvdVulnerability("cve-1", new Timestamp(System.currentTimeMillis()), "Analyzed", null);
 
         vuln.setMitreVuln(mVuln);
         vuln2.setNvdVuln(nVuln);
@@ -473,7 +473,7 @@ public class DatabaseHelperTest {
         when(res.getString(anyString())).thenReturn("CVE-2023-2222", "Analyzed");
 
         CompositeVulnerability vuln = new CompositeVulnerability(new RawVulnerability(1, "CVE-2023-2222", "desc", offset(-1), offset(1), offset(-10), "example.com"));
-        NvdVulnerability nVuln = new NvdVulnerability("cve-1", new Timestamp(System.currentTimeMillis()), "Analyzed");
+        NvdVulnerability nVuln = new NvdVulnerability("cve-1", new Timestamp(System.currentTimeMillis()), "Analyzed", null);
         vuln.setNvdVuln(nVuln);
         Set<CompositeVulnerability> set = dbh.attachNvdVulns(vulns);
 
@@ -521,8 +521,8 @@ public class DatabaseHelperTest {
     @Test
     public void upsertNvdDataTest() throws SQLException {
         Set<NvdVulnerability> vulns = new HashSet<>();
-        NvdVulnerability vuln = new NvdVulnerability("cve-1", new Timestamp(System.currentTimeMillis()), "Analyzed");
-        NvdVulnerability vuln2 = new NvdVulnerability("cve-2", new Timestamp(System.currentTimeMillis()), "Not in NVD");
+        NvdVulnerability vuln = new NvdVulnerability("cve-1", new Timestamp(System.currentTimeMillis()), "Analyzed", null);
+        NvdVulnerability vuln2 = new NvdVulnerability("cve-2", new Timestamp(System.currentTimeMillis()), "Not in NVD", null);
         vulns.add(vuln);
         vulns.add(vuln2);
 
