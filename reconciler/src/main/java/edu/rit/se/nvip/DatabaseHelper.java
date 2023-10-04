@@ -48,6 +48,7 @@ public class DatabaseHelper {
     private static final String DELETE_JOB = "DELETE FROM cvejobtrack WHERE cve_id = ?";
     private static final String INSERT_VDO_SET = "INSERT INTO vdoset (cve_id, cvss_base_score, created_date) VALUES (?, ?, NOW())";
     private static final String INSERT_VDO_CHARACTERISTIC = "INSERT INTO vdocharacteristic (cve_id, vdo_label, vdo_noun_group, vdo_confidence, vdo_set_id) VALUES (?, ?, ?, ?, ?)";
+    private static final String UPDATE_VV_VDO_SET = "UPDATE vulnerabilityversion SET vdo_set_id = ? WHERE vuln_version_id = ?";
     private static final String INSERT_CWE = "INSERT INTO weakness (cve_id, cwe_id) VALUES (?, ?)";
     private static final String DELETE_CWE = "DELETE FROM weakness WHERE cve_id = ?";
     private static final String MITRE_COUNT = "SELECT COUNT(*) AS num_rows FROM mitredata;";
@@ -538,7 +539,8 @@ public class DatabaseHelper {
     private void insertVdoSetAndCvss(CompositeVulnerability vuln) {
         try (Connection conn = getConnection();
              PreparedStatement setStatement = conn.prepareStatement(INSERT_VDO_SET);
-             PreparedStatement rowStatement = conn.prepareStatement(INSERT_VDO_CHARACTERISTIC);) {
+             PreparedStatement rowStatement = conn.prepareStatement(INSERT_VDO_CHARACTERISTIC);
+             PreparedStatement vvStatement = conn.prepareStatement(UPDATE_VV_VDO_SET);) {
             // these tables should be updated atomically
             conn.setAutoCommit(false);
             // insert new vdoset
@@ -551,11 +553,17 @@ public class DatabaseHelper {
             if (rs.next()) {
                 setId = rs.getInt(1);
             }
+            // insert vdocharacteristic rows with set id
             for (VdoCharacteristic vdo : vuln.getVdoCharacteristics()) {
                 populateVDOInsert(rowStatement, vdo, setId);
                 rowStatement.addBatch();
             }
             rowStatement.executeBatch();
+            // put set id in vulnerabilityversion row
+            vvStatement.setInt(1, setId);
+            vvStatement.setInt(2, vuln.getVersionId());
+            vvStatement.executeUpdate();
+
             conn.commit();
         } catch (SQLException ex) {
             logger.error("Error while inserting vdo set and labels");
