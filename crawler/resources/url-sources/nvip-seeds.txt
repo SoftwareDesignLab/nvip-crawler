@@ -157,6 +157,7 @@ https://github.com/ckan/ckan-docker-base/security/
 https://github.com/cloudflare/circl/security/
 https://github.com/codeigniter4/CodeIgniter4/security/
 https://github.com/CollaboraOnline/online/security/
+https://github.com/composer/composer/security/
 https://github.com/contiki-ng/contiki-ng/security/
 https://github.com/craftcms/cms/security/advisories?state=published
 https://github.com/dgraph-io/dgraph/security/
@@ -281,6 +282,13 @@ https://labs.withsecure.com/advisories/
 https://labs.yarix.com/advisories/
 https://layersevensecurity.com/advisories/
 https://lednerb.de/en/publications/
+https://lgsecurity.lge.com/bulletins/avproducts#updateDetails
+https://lgsecurity.lge.com/bulletins/homeappliance#updateDetails
+https://lgsecurity.lge.com/bulletins/idproducts#updateDetails
+https://lgsecurity.lge.com/bulletins/mobile#updateDetails
+https://lgsecurity.lge.com/bulletins/monitor#updateDetails
+https://lgsecurity.lge.com/bulletins/pc#updateDetails
+https://lgsecurity.lge.com/bulletins/tv#updateDetails
 https://libreswan.org/security/
 https://liferay.dev/portal/security/known-vulnerabilities/
 https://line.github.io/security-advisory-blog/advisory/
@@ -561,6 +569,7 @@ https://www.idemia.com/vulnerability-information/
 https://www.incibe-cert.es/en/early-warning/ics-advisories/
 https://www.incibe-cert.es/en/early-warning/security-advisories/
 https://www.incibe-cert.es/en/early-warning/vulnerabilities/
+https://www.incibe.es/en/incibe-cert/alerta-temprana/avisos/
 https://www.incibe.es/incibe-cert/alerta-temprana/vulnerabilidades/
 https://www.intel.com/content/www/us/en/security-center/default.html/
 https://www.iot83.com/security/
