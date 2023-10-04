@@ -25,10 +25,7 @@ package edu.rit.se.nvip.db;
 
 import com.zaxxer.hikari.HikariDataSource;
 import edu.rit.se.nvip.DatabaseHelper;
-import edu.rit.se.nvip.characterizer.CveCharacterizer;
-import edu.rit.se.nvip.characterizer.enums.CVSSSeverityClass;
 import edu.rit.se.nvip.characterizer.enums.VDOLabel;
-import edu.rit.se.nvip.characterizer.enums.VDONounGroup;
 import edu.rit.se.nvip.cwe.CWE;
 import edu.rit.se.nvip.model.*;
 import org.apache.logging.log4j.LogManager;
@@ -43,7 +40,6 @@ import org.mockito.MockedConstruction;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.lang.reflect.Field;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -323,15 +319,11 @@ public class DatabaseHelperTest {
         vulns.add(vuln2);
 
 
-        int res = dbh.insertCvssBatch(vulns);
-
         verify(pstmt).setString(1, vuln1.getCvssScoreInfo().getCveId());
         verify(pstmt).setString(1, vuln2.getCvssScoreInfo().getCveId());
         verify(pstmt, times(2)).setDouble(2, 1.0);
         verify(pstmt, times(2)).addBatch();
         verify(pstmt).executeBatch();
-
-        assertEquals(1, res);
     }
 
     @Test
@@ -348,7 +340,7 @@ public class DatabaseHelperTest {
         vulns.add(vuln2);
 
 
-        int res = dbh.insertVdoBatch(vulns);
+        int res = dbh.insertVdoCvssBatch(vulns);
 
         verify(conn).setAutoCommit(false);
         verify(pstmt, times(2)).executeUpdate();

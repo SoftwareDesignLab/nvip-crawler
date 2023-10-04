@@ -13,7 +13,6 @@ import edu.rit.se.nvip.utils.ReconcilerEnvVars;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
@@ -109,8 +108,7 @@ public class ReconcilerController {
             Set<CompositeVulnerability> recharacterized = reconciledVulns.stream()
                     .filter(CompositeVulnerability::isRecharacterized).collect(Collectors.toSet());
 
-            dbh.insertCvssBatch(recharacterized);
-            dbh.insertVdoBatch(recharacterized);
+            dbh.insertVdoCvssBatch(recharacterized);
             dbh.insertSSVCSet(recharacterized);
         }
         // PNE team no longer wants a finish message
@@ -145,7 +143,7 @@ public class ReconcilerController {
            try {
                 String[] trainingDataInfo = {ReconcilerEnvVars.getTrainingDataDir(), ReconcilerEnvVars.getTrainingData()};
                 logger.info("Setting NVIP_CVE_CHARACTERIZATION_LIMIT to {}", ReconcilerEnvVars.getCharacterizationLimit());
-                return new CveCharacterizer(trainingDataInfo[0], trainingDataInfo[1], ReconcilerEnvVars.getCharacterizationApproach(), ReconcilerEnvVars.getCharacterizationMethod(), dbh);
+                return new CveCharacterizer(trainingDataInfo[0], trainingDataInfo[1], ReconcilerEnvVars.getCharacterizationApproach(), ReconcilerEnvVars.getCharacterizationMethod());
            } catch (NullPointerException | NumberFormatException e) {
                 logger.warn("Could not fetch NVIP_CVE_CHARACTERIZATION_TRAINING_DATA or NVIP_CVE_CHARACTERIZATION_TRAINING_DATA_DIR from env vars");
                 return null;
