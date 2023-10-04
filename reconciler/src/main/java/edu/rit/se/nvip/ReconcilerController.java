@@ -13,7 +13,6 @@ import edu.rit.se.nvip.utils.ReconcilerEnvVars;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
@@ -109,8 +108,7 @@ public class ReconcilerController {
             Set<CompositeVulnerability> recharacterized = reconciledVulns.stream()
                     .filter(CompositeVulnerability::isRecharacterized).collect(Collectors.toSet());
 
-            dbh.insertCvssBatch(recharacterized);
-            dbh.insertVdoBatch(recharacterized);
+            dbh.insertVdoCvssBatch(recharacterized);
         }
         // PNE team no longer wants a finish message
         //messenger.sendPNEFinishMessage();

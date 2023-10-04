@@ -15,11 +15,9 @@ import edu.rit.se.nvip.utils.ReconcilerEnvVars;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 class ReconcilerControllerTest {
@@ -69,8 +67,7 @@ class ReconcilerControllerTest {
         doNothing().when(mockMes).sendPNEMessage(anyList());
         when(mockDbh.insertTimeGapsForNewVulns(anySet())).thenReturn(1);
         when(mockDbh.insertRun(any(RunStats.class))).thenReturn(1);
-        when(mockDbh.insertCvssBatch(anySet())).thenReturn(1);
-        when(mockDbh.insertVdoBatch(anySet())).thenReturn(1);
+        when(mockDbh.insertVdoCvssBatch(anySet())).thenReturn(1);
         doNothing().when(mockMitre).updateMitreTables();
         doNothing().when(mockNvd).updateNvdTables();
         mockedDb.when(DatabaseHelper::getInstance).thenReturn(mockDbh);
