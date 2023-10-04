@@ -475,6 +475,7 @@ public class DatabaseHelperTest {
         CompositeVulnerability vuln = new CompositeVulnerability(new RawVulnerability(1, "CVE-2023-2222", "desc", offset(-1), offset(1), offset(-10), "example.com"));
         NvdVulnerability nVuln = new NvdVulnerability("cve-1", new Timestamp(System.currentTimeMillis()), "Analyzed", new ArrayList<>());
         vuln.setNvdVuln(nVuln);
+        vuln.setPotentialSources(new HashSet<>());
         Set<CompositeVulnerability> set = dbh.attachNvdVulns(vulns);
 
         assertTrue(set.isEmpty());
@@ -532,12 +533,12 @@ public class DatabaseHelperTest {
 
         Set<NvdVulnerability> set = dbh.upsertNvdData(vulns);
 
-        verify(pstmt).setString(1, "cve-1");
-        verify(pstmt).setString(1, "cve-2");
+        verify(pstmt, times(2)).setString(1, "cve-1");
+        verify(pstmt, times(2)).setString(1, "cve-2");
         verify(pstmt).setString(3, "Analyzed");
         verify(pstmt).setString(3, "Not in NVD");
         verify(pstmt, times(2)).addBatch();
-        verify(pstmt).executeBatch();
+        verify(pstmt, times(2)).executeBatch();
 
         assertEquals(1, set.size());
     }

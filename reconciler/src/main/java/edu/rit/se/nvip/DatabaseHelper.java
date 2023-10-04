@@ -703,15 +703,18 @@ public class DatabaseHelper {
                 pstmt.setString(++i, v.getCveId());
             }
             ResultSet res = pstmt.executeQuery();
-            boolean createObjects = false;
             String cveId = null;
+            String lastCveId = null;
             Map<String, List<String>> sourceMap = new HashMap<>();
             while (res.next()) { // goes through each matching cve_id, creates the NvdVuln and attaches it to the CompVuln
-                // Check if cveId changed (ensures no duplicate objects created)
-                if(cveId != null && !cveId.equals(res.getString("cve_id"))) createObjects = true;
+                // Store last cve id to determine duplicate entries
+                lastCveId = cveId;
 
-                // Create objects
-                if(createObjects) {
+                // Update cveId value
+                cveId = res.getString("cve_id");
+
+                // Create object when source list has been compiled
+                if(lastCveId != null && !lastCveId.equals(cveId)) {
                     NvdVulnerability nvdVuln = new NvdVulnerability(
                             cveId,
                             res.getTimestamp("published_date"),
@@ -723,14 +726,24 @@ public class DatabaseHelper {
                     out.add(compVuln);
                 }
 
-                // Update cveId value
-                cveId = res.getString("cve_id");
-
                 // Create list or add to it as needed
                 List<String> sources = sourceMap.get(cveId);
                 if(sources == null) sources = new ArrayList<>();
                 sources.add(res.getString("source_url"));
                 sourceMap.put(cveId, sources);
+            }
+
+            // If only one result was found
+            if(lastCveId == null) {
+                NvdVulnerability nvdVuln = new NvdVulnerability(
+                        cveId,
+                        res.getTimestamp("published_date"),
+                        res.getString("status"),
+                        sourceMap.get(cveId)
+                );
+                CompositeVulnerability compVuln = idToVuln.get(cveId);
+                compVuln.setNvdVuln(nvdVuln);
+                out.add(compVuln);
             }
         } catch (SQLException ex) {
             logger.error("Error while inserting time gaps");
