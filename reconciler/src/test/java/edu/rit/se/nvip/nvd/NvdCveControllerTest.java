@@ -47,11 +47,11 @@ class NvdCveControllerTest {
         reconciledVulns.add(vuln4);
         reconciledVulns.add(vuln5);
 
-        NvdVulnerability nvdVuln1 = new NvdVulnerability("CVE-2021-123455", new Timestamp(System.currentTimeMillis()), "Analyzed");
-        NvdVulnerability nvdVuln2 = new NvdVulnerability("CVE-2021-12234", new Timestamp(System.currentTimeMillis()), "Received");
-        NvdVulnerability nvdVuln3 = new NvdVulnerability("CVE-2021-12134", new Timestamp(System.currentTimeMillis()), "Undergoing Analysis");
-        NvdVulnerability nvdVuln4 = new NvdVulnerability("CVE-2021-1", new Timestamp(System.currentTimeMillis()), "Awaiting Analysis");
-        NvdVulnerability nvdVuln5 = new NvdVulnerability("CVE-2021-12", new Timestamp(System.currentTimeMillis()), "Not in NVD");
+        NvdVulnerability nvdVuln1 = new NvdVulnerability("CVE-2021-123455", new Timestamp(System.currentTimeMillis()), "Analyzed", null);
+        NvdVulnerability nvdVuln2 = new NvdVulnerability("CVE-2021-12234", new Timestamp(System.currentTimeMillis()), "Received", null);
+        NvdVulnerability nvdVuln3 = new NvdVulnerability("CVE-2021-12134", new Timestamp(System.currentTimeMillis()), "Undergoing Analysis", null);
+        NvdVulnerability nvdVuln4 = new NvdVulnerability("CVE-2021-1", new Timestamp(System.currentTimeMillis()), "Awaiting Analysis", null);
+        NvdVulnerability nvdVuln5 = new NvdVulnerability("CVE-2021-12", new Timestamp(System.currentTimeMillis()), "Not in NVD", null);
         vuln1.setNvdVuln(nvdVuln1);
         vuln2.setNvdVuln(nvdVuln2);
         vuln3.setNvdVuln(nvdVuln3);
