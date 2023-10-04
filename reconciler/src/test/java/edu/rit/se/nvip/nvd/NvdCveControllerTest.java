@@ -15,6 +15,7 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -47,11 +48,11 @@ class NvdCveControllerTest {
         reconciledVulns.add(vuln4);
         reconciledVulns.add(vuln5);
 
-        NvdVulnerability nvdVuln1 = new NvdVulnerability("CVE-2021-123455", new Timestamp(System.currentTimeMillis()), "Analyzed", null);
-        NvdVulnerability nvdVuln2 = new NvdVulnerability("CVE-2021-12234", new Timestamp(System.currentTimeMillis()), "Received", null);
-        NvdVulnerability nvdVuln3 = new NvdVulnerability("CVE-2021-12134", new Timestamp(System.currentTimeMillis()), "Undergoing Analysis", null);
-        NvdVulnerability nvdVuln4 = new NvdVulnerability("CVE-2021-1", new Timestamp(System.currentTimeMillis()), "Awaiting Analysis", null);
-        NvdVulnerability nvdVuln5 = new NvdVulnerability("CVE-2021-12", new Timestamp(System.currentTimeMillis()), "Not in NVD", null);
+        NvdVulnerability nvdVuln1 = new NvdVulnerability("CVE-2021-123455", new Timestamp(System.currentTimeMillis()), "Analyzed", new ArrayList<>());
+        NvdVulnerability nvdVuln2 = new NvdVulnerability("CVE-2021-12234", new Timestamp(System.currentTimeMillis()), "Received", new ArrayList<>());
+        NvdVulnerability nvdVuln3 = new NvdVulnerability("CVE-2021-12134", new Timestamp(System.currentTimeMillis()), "Undergoing Analysis", new ArrayList<>());
+        NvdVulnerability nvdVuln4 = new NvdVulnerability("CVE-2021-1", new Timestamp(System.currentTimeMillis()), "Awaiting Analysis", new ArrayList<>());
+        NvdVulnerability nvdVuln5 = new NvdVulnerability("CVE-2021-12", new Timestamp(System.currentTimeMillis()), "Not in NVD", new ArrayList<>());
         vuln1.setNvdVuln(nvdVuln1);
         vuln2.setNvdVuln(nvdVuln2);
         vuln3.setNvdVuln(nvdVuln3);
