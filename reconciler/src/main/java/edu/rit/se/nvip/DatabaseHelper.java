@@ -24,18 +24,25 @@ public class DatabaseHelper {
     private static final String GET_JOBS = "SELECT * FROM cvejobtrack";
     private static final String GET_RAW_BY_CVE_ID = "SELECT * FROM rawdescription WHERE cve_id = ?";
     private static final String UPDATE_FILTER_STATUS = "UPDATE rawdescription SET is_garbage = ? WHERE raw_description_id = ?";
-    private static final String GET_VULN = "SELECT v.*, d.description_id, d.description, d.created_date AS description_date, d.gpt_func " +
-            "FROM vulnerability AS v INNER JOIN description AS d ON v.description_id = d.description_id WHERE v.cve_id = ?";
-    private static final String GET_USED_RAW_VULNS = "SELECT rd.* " +
-            "FROM vulnerability as v " +
+    private static final String GET_VULN = "SELECT v.created_date, vv.published_date, vv.last_modified_date, d.description_id, d.description, d.created_date AS description_date, d.gpt_func " +
+            "FROM vulnerability AS v " +
+            "INNER JOIN vulnerabilityversion AS vv ON v.vuln_version_id = vv.vuln_version_id" +
             "INNER JOIN description AS d ON v.description_id = d.description_id " +
+            "WHERE v.cve_id = ?";
+    private static final String GET_USED_RAW_VULNS = "SELECT rd.* " +
+            "FROM vulnerability AS v " +
+            "INNER JOIN vulnerabilityversion AS vv ON v.vuln_version_id = vv.vuln_version_id" +
+            "INNER JOIN description AS d ON vv.description_id = d.description_id " +
             "INNER JOIN rawdescriptionjt AS rdjt ON d.description_id = rdjt.description_id " +
             "INNER JOIN rawdescription AS rd ON rdjt.raw_description_id = rd.raw_description_id " +
             "WHERE v.cve_id = ?";
 
 
-    private static final String INSERT_VULNERABILITY = "INSERT INTO vulnerability (cve_id, description_id, created_date, published_date, last_modified_date) VALUES (?, ?, ?, ?, ?)";
-    private static final String UPDATE_VULNERABILITY = "UPDATE vulnerability SET description_id = ?, published_date = ?, last_modified_date = ? WHERE cve_id = ?";
+    private static final String INSERT_VULNERABILITY = "INSERT INTO vulnerability (cve_id, created_date, vuln_version_id) VALUES (?, NOW(), ?)";
+    private static final String UPDATE_VULNERABILITY = "UPDATE vulnerability SET vuln_version_id = ? WHERE cve_id = ?";
+    private static final String INSERT_VULN_VERSION = "INSERT INTO vulnerabilityversion (cve_id, description_id, created_date, published_date, last_modified_date) VALUES (?, ?, NOW(), ?, ?)";
+    private static final String COPY_PREV_VERSION_KEYS = "UPDATE vulnerabilityversion SET vdo_set_id = (SELECT vdo_set_id FROM vulnerabilityversion WHERE cve_id = ? ORDER BY created_date DESC LIMIT 1), " +
+            "cpe_set_id = (SELECT cpe_set_id FROM vulnerabilityversion WHERE cve_id = ? ORDER BY created_date DESC LIMIT 1) WHERE vuln_version_id = ?";
     private static final String INSERT_JT = "INSERT INTO rawdescriptionjt (description_id, raw_description_id) VALUES (?, ?)";
     private static final String INSERT_DESCRIPTION = "INSERT INTO description (description, created_date, gpt_func, cve_id, is_user_generated) VALUES (?, ?, ?, ?, ?)";
     private static final String DELETE_JOB = "DELETE FROM cvejobtrack WHERE cve_id = ?";
@@ -236,9 +243,9 @@ public class DatabaseHelper {
             if (res.next()) {
                 CompositeDescription compDes = new CompositeDescription(
                         res.getInt("description_id"),
-                        res.getString("cve_id"),
+                        cveId,
                         res.getString("description"),
-                        res.getTimestamp("created_date"),
+                        res.getTimestamp("description_date"),
                         res.getString("gpt_func"),
                         rawVulns
                 );
@@ -298,6 +305,8 @@ public class DatabaseHelper {
         try (Connection conn = getConnection();
              PreparedStatement descriptionStatement = conn.prepareStatement(INSERT_DESCRIPTION, Statement.RETURN_GENERATED_KEYS);
              PreparedStatement jtStatement = conn.prepareStatement(INSERT_JT);
+             PreparedStatement vvStatement = conn.prepareStatement(INSERT_VULN_VERSION);
+             PreparedStatement copyStatement = conn.prepareStatement(COPY_PREV_VERSION_KEYS);
              PreparedStatement vulnStatement = conn.prepareStatement(isUpdate ? UPDATE_VULNERABILITY : INSERT_VULNERABILITY);
              PreparedStatement jobStatement = conn.prepareStatement(DELETE_JOB)) {
             // handle all these atomically
@@ -320,11 +329,23 @@ public class DatabaseHelper {
                 jtStatement.addBatch();
             }
             jtStatement.executeBatch();
-            // insert/update into vulnerability table
+            // insert new version row
+            populateVulnVersionInsert(vvStatement, vuln);
+            vvStatement.executeUpdate();
+            rs = vvStatement.getGeneratedKeys();
+            if (rs.next()) {
+                vuln.setVersionId(rs.getInt(1));
+            }
+            // if we're updating, copy over the vdo/cpe pointers to this new version
             if (isUpdate) {
-                populateVulnUpdate(vulnStatement, vuln);
-            } else {
+                populateCopyStatement(copyStatement, vuln);
+                copyStatement.executeUpdate();
+            }
+            // insert new vuln row or update version pointer
+            if (isUpdate) {
                 populateVulnInsert(vulnStatement, vuln);
+            } else {
+                populateVulnUpdate(vulnStatement, vuln);
             }
             vulnStatement.executeUpdate();
             // remove job
@@ -381,17 +402,25 @@ public class DatabaseHelper {
 
     private void populateVulnInsert(PreparedStatement vulnStatement, CompositeVulnerability vuln) throws SQLException {
         vulnStatement.setString(1, vuln.getCveId());
-        vulnStatement.setInt(2, vuln.getDescriptionId());
-        vulnStatement.setTimestamp(3, vuln.getCreateDate());
-        vulnStatement.setTimestamp(4, vuln.getPublishDate());
-        vulnStatement.setTimestamp(5, vuln.getLastModifiedDate());
+        vulnStatement.setInt(2, vuln.getVersionId());
     }
 
     private void populateVulnUpdate(PreparedStatement vulnStatement, CompositeVulnerability vuln) throws SQLException {
-        vulnStatement.setInt(1, vuln.getDescriptionId());
-        vulnStatement.setTimestamp(2, vuln.getPublishDate());
-        vulnStatement.setTimestamp(3, vuln.getLastModifiedDate());
-        vulnStatement.setString(4, vuln.getCveId());
+        vulnStatement.setInt(1, vuln.getVersionId());
+        vulnStatement.setString(2, vuln.getCveId());
+    }
+
+    private void populateVulnVersionInsert(PreparedStatement vvStatement, CompositeVulnerability vuln) throws SQLException{
+        vvStatement.setString(1, vuln.getCveId());
+        vvStatement.setInt(2, vuln.getDescriptionId());
+        vvStatement.setTimestamp(3, vuln.getPublishDate());
+        vvStatement.setTimestamp(4, vuln.getLastModifiedDate());
+    }
+
+    private void populateCopyStatement(PreparedStatement copyStatement, CompositeVulnerability vuln) throws SQLException{
+        copyStatement.setString(1, vuln.getCveId());
+        copyStatement.setString(2, vuln.getCveId());
+        copyStatement.setInt(3, vuln.getVersionId());
     }
 
     private void populateJobDelete(PreparedStatement jobStatement, CompositeVulnerability vuln) throws SQLException {
