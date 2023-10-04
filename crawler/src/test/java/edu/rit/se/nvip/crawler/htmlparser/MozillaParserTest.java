@@ -33,10 +33,12 @@ import static org.junit.Assert.assertTrue;
 
 public class MozillaParserTest extends AbstractParserTest {
 
+    MozillaParser parser = new MozillaParser();
+
     @Test
     public void testMozzilaSingle() {
         String html = safeReadHtml("src/test/resources/test-mozilla-single.html");
-        List<RawVulnerability> list = crawler.parseWebPage(
+        List<RawVulnerability> list = parser.parseWebPage(
                 "https://www.mozilla.org/en-US/security/advisories/mfsa2021-06/",
                 html
         );
@@ -51,7 +53,7 @@ public class MozillaParserTest extends AbstractParserTest {
     @Test
     public void testMozillaMultiple() {
         String html = safeReadHtml("src/test/resources/test-mozilla-multiple.html");
-        List<RawVulnerability> list = crawler.parseWebPage(
+        List<RawVulnerability> list = parser.parseWebPage(
                 "https://www.mozilla.org/en-US/security/advisories/mfsa2023-07/",
                 html
         );

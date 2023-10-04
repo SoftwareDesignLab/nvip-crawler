@@ -38,6 +38,12 @@ import java.util.Objects;
 
 public class HuntrParser extends AbstractCveParser {
 
+    public static final String DOMAIN_NAME = "huntr";
+
+    public HuntrParser() {
+        sourceDomainName = DOMAIN_NAME;
+    }
+
     /**
      * Parse pages listed to huntr.dev/bounties/hacktivity
      * @param domainName - huntr domain

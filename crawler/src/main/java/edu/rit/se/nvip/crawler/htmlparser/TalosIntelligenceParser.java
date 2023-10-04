@@ -48,6 +48,11 @@ import java.util.regex.Pattern;
  */
 public class TalosIntelligenceParser extends AbstractCveParser {
 	private Logger logger = LogManager.getLogger(getClass().getSimpleName());
+	public static final String DOMAIN_NAME = "talosintelligence";
+
+	public TalosIntelligenceParser() {
+		sourceDomainName = DOMAIN_NAME;
+	}
 
 	public TalosIntelligenceParser(String domainName) {
 		sourceDomainName = domainName;

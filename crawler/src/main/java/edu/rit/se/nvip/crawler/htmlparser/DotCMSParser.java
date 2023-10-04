@@ -11,6 +11,12 @@ import java.util.Set;
 
 public class DotCMSParser extends AbstractCveParser {
 
+    public static final String DOMAIN_NAME = "dotcms";
+
+    public DotCMSParser() {
+        sourceDomainName = DOMAIN_NAME;
+    }
+
     /**
      * Parse advisories listed to dotcms.com/docs/latest/known-security-issues
      * @param domainName - dotCMS domain

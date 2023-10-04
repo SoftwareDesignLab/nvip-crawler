@@ -40,6 +40,12 @@ import java.time.LocalDate;
 
 public class AutodeskParser extends AbstractCveParser {
 
+    public static final String DOMAIN_NAME = "autodesk";
+
+    public AutodeskParser() {
+        sourceDomainName = DOMAIN_NAME;
+    }
+
     public AutodeskParser(String domainName) {sourceDomainName = domainName;}
     @Override
     public List<RawVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {

@@ -13,6 +13,12 @@ import java.util.Set;
 // TODO: Add doctring to this
 public class AristaParser extends AbstractCveParser {
 
+    public static final String DOMAIN_NAME = "arista";
+
+    public AristaParser() {
+        sourceDomainName = DOMAIN_NAME;
+    }
+
     public AristaParser(String domainName) {sourceDomainName = domainName;}
 
     public List<RawVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {

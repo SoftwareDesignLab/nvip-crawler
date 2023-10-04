@@ -11,7 +11,9 @@ import static org.junit.Assert.*;
 /**
  * Tests for PyPA scraper/parser
  */
+//TODO: Don't run this test
 public class PyPAGithubScraperTest {
+
     @Test
     public void testPyPA() {
         PyPAGithubScraper scraper = new PyPAGithubScraper();

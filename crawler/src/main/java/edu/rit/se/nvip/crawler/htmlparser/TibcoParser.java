@@ -33,6 +33,12 @@ import java.util.List;
 
 public class TibcoParser extends AbstractCveParser {
 
+    public static final String DOMAIN_NAME = "tibco";
+
+    public TibcoParser() {
+        sourceDomainName = DOMAIN_NAME;
+    }
+
     /**
      * Parse advisorites listed to Tibco.com/services/support/advisories
      * Ex: <a href="https://www.tibco.com/support/advisories/2023/02/tibco-security-advisory-february-22-2023-tibco-businessconnect-cve-2022-41567">...</a>

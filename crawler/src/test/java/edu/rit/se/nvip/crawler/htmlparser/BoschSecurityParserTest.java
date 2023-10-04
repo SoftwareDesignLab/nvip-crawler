@@ -40,10 +40,12 @@ import static junit.framework.TestCase.assertEquals;
  */
 public class BoschSecurityParserTest extends AbstractParserTest {
 
+    BoschSecurityParser parser = new BoschSecurityParser();
+
     @Test
     public void testBoschSecurityParser() throws IOException {
         String html = FileUtils.readFileToString(new File("src/test/resources/test-bosch-security.html"), StandardCharsets.US_ASCII);
-        List<RawVulnerability> list = crawler.parseWebPage("https://psirt.bosch.com/security-advisories/bosch-sa-247053-bt.html", html);
+        List<RawVulnerability> list = parser.parseWebPage("https://psirt.bosch.com/security-advisories/bosch-sa-247053-bt.html", html);
 
         assertEquals(105, list.size());
 

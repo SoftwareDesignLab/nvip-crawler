@@ -23,6 +23,7 @@
  */
 package edu.rit.se.nvip.crawler.htmlparser;
 import edu.rit.se.nvip.model.RawVulnerability;
+import jnr.ffi.annotations.In;
 import org.junit.Test;
 
 import java.util.List;
@@ -33,10 +34,12 @@ import static org.junit.Assert.assertTrue;
 
 public class IntelParserTest extends AbstractParserTest {
 
+    IntelParser parser = new IntelParser();
+
     @Test
     public void testIntelSingle() {
         String html = safeReadHtml("src/test/resources/test-intel-single.html");
-        List<RawVulnerability> list = crawler.parseWebPage(
+        List<RawVulnerability> list = parser.parseWebPage(
                 "https://www.intel.com/content/www/us/en/security-center/advisory/intel-sa-00700.html",
                 html
         );
@@ -51,7 +54,7 @@ public class IntelParserTest extends AbstractParserTest {
     @Test
     public void testIntelMultiple() {
         String html = safeReadHtml("src/test/resources/test-intel-multiple.html");
-        List<RawVulnerability> list = crawler.parseWebPage(
+        List<RawVulnerability> list = parser.parseWebPage(
                 "https://www.intel.com/content/www/us/en/security-center/advisory/intel-sa-00714.html",
                 html
         );

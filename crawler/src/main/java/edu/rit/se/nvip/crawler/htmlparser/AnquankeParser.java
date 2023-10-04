@@ -44,6 +44,11 @@ import java.util.regex.Pattern;
  */
 public class AnquankeParser extends AbstractCveParser {
 	private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
+	public static final String DOMAIN_NAME = "anquanke";
+
+	public AnquankeParser() {
+		sourceDomainName = DOMAIN_NAME;
+	}
 
 	/**
 	 * Parse advisories listed to anquanke.com

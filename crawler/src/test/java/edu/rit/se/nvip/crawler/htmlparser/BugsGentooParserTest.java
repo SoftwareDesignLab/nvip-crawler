@@ -41,6 +41,8 @@ import static junit.framework.TestCase.assertEquals;
  */
 public class BugsGentooParserTest extends AbstractParserTest {
 
+    BugsGentooParser parser = new BugsGentooParser();
+
     /**
      * Test parsing a page with 1 CVE listed
      * @throws IOException
@@ -48,9 +50,8 @@ public class BugsGentooParserTest extends AbstractParserTest {
     @Test
     public void testBugsGentooParserSingleCVE() throws IOException {
 
-        CveCrawler crawler = getCrawler();
         String html = FileUtils.readFileToString(new File("src/test/resources/test-bugs-gentoo-single-cve.html"), StandardCharsets.US_ASCII);
-        List<RawVulnerability> list = crawler.parseWebPage("https://bugs.gentoo.org/600624", html);
+        List<RawVulnerability> list = parser.parseWebPage("https://bugs.gentoo.org/600624", html);
 
         assertEquals(1, list.size());
         RawVulnerability vuln1 = list.get(0);
@@ -71,9 +72,8 @@ public class BugsGentooParserTest extends AbstractParserTest {
     @Test
     public void testBugsGentooParserMultiCVE() throws IOException {
 
-        CveCrawler crawler = getCrawler();
         String html = FileUtils.readFileToString(new File("src/test/resources/test-bugs-gentoo-multi-cve.html"), StandardCharsets.US_ASCII);
-        List<RawVulnerability> list = crawler.parseWebPage("https://bugs.gentoo.org/890865", html);
+        List<RawVulnerability> list = parser.parseWebPage("https://bugs.gentoo.org/890865", html);
 
         assertEquals(2, list.size());
 

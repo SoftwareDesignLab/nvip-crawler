@@ -45,7 +45,13 @@ import java.util.*;
  * Ex: https://security.gentoo.org/glsa/200502-21
  */
 public class SecurityGentooParser extends AbstractCveParser {
-	
+
+	public static final String DOMAIN_NAME = "gentoo";
+
+	public SecurityGentooParser() {
+		sourceDomainName = DOMAIN_NAME;
+	}
+
 	public SecurityGentooParser(String domainName) {
 		sourceDomainName = domainName;
 	}

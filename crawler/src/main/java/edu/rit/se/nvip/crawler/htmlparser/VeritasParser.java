@@ -37,6 +37,12 @@ import java.util.regex.Pattern;
 
 public class VeritasParser extends AbstractCveParser {
 
+    public static final String DOMAIN_NAME = "veritas";
+
+    public VeritasParser() {
+        sourceDomainName = DOMAIN_NAME;
+    }
+
     /**
      * Parse advisories listed to veritas.com/content/support/en_US/security/
      * @param domainName - veritas domain

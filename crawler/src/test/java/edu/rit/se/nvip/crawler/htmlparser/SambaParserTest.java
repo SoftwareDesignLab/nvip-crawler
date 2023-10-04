@@ -9,10 +9,12 @@ import static junit.framework.TestCase.*;
 
 public class SambaParserTest extends AbstractParserTest {
 
+    SambaParser parser = new SambaParser();
+
     @Test
     public void testSambaParser() {
         String html = safeReadHtml("src/test/resources/test-samba.html");
-        List<RawVulnerability> list = crawler.parseWebPage(
+        List<RawVulnerability> list = parser.parseWebPage(
                 "https://www.samba.org/samba/security/CVE-2022-38023.html",
                 html
         );

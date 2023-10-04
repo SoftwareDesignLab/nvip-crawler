@@ -33,10 +33,12 @@ import static junit.framework.TestCase.assertTrue;
 
 public class MicrosoftParserTest extends AbstractParserTest {
 
+    MicrosoftParser parser = new MicrosoftParser();
+
     @Test
     public void testMSRC() {
         String html = safeReadHtml("src/test/resources/test-msrc.html");
-        List<RawVulnerability> list = crawler.parseWebPage(
+        List<RawVulnerability> list = parser.parseWebPage(
                 "https://msrc.microsoft.com/update-guide/vulnerability/CVE-2023-21809",
                 html
         );

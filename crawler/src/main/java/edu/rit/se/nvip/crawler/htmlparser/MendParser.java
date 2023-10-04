@@ -34,6 +34,12 @@ import java.util.List;
 
 public class MendParser extends AbstractCveParser {
 
+    public static final String DOMAIN_NAME = "mend.io";
+
+    public MendParser() {
+        sourceDomainName = DOMAIN_NAME;
+    }
+
     /**
      * Parse advisories listed to mend.io/vulnerability-database
      * Ex: <a href="https://www.mend.io/vulnerability-database/CVE-2023-22736">...</a>

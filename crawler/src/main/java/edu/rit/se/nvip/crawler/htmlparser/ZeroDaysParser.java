@@ -10,6 +10,12 @@ import java.util.List;
 
 public class ZeroDaysParser extends AbstractCveParser {
 
+    public static final String DOMAIN_NAME = "cybersecurityworks";
+
+    public ZeroDaysParser() {
+        sourceDomainName = DOMAIN_NAME;
+    }
+
     /**
      * Parse advisories listed to cybersecurityworks.com/zerodays-vulnerability-list/
      * @param domainName - zero days domain

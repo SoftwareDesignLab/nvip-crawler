@@ -1,26 +1,25 @@
 package edu.rit.se.nvip.crawler.htmlparser;
 
-import edu.rit.se.nvip.crawler.CveCrawler;
 import edu.rit.se.nvip.model.RawVulnerability;
 import edu.rit.se.nvip.crawler.SeleniumDriver;
-
-import org.junit.Test;
-import org.junit.BeforeClass;
-import org.junit.AfterClass;
-import org.junit.Ignore;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
-import java.util.ArrayList;
 
-import static junit.framework.TestCase.assertTrue;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
+@Disabled("Disabled until selenium driver can be properly mocked")
 public class ParseTableTest extends AbstractParserTest {
-    private static SeleniumDriver driver;
 
-    @Ignore
     @Test
     public void testParseTableQNAP() {
+        SeleniumDriver driver = mock(SeleniumDriver.class);
+
         ParseTable parser = new ParseTable("https://www.qnap.com/en/security-advisories?ref=security_advisory_details", driver);
         List<RawVulnerability> vulnerabilities = parser.parseWebPage("https://www.qnap.com/en/security-advisories?ref=security_advisory_details", null);
 
@@ -34,6 +33,8 @@ public class ParseTableTest extends AbstractParserTest {
 
     @Test
     public void testParseTableVMWare() {
+        SeleniumDriver driver = mock(SeleniumDriver.class);
+
         ParseTable parser = new ParseTable("https://www.vmware.com/security/advisories.html", driver);
         List<RawVulnerability> vulnerabilities = parser.parseWebPage("https://www.vmware.com/security/advisories.html", null);
 
@@ -47,6 +48,8 @@ public class ParseTableTest extends AbstractParserTest {
 
     @Test
     public void testParseTableNvidia() {
+        SeleniumDriver driver = mock(SeleniumDriver.class);
+
         ParseTable parser = new ParseTable("https://www.nvidia.com/en-us/security/", driver);
         List<RawVulnerability> vulnerabilities = parser.parseWebPage("https://www.nvidia.com/en-us/security/", null);
 
@@ -56,15 +59,5 @@ public class ParseTableTest extends AbstractParserTest {
         assertEquals("2018-10-16 00:00:00", vuln.getPublishDate());
         assertTrue(vuln.getDescription().contains("NVIDIA SHIELD TV – October 2018"));
         assertFalse(vuln.getDescription().contains("NVIDIA Shield TV Security Updates for CPU Speculative Side Channel Vulnerabilities"));
-    }
-
-    @BeforeClass
-    public static void setupWebDriver(){
-        driver = new SeleniumDriver();
-    }
-
-    @AfterClass
-    public static void destroyWebDriver(){
-        if(driver != null) driver.tryDiverQuit();
     }
 }

@@ -34,6 +34,12 @@ import java.util.List;
 
 public class TrendMicroParser extends AbstractCveParser {
 
+    public static final String DOMAIN_NAME = "zerodayinitiative";
+
+    public TrendMicroParser() {
+        sourceDomainName = DOMAIN_NAME;
+    }
+
     /**
      * Parse advisories listed to TrendMicro.com/vinfo/us/threat-encyclopedia/vulnerability
      * Specifically 'Security Update Overview' pages from Zero Day Initiative

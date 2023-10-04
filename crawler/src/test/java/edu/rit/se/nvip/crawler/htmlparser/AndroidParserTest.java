@@ -25,6 +25,7 @@ package edu.rit.se.nvip.crawler.htmlparser;
 
 import edu.rit.se.nvip.model.RawVulnerability;
 import org.junit.Test;
+import org.python.antlr.op.And;
 
 import java.util.List;
 
@@ -34,10 +35,12 @@ import static org.junit.Assert.assertTrue;
 
 public class AndroidParserTest extends AbstractParserTest {
 
+    AndroidParser parser = new AndroidParser();
+
     @Test
     public void testAndroidBulletin() {
         String html = safeReadHtml("src/test/resources/test-android-bulletin.html");
-        List<RawVulnerability> list = crawler.parseWebPage(
+        List<RawVulnerability> list = parser.parseWebPage(
                 "https://source.android.com/docs/security/bulletin/2023-02-01",
                 html
         );

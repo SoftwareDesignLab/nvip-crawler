@@ -24,35 +24,25 @@
 package edu.rit.se.nvip.crawler.htmlparser;
 
 import edu.rit.se.nvip.model.RawVulnerability;
-import edu.rit.se.nvip.crawler.CveCrawler;
 import edu.rit.se.nvip.crawler.SeleniumDriver;
 
 import java.util.List;
-import java.util.ArrayList;
 
-import static junit.framework.TestCase.assertEquals;
-import static junit.framework.TestCase.assertFalse;
-import static junit.framework.TestCase.assertTrue;
-import static org.junit.Assert.*;
-import org.junit.Test;
-import org.junit.BeforeClass;
-import org.junit.AfterClass;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+import static org.junit.jupiter.api.Assertions.*;
+
+//TODO: Remove some of these tests as they are redundant. Other tests address this functionality
+@ExtendWith(MockitoExtension.class)
 public class CveParserFactoryTest extends AbstractParserTest{
 
+    @Mock
     static SeleniumDriver driver;
     CveParserFactory parserFactory = new CveParserFactory();
     AbstractCveParser parser;
-
-    @BeforeClass
-    public static void setupWebDriver(){
-        driver = new SeleniumDriver();
-    }
-
-    @AfterClass
-    public static void destroyWebDriver(){
-        if(driver != null) driver.tryDiverQuit();
-    }
 
     @Test
     public void testFactoryTenable() {

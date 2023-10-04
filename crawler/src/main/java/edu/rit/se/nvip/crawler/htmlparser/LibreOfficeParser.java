@@ -10,6 +10,12 @@ import java.util.List;
 
 public class LibreOfficeParser extends AbstractCveParser {
 
+    public static final String DOMAIN_NAME = "libreoffice";
+
+    public LibreOfficeParser() {
+        sourceDomainName = DOMAIN_NAME;
+    }
+
     /**
      * Parse advisories listed to libreoffice.org/about-us/security/advisories/
      * @param domainName - LibreOffice domain

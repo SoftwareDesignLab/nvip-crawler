@@ -31,6 +31,8 @@ import static org.junit.Assert.*;
 
 public class KbCertCveParserTest extends AbstractParserTest {
 
+    KbCertCveParser parser = new KbCertCveParser();
+
     @Test
     public void testKbCertMultipleCVE() {
         String html = safeReadHtml("src/test/resources/test-kb-cert.html");

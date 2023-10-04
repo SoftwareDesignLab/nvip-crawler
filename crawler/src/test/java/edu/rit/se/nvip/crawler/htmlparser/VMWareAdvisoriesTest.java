@@ -45,16 +45,16 @@ import static org.junit.Assert.assertEquals;
  */
 public class VMWareAdvisoriesTest extends AbstractParserTest {
 
+	VMWareAdvisoriesParser parser = new VMWareAdvisoriesParser();
+
 	/**
 	 * Test Parser for page that has 1 CVE
 	 * @throws IOException
 	 */
 	@Test
 	public void testVMWareAdvisoriesSingleCVE() throws IOException {
-
-		CveCrawler crawler = getCrawler();
 		String html = FileUtils.readFileToString(new File("src/test/resources/test-vmware-advisories-single-cve.html"), StandardCharsets.UTF_8);
-		List<RawVulnerability> list = crawler.parseWebPage("https://www.vmware.com/security/advisories/VMSA-2023-0003.html", html);
+		List<RawVulnerability> list = parser.parseWebPage("https://www.vmware.com/security/advisories/VMSA-2023-0003.html", html);
 
 		assertEquals(list.size(), 1);
 
@@ -73,10 +73,8 @@ public class VMWareAdvisoriesTest extends AbstractParserTest {
 	 */
 	@Test
 	public void testVMWareAdvisoriesMultiCVE() throws IOException {
-
-		CveCrawler crawler = getCrawler();
 		String html = FileUtils.readFileToString(new File("src/test/resources/test-vmware-advisories-multi-cve.html"), StandardCharsets.UTF_8);
-		List<RawVulnerability> list = crawler.parseWebPage("https://www.vmware.com/security/advisories/VMSA-2023-0001.html", html);
+		List<RawVulnerability> list = parser.parseWebPage("https://www.vmware.com/security/advisories/VMSA-2023-0001.html", html);
 
 		assertEquals(list.size(), 4);
 

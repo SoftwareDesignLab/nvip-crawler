@@ -36,10 +36,12 @@ import static org.junit.Assert.assertTrue;
 
 public class HuntrParserTest extends AbstractParserTest {
 
+    HuntrParser parser = new HuntrParser();
+
     @Test
     public void testHuntrCVE() {
         String html = safeReadHtml("src/test/resources/test-huntr.html");
-        List<RawVulnerability> list = crawler.parseWebPage(
+        List<RawVulnerability> list = parser.parseWebPage(
                 "https://huntr.dev/bounties/2d4d309e-4c96-415f-9070-36d0815f1beb/",
                 html
         );
@@ -56,7 +58,7 @@ public class HuntrParserTest extends AbstractParserTest {
     @Test
     public void testHuntrNoCVE() {
         String html = safeReadHtml("src/test/resources/test-huntr-no.html");
-        List<RawVulnerability> list = crawler.parseWebPage(
+        List<RawVulnerability> list = parser.parseWebPage(
                 "https://huntr.dev/bounties/4cb54865-bcd5-4bf4-8c09-2b1f00fea842/",
                 html
         );

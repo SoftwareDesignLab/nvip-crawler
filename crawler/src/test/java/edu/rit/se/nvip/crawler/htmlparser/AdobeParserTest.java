@@ -33,10 +33,13 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 public class AdobeParserTest extends AbstractParserTest {
+
+    AdobeParser parser = new AdobeParser();
+
     @Test
     public void testAdobe() {
         String html = safeReadHtml("src/test/resources/test-adobe.html");
-        List<RawVulnerability> list = crawler.parseWebPage(
+        List<RawVulnerability> list = parser.parseWebPage(
                 "https://helpx.adobe.com/security/products/magento/apsb23-17.html",
                 html
         );

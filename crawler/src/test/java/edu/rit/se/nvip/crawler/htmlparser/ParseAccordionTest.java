@@ -1,24 +1,28 @@
 package edu.rit.se.nvip.crawler.htmlparser;
 
-import edu.rit.se.nvip.crawler.CveCrawler;
 import edu.rit.se.nvip.model.RawVulnerability;
 import edu.rit.se.nvip.crawler.SeleniumDriver;
-
-import org.junit.Test;
-import org.junit.BeforeClass;
-import org.junit.AfterClass;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
-import java.util.ArrayList;
 
-import static junit.framework.TestCase.assertTrue;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
+@Disabled("Disabled until selenium driver can be properly mocked")
+@ExtendWith(MockitoExtension.class)
 public class ParseAccordionTest extends AbstractParserTest{
+
+    @Mock
     private static SeleniumDriver driver;
 
     @Test
     public void testParseAccordionNi() {
+
         ParseAccordion parser = new ParseAccordion("https://www.ni.com/en-us/support/documentation/supplemental/11/available-critical-and-security-updates-for-ni-software.html", driver);
         List<RawVulnerability> vulnerabilities = parser.parseWebPage("https://www.ni.com/en-us/support/documentation/supplemental/11/available-critical-and-security-updates-for-ni-software.html", null);
 
@@ -67,15 +71,5 @@ public class ParseAccordionTest extends AbstractParserTest{
         assertEquals("2021-05-24 00:00:00", vuln.getPublishDate());
         assertTrue(vuln.getDescription().contains("ASUS is aware of newly discovered industry-wide WiFi protocol vulnerabilities that affect every brand of WiFi router. The vulnerabilities are known as Fragmentation"));
         assertFalse(vuln.getDescription().contains("ASUS has released the new BIOS version 303 for the ASUS ZenBook Pro Duo 15 OLED (UX582LR) laptop, which includes important security updates"));
-    }
-
-    @BeforeClass
-    public static void setupWebDriver(){
-        driver = new SeleniumDriver();
-    }
-
-    @AfterClass
-    public static void destroyWebDriver(){
-        if(driver != null) driver.tryDiverQuit();
     }
 }

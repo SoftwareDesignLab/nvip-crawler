@@ -37,6 +37,11 @@ import java.util.List;
  */
 public class BoschSecurityParser extends AbstractCveParser {
 
+    public static final String DOMAIN_NAME = "bosch";
+
+    public BoschSecurityParser() {
+        sourceDomainName = DOMAIN_NAME;
+    }
 
     public BoschSecurityParser(String domainName) {
         sourceDomainName = domainName;

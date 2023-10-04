@@ -23,29 +23,17 @@
  */
 package edu.rit.se.nvip.crawler;
 
-import edu.rit.se.nvip.crawler.QuickCveCrawler;
 import edu.rit.se.nvip.model.RawVulnerability;
-import org.joda.time.format.DateTimeFormatter;
-import org.joda.time.format.ISODateTimeFormat;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Disabled;
 
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
 
 import static org.junit.Assert.assertTrue;
 
 public class QuickCveCrawlerTest {
 
-	@Test
-	public void dateTest() {
-		String publishDate = "2018-07-03T01:29:00Z";
-		System.out.println(publishDate.contains("T"));
-		System.out.println(publishDate.substring(0, 10) + " " + publishDate.substring(11, 19));
-	}
-
+	@Disabled("Integration test that needs to be refactored: Should not crawl the web!")
 	@Test
 	public void testQuickCrawler() {
 		QuickCveCrawler crawler = new QuickCveCrawler();

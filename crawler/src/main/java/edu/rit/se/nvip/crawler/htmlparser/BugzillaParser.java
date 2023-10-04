@@ -50,7 +50,12 @@ import java.time.LocalDate;
  */
 public class BugzillaParser extends AbstractCveParser {
 	private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
-	
+	public static final String DOMAIN_NAME = "bugzilla";
+
+	public BugzillaParser() {
+		sourceDomainName = DOMAIN_NAME;
+	}
+
 	public BugzillaParser(String domainName) {
 		sourceDomainName = domainName;
 	}

@@ -24,6 +24,7 @@
 package edu.rit.se.nvip.crawler.htmlparser;
 import edu.rit.se.nvip.model.RawVulnerability;
 import org.junit.Test;
+import org.opencv.core.Core;
 
 import java.util.List;
 
@@ -32,10 +33,12 @@ import static org.junit.Assert.assertTrue;
 
 public class CoreParserTest extends AbstractParserTest {
 
+    CoreParser parser = new CoreParser();
+
     @Test
     public void testCoreSingle() {
         String html = safeReadHtml("src/test/resources/test-core-single.html");
-        List<RawVulnerability> list = crawler.parseWebPage(
+        List<RawVulnerability> list = parser.parseWebPage(
                 "https://www.coresecurity.com/core-labs/advisories/cisco-anyconnect-posture-hostscan-security-service-bypass",
                 html
         );
@@ -51,7 +54,7 @@ public class CoreParserTest extends AbstractParserTest {
     @Test
     public void testCoreMultiple() {
         String html = safeReadHtml("src/test/resources/test-core-multiple.html");
-        List<RawVulnerability> list = crawler.parseWebPage(
+        List<RawVulnerability> list = parser.parseWebPage(
                 "https://www.coresecurity.com/core-labs/advisories/pydio-cells-204-multiple-vulnerabilities",
                 html
         );

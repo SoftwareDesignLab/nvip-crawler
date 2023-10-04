@@ -10,10 +10,12 @@ import static junit.framework.TestCase.assertTrue;
 
 public class ZeroDaysParserTest extends AbstractParserTest {
 
+    ZeroDaysParser parser = new ZeroDaysParser();
+
     @Test
     public void testZeroDays() {
         String html = safeReadHtml("src/test/resources/test-zeroday.html");
-        List<RawVulnerability> list = crawler.parseWebPage(
+        List<RawVulnerability> list = parser.parseWebPage(
                 "https://cybersecurityworks.com/zerodays/cve-2022-28291-sensitive-information-disclosure-in-tenable-nessus-scanner.html",
                 html
         );

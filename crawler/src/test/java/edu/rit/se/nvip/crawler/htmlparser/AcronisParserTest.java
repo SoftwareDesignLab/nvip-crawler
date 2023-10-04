@@ -24,19 +24,22 @@
 package edu.rit.se.nvip.crawler.htmlparser;
 
 import edu.rit.se.nvip.model.RawVulnerability;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static junit.framework.TestCase.*;
+import static org.junit.jupiter.api.Assertions.*;
+
 
 public class AcronisParserTest extends AbstractParserTest {
+
+    AcronisParser parser = new AcronisParser();
 
     // Single CVE above title
     @Test
     public void testAcronisSingle() {
         String html = safeReadHtml("src/test/resources/test-acronis-1.html");
-        List<RawVulnerability> list = crawler.parseWebPage(
+        List<RawVulnerability> list = parser.parseWebPage(
                 "https://security-advisory.acronis.com/advisories/SEC-4092",
                 html
         );
@@ -52,7 +55,7 @@ public class AcronisParserTest extends AbstractParserTest {
     @Test
     public void testAcronisMultiple() {
         String html = safeReadHtml("src/test/resources/test-acronis-2.html");
-        List<RawVulnerability> list = crawler.parseWebPage(
+        List<RawVulnerability> list = parser.parseWebPage(
                 "https://security-advisory.acronis.com/advisories/SEC-5299",
                 html
         );

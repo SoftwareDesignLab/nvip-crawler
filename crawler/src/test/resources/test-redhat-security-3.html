@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html>
+<head><style type="text/css">.truste_cursor_pointer {cursor: pointer;}.truste_border_none {border: none;}</style>
+    <!-- CP_PRIMER_HEAD -->
+    <!-- /CP_PRIMER_HEAD -->
+
+    <!-- CP_PRIMER_HEAD -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <!--[if IEMobile]><meta http-equiv="cleartype" content="on" /><![endif]-->
+
+    <!-- metaInclude -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Chrome, Firefox OS and Opera -->
+    <meta name="theme-color" content="#000000">
+    <!-- Windows Phone -->
+    <meta name="msapplication-navbutton-color" content="#000000">
+    <!-- iOS Safari -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="#000000">
+    <script src="https://static.redhat.com/libs/redhat/marketing/latest/trustarc/trustarc.js"></script><script type="text/javascript" src="https://consent.trustarc.com/notice?c=teconsent&amp;domain=redhat.com&amp;gtm=1&amp;js=nj&amp;noticeType=bb&amp;privacypolicylink=https%3A%2F%2Fwww.redhat.com%2Fen%2Fabout%2Fprivacy-policy&amp;text=true" id="truste_0.3944642959680078"></script>
+    <script src="https://www.redhat.com/dtm.js"></script><script src="https://consent.trustarc.com/asset/notice.js/v/v1.7-2141" async="async" crossorigin="" importance="high"></script><script src="https://assets.adobedtm.com/extensions/EPbf7b42aa08bc4f10879b1484195e80d1/AppMeasurement.min.js" async=""></script><script src="https://assets.adobedtm.com/extensions/EPbf7b42aa08bc4f10879b1484195e80d1/AppMeasurement_Module_ActivityMap.min.js" async=""></script><script src="https://assets.adobedtm.com/extensions/EPbf7b42aa08bc4f10879b1484195e80d1/AppMeasurement_Module_AudienceManagement.min.js" async=""></script><script id="mktgJS" src="https://static.redhat.com/libs/@redhat/marketing/latest/rh.mktg.js"></script><script>_satellite["_runScript1"](function(event, target, Promise) {
+        var targetWaitAttempts = 0;
+
+        var awaitBody = function(offer){
+            //mbox call has returned, ensure <body> exists, then add the mbox DIV
+            var docBody  = document.getElementsByTagName("body"),
+                int_mbox;
+            if(docBody.length){
+                int_mbox = document.createElement("div");
+                docBody = docBody[0];
+                int_mbox.id = "int_mbox";
+                int_mbox.classList.add("mboxDefault");
+                int_mbox.style.display = "none";
+                //place mbox DIV as first tag within BODY
+                docBody.insertBefore(int_mbox, docBody.firstChild);
+
+                //now that receiving DIV is in place, inject the offer code
+                adobe.target.applyOffer({
+                    "mbox": "int_mbox",
+                    "selector": "#int_mbox",
+                    "offer": offer
+                });
+
+                //and then un-hide the mbox DIV
+                int_mbox.style.display = "block";
+            }else{
+                setTimeout(function(){awaitBody(offer)},100);
+            }
+        }
+
+        var awaitTarget = function(){
+            if (typeof adobe !== "undefined" && typeof adobe.target !== "undefined" && typeof adobe.target.getOffer !== "undefined") {
+                //First get the mbox call going out
+                adobe.target.getOffer({
+                    "mbox": "int_mbox",
+                    "success": function(offer) {
+                        awaitBody(offer);
+                    },
+                    // Handle errors gracefully
+                    "error": function(status, error) {}
+                });
+            }else{
+                if(++targetWaitAttempts < 50){
+                    setTimeout(awaitTarget,100);
+                }
+            }
+        }
+        awaitTarget();
+    });</script>
+    <script type="text/javascript">
+        window.portal = {
+
+            host       : "https://access.redhat.com",
+            idp_url    : "https://sso.redhat.com",
+
+            lang       : "en",
+            version    : "0.0.9",
+            builddate  : "Tue Sep 19 2023 14:55:17 GMT+0000 (Coordinated Universal Time)",
+            deploydate : "Tuesday, 19-Sep-2023 14:55:28 UTC",
+            fetchdate  : "Tuesday, 26-Sep-2023 18:47:32 UTC",
+            primer     : {}
+        };
+        var l=Object.defineProperty;var g=o=>l(o,"__esModule",{value:!0});var a=(o,t)=>()=>(o&&(t=o(o=0)),t);var u=(o,t)=>{g(o);for(var n in t)l(o,n,{get:t[n],enumerable:!0})};var e=a(()=>{});var i=a(()=>{e()});var p={};u(p,{loginIfSessionExists:()=>P});function P(){let o=!/\/logout.*/.test(location.pathname),t=window.portal.host===location.origin,n=document.cookie.indexOf("rh_sso_session")>=0,w=!(document.cookie.indexOf("rh_jwt")>=0);if(o&&t&&n&&w){let c=encodeURIComponent(window.location.href);window.location.assign(`/login?redirectTo=${c}`)}}var m=a(()=>{e();i()});e();e();i();var f="cp_primer_global_ready",E=!1;function d(){return new Promise(o=>{E?o(window.portal.primer):window.addEventListener(f,()=>{o(window.portal.primer)})})}e();var s=!0,v=undefined;i();window.portal.primer.onReady=d;s&&Promise.resolve().then(()=>(m(),p)).then(({loginIfSessionExists:o})=>{o()});document.documentElement.setAttribute("lang",document.documentElement.getAttribute("lang")||window.portal.lang||"en");
+        //# sourceMappingURL=inline-critical-js.js.map
+
+    </script>
+
+    <script type="module" src="https://access.redhat.com/services/primer/js/primer.js" crossorigin="anonymous"></script>
+
+
+    <link rel="preconnect" href="https://static.redhat.com">
+
+
+    <style type="text/css" media="screen">body::before{content:"CRITICAL CSS"}</style>
+
+    <!-- testing a method for async CSS loading recommended at https://web.dev/defer-non-critical-css/#optimize -->
+
+    <!-- <link rel="preload" href="./nimbus/css/bootstrap.css" as="style" onload="this.onload=null;this.rel='stylesheet'"> -->
+    <!-- <link rel="preload" href="./nimbus/css/bootstrap-grid.css" as="style" onload="this.onload=null;this.rel='stylesheet'"> -->
+    <!-- <link rel="preload" href="./nimbus/css/main.css" as="style" onload="this.onload=null;this.rel='stylesheet'"> -->
+    <!-- <link rel="preload" href="./nimbus/css/components.css" as="style" onload="this.onload=null;this.rel='stylesheet'"> -->
+    <!-- <link rel="preload" href="./nimbus/css/pages.css" as="style" onload="this.onload=null;this.rel='stylesheet'"> -->
+
+    <!-- <noscript><link rel="stylesheet" href="./nimbus/css/bootstrap.css"></noscript> -->
+    <!-- <noscript><link rel="stylesheet" href="./nimbus/css/bootstrap-grid.css"></noscript> -->
+    <!-- <noscript><link rel="stylesheet" href="./nimbus/css/main.css"></noscript> -->
+    <!-- <noscript><link rel="stylesheet" href="./nimbus/css/components.css"></noscript> -->
+    <!-- <noscript><link rel="stylesheet" href="./nimbus/css/pages.css"></noscript> -->
+
+    <!-- /testing a method for async CSS loading recommended at https://web.dev/defer-non-critical-css/#optimize -->
+
+    <!-- typical method for loading CSS -->
+
+    <link defer="" media="all" rel="stylesheet" href="https://access.redhat.com/services/primer/css/bootstrap.css">
+    <link defer="" media="all" rel="stylesheet" href="https://access.redhat.com/services/primer/css/bootstrap-grid.css">
+    <link defer="" media="all" rel="stylesheet" href="https://access.redhat.com/services/primer/css/main.css">
+    <link defer="" media="all" rel="stylesheet" href="https://access.redhat.com/services/primer/css/components.css">
+    <link defer="" media="all" rel="stylesheet" href="https://access.redhat.com/services/primer/css/pages.css">
+    <link defer="" media="all" rel="stylesheet" href="https://access.redhat.com/services/primer/js/primer.css">
+
+    <!-- /typical method for loading CSS -->
+    <!-- /CP_PRIMER_HEAD -->
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js" integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
+    <script src="https://access.redhat.com/webassets/avalon/j/bower_components/datatables/media/js/jquery.dataTables.min.js?v=901bab9e"></script>
+    <title>CVE-2023-25725- Red Hat Customer Portal</title>
+    <script type="module" crossorigin="" src="/security/cve/spa-assets/index.912cdcb7.js"></script>
+    <link rel="stylesheet" href="/security/cve/spa-assets/index.da2ea864.css">
+    <script src="https://assets.adobedtm.com/c5eace8ae526/0e0bd2221e41/d85498ca6bee/RC4291db99e867433ca8496d298dca09cb-source.min.js" async=""></script><script src="https://assets.adobedtm.com/c5eace8ae526/0e0bd2221e41/d85498ca6bee/RC89cb5efc622a491caa02ca11adc4672f-source.min.js" async=""></script><script charset="utf-8" src="https://siteintercept.qualtrics.com/dxjsmodule/12.f0510cc63da0d227c0b7.chunk.js?Q_CLIENTVERSION=1.99.0&amp;Q_CLIENTTYPE=web&amp;Q_BRANDID=access.redhat.com"></script></head>
+<body cz-shortcut-listen="true"><div id="int_mbox" class="mboxDefault at-element-marker" style="display: block;"></div>
+<!-- CP_PRIMER_HEADER -->
+<div id="page-wrap" class="page-wrap">
+    <div id="pers-top-page-wrap" class="top-page-wrap pers-loader-bg">
+
+        <div id="hero-bg-top-left" class="summit-bg-shapes"></div>
+        <div id="hero-bg-top-right" class="summit-bg-shapes"></div>
+
+        <!--googleoff: all-->
+        <header class="masthead" id="masthead">
+
+            <a href="#portal-utility-nav" id="global-skip-to-nav" class="skip-link visually-hidden">Skip to navigation</a>
+            <a href="#cp-main" class="skip-link visually-hidden">Skip to main content</a>
+
+
+            <nav id="portal-utility-nav" class="utility-navigation utility-navigation--bar hidden-at-mobile" data-analytics-region="utility" aria-labelledby="nav__utility-nav--desktop">
+                <h3 id="nav__utility-nav--desktop" class="element-invisible">
+                    Utilities
+                </h3>
+                <ul aria-labelledby="nav__utility-nav--desktop">
+                    <li id="nav-subscription" data-portal-tour-1="1">
+                        <a class="top-nav-subscriptions" data-analytics-level="2" data-analytics-category="Utilities" data-analytics-text="Subscription" href="https://access.redhat.com/management/">
+                            Subscriptions
+                        </a>
+                    </li>
+                    <li id="nav-downloads" data-portal-tour-1="2">
+                        <a class="top-nav-downloads" data-analytics-level="2" data-analytics-category="Utilities" data-analytics-text="Downloads" href="https://access.redhat.com/downloads/">
+                            Downloads
+                        </a>
+                    </li>
+                    <li id="nav-containers">
+                        <a class="top-nav-containers" data-analytics-level="2" data-analytics-category="Utilities" data-analytics-text="Containers" href="https://catalog.redhat.com/software/containers/explore/">
+                            Containers
+                        </a>
+                    </li>
+                    <li id="nav-support" data-portal-tour-1="3">
+                        <a class="top-nav-support-cases" data-analytics-level="2" data-analytics-category="Utilities" data-analytics-text="Support Cases" href="https://access.redhat.com/support/cases/">
+                            Support Cases
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+
+            <pfe-navigation id="pfe-navigation" data-analytics-region="mega menu" lang="" pfelement="" class="PFElement pfe-navigation--processed pfe-navigation--custom-dropdowns--processed pfe-navigation--has-search" type="combo" has_search="" has_account="" breakpoint="desktop">
+                <div class="pfe-navigation__logo-wrapper" id="pfe-navigation__logo-wrapper">
+                    <a href="https://access.redhat.com/" class="pfe-navigation__logo-link" data-analytics-text="logo" data-analytics-category="MM|logo">
+                        <img class="pfe-navigation__logo-image" alt="Red Hat Customer Portal" src="https://access.redhat.com/chrome_themes/nimbus/img/red-hat-customer-portal.svg">
+                    </a>
+                </div>
+
+                <nav class="pfe-navigation" aria-label="Main Navigation" data-analytics-region="main nav">
+                    <ul class="pfe-navigation__menu" id="pfe-navigation__menu">
+
+
+                        <li class="pfe-navigation__menu-item hidden-at-tablet hidden-at-desktop" id="nav-subscription--mobile" data-portal-tour-1="1">
+                            <a class="pfe-navigation__menu-link" data-analytics-level="1" data-analytics-text="Subscription" href="https://access.redhat.com/management/">
+                                Subscriptions
+                            </a>
+                        </li>
+                        <li class="pfe-navigation__menu-item hidden-at-tablet hidden-at-desktop" id="nav-downloads--mobile" data-portal-tour-1="2">
+                            <a class="pfe-navigation__menu-link" data-analytics-level="1" data-analytics-text="Downloads" href="https://access.redhat.com/downloads/">
+                                Downloads
+                            </a>
+                        </li>
+                        <li class="pfe-navigation__menu-item hidden-at-tablet hidden-at-desktop" id="nav-containers--mobile">
+                            <a class="pfe-navigation__menu-link" data-analytics-level="1" data-analytics-text="Containers" href="https://catalog.redhat.com/software/containers/explore/">
+                                Containers
+                            </a>
+                        </li>
+                        <li class="pfe-navigation__menu-item hidden-at-tablet hidden-at-desktop" id="nav-support--mobile" data-portal-tour-1="3">
+                            <a class="pfe-navigation__menu-link" data-analytics-level="1" data-analytics-text="Support Cases" href="https://access.redhat.com/support/cases/">
+                                Support Cases
+                            </a>
+                        </li>
+
+
+                        <li class="pfe-navigation__menu-item">
+                            <a href="https://access.redhat.com/products/" class="pfe-navigation__menu-link" data-analytics-level="1" data-analytics-text="Products and Services">
+                                Products &amp; Services
+                            </a>
+                            <div class="pfe-navigation__dropdown has-primary-detail">
+
+                                <div class="desktop-col-span-2 tablet-col-span-all">
+                                    <h3>
+                                        <a data-analytics-level="2" data-analytics-category="Products and Services" data-analytics-text="Products" href="https://access.redhat.com/products/">
+                                            Products
+                                        </a>
+                                    </h3>
+                                    <slot name="main-menu__dropdown--product__product-listing"></slot>
+                                </div>
+
+                                <div>
+                                    <h3 id="nav__products__support">
+                                        <a data-analytics-level="2" data-analytics-category="Products and Services" data-analytics-text="Support" href="https://access.redhat.com/support">
+                                            Support
+                                        </a>
+                                    </h3>
+                                    <ul aria-labelledby="nav__products__support">
+                                        <li><a data-analytics-level="3" data-analytics-category="Products and Services|Support" data-analytics-text="Production Support" href="https://access.redhat.com/support/offerings/production/">
+                                            Production Support
+                                        </a></li>
+                                        <li><a data-analytics-level="3" data-analytics-category="Products and Services|Support" data-analytics-text="Development Support" href="https://access.redhat.com/support/offerings/developer/">
+                                            Development Support
+                                        </a></li>
+                                        <li><a data-analytics-level="3" data-analytics-category="Products and Services|Support" data-analytics-text="Product Life Cycles" href="https://access.redhat.com/product-life-cycles/">
+                                            Product Life Cycles
+                                        </a></li>
+                                    </ul>
+
+                                    <h3 id="nav__products__services">
+                                        <a data-analytics-level="2" data-analytics-category="Products and Services" data-analytics-text="Services" href="https://www.redhat.com/en/services">
+                                            Services
+                                        </a>
+                                    </h3>
+                                    <ul aria-labelledby="nav__products__services">
+                                        <li><a data-analytics-level="3" data-analytics-category="Products and Services|Services" data-analytics-text="Consulting" href="https://www.redhat.com/en/services/consulting">
+                                            Consulting
+                                        </a></li>
+                                        <li><a data-analytics-level="3" data-analytics-category="Products and Services|Services" data-analytics-text="Technical Account Management" href="https://access.redhat.com/support/offerings/tam/">
+                                            Technical Account Management
+                                        </a></li>
+                                        <li><a data-analytics-level="3" data-analytics-category="Products and Services|Services" data-analytics-text="Training and Certifications" href="https://www.redhat.com/en/services/training-and-certification">
+                                            Training &amp; Certifications
+                                        </a></li>
+                                    </ul>
+                                </div>
+
+
+                                <div>
+                                    <h3 id="nav__products__documentation">
+                                        <a data-analytics-level="2" data-analytics-category="Products and Services" data-analytics-text="Documentation" href="https://access.redhat.com/documentation">
+                                            Documentation
+                                        </a>
+                                    </h3>
+                                    <ul aria-labelledby="nav__products__documentation">
+                                        <li><a data-analytics-level="3" data-analytics-category="Products and Services|Documentation" data-analytics-text="Red Hat Enterprise Linux" href="https://access.redhat.com/documentation/en/red_hat_enterprise_linux">
+                                            Red Hat Enterprise Linux
+                                        </a></li>
+                                        <li><a data-analytics-level="3" data-analytics-category="Products and Services|Documentation" data-analytics-text="Red Hat JBoss Enterprise Application Platform" href="https://access.redhat.com/documentation/en/red_hat_jboss_enterprise_application_platform">
+                                            Red Hat JBoss Enterprise Application Platform
+                                        </a></li>
+                                        <li><a data-analytics-level="3" data-analytics-category="Products and Services|Documentation" data-analytics-text="Red Hat OpenStack Platform" href="https://access.redhat.com/documentation/en/red_hat_openstack_platform">
+                                            Red Hat OpenStack Platform
+                                        </a></li>
+                                        <li><a data-analytics-level="3" data-analytics-category="Products and Services|Documentation" data-analytics-text="Red Hat OpenShift Container Platform" href="https://access.redhat.com/documentation/en/openshift_container_platform">
+                                            Red Hat OpenShift Container Platform
+                                        </a></li>
+                                    </ul>
+                                    <pfe-cta pfelement="" class="PFElement" has_link="">
+                                        <a data-analytics-level="3" data-analytics-category="Products and Services|Documentation" data-analytics-text="All Documentation" data-analytics-linktype="cta" href="https://access.redhat.com/documentation">
+                                            All Documentation
+                                        </a>
+                                    </pfe-cta>
+
+                                    <h3 id="nav__products__catalog"><a data-analytics-level="2" data-analytics-category="Products and Services" data-analytics-text="Ecosystem Catalog" href="https://catalog.redhat.com/">
+                                        Ecosystem Catalog
+                                    </a></h3>
+                                    <ul aria-labelledby="nav__products__catalog">
+                                        <li><a data-analytics-level="3" data-analytics-category="Products and Services|Ecosystem Catalog" data-analytics-text="Red Hat Partner Ecosystem" href="https://access.redhat.com/ecosystem/">
+                                            Red Hat Partner Ecosystem
+                                        </a></li>
+                                        <li><a data-analytics-level="3" data-analytics-category="Products and Services|Ecosystem Catalog" data-analytics-text="Partner Resources" href="https://access.redhat.com/ecosystem/partner-resources">
+                                            Partner Resources
+                                        </a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </li>
+
+
+                        <li class="pfe-navigation__menu-item">
+                            <a class="pfe-navigation__menu-link" data-analytics-level="1" data-analytics-text="Tools" href="https://access.redhat.com/labs/">
+                                Tools
+                            </a>
+                            <div class="pfe-navigation__dropdown pfe-navigation__dropdown--3-column">
+
+                                <div>
+                                    <h3 id="nav__tools__tools" data-analytics-level="2" data-analytics-text="Tools" data-analytics-category="Tools">
+                                        Tools
+                                    </h3>
+                                    <ul aria-labelledby="nav__tools__tools">
+                                        <li><a data-analytics-level="3" data-analytics-category="Tools|Tools" data-analytics-text="Solution Engine" href="https://access.redhat.com/support/cases/#/troubleshoot">
+                                            Troubleshoot a product issue
+                                        </a></li>
+                                        <li><a data-analytics-level="3" data-analytics-category="Tools|Tools" data-analytics-text="Packages" href="https://access.redhat.com/downloads/content/package-browser">
+                                            Packages
+                                        </a></li>
+                                        <li><a data-analytics-level="3" data-analytics-category="Tools|Tools" data-analytics-text="Errata" href="https://access.redhat.com/errata/">
+                                            Errata
+                                        </a></li>
+                                    </ul>
+                                </div>
+
+
+                                <div>
+                                    <h3 id="nav__tools__labs">
+                                        <a data-analytics-level="2" data-analytics-category="Tools" data-analytics-text="Customer Portal Labs" href="https://access.redhat.com/labs/">
+                                            Customer Portal Labs
+                                        </a>
+                                    </h3>
+                                    <ul aria-labelledby="nav__tools__labs">
+                                        <li><a data-analytics-level="3" data-analytics-category="Tools|Customer Portal Labs" data-analytics-text="Configuration" href="https://access.redhat.com/labs/#!?type=config">
+                                            Configuration
+                                        </a></li>
+                                        <li><a data-analytics-level="3" data-analytics-category="Tools|Customer Portal Labs" data-analytics-text="Deployment" href="https://access.redhat.com/labs/#!?type=deploy">
+                                            Deployment
+                                        </a></li>
+                                        <li><a data-analytics-level="3" data-analytics-category="Tools|Customer Portal Labs" data-analytics-text="Security" href="https://access.redhat.com/labs/#!?type=security">
+                                            Security
+                                        </a></li>
+
+                                        <li><a data-analytics-level="3" data-analytics-category="Tools|Customer Portal Labs" data-analytics-text="Troubleshooting" href="https://access.redhat.com/labs/#!?type=troubleshoot">
+                                            Troubleshoot
+                                        </a></li>
+                                    </ul>
+                                    <pfe-cta pfelement="" class="PFElement" has_link="">
+                                        <a data-analytics-level="3" data-analytics-category="Tools|Customer Portal Labs" data-analytics-text="All Labs" data-analytics-linktype="cta" href="https://access.redhat.com/labs/">
+                                            All labs
+                                        </a>
+                                    </pfe-cta>
+                                </div>
+
+
+                                <div>
+                                    <h4 id="nav__tools__red-hat-insights">
+                                        <a data-analytics-level="2" data-analytics-category="Tools" data-analytics-text="Red Hat Insights" href="//www.redhat.com/en/technologies/management/insights">
+                                            Red Hat Insights
+                                        </a>
+                                    </h4>
+                                    <p>Increase visibility into IT operations to detect and resolve technical issues before they impact your business.</p>
+                                    <a data-analytics-level="3" data-analytics-category="Tools|Red Hat Insights" data-analytics-text="Learn more" href="https://www.redhat.com/en/technologies/management/insights">
+                                        Learn More
+                                    </a>
+                                    <br>
+                                    <a data-analytics-level="3" data-analytics-category="Tools|Red Hat Insights" data-analytics-text="Go to Insights" href="https://cloud.redhat.com/insights">
+                                        Go to Insights
+                                    </a>
+                                </div>
+                            </div>
+                        </li>
+
+
+                        <li class="pfe-navigation__menu-item">
+                            <a class="pfe-navigation__menu-link" data-analytics-level="1" data-analytics-text="Security" href="https://access.redhat.com/security/">
+                                Security
+                            </a>
+                            <div class="pfe-navigation__dropdown pfe-navigation__dropdown--3-column">
+
+                                <div>
+                                    <h3 id="security__security-center">
+                                        <a data-analytics-level="2" data-analytics-category="Security" data-analytics-text="Red Hat Product Security Center" href="https://access.redhat.com/security">
+                                            Red Hat Product Security Center
+                                        </a>
+                                    </h3>
+                                    <p>
+                                        Engage with our Red Hat Product Security team, access security updates, and ensure your environments are not exposed to any known security vulnerabilities.
+                                    </p>
+                                    <pfe-cta pfe-priority="primary" priority="primary" pfelement="" class="PFElement" has_link="">
+                                        <a data-analytics-level="3" data-analytics-category="Security|Red Hat Product Security Center" data-analytics-text="Product Security Center" data-analytics-linktype="cta" href="https://access.redhat.com/security/">
+                                            Product Security Center
+                                        </a>
+                                    </pfe-cta>
+                                </div>
+
+                                <div>
+                                    <h3 id="nav__security__updates" data-analytics-level="2" data-analytics-text="Security Updates" data-analytics-category="Security">
+                                        <a data-analytics-level="2" data-analytics-category="Security" data-analytics-text="Security Updates" href="/security">
+                                            Security Updates
+                                        </a>
+                                    </h3>
+                                    <ul aria-labelledby="nav__security__updates">
+                                        <li><a data-analytics-level="3" data-analytics-category="Security|Security Updates" data-analytics-text="Security Advisories" href="https://access.redhat.com/security/security-updates/#/security-advisories">
+                                            Security Advisories
+                                        </a></li>
+                                        <li><a data-analytics-level="3" data-analytics-category="Security|Security Updates" data-analytics-text="Red Hat CVE Database" href="https://access.redhat.com/security/security-updates/#/cve">
+                                            Red Hat CVE Database
+                                        </a></li>
+                                        <li><a data-analytics-level="3" data-analytics-category="Security|Security Updates" data-analytics-text="Security Labs" href="https://access.redhat.com/security/security-updates/#/security-labs">
+                                            Security Labs
+                                        </a></li>
+                                    </ul>
+                                    <p class="margin-top-xl">
+                                        Keep your systems secure with Red Hat's specialized responses to security vulnerabilities.
+                                    </p>
+                                    <pfe-cta pfelement="" class="PFElement" has_link="">
+                                        <a data-analytics-level="3" data-analytics-category="Security|Security Updates" data-analytics-text="View Responses" data-analytics-linktype="cta" href="https://access.redhat.com/security/vulnerability">
+                                            View Responses
+                                        </a>
+                                    </pfe-cta>
+                                </div>
+
+
+                                <div>
+                                    <h3 id="nav__security__resources">
+                                        <a data-analytics-level="2" data-analytics-category="Security" data-analytics-text="Resources" href="https://access.redhat.com/security/overview">
+                                            Resources
+                                        </a>
+                                    </h3>
+                                    <ul aria-labelledby="nav__security__resources">
+
+                                        <li><a data-analytics-level="3" data-analytics-category="Security|Resources" data-analytics-text="Security Blog" href="//redhat.com/en/blog/channel/security">
+                                            Security Blog
+                                        </a></li>
+                                        <li><a data-analytics-level="3" data-analytics-category="Security|Resources" data-analytics-text="Security Measurement" href="https://www.redhat.com/security/data/metrics/">
+                                            Security Measurement
+                                        </a></li>
+                                        <li><a data-analytics-level="3" data-analytics-category="Security|Resources" data-analytics-text="Severity Ratings" href="https://access.redhat.com/security/updates/classification/">
+                                            Severity Ratings
+                                        </a></li>
+                                        <li><a data-analytics-level="3" data-analytics-category="Security|Resources" data-analytics-text="Backporting Policies" href="https://access.redhat.com/security/updates/backporting/">
+                                            Backporting Policies
+                                        </a></li>
+                                        <li><a data-analytics-level="3" data-analytics-category="Security|Resources" data-analytics-text="Product Signing (GPG) Keys" href="https://access.redhat.com/security/team/key/">
+                                            Product Signing (GPG) Keys
+                                        </a></li>
+                                    </ul>
+                                </div>
+
+                            </div>
+                        </li>
+
+
+                        <li class="pfe-navigation__menu-item">
+                            <a href="https://access.redhat.com/community/" class="pfe-navigation__menu-link" data-analytics-level="1" data-analytics-text="Community">
+                                Community
+                            </a>
+                            <div class="pfe-navigation__dropdown pfe-navigation__dropdown--3-column">
+
+
+                                <div>
+                                    <h3 id="nav__community__cp-community">
+                                        <a href="https://access.redhat.com/community" data-analytics-level="2" data-analytics-text="Customer Portal Community" data-analytics-category="Community">
+                                            Customer Portal Community
+                                        </a>
+                                    </h3>
+                                    <ul aria-labelledby="nav__community__cp-community">
+                                        <li><a data-analytics-level="3" data-analytics-category="Community|Customer Portal Community" data-analytics-text="Discussions" href="https://access.redhat.com/discussions">
+                                            Discussions
+                                        </a></li>
+
+                                        <li><a data-analytics-level="3" data-analytics-category="Community|Customer Portal Community" data-analytics-text="Private Groups" href="https://access.redhat.com/groups/">
+                                            Private Groups
+                                        </a></li>
+                                    </ul>
+
+                                    <pfe-cta pfe-priority="primary" priority="primary" pfelement="" class="PFElement" has_link="">
+                                        <a data-analytics-level="3" data-analytics-category="Community|Customer Portal Community" data-analytics-text="Community Activity" data-analytics-linktype="cta" href="https://access.redhat.com/community/">
+                                            Community Activity
+                                        </a>
+                                    </pfe-cta>
+                                </div>
+
+
+                                <div>
+                                    <h3 id="nav__community__events" data-analytics-level="2" data-analytics-text="Customer Events" data-analytics-category="Community">
+                                        Customer Events
+                                    </h3>
+                                    <ul aria-labelledby="nav__community__events">
+                                        <li><a data-analytics-level="3" data-analytics-category="Community|Customer Events" data-analytics-text="Red Hat Convergence" href="https://access.redhat.com/convergence/">
+                                            Red Hat Convergence
+                                        </a></li>
+                                        <li><a data-analytics-level="3" data-analytics-category="Community|Customer Events" data-analytics-text="Red Hat Summit" href="http://www.redhat.com/summit/">
+                                            Red Hat Summit
+                                        </a></li>
+                                    </ul>
+                                </div>
+
+
+                                <div>
+                                    <h3 id="nav__community__stories" data-analytics-level="2" data-analytics-text="Stories" data-analytics-category="Community">
+                                        Stories
+                                    </h3>
+                                    <ul aria-labelledby="nav__community__stories">
+                                        <li><a data-analytics-level="3" data-analytics-category="Community|Stories" data-analytics-text="Red Hat Subscription Value" href="https://access.redhat.com/subscription-value/">
+                                            Red Hat Subscription Value
+                                        </a></li>
+                                        <li><a data-analytics-level="3" data-analytics-text="You Asked. We Acted." data-analytics-category="Community|Stories" href="https://access.redhat.com/you-asked-we-acted/">
+                                            You Asked. We Acted.
+                                        </a></li>
+                                        <li><a data-analytics-level="3" data-analytics-category="Community|Stories" data-analytics-text="Open Source Communities" href="http://www.redhat.com/en/open-source">
+                                            Open Source Communities
+                                        </a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </li>
+                    </ul>
+
+
+
+
+
+
+                </nav>
+
+
+                <div id="site-search" slot="search" class="utility-link site-search">
+                    <div class="content">
+                        <form class="ng-pristine ng-valid topSearchForm" id="topSearchForm" name="topSearchForm" action="/search/browse/search/" method="get" enctype="application/x-www-form-urlencoded" wtx-context="2EB73BCC-D78C-43FB-952A-51A7AC884DD3">
+                            <cp-search-autocomplete class="push-bottom" path="/webassets/avalon/j/data.json" pfelement="" type="container"></cp-search-autocomplete>
+
+                            <div>
+                                Or <a href="/support/cases/#/troubleshoot">troubleshoot an issue</a>.
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+
+                <div slot="secondary-links" id="localesMenu" class="pfe-navigation__custom-dropdown__wrapper--single-column pfe-navigation__custom-dropdown__wrapper">
+                    <button class="pfe-navigation__secondary-link" id="pfe-navigation__secondary-link--English" aria-controls="pfe-navigation__custom-dropdown--English" aria-expanded="false">
+                        <pfe-icon icon="web-icon-globe" size="sm" aria-hidden="true" pfelement="" class="PFElement" on="light" type="content"></pfe-icon>
+                        English
+                    </button>
+
+
+                    <div id="pfe-navigation__custom-dropdown--English" class="pfe-navigation__dropdown-wrapper pfe-navigation__custom-dropdown--single-column pfe-navigation__dropdown-wrapper--invisible" aria-hidden="true" tabindex="-1"><pfe-navigation-dropdown dropdown-width="single" pfelement="" class="PFElement pfe-navigation__dropdown" type="container" data-id-suffix="English">
+                        <h2 class="utility-header">
+                            Select Your Language
+                        </h2>
+                        <ul class="reset">
+                            <li><a href="https://access.redhat.com/changeLanguage?language=en" data-lang="en" id="en" data-analytics-text="English">English</a></li>
+                            <li><a href="https://access.redhat.com/changeLanguage?language=fr" data-lang="fr" id="fr" data-analytics-text="French">Français</a></li>
+                            <li><a href="https://access.redhat.com/changeLanguage?language=ko" data-lang="ko" id="ko" data-analytics-text="Korean">한국어</a></li>
+                            <li><a href="https://access.redhat.com/changeLanguage?language=ja" data-lang="ja" id="ja" data-analytics-text="Japanese">日本語</a></li>
+                            <li><a href="https://access.redhat.com/changeLanguage?language=zh_CN" data-lang="zh_CN" id="zh_CN" data-analytics-text="Chinese">中文 (中国)</a></li>
+                        </ul>
+
+                    </pfe-navigation-dropdown></div></div>
+
+
+                <rh-account-dropdown slot="account" lang="" pfelement="" class="PFElement" type="content" login-link="https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/auth?client_id=customer-portal&amp;redirect_uri=https%3A%2F%2Faccess.redhat.com%2Fservices%2Fprimer%2Fsession%2Fscribe%2F%3FredirectTo%3Dhttps%253A%252F%252Faccess.redhat.com%252Fsecurity%252Fcve%252Fcve-2023-25725&amp;state=224e7dfa-4df4-42e7-8f12-58714aaa8e48&amp;response_mode=fragment&amp;response_type=code&amp;scope=openid&amp;nonce=5f76d501-6ab4-47d4-82e9-d9fda9668f7f"></rh-account-dropdown>
+
+
+                <pfe-primary-detail breakpoint-width="600" class="main-menu__dropdown--product__product-listing PFElement" slot="main-menu__dropdown--product__product-listing" consistent-height="" aria-orientation="vertical" role="tablist" pfelement="" on="&quot;light&quot;" type="container" has_details="" breakpoint="compact">
+                    <button role="tab" slot="details-nav" data-was-tag="H3" id="pfe-detail-toggle-kxqh7wq61" data-index="0" aria-controls="pfe-detail-xaql4d0mp" aria-expanded="false">
+
+                        Infrastructure and Management
+
+                    </button>
+                    <div slot="details" data-index="0" id="pfe-detail-xaql4d0mp" role="tabpanel" tabindex="-1" aria-labelledby="pfe-detail-toggle-kxqh7wq61" data-processed="true" hidden="" aria-hidden="true">
+                        <ul>
+                            <li>
+                                <a data-analytics-level="3" data-analytics-category="Products and Services|Products:Infrastructure and Management" data-analytics-text="Red Hat Enterprise Linux" href="https://access.redhat.com/products/red-hat-enterprise-linux/">
+                                    Red Hat Enterprise Linux
+                                </a>
+                            </li>
+                            <li>
+                                <a data-analytics-level="3" data-analytics-category="Products and Services|Products:Infrastructure and Management" data-analytics-text="Red Hat Satellite" href="https://access.redhat.com/products/red-hat-satellite/">
+                                    Red Hat Satellite
+                                </a>
+                            </li>
+                            <li>
+                                <a data-analytics-level="3" data-analytics-category="Products and Services|Products:Infrastructure and Management" data-analytics-text="Red Hat Subscription Management" href="https://access.redhat.com/products/red-hat-subscription-management/">
+                                    Red Hat Subscription Management
+                                </a>
+                            </li>
+                            <li>
+                                <a data-analytics-level="3" data-analytics-category="Products and Services|Products:Infrastructure and Management" data-analytics-text="Red Hat Insights" href="https://access.redhat.com/products/red-hat-insights/">
+                                    Red Hat Insights
+                                </a>
+                            </li>
+                            <li><a data-analytics-level="3" data-analytics-category="Products and Services|Products:Infrastructure and Management" data-analytics-text="Red Hat Ansible Automation Platform" href="https://access.redhat.com/products/red-hat-ansible-automation-platform/">
+                                Red Hat Ansible Automation Platform
+                            </a></li>
+                        </ul>
+                    </div>
+
+                    <button role="tab" slot="details-nav" data-was-tag="H3" id="pfe-detail-toggle-sj79fw3bo" data-index="1" aria-controls="pfe-detail-qti04wblk" aria-expanded="false">
+
+                        Cloud Computing
+
+                    </button>
+                    <div slot="details" data-index="1" id="pfe-detail-qti04wblk" role="tabpanel" tabindex="-1" aria-labelledby="pfe-detail-toggle-sj79fw3bo" data-processed="true" hidden="" aria-hidden="true">
+                        <ul>
+                            <li>
+                                <a data-analytics-level="3" data-analytics-category="Products and Services|Products:Cloud Computing" data-analytics-text="Red Hat OpenShift" href="https://access.redhat.com/products/openshift">
+                                    Red Hat OpenShift
+                                </a>
+                            </li>
+                            <li>
+                                <a data-analytics-level="3" data-analytics-category="Products and Services|Products:Cloud Computing" data-analytics-text="Red Hat OpenStack Platform" href="https://access.redhat.com/products/red-hat-openstack-platform/">
+                                    Red Hat OpenStack Platform
+                                </a>
+                            </li>
+                            <li>
+                                <a data-analytics-level="3" data-analytics-category="Products and Services|Products:Cloud Computing Platform" data-analytics-text="Red Hat OpenShift Container Platform" href="https://access.redhat.com/products/red-hat-openshift-container-platform/">
+                                    Red Hat OpenShift Container Platform
+                                </a>
+                            </li>
+                            <li>
+                                <a data-analytics-level="3" data-analytics-category="Products and Services|Products:Cloud Computing Platform" data-analytics-text="Red Hat OpenShift Data Science" href="https://access.redhat.com/products/red-hat-openshift-data-science/">
+                                    Red Hat OpenShift Data Science
+                                </a>
+                            </li>
+                            <li>
+                                <a data-analytics-level="3" data-analytics-category="Products and Services|Products:Cloud Computing" data-analytics-text="Red Hat OpenShift Dedicated" href="https://access.redhat.com/products/openshift-dedicated-red-hat/">
+                                    Red Hat OpenShift Dedicated
+                                </a>
+                            </li>
+                            <li>
+                                <a data-analytics-level="3" data-analytics-category="Products and Services|Products:Cloud Computing Platform" data-analytics-text="Red Hat Advanced Cluster Security for Kubernetes" href="https://access.redhat.com/products/red-hat-advanced-cluster-security-for-kubernetes/">
+                                    Red Hat Advanced Cluster Security for Kubernetes
+                                </a>
+                            </li>
+                            <li>
+                                <a data-analytics-level="3" data-analytics-category="Products and Services|Products:Cloud Computing" data-analytics-text="Red Hat Advanced Cluster Management for Kubernetes" href="https://access.redhat.com/products/red-hat-advanced-cluster-management-for-kubernetes/">
+                                    Red Hat Advanced Cluster Management for Kubernetes
+                                </a>
+                            </li>
+                            <li>
+                                <a data-analytics-level="3" data-analytics-category="Products and Services|Products:Cloud Computing" data-analytics-text="Red Hat Quay" href="https://access.redhat.com/products/red-hat-quay/">
+                                    Red Hat Quay
+                                </a>
+                            </li>
+                            <li>
+                                <a data-analytics-level="3" data-analytics-category="Products and Services|Products:Cloud Computing" data-analytics-text="Red Hat CodeReady Workspaces" href="https://access.redhat.com/products/red-hat-codeready-workspaces/">
+                                    OpenShift Dev Spaces
+                                </a>
+                            </li>
+                            <li>
+                                <a data-analytics-level="3" data-analytics-category="Products and Services|Products:Cloud Computing" data-analytics-text="Red Hat OpenShift Service on AWS" href="https://access.redhat.com/products/red-hat-openshift-service-aws">
+                                    Red Hat OpenShift Service on AWS
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <button role="tab" slot="details-nav" data-was-tag="H3" id="pfe-detail-toggle-gurzhws5q" data-index="2" aria-controls="pfe-detail-c91vbmx4n" aria-expanded="false">
+
+                        Storage
+
+                    </button>
+                    <div slot="details" data-index="2" id="pfe-detail-c91vbmx4n" role="tabpanel" tabindex="-1" aria-labelledby="pfe-detail-toggle-gurzhws5q" data-processed="true" hidden="" aria-hidden="true">
+                        <ul>
+                            <li>
+                                <a data-analytics-level="3" data-analytics-category="Products and Services|Products:Storage" data-analytics-text="Red Hat Gluster Storage" href="https://access.redhat.com/products/red-hat-storage/">
+                                    Red Hat Gluster Storage
+                                </a>
+                            </li>
+                            <li>
+                                <a data-analytics-level="3" data-analytics-category="Products and Services|Products:Storage" data-analytics-text="Red Hat Hyperconverged Infrastructure" href="https://access.redhat.com/products/red-hat-hyperconverged-infrastructure/">
+                                    Red Hat Hyperconverged Infrastructure
+                                </a>
+                            </li>
+                            <li>
+                                <a data-analytics-level="3" data-analytics-category="Products and Services|Products:Storage" data-analytics-text="Red Hat Ceph Storage" href="https://access.redhat.com/products/red-hat-ceph-storage/">
+                                    Red Hat Ceph Storage
+                                </a>
+                            </li>
+                            <li>
+                                <a data-analytics-level="3" data-analytics-category="Products and Services|Products:Storage" data-analytics-text="Red Hat Openshift Container Storage" href="https://access.redhat.com/products/red-hat-openshift-data-foundation">
+                                    Red Hat OpenShift Data Foundation
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <button role="tab" slot="details-nav" data-was-tag="H3" id="pfe-detail-toggle-ksahqffwb" data-index="3" aria-controls="pfe-detail-wpisisipl" aria-expanded="false">
+
+                        Runtimes
+
+                    </button>
+                    <div slot="details" data-index="3" id="pfe-detail-wpisisipl" role="tabpanel" tabindex="-1" aria-labelledby="pfe-detail-toggle-ksahqffwb" data-processed="true" hidden="" aria-hidden="true">
+                        <ul>
+                            <li>
+                                <a data-analytics-level="3" data-analytics-category="Products and Services|Products:Runtimes" data-analytics-text="Red Hat Runtimes" href="https://access.redhat.com/products/red-hat-runtimes/">
+                                    Red Hat Runtimes
+                                </a>
+                            </li>
+                            <li>
+                                <a data-analytics-level="3" data-analytics-category="Products and Services|Products:Runtimes" data-analytics-text="Red Hat JBoss Enterprise Application Platform" href="https://access.redhat.com/products/red-hat-jboss-enterprise-application-platform/">
+                                    Red Hat JBoss Enterprise Application Platform
+                                </a>
+                            </li>
+                            <li>
+                                <a data-analytics-level="3" data-analytics-category="Products and Services|Products:Runtimes" data-analytics-text="Red Hat Data Grid" href="https://access.redhat.com/products/red-hat-data-grid/">
+                                    Red Hat Data Grid
+                                </a>
+                            </li>
+                            <li>
+                                <a data-analytics-level="3" data-analytics-category="Products and Services|Products:Runtimes" data-analytics-text="Red Hat JBoss Web Server" href="https://access.redhat.com/products/red-hat-jboss-web-server/">
+                                    Red Hat JBoss Web Server
+                                </a>
+                            </li>
+                            <li>
+                                <a data-analytics-level="3" data-analytics-category="Products and Services|Products:Runtimes" data-analytics-text="Red Hat Single Sign On" href="https://access.redhat.com/products/red-hat-single-sign-on/">
+                                    Red Hat Single Sign On
+                                </a>
+                            </li>
+                            <li>
+                                <a data-analytics-level="3" data-analytics-category="Products and Services|Products:Runtimes" data-analytics-text="Red Hat support for Spring Boot" href="https://access.redhat.com/products/spring-boot/">
+                                    Red Hat support for Spring Boot
+                                </a>
+                            </li>
+                            <li>
+                                <a data-analytics-level="3" data-analytics-category="Products and Services|Products:Runtimes" data-analytics-text="Red Hat build of Node.js" href="https://access.redhat.com/products/nodejs/">
+                                    Red Hat build of Node.js
+                                </a>
+                            </li>
+
+                            <li>
+                                <a data-analytics-level="3" data-analytics-category="Products and Services|Products:Runtimes" data-analytics-text="Red Hat build of Quarkus" href="https://access.redhat.com/products/quarkus/">
+                                    Red Hat build of Quarkus
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <button role="tab" slot="details-nav" data-was-tag="H3" id="pfe-detail-toggle-9pa4qj8cv" data-index="4" aria-controls="pfe-detail-p2qjqijtb" aria-expanded="false">
+
+                        Integration and Automation
+
+                    </button>
+                    <div slot="details" data-index="4" id="pfe-detail-p2qjqijtb" role="tabpanel" tabindex="-1" aria-labelledby="pfe-detail-toggle-9pa4qj8cv" data-processed="true" hidden="" aria-hidden="true">
+                        <ul class="border-bottom" id="portal-menu-border-bottom">
+                            <li>
+                                <a data-analytics-level="3" data-analytics-category="Products and Services|Products:Integration and Automation" data-analytics-text="Red Hat Application Foundations" href="https://access.redhat.com/products/red-hat-application-foundations/">
+                                    Red Hat Application Foundations
+                                </a>
+                            </li>
+                            <li>
+                                <a data-analytics-level="3" data-analytics-category="Products and Services|Products:Integration and Automation" data-analytics-text="Red Hat Fuse" href="https://access.redhat.com/products/red-hat-fuse/">
+                                    Red Hat Fuse
+                                </a>
+                            </li>
+                            <li>
+                                <a data-analytics-level="3" data-analytics-category="Products and Services|Products:Integration and Automation" data-analytics-text="Red Hat AMQ" href="https://access.redhat.com/products/red-hat-amq/">
+                                    Red Hat AMQ
+                                </a>
+                            </li>
+                            <li>
+                                <a data-analytics-level="3" data-analytics-category="Products and Services|Products:Integration and Automation" data-analytics-text="Red Hat 3scale API Management" href="https://access.redhat.com/products/red-hat-3scale/">
+                                    Red Hat 3scale API Management
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    <div slot="details-nav--footer">
+                        <pfe-cta pfe-priority="primary" priority="primary" pfelement="" class="PFElement" on="&quot;light&quot;" has_link="">
+                            <a href="https://access.redhat.com/products/" class="pfe-navigation__menu-link" data-analytics-level="2" data-analytics-text="All Products" data-analytics-category="Products and Services|Products:" data-analytics-linktype="cta">
+                                All Products
+                            </a>
+                        </pfe-cta>
+                    </div>
+                </pfe-primary-detail>
+
+                <div slot="secondary-links" class="pfe-navigation__site-switcher pfe-navigation__custom-dropdown__wrapper--full pfe-navigation__custom-dropdown__wrapper" mobile-slider=""><button class="pfe-navigation__secondary-link" id="pfe-navigation__secondary-link--undefined" aria-controls="pfe-navigation__custom-dropdown--undefined" aria-expanded="false"><pfe-icon icon="web-icon-grid-3x3" size="sm" aria-hidden="true" pfelement="" class="PFElement" on="light" type="content"></pfe-icon>undefined</button> <div id="pfe-navigation__custom-dropdown--undefined" class="pfe-navigation__dropdown-wrapper pfe-navigation__custom-dropdown--full pfe-navigation__dropdown-wrapper--invisible" aria-hidden="true" tabindex="-1"><pfe-navigation-dropdown dropdown-width="full" pfelement="" class="PFElement pfe-navigation__dropdown" type="container" data-id-suffix="undefined"><div class="pfe-navigation__site-switcher__back-wrapper"><button class="pfe-navigation__site-switcher__back-button" aria-label="Close undefined and return to menu">Back to menu</button></div><site-switcher lang="" pfelement="" class="PFElement" type="content"></site-switcher></pfe-navigation-dropdown></div></div></pfe-navigation>
+
+            <div id="scroll-anchor"></div>
+
+            <!--[if IE 8]>
+            <div class="portal-messages">
+                <div class="alert alert-warning alert-portal alert-w-icon">
+                    <span class="icon-warning alert-icon" aria-hidden="true"></span>
+                    You are using an unsupported web browser. Update to a supported browser for the best experience. <a href="/announcements/2120951">Read the announcement</a>.
+                </div>
+            </div>
+            <![endif]-->
+            <!--[if IE 9]>
+            <div class="portal-messages">
+                <div class="alert alert-warning alert-portal alert-w-icon">
+                    <span class="icon-warning alert-icon" aria-hidden="true"></span>
+                    As of March 1, 2016, the Red Hat Customer Portal will no longer support Internet Explorer 9. See our new <a href="/help/browsers">browser support policy</a> for more information.
+                </div>
+            </div>
+            <![endif]-->
+            <div id="site-section"></div>
+        </header>
+        <!--googleon: all-->
+
+        <main id="cp-main" class="portal-content-area">
+            <div id="cp-content" class="main-content">
+
+                <!-- /CP_PRIMER_HEADER -->
+                <!-- CP_PRIMER_HEADER -->
+                <!-- /CP_PRIMER_HEADER -->
+                <noscript>
+                    <strong>We're sorry but cve-details doesn't work properly without JavaScript enabled. Please enable it to continue.</strong>
+                </noscript>
+                <div id="cve-details-app" data-v-app=""><div id="cve-details-app" data-test="test-div"><!----><!----><!----><div><div id="cve-overview" class="band band-alt band-first"><div class="container"><div class="pfe-l-grid pfe-m-gutters"><div class="pfe-m-7-col"><h1 data-test="cve-overview-heading" class="headline" style="margin-top: 0px;">CVE-2023-25725</h1><p class="cve-public-date">Public on <pfe-datetime type="local" day="numeric" month="long" year="numeric" datetime="2023-02-14T16:20:00+00:00" format="local" pfelement="" class="PFElement"></pfe-datetime></p><p class="cve-last-modified">Last Modified: <pfe-datetime type="local" day="numeric" month="long" year="numeric" hour="numeric" minute="numeric" second="numeric" time-zone="utc" timestamp="1693499235" format="local" pfelement="" class="PFElement"></pfe-datetime> UTC </p><!----></div><!----></div><div class="pfe-l-grid pfe-m-gutters push-top"><div id="stat-card-impact" class="stat-card-left pfe-m-4-col"><span class="stat-number cve-impact-important"><pfe-icon icon="rh-shield" data-test="impact-card-icon" aria-hidden="true" color="lightest" class="lightest icon PFElement" size="1x" pfelement="" on="light" type="content"></pfe-icon><span class="lightest severity-text">Important</span></span><span class="stat-title white">Important Impact<a class="cta" href="https://access.redhat.com/security/updates/classification/"><span class="stat-subtitle">What does this mean?</span></a></span></div><div class="pfe-m-4-col"><a aria-current="page" href="/security/cve/cve-2023-25725#cve-cvss-v3" class="router-link-active router-link-exact-active stat-card-left"><span class="stat-number">8.2</span><span class="stat-title white">CVSS v3 Base Score<span class="stat-subtitle" data-cy="cve-cvss-v3">CVSS Score Breakdown</span></span></a></div><!----><div class="pfe-m-4-col"><pfe-card color="lightest" class="callout PFElement" size="small" pfelement="" on="light" type="container" has_header="" has_body=""><h2 data-test="insights-card-heading" slot="pfe-card--header">Insights vulnerability analysis</h2><pfe-cta on="light" pfelement="" class="PFElement" has_link=""><a href="https://console.redhat.com/insights/vulnerability/cves/CVE-2023-25725">View exposed systems</a></pfe-cta></pfe-card></div></div></div></div><div><div class="container"><div class="pfe-l-grid pfe-m-gutters"><div class="pfe-m-7-col-on-md"><section id="cve-details-description"><div data-v-24547df2=""><h2 data-v-24547df2="" data-test="cve-desc-heading">Description</h2><!----><div data-v-24547df2=""><pfe-markdown data-v-24547df2="" pfelement="" class="PFElement" has_default=""><p data-v-24547df2="" pfe-markdown-container="" style="display: none;">A flaw was found in HAProxy's headers processing that causes HAProxy to drop important headers fields such as Connection, Content-length, Transfer-Encoding, and Host after having partially processed them. A maliciously crafted HTTP request could be used in an HTTP request smuggling attack to bypass filtering and detection by HAProxy.</p><div pfe-markdown-render=""><p>A flaw was found in HAProxy's headers processing that causes HAProxy to drop important headers fields such as Connection, Content-length, Transfer-Encoding, and Host after having partially processed them. A maliciously crafted HTTP request could be used in an HTTP request smuggling attack to bypass filtering and detection by HAProxy.</p>
+                </div></pfe-markdown></div></div></section><!----><section id="cve-details-statement"><h2>Statement</h2><div><pfe-markdown pfelement="" class="PFElement" has_default=""><div pfe-markdown-container="" style="display: none;">Red Hat OpenStack Platform doesn't ship any haproxy code of its own and instead the openstack-haproxy-container consumes the `haproxy` RPM provided by RHEL.</div><div pfe-markdown-render=""><p>Red Hat OpenStack Platform doesn't ship any haproxy code of its own and instead the openstack-haproxy-container consumes the <code>haproxy</code> RPM provided by RHEL.</p>
+                </div></pfe-markdown></div></section><!----></div><div class="pfe-m-1-col-on-md hidden-xs"></div><div class="pfe-m-4-col-on-md"><div class="card card-bordered"><h3 data-test="additional-info-heading" class="card-heading">Additional Information</h3><ul class="list-caret push-top-narrow"><li><a href="https://bugzilla.redhat.com/show_bug.cgi?id=2169089">Bugzilla 2169089</a>: request smuggling attack in HTTP/1 header parsing</li><li><a href="http://cwe.mitre.org/data/definitions/444.html">CWE-444</a>: Inconsistent Interpretation of HTTP Requests ('HTTP Request/Response Smuggling')</li><li><a aria-current="page" href="/security/cve/cve-2023-25725#cve-faq" class="router-link-active router-link-exact-active" data-cy="FAQ">FAQ</a>: Frequently asked questions about CVE-2023-25725</li></ul></div><section id="cve-references" class="push-top-wide"><pfe-accordion disclosure="true" pfelement="" class="PFElement" type="container" has_default=""><pfe-accordion-header disclosure="true" id="pfe-accordion-header-52wbi4qna" pfelement="" class="PFElement" aria-controls="pfe-accordion-panel-ql17po8yw"><h2 data-test="cve-ref-heading">External References</h2></pfe-accordion-header><pfe-accordion-panel disclosure="true" id="pfe-accordion-panel-ql17po8yw" role="region" pfelement="" class="PFElement" aria-hidden="true" tabindex="-1" aria-labelledby="pfe-accordion-header-52wbi4qna"><pfe-markdown pfelement="" class="PFElement" has_default=""><div pfe-markdown-container="" style="display: none;">https://www.cve.org/CVERecord?id=CVE-2023-25725
+                    https://nvd.nist.gov/vuln/detail/CVE-2023-25725
+                    https://www.haproxy.com/blog/february-2023-header-parser-fixed/
+                    https://www.mail-archive.com/haproxy@formilux.org/msg43229.html</div><div pfe-markdown-render=""><p><a href="https://www.cve.org/CVERecord?id=CVE-2023-25725">https://www.cve.org/CVERecord?id=CVE-2023-25725</a>
+                    <a href="https://nvd.nist.gov/vuln/detail/CVE-2023-25725">https://nvd.nist.gov/vuln/detail/CVE-2023-25725</a>
+                    <a href="https://www.haproxy.com/blog/february-2023-header-parser-fixed/">https://www.haproxy.com/blog/february-2023-header-parser-fixed/</a>
+                    <a href="https://www.mail-archive.com/haproxy@formilux.org/msg43229.html">https://www.mail-archive.com/haproxy@formilux.org/msg43229.html</a></p>
+                </div></pfe-markdown></pfe-accordion-panel></pfe-accordion></section></div></div><section id="cve-affected-packages" class="push-top-wide pfe-l-grid pfe-m-gutters"><h2>Affected Packages and Issued Red Hat Security Errata</h2><div data-v-5811ff54="" class="table-data-wrapper push-top" rhbreakdown="[object Object]"><div data-v-5811ff54="" id="DataTables_Table_0_wrapper-errata" class="dataTables_wrapper no-footer"><div id="DataTables_Table_0_wrapper" class="dataTables_wrapper no-footer"><div class="table-data-top"><div id="DataTables_Table_0_filter" class="dataTables_filter"><label>Search:<input type="search" class="" placeholder="" aria-controls="DataTables_Table_0" wtx-context="A34F59BF-806B-476A-8664-6F14AF2837CA"></label></div></div><table data-v-5811ff54="" id="DataTables_Table_0" class="table-data table table-cp table-bordered table-striped dataTable no-footer" role="grid" data-test="data-table" aria-describedby="DataTables_Table_0_info"><thead data-v-5811ff54=""><tr data-v-5811ff54="" role="row"><th data-v-5811ff54="" id="th-platform-b" scope="col" class="sorting" tabindex="0" aria-controls="DataTables_Table_0" rowspan="1" colspan="1" aria-label="Platform: activate to sort column ascending" style="width: 176px;">Platform</th><th data-v-5811ff54="" id="th-package-b" scope="col" class="sorting_desc" tabindex="0" aria-controls="DataTables_Table_0" rowspan="1" colspan="1" aria-label="Package: activate to sort column ascending" style="width: 144.267px;" aria-sort="descending">Package</th><th data-v-5811ff54="" id="th-state-b" scope="col" class="sorting" tabindex="0" aria-controls="DataTables_Table_0" rowspan="1" colspan="1" aria-label="State: activate to sort column ascending" style="width: 126.033px;">State</th><th data-v-5811ff54="" id="th-errata-b" scope="col" class="sorting" tabindex="0" aria-controls="DataTables_Table_0" rowspan="1" colspan="1" aria-label="Errata: activate to sort column ascending" style="width: 114.933px;">Errata</th><th data-v-5811ff54="" id="th-release-b" scope="col" class="sorting" tabindex="0" aria-controls="DataTables_Table_0" rowspan="1" colspan="1" aria-label="Release Date: activate to sort column ascending" style="width: 90.767px;">Release Date</th></tr></thead><tbody data-v-5811ff54=""><tr data-v-5811ff54="" role="row" class="odd"><th data-v-5811ff54="" class="th-platform1-b">Red Hat Software Collections</th><td data-v-5811ff54="" class="sorting_1"><span data-v-5811ff54="" class="package-name">rh-haproxy18-haproxy</span><!----><!----><!----></td><td data-v-5811ff54=""><span data-v-5811ff54="">Not affected</span></td><td data-v-5811ff54=""><a data-v-5811ff54=""></a></td><td data-v-5811ff54=""><pfe-datetime data-v-5811ff54="" type="local" day="numeric" month="long" year="numeric" format="local" pfelement="" class="PFElement"></pfe-datetime></td></tr><tr data-v-5811ff54="" role="row" class="even"><th data-v-5811ff54="" class="th-platform1-b">Red Hat Enterprise Linux 9</th><td data-v-5811ff54="" class="sorting_1"><span data-v-5811ff54="" class="package-name">haproxy</span><!----><!----><!----></td><td data-v-5811ff54=""><span data-v-5811ff54="">Fixed</span></td><td data-v-5811ff54=""><a data-v-5811ff54="" href="https://access.redhat.com/errata/RHSA-2023:1696">RHSA-2023:1696</a></td><td data-v-5811ff54=""><pfe-datetime data-v-5811ff54="" type="local" day="numeric" month="long" year="numeric" datetime="2023-04-11T14:30:22+00:00" format="local" pfelement="" class="PFElement"></pfe-datetime></td></tr><tr data-v-5811ff54="" role="row" class="odd"><th data-v-5811ff54="" class="th-platform1-b">Red Hat Enterprise Linux 9.0 Extended Update Support</th><td data-v-5811ff54="" class="sorting_1"><span data-v-5811ff54="" class="package-name">haproxy</span><!----><!----><!----></td><td data-v-5811ff54=""><span data-v-5811ff54="">Fixed</span></td><td data-v-5811ff54=""><a data-v-5811ff54="" href="https://access.redhat.com/errata/RHSA-2023:1978">RHSA-2023:1978</a></td><td data-v-5811ff54=""><pfe-datetime data-v-5811ff54="" type="local" day="numeric" month="long" year="numeric" datetime="2023-04-25T10:27:06+00:00" format="local" pfelement="" class="PFElement"></pfe-datetime></td></tr><tr data-v-5811ff54="" role="row" class="even"><th data-v-5811ff54="" class="th-platform1-b">Red Hat OpenShift Container Platform 4.10</th><td data-v-5811ff54="" class="sorting_1"><span data-v-5811ff54="" class="package-name">haproxy</span><!----><!----><!----></td><td data-v-5811ff54=""><span data-v-5811ff54="">Fixed</span></td><td data-v-5811ff54=""><a data-v-5811ff54="" href="https://access.redhat.com/errata/RHSA-2023:1655">RHSA-2023:1655</a></td><td data-v-5811ff54=""><pfe-datetime data-v-5811ff54="" type="local" day="numeric" month="long" year="numeric" datetime="2023-04-12T12:02:17+00:00" format="local" pfelement="" class="PFElement"></pfe-datetime></td></tr><tr data-v-5811ff54="" role="row" class="odd"><th data-v-5811ff54="" class="th-platform1-b">Red Hat OpenShift Container Platform 4.11</th><td data-v-5811ff54="" class="sorting_1"><span data-v-5811ff54="" class="package-name">haproxy</span><!----><!----><!----></td><td data-v-5811ff54=""><span data-v-5811ff54="">Fixed</span></td><td data-v-5811ff54=""><a data-v-5811ff54="" href="https://access.redhat.com/errata/RHBA-2023:1649">RHBA-2023:1649</a></td><td data-v-5811ff54=""><pfe-datetime data-v-5811ff54="" type="local" day="numeric" month="long" year="numeric" datetime="2023-04-12T04:51:26+00:00" format="local" pfelement="" class="PFElement"></pfe-datetime></td></tr><tr data-v-5811ff54="" role="row" class="even"><th data-v-5811ff54="" class="th-platform1-b">Red Hat OpenShift Container Platform 4.12</th><td data-v-5811ff54="" class="sorting_1"><span data-v-5811ff54="" class="package-name">haproxy</span><!----><!----><!----></td><td data-v-5811ff54=""><span data-v-5811ff54="">Fixed</span></td><td data-v-5811ff54=""><a data-v-5811ff54="" href="https://access.redhat.com/errata/RHSA-2023:1268">RHSA-2023:1268</a></td><td data-v-5811ff54=""><pfe-datetime data-v-5811ff54="" type="local" day="numeric" month="long" year="numeric" datetime="2023-03-21T14:50:04+00:00" format="local" pfelement="" class="PFElement"></pfe-datetime></td></tr><tr data-v-5811ff54="" role="row" class="odd"><th data-v-5811ff54="" class="th-platform1-b">Red Hat OpenShift Container Platform 4.13</th><td data-v-5811ff54="" class="sorting_1"><span data-v-5811ff54="" class="package-name">haproxy</span><!----><!----><!----></td><td data-v-5811ff54=""><span data-v-5811ff54="">Fixed</span></td><td data-v-5811ff54=""><a data-v-5811ff54="" href="https://access.redhat.com/errata/RHSA-2023:1325">RHSA-2023:1325</a></td><td data-v-5811ff54=""><pfe-datetime data-v-5811ff54="" type="local" day="numeric" month="long" year="numeric" datetime="2023-05-18T00:14:06+00:00" format="local" pfelement="" class="PFElement"></pfe-datetime></td></tr><tr data-v-5811ff54="" role="row" class="even"><th data-v-5811ff54="" class="th-platform1-b">Red Hat Ceph Storage 5</th><td data-v-5811ff54="" class="sorting_1"><span data-v-5811ff54="" class="package-name">haproxy</span><!----><!----><!----></td><td data-v-5811ff54=""><span data-v-5811ff54="">Affected</span></td><td data-v-5811ff54=""><a data-v-5811ff54=""></a></td><td data-v-5811ff54=""><pfe-datetime data-v-5811ff54="" type="local" day="numeric" month="long" year="numeric" format="local" pfelement="" class="PFElement"></pfe-datetime></td></tr><tr data-v-5811ff54="" role="row" class="odd"><th data-v-5811ff54="" class="th-platform1-b">Red Hat Enterprise Linux 7</th><td data-v-5811ff54="" class="sorting_1"><span data-v-5811ff54="" class="package-name">haproxy</span><!----><!----><!----></td><td data-v-5811ff54=""><span data-v-5811ff54="">Not affected</span></td><td data-v-5811ff54=""><a data-v-5811ff54=""></a></td><td data-v-5811ff54=""><pfe-datetime data-v-5811ff54="" type="local" day="numeric" month="long" year="numeric" format="local" pfelement="" class="PFElement"></pfe-datetime></td></tr><tr data-v-5811ff54="" role="row" class="even"><th data-v-5811ff54="" class="th-platform1-b">Red Hat Enterprise Linux 8</th><td data-v-5811ff54="" class="sorting_1"><span data-v-5811ff54="" class="package-name">haproxy</span><!----><!----><!----></td><td data-v-5811ff54=""><span data-v-5811ff54="">Not affected</span></td><td data-v-5811ff54=""><a data-v-5811ff54=""></a></td><td data-v-5811ff54=""><pfe-datetime data-v-5811ff54="" type="local" day="numeric" month="long" year="numeric" format="local" pfelement="" class="PFElement"></pfe-datetime></td></tr></tbody></table><div class="table-data-bottom"><div class="dataTables_length" id="DataTables_Table_0_length"><label>Show <select name="DataTables_Table_0_length" aria-controls="DataTables_Table_0" class="" wtx-context="5F3326C4-D0E5-4ADC-8472-18E7EBE4F351"><option value="10">10</option><option value="25">25</option><option value="50">50</option><option value="100">100</option></select> entries</label></div><div class="dataTables_paginate paging_full_numbers" id="DataTables_Table_0_paginate"><a class="paginate_button first disabled" aria-controls="DataTables_Table_0" data-dt-idx="0" tabindex="-1" id="DataTables_Table_0_first" aria-disabled="true" disabled="disabled">First</a><a class="paginate_button previous disabled" aria-controls="DataTables_Table_0" data-dt-idx="1" tabindex="-1" id="DataTables_Table_0_previous" aria-disabled="true" disabled="disabled">Previous</a><span><a class="paginate_button current" aria-controls="DataTables_Table_0" data-dt-idx="2" tabindex="0" aria-current="">1</a><a class="paginate_button " aria-controls="DataTables_Table_0" data-dt-idx="3" tabindex="0">2</a></span><a class="paginate_button next" aria-controls="DataTables_Table_0" data-dt-idx="4" tabindex="0" id="DataTables_Table_0_next">Next</a><a class="paginate_button last" aria-controls="DataTables_Table_0" data-dt-idx="5" tabindex="0" id="DataTables_Table_0_last">Last</a></div><div class="dataTables_info" id="DataTables_Table_0_info" role="status" aria-live="polite">Showing 1 to 10 of 11 entries</div></div></div></div><div data-v-5811ff54="" class="clear"></div><div data-v-5811ff54="" class="pfe-l-grid pfe-m-gutters pfe-m-all-9-col-on-md"><p data-v-5811ff54="" id="package-disclaimer" class="push-top-narrow">Unless explicitly stated as not affected, all previous versions of packages in any minor update stream of a product listed here should be assumed vulnerable, although may not have been subject to full analysis.</p></div></div></section><section id="cve-cvss" class="pfe-l-grid pfe-m-gutters"><h2>Common Vulnerability Scoring System (CVSS) Score Details</h2><div class="pfe-m-6-col-on-md"><rh-alert class="cvss-alert" state="info"><h3 slot="header">Important note</h3><p>CVSS scores for open source components depend on vendor-specific factors (e.g. version or build chain). Therefore, Red Hat's score and impact rating can be different from NVD and other vendors. Red Hat remains the authoritative CVE Naming Authorities (CNA) source for its products and services (see <a href="https://access.redhat.com/security/updates/classification#cvss">Red Hat classifications</a>).</p></rh-alert></div><!----><div><!----><!----><div id="cve-cvss-v3"><div class="pfe-l-grid pfe-m-gutters"><div class="pfe-m-7-col-on-md"><table class="table table-cp"><thead><tr><th id="th-cve-category-type" scope="col">CVSS v3 Score Breakdown</th><th id="th-cve-rh" scope="col">Red Hat</th><th id="th-cve-NVD" scope="col">NVD</th></tr></thead><!----><!----><tbody><tr class="row-match"><th id="th-cve-category1">CVSS v3 Base Score</th><td>8.2</td><td>9.1</td></tr><tr class=""><th id="th-cve-category2">Attack Vector</th><td>Network</td><td>Network</td></tr><tr class=""><th id="th-cve-category3">Attack Complexity</th><td>Low</td><td>Low</td></tr><tr class=""><th id="th-cve-category4">Privileges Required</th><td>None</td><td>None</td></tr><tr class=""><th id="th-cve-category5">User Interaction</th><td>None</td><td>None</td></tr><tr class=""><th id="th-cve-category6">Scope</th><td>Unchanged</td><td>Unchanged</td></tr><tr class=""><th id="th-cve-category7">Confidentiality Impact</th><td>None</td><td>None</td></tr><tr class=""><th id="th-cve-category8">Integrity Impact</th><td>High</td><td>High</td></tr><tr class="row-match"><th id="th-cve-category9">Availability Impact</th><td>Low</td><td>High</td></tr></tbody><!----></table></div><div id="package-vectors" class="pfe-m-5-col-on-md"><h3>CVSS v3 Vector</h3><p><span class="cve-vector">Red Hat: </span><span class="cve-vector-compare">CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:H/<span class="vector-highlight">A:L</span></span></p><p><span class="cve-vector">NVD: </span><span class="cve-vector-compare">CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:H/<span class="vector-highlight">A:H</span></span></p><pfe-card id="score-explanation" border="true" color="lightest" class="deployment-cards PFElement" pfelement="" on="light" type="container" has_header="" has_body="" has_footer=""><h4 id="explanation-heading" slot="pfe-card--header" class="card-heading">Red Hat CVSS v3 Score Explanation</h4><pfe-markdown id="explanation-details" on="light" pfelement="" class="PFElement" has_default=""><div pfe-markdown-container="" style="display: none;">The impact to Availability is low since potential impact is undetermined but unlikely.</div><div pfe-markdown-render=""><p>The impact to Availability is low since potential impact is undetermined but unlikely.</p>
+                </div></pfe-markdown><div id="explanation-footer" slot="pfe-card--footer"><!----></div></pfe-card></div></div></div></div></section><!----></div></div><div id="cve-faq"><div class="container"><div class="pfe-l-grid pfe-m-gutters"><div class="pfe-m-12-col"><div class="pfe-l-grid pfe-m-gutters"><div class="pfe-m-8-col-on-md pfe-m-startat-3-col-on-md"><h2 data-test="faq-heading-h2">Frequently Asked Questions</h2><div><pfe-accordion pfelement="" class="PFElement" type="container" has_default="" disclosure="false"><pfe-accordion-header id="pfe-accordion-header-gm3stjfam" pfelement="" class="PFElement" aria-controls="pfe-accordion-panel-clu7m9xnn" disclosure="false"><h3 data-test="faq-heading-h3">Why is Red Hat's CVSS v3 score or Impact different from other vendors?</h3></pfe-accordion-header><pfe-accordion-panel id="pfe-accordion-panel-clu7m9xnn" role="region" pfelement="" class="PFElement" aria-hidden="true" tabindex="-1" aria-labelledby="pfe-accordion-header-gm3stjfam" disclosure="false">For open source software shipped by multiple vendors, the CVSS base scores may vary for each vendor's version depending on the version they ship, how they ship it, the platform, and even how the software is compiled. This makes scoring of vulnerabilities difficult for third-party vulnerability databases such as NVD that only provide a single CVSS base score for each vulnerability. Red Hat scores reflect how a vulnerability affects our products specifically.<br><br>For more information, see <a href="https://access.redhat.com/solutions/762393">https://access.redhat.com/solutions/762393</a>.</pfe-accordion-panel><pfe-accordion-header id="pfe-accordion-header-mi62lc3np" pfelement="" class="PFElement" aria-controls="pfe-accordion-panel-3nf925d6i" disclosure="false"><h3 data-test="faq-heading-h3">My product is listed as "Under investigation" or "Affected", when will Red Hat release a fix for this vulnerability?</h3></pfe-accordion-header><pfe-accordion-panel id="pfe-accordion-panel-3nf925d6i" role="region" pfelement="" class="PFElement" aria-hidden="true" tabindex="-1" aria-labelledby="pfe-accordion-header-mi62lc3np" disclosure="false"><ul><li>"Under investigation" doesn't necessarily mean that the product is affected by this vulnerability. It only means that our Analysis Team is still working on determining whether the product is affected and how it is affected.</li><li>"Affected" means that our Analysis Team has determined that this product is affected by this vulnerability and might release a fix to address this in the near future.</li></ul></pfe-accordion-panel><pfe-accordion-header id="pfe-accordion-header-b0oayarpi" pfelement="" class="PFElement" aria-controls="pfe-accordion-panel-25dpfxuth" disclosure="false"><h3 data-test="faq-heading-h3">What can I do if my product is listed as "Will not fix"?</h3></pfe-accordion-header><pfe-accordion-panel id="pfe-accordion-panel-25dpfxuth" role="region" pfelement="" class="PFElement" aria-hidden="true" tabindex="-1" aria-labelledby="pfe-accordion-header-b0oayarpi" disclosure="false">This depends mostly on the <a href="https://access.redhat.com/security/updates/classification/">Impact</a> of the vulnerability and the <a href="https://access.redhat.com/product-life-cycles/update_policies">Life Cycle</a> phase in which your product is currently in. Overall, you have the following options:<ul><li>Upgrade to a supported product version that includes a fix for this vulnerability (recommended)</li><li>Apply a mitigation (if one exists)</li><li>Open a <a href="https://access.redhat.com/support/cases/#/new">support case</a> to request a prioritization of releasing a fix for this vulnerability</li></ul></pfe-accordion-panel><pfe-accordion-header id="pfe-accordion-header-bln3xjxlg" pfelement="" class="PFElement" aria-controls="pfe-accordion-panel-ni6qgx27g" disclosure="false"><h3 data-test="faq-heading-h3">I have a Red Hat product but it is not in the above list, is it affected?</h3></pfe-accordion-header><pfe-accordion-panel id="pfe-accordion-panel-ni6qgx27g" role="region" pfelement="" class="PFElement" aria-hidden="true" tabindex="-1" aria-labelledby="pfe-accordion-header-bln3xjxlg" disclosure="false">The listed products were found to include one or more of the components that this vulnerability affects. These products underwent a thorough evaluation to determine their affectedness by this vulnerability. Note that layered products (such as container-based offerings) that consume affected components from any of the products listed in this table may be affected and are not represented.</pfe-accordion-panel><pfe-accordion-header id="pfe-accordion-header-qmg2lsjsw" pfelement="" class="PFElement" aria-controls="pfe-accordion-panel-vxohkuenw" disclosure="false"><h3 data-test="faq-heading-h3">Why is my security scanner reporting my product as vulnerable to this vulnerability even though my product version is fixed or not affected?</h3></pfe-accordion-header><pfe-accordion-panel id="pfe-accordion-panel-vxohkuenw" role="region" pfelement="" class="PFElement" aria-hidden="true" tabindex="-1" aria-labelledby="pfe-accordion-header-qmg2lsjsw" disclosure="false">In order to maintain code stability and compatibility, Red Hat usually does not rebase packages to entirely new versions. Instead, we <a href="https://access.redhat.com/security/updates/backporting">backport</a> fixes and new features to an older version of the package we distribute. This can result in some security scanners that only consider the package version to report the package as vulnerable. To avoid this, we suggest that you use an OVAL-compatible security scanner like OpenSCAP.<br><br>For more information, see <a href="https://www.redhat.com/en/blog/determining-your-risk">https://www.redhat.com/en/blog/determining-your-risk</a>.</pfe-accordion-panel><pfe-accordion-header id="pfe-accordion-header-aa2g06nb9" pfelement="" class="PFElement" aria-controls="pfe-accordion-panel-u4ep6k4gr" disclosure="false"><h3 data-test="faq-heading-h3">My product is listed as "Out of Support Scope". What does this mean?</h3></pfe-accordion-header><pfe-accordion-panel id="pfe-accordion-panel-u4ep6k4gr" role="region" pfelement="" class="PFElement" aria-hidden="true" tabindex="-1" aria-labelledby="pfe-accordion-header-aa2g06nb9" disclosure="false">When a product is listed as "Out of Support Scope", it means a vulnerability with the impact level assigned to this CVE is no longer covered by its current <a href="https://access.redhat.com/product-life-cycles/update_policies">support lifecycle phase</a>. The product has been identified to contain the impacted component, but analysis to determine whether it is affected or not by this vulnerability was not performed. The product should be assumed to be affected. Customers are advised to apply any mitigation options documented on this page, consider removing or disabling the impacted component, or upgrade to a supported version of the product that has an update available.</pfe-accordion-panel></pfe-accordion><p id="glossary-link"><span>Not sure what something means?</span> Check out our <a href="/security/glossary">Security Glossary</a>. </p></div></div></div></div></div></div></div><section id="cve-footer" class="container"><div class="pfe-l-grid pfe-m-gutters"><div class="pfe-m-12-col"><p>This page is generated automatically and has not been checked for errors or omissions.</p><p>For clarification or corrections please contact <a href="https://access.redhat.com/security/team/contact/">Red Hat Product Security</a>.</p><p class="push-top-narrow">Last Modified: <pfe-datetime type="local" day="numeric" month="long" year="numeric" hour="numeric" minute="numeric" second="numeric" time-zone="utc" timestamp="1693499235" format="local" pfelement="" class="PFElement"></pfe-datetime> UTC </p><p> CVE description copyright © 2021<!----></p><!----></div></div></section></div></div></div>
+                <div data-cy-root=""></div>
+
+                <!-- built files will be auto injected -->
+                <!-- CP_PRIMER_FOOTER -->
+
+            </div>
+        </main>
+    </div>
+    <!--googleoff: all-->
+    <div id="to-top"><a class="btn_slideto" href="#masthead" aria-label="Back to Top" style="opacity: 0;"><span class="web-icon-upload"></span></a></div>
+    <footer class="footer-main">
+        <div class="footer-top">
+            <div class="container">
+
+                <div class="brand">
+                    <a href="https://redhat.com">
+                        <svg class="rh-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 613 145">
+                            <defs>
+                                <style>
+                                    .rh-logo-hat {
+                                        fill: #e00;
+                                    }
+                                    .rh-logo-type {
+                                        fill: #fff;
+                                    }
+                                </style>
+                            </defs>
+                            <title>Red Hat</title>
+                            <path class="rh-logo-hat" d="M127.47,83.49c12.51,0,30.61-2.58,30.61-17.46a14,14,0,0,0-.31-3.42l-7.45-32.36c-1.72-7.12-3.23-10.35-15.73-16.6C124.89,8.69,103.76.5,97.51.5,91.69.5,90,8,83.06,8c-6.68,0-11.64-5.6-17.89-5.6-6,0-9.91,4.09-12.93,12.5,0,0-8.41,23.72-9.49,27.16A6.43,6.43,0,0,0,42.53,44c0,9.22,36.3,39.45,84.94,39.45M160,72.07c1.73,8.19,1.73,9.05,1.73,10.13,0,14-15.74,21.77-36.43,21.77C78.54,104,37.58,76.6,37.58,58.49a18.45,18.45,0,0,1,1.51-7.33C22.27,52,.5,55,.5,74.22c0,31.48,74.59,70.28,133.65,70.28,45.28,0,56.7-20.48,56.7-36.65,0-12.72-11-27.16-30.83-35.78"></path>
+                            <path class="rh-logo-band" d="M160,72.07c1.73,8.19,1.73,9.05,1.73,10.13,0,14-15.74,21.77-36.43,21.77C78.54,104,37.58,76.6,37.58,58.49a18.45,18.45,0,0,1,1.51-7.33l3.66-9.06A6.43,6.43,0,0,0,42.53,44c0,9.22,36.3,39.45,84.94,39.45,12.51,0,30.61-2.58,30.61-17.46a14,14,0,0,0-.31-3.42Z"></path>
+                            <path class="rh-logo-type" d="M579.74,92.8c0,11.89,7.15,17.67,20.19,17.67a52.11,52.11,0,0,0,11.89-1.68V95a24.84,24.84,0,0,1-7.68,1.16c-5.37,0-7.36-1.68-7.36-6.73V68.3h15.56V54.1H596.78v-18l-17,3.68V54.1H568.49V68.3h11.25Zm-53,.32c0-3.68,3.69-5.47,9.26-5.47a43.12,43.12,0,0,1,10.1,1.26v7.15a21.51,21.51,0,0,1-10.63,2.63c-5.46,0-8.73-2.1-8.73-5.57m5.2,17.56c6,0,10.84-1.26,15.36-4.31v3.37h16.82V74.08c0-13.56-9.14-21-24.39-21-8.52,0-16.94,2-26,6.1l6.1,12.52c6.52-2.74,12-4.42,16.83-4.42,7,0,10.62,2.73,10.62,8.31v2.73a49.53,49.53,0,0,0-12.62-1.58c-14.31,0-22.93,6-22.93,16.73,0,9.78,7.78,17.24,20.19,17.24m-92.44-.94h18.09V80.92h30.29v28.82H506V36.12H487.93V64.41H457.64V36.12H439.55ZM370.62,81.87c0-8,6.31-14.1,14.62-14.1A17.22,17.22,0,0,1,397,72.09V91.54A16.36,16.36,0,0,1,385.24,96c-8.2,0-14.62-6.1-14.62-14.09m26.61,27.87h16.83V32.44l-17,3.68V57.05a28.3,28.3,0,0,0-14.2-3.68c-16.19,0-28.92,12.51-28.92,28.5a28.25,28.25,0,0,0,28.4,28.6,25.12,25.12,0,0,0,14.93-4.83ZM320,67c5.36,0,9.88,3.47,11.67,8.83H308.47C310.15,70.3,314.36,67,320,67M291.33,82c0,16.2,13.25,28.82,30.28,28.82,9.36,0,16.2-2.53,23.25-8.42l-11.26-10c-2.63,2.74-6.52,4.21-11.14,4.21a14.39,14.39,0,0,1-13.68-8.83h39.65V83.55c0-17.67-11.88-30.39-28.08-30.39a28.57,28.57,0,0,0-29,28.81M262,51.58c6,0,9.36,3.78,9.36,8.31S268,68.2,262,68.2H244.11V51.58Zm-36,58.16h18.09V82.92h13.77l13.89,26.82H292l-16.2-29.45a22.27,22.27,0,0,0,13.88-20.72c0-13.25-10.41-23.45-26-23.45H226Z"></path>
+                        </svg>
+                    </a>
+                </div>
+
+                <div role="navigation" aria-label="quick">
+                    <h3>Quick Links</h3>
+                    <ul>
+                        <li><a class="download-software" href="https://access.redhat.com/downloads/">Downloads</a></li>
+                        <li><a class="manage-subscriptions" href="https://access.redhat.com/management">Subscriptions</a></li>
+                        <li><a class="support-cases" href="https://access.redhat.com/support">Support Cases</a></li>
+                        <li><a class="customer-service" href="https://access.redhat.com/support/customer-service">Customer Service</a></li>
+                        <li><a class="quick-docs" href="https://access.redhat.com/documentation">Product Documentation</a></li>
+                    </ul>
+                </div>
+
+                <div role="navigation" aria-label="help">
+                    <h3>Help</h3>
+                    <ul>
+                        <li><a class="contact-us" href="https://access.redhat.com/support/contact/">Contact Us</a></li>
+                        <li><a class="cp-faqs" href="https://access.redhat.com/articles/33844">Customer Portal FAQ</a></li>
+                        <li><a class="login-problems" href="https://access.redhat.com/help/login_assistance">Log-in Assistance</a></li>
+                    </ul>
+                </div>
+
+                <div role="navigation" aria-label="site">
+                    <h3>Site Info</h3>
+                    <ul>
+                        <li><a class="trust-red-hat" href="https://www.redhat.com/en/trust">Trust Red Hat</a></li>
+                        <li><a class="browser-support-policy" href="https://www.redhat.com/en/about/browser-support">Browser Support Policy</a></li>
+                        <li><a class="accessibility" href="https://www.redhat.com/en/about/digital-accessibility">Accessibility</a></li>
+                        <li><a class="recognition" href="https://access.redhat.com/recognition/">Awards and Recognition</a></li>
+                        <li><a class="colophon" href="https://access.redhat.com/help/colophon/">Colophon</a></li>
+                    </ul>
+                </div>
+
+                <div role="navigation" aria-label="other">
+                    <h3>Related Sites</h3>
+                    <ul>
+                        <li><a href="https://www.redhat.com/" class="red-hat-com">redhat.com</a></li>
+                        <li><a href="http://developers.redhat.com/" class="red-hat-developers">developers.redhat.com</a></li>
+                        <li><a href="https://connect.redhat.com/" class="partner-connect">connect.redhat.com</a></li>
+                        <li><a href="https://cloud.redhat.com/" class="cloud-com">cloud.redhat.com</a></li>
+                    </ul>
+                </div>
+
+                <div role="navigation" aria-label="about">
+                    <h3>About</h3>
+                    <ul>
+                        <li><a href="https://access.redhat.com/subscription-value" class="subscription-value">Red Hat Subscription Value</a></li>
+                        <li><a href="https://www.redhat.com/about/" class="about-red-hat">About Red Hat</a></li>
+                        <li><a href="http://jobs.redhat.com" class="about-jobs">Red Hat Jobs</a></li>
+                    </ul>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="anchor">
+            <div class="container">
+                <div class="status-legal">
+                    <a href="https://status.redhat.com" class="status-page-widget">
+                        <span class="status-description">All systems operational</span>
+                        <span class="status-dot shape-circle shape-dash-lime"></span>
+                    </a>
+                    <div class="legal-copyright">
+                        <div class="copyright">2023</div>
+
+                        <div role="navigation" aria-label="legal" class="legal">
+                            <ul>
+                                <li><a href="http://www.redhat.com/en/about/privacy-policy" class="privacy-policy">Privacy Statement</a></li>
+                                <li><a href="https://www.redhat.com/en/about/terms-use" class="terms-of-use">Terms of Use</a></li>
+                                <li><a href="http://www.redhat.com/en/about/all-policies-guidelines" class="all-policies">All Policies and Guidelines</a></li>
+                                <li><a id="teconsent" consent="undefined"><a role="link" id="icon-id06163945328242393" tabindex="0" lang="en" aria-haspopup="dialog" aria-label="Cookie Preferences, opens a dedicated popup modal window" class="truste_cursor_pointer">Cookie preferences</a></a></li>
+                            </ul>
+                            <div id="privacy_policy">
+                                We've updated our &lt;a href='http://www.redhat.com/en/about/privacy-policy' class='privacy-policy'&gt;Privacy Statement&lt;/a&gt; effective September 15, 2023.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="social">
+                    <a href="http://www.redhat.com/summit/" class="summit">
+                        <img src="https://access.redhat.com/chrome_themes/nimbus/img/rh-summit-red-a.svg" alt="Red Hat Summit"> <span class="offscreen">Red Hat Summit</span>
+                    </a>
+
+                    <div class="social-media">
+                        <a href="https://twitter.com/RedHat" class="sm-icon twitter"><span class="nicon-twitter"></span><span class="offscreen">Twitter</span></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+    <!-- TrustArc -->
+    <div id="consent_blackbar"><style>    @font-face{      font-family:"RedHatDisplayBold";      src: url(https://consent.trustarc.com/get?name=RedHatDisplay-Bold.ttf) format("truetype");}  @font-face{      font-family:"RedHatDisplayMedium";      src: url(https://consent.trustarc.com/get?name=RedHatDisplay-Medium.ttf) format("truetype");}  @font-face{      font-family:"RedHatTextRegular";      src: url(https://consent.trustarc.com/get?name=RedHatText-Regular.ttf) format("truetype");}        #truste-consent-track{        background-color: #FFF;        max-width: 412px;        border-top: 2px solid #2B9AF3;        box-shadow: 0px 5px 15px rgb(0 0 0 / 20%);        position: fixed;        bottom: 32px;        left: 32px;        right: 32px;        z-index: 99999;      }        .truste-banner {         margin: 0 auto;          padding: 16px;      }            .truste-messageColumn {          font-family: RedHatTextRegular;          font-size: 14px;          color: #000;          margin: 0;           line-height: 21px;          padding: 0 0 0 32px;          position: relative;      }        .truste-buttonsColumn {         position: absolute;         right: 16px;         top: 11px;      }       .hidedesktop {            display: none;        font-family:  RedHatTextRegular;        font-size: 14px;        cursor: pointer;        color: #00559c;          text-decoration:none;      }      .truste-cookie-link {        font-family:  RedHatTextRegular;         cursor: pointer;        color: #0066CC;          text-decoration: none;     }      .truste-cookie-link:hover {      color: #004080;      text-decoration: underline;  }    .truste-url-banner-link {        font-family:  RedHatTextRegular;         cursor: pointer;        color: #0066CC;          text-decoration: none;     }      .truste-url-banner-link:hover {      color: #004080;      text-decoration: underline;  }    .truste-messageColumn a:visited {      color: purple;  }      .truste-info-icon {      width: 18px;      position: absolute;      left: 0;      top: 1px;  }      h2.truste-title {      color: #002952;      font-family: RedHatDisplayMedium;      display: block;      padding-bottom: 8px;      font-weight: 600;      font-size:14px;  }    img.truste-info-icon {      filter: invert(44%) sepia(82%) saturate(679%) hue-rotate(171deg) brightness(104%) contrast(91%);  }    button#truste-consent-button {      background: none;      border: none;      cursor: pointer;      padding: 8px;      margin: 0;  }    button#truste-consent-button img {      filter: invert(45%) sepia(8%) saturate(284%) hue-rotate(173deg) brightness(92%) contrast(89%);      width: 10px;  }              /* MEDIA QUERIES */        @media screen and (max-width: 768px){        #truste-consent-track{          max-width: 314px;          left: 24px;          right: 24px;          bottom: 24px;        }      }        @media screen and (max-width: 404px){        #truste-consent-track{          max-width: 100%;        }      }          @media screen and (max-width: 420px) {              .hidedesktop {                display: inline;            font-size: 14px;            cursor: pointer;            color: #00559c;              text-decoration:none;          }     }          @media screen and (min-width: 421px) and (max-width: 856px) {          .hidedesktop {                display: inline;            font-size: 14px;            cursor: pointer;            color: #00559c;              text-decoration:none;          }            }        </style>      <div id="truste-consent-track" style="display: block; opacity: 1;">      <div id="truste-consent-content" class="truste-banner" style="overflow: hidden; max-width: 1200px; max-height:auto;">            <div id="truste-consent-text" class="truste-messageColumn"><img class="truste-info-icon" alt="" src="https://consent.trustarc.com/get?name=info-circle-solid.svg"><h2 class="truste-title">How we use cookies</h2>We use cookies on our websites to deliver our online services. Details about how we use cookies and how you may disable them are set out in our&nbsp;<a href="http://www.redhat.com/en/about/privacy-policy#cookies" target="_blank" class="truste-cookie-link">Privacy Statement</a>. By using this website you agree to our use of cookies.</div>          <div id="truste-consent-buttons" class="truste-buttonsColumn">            <button id="truste-consent-button" type="button" class="truste-button1"><img alt="Close" src="https://consent.trustarc.com/get?name=redhat_close_small.svg"></button>          </div>          </div>        </div></div>
+    <!--googleon: all-->
+</div>
+<!-- /CP_PRIMER_FOOTER -->
+<!-- CP_PRIMER_FOOTER -->
+<!-- /CP_PRIMER_FOOTER -->
+
+
+<div id="ZN_bCxD2jjWRr4bfVQ"></div><script type="text/javascript" src="https://znbcxd2jjwrr4bfvq-redhatvoc.siteintercept.qualtrics.com/WRSiteInterceptEngine/?Q_ZID=ZN_bCxD2jjWRr4bfVQ"></script></body>
+</html>
