@@ -37,7 +37,6 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.sql.*;
 import java.util.*;
@@ -97,7 +96,7 @@ public class DatabaseHelperTest {
 	@Before
 	public void setUp() {
 		this.dbh = new DatabaseHelper(databaseType, hikariUrl, hikariUser, hikariPassword);
-		ReflectionTestUtils.setField(this.dbh, "dataSource", this.hds);
+		this.dbh.setDataSource(this.hds);
 		this.setMocking();
 	}
 

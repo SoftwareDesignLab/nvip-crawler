@@ -86,6 +86,8 @@ public class DatabaseHelper {
 		}
 	}
 
+	protected void setDataSource(HikariDataSource hds) { this.dataSource = hds; }
+
 	/**
 	 * Creates and returns a HikariConfig object (to connect to the database).
 	 *
