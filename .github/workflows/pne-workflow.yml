@@ -123,8 +123,8 @@ jobs:
 
       - name: Build and Push Docker Image for Product Extractor
         run: |
-          docker build . -f productnameextractor/Dockerfile -t nvip-productnameextractor:dev -t ghcr.io/softwaredesignlab/nvip-productnameextractor:dev
-          docker push ghcr.io/softwaredesignlab/nvip-productnameextractor:dev
+          docker build . -f productnameextractor/Dockerfile -t nvip-productnameextractor:staging -t ghcr.io/softwaredesignlab/nvip-productnameextractor:staging
+          docker push ghcr.io/softwaredesignlab/nvip-productnameextractor:staging
 
   # Deploy product extractor component project to container registry
   production-deploy:
