@@ -105,8 +105,8 @@ jobs:
 
       - name: Build and Push Docker Image for Patchfinder
         run: |
-          docker build . -f patchfinder/Dockerfile -t nvip-patchfinder:dev -t ghcr.io/softwaredesignlab/nvip-patchfinder:dev
-          docker push ghcr.io/softwaredesignlab/nvip-patchfinder:dev
+          docker build . -f patchfinder/Dockerfile -t nvip-patchfinder:staging -t ghcr.io/softwaredesignlab/nvip-patchfinder:staging
+          docker push ghcr.io/softwaredesignlab/nvip-patchfinder:staging
 
     # Deploy patchfinder component project to container registry
   production-deploy:
