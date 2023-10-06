@@ -15,6 +15,7 @@ https://advisories.octopus.com/
 https://advisories.softiron.cloud/
 https://advisories.stormshield.eu/
 https://advisory.dualvs.com/
+https://advisory.splunk.com/
 https://airbus-seclab.github.io/
 https://akka.io/security/
 https://amperecomputing.com/products/product-security.html/
@@ -68,6 +69,7 @@ https://community.f5.com/t5/technical-articles/tkb-p/TechnicalArticles/
 https://community.flexera.com/t5/FlexNet-Publisher-Knowledge-Base/tkb-p/FNP-Knowledge/label-name/vulnerability/
 https://community.netwitness.com/t5/netwitness-platform-advisories/ct-p/netwitness-advisories/
 https://community.openvpn.net/openvpn/wiki/SecurityAnnouncements/
+https://community.plone.org/c/announcements/security/
 https://community.progress.com/s/global-search/%40uri#q=security%20bulletin&t=All&sort=date%20descending
 https://community.rsa.com/t5/securid-advisories/ct-p/securid-access-advisories/
 https://community.sailpoint.com/t5/IdentityIQ-Product-Guides/IdentityIQ-Security-Vulnerabilities/ta-p/74058/
@@ -91,6 +93,11 @@ https://cyberdanube.com/en/blogs/
 https://cybersecurityworks.com/zerodays-vulnerability-list/
 https://danrevah.github.io/
 https://developer.arm.com/Arm%20Security%20Center/
+https://developer.arm.com/Arm%20Security%20Center/Arm%20Compiler%205%20Stack%20Protection
+https://developer.arm.com/Arm%20Security%20Center/Arm%20Log4j%20Vulnerabilities
+https://developer.arm.com/Arm%20Security%20Center/Armv8-M%20Stack%20Sealing%20Vulnerability
+https://developer.arm.com/Arm%20Security%20Center/Mali%20GPU%20Driver%20Vulnerabilities
+https://developer.arm.com/Arm%20Security%20Center/Speculative%20Processor%20Vulnerability
 https://developer.joomla.org/security-centre.html/
 https://developers.ibexa.co/security-advisories/
 https://device.harmonyos.com/en/docs/security/update/security-bulletins-overview-0000001155006471/
@@ -110,6 +117,8 @@ https://docs.docker.com/engine/release-notes/
 https://docs.docker.com/security/
 https://docs.illumio.com/LandingPages/Categories/security-advisories.html/
 https://docs.keeper.io/release-notes/keeper-security/security-advisories/
+https://docs.netgate.com/advisories/index.html/
+https://docs.netscaler.com/en-us/citrix-application-delivery-management-service/instance-advisory/security-advisory/
 https://docs.newrelic.com/docs/security/security-privacy/information-security/security-bulletins/
 https://docs.payara.fish/community/docs/Security/Security%20Fix%20List.html/
 https://docs.payara.fish/enterprise/docs/Security/Security%20Fix%20List.html/
@@ -188,6 +197,7 @@ https://github.com/kanboard/kanboard/security/
 https://github.com/kiwitcms/Kiwi/security/
 https://github.com/kubernetes/kubernetes/issues?utf8=✓&q=is%3Aissue+label%3Aarea%2Fsecurity+in%3Atitle+CVE
 https://github.com/kyverno/kyverno/security/advisories/
+https://github.com/l4rRyxz/CVE-Disclosures/tree/main/
 https://github.com/LianKee/SO-CVEs/tree/main/CVEs/
 https://github.com/M19O/Security-Advisories/tree/main/
 https://github.com/mage-ai/mage-ai/security/
@@ -405,6 +415,7 @@ https://success.trendmicro.com/dcx/s/vulnerability-response?language=en_US#curre
 https://support-feed.eset.com/advisories/
 https://support.a10networks.com/support/security-advisories/
 https://support.apple.com/en-us/HT201222/
+https://support.apple.com/kb/index?page=search&q=CVE&product=&doctype=&currentPage=1&includeArchived=false&locale=en_US&src=support_searchbox_psp&type=organic
 https://support.avaya.com/support/en/helpcenter/GenericDetail/C2009223125237478059/
 https://support.blackberry.com/kb#f:@objecttypelabel=[Security%20Advisory]
 https://support.broadcom.com/web/ecx/search?searchString=Security+Advisories&from=0&sortby=_score&orderBy=desc&pageNo=1&aggregations=%5B%5D&uid=d042dbba-f8c4-11ea-beba-0242ac12000b&resultsPerPage=10&exactPhrase=&withOneOrMore=&withoutTheWords=&pageSize=10&language=en&state=1&suCaseCreate=false/
@@ -460,6 +471,7 @@ https://wid.cert-bund.de/.well-known/csaf/white/
 https://wpscan.com/plugins/
 https://wpscan.com/themes/
 https://wpscan.com/wordpresses/
+https://www.1e.com/trust-security-compliance/cve-info/
 https://www.3ds.com/vulnerability/advisories/
 https://www.42gears.com/security-and-compliance/
 https://www.absolute.com/platform/security-information/vulnerability-archive/
@@ -535,6 +547,7 @@ https://www.electronics.jtekt.co.jp/en/topics/
 https://www.elotouch.com/services/elocare-os-360/security-bulletins/
 https://www.emerson.com/en-us/support/security-notifications/
 https://www.esentire.com/resources/security-advisories/
+https://www.espressif.com/en/support/documents/advisories/
 https://www.esri.com/arcgis-blog/?s=#&tag=cve
 https://www.esri.com/arcgis-blog/?s=#&tag=cve&tag=security
 https://www.facebook.com/security/
