@@ -26,6 +26,6 @@ COPY --from=builder /home/app/patchfinder/target/patchfinder_lib /usr/local/lib/
 COPY --from=builder /home/app/patchfinder/target/patchfinder-1.0.jar /usr/local/lib/patchfinder-1.0.jar
 
 WORKDIR /usr/local/lib/
-ENTRYPOINT ["java", "-cp", "patchfinder-1.0.jar:patchfinder_lib/*", "PatchFinderMain"]
+ENTRYPOINT ["java", "-cp", "patchfinder-1.0.jar:patchfinder_lib/*", "PatchFixMain"]
 
 
