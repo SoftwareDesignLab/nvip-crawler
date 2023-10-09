@@ -219,7 +219,7 @@ public class PatchFinderThread implements Runnable {
 	 */
 	private void findPatchCommitsFromUrl(ArrayList<PatchCommit> foundPatchCommits, String cve, String patchSource, int commitCount) {
 		// Define page range
-		final int numPags = (int) Math.ceil((double) commitCount / 35);
+		final int numPages = (int) Math.ceil((double) commitCount / 35);
 		final String baseCommitsUrl = patchSource + "/commits";
 
 		// Query first page and get HEAD commit
@@ -240,8 +240,8 @@ public class PatchFinderThread implements Runnable {
 
 			// Generate list of page URLs to query with head commit SHA
 			final List<String> pageUrls = new ArrayList<>();
-			for (int i = 2; i <= numPags; i++) {
-				pageUrls.add(baseCommitsUrl + "?page=" + i + "&after=" + headCommitEndpoint);
+			for (int i = 34; i < (numPages * 35) - 35; i += 35) {
+				pageUrls.add(baseCommitsUrl + "&after=" + headCommitEndpoint + "+" + i);
 			}
 
 			for (String url : pageUrls) {
