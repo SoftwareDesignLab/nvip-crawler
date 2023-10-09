@@ -77,6 +77,7 @@ public class PatchFinderMain extends Thread {
         }
     }
 
+    // TODO: Implement job streaming (queue received jobs to be consumed, support end messages)
     private void runRabbit() {
         // Start busy-wait loop
         final Messenger rabbitMQ = new Messenger(

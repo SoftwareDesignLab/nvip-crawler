@@ -217,6 +217,7 @@ public class ProductNameExtractorMain {
         logger.info("Product Name Extractor found and inserted {} affected products to the database in {} seconds", affectedProducts.size(), Math.floor(((double) (System.currentTimeMillis() - getProdStart) / 1000) * 100) / 100);
     }
 
+    // TODO: Implement job streaming (queue received jobs to be consumed, support end messages)
     // Using RabbitMQ, get the list of cve IDs from the reconciler and create vuln list from those
     private static void rabbitMain(DatabaseHelper databaseHelper) {
         List<CompositeVulnerability> vulnList;

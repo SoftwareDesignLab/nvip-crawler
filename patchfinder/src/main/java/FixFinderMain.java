@@ -78,7 +78,7 @@ public class FixFinderMain extends Thread {
     }
 
     private void runRabbit() {
-        // TODO: RabbitMQ integration, wait until PoC is accepted to complete this
+        // TODO: RabbitMQ integration (with job streaming), wait until PoC is accepted to complete this
         throw new UnsupportedOperationException();
     }
 
