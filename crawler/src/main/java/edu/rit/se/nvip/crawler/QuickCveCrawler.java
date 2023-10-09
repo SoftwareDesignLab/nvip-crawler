@@ -24,7 +24,7 @@
 package edu.rit.se.nvip.crawler;
 
 import io.github.bonigarcia.wdm.WebDriverManager;
-import edu.rit.se.nvip.model.RawVulnerability;
+import edu.rit.se.nvip.db.model.RawVulnerability;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.util.NullOutputStream;

@@ -23,15 +23,13 @@
  */
 package edu.rit.se.nvip.crawler.htmlparser;
 
-import edu.rit.se.nvip.model.RawVulnerability;
 import edu.rit.se.nvip.crawler.SeleniumDriver;
 
+import edu.rit.se.nvip.db.model.RawVulnerability;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-import org.openqa.selenium.JavascriptExecutor;
-
 
 import java.io.*;
 import java.net.HttpURLConnection;

@@ -1,6 +1,6 @@
 package edu.rit.se.nvip.crawler.htmlparser;
 
-import edu.rit.se.nvip.model.RawVulnerability;
+import edu.rit.se.nvip.db.model.RawVulnerability;
 import edu.rit.se.nvip.crawler.SeleniumDriver;
 
 import org.apache.commons.lang3.StringUtils;

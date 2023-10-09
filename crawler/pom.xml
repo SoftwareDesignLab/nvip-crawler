@@ -138,6 +138,12 @@
 	<!-- List of dependencies for NVIP -->
 	<dependencies>
 		<dependency>
+			<groupId>edu.rit.se.nvip</groupId>
+			<artifactId>db</artifactId>
+			<version>2.0</version>
+		</dependency>
+		
+		<dependency>
 			<groupId>org.apache.logging.log4j</groupId>
 			<artifactId>log4j-core</artifactId>
 		</dependency>
@@ -157,11 +163,6 @@
 		</dependency>
 
 		<dependency>
-			<groupId>com.rabbitmq</groupId>
-			<artifactId>amqp-client</artifactId>
-		</dependency>
-
-		<dependency>
 			<groupId>com.mysql</groupId>
 			<artifactId>mysql-connector-j</artifactId>
 		</dependency>
@@ -170,18 +171,6 @@
 		<dependency>
 			<groupId>org.eclipse.jgit</groupId>
 			<artifactId>org.eclipse.jgit</artifactId>
-		</dependency>
-
-		<dependency>
-			<groupId>io.github.bonigarcia</groupId>
-			<artifactId>webdrivermanager</artifactId>
-			<version>5.5.3</version>
-		</dependency>
-
-		<dependency>
-			<groupId>org.seleniumhq.selenium</groupId>
-			<artifactId>selenium-java</artifactId>
-			<version>4.13.0</version>
 		</dependency>
 
 		<!-- https://mvnrepository.com/artifact/xml-apis/xml-apis -->
@@ -225,28 +214,10 @@
 			<version>5.7.1</version>
 		</dependency>
 
-		<!-- edu.stanford.nlp -->
-		<dependency>
-			<groupId>edu.stanford.nlp</groupId>
-			<artifactId>stanford-corenlp</artifactId>
-			<version>4.5.2</version>
-		</dependency>
-		<dependency>
-			<groupId>edu.stanford.nlp</groupId>
-			<artifactId>stanford-corenlp</artifactId>
-			<version>4.5.2</version>
-			<classifier>models</classifier>
-		</dependency>
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-api</artifactId>
 			<version>1.7.30</version>
-		</dependency>
-
-		<dependency>
-			<groupId>org.python</groupId>
-			<artifactId>jython-standalone</artifactId>
-			<version>2.7.2</version>
 		</dependency>
 
 		<!-- Apache FileUtils -->
@@ -255,14 +226,6 @@
 			<artifactId>commons-io</artifactId>
 			<version>2.11.0</version>
 			<type>jar</type>
-		</dependency>
-
-		<!-- Crawler4J -->
-		<dependency>
-			<groupId>de.hs-heilbronn.mi</groupId>
-			<artifactId>crawler4j-with-sleepycat</artifactId>
-			<version>5.0.1</version>
-			<type>pom</type>
 		</dependency>
 
 		<!-- https://mvnrepository.com/artifact/org.jsoup/jsoup -->
@@ -291,28 +254,6 @@
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-math3</artifactId>
 			<version>3.0</version>
-		</dependency>
-
-		<!-- <version>1.0.0-beta5</version> -->
-		<dependency>
-			<groupId>org.deeplearning4j</groupId>
-			<artifactId>deeplearning4j-core</artifactId>
-			<version>1.0.0-beta7</version>
-		</dependency>
-		<dependency>
-			<groupId>org.deeplearning4j</groupId>
-			<artifactId>deeplearning4j-nlp</artifactId>
-			<version>1.0.0-beta7</version>
-		</dependency>
-		<dependency>
-			<groupId>org.deeplearning4j</groupId>
-			<artifactId>deeplearning4j-nn</artifactId>
-			<version>1.0.0-beta7</version>
-		</dependency>
-		<dependency>
-			<groupId>org.deeplearning4j</groupId>
-			<artifactId>deeplearning4j-parallel-wrapper</artifactId>
-			<version>1.0.0-beta7</version>
 		</dependency>
 
 		<!-- https://mvnrepository.com/artifact/org.nd4j/nd4j-native-platform -->
@@ -349,6 +290,19 @@
 			<groupId>net.sf.cssbox</groupId>
 			<artifactId>pdf2dom</artifactId>
 			<version>2.0.1</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.seleniumhq.selenium</groupId>
+			<artifactId>selenium-java</artifactId>
+			<version>4.13.0</version>
+		</dependency>
+
+		<!-- https://mvnrepository.com/artifact/io.github.bonigarcia/webdrivermanager -->
+		<dependency>
+			<groupId>io.github.bonigarcia</groupId>
+			<artifactId>webdrivermanager</artifactId>
+			<version>5.5.3</version>
 		</dependency>
 
 		<dependency>
