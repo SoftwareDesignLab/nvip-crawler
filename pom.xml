@@ -22,6 +22,7 @@
 		<module>patchfinder</module>
 		<module>productnameextractor</module>
 		<module>reconciler</module>
+		<module>db</module>
 	</modules>
 
 	<!-- Added to enforce the usage of https -->
@@ -60,10 +61,10 @@
 				<artifactId>liquibase-maven-plugin</artifactId>
 				<version>4.23.0</version>
 				<configuration>
-					<propertyFile>/nvip_data/mysql-database/newDB/liquibase.properties</propertyFile>
+					<propertyFile>nvip_data/mysql-database/newDB/liquibase.properties</propertyFile>
 					<!-- turn off prompt for non-local db since this does run in headless environments -->
 					<promptOnNonLocalDatabase>false</promptOnNonLocalDatabase>
-					<searchPath>${project.basedir}/..</searchPath>
+					<searchPath>${project.basedir}</searchPath>
 				</configuration>
 				<dependencies>
 					<dependency>
@@ -206,6 +207,7 @@
 				<version>4.13.2</version>
 				<scope>test</scope>
 			</dependency>
+
 			<dependency>
 				<groupId>org.junit.jupiter</groupId>
 				<artifactId>junit-jupiter</artifactId>
@@ -232,6 +234,13 @@
 				<groupId>org.springframework</groupId>
 				<artifactId>spring-test</artifactId>
 				<version>6.0.11</version>
+				<scope>test</scope>
+			</dependency>
+
+			<dependency>
+				<groupId>org.assertj</groupId>
+				<artifactId>assertj-core</artifactId>
+				<version>3.24.2</version>
 				<scope>test</scope>
 			</dependency>
 

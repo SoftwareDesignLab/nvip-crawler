@@ -1,10 +1,11 @@
 package edu.rit.se.nvip;
 
 import com.rabbitmq.client.*;
-import com.rometools.utils.IO;
 import edu.rit.se.nvip.crawler.CveCrawlController;
 import edu.rit.se.nvip.crawler.github.PyPAGithubScraper;
-import edu.rit.se.nvip.model.RawVulnerability;
+import edu.rit.se.nvip.db.model.RawVulnerability;
+import edu.rit.se.nvip.db.repositories.RawDescriptionRepository;
+import edu.rit.se.nvip.db.DatabaseHelper;
 import edu.rit.se.nvip.utils.UtilHelper;
 
 import com.opencsv.CSVWriter;
@@ -29,13 +30,14 @@ import java.lang.reflect.Modifier;
 public class CrawlerMain {
 
     private static final Logger logger = LogManager.getLogger(CrawlerMain.class);
-    private final DatabaseHelper databaseHelper;
+    private final RawDescriptionRepository rawDescriptionRepository;
+
     private final Map<String, Object> crawlerVars = new HashMap<>();
     private final Map<String, Object> dataVars = new HashMap<>();
     private static Map<String, String> sourceTypes = null;
 
-    public CrawlerMain(DatabaseHelper databaseHelper){
-        this.databaseHelper = databaseHelper;
+    public CrawlerMain(RawDescriptionRepository rawDescriptionRepository, DatabaseHelper databaseHelper){
+        this.rawDescriptionRepository = rawDescriptionRepository;
     }
 
     /**
@@ -47,8 +49,15 @@ public class CrawlerMain {
 
         // get sources from the seeds file or the database
         DatabaseHelper databaseHelper = DatabaseHelper.getInstance();
+        if (!databaseHelper.testDbConnection()) {
+            logger.error("Error in database connection! Please check if the database configured in DB Envvars is up and running!");
+            System.exit(1);
+        }
 
-        CrawlerMain crawlerMain = new CrawlerMain(databaseHelper);
+        CrawlerMain crawlerMain = new CrawlerMain(
+            new RawDescriptionRepository(databaseHelper.getDataSource()),
+            databaseHelper
+        );
         crawlerMain.run();
     }
 
@@ -58,11 +67,6 @@ public class CrawlerMain {
 
         // check required data directories
         checkDataDirs();
-
-        if (!databaseHelper.testDbConnection()) {
-            logger.error("Error in database connection! Please check if the database configured in DB Envvars is up and running!");
-            System.exit(1);
-        }
 
         if (!this.testMQConnection()) {
             logger.error("ERROR: Failed to connect to RabbitMQ server on {}:{}/{}",
@@ -561,9 +565,9 @@ public class CrawlerMain {
         for (String cveId: crawledCves.keySet()) {
             for (RawVulnerability vuln: crawledCves.get(cveId)) {
                 // check if the data is already in the DB before inserting.
-                if (!databaseHelper.checkIfInRawDescriptions(vuln.getCveId(), vuln.getDescription())) {
+                if (!rawDescriptionRepository.checkIfInRawDescriptions(vuln.getCveId(), vuln.getDescription())) {
                     //logger.info("Inserting new raw description for CVE {} into DB" ,cveId);
-                    insertedCVEs += databaseHelper.insertRawVulnerability(vuln);
+                    insertedCVEs += rawDescriptionRepository.insertRawVulnerability(vuln);
                     cveArray.add(vuln.getCveId());
                 }
             }

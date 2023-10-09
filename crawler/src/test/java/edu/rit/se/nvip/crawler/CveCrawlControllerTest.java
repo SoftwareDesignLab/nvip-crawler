@@ -1,6 +1,6 @@
 package edu.rit.se.nvip.crawler;
 
-import edu.rit.se.nvip.model.RawVulnerability;
+import edu.rit.se.nvip.db.model.RawVulnerability;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
