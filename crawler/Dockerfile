@@ -16,7 +16,7 @@ ADD crawler/src/main crawler/src/main
 RUN mvn package -Dmaven.test.skip=true --projects=crawler
 
 ### Crawler Run Stage
-FROM openjdk:11-jre-slim AS crawler
+FROM amazoncorretto:17-alpine AS crawler
 
 RUN apt-get update \
     && apt-get install -y libglib2.0-0 libnss3 libxcb1
