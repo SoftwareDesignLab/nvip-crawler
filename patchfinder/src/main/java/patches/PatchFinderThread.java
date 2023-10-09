@@ -220,7 +220,7 @@ public class PatchFinderThread implements Runnable {
 	private void findPatchCommitsFromUrl(ArrayList<PatchCommit> foundPatchCommits, String cve, String patchSource, int commitCount) {
 		// Define page range
 		final int numPags = (int) Math.ceil((double) commitCount / 35);
-		final String baseCommitsUrl = patchSource + "/patches";
+		final String baseCommitsUrl = patchSource + "/commits";
 
 		// Query first page and get HEAD commit
 		try {
