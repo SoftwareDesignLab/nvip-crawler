@@ -36,7 +36,7 @@ public class CrawlerMain {
     private final Map<String, Object> dataVars = new HashMap<>();
     private static Map<String, String> sourceTypes = null;
 
-    public CrawlerMain(RawDescriptionRepository rawDescriptionRepository, DatabaseHelper databaseHelper){
+    public CrawlerMain(RawDescriptionRepository rawDescriptionRepository){
         this.rawDescriptionRepository = rawDescriptionRepository;
     }
 
@@ -55,8 +55,7 @@ public class CrawlerMain {
         }
 
         CrawlerMain crawlerMain = new CrawlerMain(
-            new RawDescriptionRepository(databaseHelper.getDataSource()),
-            databaseHelper
+            new RawDescriptionRepository(databaseHelper.getDataSource())
         );
         crawlerMain.run();
     }
