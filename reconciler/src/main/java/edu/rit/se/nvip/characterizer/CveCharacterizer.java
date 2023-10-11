@@ -32,6 +32,7 @@ import edu.rit.se.nvip.characterizer.enums.VDOLabel;
 import edu.rit.se.nvip.characterizer.enums.VDONounGroup;
 import edu.rit.se.nvip.model.CompositeVulnerability;
 import edu.rit.se.nvip.model.CvssScore;
+import edu.rit.se.nvip.model.SSVC;
 import edu.rit.se.nvip.model.VdoCharacteristic;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
@@ -193,8 +194,6 @@ public class CveCharacterizer {
 					continue;
 				}
 
-				// TODO: Integrate SSVC scoring here
-
 				// characterize CVE
 				Map<VDOLabel, Double> prediction = characterizeCveForVDO(vuln.getDescription(), true);
 				for (VDOLabel label : prediction.keySet()) {
@@ -208,6 +207,11 @@ public class CveCharacterizer {
 				CvssScore score = new CvssScore(vuln.getCveId(), cvssScore, 0.5); //confidence isn't used or stored anywhere
 				vuln.addCvssScore(score);
 //				logger.info("CVSS Score predicted for {}", vulnerability.getCveId());
+
+				// TODO: Route query to this object
+				// Get SSVC score
+				final SSVC ssvc = new SSVC(false, null, false);
+				// TODO: Attach object to vuln
 
 				// log
 				if (totCharacterized % 100 == 0 && totCharacterized > 0) {
