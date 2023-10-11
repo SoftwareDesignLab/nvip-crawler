@@ -28,13 +28,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.*;
 import org.junit.jupiter.api.Test;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.*;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.platform.commons.function.Try.success;
@@ -74,7 +73,7 @@ public class MessengerTest {
         }).when(channelMock).basicConsume((String) eq("productnameextractor"), eq(true), (DeliverCallback) any(), (CancelCallback) any());
 
         // Invoke the method under test asynchronously using CompletableFuture
-        CompletableFuture<List<String>> completableFuture = CompletableFuture.supplyAsync(() -> {
+        CompletableFuture<PNEInputMessage> completableFuture = CompletableFuture.supplyAsync(() -> {
             try {
                 return messenger.waitForReconcilerMessage(5);
             } catch (Exception e) {
@@ -85,7 +84,7 @@ public class MessengerTest {
 
         // Wait for the message to be delivered and the method under test to complete or timeout after 5 seconds
         try {
-            List<String> actualMessage = completableFuture.get(5, TimeUnit.SECONDS);
+            PNEInputMessage actualMessage = completableFuture.get(5, TimeUnit.SECONDS);
             assertNotNull(actualMessage);
         } catch (TimeoutException e) {
             success("Message not received within the specified timeout.");
@@ -95,10 +94,11 @@ public class MessengerTest {
     @Test
     public void testParseIds_ValidJsonString() {
         Messenger messenger = new Messenger("localhost", "/", 5672,"guest", "guest", "RECONCILER_OUT", "PNE_OUT");
-        String jsonString = "[\"id1\",\"id2\",\"id3\"]";
+        String jsonString = "{\"jobs\":[{\"cveId\":\"id1\"},{\"cveId\":\"id2\"},{\"cveId\":\"id3\"}]}";
         List<String> expectedIds = Arrays.asList("id1", "id2", "id3");
 
-        List<String> actualIds = messenger.parseIds(jsonString);
+        PNEInputMessage msg = messenger.parseInput(jsonString);
+        List<String> actualIds = msg.getJobs().stream().map(PNEInputJob::getCveId).collect(Collectors.toList());
 
         assertEquals(expectedIds, actualIds);
     }
@@ -108,7 +108,8 @@ public class MessengerTest {
         Messenger messenger = new Messenger("localhost", "/", 5672,"guest", "guest", "RECONCILER_OUT", "PNE_OUT");
         String jsonString = "invalidJsonString";
 
-        List<String> actualIds = messenger.parseIds(jsonString);
+        PNEInputMessage msg = messenger.parseInput(jsonString);
+        List<String> actualIds = msg.getJobs().stream().map(PNEInputJob::getCveId).collect(Collectors.toList());
 
         assertNotNull(actualIds);
         assertTrue(actualIds.isEmpty());

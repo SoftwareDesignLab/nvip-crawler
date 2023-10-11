@@ -26,6 +26,7 @@ package db;
 
 import com.zaxxer.hikari.HikariDataSource;
 import env.ProductNameExtractorEnvVars;
+import model.CpeCollection;
 import model.cpe.AffectedProduct;
 import model.cve.CompositeVulnerability;
 import org.junit.jupiter.api.BeforeEach;
@@ -114,7 +115,7 @@ public class DatabaseHelperTest {
 	public void insertAffectedProductsTest() {
 		int inCount = 5;
 		List<AffectedProduct> products = buildDummyProducts(inCount);
-		dbh.insertAffectedProducts(products);
+		dbh.insertAffectedProducts(new CpeCollection(null, products));
 		try {
 			verify(pstmt, times(inCount*7)).setString(anyInt(), any());
 			verify(pstmt, times(inCount)).executeUpdate();
@@ -179,6 +180,11 @@ public class DatabaseHelperTest {
 		cveIds.add(cveId2);
 		cveIds.add(cveId3);
 
+		List<Integer> vvIds = new ArrayList<>();
+		vvIds.add(1);
+		vvIds.add(2);
+		vvIds.add(3);
+
 		// Mock the database interactions
 		when(conn.prepareStatement(anyString())).thenReturn(pstmt);
 		when(pstmt.executeQuery()).thenReturn(res);
@@ -186,7 +192,7 @@ public class DatabaseHelperTest {
 		when(res.getInt("vuln_id")).thenReturn(1, 2, 3);
 		when(res.getString("description")).thenReturn(description1, description2, description3);
 
-		List<CompositeVulnerability> vulnList = dbh.getSpecificCompositeVulnerabilities(cveIds);
+		List<CompositeVulnerability> vulnList = dbh.getSpecificCompositeVulnerabilities(vvIds);
 		assertEquals(vulnList.size(), cveIds.size());
 
 		CompositeVulnerability vuln1 = vulnList.get(0);
@@ -202,9 +208,9 @@ public class DatabaseHelperTest {
 	public void testInsertAffectedProductsToDB() {
 		//dont actually want to insert anything into the db
 		dbh = spy(dbh);
-		doNothing().when(dbh).insertAffectedProducts(anyList());
+		doNothing().when(dbh).insertAffectedProducts(any());
 		dbh.insertAffectedProductsToDB(new ArrayList<>());
-		verify(dbh).insertAffectedProducts(anyList());
+		verify(dbh).insertAffectedProducts(any());
 	}
 
 //	@Test
