@@ -1,7 +1,7 @@
 http://nginx.org/en/security_advisories.html/
 http://oxnan.com/
 http://support.zte.com.cn/support/news/NewsMain.aspx/
-http://svn.apache.org/viewvc/tomcat/site/trunk/docs/?pathrev=1907857
+http://svn.apache.org/viewvc/tomcat/site/trunk/docs/
 http://www.netbsd.org/support/security/
 http://www.slackware.com/security/
 http://www.squid-cache.org/Advisories/
@@ -211,6 +211,7 @@ https://github.com/Netflix/security-bulletins/
 https://github.com/neutrinolabs/xrdp/security/advisories/
 https://github.com/nextcloud/security-advisories/security/advisories/
 https://github.com/ochronasec/ochrona_python_vulnerabilities/tree/main/vulns/
+https://github.com/OctoPrint/OctoPrint/security/
 https://github.com/openbmc/openbmc/issues?utf8=✓&q=Security+Advisory
 https://github.com/opensearch-project/security/security/advisories/
 https://github.com/opf/openproject/security/advisories/
@@ -266,6 +267,7 @@ https://help.motorolanetwork.com/hc/en-us/search?utf8=%E2%9C%93&query=CVE
 https://help.talend.com/r/en-US/Talend-Products-CVEs/Talend-Products-CVEs/
 https://helpx.adobe.com/security.html/
 https://herolab.usd.de/en/security-advisories/
+https://holdings.panasonic/global/corporate/product-security/psirt/advisories.html/
 https://huntr.dev/bounties/hacktivity/
 https://ict.co/help-support/security-advisories/
 https://ikiwiki.info/security/
@@ -280,7 +282,9 @@ https://johnjhacking.com/blog/
 https://jpn.nec.com/security-info/index.html/
 https://jvn.jp/
 https://jvn.jp/report/index.html/
+https://kb.isc.org/docs/aa-00913/
 https://kb.isc.org/docs/aa-01020/
+https://kb.isc.org/docs/search?query=cve&searchType=articles
 https://kb.juniper.net/InfoCenter/index?page=content&channel=SECURITY_ADVISORIES
 https://kb.pulsesecure.net/?atype=sa
 https://knowledge.hitachivantara.com/Security/
@@ -290,6 +294,7 @@ https://labs.f-secure.com/advisories/
 https://labs.integrity.pt/advisories/
 https://labs.withsecure.com/advisories/
 https://labs.yarix.com/advisories/
+https://launchpad.net/+search?field.text=cve&x=0&y=0
 https://layersevensecurity.com/advisories/
 https://lednerb.de/en/publications/
 https://lgsecurity.lge.com/bulletins/avproducts#updateDetails
@@ -303,6 +308,7 @@ https://libreswan.org/security/
 https://liferay.dev/portal/security/known-vulnerabilities/
 https://line.github.io/security-advisory-blog/advisory/
 https://linksys-sh.com/security-advisory/
+https://lists.apache.org/list.html?announce@tomcat.apache.org
 https://lists.debian.org/debian-lts-announce/
 https://lists.gnupg.org/pipermail/gnupg-announce/
 https://lists.nongnu.org/archive/html/
@@ -550,6 +556,7 @@ https://www.esentire.com/resources/security-advisories/
 https://www.espressif.com/en/support/documents/advisories/
 https://www.esri.com/arcgis-blog/?s=#&tag=cve
 https://www.esri.com/arcgis-blog/?s=#&tag=cve&tag=security
+https://www.f-secure.com/us-en/support/security-advisories/
 https://www.facebook.com/security/
 https://www.fastly.com/security-advisories/
 https://www.festo.com/us/en/search/?tab=SUPPORT_PORTAL&q=FestoSecurityAdvisory&documentTypeGroup=EXPERT_KNOWLEDGE&documentTypes=&supportPortalQ=
