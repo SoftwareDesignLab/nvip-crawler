@@ -192,6 +192,9 @@ public class CveCharacterizer {
 					countNotChanged++;
 					continue;
 				}
+
+				// TODO: Integrate SSVC scoring here
+
 				// characterize CVE
 				Map<VDOLabel, Double> prediction = characterizeCveForVDO(vuln.getDescription(), true);
 				for (VDOLabel label : prediction.keySet()) {
