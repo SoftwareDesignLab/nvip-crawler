@@ -82,7 +82,7 @@ class ReconcilerControllerTest {
         doNothing().when(mockDbh).updateFilterStatus(anySet());
         when(mockRecon.reconcile(any(CompositeVulnerability.class), anySet())).thenReturn(vuln);
         when(mockDbh.insertOrUpdateVulnerabilityFull(any(CompositeVulnerability.class))).thenReturn(1);
-        doNothing().when(mockMes).sendPNEMessage(anyList());
+        doNothing().when(mockMes).sendPNEMessage(any());
         when(mockDbh.insertTimeGapsForNewVulns(anySet())).thenReturn(1);
         when(mockDbh.insertRun(any(RunStats.class))).thenReturn(1);
         when(mockDbh.insertVdoCvssBatch(anySet())).thenReturn(1);

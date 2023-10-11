@@ -4,6 +4,8 @@ import edu.rit.se.nvip.characterizer.CveCharacterizer;
 import edu.rit.se.nvip.filter.FilterHandler;
 import edu.rit.se.nvip.filter.FilterReturn;
 import edu.rit.se.nvip.messenger.Messenger;
+import edu.rit.se.nvip.messenger.PNEInputJob;
+import edu.rit.se.nvip.messenger.PNEInputMessage;
 import edu.rit.se.nvip.mitre.MitreCveController;
 import edu.rit.se.nvip.model.*;
 import edu.rit.se.nvip.nvd.NvdCveController;
@@ -81,7 +83,9 @@ public class ReconcilerController {
                 .collect(Collectors.toSet());
 
         //PNE team changed their mind about streaming jobs as they finish, they now just want one big list
-        messenger.sendPNEMessage(newOrUpdated.stream().map(CompositeVulnerability::getCveId).collect(Collectors.toList()));
+        List<PNEInputJob> pneJobs = new ArrayList<>();
+        newOrUpdated.forEach(v->pneJobs.add(new PNEInputJob(v.getCveId(), v.getVersionId())));
+        messenger.sendPNEMessage(new PNEInputMessage(pneJobs));
 
         logger.info("Starting NVD/MITRE comparisons");
         updateNvdMitre(); // todo this could be done from the start asynchronously, but attaching shouldn't happen until it's done

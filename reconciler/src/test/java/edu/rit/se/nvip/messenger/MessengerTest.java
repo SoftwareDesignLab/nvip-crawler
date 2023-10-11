@@ -105,7 +105,7 @@ class MessengerTest {
         when(conn.createChannel()).thenReturn(channelMock);
 
         // Act
-        messenger.sendPNEMessage(ids);
+        messenger.sendPNEMessage(new PNEInputMessage());
 
         // Assert
         verify(factoryMock).newConnection();

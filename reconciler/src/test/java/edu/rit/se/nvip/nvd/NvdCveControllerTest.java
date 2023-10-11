@@ -92,7 +92,7 @@ class NvdCveControllerTest {
                         "               \"id\": \"CVE-2023-1234\"," +
                         "               \"published\": \"2023-08-21T12:34:56.789\"," +
                         "               \"vulnStatus\": \"open\"," +
-                        "               \"references\": []" +
+                        "               \"references\":[]" +
                         "           }" +
                         "       }," +
                         "       {" +
@@ -100,7 +100,7 @@ class NvdCveControllerTest {
                         "               \"id\": \"CVE-2023-5678\"," +
                         "               \"published\": \"2023-08-15T08:00:00.123\"," +
                         "               \"vulnStatus\": \"closed\"," +
-                        "               \"references\": []" +
+                        "               \"references\":[]" +
                         "           }" +
                         "       }" +
                         "   ]" +
