@@ -205,7 +205,7 @@ public class Messenger {
             return OM.readValue(jsonString, PNEInputMessage.class);
         } catch (JsonProcessingException e) {
             logger.error("Failed to parse list of ids from json string: {}", e.toString());
-            return new PNEInputMessage(new ArrayList<>());
+            return new PNEInputMessage("", new ArrayList<>());
         }
     }
 

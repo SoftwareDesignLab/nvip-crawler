@@ -1,4 +1,5 @@
-package messenger;
+package edu.rit.se.nvip.messenger;
+
 
 import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -17,6 +18,11 @@ public class PNEInputMessage {
 
     public PNEInputMessage(String command, List<PNEInputJob> jobs) {
         this.command = command;
+        this.jobs = jobs;
+    }
+
+    public PNEInputMessage(List<PNEInputJob> jobs) {
+        this.command = "NORMAL";
         this.jobs = jobs;
     }
 
@@ -40,13 +46,5 @@ public class PNEInputMessage {
 
     public boolean hasJobArray() {
         return this.jobs != null;
-    }
-
-    public static void main(String[] args) throws JsonProcessingException {
-        String msg = "{\"jobs\":[{\"cveId\":\"xxx\", \"vulnVersionId\":321}]}";
-        PNEInputMessage im = new ObjectMapper().readValue(msg, PNEInputMessage.class);
-        String msg2 = "{\"command\":\"terminate\"}";
-        PNEInputMessage im2 = new ObjectMapper().readValue(msg2, PNEInputMessage.class);
-        int a = 0;
     }
 }

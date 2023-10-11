@@ -116,14 +116,14 @@ public class Messenger {
 
     /**
      * Sends the list of Ids to the PNE
-     * @param ids
+     * @param msg
      */
-    public void sendPNEMessage(List<String> ids) {
+    public void sendPNEMessage(PNEInputMessage msg) {
 
         try (Connection connection = factory.newConnection();
              Channel channel = connection.createChannel()) {
             channel.queueDeclare(outputQueue, false, false, false, null);
-            String message = genJson(ids);
+            String message = genJson(msg);
             channel.basicPublish("", outputQueue, null, message.getBytes(StandardCharsets.UTF_8));
 
         } catch (TimeoutException | IOException e) {
@@ -149,12 +149,12 @@ public class Messenger {
 
     /**
      * generates the json string from the list of strings
-     * @param ids
+     * @param msg
      * @return
      */
-    private String genJson(List<String> ids) {
+    private String genJson(PNEInputMessage msg) {
         try {
-            return OM.writeValueAsString(ids);
+            return OM.writeValueAsString(msg);
         } catch (JsonProcessingException e) {
             logger.error("Failed to convert list of ids to json string: {}", e.toString());
             return "";
