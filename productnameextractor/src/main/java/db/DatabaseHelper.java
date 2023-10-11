@@ -29,7 +29,9 @@ import java.util.*;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
+import model.CpeCollection;
 import model.cpe.AffectedProduct;
 import model.cve.CompositeVulnerability;
 import org.apache.logging.log4j.LogManager;
@@ -53,10 +55,17 @@ public class DatabaseHelper {
 	private HikariConfig config;
 	private HikariDataSource dataSource;
 	private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
-	private final String selectVulnerabilitySql = "SELECT vulnerability.vuln_id, vulnerability.cve_id, description.description FROM vulnerability JOIN description ON vulnerability.description_id = description.description_id;";
-	private final String selectSpecificVulnerabilitySql = "SELECT vulnerability.vuln_id, description.description FROM vulnerability JOIN description ON vulnerability.description_id = description.description_id WHERE vulnerability.cve_id = ?;";
-	private final String insertAffectedProductSql = "INSERT INTO affectedproduct (cve_id, cpe, product_name, version, vendor, purl, swid_tag) VALUES (?, ?, ?, ?, ?, ?, ?);";
+	private final String selectVulnerabilitySql = "SELECT v.vuln_id, v.cve_id, d.description, vv.vuln_version_id " +
+			"FROM vulnerability AS v JOIN vulnerabilityversion AS vv ON v.vuln_version_id = vv.vuln_version_id " +
+			"JOIN description AS d ON vv.description_id = d.description_id;";
+	private final String selectSpecificVulnerabilitySql = "SELECT v.vuln_id, vuln.cve_id, d.description " +
+			"FROM vulnerability AS v JOIN vulnerabilityversion AS vv on v.vuln_version_id = vv.vuln_version_id " +
+			"JOIN description AS d ON vv.description_id = d.description_id WHERE vv.vuln_version_id = ?;";
+
+	private final String insertCpeSet = "INSERT INTO cpeset (cve_id, created_date) VALUES (?, NOW())";
+	private final String insertAffectedProductSql = "INSERT INTO affectedproduct (cve_id, cpe, product_name, version, vendor, purl, swid_tag, cpe_set_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?);";
 	private final String deleteAffectedProductSql = "DELETE FROM affectedproduct where cve_id = ?;";
+	private final String updateVulnVersion = "UPDATE vulnerabilityversion SET cpe_set_id = ? WHERE vuln_version_id = ?";
 
 	/**
 	 * Constructor for DatabaseHelper. Initializes the HikariDataSource connection to the database to be used.
@@ -131,16 +140,35 @@ public class DatabaseHelper {
 	 * Insert affected products into the database. First deletes existing data
 	 * in the database for the affected products in the list, then inserts the new data.
 	 *
-	 * @param affectedProducts list of affected products to be inserted
+	 * @param cpeCollections list of affected products to be inserted
 	 */
-	public void insertAffectedProductsToDB(List<AffectedProduct> affectedProducts) {
+	public void insertAffectedProductsToDB(List<CpeCollection> cpeCollections) {
 		logger.info("Inserting Affected Products to DB!");
+		for (CpeCollection cpes : cpeCollections) {
+			// insert into cpeset table
+			int cpeSetId = insertCpeSet(cpes.getCve().getCveId());
+			cpes.setCpeSetId(cpeSetId);
+			// insert into affectedproduct table
+			insertAffectedProducts(cpes);
+			// update the cpeset fk in vulnversion
+			updateVulnVersion(cpes.getCve().getVersionId(), cpeSetId);
+		}
+	}
 
-		// Delete existing affected product data for those in list
-		deleteAffectedProducts(affectedProducts);
-
-		// Insert affected products
-		insertAffectedProducts(affectedProducts);
+	private int insertCpeSet(String cveId) {
+		int setId = -1;
+		try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(insertCpeSet)) {
+			pstmt.setString(1, cveId);
+			pstmt.executeUpdate();
+			ResultSet rs = pstmt.getGeneratedKeys();
+			if (rs.next()) {
+				setId = rs.getInt(1);
+			}
+		} catch (SQLException e) {
+			logger.error("Error while inserting into cpeset");
+			logger.error(e);
+		}
+		return setId;
 	}
 
 	/**
@@ -148,8 +176,8 @@ public class DatabaseHelper {
 	 *
 	 * @param affectedProducts list of affected products
 	 */
-	public void insertAffectedProducts(List<AffectedProduct> affectedProducts) {
-		logger.info("Inserting {} affected products...", affectedProducts.size());
+	public void insertAffectedProducts(CpeCollection affectedProducts) {
+		logger.info("Inserting {} affected products...", affectedProducts.getCpes().size());
 
 		// CPE 2.3 Regex
 		// Regex101: https://regex101.com/r/9uaTQb/1
@@ -157,9 +185,8 @@ public class DatabaseHelper {
 
 		int count = 0;
 		try (Connection conn = getConnection();
-				Statement stmt = conn.createStatement();
 				PreparedStatement pstmt = conn.prepareStatement(insertAffectedProductSql);) {
-			for (AffectedProduct affectedProduct : affectedProducts) {
+			for (AffectedProduct affectedProduct : affectedProducts.getCpes()) {
 				try {
 					// Validate and extract CPE data
 					final String cpe = affectedProduct.getCpe();
@@ -176,6 +203,7 @@ public class DatabaseHelper {
 					pstmt.setString(5, affectedProduct.getVendor());
 					pstmt.setString(6, affectedProduct.getPURL());
 					pstmt.setString(7, affectedProduct.getSWID());
+					pstmt.setInt(8, affectedProducts.getCpeSetId());
 
 					count += pstmt.executeUpdate();
 
@@ -210,6 +238,17 @@ public class DatabaseHelper {
 		logger.info("Done. Deleted existing affected products in database!");
 	}
 
+	public void updateVulnVersion(int vulnVersionId, int cpeSetId) {
+		logger.info("Updating the cpeset fk in vulnerabilityversion");
+		try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(updateVulnVersion)) {
+			pstmt.setInt(1, cpeSetId);
+			pstmt.setInt(2, vulnVersionId);
+			pstmt.executeUpdate();
+		} catch (SQLException e) {
+			logger.error(e.toString());
+		}
+	}
+
 	/**
 	 * Gets list of vulnerabilities from the database, formats them into CompositeVulnerability objects,
 	 * and limits the returned list to maxVulnerabilities size.
@@ -220,7 +259,7 @@ public class DatabaseHelper {
 	public List<CompositeVulnerability> getAllCompositeVulnerabilities(int maxVulnerabilities) {
 		ArrayList<CompositeVulnerability> vulnList = new ArrayList<>();
 		synchronized (DatabaseHelper.class) {
-			int vulnId;
+			int vulnId, vulnVersionId;
 			String cveId, description;
 			try (Connection connection = getConnection()) {
 				PreparedStatement pstmt = connection.prepareStatement(selectVulnerabilitySql);
@@ -232,6 +271,7 @@ public class DatabaseHelper {
 					vulnId = rs.getInt("vuln_id");
 					cveId = rs.getString("cve_id");
 					description = rs.getString("description");
+					vulnVersionId = rs.getInt("vuln_version_id");
 
 					CompositeVulnerability vulnerability = new CompositeVulnerability(
 							vulnId,
@@ -239,6 +279,7 @@ public class DatabaseHelper {
 							description,
 							CompositeVulnerability.CveReconcileStatus.UPDATE
 					);
+					vulnerability.setVersionId(vulnVersionId);
 					vulnList.add(vulnerability);
 					vulnCount++;
 				}
@@ -257,24 +298,25 @@ public class DatabaseHelper {
 	 * Gets list of specific vulnerabilities by their CVE IDs from the database,
 	 * formats them into CompositeVulnerability objects, and returns the list.
 	 *
-	 * @param cveIds list of CVEs to be pulled from database
+	 * @param vulnVersionIds list of CVEs to be pulled from database
 	 * @return list of fetched vulnerabilities
 	 */
-	public List<CompositeVulnerability> getSpecificCompositeVulnerabilities(List<String> cveIds){
+	public List<CompositeVulnerability> getSpecificCompositeVulnerabilities(List<Integer> vulnVersionIds){
 		ArrayList<CompositeVulnerability> vulnList = new ArrayList<>();
 		synchronized (DatabaseHelper.class) {
 			try (Connection connection = getConnection()) {
 
 				// For each CVE ID in cveIds, query database for info specific to that cve
-				for(String cveId : cveIds){
+				for(int vvId : vulnVersionIds){
 					PreparedStatement pstmt = connection.prepareStatement(selectSpecificVulnerabilitySql);
-					pstmt.setString(1, cveId);
+					pstmt.setInt(1, vvId);
 
 					ResultSet rs = pstmt.executeQuery();
 
 					while (rs.next()) {
 						int vulnId = rs.getInt("vuln_id");
 						String description = rs.getString("description");
+						String cveId = rs.getString("cve_id");
 
 						CompositeVulnerability vulnerability = new CompositeVulnerability(
 								vulnId,
@@ -282,10 +324,11 @@ public class DatabaseHelper {
 								description,
 								CompositeVulnerability.CveReconcileStatus.UPDATE
 						);
+						vulnerability.setVersionId(vvId);
 						vulnList.add(vulnerability);
 					}
 				}
-				logger.info("Successfully loaded {} existing CVE items from DB! {} CVE items were not found in the DB", vulnList.size(), cveIds.size() - vulnList.size());
+				logger.info("Successfully loaded {} existing CVE items from DB! {} CVE items were not found in the DB", vulnList.size(), vulnVersionIds.size() - vulnList.size());
 			} catch (Exception e) {
 				logger.error("Error while getting existing vulnerabilities from DB\nException: {}", e.getMessage());
 				logger.error("This is a serious error! Product Name Extraction will not be able to proceed! Exiting...");

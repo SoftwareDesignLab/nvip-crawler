@@ -116,42 +116,33 @@ public class Messenger {
      * @param pollInterval number of seconds between each poll to the queue
      * @return list of jobs or one-element list containing 'FINISHED' or 'TERMINATE'
      */
-    public List<String> waitForReconcilerMessage(int pollInterval) {
+    public PNEInputMessage waitForReconcilerMessage(int pollInterval) {
         // Initialize job list
-        List<String> cveIds = null;
+        PNEInputMessage retVal = null;
         logger.info("Waiting for jobs from Reconciler...");
         final long startTime = System.currentTimeMillis();
 
         // Busy-wait loop for jobs
-        while(cveIds == null) {
+        while(retVal == null) {
             try(Connection connection = factory.newConnection();
                 Channel channel = connection.createChannel()){
 
                 channel.queueDeclare(inputQueue, false, false, false, null);
 
-                BlockingQueue<List<String>> messageQueue = new ArrayBlockingQueue<>(1);
+                BlockingQueue<PNEInputMessage> messageQueue = new ArrayBlockingQueue<>(1);
 
                 DeliverCallback deliverCallback = (consumerTag, delivery) -> {
                     String message = new String(delivery.getBody(), StandardCharsets.UTF_8);
-
-                    // If FINISHED or TERMINATE sent, just offer a 1 element list with the message
-                    if(message.equals("FINISHED") || message.equals("TERMINATE")) {
-                        List<String> noJobs = new ArrayList<>();
-                        noJobs.add(message);
-                        messageQueue.offer(noJobs);
-
-                    // Otherwise jobs were sent, parseIds and then offer the list of jobs
-                    } else {
-                        List<String> parsedIds = parseIds(message);
-                        if(parsedIds.size() > 0 && !messageQueue.offer(parsedIds)) logger.error("Job response could not be added to message queue");
+                    PNEInputMessage msg = parseInput(message);
+                    if(!messageQueue.offer(msg)) {
+                        logger.error("Job response could not be added to message queue");
                     }
-
                 };
 
                 channel.basicConsume(inputQueue, true, deliverCallback, consumerTag -> { });
 
                 logger.info("Polling message queue...");
-                cveIds = messageQueue.poll(pollInterval, TimeUnit.SECONDS);
+                retVal = messageQueue.poll(pollInterval, TimeUnit.SECONDS);
                 final long elapsedTime = System.currentTimeMillis() - startTime;
 
                 // Status log every 10 minutes
@@ -165,7 +156,7 @@ public class Messenger {
             }
         }
 
-        return cveIds;
+        return retVal;
     }
 
     /**
@@ -209,12 +200,12 @@ public class Messenger {
      * @return list of CVE IDs
      */
     @SuppressWarnings("unchecked")
-    public List<String> parseIds(String jsonString) {
+    public PNEInputMessage parseInput(String jsonString) {
         try {
-            return OM.readValue(jsonString, ArrayList.class);
+            return OM.readValue(jsonString, PNEInputMessage.class);
         } catch (JsonProcessingException e) {
             logger.error("Failed to parse list of ids from json string: {}", e.toString());
-            return new ArrayList<>();
+            return new PNEInputMessage(new ArrayList<>());
         }
     }
 

@@ -22,6 +22,9 @@
  * SOFTWARE.
  */
 
+import messenger.PNEInputJob;
+import messenger.PNEInputMessage;
+import model.CpeCollection;
 import productdetection.AffectedProductIdentifier;
 import com.opencsv.CSVReader;
 import db.DatabaseHelper;
@@ -41,6 +44,7 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Main class and driver for the NVIP Product Name Extractor.
@@ -209,11 +213,13 @@ public class ProductNameExtractorMain {
         final long getProdStart = System.currentTimeMillis();
         final List<AffectedProduct> affectedProducts = affectedProductIdentifier.identifyAffectedProducts();
         int numAffectedProducts = affectedProducts.size();
+        Map<String, List<AffectedProduct>> cveToCpes = affectedProducts.stream().collect(Collectors.groupingBy(AffectedProduct::getCveId));
+        List<CpeCollection> groupedProds = vulnList.stream().map(v->new CpeCollection(v, cveToCpes.get(v.getCveId()))).collect(Collectors.toList());
 
         logger.info("Product Name Extractor found {} affected products in {} seconds", numAffectedProducts, Math.floor(((double) (System.currentTimeMillis() - getProdStart) / 1000) * 100) / 100);
 
         // Insert the affected products found into the database
-        databaseHelper.insertAffectedProductsToDB(affectedProducts);
+        databaseHelper.insertAffectedProductsToDB(groupedProds);
         logger.info("Product Name Extractor found and inserted {} affected products to the database in {} seconds", affectedProducts.size(), Math.floor(((double) (System.currentTimeMillis() - getProdStart) / 1000) * 100) / 100);
     }
 
@@ -225,17 +231,17 @@ public class ProductNameExtractorMain {
             try {
 
                 // Get CVE IDs to be processed from reconciler
-                List<String> cveIds = rabbitMQ.waitForReconcilerMessage(rabbitPollInterval);
+                PNEInputMessage msg = rabbitMQ.waitForReconcilerMessage(rabbitPollInterval);
 
                 // If 'TERMINATE' message sent, initiate shutdown sequence and exit process
-                if (cveIds.size() == 1 && cveIds.get(0).equals("TERMINATE")) {
+                if (msg.getCommand().equals("TERMINATE")) {
                     logger.info("TERMINATE message received from the Reconciler, shutting down...");
                     databaseHelper.shutdown();
                     logger.info("Shutdown completed.");
                     System.exit(1);
 
                     // If 'FINISHED' message sent, jobs are done for now, release resources
-                } else if (cveIds.size() == 1 && cveIds.get(0).equals("FINISHED")) {
+                } else if (msg.getCommand().equals("FINISHED")) {
                     logger.info("FINISHED message received from the Reconciler, releasing resources...");
                     releaseResources();
 
@@ -243,11 +249,13 @@ public class ProductNameExtractorMain {
                     rabbitMQ.sendPatchFinderFinishMessage();
 
                     // Otherwise, CVE jobs were received, process them
-                } else {
+                } else if (msg.hasJobArray()){
+                    List<String> cveIds = msg.getJobs().stream().map(PNEInputJob::getCveId).collect(Collectors.toList());
+                    List<Integer> vulnVersionIds = msg.getJobs().stream().map(PNEInputJob::getVulnVersionId).collect(Collectors.toList());
                     logger.info("Received job with CVE(s) {}", cveIds);
 
                     // Pull specific cve information from database for each CVE ID passed from reconciler
-                    vulnList = databaseHelper.getSpecificCompositeVulnerabilities(cveIds);
+                    vulnList = databaseHelper.getSpecificCompositeVulnerabilities(vulnVersionIds);
 
                     // Initialize the affectedProductIdentifier and get ready to process cveIds
                     initializeProductIdentifier(vulnList);
@@ -255,9 +263,11 @@ public class ProductNameExtractorMain {
                     // Identify affected products from the CVEs
                     final long getProdStart = System.currentTimeMillis();
                     List<AffectedProduct> affectedProducts = affectedProductIdentifier.identifyAffectedProducts();
+                    Map<String, List<AffectedProduct>> cveToCpes = affectedProducts.stream().collect(Collectors.groupingBy(AffectedProduct::getCveId));
+                    List<CpeCollection> groupedProds = vulnList.stream().map(v->new CpeCollection(v, cveToCpes.get(v.getCveId()))).collect(Collectors.toList());
 
                     // Insert the affected products found into the database
-                    databaseHelper.insertAffectedProductsToDB(affectedProducts);
+                    databaseHelper.insertAffectedProductsToDB(groupedProds);
                     logger.info("Product Name Extractor found and inserted {} affected products to the database in {} seconds", affectedProducts.size(), Math.floor(((double) (System.currentTimeMillis() - getProdStart) / 1000) * 100) / 100);
 
                     // Clear cveIds, extract only the cveIds for which affected products were found to be sent to the Patchfinder
