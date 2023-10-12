@@ -100,7 +100,10 @@ https://developer.arm.com/Arm%20Security%20Center/Mali%20GPU%20Driver%20Vulnerab
 https://developer.arm.com/Arm%20Security%20Center/Speculative%20Processor%20Vulnerability
 https://developer.joomla.org/security-centre.html/
 https://developers.ibexa.co/security-advisories/
+https://device.harmonyos.com/en/docs/security/update/oem_security_update_phone-0000001082257175/
 https://device.harmonyos.com/en/docs/security/update/security-bulletins-overview-0000001155006471/
+https://device.harmonyos.com/en/docs/security/update/security-bulletins-visions-overview-0000001208556407/
+https://device.harmonyos.com/en/docs/security/update/security-bulletins-wearables-overview-0000001181146331/
 https://devolutions.net/security/advisories/
 https://dhis2.org/security/vulnerabilities/
 https://discuss.elastic.co/c/announcements/security-announcements/31/
@@ -146,6 +149,7 @@ https://friends-of-presta.github.io/security-advisories/
 https://gitbook.seguranca-informatica.pt/cve-and-exploits/cves/chiyu-iot-devices/
 https://gitee.com/opengauss/security/issues?assignee_id=&author_id=&branch=&collaborator_ids=&issue_search=&label_ids=&label_text=&milestone_id=&priority=&private_issue=&program_id=&project_type=&scope=&single_label_id=&single_label_text=&sort=&state=all&target_project=
 https://gitee.com/openharmony/security/tree/master/en/security-disclosure/
+https://github.blog/category/security/
 https://github.com/10splayaSec/CVE-Disclosures/tree/main/ChurchCRM/
 https://github.com/advisories?query=type%3Aunreviewed/
 https://github.com/advisories/
@@ -281,6 +285,7 @@ https://jira.atlassian.com/projects/JRASERVER/issues/
 https://johnjhacking.com/blog/
 https://jpn.nec.com/security-info/index.html/
 https://jvn.jp/
+https://jvn.jp/en/vu/
 https://jvn.jp/report/index.html/
 https://kb.isc.org/docs/aa-00913/
 https://kb.isc.org/docs/aa-01020/
@@ -589,6 +594,7 @@ https://www.idemia.com/vulnerability-information/
 https://www.incibe-cert.es/en/early-warning/ics-advisories/
 https://www.incibe-cert.es/en/early-warning/security-advisories/
 https://www.incibe-cert.es/en/early-warning/vulnerabilities/
+https://www.incibe.es/en/incibe-cert/alerta-temprana/avisos-sci/
 https://www.incibe.es/en/incibe-cert/alerta-temprana/avisos/
 https://www.incibe.es/incibe-cert/alerta-temprana/vulnerabilidades/
 https://www.intel.com/content/www/us/en/security-center/default.html/
