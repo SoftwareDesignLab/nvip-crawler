@@ -90,7 +90,7 @@ public class CveCharacterizerTest {
 		when(mockPartialCvssVectorGenerator.getCVssVector(anySet())).thenReturn(new String[8]);
 		//create characterizer with the mocks manually injected
 		CveCharacterizer cveCharacterizer = new CveCharacterizer(mockPreProcessor, mockCveClassifierFactory, mockCvssScoreCalculator, mockPartialCvssVectorGenerator,
-				trainingDataInfo[0], trainingDataInfo[1], "ML", "NB");
+				trainingDataInfo[0], trainingDataInfo[1], "ML", "NB", null); // TODO: Add/mock dbh
 
 
 

@@ -68,6 +68,8 @@ public class DatabaseHelper {
     private static final String SELECT_MITRE_BY_DATE = "SELECT cve_id FROM mitredata WHERE last_modified >= DATE_SUB(NOW(), INTERVAL 2 MINUTE)";
     private static final String INSERT_RUN_STATS = "INSERT INTO runhistory (run_date_time, total_cve_count, new_cve_count, updated_cve_count, not_in_nvd_count, not_in_mitre_count, not_in_both_count, avg_time_gap_nvd, avg_time_gap_mitre)" +
             "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    private static final String EXPLOIT_EXISTS = "SELECT id FROM exploit WHERE cve_id = ?";
+    private static final String INSERT_SSVC = "INSERT INTO ssvc (cve_id, automatable, exploit_status, technical_impact) VALUES (?, ?, ?, ?)";
 
     public static synchronized DatabaseHelper getInstance() {
         if (databaseHelper == null) {
@@ -783,6 +785,43 @@ public class DatabaseHelper {
             logger.error(ex);
         }
         return out;
+    }
+
+    public boolean exploitExists(String cveId) {
+        try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(EXPLOIT_EXISTS)) {
+            pstmt.setString(1, cveId);
+            return pstmt.execute();
+        } catch (SQLException ex) {
+            logger.error("Error while fetching exploit data");
+            logger.error(ex);
+            return false;
+        }
+    }
+
+    public void insertSSVCSet(Set<CompositeVulnerability> vulns) {
+        try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(INSERT_SSVC)) {
+            conn.setAutoCommit(false);
+            for (CompositeVulnerability vuln : vulns) {
+                // Get SSVC data
+                final SSVC ssvc = vuln.getSSVC();
+
+                // Skip vulns w/o data
+                if (!vuln.isRecharacterized() || ssvc == null) continue;
+
+                // Insert data into statement
+                pstmt.setString(1, vuln.getCveId());
+                pstmt.setBoolean(2, ssvc.isAutomatable());
+                pstmt.setString(3, ssvc.getExploitStatus());
+                pstmt.setBoolean(4, ssvc.getTechnicalImpact());
+
+            }
+            // Execute statement
+            pstmt.execute();
+            conn.commit();
+        } catch (SQLException ex) {
+            logger.error("Error while inserting vdo labels");
+            logger.error(ex);
+        }
     }
 
 }

@@ -13,4 +13,8 @@ public class SSVC {
         this.exploitStatus = exploitStatus;
         this.technicalImpact = technicalImpact;
     }
+
+    public boolean isAutomatable() { return automatable; }
+    public String getExploitStatus() { return exploitStatus.toString(); }
+    public boolean getTechnicalImpact() { return technicalImpact; }
 }

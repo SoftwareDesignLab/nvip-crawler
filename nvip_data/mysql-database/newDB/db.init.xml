@@ -930,5 +930,25 @@
         </createTable>
     </changeSet>
 
+    <changeSet id="createSSVCTable" author="dylan">
+        <createTable tableName="ssvc">
+            <column name="id" autoIncrement="true" type="SERIAL">
+                <constraints primaryKey="true" nullable="false" unique="true"/>
+            </column>
+            <column name="cve_id" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="automatable" type="TINYINT(1)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="exploit_status" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="technical_impact" type="TINYINT(1)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
 
 </databaseChangeLog>
