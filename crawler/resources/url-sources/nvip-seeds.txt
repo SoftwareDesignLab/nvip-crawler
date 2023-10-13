@@ -452,6 +452,7 @@ https://support.purestorage.com/Pure_Security/Security_Bulletins
 https://support.redlion.net/hc/en-us/sections/360006547251-Security-Advisories/
 https://support.rhinomobility.com/security/releases/
 https://support.ruckuswireless.com/security_bulletins/
+https://support.sap.com/en/my-support/knowledge-base/security-notes-news.html?anchorId=section_1194770574
 https://support.sas.com/en/security-bulletins.html/
 https://support.servicenow.com/kb?id=kb_article_view&sysparm_article=KB1226057
 https://support.sitecore.com/kb?id=kb_search&kb_knowledge_base=44035465db70dc109e54320a689619bf&language=en
@@ -521,7 +522,6 @@ https://www.broadcom.com/support/security-center/protection-bulletin/
 https://www.canon-europe.com/psirt/advisory-information/
 https://www.cert-in.org.in/
 https://www.cisa.gov/known-exploited-vulnerabilities-catalog/
-https://www.cisa.gov/news-events/cybersecurity-advisories
 https://www.cisa.gov/news-events/cybersecurity-advisories/
 https://www.cisecurity.org/advisory/
 https://www.cloudbees.com/security-advisories/
@@ -684,6 +684,7 @@ https://www.ruby-lang.org/en/security/
 https://www.ruckusnetworks.com/support/security-bulletins/
 https://www.sailpoint.com/security-advisories/
 https://www.samba.org/samba/history/security.html/
+https://www.sap.com/documents/2022/02/fa865ea4-167e-0010-bca6-c68f7e60039b.html/
 https://www.se.com/ww/en/work/support/cybersecurity/security-notifications.jsp/
 https://www.seagate.com/support/security/
 https://www.secomea.com/cybersecurity-advisory/
@@ -696,6 +697,7 @@ https://www.sierrawireless.com/company/iot-device-security/security-bulletins/ar
 https://www.silver-peak.com/support/user-documentation/security-advisories/
 https://www.sit.fraunhofer.de/de/cve/
 https://www.sk-cert.sk/threat/index.html/
+https://www.softether.org/9-about/News/
 https://www.solarwinds.com/trust-center/security-advisories/
 https://www.solidigm.com/content/dam/solidigm/en/site/support/support-community/cve-(security)/documents/public-security-advisory.pdf/
 https://www.sophos.com/en-us/security-advisories/
