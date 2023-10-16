@@ -212,6 +212,7 @@ https://github.com/metabase/metabase/security/advisories/
 https://github.com/metersphere/metersphere/security/advisories/
 https://github.com/Mirantis/security/blob/main/advisories/advisories.md/
 https://github.com/Netflix/security-bulletins/
+https://github.com/netlify/cli/issues?q=label%3A%22type%3A+security%22+
 https://github.com/neutrinolabs/xrdp/security/advisories/
 https://github.com/nextcloud/security-advisories/security/advisories/
 https://github.com/ochronasec/ochrona_python_vulnerabilities/tree/main/vulns/
@@ -249,6 +250,7 @@ https://github.com/zephyrproject-rtos/zephyr/security/advisories/
 https://github.com/zowe/community/security/advisories/
 https://github.com/zulip/zulip/security/advisories/
 https://gitlab.com/gitlab-org/cves/
+https://gitlab.com/qemu-project/qemu/-/issues/?sort=created_date&state=all&search=cve&first_page_size=20
 https://global.abb/group/en/technology/cyber-security/alerts-and-notifications/
 https://global.medtronic.com/xg-en/product-security/security-bulletins.html/
 https://gnupg.org/blog/
@@ -315,6 +317,7 @@ https://line.github.io/security-advisory-blog/advisory/
 https://linksys-sh.com/security-advisory/
 https://lists.apache.org/list.html?announce@tomcat.apache.org
 https://lists.debian.org/debian-lts-announce/
+https://lists.fedoraproject.org/archives/search?count=100&q=cve&mlist=package-announce%40lists.fedoraproject.org&page=1&sort=date-desc
 https://lists.gnupg.org/pipermail/gnupg-announce/
 https://lists.nongnu.org/archive/html/
 https://lists.opensuse.org/archives/list/security-announce@lists.opensuse.org/
@@ -355,7 +358,7 @@ https://otrs.com/overview-release-notes-security-advisories/security-advisories/
 https://owncloud.com/security/
 https://packetstormsecurity.com/files/date/
 https://packetstormsecurity.com/files/tags/advisory/
-https://pandorafms.com/en/security/common-vulnerabilities-and-exposures/
+https://pandorafms.com/common-vulnerabilities-and-exposures/
 https://patchstack.com/category/security-advisories/
 https://patchstack.com/database/
 https://patchstack.com/database/vulnerability/surecart/
@@ -459,6 +462,7 @@ https://support.sitecore.com/kb?id=kb_search&kb_knowledge_base=44035465db70dc109
 https://support.sonatype.com/hc/en-us/sections/203012668-Security-Advisories/
 https://support1.cloverdx.com/hc/en-us/articles/360021006240-Security-advisories/
 https://supportm.trellix.com/webcenter/portal/supportportal/pages_knowledgecenter/
+https://supportportal.juniper.net/s/global-search/%40uri?language=en_US#sort=%40sfcec_community_publish_date_formula__c%20descending&f:ctype=[Security%20Advisories]
 https://symfony.com/blog/category/security-advisories/
 https://syncope.apache.org/security/
 https://tailscale.com/security-bulletins/
@@ -579,6 +583,7 @@ https://www.gov.il/en/Departments/faq/cve_advisories
 https://www.gov.il/en/departments/faq/cve_advisories/
 https://www.greenrocketsecurity.com/resources/security-updates/
 https://www.hanwhavision.com/en/support/cybersecurity/
+https://www.haproxy.com/blog/category/security
 https://www.hidglobal.com/security-center/
 https://www.hihonor.com/global/security/
 https://www.hitachi.com/hirt/security/security.html/
@@ -662,6 +667,7 @@ https://www.phoenixcontact.com/en-pc/psirt
 https://www.php.net/ChangeLog-7.php/
 https://www.postgresql.org/support/security/
 https://www.productsecurity.jnj.com/advisories.html/
+https://www.profelis.com.tr/politikalar/bilgi-guvenligi-politikamiz/
 https://www.progress.com/security/
 https://www.projectcalico.org/security-bulletins/
 https://www.proofpoint.com/us/security/security-advisories/
@@ -738,7 +744,6 @@ https://www.veritas.com/content/support/en_US/security/
 https://www.villageb.io/security-advisory/
 https://www.vivo.com/en/support/security-advisory/
 https://www.vmware.com/security/advisories.html/
-https://www.vulsec.org/advisories/
 https://www.watchguard.com/wgrd-psirt/advisories/
 https://www.welivesecurity.com/papers/threat-reports/
 https://www.westerndigital.com/support/productsecurity/
@@ -748,6 +753,7 @@ https://www.wibu.com/us/support/security-advisories.html/
 https://www.wireshark.org/security/
 https://www.withsecure.com/en/support/security-advisories/
 https://www.wolfssl.com/docs/security-vulnerabilities/
+https://www.wordfence.com/threat-intel/vulnerabilities/
 https://www.wordfence.com/vulnerability-advisories/
 https://www.xpdfreader.com/security-fixes.html/
 https://www.xylem.com/en-us/about-xylem/cybersecurity/advisories/?page=1&pagesize=24&categories=1324/
