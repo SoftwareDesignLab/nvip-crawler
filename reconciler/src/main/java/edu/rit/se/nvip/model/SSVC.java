@@ -1,20 +1,26 @@
 package edu.rit.se.nvip.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+@JsonIgnoreProperties(ignoreUnknown=true)
 public class SSVC {
     private enum EXPLOIT_STATUS {
         NONE, POC, ACTIVE
     }
-    private final boolean automatable;
-    private final EXPLOIT_STATUS exploitStatus;
-    private final boolean technicalImpact;
+    @JsonProperty("automatable")
+    private boolean automatable;
+    @JsonProperty("exploitStatus")
+    private EXPLOIT_STATUS exploitStatus;
 
-    public SSVC(boolean automatable, EXPLOIT_STATUS exploitStatus, boolean technicalImpact) {
-        this.automatable = automatable;
-        this.exploitStatus = exploitStatus;
-        this.technicalImpact = technicalImpact;
-    }
+    private boolean technicalImpact;
 
     public boolean isAutomatable() { return automatable; }
     public String getExploitStatus() { return exploitStatus.toString(); }
     public boolean getTechnicalImpact() { return technicalImpact; }
+
+    @JsonProperty("technicalImpact")
+    public void setTechnicalImpact(String technicalImpact) {
+        this.technicalImpact = technicalImpact.equals("TOTAL");
+    }
 }
