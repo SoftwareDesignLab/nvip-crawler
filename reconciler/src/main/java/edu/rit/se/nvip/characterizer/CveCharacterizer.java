@@ -39,12 +39,9 @@ import edu.rit.se.nvip.model.VdoCharacteristic;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import sun.net.www.protocol.https.HttpsURLConnectionImpl;
 
-import javax.net.ssl.HttpsURLConnection;
 import java.io.*;
 import java.net.URL;
-import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.nio.file.Paths;
 import java.util.*;
@@ -250,7 +247,7 @@ public class CveCharacterizer {
 			params.put("exploitStatus", dbh.exploitExists(vuln.getCveId()) ? "POC" : "NONE");
 
 			// Create url object
-			final URL url = new URL("ssvc" + getParamsString(params));
+			final URL url = new URL("http://localhost:5000/ssvc" + getParamsString(params));
 
 //			// Setup connection and parameters
 //			final HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
@@ -292,7 +289,7 @@ public class CveCharacterizer {
 
 	private static String getParamsString(Map<String, String> params)
 			throws UnsupportedEncodingException {
-		StringBuilder result = new StringBuilder();
+		StringBuilder result = new StringBuilder("?");
 
 		for (Map.Entry<String, String> entry : params.entrySet()) {
 			result.append(URLEncoder.encode(entry.getKey(), "UTF-8"));
