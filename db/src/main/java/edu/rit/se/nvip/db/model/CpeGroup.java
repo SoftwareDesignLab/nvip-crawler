@@ -44,7 +44,7 @@ public class CpeGroup {
 	private final String vendor;
 	private final String product;
 	@Getter private String commonTitle;
-	@Getter	private HashMap<String, CpeEntry> versions;
+	@Getter	private HashMap<String, CpeEntry> versions = new HashMap<>();
 	
 	/**
 	 * Add CPE entry (version) to the CPE group
