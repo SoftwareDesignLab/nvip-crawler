@@ -1,27 +1,27 @@
 package messenger;
 
 import com.fasterxml.jackson.annotation.JsonSetter;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.List;
 
-/**
- * An InputMessage is either an array of CVE jobs, or a plain string used as a command, such as "TERMINATE"
- */
-public class PNEInputMessage {
-    private List<PNEInputJob> jobs;
+public class PFInputMessage {
+    private List<PFInputJob> jobs;
     private String command;
 
-    public PNEInputMessage() {}
+    public PFInputMessage() {}
 
-    public PNEInputMessage(String command, List<PNEInputJob> jobs) {
+    public PFInputMessage(String command, List<PFInputJob> jobs) {
         this.command = command;
         this.jobs = jobs;
     }
 
+    public PFInputMessage(List<PFInputJob> jobs) {
+        this.command = "NORMAL";
+        this.jobs = jobs;
+    }
+
     @JsonSetter("jobs")
-    public void setJobs(List<PNEInputJob> jobs) {
+    public void setJobs(List<PFInputJob> jobs) {
         this.jobs = jobs;
     }
 
@@ -30,7 +30,7 @@ public class PNEInputMessage {
         this.command = command;
     }
 
-    public List<PNEInputJob> getJobs() {
+    public List<PFInputJob> getJobs() {
         return this.jobs;
     }
 

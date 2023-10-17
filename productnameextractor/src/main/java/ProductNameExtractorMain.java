@@ -22,14 +22,12 @@
  * SOFTWARE.
  */
 
-import messenger.PNEInputJob;
-import messenger.PNEInputMessage;
+import messenger.*;
 import model.CpeCollection;
 import productdetection.AffectedProductIdentifier;
 import com.opencsv.CSVReader;
 import db.DatabaseHelper;
 import env.ProductNameExtractorEnvVars;
-import messenger.Messenger;
 import model.cpe.AffectedProduct;
 import model.cpe.CpeGroup;
 import model.cve.CompositeVulnerability;
@@ -270,15 +268,13 @@ public class ProductNameExtractorMain {
                     databaseHelper.insertAffectedProductsToDB(groupedProds);
                     logger.info("Product Name Extractor found and inserted {} affected products to the database in {} seconds", affectedProducts.size(), Math.floor(((double) (System.currentTimeMillis() - getProdStart) / 1000) * 100) / 100);
 
-                    // Clear cveIds, extract only the cveIds for which affected products were found to be sent to the Patchfinder
-                    cveIds.clear();
-                    for(AffectedProduct affectedProduct: affectedProducts){
-                        if(!cveIds.contains(affectedProduct.getCveId())) cveIds.add(affectedProduct.getCveId());
-                    }
+                    List<PFInputJob> pfJobs = new ArrayList<>();
+                    groupedProds.forEach(g->pfJobs.add(new PFInputJob(g.getCve().getCveId(), g.getCve().getVersionId())));
+                    PFInputMessage pfm = new PFInputMessage(pfJobs);
 
                     // Send list of cveIds to Patchfinder
                     logger.info("Sending jobs to patchfinder...");
-                    rabbitMQ.sendPatchFinderMessage(cveIds);
+                    rabbitMQ.sendPatchFinderMessage(pfm);
                     logger.info("Jobs have been sent!\n\n");
                 }
 
