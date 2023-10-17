@@ -1,9 +1,8 @@
 package edu.rit.se.nvip.db.model;
 
-import edu.rit.se.nvip.db.model.VdoCharacteristic;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests for VdoCharacteristic Model
