@@ -162,14 +162,14 @@ public class Messenger {
     /**
      * Sends a list of jobs in the form of CVE IDs to be processed by the PatchFinder to the 'PNE_OUT' queue.
      *
-     * @param cveIds list of jobs to be processed
+     * @param msg list of jobs to be processed
      */
-    public void sendPatchFinderMessage(List<String> cveIds) {
+    public void sendPatchFinderMessage(PFInputMessage msg) {
 
         try (Connection connection = factory.newConnection();
              Channel channel = connection.createChannel()) {
             channel.queueDeclare(outputQueue, false, false, false, null);
-            String message = genJson(cveIds);
+            String message = genJson(msg);
             channel.basicPublish("", outputQueue, null, message.getBytes(StandardCharsets.UTF_8));
 
         } catch (TimeoutException | IOException e) {
@@ -185,8 +185,8 @@ public class Messenger {
         try (Connection connection = factory.newConnection();
              Channel channel = connection.createChannel()) {
             channel.queueDeclare(outputQueue, false, false, false, null);
-            String message = "FINISHED";
-            channel.basicPublish("", outputQueue, null, message.getBytes(StandardCharsets.UTF_8));
+            PFInputMessage pfm = new PFInputMessage("FINISHED", new ArrayList<>());
+            channel.basicPublish("", outputQueue, null, genJson(pfm).getBytes(StandardCharsets.UTF_8));
 
         } catch (TimeoutException | IOException e) {
             logger.error("Error occurred while sending the PNE message to RabbitMQ: {}", e.getMessage());
@@ -212,27 +212,27 @@ public class Messenger {
     /**
      * Takes in a list of CVE IDs and transforms it into a JSON string to be sent via RabbitMQ.
      *
-     * @param cveIds list of CVE IDs
+     * @param msg list of CVE IDs
      * @return single JSON string of all CVE IDs
      */
-    private String genJson(List<String> cveIds) {
+    private String genJson(PFInputMessage msg) {
         try {
-            return OM.writeValueAsString(cveIds);
+            return OM.writeValueAsString(msg);
         } catch (JsonProcessingException e) {
             logger.error("Failed to convert list of ids to json string: {}", e.toString());
             return "";
         }
     }
 
-    private void sendDummyMessage(String queue, List<String> cveIds) {
-        try (Connection connection = factory.newConnection();
-             Channel channel = connection.createChannel()) {
-            channel.queueDeclare(queue, false, false, false, null);
-            String message = genJson(cveIds);
-            channel.basicPublish("", queue, null, message.getBytes(StandardCharsets.UTF_8));
-            logger.info("Successfully sent message:\n\"{}\"", message);
-        } catch (IOException | TimeoutException e) { logger.error("Error sending message: {}", e.toString()); }
-    }
+//    private void sendDummyMessage(String queue, List<String> cveIds) {
+//        try (Connection connection = factory.newConnection();
+//             Channel channel = connection.createChannel()) {
+//            channel.queueDeclare(queue, false, false, false, null);
+//            String message = genJson(cveIds);
+//            channel.basicPublish("", queue, null, message.getBytes(StandardCharsets.UTF_8));
+//            logger.info("Successfully sent message:\n\"{}\"", message);
+//        } catch (IOException | TimeoutException e) { logger.error("Error sending message: {}", e.toString()); }
+//    }
 
     private static List<String> getIdsFromFile(String filename) {
         try {
@@ -243,22 +243,22 @@ public class Messenger {
         return new ArrayList<>();
     }
 
-    private void sendDummyBatchedList(String queue, List<String> messages, int batchSize) {
-        // 0 results in no batching
-        if(batchSize == 0) batchSize = messages.size();
-
-        // Get number of batches (including any partial batches)
-        final int numBatches = (int) Math.ceil((double) messages.size() / batchSize);
-
-        // Determine if there is a partial batch
-        final boolean hasPartial = messages.size() % batchSize != 0;
-
-        // Send batches
-        for (int i = 0; i < numBatches; i++) {
-            if(!hasPartial && i + 1 == numBatches) this.sendDummyMessage(queue, messages.subList(i * batchSize, messages.size() - 1));
-            else this.sendDummyMessage(queue, messages.subList(i * batchSize, (i + 1) * batchSize));
-        }
-    }
+//    private void sendDummyBatchedList(String queue, List<String> messages, int batchSize) {
+//        // 0 results in no batching
+//        if(batchSize == 0) batchSize = messages.size();
+//
+//        // Get number of batches (including any partial batches)
+//        final int numBatches = (int) Math.ceil((double) messages.size() / batchSize);
+//
+//        // Determine if there is a partial batch
+//        final boolean hasPartial = messages.size() % batchSize != 0;
+//
+//        // Send batches
+//        for (int i = 0; i < numBatches; i++) {
+//            if(!hasPartial && i + 1 == numBatches) this.sendDummyMessage(queue, messages.subList(i * batchSize, messages.size() - 1));
+//            else this.sendDummyMessage(queue, messages.subList(i * batchSize, (i + 1) * batchSize));
+//        }
+//    }
 
     private static List<String> getIdsFromJson(String path) {
         try {
