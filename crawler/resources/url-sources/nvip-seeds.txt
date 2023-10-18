@@ -210,6 +210,7 @@ https://github.com/matrix-org/synapse/security/advisories/
 https://github.com/megaease/easeprobe/security/advisories/
 https://github.com/metabase/metabase/security/advisories/
 https://github.com/metersphere/metersphere/security/advisories/
+https://github.com/MikeIsAStar/Counter-Strike-Arbitrary-File-Read/
 https://github.com/Mirantis/security/blob/main/advisories/advisories.md/
 https://github.com/Netflix/security-bulletins/
 https://github.com/netlify/cli/issues?q=label%3A%22type%3A+security%22+
@@ -440,6 +441,8 @@ https://support.confluent.io/hc/en-us/sections/360008413952-Security-Advisories-
 https://support.forcepoint.com/s/global-search/%40uri#q=cve&t=Knowledge%20Base&sort=relevancy
 https://support.forcepoint.com/s/global-search/%40uri#q=security%20advisory&t=Knowledge%20Base&sort=relevancy
 https://support.google.com/product-documentation/topic/12974021?hl=en&amp;ref_topic=10123615&amp;sjid=5419128013624043298-NA
+https://support.hcltechsw.com/csm?id=search&spa=1&q=Security%20Bulletin&t=kb&updated=str:month_ago
+https://support.hcltechsw.com/csm?id=search&spa=1&q=Security%20Bulletin&t=kb&updated=str:week_ago
 https://support.hp.com/us-en/security-bulletin-archive/
 https://support.hp.com/us-en/security-bulletins/
 https://support.hpe.com/connect/s/securitybulletinlibrary?language=en_US#sort=%40hpescuniversaldate%20descending&numberOfResults=100&f:@kmdoclanguagecode=[cv1871440]&hpe=1
@@ -469,6 +472,7 @@ https://tailscale.com/security-bulletins/
 https://takeonme.org/cve.html/
 https://talosintelligence.com/vulnerability_reports/
 https://tomcat.apache.org/security-jk.html/
+https://tomcat.apache.org/security.html/
 https://trust.mi.com/misrc/bulletins?tab=advisory
 https://trust.okta.com/security-advisories/
 https://trust.zscaler.com/security-advisories/
@@ -659,12 +663,14 @@ https://www.openwall.com/lists/oss-security/
 https://www.oracle.com/security-alerts/
 https://www.oxygenxml.com/security/advisories.html/
 https://www.panasonic.com/global/corporate/product-security/sec/psirt/advisories.html/
+https://www.papercut.com/kb/Main/CommonSecurityQuestions/
 https://www.papercut.com/search/?q=CVE
 https://www.pega.com/trust/security-bulletins/
 https://www.philips.com/a-w/security/security-advisories/
 https://www.phoenix.com/product-security/
 https://www.phoenixcontact.com/en-pc/psirt
 https://www.php.net/ChangeLog-7.php/
+https://www.playframework.com/security/vulnerability/
 https://www.postgresql.org/support/security/
 https://www.productsecurity.jnj.com/advisories.html/
 https://www.profelis.com.tr/politikalar/bilgi-guvenligi-politikamiz/
@@ -683,6 +689,7 @@ https://www.qualys.com/security-advisories/
 https://www.red-gate.com/privacy-and-security/vulnerabilities/
 https://www.redpacketsecurity.com/
 https://www.redteam-pentesting.de/en/advisories/-advisories-publicised-vulnerability-analyses/
+https://www.renesas.com/us/en/support/renesas-psirt/
 https://www.replicated.com/security/advisories/
 https://www.ricoh.com/products/security/vulnerabilities/
 https://www.ringcentral.com/trust-center/security-bulletin.html/
