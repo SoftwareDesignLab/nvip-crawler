@@ -227,6 +227,7 @@ https://github.com/palantir/security-bulletins/
 https://github.com/patriksimek/vm2/security/advisories/
 https://github.com/pendulum-project/ntpd-rs/security/advisories/
 https://github.com/pimcore/pimcore/security/advisories/
+https://github.com/pkp/pkp-lib/issues?q=is%3Aissue+cve+
 https://github.com/planetlabs/planet-client-python/security/advisories/
 https://github.com/pterodactyl/wings/security/advisories/
 https://github.com/QubesOS/qubes-secpack/tree/master/QSBs/
@@ -764,6 +765,7 @@ https://www.wordfence.com/threat-intel/vulnerabilities/
 https://www.wordfence.com/vulnerability-advisories/
 https://www.xpdfreader.com/security-fixes.html/
 https://www.xylem.com/en-us/about-xylem/cybersecurity/advisories/?page=1&pagesize=24&categories=1324/
+https://www.yealink.com/en/trust-center/security-advisories/
 https://www.yokogawa.com/library/resources/white-papers/yokogawa-security-advisory-report-list/
 https://www.yubico.com/support/issue-rating-system/security-advisories/
 https://www.zabbix.com/security_advisories/
