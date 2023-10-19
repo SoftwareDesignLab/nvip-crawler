@@ -28,7 +28,6 @@ import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import com.zaxxer.hikari.pool.HikariPool.PoolInitializationException;
 import fixes.Fix;
-import messenger.PFInputJob;
 import model.CpeEntry;
 import model.CpeGroup;
 import org.apache.logging.log4j.LogManager;
@@ -205,10 +204,10 @@ public class DatabaseHelper {
 	 * Collects a map of CPEs with their correlated CVE and Vuln ID used for
 	 * collecting patches given a list of CVE ids.
 	 *
-	 * @param cves CVEs to get affected products for
+	 * @param vulnVersionIds CVEs to get affected products for
 	 * @return a map of affected products
 	 */
-	public Map<String, CpeGroup> getAffectedProducts(List<PFInputJob> cves) {
+	public Map<String, CpeGroup> getAffectedProducts(List<Integer> vulnVersionIds) {
 		Map<String, CpeGroup> affectedProducts = new HashMap<>();
 		// Prepare statement
 		try (Connection conn = getConnection();
@@ -217,13 +216,13 @@ public class DatabaseHelper {
 		) {
 			// Execute correct statement and get result set
 			ResultSet res = null;
-			if(cves == null) {
+			if(vulnVersionIds == null) {
 				res = getAll.executeQuery();
 				parseAffectedProducts(affectedProducts, res);
 			}
 			else {
-				for (PFInputJob cve : cves) {
-					getById.setInt(1, cve.getVulnVersionId());
+				for (int id : vulnVersionIds) {
+					getById.setInt(1, id);
 					res = getById.executeQuery();
 					parseAffectedProducts(affectedProducts, res);
 				}

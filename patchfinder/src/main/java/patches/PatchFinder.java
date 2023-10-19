@@ -97,7 +97,8 @@ public class PatchFinder {
 	 */
 	public static void run(List<PFInputJob> jobs) throws IOException, InterruptedException {
 		// Get affected products via CVE ids
-		final Map<String, CpeGroup> affectedProducts = databaseHelper.getAffectedProducts(jobs);
+		List<Integer> vulnVersionIds = jobs.stream().map(PFInputJob::getVulnVersionId).collect(Collectors.toList());
+		final Map<String, CpeGroup> affectedProducts = databaseHelper.getAffectedProducts(vulnVersionIds);
 		logger.info("Successfully got affected products for {} CVEs from the database", affectedProducts.size());
 		PatchFinder.run(affectedProducts, 0);
 	}
