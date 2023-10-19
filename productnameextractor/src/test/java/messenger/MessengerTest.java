@@ -30,6 +30,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.*;
@@ -128,13 +129,16 @@ public class MessengerTest {
         when(factory.newConnection().createChannel()).thenReturn(channel);
 
         String queueName = "PNE_OUT";
-        List<String> cveIds = Arrays.asList("CVE-2023-0001", "CVE-2023-0002");
+        List<PFInputJob> jobs = new ArrayList<>();
+        jobs.add(new PFInputJob("CVE-2023-0001", 1));
+        jobs.add(new PFInputJob("CVE-2023-0002", 2));
+        PFInputMessage msg = new PFInputMessage("NORMAL", jobs);
 
         // Act
-        messenger.sendPatchFinderMessage(cveIds);
+        messenger.sendPatchFinderMessage(msg);
 
         // Assert
-        String expectedMessage = "[\"CVE-2023-0001\",\"CVE-2023-0002\"]";
+        String expectedMessage = msg.toString();
         verify(channel, times(1)).queueDeclare(
                 eq(queueName),
                 eq(false),
@@ -164,8 +168,8 @@ public class MessengerTest {
         when(connection.createChannel()).thenReturn(channel);
 
         String queueName = "PNE_OUT";
-        String message = "FINISHED";
-        byte[] messageBytes = message.getBytes(StandardCharsets.UTF_8);
+        PFInputMessage msg = new PFInputMessage("FINISHED", new ArrayList<>());
+        byte[] messageBytes = msg.toString().getBytes(StandardCharsets.UTF_8);
 
         // Act
         messenger.sendPatchFinderFinishMessage();
