@@ -15,8 +15,6 @@ import com.google.gson.GsonBuilder;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
 
 import java.io.*;
 import java.net.MalformedURLException;
@@ -67,7 +65,9 @@ public class CrawlerMain {
         // check required data directories
         checkDataDirs();
 
-        if (!this.testMQConnection()) {
+        ConnectionFactory connectionFactory = getConnectionFactory();
+
+        if (!this.testMQConnection(connectionFactory)) {
             logger.error("ERROR: Failed to connect to RabbitMQ server on {}:{}/{}",
                     dataVars.get("mqHost"),
                     dataVars.get("mqVirtualHost"),
@@ -557,67 +557,48 @@ public class CrawlerMain {
      * @param crawledCves
      */
     private void insertRawCVEsAndPrepareMessage(HashMap<String, ArrayList<RawVulnerability>> crawledCves) {
-        logger.info("Inserting {} CVEs to DB", crawledCves.size());
-        int insertedCVEs = 0;
-        JSONArray cveArray = new JSONArray();
+        // Create a connection to the RabbitMQ server and create the channel
+        ConnectionFactory factory = getConnectionFactory();
 
-        for (String cveId: crawledCves.keySet()) {
-            for (RawVulnerability vuln: crawledCves.get(cveId)) {
-                // check if the data is already in the DB before inserting.
-                if (!rawDescriptionRepository.checkIfInRawDescriptions(vuln.getCveId(), vuln.getDescription())) {
-                    //logger.info("Inserting new raw description for CVE {} into DB" ,cveId);
-                    insertedCVEs += rawDescriptionRepository.insertRawVulnerability(vuln);
-                    cveArray.add(vuln.getCveId());
-                }
-            }
-        }
+        try (Connection connection = factory.newConnection()){
+            logger.info("Inserting {} CVEs to DB", crawledCves.size());
 
-        logger.info("Inserted {} raw CVE entries in rawdescriptions", insertedCVEs);
-        logger.info("Notifying Reconciler to reconciler {} new raw data entries", insertedCVEs);
+            List<RawVulnerability> vulnsToInsert = crawledCves.values().stream()
+                    .flatMap(Collection::stream)
+                    .filter(vuln -> !rawDescriptionRepository.checkIfInRawDescriptions(vuln.getCveId(), vuln.getDescription()))
+                    .toList();
 
-        // Prepare the message and send it to the MQ server for Reconciler to pick up
-        // Sends a JSON object with an array of CVE IDs that require reconciliation
-        JSONObject messageBody = new JSONObject();
-        messageBody.put("cves", cveArray);
+            List<RawVulnerability> insertedVulns = rawDescriptionRepository.batchInsertRawVulnerability(vulnsToInsert);
 
-        try {
-            // Create a connection to the RabbitMQ server and create the channel
-            ConnectionFactory factory = new ConnectionFactory();
-            factory.setHost(dataVars.get("mqHost") + "");
-            factory.setVirtualHost(dataVars.get("mqVirtualHost")+"");
-            factory.setPort((int) dataVars.get("mqPort"));
-            factory.setUsername(dataVars.get("mqUsername")+"");
-            factory.setPassword(dataVars.get("mqPassword")+"");
+            logger.info("Inserted {} raw CVE entries in rawdescriptions", insertedVulns.size());
+            logger.info("Notifying Reconciler to reconciler {} new raw data entries", insertedVulns.size());
 
-            try {
-                factory.useSslProtocol();
-            } catch (NoSuchAlgorithmException e) {
-                throw new RuntimeException(e);
-            } catch (KeyManagementException e) {
-                throw new RuntimeException(e);
+            try(Channel channel = connection.createChannel()) {
+                // Prepare the message and send it to the MQ server for Reconciler to pick up
+                // Sends a JSON object with an array of CVE IDs that require reconciliation
+                Gson gson = new Gson();
+
+                String cveArray = gson.toJson(insertedVulns);
+                Map<String, String> messageBody = new HashMap<>();
+                messageBody.put("cves", cveArray);
+
+                // Declare a queue and send the message
+                String queueName = dataVars.get("mqQueueName") + "";
+                channel.queueDeclare(queueName, false, false, false, null);
+                logger.info("Queue '{}' created successfully.", queueName);
+                channel.basicPublish("", queueName, null, cveArray.getBytes());
+                logger.info("outgoing cve message: {}", cveArray);
+                logger.info(cveArray.getBytes());
+                logger.info("Message to Reconciler sent successfully.");
             }
 
-            Connection connection = factory.newConnection();
-            Channel channel = connection.createChannel();
-
-            // Declare a queue and send the message
-            String queueName = dataVars.get("mqQueueName") + "";
-            channel.queueDeclare(queueName, false, false, false, null);
-            logger.info("Queue '{}' created successfully.", queueName);
-            channel.basicPublish("", queueName, null, cveArray.toJSONString().getBytes());
-            logger.info("outgoing cve message: {}", cveArray.toJSONString());
-            logger.info(cveArray.toJSONString().getBytes());
-            logger.info("Message to Reconciler sent successfully.");
-
-            channel.close();
-            connection.close();
         } catch (Exception ex) {
             logger.error("ERROR: Failed to send message to MQ server on {} via port {}", dataVars.get("mqHost"),
                     dataVars.get("mqPort"));
         }
     }
 
-    private boolean testMQConnection() {
+    private ConnectionFactory getConnectionFactory(){
         ConnectionFactory factory = new ConnectionFactory();
         factory.setHost(dataVars.get("mqHost") + "");
         factory.setVirtualHost(dataVars.get("mqVirtualHost")+"");
@@ -633,6 +614,10 @@ public class CrawlerMain {
             throw new RuntimeException(e);
         }
 
+        return factory;
+    }
+
+    private boolean testMQConnection(ConnectionFactory factory) {
         try (Connection connection = factory.newConnection()){
             return true;
         } catch (Exception e) {

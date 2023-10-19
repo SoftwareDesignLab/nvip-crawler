@@ -1,19 +1,19 @@
 package edu.rit.se.nvip.db.repositories;
 
+import com.google.common.collect.Lists;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import edu.rit.se.nvip.db.model.RawVulnerability;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.sql.DataSource;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.Timestamp;
+import java.sql.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 
 @Slf4j
@@ -53,6 +53,65 @@ public class RawDescriptionRepository {
         }
 
         return 0;
+    }
+
+    /**
+     * for inserting crawled data to rawdescriptions
+     * @param vulns
+     * @return
+     */
+    public List<RawVulnerability> batchInsertRawVulnerability(List<RawVulnerability> vulns) {
+        List<RawVulnerability> inserted = new ArrayList<>();
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement pstmt = connection.prepareStatement(insertRawData)) {
+
+            //Split vulns into batches for JDBC Insert
+            //TODO: Move the hardcoded value
+            for(List<RawVulnerability> batch: Lists.partition(vulns, 1024)) {
+                for(RawVulnerability vuln: batch){
+                    pstmt.setString(1, vuln.getDescription());
+                    pstmt.setString(2, vuln.getCveId());
+                    pstmt.setTimestamp(3, Timestamp.valueOf(vuln.getCreatedDateAsDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
+                    pstmt.setTimestamp(4, Timestamp.valueOf(vuln.getPublishDateAsDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
+                    pstmt.setTimestamp(5, Timestamp.valueOf(vuln.getLastModifiedDateAsDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
+                    pstmt.setString(6, vuln.getSourceURL());
+                    pstmt.setString(7, vuln.getSourceType());
+                    pstmt.setString(8, vuln.getParserType());
+                    pstmt.addBatch();
+                }
+            }
+            log.info(pstmt.toString());
+
+            int[] results = pstmt.executeBatch();
+
+            if(results.length == vulns.size()){
+                for(int i = 0; i < vulns.size(); i++){
+                    if(results[i] == Statement.SUCCESS_NO_INFO || results[i] == Statement.KEEP_CURRENT_RESULT || results[i] == Statement.CLOSE_CURRENT_RESULT) {
+                        inserted.add(vulns.get(i));
+                    } else {
+                        log.info("Failed to insert {}: {}", vulns.get(i).getCveId(), results[i]);
+                    }
+                }
+            }
+        } catch (BatchUpdateException e) {
+            log.error("Failed to insert all vulnerabilities in batch: {}", e.getMessage());
+            int[] results = e.getUpdateCounts();
+            if(results.length == vulns.size()){
+                for(int i = 0; i < vulns.size(); i++){
+                    if(results[i] == Statement.SUCCESS_NO_INFO || results[i] == Statement.KEEP_CURRENT_RESULT || results[i] == Statement.CLOSE_CURRENT_RESULT) {
+                        inserted.add(vulns.get(i));
+                    } else {
+                        log.info("Failed to insert {}: {}", vulns.get(i).getCveId(), results[i]);
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            log.error("Failed to execute batch insert");
+            log.error(e.toString());
+        }
+
+        return inserted;
     }
 
     /**
