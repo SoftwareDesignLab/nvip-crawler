@@ -27,6 +27,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import db.DatabaseHelper;
 import env.PatchFinderEnvVars;
+import messenger.PFInputJob;
 import model.CpeGroup;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -90,13 +91,13 @@ public class PatchFinder {
 
 	/**
 	 * Run a list of given jobs through the Patchfinder
-	 * @param cveIds CVEs to get affected products and patches for
+	 * @param jobs CVEs to get affected products and patches for
 	 * @throws IOException if an IO error occurs while attempting to find patches
 	 * @throws InterruptedException if a thread interrupted error occurs while attempting to find patches
 	 */
-	public static void run(List<String> cveIds) throws IOException, InterruptedException {
+	public static void run(List<PFInputJob> jobs) throws IOException, InterruptedException {
 		// Get affected products via CVE ids
-		final Map<String, CpeGroup> affectedProducts = databaseHelper.getAffectedProducts(cveIds);
+		final Map<String, CpeGroup> affectedProducts = databaseHelper.getAffectedProducts(jobs);
 		logger.info("Successfully got affected products for {} CVEs from the database", affectedProducts.size());
 		PatchFinder.run(affectedProducts, 0);
 	}

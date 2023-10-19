@@ -28,6 +28,7 @@ import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import com.zaxxer.hikari.pool.HikariPool.PoolInitializationException;
 import fixes.Fix;
+import messenger.PFInputJob;
 import model.CpeEntry;
 import model.CpeGroup;
 import org.apache.logging.log4j.LogManager;
@@ -48,8 +49,11 @@ public class DatabaseHelper {
 	private HikariDataSource dataSource;
 	private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
 
-	private final String selectAffectedProductsSql = "SELECT cve_id, cpe FROM affectedproduct GROUP BY product_name, affected_product_id ORDER BY cve_id DESC, version ASC;";
-	private final String selectAffectedProductsByIdsSql = "SELECT cve_id, cpe FROM affectedproduct WHERE cve_id = ? GROUP BY product_name, affected_product_id ORDER BY cve_id DESC, version ASC;";
+	private final String selectAffectedProductsSql = "SELECT cve_id, cpe FROM affectedproduct ORDER BY cve_id DESC, version ASC;";
+	private final String selectAffectedProductsByIdsSql = "SELECT ap.cve_id, ap.cpe FROM affectedproduct AS ap " +
+			"JOIN cpeset AS cs ON cs.cpe_set_id = ap.cpe_set_id " +
+			"JOIN vulnerabilityversion AS vv ON vv.cpe_set_id = cs.cpe_set_id " +
+			"WHERE vv.vuln_version_id = ? ORDER BY cve_id DESC, version ASC;";
 	private final String getExistingSourceUrlsSql = "SELECT source_url, source_url_id FROM patchsourceurl";
 	private final String getExistingPatchCommitsSql = "SELECT commit_sha FROM patchcommit";
 	private final String insertPatchSourceURLSql = "INSERT INTO patchsourceurl (cve_id, source_url) VALUES (?, ?);";
@@ -201,10 +205,10 @@ public class DatabaseHelper {
 	 * Collects a map of CPEs with their correlated CVE and Vuln ID used for
 	 * collecting patches given a list of CVE ids.
 	 *
-	 * @param cveIds CVEs to get affected products for
+	 * @param cves CVEs to get affected products for
 	 * @return a map of affected products
 	 */
-	public Map<String, CpeGroup> getAffectedProducts(List<String> cveIds) {
+	public Map<String, CpeGroup> getAffectedProducts(List<PFInputJob> cves) {
 		Map<String, CpeGroup> affectedProducts = new HashMap<>();
 		// Prepare statement
 		try (Connection conn = getConnection();
@@ -213,13 +217,13 @@ public class DatabaseHelper {
 		) {
 			// Execute correct statement and get result set
 			ResultSet res = null;
-			if(cveIds == null) {
+			if(cves == null) {
 				res = getAll.executeQuery();
 				parseAffectedProducts(affectedProducts, res);
 			}
 			else {
-				for (String cveId : cveIds) {
-					getById.setString(1, cveId);
+				for (PFInputJob cve : cves) {
+					getById.setInt(1, cve.getVulnVersionId());
 					res = getById.executeQuery();
 					parseAffectedProducts(affectedProducts, res);
 				}

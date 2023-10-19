@@ -120,7 +120,7 @@ public class MessengerTest {
         String jsonString = "[\"id1\",\"id2\",\"id3\"]";
         List<String> expectedIds = Arrays.asList("id1", "id2", "id3");
 
-        List<String> actualIds = messenger.parseIds(jsonString);
+        List<String> actualIds = messenger.parseMsg(jsonString);
 
         assertEquals(expectedIds, actualIds);
     }
@@ -130,7 +130,7 @@ public class MessengerTest {
         Messenger messenger = new Messenger("localhost", "/", 5672,"guest", "guest", "PNE_OUT");
         String jsonString = "invalidJsonString";
 
-        List<String> actualIds = messenger.parseIds(jsonString);
+        List<String> actualIds = messenger.parseMsg(jsonString);
 
         assertNotNull(actualIds);
         Assert.assertTrue(actualIds.isEmpty());

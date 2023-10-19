@@ -24,6 +24,7 @@
 
 import env.PatchFinderEnvVars;
 import messenger.Messenger;
+import messenger.PFInputMessage;
 import model.CpeGroup;
 
 import java.io.IOException;
@@ -90,13 +91,13 @@ public class PatchFinderMain extends Thread {
         while(true) {
             try {
                 // Wait and get jobs
-                final List<String> jobs = rabbitMQ.waitForProductNameExtractorMessage(PatchFinderEnvVars.getRabbitPollInterval());
+                final PFInputMessage msg = rabbitMQ.waitForProductNameExtractorMessage(PatchFinderEnvVars.getRabbitPollInterval());
 
                 // If null is returned, either and error occurred or intentional program quit
-                if(jobs == null) break;
+                if(msg == null) break;
 
                 // Otherwise, run received jobs
-                PatchFinder.run(jobs);
+                PatchFinder.run(msg.getJobs());
             } catch (IOException | InterruptedException e) {
                 logger.error("A fatal error occurred during job waiting: {}", e.toString());
                 break;

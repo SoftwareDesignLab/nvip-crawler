@@ -89,29 +89,30 @@ public class Messenger {
      * @param pollInterval time to wait before timing out and returning null
      * @return null or a list of received CVE ids to find patches for
      */
-    public List<String> waitForProductNameExtractorMessage(int pollInterval) {
+    public PFInputMessage waitForProductNameExtractorMessage(int pollInterval) {
         // Initialize job list
-        List<String> cveIds = null;
+        PFInputMessage retVal = null;
 
         // Busy-wait loop for jobs
-        while(cveIds == null) {
+        while(retVal == null) {
             try(Connection connection = factory.newConnection();
                 Channel channel = connection.createChannel()){
 
                 channel.queueDeclare(inputQueue, false, false, false, null);
 
-                BlockingQueue<List<String>> messageQueue = new ArrayBlockingQueue<>(1);
+                BlockingQueue<PFInputMessage> messageQueue = new ArrayBlockingQueue<>(1);
 
                 DeliverCallback deliverCallback = (consumerTag, delivery) -> {
                     String message = new String(delivery.getBody(), StandardCharsets.UTF_8);
-                    List<String> parsedIds = parseIds(message);
-                    if(parsedIds.size() > 0 && !messageQueue.offer(parsedIds)) logger.error("Job response could not be added to message queue");
+                    PFInputMessage msg = parseMsg(message);
+                    if(!messageQueue.offer(msg)) {
+                        logger.error("Job response could not be added to message queue");
+                    }
                 };
                 channel.basicConsume(inputQueue, true, deliverCallback, consumerTag -> { });
 
                 logger.info("Polling message queue...");
-                cveIds = messageQueue.poll(pollInterval, TimeUnit.SECONDS);
-                if(cveIds != null) logger.info("Received job with CVE(s) {}", cveIds);
+                retVal = messageQueue.poll(pollInterval, TimeUnit.SECONDS);
 
             } catch (TimeoutException | InterruptedException | IOException e) {
                 logger.error("Error occurred while getting jobs from the ProductNameExtractor: {}", e.toString());
@@ -120,7 +121,7 @@ public class Messenger {
         }
 
 
-        return cveIds;
+        return retVal;
     }
 
     /**
@@ -129,12 +130,12 @@ public class Messenger {
      * @return parsed list of ids
      */
     @SuppressWarnings("unchecked")
-    public List<String> parseIds(String jsonString) {
+    public PFInputMessage parseMsg(String jsonString) {
         try {
-            return OM.readValue(jsonString, ArrayList.class);
+            return OM.readValue(jsonString, PFInputMessage.class);
         } catch (JsonProcessingException e) {
             logger.error("Failed to parse list of ids from json string: {}", e.toString());
-            return new ArrayList<>();
+            return null;
         }
     }
 
