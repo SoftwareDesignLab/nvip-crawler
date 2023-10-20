@@ -8,10 +8,10 @@ import edu.rit.se.nvip.model.RawVulnerability;
 import edu.rit.se.nvip.utils.GitController;
 import org.apache.commons.io.FileUtils;
 import org.junit.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
-import org.mockito.Mockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.File;
 import java.io.IOException;
@@ -23,7 +23,7 @@ import java.util.Set;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.*;
 
-
+@ExtendWith(MockitoExtension.class)
 public class MitreCveControllerTest {
 
     private final MitreCveController mitreCveController = new MitreCveController();
