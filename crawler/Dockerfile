@@ -13,11 +13,11 @@ ADD reconciler/pom.xml reconciler/pom.xml
 ADD db/src/main db/src/main
 RUN mvn install -Dmaven.test.skip=true --projects=db
 
-RUN mvn dependency:go-offline
+RUN mvn dependency:go-offline --projects=db,crawler
 
 ADD crawler/src/main crawler/src/main
 
-RUN mvn package -Dmaven.test.skip=true --projects=crawler
+RUN mvn package -Dmaven.test.skip=true --projects=db,crawler
 
 ### Crawler Run Stage
 FROM eclipse-temurin:17-jre AS crawler
