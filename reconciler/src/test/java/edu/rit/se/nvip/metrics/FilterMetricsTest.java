@@ -6,9 +6,9 @@ import edu.rit.se.nvip.utils.metrics.CrawlerRun;
 import edu.rit.se.nvip.utils.metrics.FilterMetrics;
 import org.junit.jupiter.api.Test;
 
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -20,8 +20,8 @@ class FilterMetricsTest {
 
     @Test
     public void filterMetricsTest(){
-        String path = System.getProperty("user.dir") + "\\src\\test\\resources"; //just 1 json
-        String path2 = System.getProperty("user.dir") + "\\src\\test\\resources\\multipleJsons"; //2 jsons
+        String path = Paths.get(System.getProperty("user.dir"), "src", "test", "resources").toString(); //just 1 json
+        String path2 =  Paths.get(System.getProperty("user.dir"), "src", "test", "resources", "multipleJsons").toString(); //2 jsons
 
         FilterMetrics filterMetrics = new FilterMetrics(path, new FilterHandler(), FilterHandler.FilterScope.ALL);
         FilterMetrics filterMetrics2 = genFilterMetrics(path2);
@@ -40,8 +40,8 @@ class FilterMetricsTest {
     @Test
     public void newVulnsPerRunTest(){
         //tests first file that all vulns added are new
-        String path = System.getProperty("user.dir") + "\\src\\test\\resources";
-        String path2 = System.getProperty("user.dir") + "\\src\\test\\resources\\multipleJsons";
+        String path = Paths.get(System.getProperty("user.dir"), "src", "test", "resources").toString(); //just 1 json
+        String path2 = Paths.get(System.getProperty("user.dir"), "src", "test", "resources", "multipleJsons").toString(); //2 jsons
 
         FilterMetrics filterMetrics = genFilterMetrics(path);
         FilterMetrics filterMetrics2 = genFilterMetrics(path2);
@@ -60,7 +60,7 @@ class FilterMetricsTest {
 
     @Test
     public void sourceTypeDistributionTest(){
-        String path = System.getProperty("user.dir") + "\\src\\test\\resources";
+        String path = Paths.get(System.getProperty("user.dir"), "src", "test", "resources").toString(); //just 1 json
         FilterMetrics filterMetrics = genFilterMetrics(path);
 
         Map<CrawlerRun, Map<RawVulnerability.SourceType, Integer>> distribution = filterMetrics.sourceTypeDistribution();
@@ -70,14 +70,12 @@ class FilterMetricsTest {
         Map<RawVulnerability.SourceType, Integer> otherMap = distribution.get(runs.get(0));
 
         assertEquals(3, otherMap.get(RawVulnerability.SourceType.OTHER)); //should be 3 OTHERs
-
-
     }
 
 
     @Test
     public void numFilteredTest(){
-        String path = System.getProperty("user.dir") + "\\src\\test\\resources";
+        String path = Paths.get(System.getProperty("user.dir"), "src", "test", "resources").toString(); //just 1 json
 
         FilterMetrics filterMetrics = genFilterMetrics(path);
 
@@ -102,7 +100,7 @@ class FilterMetricsTest {
     @Test
     public void proportionPassedTest(){
 
-        String path = System.getProperty("user.dir") + "\\src\\test\\resources\\multipleJsons";
+        String path = Paths.get(System.getProperty("user.dir"), "src", "test", "resources", "multipleJsons").toString();
         FilterMetrics filterMetrics = genFilterMetrics(path);
 
         FilterHandler filterHandler = new FilterHandler();

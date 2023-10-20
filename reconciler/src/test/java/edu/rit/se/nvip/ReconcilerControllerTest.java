@@ -13,16 +13,19 @@ import edu.rit.se.nvip.reconciler.Reconciler;
 import edu.rit.se.nvip.reconciler.ReconcilerFactory;
 import edu.rit.se.nvip.utils.ReconcilerEnvVars;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.MockedStatic;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
 class ReconcilerControllerTest {
+
 
     /**
      * lots of mocks but this  verifies that everything is being called correctly for the reconciler controller
@@ -92,13 +95,13 @@ class ReconcilerControllerTest {
     public void initTest(){
         ReconcilerController rc = new ReconcilerController();
         DatabaseHelper mockDb = mock(DatabaseHelper.class);
-        Reconciler mockRecon = mock(Reconciler.class);
+//        Reconciler mockRecon = mock(Reconciler.class);
         MockedStatic<DatabaseHelper> mockedDB = mockStatic(DatabaseHelper.class);
-        MockedStatic<ReconcilerFactory> mockedRF = mockStatic(ReconcilerFactory.class);
+//        MockedStatic<ReconcilerFactory> mockedRF = mockStatic(ReconcilerFactory.class);
 
         mockedDB.when(DatabaseHelper::getInstance).thenReturn(mockDb);
-        mockedRF.when(() -> ReconcilerFactory.createReconciler(anyString())).thenReturn(mockRecon);
-        doNothing().when(mockRecon).setKnownCveSources(anyMap());
+//        mockedRF.when(() -> ReconcilerFactory.createReconciler(anyString())).thenReturn(mockRecon);
+//        doNothing().when(mockRecon).setKnownCveSources(anyMap());
 
         rc.initialize();
     }
