@@ -4,6 +4,7 @@ import edu.rit.se.nvip.filter.FilterHandler;
 import edu.rit.se.nvip.model.RawVulnerability;
 import edu.rit.se.nvip.utils.metrics.CrawlerRun;
 import edu.rit.se.nvip.utils.metrics.FilterMetrics;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Paths;
@@ -18,103 +19,108 @@ class FilterMetricsTest {
         return new FilterMetrics(path); //generates a new filterMetrics with designated path
     }
 
-    @Test
-    public void filterMetricsTest(){
-        String path = Paths.get(System.getProperty("user.dir"), "src", "test", "resources").toString(); //just 1 json
-        String path2 =  Paths.get(System.getProperty("user.dir"), "src", "test", "resources", "multipleJsons").toString(); //2 jsons
+    @Nested
+    class WithSingleRun {
 
-        FilterMetrics filterMetrics = new FilterMetrics(path, new FilterHandler(), FilterHandler.FilterScope.ALL);
-        FilterMetrics filterMetrics2 = genFilterMetrics(path2);
+        final String path = Paths.get(System.getProperty("user.dir"), "src", "test", "resources").toString();
 
-        assertEquals(1, filterMetrics.getRuns().size()); //should have 1 run
-        assertEquals(3, filterMetrics.getRuns().get(0).getVulns().size()); //should have 3 vulns
+        @Test
+        public void testFilterMetrics(){
+            FilterMetrics filterMetrics = new FilterMetrics(path, new FilterHandler(), FilterHandler.FilterScope.ALL);
 
-        //test on directory that has multiple json files
-        assertEquals(2, filterMetrics2.getRuns().size()); //should have 2 run
-        assertEquals(3, filterMetrics2.getRuns().get(0).getVulns().size()); //should have 1 vulns on first run ALL BASED ON VULNID in JSON
-        assertEquals(7, filterMetrics2.getRuns().get(1).getVulns().size()); //should have 7 vulns on second run
-
-
-    }
-
-    @Test
-    public void newVulnsPerRunTest(){
-        //tests first file that all vulns added are new
-        String path = Paths.get(System.getProperty("user.dir"), "src", "test", "resources").toString(); //just 1 json
-        String path2 = Paths.get(System.getProperty("user.dir"), "src", "test", "resources", "multipleJsons").toString(); //2 jsons
-
-        FilterMetrics filterMetrics = genFilterMetrics(path);
-        FilterMetrics filterMetrics2 = genFilterMetrics(path2);
-
-        Map<CrawlerRun, Integer> newVulns = filterMetrics.newVulnsPerRun();
-
-        assertEquals(3, newVulns.get(filterMetrics.getRuns().get(0)));//should have 3 new vulns
-        //tests that vulns don't repeat
-
-        Map<CrawlerRun, Integer> newVulns2 = filterMetrics2.newVulnsPerRun();
-
-        assertEquals(3, newVulns2.get(filterMetrics2.getRuns().get(0)));//should have 3 new vulns
-        assertEquals(4, newVulns2.get(filterMetrics2.getRuns().get(1)));//should have 1 new vuln
-    }
-
-
-    @Test
-    public void sourceTypeDistributionTest(){
-        String path = Paths.get(System.getProperty("user.dir"), "src", "test", "resources").toString(); //just 1 json
-        FilterMetrics filterMetrics = genFilterMetrics(path);
-
-        Map<CrawlerRun, Map<RawVulnerability.SourceType, Integer>> distribution = filterMetrics.sourceTypeDistribution();
-
-        List<CrawlerRun> runs = filterMetrics.getRuns();
-
-        Map<RawVulnerability.SourceType, Integer> otherMap = distribution.get(runs.get(0));
-
-        assertEquals(3, otherMap.get(RawVulnerability.SourceType.OTHER)); //should be 3 OTHERs
-    }
-
-
-    @Test
-    public void numFilteredTest(){
-        String path = Paths.get(System.getProperty("user.dir"), "src", "test", "resources").toString(); //just 1 json
-
-        FilterMetrics filterMetrics = genFilterMetrics(path);
-
-        FilterHandler filterHandler = new FilterHandler();
-        for (CrawlerRun run : filterMetrics.getRuns()){ //for each run, run filters on the run's vulns
-            filterHandler.runFilters(run.getVulns());
+            assertEquals(1, filterMetrics.getRuns().size()); //should have 1 run
+            assertEquals(3, filterMetrics.getRuns().get(0).getVulns().size()); //should have 3 vulns
         }
 
-        Map<CrawlerRun, FilterMetrics.FilterStats> filterMap = filterMetrics.numFiltered(); //get num filtered
+        @Test
+        public void testNewVulnsPerRun(){
+            //tests first file that all vulns added are new
+            String path = Paths.get(System.getProperty("user.dir"), "src", "test", "resources").toString(); //just 1 json
 
-        CrawlerRun run = filterMetrics.getRuns().get(0);
+            FilterMetrics filterMetrics = genFilterMetrics(path);
 
+            Map<CrawlerRun, Integer> newVulns = filterMetrics.newVulnsPerRun();
 
-        assertEquals(3, filterMap.get(run).getTotalVulns()); //should have 3 total vulns
-        assertEquals(3, filterMap.get(run).getTotalFiltered()); //should have 3 total filtered
-        assertEquals(1, filterMap.get(run).getPassedFilters()); //one passes all
-        assertEquals(2, filterMap.get(run).getTotalFailed()); //two fail on DescriptionSizeFilter (currently set to < 1000 and the vulns desc are over 1000)
-        assertEquals(0, filterMap.get(run).getTotalNotFiltered()); //0 don't get filtered
-
-    }
-
-    @Test
-    public void proportionPassedTest(){
-
-        String path = Paths.get(System.getProperty("user.dir"), "src", "test", "resources", "multipleJsons").toString();
-        FilterMetrics filterMetrics = genFilterMetrics(path);
-
-        FilterHandler filterHandler = new FilterHandler();
-        for (CrawlerRun run : filterMetrics.getRuns()){ //for each run, run filters on the run's vulns
-            filterHandler.runFilters(run.getVulns());
+            assertEquals(3, newVulns.get(filterMetrics.getRuns().get(0)));//should have 3 new vulns
         }
 
-        Map<CrawlerRun, Double> propMap = filterMetrics.proportionPassed();
+        @Test
+        public void testSourceTypeDistribution(){
+            FilterMetrics filterMetrics = genFilterMetrics(path);
 
-        CrawlerRun run = filterMetrics.getRuns().get(0);
-        CrawlerRun run2 = filterMetrics.getRuns().get(1);
+            Map<CrawlerRun, Map<RawVulnerability.SourceType, Integer>> distribution = filterMetrics.sourceTypeDistribution();
 
-        assertEquals(((double) 1 /3), propMap.get(run)); //1 of 3 vulns pass filters
-        assertEquals(((double) 4 /7), propMap.get(run2)); //4 of 7 vulns pass filters
+            List<CrawlerRun> runs = filterMetrics.getRuns();
+
+            Map<RawVulnerability.SourceType, Integer> otherMap = distribution.get(runs.get(0));
+
+            assertEquals(3, otherMap.get(RawVulnerability.SourceType.OTHER)); //should be 3 OTHERs
+        }
+
+        @Test
+        public void testNumFilteredTest(){
+            FilterMetrics filterMetrics = genFilterMetrics(path);
+
+            FilterHandler filterHandler = new FilterHandler();
+            for (CrawlerRun run : filterMetrics.getRuns()){ //for each run, run filters on the run's vulns
+                filterHandler.runFilters(run.getVulns());
+            }
+
+            Map<CrawlerRun, FilterMetrics.FilterStats> filterMap = filterMetrics.numFiltered(); //get num filtered
+
+            CrawlerRun run = filterMetrics.getRuns().get(0);
+
+            assertEquals(3, filterMap.get(run).getTotalVulns()); //should have 3 total vulns
+            assertEquals(3, filterMap.get(run).getTotalFiltered()); //should have 3 total filtered
+            assertEquals(1, filterMap.get(run).getPassedFilters()); //one passes all
+            assertEquals(2, filterMap.get(run).getTotalFailed()); //two fail on DescriptionSizeFilter (currently set to < 1000 and the vulns desc are over 1000)
+            assertEquals(0, filterMap.get(run).getTotalNotFiltered()); //0 don't get filtered
+
+        }
     }
 
+    @Nested
+    class WithMultipleRuns {
+
+        final String path =  Paths.get(System.getProperty("user.dir"), "src", "test", "resources", "multipleJsons").toString(); //2 jsons;
+
+        @Test
+        public void testFilterMetrics(){
+
+            FilterMetrics filterMetrics2 = genFilterMetrics(path);
+
+            //test on directory that has multiple json files
+            assertEquals(2, filterMetrics2.getRuns().size()); //should have 2 run
+            assertEquals(3, filterMetrics2.getRuns().get(0).getVulns().size()); //should have 1 vulns on first run ALL BASED ON VULNID in JSON
+            assertEquals(7, filterMetrics2.getRuns().get(1).getVulns().size()); //should have 7 vulns on second run
+        }
+
+        @Test
+        public void testNewVulnsPerRun(){
+            FilterMetrics filterMetrics = genFilterMetrics(path);
+
+            Map<CrawlerRun, Integer> newVulns2 = filterMetrics.newVulnsPerRun();
+
+            assertEquals(3, newVulns2.get(filterMetrics.getRuns().get(0)));//should have 3 new vulns
+            assertEquals(4, newVulns2.get(filterMetrics.getRuns().get(1)));//should have 1 new vuln
+        }
+
+        @Test
+        public void proportionPassedTest(){
+            FilterMetrics filterMetrics = genFilterMetrics(path);
+
+            FilterHandler filterHandler = new FilterHandler();
+            for (CrawlerRun run : filterMetrics.getRuns()){ //for each run, run filters on the run's vulns
+                filterHandler.runFilters(run.getVulns());
+            }
+
+            Map<CrawlerRun, Double> propMap = filterMetrics.proportionPassed();
+
+            CrawlerRun run = filterMetrics.getRuns().get(0);
+            CrawlerRun run2 = filterMetrics.getRuns().get(1);
+
+            assertEquals(((double) 1 /3), propMap.get(run)); //1 of 3 vulns pass filters
+            assertEquals(((double) 4 /7), propMap.get(run2)); //4 of 7 vulns pass filters
+        }
+    }
 }
