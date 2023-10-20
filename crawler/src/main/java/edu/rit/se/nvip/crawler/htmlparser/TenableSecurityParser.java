@@ -49,7 +49,6 @@ import java.time.LocalDate;
  * Ex: <a href="https://www.tenable.com/security/research/tra-2023-5">Source</a>
  */
 public class TenableSecurityParser extends AbstractCveParser {
-	private static final Logger logger = LogManager.getLogger(TenableSecurityParser.class);
 
 	public static final String DOMAIN_NAME = "tenable";
 

@@ -25,6 +25,7 @@ package edu.rit.se.nvip.crawler;
 
 import io.github.bonigarcia.wdm.WebDriverManager;
 import edu.rit.se.nvip.db.model.RawVulnerability;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.util.NullOutputStream;
@@ -61,8 +62,8 @@ import java.util.*;
  * @author axoeec
  *
  */
+@Slf4j
 public class QuickCveCrawler {
-	private Logger logger = LogManager.getLogger(getClass().getSimpleName());
 	private static final String USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36";
 
 	public List<RawVulnerability> getCVEsfromKnownSummaryPages() {
@@ -105,19 +106,19 @@ public class QuickCveCrawler {
 				cal.add(Calendar.DATE, -1 * day);
 				String date = dateFormat.format(cal.getTime());
 				String link = url + date;
-				logger.info("Scraping most recent CVEs from {}", link);
+				log.info("Scraping most recent CVEs from {}", link);
 				try {
 					String html = getContentFromUrl(link);
 					list.addAll(crawler.parseWebPage(link, html));
 					Thread.sleep(1000);
 				} catch (Exception e) {
-					logger.error("Error scraping url {}, {}", link, e.toString());
+					log.error("Error scraping url {}, {}", link, e.toString());
 				}
 			}
 
-			logger.info("Retrieved {} CVES from {}, Total CVEs: {}", list.size() - count, url, list.size());
+			log.info("Retrieved {} CVES from {}, Total CVEs: {}", list.size() - count, url, list.size());
 		} catch (Exception e) {
-			logger.error("Error scraping PacketStorm! {}", e);
+			log.error("Error scraping PacketStorm! {}", e);
 		}
 		return list;
 	}
@@ -134,12 +135,12 @@ public class QuickCveCrawler {
 
 		try {
 			int count = list.size();
-			logger.info("Getting CVES from {} ", url);
+			log.info("Getting CVES from {} ", url);
 			String html = getContentFromUrl(url);
 			list.addAll(crawler.parseWebPage(url, html));
-			logger.info("Retrieved {} CVES from {}, Total CVEs: {}", list.size() - count, url, list.size());
+			log.info("Retrieved {} CVES from {}, Total CVEs: {}", list.size() - count, url, list.size());
 		} catch (Exception e) {
-			logger.error("Error scraping url {}, {}", url, e.toString());
+			log.error("Error scraping url {}, {}", url, e.toString());
 		}
 		return list;
 	}
@@ -184,13 +185,13 @@ public class QuickCveCrawler {
 			bufferedReader.close();
 
 		} catch (SSLException e) {
-			logger.error(e.toString());
+			log.error(e.toString());
 		} catch (SocketException e) {
-			logger.error(e.toString());
+			log.error(e.toString());
 		} catch (IOException e) {
-			logger.error(e.toString());
+			log.error(e.toString());
 		} catch (Exception e) {
-			logger.error(e.toString());
+			log.error(e.toString());
 		}
 		return response.toString();
 	}
@@ -211,7 +212,7 @@ public class QuickCveCrawler {
 	// 		// scrape first 3 pages
 	// 		for (int pageIndex = 1; pageIndex < 4; pageIndex++) {
 	// 			String pageLink = sUrlForCveListPage.replace("$pageno$", pageIndex + "");
-	// 			logger.info("Scraping CVEs from CNNVD {} ,pape # {}", pageLink, pageIndex);
+	// 			log.info("Scraping CVEs from CNNVD {} ,pape # {}", pageLink, pageIndex);
 
 	// 			String pageStr = getContentFromUrl(pageLink);
 	// 			List<String> cveURLsInPage = chinaCveParser.getCveUrlListFromPage(pageStr);
@@ -221,7 +222,7 @@ public class QuickCveCrawler {
 	// 					String[] cveUrlParts = cveURLItem.split("=");
 	// 					String cnnvdCveId = cveUrlParts[1];
 
-	// 					logger.info("Getting {} details from {}", cnnvdCveId, cveURLItem);
+	// 					log.info("Getting {} details from {}", cnnvdCveId, cveURLItem);
 
 	// 					String cveDetailHtml = getContentFromUrl(cveURLItem);
 	// 					// get CVE details
@@ -238,14 +239,14 @@ public class QuickCveCrawler {
 	// 					list.add(vulnComposite);
 	// 					Thread.sleep(r.nextInt(100) + 1000); // random wait
 	// 				} catch (Exception e) {
-	// 					logger.error("Error while getting CVE details from {}, {} ", cveURLItem, e.toString());
+	// 					log.error("Error while getting CVE details from {}, {} ", cveURLItem, e.toString());
 	// 				}
 	// 			}
 	// 		}
 
-	// 		logger.info("Done! Scraped {} CVEs from Cnnvd! ", list.size() - count);
+	// 		log.info("Done! Scraped {} CVEs from Cnnvd! ", list.size() - count);
 	// 	} catch (Exception e) {
-	// 		logger.error("Error scraping CNNVD! {}", e);
+	// 		log.error("Error scraping CNNVD! {}", e);
 
 	// 	}
 	// 	return list;
@@ -275,7 +276,7 @@ public class QuickCveCrawler {
 			url = url.replace("{x}", year + "");
 			url = url.replace("{y}", quarter + "");
 
-			logger.info("Getting CVES from {} ", url);
+			log.info("Getting CVES from {} ", url);
 			int count = list.size();
 
 			// summary page content
@@ -291,7 +292,7 @@ public class QuickCveCrawler {
 					String linkExt = element.attr("href");
 					String pageLink = url + "/" + linkExt;
 
-					logger.info("Scraping {}", pageLink);
+					log.info("Scraping {}", pageLink);
 
 					// get CVE content
 					html = getContentFromUrl(pageLink);
@@ -301,9 +302,9 @@ public class QuickCveCrawler {
 				}
 			}
 
-			logger.info("Retrieved {} CVES from {}, Total CVEs: {}", list.size() - count, url, list.size());
+			log.info("Retrieved {} CVES from {}, Total CVEs: {}", list.size() - count, url, list.size());
 		} catch (Exception e) {
-			logger.error("Error scraping url {}, {}", url, e.toString());
+			log.error("Error scraping url {}, {}", url, e.toString());
 		}
 		return list;
 	}

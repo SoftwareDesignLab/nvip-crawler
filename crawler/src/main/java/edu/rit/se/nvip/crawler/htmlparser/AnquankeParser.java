@@ -24,6 +24,7 @@
 package edu.rit.se.nvip.crawler.htmlparser;
 
 import edu.rit.se.nvip.db.model.RawVulnerability;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jsoup.Jsoup;
@@ -42,8 +43,8 @@ import java.util.regex.Pattern;
  * @author axoeec
  *
  */
+@Slf4j
 public class AnquankeParser extends AbstractCveParser {
-	private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
 	public static final String DOMAIN_NAME = "anquanke";
 
 	public AnquankeParser() {
@@ -114,7 +115,7 @@ public class AnquankeParser extends AbstractCveParser {
 			));
 
 		} catch (Exception e) {
-			logger.error("An error occurred while parsing Anquanke URL: " + sSourceURL);
+			log.error("An error occurred while parsing Anquanke URL: " + sSourceURL);
 		}
 
 		return vulnerabilities;

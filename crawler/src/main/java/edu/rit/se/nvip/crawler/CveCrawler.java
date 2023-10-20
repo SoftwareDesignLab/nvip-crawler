@@ -32,6 +32,7 @@ import edu.uci.ics.crawler4j.parser.HtmlParseData;
 import edu.uci.ics.crawler4j.url.WebURL;
 import edu.rit.se.nvip.db.model.RawVulnerability;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -48,9 +49,9 @@ import java.util.regex.Pattern;
  * @author axoeec
  *
  */
+@Slf4j
 public class CveCrawler extends WebCrawler {
 
-	private final Logger nvip_logger = LogManager.getLogger(getClass().getSimpleName());
 	private final static Pattern FILTERS = Pattern.compile(".*(\\.(css|js|gif|jpg" + "|png|mp3|mp4|zip|gz))$");
 	private final List<String> myCrawlDomains;
 	private String outputDir;
@@ -141,7 +142,7 @@ public class CveCrawler extends WebCrawler {
 			}
 
 			if (vulnerabilityList.isEmpty()) {
-				nvip_logger.warn("WARNING: No CVEs found at {}!", pageURL);
+				log.warn("WARNING: No CVEs found at {}!", pageURL);
 				updateCrawlerReport("No CVEs found at " + pageURL + "!");
 			} else {
 				for (RawVulnerability vulnerability : vulnerabilityList) {
@@ -153,7 +154,7 @@ public class CveCrawler extends WebCrawler {
 						foundCVEs.put(vulnerability.getCveId(), newList);
 					}
 				}
-				nvip_logger.info("{} CVEs found at {}", vulnerabilityList.size(),pageURL);
+				log.info("{} CVEs found at {}", vulnerabilityList.size(),pageURL);
 			}
 		}
 	}

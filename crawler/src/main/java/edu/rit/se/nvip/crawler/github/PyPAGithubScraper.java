@@ -24,6 +24,7 @@
 package edu.rit.se.nvip.crawler.github;
 
 import edu.rit.se.nvip.db.model.RawVulnerability;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eclipse.jgit.util.FileUtils;
@@ -37,9 +38,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Objects;
 
+@Slf4j
 public class PyPAGithubScraper {
-
-    private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
 
     private static final String pypaDir = "pypa-repo";
 
@@ -54,18 +54,18 @@ public class PyPAGithubScraper {
         HashMap<String, RawVulnerability> vulnMap = extractCVEsFromVulns();
         // delete git repo once finished
         deleteRepository();
-        logger.info("PyPA scraper completed.");
+        log.info("PyPA scraper completed.");
 
         return vulnMap;
     }
 
     private HashMap<String, RawVulnerability> extractCVEsFromVulns() {
-        logger.info("Extracting CVEs from /vulns dir...");
+        log.info("Extracting CVEs from /vulns dir...");
         File vulnDir = Paths.get("", pypaDir, "vulns").toFile();
         File[] directories = vulnDir.listFiles();
         HashMap<String, RawVulnerability> vulnMap = new HashMap<>();
         if (directories == null) {
-            logger.error("Failed to parse PyPA directories... returning.");
+            log.error("Failed to parse PyPA directories... returning.");
             return vulnMap;
         }
         // loop through each dir in /vulns
@@ -74,7 +74,7 @@ public class PyPAGithubScraper {
             if (subdir.isDirectory()) {
                 File[] files = subdir.listFiles();
                 if (files == null) {
-                    logger.warn("Failed to locate files in subdirectory: " + subdir.getName());
+                    log.warn("Failed to locate files in subdirectory: " + subdir.getName());
                     continue;
                 }
                 for (File file : files ) {
@@ -88,7 +88,7 @@ public class PyPAGithubScraper {
                             )));
                         }
                     } catch (NullPointerException e){
-                        logger.warn("Unable to parse {}: {}", file.getName(), e.getMessage());
+                        log.warn("Unable to parse {}: {}", file.getName(), e.getMessage());
                     }
 
                 }
@@ -116,7 +116,7 @@ public class PyPAGithubScraper {
         try {
             pullDir = f.exists() && Objects.requireNonNull(f.list()).length > 1;
         } catch (Exception e) {
-            logger.error("ERROR: gitfolder does not exist at location {}", remotePath);
+            log.error("ERROR: gitfolder does not exist at location {}", remotePath);
             e.printStackTrace();
         }
 
@@ -125,18 +125,18 @@ public class PyPAGithubScraper {
         try {
             if (pullDir) {
                 if (gitController.pullRepo())
-                    logger.info("Pulled git repo at: " + remotePath + " to: " + gitFolder);
+                    log.info("Pulled git repo at: " + remotePath + " to: " + gitFolder);
                 else
-                    logger.error("Failed to pull git repo at: " + remotePath + " to: " + gitFolder);
+                    log.error("Failed to pull git repo at: " + remotePath + " to: " + gitFolder);
             } else {
                 if (gitController.cloneRepo())
-                    logger.info("Cloned git repo at: " + remotePath + " to: " + gitFolder);
+                    log.info("Cloned git repo at: " + remotePath + " to: " + gitFolder);
                 else
-                    logger.error("Could not clone git repo at: " + remotePath + " to: " + gitFolder);
+                    log.error("Could not clone git repo at: " + remotePath + " to: " + gitFolder);
 
             }
         } catch(Exception e) {
-            logger.error("ERROR: Failed to clone or pull PythonPA Repo");
+            log.error("ERROR: Failed to clone or pull PythonPA Repo");
             e.printStackTrace();
         }
     }
@@ -146,15 +146,15 @@ public class PyPAGithubScraper {
      * Once parsing is complete
      */
     public void deleteRepository() {
-        logger.info("Deleting PyPA repo local instance...");
+        log.info("Deleting PyPA repo local instance...");
         try {
             // clone / pull to this local path
             Path gitFolder = Paths.get("", pypaDir);
             File dir = new File(gitFolder.toString());
             FileUtils.delete(dir, 1);
-            logger.info("PyPA Repo deleted successfully!");
+            log.info("PyPA Repo deleted successfully!");
         } catch (IOException e) {
-            logger.info(e.getMessage());
+            log.info(e.getMessage());
         }
     }
 }

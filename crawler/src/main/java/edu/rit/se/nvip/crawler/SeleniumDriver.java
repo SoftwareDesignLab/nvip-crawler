@@ -23,8 +23,7 @@
  */
 package edu.rit.se.nvip.crawler;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import lombok.extern.slf4j.Slf4j;
 
 import org.openqa.selenium.WebDriver;
 import io.github.bonigarcia.wdm.WebDriverManager;
@@ -41,7 +40,6 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.ElementNotInteractableException;
-import org.openqa.selenium.interactions.MoveTargetOutOfBoundsException;
 
 import java.util.Map;
 import java.util.HashMap;
@@ -54,12 +52,12 @@ import java.time.Duration;
  * @author asawtelle
  *
  */
+@Slf4j
 public class SeleniumDriver {
 	private static final int MAX_QUIT_TRIES = 2;
 	private static final int MAX_GET_TRIES = 2;
 	private static final int MAX_ACTION_TRIES = 3;
 
-	private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
 	private WebDriver driver;
 	private Actions actions;
 
@@ -110,7 +108,7 @@ public class SeleniumDriver {
                 driver.quit();
                 break;
             } catch (Exception e) {
-                logger.info("Retrying driver quit...");
+                log.info("Retrying driver quit...");
                 tries++;
             }
         }
@@ -123,7 +121,7 @@ public class SeleniumDriver {
                 driver.get(sSourceURL);
                 break;
             } catch (TimeoutException e) {
-                logger.info("Retrying page get...");
+                log.info("Retrying page get...");
                 tries++;
             }
         }
@@ -133,7 +131,7 @@ public class SeleniumDriver {
             Thread.sleep(1000);
             html = driver.getPageSource();
         } catch (TimeoutException | InterruptedException e) {
-            logger.warn("Unable to get {}", sSourceURL);
+            log.warn("Unable to get {}", sSourceURL);
         }
         return html;
     }
@@ -145,13 +143,13 @@ public class SeleniumDriver {
     		element = new WebDriverWait(driver, Duration.ofSeconds(3))
                 .until(driver -> driver.findElement(findBy));
       	} catch (Exception e){
-      		logger.warn("Finding element {} raised {}", findBy.toString(), e.getClass().getSimpleName());
-            logger.debug(e.toString());
+      		log.warn("Finding element {} raised {}", findBy.toString(), e.getClass().getSimpleName());
+            log.debug(e.toString());
       	}
         return element;
     }
 
-    //TODO Maybe comment out logger statements, maybe break on stale or move ex.
+    //TODO Maybe comment out log statements, maybe break on stale or move ex.
     public boolean tryClickElement(WebElement element, int timeoutDuration){
         boolean result = false;
         int attempts = 0;
@@ -164,8 +162,8 @@ public class SeleniumDriver {
                 result = true;
                 break;
             } catch(Exception e) {
-                logger.warn("Clicking element {} raised {}", element.getAccessibleName(), e.getClass().getSimpleName());
-                logger.debug(e.toString());
+                log.warn("Clicking element {} raised {}", element.getAccessibleName(), e.getClass().getSimpleName());
+                log.debug(e.toString());
             }
             attempts++;
         }
@@ -184,8 +182,8 @@ public class SeleniumDriver {
                 result = true;
                 break;
             } catch(Exception e) {
-            	logger.warn("Clicking element {} raised {}", (element == null ? "" : element.getAccessibleName()), e.getClass().getSimpleName());
-                logger.debug(e.toString());
+            	log.warn("Clicking element {} raised {}", (element == null ? "" : element.getAccessibleName()), e.getClass().getSimpleName());
+                log.debug(e.toString());
             }
             attempts++;
         }
@@ -196,11 +194,11 @@ public class SeleniumDriver {
         try {
             WebElement cookiesButton = driver.findElement(By.xpath("//button[text()='Agree' or text()='Accept' or text()='Accept Cookies' or text()='Accept all']"));
             cookiesButton.click();
-            logger.info("Accepted Cookies for page " + driver.getCurrentUrl());
+            log.info("Accepted Cookies for page " + driver.getCurrentUrl());
         } catch (NoSuchElementException e) {
-            logger.info("No Cookies pop-up found for page " + driver.getCurrentUrl());
+            log.info("No Cookies pop-up found for page " + driver.getCurrentUrl());
         } catch (ElementNotInteractableException e) {
-        	logger.info("Unable to click cookies pop-up for page " + driver.getCurrentUrl());
+        	log.info("Unable to click cookies pop-up for page " + driver.getCurrentUrl());
         }
     }
 
@@ -208,7 +206,7 @@ public class SeleniumDriver {
     	try{
             driver.manage().deleteAllCookies();
         } catch (TimeoutException e) {
-            logger.warn("Unable to clear cookies for {}", driver.getCurrentUrl());
+            log.warn("Unable to clear cookies for {}", driver.getCurrentUrl());
         }
     }
 }

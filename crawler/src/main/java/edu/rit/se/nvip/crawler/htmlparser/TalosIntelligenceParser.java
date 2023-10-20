@@ -24,6 +24,7 @@
 package edu.rit.se.nvip.crawler.htmlparser;
 
 import edu.rit.se.nvip.db.model.RawVulnerability;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jsoup.Jsoup;
@@ -46,8 +47,8 @@ import java.util.regex.Pattern;
  * @author Ahmet Okutan
  *
  */
+@Slf4j
 public class TalosIntelligenceParser extends AbstractCveParser {
-	private Logger logger = LogManager.getLogger(getClass().getSimpleName());
 	public static final String DOMAIN_NAME = "talosintelligence";
 
 	public TalosIntelligenceParser() {
@@ -145,7 +146,7 @@ public class TalosIntelligenceParser extends AbstractCveParser {
 							publishDate = UtilHelper.longDateFormat.format(dateFormat_yyyy_MM_dd.parse(publishDate));
 						}
 					} catch (Exception e) {
-						logger.error("Error parsing Timeline section at: " + sSourceURL);
+						log.error("Error parsing Timeline section at: " + sSourceURL);
 					}
 				}
 
@@ -154,7 +155,7 @@ public class TalosIntelligenceParser extends AbstractCveParser {
 			for (String cveId : uniqueCves)
 				vulnerabilities.add(new RawVulnerability(sSourceURL, cveId, publishDate, lastModifiedDate, description.toString(), getClass().getSimpleName()));
 		} catch (Exception e) {
-			logger.error("An error occurred while parsing TalosIntelligence URL: " + sSourceURL);
+			log.error("An error occurred while parsing TalosIntelligence URL: " + sSourceURL);
 		}
 
 		return vulnerabilities;

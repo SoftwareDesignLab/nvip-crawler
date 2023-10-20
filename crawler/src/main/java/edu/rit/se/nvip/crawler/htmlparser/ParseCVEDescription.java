@@ -2,6 +2,7 @@ package edu.rit.se.nvip.crawler.htmlparser;
 
 import edu.rit.se.nvip.db.model.RawVulnerability;
 import edu.rit.se.nvip.utils.UtilHelper;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jsoup.Jsoup;
@@ -14,9 +15,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.time.LocalDate;
 
+@Slf4j
 public class ParseCVEDescription extends AbstractCveParser implements ParserStrategy  {
-
-    private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
 
     /**
      * Generic parser list strategy
@@ -40,16 +40,16 @@ public class ParseCVEDescription extends AbstractCveParser implements ParserStra
          * Case 1: if no CVE ID regex exists in the page then ignore this source
          */
         if (cveIDsInPage.size() == 0) {
-            logger.debug("No CVE related content was found at URL: " + sSourceURL);
+            log.debug("No CVE related content was found at URL: " + sSourceURL);
             return vulnerabilities;
         }
 
         if (containsChineseChars(sCVEContent)) {
-            logger.debug("Foreign chars were found at URL: " + sSourceURL);
+            log.debug("Foreign chars were found at URL: " + sSourceURL);
             return vulnerabilities;
         }
 
-        logger.debug("Page URL: " + sSourceURL + "\t Found " + cveIDsInPage.size() + " CVE(s): " + cveIDsInPage);
+        log.debug("Page URL: " + sSourceURL + "\t Found " + cveIDsInPage.size() + " CVE(s): " + cveIDsInPage);
         // pickURL(sSourceURL); // add this url to our list, to update our crawl source
         // URLs at the end.
 
@@ -107,7 +107,7 @@ public class ParseCVEDescription extends AbstractCveParser implements ParserStra
             if (cveIDsInSentence.length > 1) {
 
                 Object[] cveIDDistances = cveIDMapInSentence.values().toArray();
-                logger.debug("CVE ID distances: " + Arrays.deepToString(cveIDDistances));
+                log.debug("CVE ID distances: " + Arrays.deepToString(cveIDDistances));
                 aBlockOfCveIdsInTheSentence = checkCveIdDistances(cveIDDistances);
 
                 if (!aBlockOfCveIdsInTheSentence) {
@@ -121,7 +121,7 @@ public class ParseCVEDescription extends AbstractCveParser implements ParserStra
                     boolean bTheSentenceHasValuableInfo = sentenceContainsValuableInfoForCVE(currentSentence, cveIDsInSentence.length);
                     Element tag = myHTMLElements.get(indexSentence);
                     boolean bWorthsToSplit = (tag == null) ? bTheSentenceHasValuableInfo : !tag.tagName().startsWith("li") && !tag.tagName().startsWith("h") && !tag.tagName().startsWith("a");
-                    logger.debug("&&&Splitting sentence:  #ofCVE: " + cveIDsInSentence.length + ", Sent. Length: " + currentSentence.length() + ", Tag Name: " + tag + ", TheSentenceHasValuableInfo: " + bTheSentenceHasValuableInfo
+                    log.debug("&&&Splitting sentence:  #ofCVE: " + cveIDsInSentence.length + ", Sent. Length: " + currentSentence.length() + ", Tag Name: " + tag + ", TheSentenceHasValuableInfo: " + bTheSentenceHasValuableInfo
                             + ", bWorthsToSplit: " + bWorthsToSplit + ", Sentence: " + currentSentence.replace("\n", ""));
 
                     if (bTheSentenceHasValuableInfo && bWorthsToSplit) {
@@ -150,7 +150,7 @@ public class ParseCVEDescription extends AbstractCveParser implements ParserStra
             // If we are here, then this sentence must have at least one CVE ID
             String cveIDOfCurrentSentence = getFirstCveIdFromString(currentSentence);
             if (cveIDOfCurrentSentence == null) {
-                logger.error("Oops! There must be something wrong! Check this page! Sentence Index: " + indexSentence + ", CurrentSentence: " + currentSentence + "\n All Sentences: " + allSentences);
+                log.error("Oops! There must be something wrong! Check this page! Sentence Index: " + indexSentence + ", CurrentSentence: " + currentSentence + "\n All Sentences: " + allSentences);
             }
 
             // if there is a prior sentence start looking for vulnerability attributes from there
@@ -218,12 +218,12 @@ public class ParseCVEDescription extends AbstractCveParser implements ParserStra
                     }
                     vulnMap.put(vuln.getCveId(), vuln);
                 } else {
-                    logger.debug("Ignoring this CVE! ID: " + cveIDOfCurrentSentence + ", Description: " + sbDescription);
+                    log.debug("Ignoring this CVE! ID: " + cveIDOfCurrentSentence + ", Description: " + sbDescription);
                 }
             }
         }
 
-        logger.debug(vulnMap.size() + " of " + cveIDsInPage.size() + " CVEs were scraped from URL:" + sSourceURL + " - " + (cveIDsInPage.size() - vulnMap.size()) + " were ignored!");
+        log.debug(vulnMap.size() + " of " + cveIDsInPage.size() + " CVEs were scraped from URL:" + sSourceURL + " - " + (cveIDsInPage.size() - vulnMap.size()) + " were ignored!");
         return new ArrayList<>(vulnMap.values());
     }
 
@@ -350,7 +350,7 @@ public class ParseCVEDescription extends AbstractCveParser implements ParserStra
         if (sentenceContainsValuableInfoForCVE(sentenceToAdd, 1))
             childSentences.add(sentenceToAdd);
 
-        logger.debug("tokenizeTagTextAccordingToCVEIDRegex: Size: " + childSentences.size() + ", Ignored: " + (matchCount - childSentences.size() + 1) + ", List: " + childSentences.toString().replace("\n", ""));
+        log.debug("tokenizeTagTextAccordingToCVEIDRegex: Size: " + childSentences.size() + ", Ignored: " + (matchCount - childSentences.size() + 1) + ", List: " + childSentences.toString().replace("\n", ""));
 
         return childSentences;
     }

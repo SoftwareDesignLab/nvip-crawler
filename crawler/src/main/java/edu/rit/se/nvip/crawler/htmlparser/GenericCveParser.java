@@ -26,6 +26,7 @@ package edu.rit.se.nvip.crawler.htmlparser;
 import edu.rit.se.nvip.db.model.RawVulnerability;
 import edu.rit.se.nvip.crawler.SeleniumDriver;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -41,8 +42,8 @@ import java.util.List;
  * different parser strategies based on page given
  *
  */
+@Slf4j
 public class GenericCveParser extends AbstractCveParser  {
-	private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
 	private SeleniumDriver driver;
 
 	/**
@@ -96,11 +97,11 @@ public class GenericCveParser extends AbstractCveParser  {
 	public List<RawVulnerability> parseWebPage(String sSourceURL, String sCVEContentHTML) {
 		if (parserStrategy == null)
 			parserStrategy = chooseParserStrategy(sCVEContentHTML);
-		logger.info("Generic Parsing " + sSourceURL + " with " + parserStrategy.getClass().getSimpleName());
+		log.info("Generic Parsing " + sSourceURL + " with " + parserStrategy.getClass().getSimpleName());
 		List<RawVulnerability> genericList = parserStrategy.parseWebPage(sSourceURL, sCVEContentHTML);
 		if (!(parserStrategy instanceof ParseCVEDescription)) {
 			// throw in whatever ParseCVEDescription can find too
-			logger.info("Generic Parsing " + sSourceURL + " with ParseCVEDescription");
+			log.info("Generic Parsing " + sSourceURL + " with ParseCVEDescription");
 			genericList.addAll(new ParseCVEDescription(sSourceURL).parseWebPage(sSourceURL, sCVEContentHTML));
 		}
 		return genericList;
