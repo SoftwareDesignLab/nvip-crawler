@@ -71,9 +71,7 @@ jobs:
 
       - name: Test and Build PatchFinder with Maven
         run: |
-          cd patchfinder
-          mvn dependency:go-offline
-          mvn package
+          mvn test --projects=db,patchfinder
 
       - name: Publish Test Report
         if: success() || failure()

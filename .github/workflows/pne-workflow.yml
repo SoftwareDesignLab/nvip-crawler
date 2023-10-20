@@ -83,9 +83,7 @@ jobs:
 
       - name: Test and Build Product Extractor with Maven
         run: |
-          cd productnameextractor
-          mvn dependency:go-offline
-          mvn package
+          mvn test --projects=db,productnameextractor
 
       - name: Publish Test Report
         if: success() || failure()
