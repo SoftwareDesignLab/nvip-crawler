@@ -26,7 +26,6 @@ nvip_data/pypa-repo/
 Servers/
 nvip_data/
 /nvip_data/mysql-database/
-pom.xml
 env.list
 
 
