@@ -139,6 +139,7 @@ public class FilterMetrics {
             File[] files = directory.listFiles();
 
             if (files != null) {
+                Arrays.sort(files, Comparator.comparing(File::getName));
                 for (File file : files) {
                     if (file.isFile() && file.getName().toLowerCase().endsWith(".json")) {
                         jsonFiles.add(file);
