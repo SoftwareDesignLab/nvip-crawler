@@ -71,9 +71,7 @@ jobs:
 
       - name: Test Crawler
         run: |
-          cd crawler
-          mvn dependency:go-offline
-          mvn test
+          mvn test --projects=db,crawler
 
       - name: Publish Test Report
         if: success() || failure()
