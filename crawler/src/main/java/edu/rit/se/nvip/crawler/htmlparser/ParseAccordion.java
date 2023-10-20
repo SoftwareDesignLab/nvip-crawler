@@ -3,6 +3,7 @@ package edu.rit.se.nvip.crawler.htmlparser;
 import edu.rit.se.nvip.db.model.RawVulnerability;
 import edu.rit.se.nvip.crawler.SeleniumDriver;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -21,8 +22,6 @@ import java.util.List;
 import java.util.Set;
 
 public class ParseAccordion extends AbstractCveParser implements ParserStrategy {
-
-    private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
 
     SeleniumDriver driver;
 

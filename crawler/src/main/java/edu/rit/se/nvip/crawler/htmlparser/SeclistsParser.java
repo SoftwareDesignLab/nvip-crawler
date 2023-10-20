@@ -24,6 +24,7 @@
 package edu.rit.se.nvip.crawler.htmlparser;
 
 import edu.rit.se.nvip.db.model.RawVulnerability;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jsoup.Jsoup;
@@ -42,8 +43,8 @@ import java.util.*;
  *
  * Ex:https://seclists.org/bugtraq/2016/Feb/147
  */
+@Slf4j
 public class SeclistsParser extends AbstractCveParser {
-	private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
 
 	public static final String DOMAIN_NAME = "seclists";
 
@@ -85,7 +86,7 @@ public class SeclistsParser extends AbstractCveParser {
 				try {
 					publishDate = UtilHelper.longDateFormat.format(dateFormat.parse(line.trim()));
 				} catch (ParseException e) {
-					logger.error("Failed to parse date on {}, format not known!", sSourceURL);
+					log.error("Failed to parse date on {}, format not known!", sSourceURL);
 					publishDate = null;
 				}
 			}

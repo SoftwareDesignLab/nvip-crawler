@@ -44,7 +44,6 @@ import java.time.LocalDateTime;
 
 public class GitHubAdvisoryParser extends AbstractCveParser {
 
-    private static final Logger logger = LogManager.getLogger(RawVulnerability.class);
     public static final String DOMAIN_NAME = "github.com/advisories"; //TODO: could also be `github` need to see how this value is used
 
     private SeleniumDriver driver;
