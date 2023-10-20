@@ -3,17 +3,21 @@ FROM maven:3.8.7-openjdk-18-slim AS builder
 WORKDIR /home/app
 
 ADD pom.xml .
+ADD db/pom.xml db/pom.xml
 ADD crawler/pom.xml crawler/pom.xml
 ADD exploitfinder/pom.xml exploitfinder/pom.xml
 ADD patchfinder/pom.xml patchfinder/pom.xml
 ADD productnameextractor/pom.xml productnameextractor/pom.xml
 ADD reconciler/pom.xml reconciler/pom.xml
 
+ADD db/src/main db/src/main
+RUN mvn install -Dmaven.test.skip=true --projects=db
+
 RUN mvn dependency:go-offline
 
 ADD productnameextractor/src/main productnameextractor/src/main
 
-RUN mvn package -Dmaven.test.skip=true --projects=productnameextractor
+RUN mvn package -Dmaven.test.skip=true --projects=db,productnameextractor
 
 ### Run Stage
 FROM openjdk:11-jre-slim
