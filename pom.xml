@@ -64,7 +64,7 @@
 					<propertyFile>nvip_data/mysql-database/newDB/liquibase.properties</propertyFile>
 					<!-- turn off prompt for non-local db since this does run in headless environments -->
 					<promptOnNonLocalDatabase>false</promptOnNonLocalDatabase>
-					<searchPath>${project.basedir}</searchPath>
+					<searchPath>${project.basedir}/../</searchPath>
 				</configuration>
 				<dependencies>
 					<dependency>

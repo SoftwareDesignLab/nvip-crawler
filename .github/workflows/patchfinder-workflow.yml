@@ -67,7 +67,7 @@ jobs:
           LIQUIBASE_COMMAND_PASSWORD: ${{ env.HIKARI_PASSWORD }}
         run: |
           mysql -e 'CREATE DATABASE nvip;' -u${{ env.HIKARI_USER }} -p${{ env.HIKARI_PASSWORD }} 
-          mvn liquibase:update --no-transfer-progress --projects=patchfinder
+          mvn liquibase:update --no-transfer-progress --projects=db
 
       - name: Test and Build PatchFinder with Maven
         run: |
