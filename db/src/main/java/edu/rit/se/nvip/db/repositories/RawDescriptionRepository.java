@@ -68,7 +68,7 @@ public class RawDescriptionRepository {
 
             //Split vulns into batches for JDBC Insert
             //TODO: Move the hardcoded value
-            for(List<RawVulnerability> batch: Lists.partition(vulns, 1024)) {
+            for(List<RawVulnerability> batch: Lists.partition(vulns, 256)) {
                 for(RawVulnerability vuln: batch){
                     pstmt.setString(1, vuln.getDescription());
                     pstmt.setString(2, vuln.getCveId());
@@ -80,19 +80,21 @@ public class RawDescriptionRepository {
                     pstmt.setString(8, vuln.getParserType());
                     pstmt.addBatch();
                 }
-            }
-            log.info(pstmt.toString());
 
-            int[] results = pstmt.executeBatch();
+                log.info(pstmt.toString());
 
-            if(results.length == vulns.size()){
-                for(int i = 0; i < vulns.size(); i++){
-                    if(results[i] == Statement.SUCCESS_NO_INFO || results[i] == Statement.KEEP_CURRENT_RESULT || results[i] == Statement.CLOSE_CURRENT_RESULT) {
-                        inserted.add(vulns.get(i));
-                    } else {
-                        log.info("Failed to insert {}: {}", vulns.get(i).getCveId(), results[i]);
+                int[] results = pstmt.executeBatch();
+
+                if(results.length == vulns.size()){
+                    for(int i = 0; i < vulns.size(); i++){
+                        if(results[i] == Statement.SUCCESS_NO_INFO || results[i] == Statement.KEEP_CURRENT_RESULT || results[i] == Statement.CLOSE_CURRENT_RESULT) {
+                            inserted.add(vulns.get(i));
+                        } else {
+                            log.info("Failed to insert {}: {}", vulns.get(i).getCveId(), results[i]);
+                        }
                     }
                 }
+                pstmt.clearBatch();
             }
         } catch (BatchUpdateException e) {
             log.error("Failed to insert all vulnerabilities in batch: {}", e.getMessage());
@@ -109,6 +111,9 @@ public class RawDescriptionRepository {
         } catch (SQLException e) {
             log.error("Failed to execute batch insert");
             log.error(e.toString());
+        } catch (Exception e) {
+            log.error("Unexpected Error Occurred!");
+            log.error("", e);
         }
 
         return inserted;
