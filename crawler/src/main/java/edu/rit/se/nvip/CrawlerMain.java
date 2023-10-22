@@ -561,13 +561,14 @@ public class CrawlerMain {
         ConnectionFactory factory = getConnectionFactory();
 
         try (Connection connection = factory.newConnection()){
-            log.info("Inserting {} CVEs to DB", crawledCves.size());
 
+            log.info("Filtering out duplicate cves from {} submitted CVE's", crawledCves.size());
             List<RawVulnerability> vulnsToInsert = crawledCves.values().stream()
                     .flatMap(Collection::stream)
                     .filter(vuln -> !rawDescriptionRepository.checkIfInRawDescriptions(vuln.getCveId(), vuln.getDescription()))
                     .toList();
 
+            log.info("Filtered out duplicate CVE's leaving {} to be inserted", vulnsToInsert.size());
             List<RawVulnerability> insertedVulns = rawDescriptionRepository.batchInsertRawVulnerability(vulnsToInsert);
 
             log.info("Inserted {} raw CVE entries in rawdescriptions", insertedVulns.size());
