@@ -110,7 +110,7 @@ public class CveCrawler extends WebCrawler {
 		//TODO: move this list
 		List<String> dynamicSeeds = Arrays.asList("redhat", "tibco", "autodesk", "trustwave", "mend.io");
 		if (dynamicSeeds.stream().anyMatch(url::contains)) {
-			logger.info("Getting content from page with dynamically-loaded HTML {}", url);
+			log.info("Getting content from page with dynamically-loaded HTML {}", url);
 			return QuickCveCrawler.getContentFromDynamicPage(url, driver.getDriver());
 		}
 		HtmlParseData htmlParseData = (HtmlParseData) page.getParseData();
@@ -125,9 +125,9 @@ public class CveCrawler extends WebCrawler {
 		String pageURL = page.getWebURL().getURL();
 
 		if (!shouldVisit(page, page.getWebURL())) {
-			logger.info("Skipping URL: {}", pageURL);
+			log.info("Skipping URL: {}", pageURL);
 		} else if (page.getParseData() instanceof HtmlParseData) {
-//			logger.info("Parsing {}", pageURL);
+//			log.info("Parsing {}", pageURL);
 			HtmlParseData htmlParseData = (HtmlParseData) page.getParseData();
 			String html = htmlParseData.getHtml();
 
@@ -136,8 +136,8 @@ public class CveCrawler extends WebCrawler {
 			try {
 				vulnerabilityList = parseWebPage(pageURL, html);
 			} catch (Exception e) {
-				logger.warn("WARNING: Crawler error when parsing {} --> {}", page.getWebURL(), e.toString());
-				e.printStackTrace();
+				log.warn("WARNING: Crawler error when parsing {} --> {}", page.getWebURL(), e.toString());
+				log.error("", e);
 				updateCrawlerReport("Crawler error when parsing " +  page.getWebURL() +" --> " + e);
 			}
 
@@ -172,15 +172,15 @@ public class CveCrawler extends WebCrawler {
 		return parser.parseWebPage(sSourceURL, sCVEContentHTML);
 	}
 
-	private void updateCrawlerReport(String log) {
+	private void updateCrawlerReport(String crawlerLog) {
 		File reportFile = new File(outputDir);
 		try {
 			reportFile.createNewFile();
 			FileWriter write = new FileWriter(reportFile, true);
-			write.write(log + "\n");
+			write.write(crawlerLog + "\n");
 			write.close();
 		} catch (IOException e) {
-			logger.info("Failure writing report to {}: {}", outputDir, e);
+			log.info("Failure writing report to {}: {}", outputDir, e);
 		}
 	}
 }

@@ -117,7 +117,7 @@ public class PyPAGithubScraper {
             pullDir = f.exists() && Objects.requireNonNull(f.list()).length > 1;
         } catch (Exception e) {
             log.error("ERROR: gitfolder does not exist at location {}", remotePath);
-            e.printStackTrace();
+            log.error("", e);
         }
 
         // if already locally stored instance of repo, fetch latest
@@ -137,7 +137,7 @@ public class PyPAGithubScraper {
             }
         } catch(Exception e) {
             log.error("ERROR: Failed to clone or pull PythonPA Repo");
-            e.printStackTrace();
+            log.error("", e);
         }
     }
 
