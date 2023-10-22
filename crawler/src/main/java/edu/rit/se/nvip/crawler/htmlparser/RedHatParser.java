@@ -24,6 +24,7 @@
 package edu.rit.se.nvip.crawler.htmlparser;
 
 import edu.rit.se.nvip.db.model.RawVulnerability;
+import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
@@ -39,6 +40,7 @@ import java.util.List;
  * Web Parser for RedHat CVE Page
  * (ex. https://access.redhat.com/security/cve/cve-2023-25725)
  */
+@Slf4j
 public class RedHatParser extends AbstractCveParser {
 
     public static final String DOMAIN_NAME = "redhat";
@@ -72,7 +74,7 @@ public class RedHatParser extends AbstractCveParser {
 
             vulnerabilities.add(new RawVulnerability(sSourceURL, cve, publishedDate, lastModifiedDate, description, getClass().getSimpleName()));
         } catch (Exception e) {
-            System.out.println(e);
+            log.error("Error parsing {}: {}", sSourceURL, e.toString());
         }
         return vulnerabilities;
 	}

@@ -22,6 +22,7 @@ import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.lang.reflect.Modifier;
+import java.util.concurrent.TimeoutException;
 
 
 @Slf4j
@@ -570,7 +571,7 @@ public class CrawlerMain {
             List<RawVulnerability> insertedVulns = rawDescriptionRepository.batchInsertRawVulnerability(vulnsToInsert);
 
             log.info("Inserted {} raw CVE entries in rawdescriptions", insertedVulns.size());
-            log.info("Notifying Reconciler to reconciler {} new raw data entries", insertedVulns.size());
+            log.info("Notifying Reconciler to reconcile {} new raw data entries", insertedVulns.size());
 
             try(Channel channel = connection.createChannel()) {
                 // Prepare the message and send it to the MQ server for Reconciler to pick up
@@ -585,15 +586,18 @@ public class CrawlerMain {
                 String queueName = dataVars.get("mqQueueName") + "";
                 channel.queueDeclare(queueName, false, false, false, null);
                 log.info("Queue '{}' created successfully.", queueName);
+                log.info("Sending message to broker: {}", cveArray);
                 channel.basicPublish("", queueName, null, cveArray.getBytes());
-                log.info("outgoing cve message: {}", cveArray);
-                log.info("{}", cveArray.getBytes());
                 log.info("Message to Reconciler sent successfully.");
             }
 
-        } catch (Exception ex) {
-            log.error("ERROR: Failed to send message to MQ server on {} via port {}", dataVars.get("mqHost"),
-                    dataVars.get("mqPort"));
+        } catch (IOException e) {
+            log.error("Failed to send message to MQ server on {} via port {}: {}", dataVars.get("mqHost"),
+                    dataVars.get("mqPort"), e.getMessage());
+            log.error("", e);
+        } catch (TimeoutException e) {
+            log.error("Connection to MQ Server {} timed out: {}", dataVars.get("mqHost"), e.getMessage());
+            log.error("", e);
         }
     }
 
@@ -607,9 +611,7 @@ public class CrawlerMain {
 
         try {
             factory.useSslProtocol();
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        } catch (KeyManagementException e) {
+        } catch (NoSuchAlgorithmException | KeyManagementException e) {
             throw new RuntimeException(e);
         }
 
@@ -619,7 +621,7 @@ public class CrawlerMain {
     private boolean testMQConnection(ConnectionFactory factory) {
         try (Connection connection = factory.newConnection()){
             return true;
-        } catch (Exception e) {
+        } catch (IOException | TimeoutException e) {
             return false;
         }
     }
