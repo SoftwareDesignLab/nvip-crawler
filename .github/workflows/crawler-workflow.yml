@@ -64,8 +64,7 @@ jobs:
 
       - name: Run Liquibase Update
         run: |
-          cd db
-          mvn liquibase:update
+          mvn liquibase:update --projects=db
 
       - name: Test Crawler
         run: |
