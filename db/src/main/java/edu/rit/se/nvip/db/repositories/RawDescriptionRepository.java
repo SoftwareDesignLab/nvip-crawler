@@ -11,6 +11,7 @@ import javax.sql.DataSource;
 import java.sql.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -69,19 +70,22 @@ public class RawDescriptionRepository {
             //Split vulns into batches for JDBC Insert
             //TODO: Move the hardcoded value
             for(List<RawVulnerability> batch: Lists.partition(vulns, 256)) {
-                for(RawVulnerability vuln: batch){
-                    pstmt.setString(1, vuln.getDescription());
-                    pstmt.setString(2, vuln.getCveId());
-                    pstmt.setTimestamp(3, Timestamp.valueOf(vuln.getCreatedDateAsDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
-                    pstmt.setTimestamp(4, Timestamp.valueOf(vuln.getPublishDateAsDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
-                    pstmt.setTimestamp(5, Timestamp.valueOf(vuln.getLastModifiedDateAsDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
-                    pstmt.setString(6, vuln.getSourceURL());
-                    pstmt.setString(7, vuln.getSourceType());
-                    pstmt.setString(8, vuln.getParserType());
-                    pstmt.addBatch();
+                for(RawVulnerability vuln: batch) {
+                    try {
+                        pstmt.setString(1, vuln.getDescription());
+                        pstmt.setString(2, vuln.getCveId());
+                        pstmt.setTimestamp(3, Timestamp.valueOf(vuln.getCreatedDateAsDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
+                        pstmt.setTimestamp(4, Timestamp.valueOf(vuln.getPublishDateAsDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
+                        pstmt.setTimestamp(5, Timestamp.valueOf(vuln.getLastModifiedDateAsDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
+                        pstmt.setString(6, vuln.getSourceURL());
+                        pstmt.setString(7, vuln.getSourceType());
+                        pstmt.setString(8, vuln.getParserType());
+                        pstmt.addBatch();
+                    } catch (DateTimeParseException e) {
+                        log.error("Failed to add {} to batch: {}", vuln.getCveId(), e.getMessage());
+                        log.error("", e);
+                    }
                 }
-
-                log.info(pstmt.toString());
 
                 int[] results = pstmt.executeBatch();
 
