@@ -9,8 +9,8 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-public class cxsecurityParser extends FixParser {
-    protected cxsecurityParser(String cveId, String url) {
+public class CXSecurityParser extends FixParser {
+    protected CXSecurityParser(String cveId, String url) {
         super(cveId, url);
     }
 
@@ -20,9 +20,6 @@ public class cxsecurityParser extends FixParser {
 
         // Retrieve description
         String description = String.valueOf(this.DOM.select("h6").first().text());
-
-        //retrieve references
-        Document doc = Jsoup.connect(url).get();
 
         Elements references  = this.DOM.select("table").last().select("td").select("div");
         for(Element row : references){

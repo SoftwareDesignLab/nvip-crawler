@@ -112,7 +112,7 @@ public abstract class FixParser {
                 parser = new RedhatParser(cveId, url);
                 break;
             case "cxsecurity.com":
-                parser = new cxsecurityParser(cveId, url);
+                parser = new CXSecurityParser(cveId, url);
                 break;
             default:
                 parser = new GenericParser(cveId, url);
