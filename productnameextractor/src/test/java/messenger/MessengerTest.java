@@ -26,8 +26,7 @@ package messenger;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.*;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -37,7 +36,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.*;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.platform.commons.function.Try.success;
 import static org.mockito.Mockito.*;
 
@@ -112,7 +111,7 @@ public class MessengerTest {
         List<String> actualIds = messenger.parseIds(jsonString);
 
         assertNotNull(actualIds);
-        Assert.assertTrue(actualIds.isEmpty());
+        assertTrue(actualIds.isEmpty());
     }
 
 

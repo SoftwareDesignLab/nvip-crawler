@@ -26,9 +26,8 @@ import env.ProductNameExtractorEnvVars;
 import model.cpe.AffectedProduct;
 import model.cve.CompositeVulnerability;
 import model.cpe.CpeGroup;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import dictionary.ProductDictionary;
-import org.mockito.Mockito;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -36,8 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 /**
@@ -80,7 +78,7 @@ public class AffectedProductIdentifierTest {
 
 		System.out.println(v.getAffectedProducts());
 
-		assertTrue("Test failed: No affected releases found", (v.getAffectedProducts().size() > 0));
+		assertTrue((v.getAffectedProducts().size() > 0), "Test failed: No affected releases found");
 	}
 
 	@Test

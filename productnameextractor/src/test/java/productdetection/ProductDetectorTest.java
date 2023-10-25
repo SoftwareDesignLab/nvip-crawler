@@ -28,8 +28,8 @@ import aimodels.NERModel;
 import model.cpe.ClassifiedWord;
 import model.cpe.CpeGroup;
 import env.ProductNameExtractorEnvVars;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import dictionary.ProductDictionary;
 import org.mockito.ArgumentMatchers;
 
@@ -37,10 +37,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 /**
  * Unit tests for ProductDetector class
@@ -59,7 +57,7 @@ public class ProductDetectorTest {
     private static final String nlpDir = ProductNameExtractorEnvVars.getNlpDir();
     private static final String dataDir = ProductNameExtractorEnvVars.getDataDir();
 
-    @Before
+    @BeforeEach
     public void setUp() throws IOException {
         // Initialize ProductDetector with a mock CpeLookUp object or a real implementation for testing
         CpeLookUp cpeLookUp = new CpeLookUp();
