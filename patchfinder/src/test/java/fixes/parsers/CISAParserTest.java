@@ -5,7 +5,12 @@ import org.junit.Test;
 public class CISAParserTest extends FixParserTest<CISAParser> {
     public CISAParserTest() {
         // TODO: Initialize with test values
-        super(new CISAParser("", ""));
+        this.setFixParser(getNewParser("", ""));
+    }
+
+    @Override
+    protected CISAParser getNewParser(String cveId, String url) {
+        return new CISAParser(cveId, url);
     }
 
     @Override
