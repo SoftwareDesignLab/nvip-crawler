@@ -24,7 +24,7 @@ package dictionary; /**
 
 import model.cpe.CpeEntry;
 import model.cpe.CpeGroup;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Assertions;
 
 import static org.junit.jupiter.api.Assertions.*;

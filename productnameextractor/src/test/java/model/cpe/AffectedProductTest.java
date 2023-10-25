@@ -24,10 +24,9 @@ package model.cpe;
  * SOFTWARE.
  */
 
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Unit tests for AffectedProduct class
@@ -44,7 +43,7 @@ public class AffectedProductTest {
         AffectedProduct product2 = new AffectedProduct("CVE-2023-5678", "cpe:2.3:a:vulnerable_product:1.0", "1.0");
 
         // Assert that the two objects are not equal
-        Assertions.assertNotEquals(product1, product2);
+        assertNotEquals(product1, product2);
     }
 
     @Test
@@ -54,7 +53,7 @@ public class AffectedProductTest {
         AffectedProduct Product2 = new AffectedProduct("CVE-2023-5678", "cpe:2.3:a:vulnerable_product:2.0", "2.0");
 
         // Assert that the two objects are not equal
-        Assertions.assertNotEquals(Product1, Product2);
+        assertNotEquals(Product1, Product2);
     }
 
     @Test
@@ -63,10 +62,10 @@ public class AffectedProductTest {
         AffectedProduct product = new AffectedProduct("CVE-2023-1234", "cpe:2.3:a:vulnerable_product:1.0", "1.0");
 
         // Assert that the object is not equal to null
-        Assertions.assertNotEquals(product, null);
+        assertNotEquals(product, null);
     }
 
-    @org.junit.Test
+    @Test
     public void swidGenerationVersionTest(){
         String expectedSWID = "<SoftwareIdentity xmlns=\"http://standards.iso.org/iso/19770/-2/2015/schema.xsd\" " +
                 "name=\"Example Software\" " +
@@ -88,7 +87,7 @@ public class AffectedProductTest {
         assertEquals(expectedSWID, product.getSWID());
     }
 
-    @org.junit.Test
+    @Test
     public void swidGenerationWOVersionTest() {
         String expectedSWID = "<SoftwareIdentity xmlns=\"http://standards.iso.org/iso/19770/-2/2015/schema.xsd\" " +
                 "name=\"Example Software\" " +
@@ -111,7 +110,7 @@ public class AffectedProductTest {
     }
 
     //cveId, cpe, releaseDate are all empty string because they are not used for PURL Generation
-    @org.junit.Test
+    @Test
     public void purlGenerationWOVersionTest(){
         String productName = "android";
         AffectedProduct product = new AffectedProduct("", "", productName, "", "google");
@@ -121,7 +120,7 @@ public class AffectedProductTest {
         assertEquals(expected,product.getPURL());
     }
 
-    @org.junit.Test
+    @Test
     public void purlGenerationVersionTest(){
         String productName = "security";
         AffectedProduct product = new AffectedProduct("", "", productName, "1.6.2", "gentoo");
