@@ -13,4 +13,14 @@ public abstract class FixParserTest<T extends FixParser> {
 
     @Test
     public abstract void testParseWebpage();
+
+    @Test
+    public void testParse() {
+        // TODO: Test parse
+    }
+
+    @Test
+    public void testGetParser() {
+        // TODO: Test getParser
+    }
 }
