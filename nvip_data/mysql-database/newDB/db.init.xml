@@ -950,5 +950,15 @@
         </createTable>
     </changeSet>
 
+    <changeSet id="addExploitRows" author="dylan">
+        <addColumn tableName="exploit">
+            <column name="ignore" type="TINYINT(1)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="fixed" type="TINYINT(1)">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
 
 </databaseChangeLog>
