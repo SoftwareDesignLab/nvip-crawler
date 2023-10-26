@@ -51,7 +51,8 @@ public class PatchFinderThread implements Runnable {
 	private final HashMap<String, ArrayList<String>> cvePatchEntry;
 	private final String clonePath;
 	private final long timeoutMilli;
-	private RevWalk walk; // TODO: initialize properly
+	private RevWalk walk; // TODO: remove
+	//TODO: Improve these patterns, currently we are getting many commits not directly related to the specific cve we claim
 	private static final Pattern[] patchPatterns = new Pattern[] {Pattern.compile("vulnerability|Vulnerability|vuln|Vuln|VULN[ #]*([0-9]+)")};
 	private static final Logger logger = LogManager.getLogger(PatchFinder.class.getName());
 

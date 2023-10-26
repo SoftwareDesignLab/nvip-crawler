@@ -110,6 +110,7 @@ public class PatchUrlFinder {
 	 * @param vendor vendor name
 	 * @throws IOException if an IO error occurs while testing the url connection
 	 */
+	// TODO: Consider using https://www.cve.org to lookup existing github references to repos/PRs
 	private ArrayList<String> parseURL(String vendor, String product) throws IOException {
 		ArrayList<String> newAddresses = new ArrayList<>();
 
