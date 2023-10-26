@@ -57,7 +57,7 @@ public class PatchFinder {
 	private static DatabaseHelper databaseHelper;
 	private static PatchUrlFinder patchURLFinder;
 
-	private static final ArrayList<PatchCommit> patchCommits = new ArrayList<>();
+	private static final Set<PatchCommit> patchCommits = new HashSet<>();
 	private static Map<String, ArrayList<String>> sourceDict;
 	protected static Instant urlDictLastCompilationDate = Instant.parse("2000-01-01T00:00:00.00Z");
 	protected static final String[] addressBases = PatchFinderEnvVars.getAddressBases();
@@ -173,7 +173,7 @@ public class PatchFinder {
 		PatchFinder.findPatchesMultiThreaded(possiblePatchURLs);
 
 		// Get found patches from patchfinder
-		ArrayList<PatchCommit> patchCommits = PatchFinder.getPatchCommits();
+		Set<PatchCommit> patchCommits = PatchFinder.getPatchCommits();
 
 		// Insert found patch commits (if any)
 		if(patchCommits.size() > 0) {
@@ -311,7 +311,7 @@ public class PatchFinder {
 		}
 	}
 
-	public static ArrayList<PatchCommit> getPatchCommits() {
+	public static Set<PatchCommit> getPatchCommits() {
 		return patchCommits;
 	}
 

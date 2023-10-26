@@ -48,6 +48,7 @@ public class PatchFinderTest {
     @Before
     public void setUp() {
         PatchFinderEnvVars.initializeEnvVars(true);
+        PatchFinder.init();
     }
 
     @Test
