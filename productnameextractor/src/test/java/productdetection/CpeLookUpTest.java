@@ -24,6 +24,7 @@ package productdetection;
  * SOFTWARE.
  */
 
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import model.cpe.CpeGroup;
 import model.cpe.ProductItem;
@@ -46,8 +47,11 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class CpeLookUpTest {
 	// Init cpeLookUp
-	private static final CpeLookUp cpeLookUp = new CpeLookUp();
-	static {
+	private static CpeLookUp cpeLookUp;
+
+	@BeforeAll
+	static void initCpeLookUp(){
+		cpeLookUp = new CpeLookUp();
 		try {
 			final Map<String, CpeGroup> productDict = ProductDictionary.readProductDict("src/test/resources/data/test_product_dict.json"); //src/test/resources/data/test_product_dict.json
 			cpeLookUp.loadProductDict(productDict);
@@ -55,7 +59,6 @@ public class CpeLookUpTest {
 			throw new RuntimeException(e);
 		}
 	}
-
 
 	@Test
 	public void legitimateProduct() {
@@ -68,7 +71,7 @@ public class CpeLookUpTest {
 
 		assertNotNull(idList, "idList was null");
 		assertNotEquals(idList.size(), 0, "idList was empty");
-		assertEquals("actual result was not expected result", expectedResult, idList.get(0));
+		assertEquals(expectedResult, idList.get(0), "actual result was not expected result");
 	}
 
 	@Test
@@ -83,7 +86,7 @@ public class CpeLookUpTest {
 
 		assertNotNull(idList, "idList was null");
 		assertNotEquals(idList.size(), 0, "idList was empty");
-		assertEquals("actual result was not expected result", expectedResult, idList.get(0));
+		assertEquals(expectedResult, idList.get(0), "actual result was not expected result");
 	}
 
 	@Test
@@ -99,7 +102,7 @@ public class CpeLookUpTest {
 
 		assertNotNull(idList, "idList was null");
 		assertNotEquals(idList.size(), 0, "idList was empty");
-		assertEquals("actual result was not expected result", expected, idList.get(0));
+		assertEquals(expected, idList.get(0), "actual result was not expected result");
 
 	}
 
@@ -132,9 +135,9 @@ public class CpeLookUpTest {
 
 		assertNotNull(idList, "idList was null");
 		assertNotEquals(idList.size(), 0, "idList was empty");
-		assertEquals("actual result was not expected result", expectedResult1, idList.get(0));
-		assertEquals("actual result was not expected result", expectedResult2, idList.get(1));
-		assertEquals("actual result was not expected result", expectedResult3, idList.get(2));
+		assertEquals(expectedResult1, idList.get(0), "actual result was not expected result");
+		assertEquals(expectedResult2, idList.get(1), "actual result was not expected result");
+		assertEquals(expectedResult3, idList.get(2), "actual result was not expected result");
 	}
 
 	@Test
@@ -147,7 +150,7 @@ public class CpeLookUpTest {
 
 		assertNotNull(idList, "idList was null");
 		assertNotEquals(idList.size(), 0, "idList was empty");
-		assertEquals("actual result was not expected result", expectedResult, idList.get(0));
+		assertEquals(expectedResult, idList.get(0), "actual result was not expected result");
 	}
 
 	@Test
