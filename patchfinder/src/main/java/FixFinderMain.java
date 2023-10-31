@@ -85,7 +85,7 @@ public class FixFinderMain extends Thread {
     private void runDev() {
         // Manually enter CVEs for development
         List<String> cveIds = new ArrayList<>();
-        cveIds.add("CVE-2023-3990");
+        cveIds.add("CVE-2023-38571");
 
         try {
             FixFinder.run(cveIds);
