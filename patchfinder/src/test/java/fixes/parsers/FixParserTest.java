@@ -3,6 +3,7 @@ package fixes.parsers;
 import env.FixFinderEnvVars;
 import org.junit.Test;
 
+import java.io.IOException;
 public abstract class FixParserTest<T extends FixParser> {
     private T fixParser;
 
@@ -18,7 +19,7 @@ public abstract class FixParserTest<T extends FixParser> {
     protected abstract T getNewParser(String cveId, String url);
 
     @Test
-    public abstract void testParseWebpage();
+    public abstract void testParseWebpage() throws IOException;
 
     @Test
     public void testParse() {

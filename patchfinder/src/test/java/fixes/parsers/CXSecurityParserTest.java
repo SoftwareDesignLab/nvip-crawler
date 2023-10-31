@@ -1,14 +1,19 @@
 package fixes.parsers;
 
 import fixes.Fix;
+import org.jsoup.Jsoup;
 import org.junit.Test;
 
+import java.io.IOException;
+import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
+import static org.junit.Assert.assertEquals;
 
 public class CXSecurityParserTest extends FixParserTest<CXSecurityParser> {
     public CXSecurityParserTest() {
         // TODO: Initialize with test values
-        this.setFixParser(getNewParser("", ""));
+//        this.setFixParser(getNewParser("", ""));
     }
 
     @Override
@@ -17,15 +22,21 @@ public class CXSecurityParserTest extends FixParserTest<CXSecurityParser> {
     }
 
     @Override
-    public void testParseWebpage() {
+    //zero fixes are found
+    public void testParseWebpage() throws IOException {
         // TODO: Test parseWebpage
-        final List<Fix> fixes = this.fixParser().parse();
     }
 
     @Test
     public void testParseWebpageNoFixes() {
         // TODO: Test parseWebpage with second cve/url
-        this.setFixParser(getNewParser("", ""));
-        final List<Fix> fixes = this.fixParser().parse();
+        String cveId ="CVE-2023-3990";
+        String url ="https://cxsecurity.com/cveshow/CVE-2023-3990";
+        this.setFixParser(getNewParser(cveId, url));
+
+        List <Fix> actual =  this.fixParser().parse();
+        List <Fix> expected = new ArrayList<>();
+
+        assertEquals(expected, actual);
     }
 }

@@ -33,7 +33,6 @@ public class CXSecurityParser extends FixParser {
             FixParser parser = FixParser.getParser(cveId, fixSource);
             this.fixes.addAll(parser.parse());
         }
-
         return this.fixes;
     }
 
