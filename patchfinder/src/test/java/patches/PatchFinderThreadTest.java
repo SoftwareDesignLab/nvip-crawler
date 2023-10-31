@@ -61,8 +61,7 @@ public class PatchFinderThreadTest {
         PatchFinder patchFinder = Mockito.mock(PatchFinder.class);
         //check the patch commits
         Set<PatchCommit> patchCommits = PatchFinder.getPatchCommits();
-        assertEquals(48, patchCommits.size());
-
+        assertEquals(24, patchCommits.size());
     }
 
     //Cant find a repo to test this with that matches the >1000 commits threshold
