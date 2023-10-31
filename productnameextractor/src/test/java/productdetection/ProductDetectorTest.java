@@ -28,10 +28,14 @@ import aimodels.NERModel;
 import model.cpe.ClassifiedWord;
 import model.cpe.CpeGroup;
 import env.ProductNameExtractorEnvVars;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import dictionary.ProductDictionary;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentMatchers;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -48,30 +52,37 @@ import static org.mockito.Mockito.*;
  * @author Richard Sawh
  *
  */
+@ExtendWith(MockitoExtension.class)
 public class ProductDetectorTest {
-    static{
-        ProductNameExtractorEnvVars.initializeEnvVars();
-    }
+
+    @Mock NERModel nerModel;
+
+    static CpeLookUp cpeLookUp;
+
     private ProductDetector productDetector;
     private static final String resourceDir = ProductNameExtractorEnvVars.getResourceDir();
     private static final String nlpDir = ProductNameExtractorEnvVars.getNlpDir();
     private static final String dataDir = ProductNameExtractorEnvVars.getDataDir();
 
-    @BeforeEach
-    public void setUp() throws IOException {
+    @BeforeAll
+    static void setUpAllTests() throws IOException {
+        ProductNameExtractorEnvVars.initializeEnvVars();
+
         // Initialize ProductDetector with a mock CpeLookUp object or a real implementation for testing
-        CpeLookUp cpeLookUp = new CpeLookUp();
+        cpeLookUp = new CpeLookUp();
         final Map<String, CpeGroup> productDict = ProductDictionary.readProductDict("src/test/resources/data/test_product_dict.json");
         cpeLookUp.loadProductDict(productDict);
-        productDetector = new ProductDetector(cpeLookUp, resourceDir, nlpDir, dataDir);
+    }
 
+    @BeforeEach
+    public void setUp() throws IOException {
+        productDetector = new ProductDetector(cpeLookUp, resourceDir, nlpDir, dataDir);
     }
 
     @Test
     public void classifyWordsInDescriptionTest() {
         String[] words = {"The", "software", "version", "is", "vulnerable", "before", "2.1.0"};
         float[] confidences = {1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.9f, 0.9f};
-        NERModel nerModel = mock(NERModel.class);
         ArrayList<ClassifiedWord> nerResult = new ArrayList<>();
         ClassifiedWord word1 = new ClassifiedWord("The", confidences);
         ClassifiedWord word2 = new ClassifiedWord("software", confidences);
@@ -93,9 +104,11 @@ public class ProductDetectorTest {
 
         String productResult = "[The: OTHER, software: OTHER, version: OTHER, is: OTHER, vulnerable: OTHER, before: SOFTWARE_VERSION, 2.1.0: SOFTWARE_VERSION]";
 
+        System.out.println(productDetector.classifyWordsInDescription(words).toString());
         assertTrue(productResult.contains(productDetector.classifyWordsInDescription(words).toString()));
         assertEquals(nerResult.toString(), nerModel.classifyComplex(words).toString());
     }
+
     @Test
     public void getProductItemsWithDescriptionWordsTest() {
         // Create a sample array of classified words
@@ -112,8 +125,6 @@ public class ProductDetectorTest {
 
         String productItems = "[SN: Microsoft Office 2.1.0]";
         assertEquals(productItems, productDetector.getProductItems(classifiedWords).toString());
-
-
     }
 }
 
