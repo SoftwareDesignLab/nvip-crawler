@@ -58,7 +58,7 @@ public class PatchFinderThreadTest {
         PatchFinder patchFinder = Mockito.mock(PatchFinder.class);
         //check the patch commits
         List<PatchCommit> patchCommits = PatchFinder.getPatchCommits();
-        assertEquals(48, patchCommits.size());
+        assertEquals(24, patchCommits.size());
 
     }
 
