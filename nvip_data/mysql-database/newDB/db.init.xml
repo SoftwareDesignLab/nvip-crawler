@@ -961,4 +961,7 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="nullableDateChangesInRawDescriptions" author="ctevse@rit.edu">
+        <dropNotNullConstraint tableName="rawdescription" columnName="last_modified_date" columnDataType="datetime"/>
+    </changeSet>
 </databaseChangeLog>
