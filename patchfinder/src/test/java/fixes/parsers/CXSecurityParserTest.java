@@ -23,7 +23,7 @@ public class CXSecurityParserTest extends FixParserTest<CXSecurityParser> {
 
     @Override
     //zero fixes are found
-    public void testParseWebpage() throws IOException {
+    public void testParseWebpage() {
         // TODO: Test parseWebpage
     }
 
