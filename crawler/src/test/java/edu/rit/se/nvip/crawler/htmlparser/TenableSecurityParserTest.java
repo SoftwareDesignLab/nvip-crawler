@@ -67,8 +67,8 @@ public class TenableSecurityParserTest extends AbstractParserTest {
         assertEquals(4, list.size());
         RawVulnerability vuln = getVulnerability(list, "CVE-2014-3570");
         assertNotNull(vuln);
-        assertEquals("2023-10-31 00:00:00", vuln.getPublishDate());
-        assertEquals("2023-10-31 00:00:00", vuln.getLastModifiedDate());
+        assertEquals("2023-11-01 00:00:00", vuln.getPublishDate());
+        assertEquals("2023-11-01 00:00:00", vuln.getLastModifiedDate());
         assertTrue(vuln.getDescription().contains("OpenSSL contains a flaw in the dtls1_buffer_record"));
     }
 
@@ -81,8 +81,8 @@ public class TenableSecurityParserTest extends AbstractParserTest {
         assertEquals(9, list.size());
         RawVulnerability vuln = getVulnerability(list, "CVE-2015-0204");
         assertNotNull(vuln);
-        assertEquals("2023-10-31 00:00:00", vuln.getPublishDate());
-        assertEquals("2023-10-31 00:00:00", vuln.getLastModifiedDate());
+        assertEquals("2023-11-01 00:00:00", vuln.getPublishDate());
+        assertEquals("2023-11-01 00:00:00", vuln.getLastModifiedDate());
         assertTrue(vuln.getDescription().contains("OpenSSL contains an invalid read flaw in"));
     }
 
