@@ -76,8 +76,7 @@ public class NvdUrlFinder extends FixUrlFinder {
         // Test NVD direct cve page
         final String directSource = "https://nvd.nist.gov/vuln/detail/" + cveId;
         if(testConnection(directSource)) {
-            try { urlList.addAll(this.scrapeReferences(directSource)); }
-            catch (IOException e) { logger.warn("Failed to scrape references from NVD page: {}", e.toString()); }
+            urlList.addAll(this.scrapeReferences(directSource));
         }
 
         return urlList;
