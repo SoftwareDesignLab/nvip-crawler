@@ -25,7 +25,6 @@ package fixes.parsers;
 
 import fixes.Fix;
 
-import java.io.IOException;
 import java.util.List;
 
 public class RedhatSecurityParser extends RedhatParser {

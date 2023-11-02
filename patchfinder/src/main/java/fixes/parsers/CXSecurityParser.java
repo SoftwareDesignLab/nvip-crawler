@@ -2,11 +2,9 @@ package fixes.parsers;
 
 import fixes.Fix;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
+
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 public class CXSecurityParser extends FixParser {
@@ -19,7 +17,7 @@ public class CXSecurityParser extends FixParser {
         List<String> fixSources = new ArrayList<>();
 
         // Retrieve description
-        String description = String.valueOf(this.DOM.select("h6").first().text());
+        String description = this.DOM.select("h6").first().text();
 
         Elements references  = this.DOM.select("table").last().select("td").select("div");
         for(Element row : references){

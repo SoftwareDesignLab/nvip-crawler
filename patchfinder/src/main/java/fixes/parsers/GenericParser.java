@@ -121,7 +121,7 @@ public class GenericParser extends FixParser {
 
                     // If data was found, store in a new Fix object and add to list of found fixes
                     if(fixDescription.length() > 0)
-                        this.fixes.add(new Fix(cveId, fixDescription.toString(), url));
+                        this.fixes.add(new Fix(cveId, fixDescription, url));
 
                     // Skip to next header
                     break;
