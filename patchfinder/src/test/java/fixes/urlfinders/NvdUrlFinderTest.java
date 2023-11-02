@@ -1,7 +1,7 @@
 package fixes.urlfinders;
 
-public class NvdFixUrlFinderTest extends FixUrlFinderTest<NvdUrlFinder> {
-    public NvdFixUrlFinderTest() {
+public class NvdUrlFinderTest extends FixUrlFinderTest<NvdUrlFinder> {
+    public NvdUrlFinderTest() {
         super(new NvdUrlFinder());
     }
 
