@@ -23,6 +23,7 @@
  */
 package edu.rit.se.nvip.utils;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eclipse.jgit.api.CloneCommand;
@@ -40,8 +41,8 @@ import java.io.File;
  * @author axoeec
  *
  */
+@Slf4j
 public class GitController {
-	private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
 
 	private String localPath;
 	private String remotePath;
@@ -58,17 +59,17 @@ public class GitController {
 	 * @return
 	 */
 	public boolean pullRepo() {
-		logger.info("Checking for updates for {} repo!...", localPath);
+		log.info("Checking for updates for {} repo!...", localPath);
 		try (FileRepository localRepo = new FileRepository(localPath + "/.git");) {
 			try (Git git = new Git(localRepo)) {
 				PullCommand pull = git.pull();
 				pull.call();
 			} catch (Exception e) {
-				logger.error("Error while pulling repo {} {} ", remotePath, e.toString());
+				log.error("Error while pulling repo {} {} ", remotePath, e.toString());
 				return false;
 			}
 		} catch (Exception e) {
-			logger.error("Error while initializing FileRepository for {}: {} ", remotePath, e.toString());
+			log.error("Error while initializing FileRepository for {}: {} ", remotePath, e.toString());
 			return false;
 		}
 		return true;
@@ -83,7 +84,7 @@ public class GitController {
 		Git git = null;
 		File localFileDir;
 		try {
-			logger.info("{} repository does not exist! Cloning repo now, this will take some time, please wait!...", localPath);
+			log.info("{} repository does not exist! Cloning repo now, this will take some time, please wait!...", localPath);
 			localFileDir = new File(localPath);
 			CloneCommand cloneCommand = Git.cloneRepository();
 			cloneCommand.setURI(remotePath);
@@ -98,7 +99,7 @@ public class GitController {
 			config.setString("remote", "origin", "url", remotePath);
 			config.save();
 		} catch (Exception e) {
-			logger.error("Error while cloning repo at: " + remotePath + ", " + e.toString());
+			log.error("Error while cloning repo at: {}, {}", remotePath, e.toString());
 			return false;
 		} finally {
 			git.close();

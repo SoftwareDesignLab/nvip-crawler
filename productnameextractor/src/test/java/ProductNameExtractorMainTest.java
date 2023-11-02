@@ -22,14 +22,10 @@
  * SOFTWARE.
  */
 
-import static org.junit.Assert.*;
-import static org.junit.platform.commons.function.Try.success;
-
 import java.util.concurrent.*;
 
 import env.ProductNameExtractorEnvVars;
-import org.junit.Test;
-import java.io.File;
+import org.junit.jupiter.api.Test;
 
 
 public class ProductNameExtractorMainTest {

@@ -29,7 +29,7 @@ import java.util.List;
 
 import org.junit.Test;
 
-import edu.rit.se.nvip.model.RawVulnerability;
+import edu.rit.se.nvip.db.model.RawVulnerability;
 
 public class BugzillaParserTest extends AbstractParserTest {
 

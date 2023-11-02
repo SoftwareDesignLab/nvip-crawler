@@ -29,6 +29,7 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 
@@ -50,6 +51,7 @@ public class GenericParser extends FixParser {
         MITIGATION,
         RESOLVE,
         RESOLUTION;
+//        COUNTERMEASURE;
 
         /**
          * Determines if given word is a valid member of this enum (case-insensitive).
@@ -58,10 +60,27 @@ public class GenericParser extends FixParser {
          * @return whether the word is a valid member of this enum
          */
         public static boolean hasWord(String word) {
+            word = word.toUpperCase();
             try {
-                FIX_WORDS.valueOf(word.toUpperCase());
+                FIX_WORDS.valueOf(word);
                 return true;
-            } catch (Exception ignored) { return false; }
+            } catch (Exception ignored) {
+                // If no direct match, check if word is plural and try singular form
+                final boolean endsWithES = word.endsWith("ES");
+                final boolean endsWithS = endsWithES || word.endsWith("S");
+
+                if(endsWithES || endsWithS) {
+                    final int endIndex = endsWithES ? 2 : 1;
+                    final String trimmedWord = word.substring(0, endIndex);
+                    try {
+                        FIX_WORDS.valueOf(trimmedWord);
+                        return true;
+                    } catch (Exception ignored1) { }
+                }
+
+                // Return false if no match
+                return false;
+            }
         }
     }
 
@@ -84,8 +103,11 @@ public class GenericParser extends FixParser {
 
         // Iterate over header objects
         for (Element e : headerElements) {
+            // Check text and id of header for keywords
+            final List<String> words = new ArrayList<>(Arrays.asList(e.text().split(" ")));
+            words.add(e.id());
             // Split text on spaces and check each word.
-            for (String headerWord : e.text().split(" ")) {
+            for (String headerWord : words) {
                 // Check if word is a member of FIX_WORDS (case-insensitive)
                 if(FIX_WORDS.hasWord(headerWord)) {
                     // Find and store description elements related to the current header

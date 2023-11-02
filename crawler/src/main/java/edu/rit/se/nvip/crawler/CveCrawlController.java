@@ -24,6 +24,7 @@
 package edu.rit.se.nvip.crawler;
 
 import crawlercommons.filters.basic.BasicURLNormalizer;
+import edu.rit.se.nvip.db.model.RawVulnerability;
 import edu.uci.ics.crawler4j.crawler.CrawlConfig;
 import edu.uci.ics.crawler4j.crawler.CrawlController;
 import edu.uci.ics.crawler4j.fetcher.PageFetcher;
@@ -32,7 +33,7 @@ import edu.uci.ics.crawler4j.frontier.SleepycatFrontierConfiguration;
 import edu.uci.ics.crawler4j.robotstxt.RobotstxtConfig;
 import edu.uci.ics.crawler4j.robotstxt.RobotstxtServer;
 import edu.uci.ics.crawler4j.url.SleepycatWebURLFactory;
-import edu.rit.se.nvip.model.RawVulnerability;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -43,10 +44,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 public class CveCrawlController {
     public static final String DEFAULT_USER_AGENT = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0";
 
-    private static final Logger logger = LogManager.getLogger(CveCrawlController.class.getSimpleName());
     private final HashMap<String, ArrayList<RawVulnerability>> cveHashMapAll = new HashMap<>();
 
     private final List<String> urls;
@@ -86,10 +87,10 @@ public class CveCrawlController {
         // Fill in seed URLs
         for (String url: urls) {
             try {
-                logger.info("ADDING {} to SEEDS", url);
+                log.info("ADDING {} to SEEDS", url);
                 controller1.addSeed(url);
             } catch (Exception e) {
-                logger.warn("WARNING: Error trying to add {} as a seed URL", url);
+                log.warn("WARNING: Error trying to add {} as a seed URL", url);
             }
         }
 
@@ -101,7 +102,7 @@ public class CveCrawlController {
             outputFile = crawlerVars.get("outputDir") + "/" + dtf.format(now) + ".txt";
         }
 
-        logger.info("CURRENT CRAWL DEPTH ----> " + config1.getMaxDepthOfCrawling());
+        log.info("CURRENT CRAWL DEPTH ----> " + config1.getMaxDepthOfCrawling());
 
         // Setup thread factory and start crawler
         String finalOutputFile = outputFile;
@@ -110,7 +111,7 @@ public class CveCrawlController {
         controller1.startNonBlocking(factory1, (Integer) crawlerVars.get("crawlerNum"));
 
         controller1.waitUntilFinish();
-        logger.info("Crawler 1 is finished.");
+        log.info("Crawler 1 is finished.");
 
         cveHashMapAll.putAll(getVulnerabilitiesFromCrawlerThreads(controller1));
 
@@ -142,7 +143,7 @@ public class CveCrawlController {
                     }
                 }
             } catch (Exception e) {
-                logger.error("Error while getting data from crawler {}\tcveDataCrawler: Error: {} ", nCrawlerID, e.toString());
+                log.error("Error while getting data from crawler {}\tcveDataCrawler: Error: {} ", nCrawlerID, e.toString());
             }
             nCrawlerID++;
         }

@@ -24,12 +24,15 @@
 package edu.rit.se.nvip.reconciler;
 
 import edu.rit.se.nvip.reconciler.models.ApacheOpenNLPModel;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * @author axoeec
  *
  */
 public class ReconcilerFactory {
+	private static final Logger log = LogManager.getLogger(ReconcilerFactory.class.getSimpleName());
 
 	public static final String SIMPLE = "SIMPLE";
 	public static final String STANFORD_SIMPLE_NLP = "STANFORD_SIMPLE_NLP";
@@ -37,24 +40,31 @@ public class ReconcilerFactory {
 	public static final String APACHE_OPEN_NLP = "APACHE_OPEN_NLP";
 
 	public static Reconciler createReconciler(String type, boolean doAttachModel) {
+		
+		Reconciler reconciler;
 
 		switch (type) {
 			case SIMPLE:
-				return new SimpleReconciler();
+				reconciler = new SimpleReconciler();
+				break;
 			case STANFORD_SIMPLE_NLP:
-				return new StanfordSimpleNLPReconciler();
+				reconciler = new StanfordSimpleNLPReconciler();
+				break;
 			case STANFORD_CORE_NLP:
-				return new StanfordCoreNLPReconciler();
+				reconciler = new StanfordCoreNLPReconciler();
+				break;
 			case APACHE_OPEN_NLP:
 				ApacheOpenNLPReconciler out = new ApacheOpenNLPReconciler();
 				if(doAttachModel) {
 					out.attachModel(new ApacheOpenNLPModel());
 				}
-				return out;
+				reconciler = out;
+				break;
 			default:
-				return new SimpleReconciler();
+				reconciler = new SimpleReconciler();
 		}
 
+		return reconciler;
 	}
 	public static Reconciler createReconciler(String type) {
 		return createReconciler(type, false);

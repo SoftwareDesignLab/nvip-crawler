@@ -30,7 +30,7 @@ import java.util.ArrayList;
 import model.cpe.ClassifiedWord;
 import model.cpe.ProductItem;
 import env.ProductNameExtractorEnvVars;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import productdetection.ProductDetector;
 
 import static org.junit.Assert.*;

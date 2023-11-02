@@ -25,14 +25,14 @@ package edu.rit.se.nvip.crawler;
 
 import edu.rit.se.nvip.crawler.htmlparser.AbstractCveParser;
 import edu.rit.se.nvip.crawler.htmlparser.CveParserFactory;
-import edu.rit.se.nvip.crawler.SeleniumDriver;
 
 import edu.uci.ics.crawler4j.crawler.Page;
 import edu.uci.ics.crawler4j.crawler.WebCrawler;
 import edu.uci.ics.crawler4j.parser.HtmlParseData;
 import edu.uci.ics.crawler4j.url.WebURL;
-import edu.rit.se.nvip.model.RawVulnerability;
+import edu.rit.se.nvip.db.model.RawVulnerability;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -41,7 +41,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
 import java.util.regex.Pattern;
-import java.time.Duration;
 
 /**
  *
@@ -50,9 +49,9 @@ import java.time.Duration;
  * @author axoeec
  *
  */
+@Slf4j
 public class CveCrawler extends WebCrawler {
 
-	private final Logger nvip_logger = LogManager.getLogger(getClass().getSimpleName());
 	private final static Pattern FILTERS = Pattern.compile(".*(\\.(css|js|gif|jpg" + "|png|mp3|mp4|zip|gz))$");
 	private final List<String> myCrawlDomains;
 	private String outputDir;
@@ -111,7 +110,7 @@ public class CveCrawler extends WebCrawler {
 		//TODO: move this list
 		List<String> dynamicSeeds = Arrays.asList("redhat", "tibco", "autodesk", "trustwave", "mend.io");
 		if (dynamicSeeds.stream().anyMatch(url::contains)) {
-			logger.info("Getting content from page with dynamically-loaded HTML {}", url);
+			log.info("Getting content from page with dynamically-loaded HTML {}", url);
 			return QuickCveCrawler.getContentFromDynamicPage(url, driver.getDriver());
 		}
 		HtmlParseData htmlParseData = (HtmlParseData) page.getParseData();
@@ -126,9 +125,9 @@ public class CveCrawler extends WebCrawler {
 		String pageURL = page.getWebURL().getURL();
 
 		if (!shouldVisit(page, page.getWebURL())) {
-			logger.info("Skipping URL: {}", pageURL);
+			log.info("Skipping URL: {}", pageURL);
 		} else if (page.getParseData() instanceof HtmlParseData) {
-//			logger.info("Parsing {}", pageURL);
+//			log.info("Parsing {}", pageURL);
 			HtmlParseData htmlParseData = (HtmlParseData) page.getParseData();
 			String html = htmlParseData.getHtml();
 
@@ -137,13 +136,13 @@ public class CveCrawler extends WebCrawler {
 			try {
 				vulnerabilityList = parseWebPage(pageURL, html);
 			} catch (Exception e) {
-				logger.warn("WARNING: Crawler error when parsing {} --> {}", page.getWebURL(), e.toString());
-				e.printStackTrace();
+				log.warn("WARNING: Crawler error when parsing {} --> {}", page.getWebURL(), e.toString());
+				log.error("", e);
 				updateCrawlerReport("Crawler error when parsing " +  page.getWebURL() +" --> " + e);
 			}
 
 			if (vulnerabilityList.isEmpty()) {
-				nvip_logger.warn("WARNING: No CVEs found at {}!", pageURL);
+				log.warn("WARNING: No CVEs found at {}!", pageURL);
 				updateCrawlerReport("No CVEs found at " + pageURL + "!");
 			} else {
 				for (RawVulnerability vulnerability : vulnerabilityList) {
@@ -155,7 +154,7 @@ public class CveCrawler extends WebCrawler {
 						foundCVEs.put(vulnerability.getCveId(), newList);
 					}
 				}
-				nvip_logger.info("{} CVEs found at {}", vulnerabilityList.size(),pageURL);
+				log.info("{} CVEs found at {}", vulnerabilityList.size(),pageURL);
 			}
 		}
 	}
@@ -173,15 +172,15 @@ public class CveCrawler extends WebCrawler {
 		return parser.parseWebPage(sSourceURL, sCVEContentHTML);
 	}
 
-	private void updateCrawlerReport(String log) {
+	private void updateCrawlerReport(String crawlerLog) {
 		File reportFile = new File(outputDir);
 		try {
 			reportFile.createNewFile();
 			FileWriter write = new FileWriter(reportFile, true);
-			write.write(log + "\n");
+			write.write(crawlerLog + "\n");
 			write.close();
 		} catch (IOException e) {
-			logger.info("Failure writing report to {}: {}", outputDir, e);
+			log.info("Failure writing report to {}: {}", outputDir, e);
 		}
 	}
 }

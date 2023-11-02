@@ -23,9 +23,10 @@
  */
 package edu.rit.se.nvip.crawler.htmlparser;
 
-import edu.rit.se.nvip.model.RawVulnerability;
+import edu.rit.se.nvip.db.model.RawVulnerability;
 import edu.rit.se.nvip.utils.UtilHelper;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -48,8 +49,8 @@ import java.time.LocalDate;
  * @author axoeec, aep7128
  *
  */
+@Slf4j
 public class BugzillaParser extends AbstractCveParser {
-	private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
 	public static final String DOMAIN_NAME = "bugzilla";
 
 	public BugzillaParser() {
@@ -118,7 +119,7 @@ public class BugzillaParser extends AbstractCveParser {
 						}
 
 					} catch (Exception e) {
-						logger.error("Error parsing date: " + publishDate + " at " + sSourceURL);
+						log.error("Error parsing date: " + publishDate + " at " + sSourceURL);
 					}
 				}
 			}
@@ -127,7 +128,7 @@ public class BugzillaParser extends AbstractCveParser {
 				vulnerabilities.add(new RawVulnerability(sSourceURL, cveId, publishDate, lastModifiedDate, description, getClass().getSimpleName()));
 
 		} catch (Exception e) {
-			logger.error("An error occurred while parsing Bugzilla URL: " + sSourceURL);
+			log.error("An error occurred while parsing Bugzilla URL: " + sSourceURL);
 		}
 
 		return vulnerabilities;

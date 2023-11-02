@@ -2,6 +2,7 @@ package edu.rit.se.nvip.utils;
 
 import org.junit.jupiter.api.Test;
 
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -13,7 +14,8 @@ public class ReconcilerEnvVarsTest {
     //verifies you can getenv vars from the env.list file
     @Test
     void testGetters() {
-        String path = System.getProperty("user.dir") + "\\src\\test\\resources\\dummyENV.list";
+
+        String path = Paths.get(System.getProperty("user.dir"), "src", "test", "resources", "dummyENV.list").toString();
         ReconcilerEnvVars.loadFromFile(path);
         List<String> list = new ArrayList<>();
         list.add("SIMPLE");

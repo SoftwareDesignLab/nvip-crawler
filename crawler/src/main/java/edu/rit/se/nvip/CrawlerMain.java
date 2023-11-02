@@ -1,10 +1,11 @@
 package edu.rit.se.nvip;
 
 import com.rabbitmq.client.*;
-import com.rometools.utils.IO;
 import edu.rit.se.nvip.crawler.CveCrawlController;
 import edu.rit.se.nvip.crawler.github.PyPAGithubScraper;
-import edu.rit.se.nvip.model.RawVulnerability;
+import edu.rit.se.nvip.db.model.RawVulnerability;
+import edu.rit.se.nvip.db.repositories.RawDescriptionRepository;
+import edu.rit.se.nvip.db.DatabaseHelper;
 import edu.rit.se.nvip.utils.UtilHelper;
 
 import com.opencsv.CSVWriter;
@@ -12,10 +13,7 @@ import com.opencsv.CSVWriter;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.*;
 import java.net.MalformedURLException;
@@ -24,18 +22,20 @@ import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.lang.reflect.Modifier;
+import java.util.concurrent.TimeoutException;
 
 
+@Slf4j
 public class CrawlerMain {
 
-    private static final Logger logger = LogManager.getLogger(CrawlerMain.class);
-    private final DatabaseHelper databaseHelper;
+    private final RawDescriptionRepository rawDescriptionRepository;
+
     private final Map<String, Object> crawlerVars = new HashMap<>();
     private final Map<String, Object> dataVars = new HashMap<>();
     private static Map<String, String> sourceTypes = null;
 
-    public CrawlerMain(DatabaseHelper databaseHelper){
-        this.databaseHelper = databaseHelper;
+    public CrawlerMain(RawDescriptionRepository rawDescriptionRepository){
+        this.rawDescriptionRepository = rawDescriptionRepository;
     }
 
     /**
@@ -47,8 +47,14 @@ public class CrawlerMain {
 
         // get sources from the seeds file or the database
         DatabaseHelper databaseHelper = DatabaseHelper.getInstance();
+        if (!databaseHelper.testDbConnection()) {
+            log.error("Error in database connection! Please check if the database configured in DB Envvars is up and running!");
+            System.exit(1);
+        }
 
-        CrawlerMain crawlerMain = new CrawlerMain(databaseHelper);
+        CrawlerMain crawlerMain = new CrawlerMain(
+            new RawDescriptionRepository(databaseHelper.getDataSource())
+        );
         crawlerMain.run();
     }
 
@@ -59,13 +65,10 @@ public class CrawlerMain {
         // check required data directories
         checkDataDirs();
 
-        if (!databaseHelper.testDbConnection()) {
-            logger.error("Error in database connection! Please check if the database configured in DB Envvars is up and running!");
-            System.exit(1);
-        }
+        ConnectionFactory connectionFactory = getConnectionFactory();
 
-        if (!this.testMQConnection()) {
-            logger.error("ERROR: Failed to connect to RabbitMQ server on {}:{}/{}",
+        if (!this.testMQConnection(connectionFactory)) {
+            log.error("ERROR: Failed to connect to RabbitMQ server on {}:{}/{}",
                     dataVars.get("mqHost"),
                     dataVars.get("mqVirtualHost"),
                     dataVars.get("mqPort"));
@@ -74,14 +77,14 @@ public class CrawlerMain {
 
         boolean crawlerTestMode = (boolean) crawlerVars.get("testMode");
         if (crawlerTestMode)
-            logger.info("Starting Crawler IN TEST MODE using {}",
+            log.info("Starting Crawler IN TEST MODE using {}",
                     ((String)crawlerVars.get("seedFileDir")).split("/")[((String)crawlerVars.get("seedFileDir")).split("/").length - 1]);
         else
-            logger.info("Starting Crawler...");
+            log.info("Starting Crawler...");
 
         // TODO: Move this to reconciler/processor
         if ((Boolean) dataVars.get("refreshNvdList")) {
-            logger.info("Refreshing NVD CVE List");
+            log.info("Refreshing NVD CVE List");
 //            new NvdCveController().updateNvdDataTable((String) dataVars.get("nvdUrl"));
         }
 
@@ -100,12 +103,12 @@ public class CrawlerMain {
             {
                 String domain = reader.nextLine();
                 if (domain.length() > 5) {
-                    //logger.info("Added {} to whitelist", domain);
+                    //log.info("Added {} to whitelist", domain);
                     whiteList.add(domain);
                 }
             }
         } catch (FileNotFoundException e) {
-            logger.error("Unable to read whitelist file");
+            log.error("Unable to read whitelist file");
             throw new RuntimeException(e);
         }
 
@@ -117,11 +120,11 @@ public class CrawlerMain {
         }
 
         long crawlEndTime = System.currentTimeMillis();
-        logger.info("Crawler Finished\nTime: {} seconds", (crawlEndTime - crawlStartTime) / 1000.0);
+        log.info("Crawler Finished\nTime: {} seconds", (crawlEndTime - crawlStartTime) / 1000.0);
 
         // Merge CVEs found in python GitHub with CVEs that were crawled
         if (!crawlerTestMode) {
-            logger.info("Merging Python CVEs with Crawled CVEs");
+            log.info("Merging Python CVEs with Crawled CVEs");
             for (String pyCve: pyCves.keySet()) {
                 if (crawledCVEs.containsKey(pyCve)) {
                     crawledCVEs.get(pyCve).add(pyCves.get(pyCve));
@@ -136,31 +139,31 @@ public class CrawlerMain {
         // Update the source types for the found CVEs and insert new entries into the rawdescriptions table
         updateSourceTypes(crawledCVEs);
 
-        logger.info("Outputting CVEs to a CSV and JSON");
+        log.info("Outputting CVEs to a CSV and JSON");
         int linesWritten = cvesToCsv(crawledCVEs);
-        logger.info("Wrote {} lines to {}", linesWritten, (String)crawlerVars.get("testOutputDir")+"/test_output.csv");
+        log.info("Wrote {} lines to {}", linesWritten, (String)crawlerVars.get("testOutputDir")+"/test_output.csv");
         cvesToJson(crawledCVEs);
-        logger.info("Done!");
+        log.info("Done!");
 
         // Output results in testmode
         // Store raw data in DB otherwise
         if (crawlerTestMode) {
-            logger.info("CVEs Found: {}", crawledCVEs.size());
+            log.info("CVEs Found: {}", crawledCVEs.size());
             for (String cveId: crawledCVEs.keySet()) {
-                logger.info("CVE: {}:\n", cveId);
+                log.info("CVE: {}:\n", cveId);
                 for (RawVulnerability vuln: crawledCVEs.get(cveId)) {
                     String description = vuln.getDescription().length() > 100 ? vuln.getDescription().substring(0, 100) + "...": vuln.getDescription();
-                    logger.info("[{} | {}]\n", vuln.getSourceURL(), description);
+                    log.info("[{} | {}]\n", vuln.getSourceURL(), description);
                 }
             }
         } else {
             // Update the source types for the found CVEs and insert new entries into the rawdescriptions table
-            logger.info("Done! Preparing to insert all raw data found in this run!");
+            log.info("Done! Preparing to insert all raw data found in this run!");
             insertRawCVEsAndPrepareMessage(crawledCVEs);
-            logger.info("Raw data inserted and Message sent successfully!");
+            log.info("Raw data inserted and Message sent successfully!");
         }
 
-        logger.info("Done!");
+        log.info("Done!");
     }
 
     /**
@@ -278,7 +281,7 @@ public class CrawlerMain {
         if (envvarValue != null && !envvarValue.isEmpty()) {
             envvarMap.put(envvarName, envvarValue);
         } else {
-            logger.warn(warningMessage);
+            log.warn(warningMessage);
             envvarMap.put(envvarName, defaultValue);
         }
     }
@@ -296,7 +299,7 @@ public class CrawlerMain {
         if (envvarValue != null && !envvarValue.isEmpty()) {
             envvarMap.put(envvarName, Boolean.parseBoolean(envvarValue));
         } else {
-            logger.warn(warningMessage);
+            log.warn(warningMessage);
             envvarMap.put(envvarName, defaultValue);
         }
     }
@@ -316,12 +319,12 @@ public class CrawlerMain {
             try {
                 envvarMap.put(envvarName, Integer.parseInt(envvarValue));
             } catch (NumberFormatException e) {
-                logger.warn("WARNING: Variable: {} = {} is not an integer, using 1 as default value", ennvarName
+                log.warn("WARNING: Variable: {} = {} is not an integer, using 1 as default value", ennvarName
                         , defaultValue);
                 envvarMap.put(envvarName, defaultValue);
             }
         } else {
-            logger.warn(warningMessage);
+            log.warn(warningMessage);
             envvarMap.put(envvarName, defaultValue);
         }
     }
@@ -338,27 +341,27 @@ public class CrawlerMain {
         String testOutputDir = (String) crawlerVars.get("testOutputDir");
 
         if (!new File(dataDir).exists()) {
-            logger.error("The data dir provided does not exist, check the 'NVIP_DATA_DIR' key in the env.list file, currently configured data dir is {}", dataDir);
+            log.error("The data dir provided does not exist, check the 'NVIP_DATA_DIR' key in the env.list file, currently configured data dir is {}", dataDir);
             System.exit(1);
         }
 
         if (!new File(crawlerSeeds).exists()) {
-            logger.error("The crawler seeds path provided: {} does not exits!", crawlerSeeds);
+            log.error("The crawler seeds path provided: {} does not exits!", crawlerSeeds);
             System.exit(1);
         }
 
         if (!new File(whitelistFileDir).exists()) {
-            logger.error("The whitelist domain file path provided: {} does not exits!", whitelistFileDir);
+            log.error("The whitelist domain file path provided: {} does not exits!", whitelistFileDir);
             System.exit(1);
         }
 
         if (!new File(crawlerOutputDir).exists()) {
-            logger.error("The crawler output dir provided: {} does not exits!", crawlerOutputDir);
+            log.error("The crawler output dir provided: {} does not exits!", crawlerOutputDir);
             System.exit(1);
         }
 
         if (!new File(testOutputDir).exists()) {
-            logger.error("The crawler output dir provided: {} does not exits!", testOutputDir);
+            log.error("The crawler output dir provided: {} does not exits!", testOutputDir);
             System.exit(1);
         }
     }
@@ -374,7 +377,7 @@ public class CrawlerMain {
             File seeds = new File((String) crawlerVars.get("seedFileDir"));
             BufferedReader seedReader = new BufferedReader(new FileReader(seeds));
             // List<String> seedURLs = new ArrayList<>();
-            logger.info("Loading the following urls: ");
+            log.info("Loading the following urls: ");
 
             String url = "";
             while (url != null) {
@@ -382,17 +385,17 @@ public class CrawlerMain {
                 url = seedReader.readLine();
             }
 
-            // logger.info("Loaded {} seed URLS from {}", seedURLs.size(), seeds.getAbsolutePath());
+            // log.info("Loaded {} seed URLS from {}", seedURLs.size(), seeds.getAbsolutePath());
 
             // for (String seedURL : seedURLs) {
             //     if (!urls.contains(seedURL))
             //         urls.add(seedURL);
             // }
 
-            logger.info("Loaded {} total seed URLs", urls.size());
+            log.info("Loaded {} total seed URLs", urls.size());
 
         } catch (IOException e) {
-            logger.error("Error while starting NVIP: {}", e.toString());
+            log.error("Error while starting NVIP: {}", e.toString());
         }
         return urls;
     }
@@ -413,7 +416,7 @@ public class CrawlerMain {
          */
         List<String> urls = grabSeedURLs();
 
-        logger.info("Starting the NVIP crawl process now to look for CVEs at {} locations with {} threads...",
+        log.info("Starting the NVIP crawl process now to look for CVEs at {} locations with {} threads...",
                 urls.size(), crawlerVars.get("crawlerNum"));
 
         CveCrawlController crawlerController = new CveCrawlController(urls, whiteList, crawlerVars);
@@ -441,7 +444,7 @@ public class CrawlerMain {
 
         Gson gson = builder.excludeFieldsWithModifiers(Modifier.FINAL).create();
         String json = gson.toJson(crawledCVEs);
-        // logger.info(json);
+        // log.info(json);
 
         try{
             String filepath = (String) crawlerVars.get("testOutputDir") + "/test_output.json";
@@ -450,7 +453,7 @@ public class CrawlerMain {
             output.write(json);
             output.close();
         } catch (IOException e) {
-            logger.error("Exception while writing list to JSON file!" + e);
+            log.error("Exception while writing list to JSON file!" + e);
         }
 
     }
@@ -461,7 +464,7 @@ public class CrawlerMain {
 
         try {
             String filepath = (String) crawlerVars.get("testOutputDir") + "/test_output.csv";
-            logger.info("Writing to CSV: {}", filepath);
+            log.info("Writing to CSV: {}", filepath);
             FileWriter fileWriter = new FileWriter(filepath, false);
             writer = new CSVWriter(fileWriter, '\t', CSVWriter.NO_QUOTE_CHARACTER, CSVWriter.NO_ESCAPE_CHARACTER, CSVWriter.DEFAULT_LINE_END);
 
@@ -480,7 +483,7 @@ public class CrawlerMain {
 
             writer.close();
         } catch (IOException | NullPointerException e) {
-            logger.error("Exception while writing list to CSV file!" + e);
+            log.error("Exception while writing list to CSV file!" + e);
             return 0;
         }
 
@@ -503,16 +506,16 @@ public class CrawlerMain {
             while (source != null) {
                 String[] tokens = source.split(" ");
                 if (tokens.length < 2)
-                    logger.warn("Source {} is not formatted correctly", source);
+                    log.warn("Source {} is not formatted correctly", source);
                 else
                     sourceTypes.put(tokens[0], tokens[1]);
                 source = sourceReader.readLine();
             }
 
-            logger.info("Loaded {} total sources/types", sourceTypes.size());
+            log.info("Loaded {} total sources/types", sourceTypes.size());
 
         } catch (IOException e) {
-            logger.error("Error while starting NVIP: {}", e.toString());
+            log.error("Error while starting NVIP: {}", e.toString());
         }
     }
 
@@ -539,7 +542,7 @@ public class CrawlerMain {
                     vuln.setSourceType(sourceTypes.get(sourceURL.getHost()));
                 }
                 catch(MalformedURLException e){
-                    logger.warn("Bad sourceURL {}: {}", vuln.getSourceURL(), e.toString());
+                    log.warn("Bad sourceURL {}: {}", vuln.getSourceURL(), e.toString());
                 }
 
                 if(vuln.getSourceType() == null){
@@ -554,67 +557,52 @@ public class CrawlerMain {
      * @param crawledCves
      */
     private void insertRawCVEsAndPrepareMessage(HashMap<String, ArrayList<RawVulnerability>> crawledCves) {
-        logger.info("Inserting {} CVEs to DB", crawledCves.size());
-        int insertedCVEs = 0;
-        JSONArray cveArray = new JSONArray();
+        // Create a connection to the RabbitMQ server and create the channel
+        ConnectionFactory factory = getConnectionFactory();
 
-        for (String cveId: crawledCves.keySet()) {
-            for (RawVulnerability vuln: crawledCves.get(cveId)) {
-                // check if the data is already in the DB before inserting.
-                if (!databaseHelper.checkIfInRawDescriptions(vuln.getCveId(), vuln.getDescription())) {
-                    //logger.info("Inserting new raw description for CVE {} into DB" ,cveId);
-                    insertedCVEs += databaseHelper.insertRawVulnerability(vuln);
-                    cveArray.add(vuln.getCveId());
-                }
-            }
-        }
+        try (Connection connection = factory.newConnection()){
 
-        logger.info("Inserted {} raw CVE entries in rawdescriptions", insertedCVEs);
-        logger.info("Notifying Reconciler to reconciler {} new raw data entries", insertedCVEs);
+            log.info("Filtering out duplicate cves from {} submitted CVE's", crawledCves.size());
+            List<RawVulnerability> vulnsToInsert = crawledCves.values().stream()
+                    .flatMap(Collection::stream)
+                    .filter(vuln -> !rawDescriptionRepository.checkIfInRawDescriptions(vuln.getCveId(), vuln.getDescription()))
+                    .toList();
 
-        // Prepare the message and send it to the MQ server for Reconciler to pick up
-        // Sends a JSON object with an array of CVE IDs that require reconciliation
-        JSONObject messageBody = new JSONObject();
-        messageBody.put("cves", cveArray);
+            log.info("Filtered out duplicate CVE's leaving {} to be inserted", vulnsToInsert.size());
+            List<RawVulnerability> insertedVulns = rawDescriptionRepository.batchInsertRawVulnerability(vulnsToInsert);
 
-        try {
-            // Create a connection to the RabbitMQ server and create the channel
-            ConnectionFactory factory = new ConnectionFactory();
-            factory.setHost(dataVars.get("mqHost") + "");
-            factory.setVirtualHost(dataVars.get("mqVirtualHost")+"");
-            factory.setPort((int) dataVars.get("mqPort"));
-            factory.setUsername(dataVars.get("mqUsername")+"");
-            factory.setPassword(dataVars.get("mqPassword")+"");
+            log.info("Inserted {} raw CVE entries in rawdescriptions", insertedVulns.size());
+            log.info("Notifying Reconciler to reconcile {} new raw data entries", insertedVulns.size());
 
-            try {
-                factory.useSslProtocol();
-            } catch (NoSuchAlgorithmException e) {
-                throw new RuntimeException(e);
-            } catch (KeyManagementException e) {
-                throw new RuntimeException(e);
+            try(Channel channel = connection.createChannel()) {
+                // Prepare the message and send it to the MQ server for Reconciler to pick up
+                // Sends a JSON object with an array of CVE IDs that require reconciliation
+                Gson gson = new Gson();
+
+                String cveArray = gson.toJson(insertedVulns);
+                Map<String, String> messageBody = new HashMap<>();
+                messageBody.put("cves", cveArray);
+
+                // Declare a queue and send the message
+                String queueName = dataVars.get("mqQueueName") + "";
+                channel.queueDeclare(queueName, false, false, false, null);
+                log.info("Queue '{}' created successfully.", queueName);
+                log.info("Sending message to broker: {}", cveArray);
+                channel.basicPublish("", queueName, null, cveArray.getBytes());
+                log.info("Message to Reconciler sent successfully.");
             }
 
-            Connection connection = factory.newConnection();
-            Channel channel = connection.createChannel();
-
-            // Declare a queue and send the message
-            String queueName = dataVars.get("mqQueueName") + "";
-            channel.queueDeclare(queueName, false, false, false, null);
-            logger.info("Queue '{}' created successfully.", queueName);
-            channel.basicPublish("", queueName, null, cveArray.toJSONString().getBytes());
-            logger.info("outgoing cve message: {}", cveArray.toJSONString());
-            logger.info(cveArray.toJSONString().getBytes());
-            logger.info("Message to Reconciler sent successfully.");
-
-            channel.close();
-            connection.close();
-        } catch (Exception ex) {
-            logger.error("ERROR: Failed to send message to MQ server on {} via port {}", dataVars.get("mqHost"),
-                    dataVars.get("mqPort"));
+        } catch (IOException e) {
+            log.error("Failed to send message to MQ server on {} via port {}: {}", dataVars.get("mqHost"),
+                    dataVars.get("mqPort"), e.getMessage());
+            log.error("", e);
+        } catch (TimeoutException e) {
+            log.error("Connection to MQ Server {} timed out: {}", dataVars.get("mqHost"), e.getMessage());
+            log.error("", e);
         }
     }
 
-    private boolean testMQConnection() {
+    private ConnectionFactory getConnectionFactory(){
         ConnectionFactory factory = new ConnectionFactory();
         factory.setHost(dataVars.get("mqHost") + "");
         factory.setVirtualHost(dataVars.get("mqVirtualHost")+"");
@@ -624,15 +612,17 @@ public class CrawlerMain {
 
         try {
             factory.useSslProtocol();
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        } catch (KeyManagementException e) {
+        } catch (NoSuchAlgorithmException | KeyManagementException e) {
             throw new RuntimeException(e);
         }
 
+        return factory;
+    }
+
+    private boolean testMQConnection(ConnectionFactory factory) {
         try (Connection connection = factory.newConnection()){
             return true;
-        } catch (Exception e) {
+        } catch (IOException | TimeoutException e) {
             return false;
         }
     }

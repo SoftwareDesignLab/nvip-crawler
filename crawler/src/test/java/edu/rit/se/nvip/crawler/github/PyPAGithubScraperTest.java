@@ -1,6 +1,6 @@
 package edu.rit.se.nvip.crawler.github;
 
-import edu.rit.se.nvip.model.RawVulnerability;
+import edu.rit.se.nvip.db.model.RawVulnerability;
 
 import org.junit.Test;
 

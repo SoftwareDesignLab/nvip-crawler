@@ -1,14 +1,10 @@
 package edu.rit.se.nvip;
 
-import edu.rit.se.nvip.characterizer.CveCharacterizer;
 import edu.rit.se.nvip.messenger.Messenger;
-import edu.rit.se.nvip.model.CompositeVulnerability;
-import edu.rit.se.nvip.model.RawVulnerability;
 import edu.rit.se.nvip.utils.ReconcilerEnvVars;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.sql.Timestamp;
 import java.util.*;
 
 public class ReconcilerMain {
@@ -63,6 +59,10 @@ public class ReconcilerMain {
                         break;
                     }
                 }
+            case "dev":
+                final Set<String> devJobs = new HashSet<>();
+                devJobs.add("CVE-2023-2825");
+                rc.main(devJobs);
         }
 
     }

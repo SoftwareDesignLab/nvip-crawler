@@ -38,7 +38,7 @@ public class characterizerRealTest {
 
         String[] trainingDataInfo = {ReconcilerEnvVars.getTrainingDataDir(), ReconcilerEnvVars.getTrainingData()};
         CveCharacterizer characterizer = new CveCharacterizer(trainingDataInfo[0], trainingDataInfo[1], ReconcilerEnvVars.getCharacterizationApproach(),
-                ReconcilerEnvVars.getCharacterizationMethod());
+                ReconcilerEnvVars.getCharacterizationMethod(), null); // TODO: Add/mock DBH
 
 
         Set<CompositeVulnerability> cveSet = new HashSet<>();

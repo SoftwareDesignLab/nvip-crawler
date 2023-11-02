@@ -85,9 +85,7 @@ public class FixFinderMain extends Thread {
     private void runDev() {
         // Manually enter CVEs for development
         List<String> cveIds = new ArrayList<>();
-        cveIds.add("CVE-2022-27911");
-        cveIds.add("CVE-2023-30367");
-        cveIds.add("CVE-2022-0847");
+        cveIds.add("CVE-2023-38571");
 
         try {
             FixFinder.run(cveIds);
@@ -97,6 +95,7 @@ public class FixFinderMain extends Thread {
     }
 
     public static void main(String[] args) {
-//        run();
+        FixFinderMain finder = new FixFinderMain();
+        finder.start();
     }
 }

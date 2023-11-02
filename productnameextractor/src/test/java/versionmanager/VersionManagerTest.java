@@ -26,10 +26,9 @@ package versionmanager;
 
 import model.cpe.ProductVersion;
 
-import org.junit.Test;
-import versionmanager.VersionManager;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Class to test VersionManager functionality and methods

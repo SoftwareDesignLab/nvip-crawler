@@ -40,9 +40,7 @@ jobs:
 
       - name: Test and Build Reconciler with Maven
         run: |
-          cd reconciler
-          mvn dependency:go-offline
-          mvn test
+          mvn test --projects=db,reconciler
 
       - name: Publish Test Report
         if: success() || failure()

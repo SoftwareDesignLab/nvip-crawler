@@ -22,6 +22,7 @@
 		<module>patchfinder</module>
 		<module>productnameextractor</module>
 		<module>reconciler</module>
+		<module>db</module>
 	</modules>
 
 	<!-- Added to enforce the usage of https -->
@@ -60,10 +61,10 @@
 				<artifactId>liquibase-maven-plugin</artifactId>
 				<version>4.23.0</version>
 				<configuration>
-					<propertyFile>/nvip_data/mysql-database/newDB/liquibase.properties</propertyFile>
+					<searchPath>${project.basedir}/nvip_data/mysql-database/newDB</searchPath>
+					<propertyFile>liquibase.properties</propertyFile>
 					<!-- turn off prompt for non-local db since this does run in headless environments -->
 					<promptOnNonLocalDatabase>false</promptOnNonLocalDatabase>
-					<searchPath>${project.basedir}/..</searchPath>
 				</configuration>
 				<dependencies>
 					<dependency>
@@ -92,7 +93,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
-				<version>2.19</version>
+				<version>2.22.2</version>
 				<!-- Other configuration options -->
 			</plugin>
 		</plugins>
@@ -206,9 +207,17 @@
 				<version>4.13.2</version>
 				<scope>test</scope>
 			</dependency>
+
 			<dependency>
 				<groupId>org.junit.jupiter</groupId>
 				<artifactId>junit-jupiter</artifactId>
+				<version>5.10.0</version>
+				<scope>test</scope>
+			</dependency>
+
+			<dependency>
+				<groupId>org.junit.jupiter</groupId>
+				<artifactId>junit-jupiter-engine</artifactId>
 				<version>5.10.0</version>
 				<scope>test</scope>
 			</dependency>
@@ -232,6 +241,13 @@
 				<groupId>org.springframework</groupId>
 				<artifactId>spring-test</artifactId>
 				<version>6.0.11</version>
+				<scope>test</scope>
+			</dependency>
+
+			<dependency>
+				<groupId>org.assertj</groupId>
+				<artifactId>assertj-core</artifactId>
+				<version>3.24.2</version>
 				<scope>test</scope>
 			</dependency>
 
