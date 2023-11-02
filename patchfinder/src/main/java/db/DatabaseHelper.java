@@ -412,6 +412,37 @@ public class DatabaseHelper {
 		return cves;
 	}
 
+	public void insertFixes(List<Fix> fixes) {
+		int existingInserts = 0;
+		int failedInserts = 0;
+
+		for (Fix fix : fixes) {
+			try {
+				final int result = this.insertFix(fix);
+				// Result of operation, 0 for OK, 1 for error, 2 for already exists
+				switch (result) {
+					case 2:
+						existingInserts++;
+						break;
+					case 1:
+						failedInserts++;
+						break;
+					default:
+						break;
+				}
+			}
+			catch (SQLException e) {
+				logger.error("Failed to insert fix {}: {}", fix, e.toString());
+			}
+		}
+
+		logger.info("Successfully inserted {} fixes into the database ({} failed, {} already existed)",
+				fixes.size() - failedInserts - existingInserts,
+				failedInserts,
+				existingInserts
+		);
+	}
+
 	/**
 	 * Method for inserting a fix into the fixes table
 	 * Should also check for duplicates

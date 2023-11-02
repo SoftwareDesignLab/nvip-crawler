@@ -66,9 +66,14 @@ public class Fix {
      * @return the fix as a string
      */
     public String toString() {
+        // Use the full description unless too long
+        String shortFixDescription = fixDescription;
+        // Shorten description to 30 chars (and ...) if too long
+        if(shortFixDescription.length() > 30) shortFixDescription = shortFixDescription.substring(0, 30) + "...";
+
         return String.format("Fix [cve_id=%s, fix_description=%s, source_url=%s]",
                 cveId,
-                fixDescription,
+                shortFixDescription,
                 sourceUrl
         );
     }
