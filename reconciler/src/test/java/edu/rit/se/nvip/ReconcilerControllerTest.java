@@ -12,6 +12,8 @@ import edu.rit.se.nvip.nvd.NvdCveController;
 import edu.rit.se.nvip.reconciler.Reconciler;
 import edu.rit.se.nvip.reconciler.ReconcilerFactory;
 import edu.rit.se.nvip.utils.ReconcilerEnvVars;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.MockedStatic;
@@ -26,6 +28,20 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class ReconcilerControllerTest {
 
+    MockedStatic<DatabaseHelper> mockedDb;
+    MockedStatic<ReconcilerEnvVars> mockedEnvVars;
+
+    @BeforeEach
+    void initMocks(){
+        mockedDb = mockStatic(DatabaseHelper.class);
+        mockedEnvVars = mockStatic(ReconcilerEnvVars.class);
+    }
+
+    @AfterEach
+    void clearMocks(){
+        mockedDb.close();
+        mockedEnvVars.close();
+    }
 
     /**
      * lots of mocks but this  verifies that everything is being called correctly for the reconciler controller
@@ -34,8 +50,6 @@ class ReconcilerControllerTest {
     void mainTest() {
         //create mocks
         ReconcilerController rc = new ReconcilerController();
-        MockedStatic<ReconcilerEnvVars> mockedEnvVars = mockStatic(ReconcilerEnvVars.class);
-        MockedStatic<DatabaseHelper> mockedDb = mockStatic(DatabaseHelper.class);
         DatabaseHelper mockDbh = mock(DatabaseHelper.class);
         FilterHandler mockFH = mock(FilterHandler.class);
         Reconciler mockRecon = mock(Reconciler.class);
@@ -86,20 +100,17 @@ class ReconcilerControllerTest {
         jobs.add("CVE-2023-3");
         jobs.add("CVE-2023-4");
         rc.main(jobs);
-
-        mockedEnvVars.close();
-        mockedDb.close();
     }
 
     @Test
     public void initTest(){
         ReconcilerController rc = new ReconcilerController();
         DatabaseHelper mockDb = mock(DatabaseHelper.class);
-//        Reconciler mockRecon = mock(Reconciler.class);
-        MockedStatic<DatabaseHelper> mockedDB = mockStatic(DatabaseHelper.class);
+        Reconciler mockRecon = mock(Reconciler.class);
 //        MockedStatic<ReconcilerFactory> mockedRF = mockStatic(ReconcilerFactory.class);
 
-        mockedDB.when(DatabaseHelper::getInstance).thenReturn(mockDb);
+        mockedDb.when(DatabaseHelper::getInstance).thenReturn(mockDb);
+        mockedEnvVars.when(ReconcilerEnvVars::getReconcilerType).thenReturn("");
 //        mockedRF.when(() -> ReconcilerFactory.createReconciler(anyString())).thenReturn(mockRecon);
 //        doNothing().when(mockRecon).setKnownCveSources(anyMap());
 
