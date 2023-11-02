@@ -97,6 +97,10 @@ public class FixFinderThread implements Runnable {
 			futures.add(future);
 		}
 
+		int totalFixes = 0;
+		int totalFailedInserts = 0;
+		int totalExistingInserts = 0;
+
 		// Wait for all futures to complete and collect their results
 		for (CompletableFuture<List<Fix>> future : futures) {
 			try {
@@ -104,7 +108,13 @@ public class FixFinderThread implements Runnable {
 				final List<Fix> fixes = future.get();
 				// Ensure no null values are allowed past here
 				if(fixes != null) {
-					FixFinder.getDatabaseHelper().insertFixes(fixes);
+					// Insert fixes as jobs complete
+					final int[] results = FixFinder.getDatabaseHelper().insertFixes(fixes);
+					// Collect insert results
+					totalFailedInserts += results[0];
+					totalExistingInserts += results[1];
+					totalFixes += fixes.size();
+
 					logger.info("{} fixes found for CVE: {}", fixes.size(), cveId);
 				}
 				else logger.warn("Future returned null");
@@ -113,6 +123,13 @@ public class FixFinderThread implements Runnable {
 				e.printStackTrace();
 			}
 		}
+
+		// Final stats logging for thread
+		logger.info("Successfully inserted {} fixes into the database ({} failed, {} already existed)",
+				totalFixes - (totalFailedInserts + totalExistingInserts),
+				totalFailedInserts,
+				totalExistingInserts
+		);
 	}
 
 }
