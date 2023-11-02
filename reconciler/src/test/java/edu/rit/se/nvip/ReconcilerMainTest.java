@@ -2,6 +2,7 @@ package edu.rit.se.nvip;
 
 import edu.rit.se.nvip.messenger.Messenger;
 import edu.rit.se.nvip.utils.ReconcilerEnvVars;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -33,6 +34,12 @@ class ReconcilerMainTest {
         mockedEnvVars = mockStatic(ReconcilerEnvVars.class);
     }
 
+    @AfterEach
+    void clearMocks(){
+        mockedDb.close();
+        mockedEnvVars.close();
+    }
+
     //verifies that the main can properly get jobs and process them for the reconciler controller, this tests both rabbit and db
     @Test
     void testMainWithDb() {
@@ -53,9 +60,6 @@ class ReconcilerMainTest {
         doNothing().when(mockCon).main(anySet());
         //test for db
         main.main();
-
-        mockedEnvVars.close();
-        mockedDb.close();
     }
 
     @Test
@@ -71,9 +75,6 @@ class ReconcilerMainTest {
 
         when(mockDb.getJobs()).thenReturn(null);
         main.main();
-
-        mockedEnvVars.close();
-        mockedDb.close();
     }
 
     @Test
@@ -100,9 +101,6 @@ class ReconcilerMainTest {
         doNothing().when(mockCon).main(anySet());
 
         main.main();
-
-        mockedEnvVars.close();
-        mockedDb.close();
     }
 
     @Test
@@ -127,8 +125,5 @@ class ReconcilerMainTest {
             fail("Caught Unexpected exception");
         }
         main.main();
-
-        mockedEnvVars.close();
-        mockedDb.close();
     }
 }
