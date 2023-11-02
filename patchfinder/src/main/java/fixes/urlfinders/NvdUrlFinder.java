@@ -25,7 +25,6 @@ package fixes.urlfinders;
  */
 
 import fixes.FixFinder;
-import fixes.parsers.NVDParser;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
@@ -38,7 +37,7 @@ import java.util.List;
  *
  *  @author Richard Sawh
  */
-public class NvdFixUrlFinder extends FixUrlFinder {
+public class NvdUrlFinder extends FixUrlFinder {
 
     private enum RESOURCE_TAGS {
         PATCH("Patch"), // Hyperlink relates directly to patch information
@@ -65,7 +64,7 @@ public class NvdFixUrlFinder extends FixUrlFinder {
         }
     }
 
-    public NvdFixUrlFinder() { }
+    public NvdUrlFinder() { }
 
     @Override
     public ArrayList<String> getUrls(String cveId) throws IOException {

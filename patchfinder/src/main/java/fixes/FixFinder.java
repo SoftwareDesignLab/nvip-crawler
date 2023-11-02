@@ -28,8 +28,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import env.FixFinderEnvVars;
 import db.DatabaseHelper;
 import fixes.urlfinders.FixUrlFinder;
-import fixes.urlfinders.NvdFixUrlFinder;
-import fixes.urlfinders.VulnerabilityFixUrlFinder;
+import fixes.urlfinders.NvdUrlFinder;
+import fixes.urlfinders.VulnerabilityUrlFinder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -76,8 +76,8 @@ public class FixFinder {
 		logger.info("Initializing FixUrlFinders...");
 
 		// Add the instances to the fixURLFinders list
-		fixURLFinders.add(new VulnerabilityFixUrlFinder());
-		fixURLFinders.add(new NvdFixUrlFinder());
+		fixURLFinders.add(new VulnerabilityUrlFinder());
+		fixURLFinders.add(new NvdUrlFinder());
 
 		logger.info("Done initializing {} FixUrlFinders: {}", fixURLFinders.size(), fixURLFinders);
 	}
