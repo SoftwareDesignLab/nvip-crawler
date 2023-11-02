@@ -82,6 +82,37 @@ public class GenericParser extends FixParser {
                 return false;
             }
         }
+
+        private static List<String> stringValues() {
+            return Arrays.stream(values()).map(Enum::toString).toList();
+        }
+    }
+
+    private enum FIX_WORDS_BLACKLIST {
+        NO, NOT;
+
+        public static int containsKeywords(String text) {
+            text = text.toUpperCase();
+            int numKeywords = 0;
+
+            // Get string values for all blacklist keywords
+            for (String keyword : FIX_WORDS_BLACKLIST.stringValues()) {
+                // Append all fix words (looking for things like "no fix" or "not resolved")
+                // Check past tense forms of keywords if needed
+                for (String fixWord : FIX_WORDS.stringValues()) {
+                    keyword += " " + fixWord;
+                    if(text.contains(keyword)) numKeywords++;
+                    else if(!keyword.endsWith("D") && text.contains(keyword + "D")) numKeywords++;
+                    else if(!keyword.endsWith("ED") && text.contains(keyword + "ED")) numKeywords++;
+                }
+            }
+
+            return numKeywords;
+        }
+
+        private static List<String> stringValues() {
+            return Arrays.stream(values()).map(Enum::toString).toList();
+        }
     }
 
     protected GenericParser(String cveId, String url) {
@@ -120,7 +151,7 @@ public class GenericParser extends FixParser {
                     final String fixDescription = String.join(" ", descriptionElements.eachText());
 
                     // If data was found, store in a new Fix object and add to list of found fixes
-                    if(fixDescription.length() > 0)
+                    if(fixDescription.length() > 0 && isFix(fixDescription))
                         this.fixes.add(new Fix(cveId, fixDescription, url));
 
                     // Skip to next header
@@ -130,6 +161,14 @@ public class GenericParser extends FixParser {
         }
 
         return this.fixes;
+    }
+
+    private boolean isFix(String fixDescription) {
+        // Get number of words that are blacklisted (blacklist words imply not fixed)
+        final int numBlacklistWords = FIX_WORDS_BLACKLIST.containsKeywords(fixDescription);
+
+        // If we find none, is likely a fix, 1 or more would imply is not a fix
+        return numBlacklistWords < 1;
     }
 
     private Elements findDescriptionElements(Element e) {
