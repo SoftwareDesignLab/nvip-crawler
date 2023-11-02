@@ -78,10 +78,9 @@ public class NVDParser extends FixParser {
      * scrape for the references table and then delegate to other parsers for those sources.
      *
      * @return List of fixes for the CVE
-     * @throws IOException if an error occurs during scraping
      */
     @Override
-    public List<Fix> parseWebPage() throws IOException{
+    public List<Fix> parseWebPage() {
         // Isolate the HTML for the references table
         Elements rows = this.DOM.select("div[id=vulnHyperlinksPanel]").first().select("table").first().select("tbody").select("tr");
 

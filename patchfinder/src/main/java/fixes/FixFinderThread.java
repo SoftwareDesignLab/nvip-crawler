@@ -83,17 +83,8 @@ public class FixFinderThread implements Runnable {
 
 		for (String url : urls) {
 			CompletableFuture<List<Fix>> future = CompletableFuture.supplyAsync(() -> {
-
-
-				try{
-					FixParser parser = FixParser.getParser(cveId, url);
-					return parser.parse();
-				} catch(IOException e){
-					logger.error("Error occurred while parsing url {} for CVE {}: {}", url, cveId, e.toString());
-					e.printStackTrace();
-					return null;
-				}
-
+				FixParser parser = FixParser.getParser(cveId, url);
+				return parser.parse();
 			});
 
 			futures.add(future);

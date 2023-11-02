@@ -25,9 +25,13 @@ package fixes.urlfinders;
  */
 
 import fixes.FixFinder;
+import fixes.parsers.NVDParser;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  *  Implementation of FixUrlFinder for CVEs collected from NVD
@@ -36,30 +40,66 @@ import java.util.ArrayList;
  */
 public class NvdFixUrlFinder extends FixUrlFinder {
 
+    private enum RESOURCE_TAGS {
+        PATCH("Patch"), // Hyperlink relates directly to patch information
+        VENDOR_ADVISORY("Vendor Advisory"), // Hyperlink relates to an advisory host
+        THIRD_PARTY_ADVISORY("Third Party Advisory"), // Hyperlink relates to a third-party advisory host
+        EXPLOIT("Exploit"), // Hyperlink relates to exploit information
+        ISSUE_TRACKING("Issue Tracking"); // Hyperlink relates to an issue tracking host
+
+        private final String name;
+        RESOURCE_TAGS(String name) {
+            this.name = name;
+        }
+
+        /**
+         * Safe valueOf method that relates tag name (i.e. "Vendor Advisory") to the correct member
+         * @param name name of resource tag
+         * @return correlated tag object, or null if not found
+         */
+        public static RESOURCE_TAGS fromString(String name) {
+            for(RESOURCE_TAGS tag : RESOURCE_TAGS.values()) {
+                if(tag.name.equalsIgnoreCase(name)) return tag;
+            }
+            return null;
+        }
+    }
+
     public NvdFixUrlFinder() { }
 
     @Override
-    public ArrayList<String> run(String cveId) throws IOException {
+    public ArrayList<String> getUrls(String cveId) throws IOException {
         logger.info("Getting fixes for CVE: {}", cveId);
-        ArrayList<String> urlList = new ArrayList<>();
 
         // Get all sources for the cve
-        ArrayList<String> sources = FixFinder.getDatabaseHelper().getCveSourcesNVD(cveId);
-
-        // Test each source for a valid connection
-        for (String source : sources) {
-            // Test reported source
-            if (testConnection(source)) {
-                urlList.add(source);
-            }
-        }
+        ArrayList<String> urlList = FixFinder.getDatabaseHelper().getCveSourcesNVD(cveId);
 
         // Test NVD direct cve page
         final String directSource = "https://nvd.nist.gov/vuln/detail/" + cveId;
         if(testConnection(directSource)) {
-            urlList.add(directSource);
+            try { urlList.addAll(this.scrapeReferences(directSource)); }
+            catch (IOException e) { logger.warn("Failed to scrape references from NVD page: {}", e.toString()); }
         }
 
         return urlList;
+    }
+
+    private List<String> scrapeReferences(String url) throws IOException {
+        // Isolate the HTML for the references table
+        Elements rows = this.getDOM(url).select("div[id=vulnHyperlinksPanel]").first().select("table").first().select("tbody").select("tr");
+
+        // For each URL stored in the table, if it has a "Patch" badge associated with it, add it to fixSources
+        List<String> fixSources = new ArrayList<>();
+        for(Element row : rows){
+            String refUrl = row.select("a").text();
+            Elements spans = row.select("span.badge");
+            // Check all resource tags
+            for(Element span: spans){
+                // Add url if the tag matches any whitelisted tag
+                if(RESOURCE_TAGS.fromString(span.text()) != null) fixSources.add(refUrl);
+            }
+        }
+
+        return fixSources;
     }
 }

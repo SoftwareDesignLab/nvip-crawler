@@ -25,6 +25,7 @@ package fixes.parsers;
  */
 
 import fixes.Fix;
+import fixes.FixProcessor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jsoup.Jsoup;
@@ -42,8 +43,7 @@ import java.util.List;
  * @author Paul Vickers
  * @author Dylan Mulligan
  */
-public abstract class FixParser {
-    protected final static Logger logger = LogManager.getLogger();
+public abstract class FixParser extends FixProcessor {
     protected final String cveId;
     protected final String url;
 
@@ -62,7 +62,7 @@ public abstract class FixParser {
         // Attempt to parse page and store returned Document object
         try {
             logger.info("{} is parsing url '{}'...", getClass().getSimpleName(), url);
-            this.DOM = Jsoup.parse(new URL(url), 10000);
+            this.DOM = this.getDOM(this.url);
             // Call abstract method implementation based on instance
             this.parseWebPage();
         }
@@ -81,7 +81,7 @@ public abstract class FixParser {
 
     //TODO: Remove this throws unless we really need it, as URL interaction has been
     // moved to parse() and the IOExceptions are handled there
-    protected abstract List<Fix> parseWebPage() throws IOException;
+    protected abstract List<Fix> parseWebPage();
 
     /**
      * Delegation method to determine which parser should be used to find fixes from the given url.
@@ -91,9 +91,14 @@ public abstract class FixParser {
      * @return Correct parser to be used
      *
      */
-    public static FixParser getParser(String cveId, String url) throws MalformedURLException {
+    public static FixParser getParser(String cveId, String url) {
         // Objectify url for domain extraction
-        final URL urlObj = new URL(url);
+        URL urlObj = null;
+        try { urlObj = new URL(url); }
+        catch (Exception e) {
+            // This should not happen, as URL has already been validated
+            logger.error("Fatal error occurred: {}", e.toString());
+        }
         // Extract domain
         final String domain = urlObj.getHost();
 

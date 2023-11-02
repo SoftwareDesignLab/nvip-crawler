@@ -15,7 +15,7 @@ public class CXSecurityParser extends FixParser {
     }
 
     @Override
-    protected List<Fix> parseWebPage() throws IOException {
+    protected List<Fix> parseWebPage() {
         List<String> fixSources = new ArrayList<>();
 
         // Retrieve description
@@ -28,6 +28,7 @@ public class CXSecurityParser extends FixParser {
 
         }
 
+        // TODO: Remove when class is migrated to type UrlParser
        // For each URL, find the correct parser for it and add the fixes found for that URL
         for(String fixSource : fixSources){
             FixParser parser = FixParser.getParser(cveId, fixSource);

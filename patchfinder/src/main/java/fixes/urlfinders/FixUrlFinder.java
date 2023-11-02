@@ -24,6 +24,7 @@ package fixes.urlfinders;
  * SOFTWARE.
  */
 
+import fixes.FixProcessor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -31,6 +32,7 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Abstract class responsible for finding possible fix source URLs for the FixFinder.
@@ -38,21 +40,31 @@ import java.util.ArrayList;
  * @author Dylan Mulligan
  */
 
-public abstract class FixUrlFinder {
+public abstract class FixUrlFinder extends FixProcessor {
+	// To be implemented in child classes, houses the actual logic that selects source urls
+	public abstract List<String> getUrls(String cveId) throws IOException;
 
-	protected static final Logger logger = LogManager.getLogger(FixUrlFinder.class.getName());
+	//Called for all child instances, makes use of their specific implementation of
+	// getUrls(), then tests and filters out any urls that can't be connected to
+	public List<String> run(String cveId) {
+		try {
+			final List<String> urls = this.getUrls(cveId);
+			// Test each source for a valid connection and filter failed connections
+			return urls.stream().filter(FixUrlFinder::testConnection).toList();
+		} catch (IOException e) {
+			logger.error("Failed to get urls for CVE '{}': {}", cveId, e.toString());
+			return new ArrayList<>();
+		}
+	}
 
-	public abstract ArrayList<String> run(String cveId) throws IOException;
-
-	protected static boolean testConnection(String address) throws IOException {
+	// Tests the connection of a given address and returns the boolean result of the test
+	protected static boolean testConnection(String address) {
 		logger.info("Testing Connection for address: " + address);
 
-		URL url = new URL(address);
-		HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
-		int response;
-
 		try {
-			response = urlConnection.getResponseCode();
+			URL url = new URL(address);
+			HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+			final int response = urlConnection.getResponseCode();
 			// Don't print OK responses, only when this is not the case
 			if(response != 200) logger.info("Response Code: " + response);
 			return true;

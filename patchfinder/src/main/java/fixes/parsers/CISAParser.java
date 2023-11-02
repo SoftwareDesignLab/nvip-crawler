@@ -47,7 +47,7 @@ public class CISAParser extends FixParser {
     }
 
     @Override
-    protected List<Fix> parseWebPage() throws IOException {
+    protected List<Fix> parseWebPage() {
         Elements headers = this.DOM.select("div[id=1-full__main]").first().select("h");
 
         return this.fixes;

@@ -13,7 +13,7 @@ public class RedhatBugzillaParser extends RedhatParser {
 
 
     @Override
-    protected List<Fix> parseWebPage() throws IOException {
+    protected List<Fix> parseWebPage() {
         List<Fix> newFixes = new ArrayList<>();
 
         // TODO: Add Bugzilla specific implementation

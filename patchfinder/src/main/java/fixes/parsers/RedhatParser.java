@@ -40,7 +40,7 @@ public class RedhatParser extends FixParser {
         super(cveId, url);
     }
 
-    protected List<Fix> parseWebPage() throws IOException{
+    protected List<Fix> parseWebPage() {
         throw new UnsupportedOperationException();
     }
 
@@ -48,7 +48,7 @@ public class RedhatParser extends FixParser {
      * Delegates and parses the specified webpage using the RedHat Sub classes
      * @return list of all found fixes
      */
-    @Override
+    @Override // TODO: Migrate to UrlFinder and make use of the new methods in FixProcessor/FixUrlFinder
     public List<Fix> parse(){
         // Init fixes list
         this.fixes = new ArrayList<>();

@@ -35,7 +35,7 @@ public class RedhatSecurityParser extends RedhatParser {
     }
 
     @Override
-    protected List<Fix> parseWebPage() throws IOException {
+    protected List<Fix> parseWebPage() {
         return null;
     }
 }
