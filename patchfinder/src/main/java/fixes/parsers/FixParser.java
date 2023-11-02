@@ -107,9 +107,9 @@ public abstract class FixParser extends FixProcessor {
 
         // Choose parser based on domain
         switch (domain) {
-            case "nvd.nist.gov":
-                parser = new NVDParser(cveId, url);
-                break;
+//            case "nvd.nist.gov":
+//                parser = new NVDParser(cveId, url);
+//                break;
             case "cisa.gov":
                 parser = new CISAParser(cveId, url);
                 break;
