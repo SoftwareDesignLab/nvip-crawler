@@ -98,12 +98,12 @@ public class GenericParser extends FixParser {
             // Get string values for all blacklist keywords
             for (String keyword : FIX_WORDS_BLACKLIST.stringValues()) {
                 // Append all fix words (looking for things like "no fix" or "not resolved")
-                // Check past tense forms of keywords if needed
                 for (String fixWord : FIX_WORDS.stringValues()) {
                     keyword += " " + fixWord;
                     if(text.contains(keyword)) numKeywords++;
-                    else if(!keyword.endsWith("D") && text.contains(keyword + "D")) numKeywords++;
-                    else if(!keyword.endsWith("ED") && text.contains(keyword + "ED")) numKeywords++;
+                    // Check past tense/plural forms
+//                    else if(!keyword.endsWith("D") && text.contains(keyword + "D")) numKeywords++;
+//                    else if(!keyword.endsWith("ED") && text.contains(keyword + "ED")) numKeywords++;
                 }
             }
 
