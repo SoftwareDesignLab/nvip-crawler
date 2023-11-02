@@ -24,6 +24,7 @@ package fixes;
  * SOFTWARE.
  */
 
+import db.DatabaseHelper;
 import fixes.parsers.FixParser;
 import fixes.parsers.CISAParser;
 import fixes.parsers.GenericParser;
@@ -83,8 +84,6 @@ public class FixFinderThread implements Runnable {
 
 		for (String url : urls) {
 			CompletableFuture<List<Fix>> future = CompletableFuture.supplyAsync(() -> {
-
-
 				try{
 					FixParser parser = FixParser.getParser(cveId, url);
 					return parser.parse();
@@ -93,31 +92,27 @@ public class FixFinderThread implements Runnable {
 					e.printStackTrace();
 					return null;
 				}
-
 			});
 
 			futures.add(future);
 		}
 
 		// Wait for all futures to complete and collect their results
-		List<Fix> allFixes = new ArrayList<>();
 		for (CompletableFuture<List<Fix>> future : futures) {
 			try {
 				// Get results of the future
 				final List<Fix> fixes = future.get();
 				// Ensure no null values are allowed past here
-				if(fixes != null) allFixes.addAll(fixes);
+				if(fixes != null) {
+					FixFinder.getDatabaseHelper().insertFixes(fixes);
+					logger.info("{} fixes found for CVE: {}", fixes.size(), cveId);
+				}
 				else logger.warn("Future returned null");
 			} catch (InterruptedException | ExecutionException e) {
 				// Handle exceptions as needed
 				e.printStackTrace();
 			}
 		}
-
-		// Add all fixes found to the static list defined in FixFinder
-		FixFinder.getFixes().addAll(allFixes);
-
-		logger.info("{} fixes found for CVE: {}", allFixes.size(), cveId);
 	}
 
 }
