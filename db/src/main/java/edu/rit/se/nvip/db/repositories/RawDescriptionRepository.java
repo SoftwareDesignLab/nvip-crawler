@@ -70,6 +70,7 @@ public class RawDescriptionRepository {
             //Split vulns into batches for JDBC Insert
             //TODO: Move the hardcoded value
             for(List<RawVulnerability> batch: Lists.partition(vulns, 256)) {
+                int ignored = 0;
                 for(RawVulnerability vuln: batch) {
                     try {
                         pstmt.setString(1, vuln.getDescription());
@@ -84,13 +85,14 @@ public class RawDescriptionRepository {
                     } catch (DateTimeParseException e) {
                         log.error("Failed to add {} to batch: {}", vuln.getCveId(), e.getMessage());
                         log.error("", e);
+                        ignored++;
                     }
                 }
 
                 int[] results = pstmt.executeBatch();
 
-                if(results.length == vulns.size()){
-                    for(int i = 0; i < vulns.size(); i++){
+                if(results.length == (batch.size() - ignored) ){
+                    for(int i = 0; i < batch.size(); i++){
                         if(results[i] == Statement.SUCCESS_NO_INFO || results[i] == Statement.KEEP_CURRENT_RESULT || results[i] == Statement.CLOSE_CURRENT_RESULT) {
                             inserted.add(vulns.get(i));
                         } else {
