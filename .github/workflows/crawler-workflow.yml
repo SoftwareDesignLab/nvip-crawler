@@ -13,6 +13,9 @@ on:
       - dev
       - 'cicd/**'
     paths-ignore:
+      - '.github/workflows/patchfinder-workflow.yml'
+      - '.github/workflows/pne-workflow.yml'
+      - '.github/workflows/reconciler-workflow.yml'
       - 'productnameextractor/**'
       - 'exploitfinder/**'
       - 'patchfinder/**'

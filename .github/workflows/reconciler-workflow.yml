@@ -13,11 +13,18 @@ on:
       - dev
       - 'cicd/**'
     paths-ignore:
+      - '.github/workflows/patchfinder-workflow.yml'
+      - '.github/workflows/pne-workflow.yml'
+      - '.github/workflows/crawler-workflow.yml'
       - 'productnameextractor/**'
       - 'exploitfinder/**'
       - 'patchfinder/**'
       - 'crawler/**'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+  
 env:
   AWS_REGION: 'us-east-1'
   OUTPUT_DIR: 'output'
