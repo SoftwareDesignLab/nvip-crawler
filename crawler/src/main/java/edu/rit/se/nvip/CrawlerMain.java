@@ -579,7 +579,7 @@ public class CrawlerMain {
                 // Sends a JSON object with an array of CVE IDs that require reconciliation
                 Gson gson = new Gson();
 
-                String cveArray = gson.toJson(insertedVulns.stream().map(RawVulnerability::getCveId).toList());
+                String cveArray = gson.toJson(insertedVulns.stream().map(RawVulnerability::getCveId).peek(log::info).toList());
                 Map<String, String> messageBody = new HashMap<>();
                 messageBody.put("cves", cveArray);
 
