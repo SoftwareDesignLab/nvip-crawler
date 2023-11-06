@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+import db.DatabaseHelper;
 import env.PatchFinderEnvVars;
 import messenger.Messenger;
 import model.CpeGroup;
@@ -41,6 +42,11 @@ import patches.PatchFinder;
  */
 public class PatchFinderMain extends Thread {
     private final static Logger logger = LogManager.getLogger(PatchFinderMain.class);
+    private final DatabaseHelper databaseHelper;
+
+    public PatchFinderMain(DatabaseHelper dbh) {
+        this.databaseHelper = dbh;
+    }
 
     /**
      * Entry point for the PatchFinder, initializes necessary classes and start listening for jobs with RabbitMQ
@@ -49,7 +55,7 @@ public class PatchFinderMain extends Thread {
     public void run() {
         logger.info("Starting PatchFinder...");
         // Init PatchFinder
-        PatchFinder.init();
+        PatchFinder.init(this.databaseHelper);
 
         // Determine run mode and start PatchFinder
         switch (PatchFinderEnvVars.getInputMode()) {
