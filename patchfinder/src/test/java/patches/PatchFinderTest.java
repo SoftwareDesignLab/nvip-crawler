@@ -138,14 +138,12 @@ public class PatchFinderTest {
         affectedProducts.put(cveId, cpeGroup);
         affectedProducts.put(cveId2, cpeGroup2);
 
+        final int numPatches = PatchFinder.run(affectedProducts, PatchFinder.cveLimit);
+
         // Call the run method and assert the expected behavior or outcome, should be 0 because they already exist in the db
-        if(PatchFinder.run(affectedProducts, PatchFinder.cveLimit) == 0){
-            success("patches already exist in the db");
-        }else if (PatchFinder.run(affectedProducts, PatchFinder.cveLimit) == 74) {
-            success("patches added to the db");
-        }else{
-            fail("patches not added to the db");
-        }
+        if(numPatches == 0) success("patches already exist in the db");
+        else if (numPatches == 26) success("patches added to the db");
+        else fail("patches not added to the db");
 
         // Assert that the affectedProducts map is empty
         assertEquals(2, affectedProducts.size());
