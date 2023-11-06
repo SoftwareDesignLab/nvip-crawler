@@ -242,7 +242,7 @@ public class PatchFinderThread implements Runnable {
 			// Generate list of page URLs to query with head commit SHA
 			final List<String> pageUrls = new ArrayList<>();
 			for (int i = 34; i < (numPages * 35) - 35; i += 35) {
-				pageUrls.add(baseCommitsUrl + "&after=" + headCommitEndpoint + "+" + i);
+				pageUrls.add(baseCommitsUrl + "?after=" + headCommitEndpoint + "+" + i);
 			}
 
 			for (String url : pageUrls) {
