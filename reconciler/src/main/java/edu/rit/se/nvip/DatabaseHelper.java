@@ -26,12 +26,12 @@ public class DatabaseHelper {
     private static final String UPDATE_FILTER_STATUS = "UPDATE rawdescription SET is_garbage = ? WHERE raw_description_id = ?";
     private static final String GET_VULN = "SELECT v.created_date, vv.published_date, vv.last_modified_date, d.description_id, d.description, d.created_date AS description_date, d.gpt_func " +
             "FROM vulnerability AS v " +
-            "INNER JOIN vulnerabilityversion AS vv ON v.vuln_version_id = vv.vuln_version_id" +
-            "INNER JOIN description AS d ON v.description_id = d.description_id " +
+            "INNER JOIN vulnerabilityversion AS vv ON v.vuln_version_id = vv.vuln_version_id " +
+            "INNER JOIN description AS d ON vv.description_id = d.description_id " +
             "WHERE v.cve_id = ?";
     private static final String GET_USED_RAW_VULNS = "SELECT rd.* " +
             "FROM vulnerability AS v " +
-            "INNER JOIN vulnerabilityversion AS vv ON v.vuln_version_id = vv.vuln_version_id" +
+            "INNER JOIN vulnerabilityversion AS vv ON v.vuln_version_id = vv.vuln_version_id " +
             "INNER JOIN description AS d ON vv.description_id = d.description_id " +
             "INNER JOIN rawdescriptionjt AS rdjt ON d.description_id = rdjt.description_id " +
             "INNER JOIN rawdescription AS rd ON rdjt.raw_description_id = rd.raw_description_id " +
@@ -47,7 +47,7 @@ public class DatabaseHelper {
     private static final String INSERT_DESCRIPTION = "INSERT INTO description (description, created_date, gpt_func, cve_id, is_user_generated) VALUES (?, ?, ?, ?, ?)";
     private static final String DELETE_JOB = "DELETE FROM cvejobtrack WHERE cve_id = ?";
     private static final String INSERT_VDO_SET = "INSERT INTO vdoset (cve_id, cvss_base_score, created_date) VALUES (?, ?, NOW())";
-    private static final String INSERT_VDO_CHARACTERISTIC = "INSERT INTO vdocharacteristic (cve_id, vdo_label, vdo_noun_group, vdo_confidence, vdo_set_id) VALUES (?, ?, ?, ?, ?)";
+    private static final String INSERT_VDO_CHARACTERISTIC = "INSERT INTO vdocharacteristic (cve_id, vdo_label, vdo_noun_group, vdo_confidence, vdo_set_id, created_date) VALUES (?, ?, ?, ?, ?, NOW())";
     private static final String UPDATE_VV_VDO_SET = "UPDATE vulnerabilityversion SET vdo_set_id = ? WHERE vuln_version_id = ?";
     private static final String INSERT_CWE = "INSERT INTO weakness (cve_id, cwe_id) VALUES (?, ?)";
     private static final String DELETE_CWE = "DELETE FROM weakness WHERE cve_id = ?";
@@ -307,7 +307,7 @@ public class DatabaseHelper {
         try (Connection conn = getConnection();
              PreparedStatement descriptionStatement = conn.prepareStatement(INSERT_DESCRIPTION, Statement.RETURN_GENERATED_KEYS);
              PreparedStatement jtStatement = conn.prepareStatement(INSERT_JT);
-             PreparedStatement vvStatement = conn.prepareStatement(INSERT_VULN_VERSION);
+             PreparedStatement vvStatement = conn.prepareStatement(INSERT_VULN_VERSION, Statement.RETURN_GENERATED_KEYS);
              PreparedStatement copyStatement = conn.prepareStatement(COPY_PREV_VERSION_KEYS);
              PreparedStatement vulnStatement = conn.prepareStatement(isUpdate ? UPDATE_VULNERABILITY : INSERT_VULNERABILITY);
              PreparedStatement jobStatement = conn.prepareStatement(DELETE_JOB)) {
@@ -345,9 +345,9 @@ public class DatabaseHelper {
             }
             // insert new vuln row or update version pointer
             if (isUpdate) {
-                populateVulnInsert(vulnStatement, vuln);
-            } else {
                 populateVulnUpdate(vulnStatement, vuln);
+            } else {
+                populateVulnInsert(vulnStatement, vuln);
             }
             vulnStatement.executeUpdate();
             // remove job
@@ -538,7 +538,7 @@ public class DatabaseHelper {
 
     private void insertVdoSetAndCvss(CompositeVulnerability vuln) {
         try (Connection conn = getConnection();
-             PreparedStatement setStatement = conn.prepareStatement(INSERT_VDO_SET);
+             PreparedStatement setStatement = conn.prepareStatement(INSERT_VDO_SET, Statement.RETURN_GENERATED_KEYS);
              PreparedStatement rowStatement = conn.prepareStatement(INSERT_VDO_CHARACTERISTIC);
              PreparedStatement vvStatement = conn.prepareStatement(UPDATE_VV_VDO_SET);) {
             // these tables should be updated atomically

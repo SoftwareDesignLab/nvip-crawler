@@ -157,7 +157,7 @@ public class DatabaseHelper {
 
 	private int insertCpeSet(String cveId) {
 		int setId = -1;
-		try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(insertCpeSet)) {
+		try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(insertCpeSet, Statement.RETURN_GENERATED_KEYS)) {
 			pstmt.setString(1, cveId);
 			pstmt.executeUpdate();
 			ResultSet rs = pstmt.getGeneratedKeys();

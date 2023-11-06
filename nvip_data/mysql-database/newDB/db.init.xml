@@ -1001,6 +1001,9 @@
             <column name="created_date" type="DATETIME">
                 <constraints nullable="false"/>
             </column>
+            <column name="cvss_base_score" type="double">
+                <constraints nullable="true"/>
+            </column>
             <column name="user_id" type="int">
                 <constraints nullable="true"/>
             </column>
@@ -1047,6 +1050,15 @@
             FROM `vdocharacteristic` vc
             JOIN TempGrouping tg ON vc.vdo_characteristic_id = tg.vdo_characteristic_id
             GROUP BY vc.cve_id, group_id, vc.user_id;
+        </sql>
+        <sql>
+            UPDATE vdoset vs
+            SET cvss_score = (
+                SELECT base_score FROM cvss
+                WHERE vs.cve_id = cvss.cve_id
+                ORDER BY ABS(TIMESTAMPDIFF(SECOND, vs.created_date, cvss.created_date)
+                LIMIT 1
+            );
         </sql>
         <addColumn tableName="vdocharacteristic">
             <column name="vdo_set_id" type="INT"/>
@@ -1149,12 +1161,6 @@
         </createTable>
         <addForeignKeyConstraint
                 baseTableName="vulnerabilityversion"
-                baseColumnNames="cve_id"
-                referencedTableName="vulnerability"
-                referencedColumnNames="cve_id"
-                constraintName="vuln_version_cve_id_fk"/>
-        <addForeignKeyConstraint
-                baseTableName="vulnerabilityversion"
                 baseColumnNames="description_id"
                 referencedTableName="description"
                 referencedColumnNames="description_id"
@@ -1210,6 +1216,10 @@
             SET vv.cpe_set_id = cs.cpe_set_id;
         </sql>
 
+        <dropForeignKeyConstraint baseTableName="vulnerability" constraintName="description_id_fk"/>
+        <dropColumn tableName="vulnerability" columnName="description_id"/>
+        <dropColumn tableName="vulnerability" columnName="published_date"/>
+        <dropColumn tableName="vulnerability" columnName="last_modified_date"/>
     </changeSet>
 
 </databaseChangeLog>
