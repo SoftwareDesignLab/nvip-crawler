@@ -54,6 +54,15 @@ public class Messenger {
     private static final ObjectMapper OM = new ObjectMapper();
     private ConnectionFactory factory;
 
+    private final BlockingQueue<List<String>> jobListQueue = new LinkedBlockingQueue<>();
+
+    // Define callback handler
+    private final DeliverCallback deliverCallback = (consumerTag, delivery) -> {
+        String message = new String(delivery.getBody(), StandardCharsets.UTF_8);
+        List<String> parsedIds = parseIds(message);
+        if(parsedIds.size() > 0 && !jobListQueue.offer(parsedIds)) logger.error("Job response could not be added to message queue");
+    };
+
     /**
      * Initialize the Messenger class with RabbitMQ host, username, and password
      * @param host RabbitMQ host
@@ -68,13 +77,13 @@ public class Messenger {
         factory.setUsername(username);
         factory.setPassword(password);
 
-        try {
-            factory.useSslProtocol();
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        } catch (KeyManagementException e) {
-            throw new RuntimeException(e);
-        }
+//        try {
+//            factory.useSslProtocol();
+//        } catch (NoSuchAlgorithmException e) {
+//            throw new RuntimeException(e);
+//        } catch (KeyManagementException e) {
+//            throw new RuntimeException(e);
+//        }
 
         this.inputQueue = inputQueue;
     }
@@ -86,39 +95,39 @@ public class Messenger {
     /**
      * Waits for a message from the PNE for pollInterval seconds, returning null unless a valid job was received
      *
-     * @param pollInterval time to wait before timing out and returning null
+     * @param pollInterval interval time in seconds to poll the blocking queue
      * @return null or a list of received CVE ids to find patches for
      */
     public List<String> waitForProductNameExtractorMessage(int pollInterval) {
         // Initialize job list
-        List<String> cveIds = null;
+        List<String> cveIds = new ArrayList<>();
 
-        // Busy-wait loop for jobs
-        while(cveIds == null) {
-            try(Connection connection = factory.newConnection();
-                Channel channel = connection.createChannel()){
+        try(Connection connection = factory.newConnection();
+            Channel channel = connection.createChannel()) {
+            // Declare the input queue
+            channel.queueDeclare(inputQueue, true, false, false, null);
+            channel.basicConsume(inputQueue, true, deliverCallback, consumerTag -> { });
 
-                channel.queueDeclare(inputQueue, false, false, false, null);
-
-                BlockingQueue<List<String>> messageQueue = new ArrayBlockingQueue<>(1);
-
-                DeliverCallback deliverCallback = (consumerTag, delivery) -> {
-                    String message = new String(delivery.getBody(), StandardCharsets.UTF_8);
-                    List<String> parsedIds = parseIds(message);
-                    if(parsedIds.size() > 0 && !messageQueue.offer(parsedIds)) logger.error("Job response could not be added to message queue");
-                };
-                channel.basicConsume(inputQueue, true, deliverCallback, consumerTag -> { });
-
+            // Busy-wait loop for jobs
+            while(cveIds.size() == 0) {
+                // Poll queue for jobs every poll interval
                 logger.info("Polling message queue...");
-                cveIds = messageQueue.poll(pollInterval, TimeUnit.SECONDS);
-                if(cveIds != null) logger.info("Received job with CVE(s) {}", cveIds);
 
-            } catch (TimeoutException | InterruptedException | IOException e) {
-                logger.error("Error occurred while getting jobs from the ProductNameExtractor: {}", e.toString());
-                break;
+                // Create jobs list of lists for draining queue
+                final List<List<String>> jobs = new ArrayList<>();
+                // Drain queue to jobs list
+                final int numReceivedJobs = jobListQueue.drainTo(jobs);
+                // Flatten jobs into id list
+                jobs.forEach(cveIds::addAll);
+
+                // Sleep if no jobs received
+                if(numReceivedJobs == 0)
+                    synchronized (this) { wait(pollInterval * 1000L); }
             }
+            logger.info("Received job with CVE(s) {}", cveIds);
+        } catch (TimeoutException | InterruptedException | IOException e) {
+            logger.error("Error occurred while getting jobs from the ProductNameExtractor: {}", e.toString());
         }
-
 
         return cveIds;
     }
@@ -147,9 +156,7 @@ public class Messenger {
         try(Connection connection = factory.newConnection();
             Channel channel = connection.createChannel()){
 
-            channel.queueDeclare(queue, false, false, false, null);
-
-            channel.basicPublish("", queue, null, message.getBytes());
+            channel.basicPublish("", queue, null, message.getBytes(StandardCharsets.UTF_8));
 
         } catch (IOException | TimeoutException e) {
             logger.error("Failed to send dummy message: {}", e.toString());
@@ -157,17 +164,31 @@ public class Messenger {
     }
 
     public static void main(String[] args) {
-//        final Messenger m = new Messenger("localhost", "guest", "guest");
-//        m.sendDummyMessage(INPUT_QUEUE, "[\"CVE-2023-2933\", \"CVE-2023-2934\"]");
-        ObjectMapper OM = new ObjectMapper();
-        try {
-            OM.writerWithDefaultPrettyPrinter().writeValue(new File("patchfinder/target/test.json"), "test1");
-            OM.writerWithDefaultPrettyPrinter().writeValue(new File("patchfinder/target/test.json"), "test2");
-//            OM.writeValue(new File("patchfinder/target/test.json"), "test1");
-//            OM.writeValue(new File("patchfinder/target/test.json"), "test2");
-            Thread.sleep(10000);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        final String INPUT_QUEUE = "PNE_OUT";
+        final Messenger m = new Messenger("localhost", "/", 5672 , "guest", "guest", INPUT_QUEUE);
+        m.sendDummyMessage(INPUT_QUEUE,"[\"CVE-2023-0001\", \"CVE-2023-0002\"]");
+        m.sendDummyMessage(INPUT_QUEUE, "[\"CVE-2023-0003\"]");
+        m.sendDummyMessage(INPUT_QUEUE, "[\"CVE-2023-0004\"]");
+        m.sendDummyMessage(INPUT_QUEUE, "[\"CVE-2023-0005\"]");
+        m.sendDummyMessage(INPUT_QUEUE, "[\"CVE-2023-0006\"]");
+        m.sendDummyMessage(INPUT_QUEUE, "[\"CVE-2023-0007\", \"CVE-2023-0008\", \"CVE-2023-0009\"]");
+
+        try { Thread.sleep(5000); } catch (Exception ignored) { }
+
+        m.sendDummyMessage(INPUT_QUEUE, "[\"CVE-2023-0010\"]");
+        m.sendDummyMessage(INPUT_QUEUE, "[\"CVE-2023-0011\"]");
+        m.sendDummyMessage(INPUT_QUEUE, "[\"CVE-2023-0012\"]");
+
+//        m.waitForProductNameExtractorMessage(5);
+//        ObjectMapper OM = new ObjectMapper();
+//        try {
+//            OM.writerWithDefaultPrettyPrinter().writeValue(new File("patchfinder/target/test.json"), "test1");
+//            OM.writerWithDefaultPrettyPrinter().writeValue(new File("patchfinder/target/test.json"), "test2");
+////            OM.writeValue(new File("patchfinder/target/test.json"), "test1");
+////            OM.writeValue(new File("patchfinder/target/test.json"), "test2");
+//            Thread.sleep(10000);
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
     }
 }

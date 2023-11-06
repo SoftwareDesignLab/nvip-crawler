@@ -60,17 +60,12 @@ public class FixFinder {
 	/**
 	 * Initialize the FixFinder and its subcomponents
 	 */
-	public static void init() {
+	public static void init(DatabaseHelper dbh) {
 		logger.info("Initializing FixFinder...");
 
 		// Init db helper
 		logger.info("Initializing DatabaseHelper...");
-		databaseHelper = new DatabaseHelper(
-				FixFinderEnvVars.getDatabaseType(),
-				FixFinderEnvVars.getHikariUrl(),
-				FixFinderEnvVars.getHikariUser(),
-				FixFinderEnvVars.getHikariPassword()
-		);
+		databaseHelper = dbh;
 
 		// Init FixUrlFinders
 		logger.info("Initializing FixUrlFinders...");
@@ -169,5 +164,10 @@ public class FixFinder {
 //				failedInserts,
 //				existingInserts
 //		);
+	}
+
+	@Override
+	public String toString() {
+		return this.getClass().getSimpleName();
 	}
 }

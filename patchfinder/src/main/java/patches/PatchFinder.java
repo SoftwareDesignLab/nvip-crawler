@@ -65,23 +65,19 @@ public class PatchFinder {
 	protected static String patchSrcUrlPath = PatchFinderEnvVars.getPatchSrcUrlPath();
 	protected static int cveLimit = PatchFinderEnvVars.getCveLimit();
 	protected static int maxThreads = PatchFinderEnvVars.getMaxThreads();
+//	private static final BlockingQueue<Runnable> workQueue = new LinkedBlockingQueue<>();
 
 	public static DatabaseHelper getDatabaseHelper() { return databaseHelper; }
 
 	/**
 	 * Initialize the Patchfinder and its subcomponents
 	 */
-	public static void init() {
+	public static void init(DatabaseHelper dbh) {
 		logger.info("Initializing PatchFinder...");
 
 		// Init db helper
 		logger.info("Initializing DatabaseHelper...");
-		databaseHelper = new DatabaseHelper(
-				PatchFinderEnvVars.getDatabaseType(),
-				PatchFinderEnvVars.getHikariUrl(),
-				PatchFinderEnvVars.getHikariUser(),
-				PatchFinderEnvVars.getHikariPassword()
-		);
+		databaseHelper = dbh;
 
 		// Init PatchUrlFinder
 		logger.info("Initializing PatchUrlFinder...");
@@ -324,15 +320,17 @@ public class PatchFinder {
 		// Init clone path and clear previously stored repos
 		File dir = new File(clonePath);
 		if(!dir.exists()) {
-			logger.warn("Unable to locate clone path '{}' for previous run repo deletion", clonePath);
+			logger.warn("Could not locate clone directory at path '{}'", clonePath);
 			try { dir.createNewFile(); }
 			catch (IOException e) { logger.error("Failed to create missing directory '{}'", clonePath); }
-		}
-		else {
-			logger.info("Clearing any existing repos @ '{}'", clonePath);
-			try { FileUtils.delete(dir, FileUtils.RECURSIVE); }
-			catch (IOException e) { logger.error("Failed to clear clone dir @ '{}': {}", dir, e); }
-		}
+		} else logger.info("Clone directory already exists at {}", clonePath);
+		//TODO: Figure out a solid solution to handling overwriting existing cloned repos, have had 0 success with
+		// deleting programmatically so far, might be a job for the docker env to handle the destruction of the clone dir
+//		else {
+//			logger.info("Clearing any existing repos @ '{}'", clonePath);
+//			try { FileUtils.delete(dir, FileUtils.RECURSIVE); }
+//			catch (IOException e) { logger.error("Failed to clear clone dir @ '{}': {}", dir, e); }
+//		}
 
 		// Determine the actual number of CVEs to be processed
 		final int totalCVEsToProcess = Math.min(possiblePatchSources.size(), cveLimit);

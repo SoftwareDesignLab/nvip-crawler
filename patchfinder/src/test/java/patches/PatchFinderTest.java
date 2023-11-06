@@ -22,6 +22,7 @@ package patches; /**
  * SOFTWARE.
  */
 
+import db.DatabaseHelper;
 import env.PatchFinderEnvVars;
 import model.CpeEntry;
 import model.CpeGroup;
@@ -44,11 +45,12 @@ import static org.mockito.Mockito.*;
  * @author Richard Sawh
  */
 public class PatchFinderTest {
+    private final DatabaseHelper databaseHelperMock = mock(DatabaseHelper.class);
 
     @Before
     public void setUp() {
         PatchFinderEnvVars.initializeEnvVars(true);
-        PatchFinder.init();
+        PatchFinder.init(databaseHelperMock);
     }
 
     @Test
@@ -100,7 +102,7 @@ public class PatchFinderTest {
         CpeGroup cpeGroup = new CpeGroup("apache", "airflow", "product_name_value", new HashMap<>());
         possiblePatchSources.put("CVE-2023-1001", cpeGroup);
 
-        PatchFinder.init();
+        PatchFinder.init(databaseHelperMock);
         try {
             // Call the run method and assert the expected behavior or outcome
             if(PatchFinder.run(possiblePatchSources, PatchFinder.cveLimit) == 0){

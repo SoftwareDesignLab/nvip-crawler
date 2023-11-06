@@ -52,7 +52,7 @@ public class PatchFinderMainTest {
 
        // Create a mock DatabaseHelper
        DatabaseHelper databaseHelperMock = mock(DatabaseHelper.class);
-       PatchFinder.init();
+       PatchFinder.init(databaseHelperMock);
 
        // Create a mock Map of affected products
        Map<String, CpeGroup> affectedProductsMock = new HashMap<>();
@@ -70,13 +70,13 @@ public class PatchFinderMainTest {
        });
 
        // Initialize PatchFinder with the mock Messenger
-       PatchFinder.init();
+       PatchFinder.init(databaseHelperMock);
 
        // Call the main method then timeout after 10 seconds
          CountDownLatch latch = new CountDownLatch(1);
             new Thread(() -> {
                 try {
-                    new PatchFinderMain().start();
+                    new PatchFinderMain(databaseHelperMock).start();
                 } catch (Exception e) {
                     fail("Exception thrown: " + e.getMessage());
                 }

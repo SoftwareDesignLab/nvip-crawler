@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+import db.DatabaseHelper;
 import env.FixFinderEnvVars;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -37,6 +38,11 @@ import java.util.List;
  */
 public class FixFinderMain extends Thread {
     private final static Logger logger = LogManager.getLogger(FixFinderMain.class);
+    private final DatabaseHelper databaseHelper;
+
+    public FixFinderMain(DatabaseHelper dbh) {
+        this.databaseHelper = dbh;
+    }
 
     /**
      * Entry point for the FixFinder, initializes necessary classes and start listening for jobs with RabbitMQ
@@ -45,18 +51,24 @@ public class FixFinderMain extends Thread {
     public void run() {
         logger.info("Starting FixFinder...");
 
-        // Init FixFinder
-        FixFinder.init();
+        // Get input mode
+        final String inputMode = FixFinderEnvVars.getInputMode();
 
         // Determine run mode and start PatchFinder
-        switch (FixFinderEnvVars.getInputMode()) {
+        switch (inputMode) {
             case "db":
+                // Init FixFinder
+                FixFinder.init(this.databaseHelper);
                 runDb();
                 break;
             case "rabbit":
+                // Init FixFinder
+                FixFinder.init(this.databaseHelper);
                 runRabbit();
                 break;
             case "dev":
+                // Init FixFinder
+                FixFinder.init(this.databaseHelper);
                 runDev();
                 break;
             default:
@@ -95,7 +107,7 @@ public class FixFinderMain extends Thread {
     }
 
     public static void main(String[] args) {
-        FixFinderMain finder = new FixFinderMain();
-        finder.start();
+//        FixFinderMain finder = new FixFinderMain();
+//        finder.start();
     }
 }
