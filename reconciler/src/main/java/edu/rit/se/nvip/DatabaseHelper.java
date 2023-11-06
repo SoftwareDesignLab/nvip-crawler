@@ -813,13 +813,14 @@ public class DatabaseHelper {
                 pstmt.setBoolean(2, ssvc.isAutomatable());
                 pstmt.setString(3, ssvc.getExploitStatus());
                 pstmt.setBoolean(4, ssvc.getTechnicalImpact());
-
+                pstmt.addBatch();
             }
-            // Execute statement
-            pstmt.execute();
+
+            // Execute batch of statements
+            pstmt.executeBatch();
             conn.commit();
         } catch (SQLException ex) {
-            logger.error("Error while inserting vdo labels");
+            logger.error("Error while inserting SSVC characteristics");
             logger.error(ex);
         }
     }
