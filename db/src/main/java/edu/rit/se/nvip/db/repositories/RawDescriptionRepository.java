@@ -3,11 +3,14 @@ package edu.rit.se.nvip.db.repositories;
 import com.google.common.collect.Lists;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+import edu.rit.se.nvip.db.DatabaseHelper;
 import edu.rit.se.nvip.db.model.RawVulnerability;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.sql.DataSource;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.sql.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -23,8 +26,8 @@ public class RawDescriptionRepository {
 
     private final DataSource dataSource;
 
-    private final String insertRawData = "INSERT INTO rawdescription (raw_description, cve_id, created_date, published_date, last_modified_date, source_url, source_type, parser_type) " +
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+    private final String insertRawData = "INSERT INTO rawdescription (raw_description, cve_id, created_date, published_date, last_modified_date, source_url, source_type, parser_type, domain) " +
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
     private final String checkIfInRawDesc = "SELECT COUNT(*) numInRawDesc FROM rawdescription WHERE cve_id = ? AND raw_description = ?";
     private final String getRawCVEs = "SELECT DISTINCT cve_id, published_date FROM rawdescription order by cve_id desc";
 
@@ -41,10 +44,16 @@ public class RawDescriptionRepository {
             pstmt.setString(2, vuln.getCveId());
             pstmt.setTimestamp(3, Timestamp.valueOf(vuln.getCreatedDateAsDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
             pstmt.setTimestamp(4, Timestamp.valueOf(vuln.getPublishDateAsDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
-            pstmt.setTimestamp(5, Timestamp.valueOf(vuln.getLastModifiedDateAsDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
+            try {
+                pstmt.setTimestamp(5, Timestamp.valueOf(vuln.getLastModifiedDateAsDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
+            } catch (DateTimeParseException e) {
+                log.error("Failed to parse last modified date for {}. Insertion will proceed with a null last modified date.", vuln.getCveId());
+                pstmt.setTimestamp(5, null);
+            }
             pstmt.setString(6, vuln.getSourceURL());
             pstmt.setString(7, vuln.getSourceType());
             pstmt.setString(8, vuln.getParserType());
+            pstmt.setString(9, vuln.getDomain());
 
             pstmt.execute();
 
@@ -77,10 +86,16 @@ public class RawDescriptionRepository {
                         pstmt.setString(2, vuln.getCveId());
                         pstmt.setTimestamp(3, Timestamp.valueOf(vuln.getCreatedDateAsDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
                         pstmt.setTimestamp(4, Timestamp.valueOf(vuln.getPublishDateAsDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
-                        pstmt.setTimestamp(5, Timestamp.valueOf(vuln.getLastModifiedDateAsDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
+                        try {
+                            pstmt.setTimestamp(5, Timestamp.valueOf(vuln.getLastModifiedDateAsDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
+                        } catch (DateTimeParseException e) {
+                            log.error("Failed to parse last modified date for {}. Insertion will proceed with a null last modified date.", vuln.getCveId());
+                            pstmt.setTimestamp(5, null);
+                        }
                         pstmt.setString(6, vuln.getSourceURL());
                         pstmt.setString(7, vuln.getSourceType());
                         pstmt.setString(8, vuln.getParserType());
+                        pstmt.setString(9, vuln.getDomain());
                         pstmt.addBatch();
                         submittedVulns.add(vuln);
                     } catch (DateTimeParseException e) {
