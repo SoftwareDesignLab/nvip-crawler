@@ -862,7 +862,6 @@
     <changeSet id="increaseNvdSourceUrlSize" author="dylan">
         <modifyDataType columnName="source_url"
                         newDataType="VARCHAR(500)"
-                        schemaName="nvip"
                         tableName="nvdsourceurl"/>
     </changeSet>
 
@@ -963,5 +962,31 @@
 
     <changeSet id="nullableDateChangesInRawDescriptions" author="ctevse@rit.edu">
         <dropNotNullConstraint tableName="rawdescription" columnName="last_modified_date" columnDataType="datetime"/>
+    </changeSet>
+
+    <changeSet id="addDomainColumnToRawDescription" author="memeee">
+        <addColumn tableName="rawdescription">
+            <column name="domain" type="TINYTEXT">
+                <constraints nullable="true"/>
+            </column>
+            <column name="description_hash" type="VARCHAR(255)"/>
+        </addColumn>
+        <sql>
+            UPDATE rawdescription SET description_hash = SUBSTRING(MD5(raw_description), 1, 255);
+        </sql>
+        <addNotNullConstraint columnName="description_hash" tableName="rawdescription" columnDataType="VARCHAR(255)"/>
+
+        <sql>
+            CREATE TRIGGER before_insert_rawdescription
+            BEFORE INSERT ON rawdescription FOR EACH ROW
+            BEGIN
+                SET NEW.description_hash = SUBSTRING(MD5(NEW.raw_description), 1, 255);
+            END;
+        </sql>
+
+        <sql>
+            ALTER TABLE rawdescription
+            ADD UNIQUE uk_rawdescription_cve_domain (cve_id, description_hash(255), domain(32));
+        </sql>
     </changeSet>
 </databaseChangeLog>
