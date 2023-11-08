@@ -27,6 +27,7 @@ package fixes;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import env.FixFinderEnvVars;
 import db.DatabaseHelper;
+import fixes.urlfinders.CXSecurityUrlFinder;
 import fixes.urlfinders.FixUrlFinder;
 import fixes.urlfinders.NvdUrlFinder;
 import fixes.urlfinders.VulnerabilityUrlFinder;
@@ -78,6 +79,7 @@ public class FixFinder {
 		// Add the instances to the fixURLFinders list
 		fixURLFinders.add(new VulnerabilityUrlFinder());
 		fixURLFinders.add(new NvdUrlFinder());
+		fixURLFinders.add(new CXSecurityUrlFinder());
 
 		logger.info("Done initializing {} FixUrlFinders: {}", fixURLFinders.size(), fixURLFinders);
 	}

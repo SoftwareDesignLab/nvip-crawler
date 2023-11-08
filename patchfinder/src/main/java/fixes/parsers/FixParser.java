@@ -112,9 +112,6 @@ public abstract class FixParser extends FixProcessor {
             case "access.redhat.com":
                 parser = new RedhatParser(cveId, url);
                 break;
-            case "cxsecurity.com":
-                parser = new CXSecurityParser(cveId, url);
-                break;
             default:
                 parser = new GenericParser(cveId, url);
                 break;
