@@ -76,13 +76,14 @@ public class ReconcilerController {
         }
         logger.info("Finished reconciliation stage - sending message to PNE");
 
-        Set<CompositeVulnerability> newOrUpdated = reconciledVulns.stream()
+        reconciledVulns.stream()
                 .filter(v -> v.getReconciliationStatus() == CompositeVulnerability.ReconciliationStatus.NEW ||
                         v.getReconciliationStatus() == CompositeVulnerability.ReconciliationStatus.UPDATED)
-                .collect(Collectors.toSet());
+                .map(CompositeVulnerability::getCveId)
+                .forEach(vuln -> messenger.sendPNEMessage(List.of(vuln)));
 
         //PNE team changed their mind about streaming jobs as they finish, they now just want one big list
-        messenger.sendPNEMessage(newOrUpdated.stream().map(CompositeVulnerability::getCveId).collect(Collectors.toList()));
+//        messenger.sendPNEMessage(newOrUpdated.stream().map(CompositeVulnerability::getCveId).collect(Collectors.toList()));
 
         logger.info("Starting NVD/MITRE comparisons");
         updateNvdMitre(); // todo this could be done from the start asynchronously, but attaching shouldn't happen until it's done
