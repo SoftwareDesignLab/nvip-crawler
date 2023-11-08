@@ -579,17 +579,22 @@ public class CrawlerMain {
                 // Sends a JSON object with an array of CVE IDs that require reconciliation
                 Gson gson = new Gson();
 
-                String cveArray = gson.toJson(insertedVulns.stream().map(RawVulnerability::getCveId).peek(vuln -> log.info(vuln)).toList());
-                Map<String, String> messageBody = new HashMap<>();
-                messageBody.put("cves", cveArray);
-
                 // Declare a queue and send the message
                 String queueName = dataVars.get("mqQueueName") + "";
                 channel.queueDeclare(queueName, false, false, false, null);
                 log.info("Queue '{}' created successfully.", queueName);
-                log.info("Sending message to broker: {}", cveArray);
-                channel.basicPublish("", queueName, null, cveArray.getBytes());
-                log.info("Message to Reconciler sent successfully.");
+
+                for(RawVulnerability vuln: insertedVulns){
+                    Map<String, String> messageBody = new HashMap<>();
+                    messageBody.put("cveId", vuln.getCveId());
+
+                    String cve = gson.toJson(messageBody);
+
+                    log.info("Sending message to broker: {}", cve);
+                    channel.basicPublish("", queueName, null, cve.getBytes());
+                }
+
+                log.info("{} Messages were sent to Reconciler successfully.", insertedVulns.size());
             }
 
         } catch (IOException e) {

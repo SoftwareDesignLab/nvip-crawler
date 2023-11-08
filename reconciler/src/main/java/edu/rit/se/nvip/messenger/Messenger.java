@@ -16,6 +16,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -140,7 +141,7 @@ public class Messenger {
     public List<String> parseIds(String jsonString) {
         try {
             logger.info("incoming cve list: {}", jsonString);
-            return OM.readValue(jsonString, ArrayList.class);
+            return List.of(OM.readTree(jsonString).get("cveId").asText());
         } catch (JsonProcessingException e) {
             logger.error("Failed to parse list of ids from json string: {}", e.toString());
             return null;
