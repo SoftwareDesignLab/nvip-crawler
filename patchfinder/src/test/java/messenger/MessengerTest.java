@@ -57,8 +57,7 @@ public class MessengerTest {
         when(connectionMock.createChannel()).thenReturn(channelMock);
 
         // Create a Messenger instance with the mock ConnectionFactory
-        Messenger messenger = new Messenger("localhost", "/", 5672,"guest", "guest", "PNE_OUT");
-        messenger.setFactory(factoryMock);
+        Messenger messenger = new Messenger(factoryMock, "PNE_OUT");
 
         // Create a message queue and a message to be received
         BlockingQueue<List<String>> messageQueue = new ArrayBlockingQueue<>(1);
@@ -114,26 +113,23 @@ public class MessengerTest {
     }
 
 
+    // Test that CVE strings are validated
     @Test
     public void testParseIds_ValidJsonString() {
-        Messenger messenger = new Messenger("localhost", "/", 5672,"guest", "guest", "PNE_OUT");
-        String jsonString = "[\"id1\",\"id2\",\"id3\"]";
-        List<String> expectedIds = Arrays.asList("id1", "id2", "id3");
+        String expectedId = "CVE-2023-0001";
 
-        List<String> actualIds = messenger.parseIds(jsonString);
+        String actualId = Messenger.parseMessage(expectedId);
 
-        assertEquals(expectedIds, actualIds);
+        assertEquals(expectedId, actualId);
     }
 
+    // Test invalid CVE string
     @Test
     public void testParseIds_InvalidJsonString() {
-        Messenger messenger = new Messenger("localhost", "/", 5672,"guest", "guest", "PNE_OUT");
         String jsonString = "invalidJsonString";
 
-        List<String> actualIds = messenger.parseIds(jsonString);
+        String actualId = Messenger.parseMessage(jsonString);
 
-        assertNotNull(actualIds);
-        Assert.assertTrue(actualIds.isEmpty());
+        assertNull(actualId);
     }
-
 }

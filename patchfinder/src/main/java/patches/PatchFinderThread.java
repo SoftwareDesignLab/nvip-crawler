@@ -48,7 +48,8 @@ import utils.GitController;
  * @author Dylan Mulligan
  */
 public class PatchFinderThread implements Runnable {
-	private final HashMap<String, ArrayList<String>> cvePatchEntry;
+	private final String cveId;
+	private final List<String> cvePatchEntry;
 	private final String clonePath;
 	private final long timeoutMilli;
 	private RevWalk walk; // TODO: remove
@@ -63,7 +64,8 @@ public class PatchFinderThread implements Runnable {
 	 * @param clonePath path to clone repos to
 	 * @param timeoutMilli milliseconds until timeout // TODO for what
 	 */
-	public PatchFinderThread(HashMap<String, ArrayList<String>> possiblePatchSources, String clonePath, long timeoutMilli) {
+	public PatchFinderThread(String cveId, List<String> possiblePatchSources, String clonePath, long timeoutMilli) {
+		this.cveId = cveId;
 		this.cvePatchEntry = possiblePatchSources;
 		this.clonePath = clonePath;
 		this.timeoutMilli = timeoutMilli;
@@ -79,18 +81,13 @@ public class PatchFinderThread implements Runnable {
 		final ArrayList<PatchCommit> foundPatchCommits = new ArrayList<>();
 
 		// Order sources by repo size ascending
-		final HashMap<String, ArrayList<Integer>> sourceCountMap = new HashMap<>();
-		cvePatchEntry.forEach((c, v) -> sourceCountMap.put(c, orderSources(cvePatchEntry.get(c))));
+		final List<Integer> sourceRepoSizes = orderSources(cvePatchEntry);
+
 
 		// For each CVE, iterate through the list of possible patch sources and
 		// Clone/Scrape the repo for patch commits (if any)
-		for (String cve : cvePatchEntry.keySet()) {
-			final ArrayList<Integer> counts = sourceCountMap.get(cve);
-			int i = 0;
-			for (String patchSource: cvePatchEntry.get(cve)) {
-				findPatchCommits(foundPatchCommits, cve, patchSource, counts.get(i));
-				i++;
-			}
+		for (int i = 0; i < cvePatchEntry.size(); i++) {
+			findPatchCommits(foundPatchCommits, cveId, cvePatchEntry.get(i), sourceRepoSizes.get(i), clonePath);
 		}
 
 		//TODO: Instead of collecting patch commits for a final insertion, change getPatchCommits
@@ -100,7 +97,11 @@ public class PatchFinderThread implements Runnable {
 		PatchFinder.getPatchCommits().addAll(foundPatchCommits); // TODO: This may be causing race conditions
 
 		final long delta = (System.currentTimeMillis() - totalStart) / 1000;
-		logger.info("Done scraping {} patch commits from CVE(s) {} in {} seconds", foundPatchCommits.size(), cvePatchEntry.keySet(), delta);
+		logger.info("Done scraping {} patch commits from CVE '{}' in {} seconds",
+				foundPatchCommits.size(),
+				cveId,
+				delta
+		);
 	}
 
 	/**
@@ -109,7 +110,7 @@ public class PatchFinderThread implements Runnable {
 	 * @param sources sources to sort
 	 * @return list of source counts (1:1 with sorted sources list)
 	 */
-	private ArrayList<Integer> orderSources(ArrayList<String> sources) {
+	private List<Integer> orderSources(List<String> sources) {
 		// Map commit counts to their respective sources
 		final HashMap<String, Integer> sourceCounts = new HashMap<>(sources.size());
 		sources.forEach(s -> sourceCounts.put(s, getCommitCount(s)));
@@ -186,7 +187,7 @@ public class PatchFinderThread implements Runnable {
 	 * @param patchSource patch source being scraped
 	 * @param commitCount number of commits in the patch source
 	 */
-	private synchronized void findPatchCommits(ArrayList<PatchCommit> foundPatchCommits, String cve, String patchSource, int commitCount) {
+	private static synchronized void findPatchCommits(ArrayList<PatchCommit> foundPatchCommits, String cve, String patchSource, int commitCount, String clonePath) {
 		try {
 			// Process found repository based on size (commit count on master branch)
 
@@ -195,7 +196,7 @@ public class PatchFinderThread implements Runnable {
 				findPatchCommitsFromUrl(foundPatchCommits, cve, patchSource, commitCount);
 			// If not over limit, clone repo to parse commits
 			else if(commitCount <= PatchFinderEnvVars.getCloneCommitLimit())
-				findPatchCommitsFromRepo(foundPatchCommits, cve, patchSource);
+				findPatchCommitsFromRepo(foundPatchCommits, cve, patchSource, clonePath);
 			// Otherwise, handle extra large repo
 			else
 				throw new IllegalArgumentException(
@@ -218,7 +219,7 @@ public class PatchFinderThread implements Runnable {
 	 * @param patchSource patch source being scraped
 	 * @param commitCount number of commits in the patch source
 	 */
-	private void findPatchCommitsFromUrl(ArrayList<PatchCommit> foundPatchCommits, String cve, String patchSource, int commitCount) {
+	private static void findPatchCommitsFromUrl(ArrayList<PatchCommit> foundPatchCommits, String cve, String patchSource, int commitCount) {
 		// Define page range
 		final int numPages = (int) Math.ceil((double) commitCount / 35);
 		final String baseCommitsUrl = patchSource + "/commits";
@@ -271,14 +272,14 @@ public class PatchFinderThread implements Runnable {
 	 * @param cve cve being analyzed
 	 * @param patchSource patch source being cloned
 	 */
-	private void findPatchCommitsFromRepo(ArrayList<PatchCommit> foundPatchCommits, String cve, String patchSource) {
+	private static void findPatchCommitsFromRepo(ArrayList<PatchCommit> foundPatchCommits, String cve, String patchSource, String clonePath) {
 		try {
 			// Split source URI into parts to build local download path string
 			final String[] sourceParts = patchSource.split("/");
 			final int len = sourceParts.length;
 
 			// Add vendor and product name from URI
-			String localDownloadLoc = clonePath + "/" + cve + "-" + sourceParts[len - 2] + "-" + sourceParts[len - 1];
+			String localDownloadLoc = clonePath + "/" + /* cve + "-" + */ sourceParts[len - 2] + "-" + sourceParts[len - 1];
 
 			// Clone git repo
 			GitController gitController = new GitController(
@@ -311,7 +312,7 @@ public class PatchFinderThread implements Runnable {
 	 * @param cve cve being analyzed
 	 * @param commitElements collection of commit elements
 	 */
-	private void parseCommitObjects(List<PatchCommit> foundPatchCommits, String cve, Elements commitElements) {
+	private static void parseCommitObjects(List<PatchCommit> foundPatchCommits, String cve, Elements commitElements) {
 		// Check if the commit message matches any of the regex provided
 		for (Pattern pattern : patchPatterns) {
 			for (Element object : commitElements) {
@@ -363,7 +364,7 @@ public class PatchFinderThread implements Runnable {
 	 * @param timelineElements collection of timeline elements
 	 * @return parsed timeline elements
 	 */
-	private List<String> parseTimeline(Elements timelineElements) {
+	private static List<String> parseTimeline(Elements timelineElements) {
 		List<String> timeline = new ArrayList<>();
 
 		for (Element timelineElement : timelineElements) {
@@ -379,7 +380,7 @@ public class PatchFinderThread implements Runnable {
 	 * @param commitPage DOM to extract from
 	 * @return extracted time to patch
 	 */
-	private String extractTimeToPatch(Document commitPage) {
+	private static String extractTimeToPatch(Document commitPage) {
 		Element timeToPatchElement = commitPage.selectFirst("relative-time[datetime]:not(.commit-author-date)");
 		if (timeToPatchElement != null) {
 			return timeToPatchElement.attr("datetime");
@@ -392,7 +393,7 @@ public class PatchFinderThread implements Runnable {
 	 * @param commitPage DOM to extract from
 	 * @return extracted lines changed count
 	 */
-	private int extractLinesChanged(Document commitPage) {
+	private static int extractLinesChanged(Document commitPage) {
 		Element linesChangedElement = commitPage.selectFirst("span.text-mono");
 		if (linesChangedElement != null) {
 			String linesChangedText = linesChangedElement.text();
@@ -411,7 +412,7 @@ public class PatchFinderThread implements Runnable {
 	 * @param url url to scrape
 	 * @return found commit elements
 	 */
-	private Elements getCommitObjects(String url) {
+	private static Elements getCommitObjects(String url) {
 		// Init output Elements list
 		final Elements commitObjects = new Elements();
 

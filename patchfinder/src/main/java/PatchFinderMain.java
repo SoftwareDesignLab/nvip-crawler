@@ -77,7 +77,13 @@ public class PatchFinderMain extends Thread {
         final int affectedProductsCount = affectedProducts.values().stream().map(CpeGroup::getVersionsCount).reduce(0, Integer::sum);
         logger.info("Successfully got {} CVEs mapped to {} affected products from the database", affectedProducts.size(), affectedProductsCount);
         try {
-            PatchFinder.run(affectedProducts, PatchFinderEnvVars.getCveLimit());
+            // TODO: Delegate to threads
+            for (String cveId : affectedProducts.keySet()) {
+                PatchFinder.run(cveId, affectedProducts.get(cveId), PatchFinderEnvVars.getCveLimit());
+            }
+
+            // When all threads are done, write source dict to file
+            PatchFinder.writeSourceDict();
         } catch (IOException e) {
             logger.error("A fatal error attempting to complete jobs: {}", e.toString());
         }
@@ -85,29 +91,32 @@ public class PatchFinderMain extends Thread {
 
     // TODO: Implement job streaming (queue received jobs to be consumed, support end messages)
     private void runRabbit() {
-        // Start busy-wait loop
-        final Messenger rabbitMQ = new Messenger(
+        // Initialize messenger
+        final Messenger messenger = new Messenger(
                 PatchFinderEnvVars.getRabbitHost(),
                 PatchFinderEnvVars.getRabbitVHost(),
                     PatchFinderEnvVars.getRabbitPort(),PatchFinderEnvVars.getRabbitUsername(),
                 PatchFinderEnvVars.getRabbitPassword(),
                     PatchFinderEnvVars.getRabbitInputQueue()
         );
-        logger.info("Starting busy-wait loop for jobs...");
-        while(true) {
-            try {
-                // Wait and get jobs
-                final List<String> jobs = rabbitMQ.waitForProductNameExtractorMessage(PatchFinderEnvVars.getRabbitPollInterval());
 
-                // If null is returned, either and error occurred or intentional program quit
-                if(jobs == null) break;
-
-                // Otherwise, run received jobs
-                PatchFinder.run(jobs);
-            } catch (IOException | InterruptedException e) {
-                logger.error("A fatal error occurred during job waiting: {}", e.toString());
-                break;
-            }
-        }
+        // Start job handling
+        messenger.startHandlingJobs();
+//        logger.info("Starting busy-wait loop for jobs...");
+//        while(true) {
+//            try {
+//                // Wait and get jobs
+//                final List<String> jobs = rabbitMQ.waitForProductNameExtractorMessage(PatchFinderEnvVars.getRabbitPollInterval());
+//
+//                // If null is returned, either and error occurred or intentional program quit
+//                if(jobs == null) break;
+//
+//                // Otherwise, run received jobs
+//                PatchFinder.run(jobs);
+//            } catch (IOException e) {
+//                logger.error("A fatal error occurred during job waiting: {}", e.toString());
+//                break;
+//            }
+//        }
     }
 }
