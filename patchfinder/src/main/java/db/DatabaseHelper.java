@@ -201,10 +201,10 @@ public class DatabaseHelper {
 	 * Collects a map of CPEs with their correlated CVE and Vuln ID used for
 	 * collecting patches given a list of CVE ids.
 	 *
-	 * @param cveIds CVEs to get affected products for
+	 * @param cveId CVEs to get affected products for
 	 * @return a map of affected products
 	 */
-	public Map<String, CpeGroup> getAffectedProducts(List<String> cveIds) {
+	public Map<String, CpeGroup> getAffectedProducts(String cveId) {
 		Map<String, CpeGroup> affectedProducts = new HashMap<>();
 		// Prepare statement
 		try (Connection conn = getConnection();
@@ -213,16 +213,14 @@ public class DatabaseHelper {
 		) {
 			// Execute correct statement and get result set
 			ResultSet res = null;
-			if(cveIds == null) {
+			if(cveId == null) {
 				res = getAll.executeQuery();
 				parseAffectedProducts(affectedProducts, res);
 			}
 			else {
-				for (String cveId : cveIds) {
-					getById.setString(1, cveId);
-					res = getById.executeQuery();
-					parseAffectedProducts(affectedProducts, res);
-				}
+				getById.setString(1, cveId);
+				res = getById.executeQuery();
+				parseAffectedProducts(affectedProducts, res);
 			}
 
 		} catch (Exception e) {

@@ -25,6 +25,7 @@ package messenger;
  */
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
@@ -33,15 +34,16 @@ import com.rabbitmq.client.DeliverCallback;
 import db.DatabaseHelper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import patches.PatchFinder;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.*;
+import java.util.regex.Pattern;
 
 /**
  * Messenger class that handles RabbitMQ interaction
@@ -52,15 +54,36 @@ public class Messenger {
     private final String inputQueue;
     private static final Logger logger = LogManager.getLogger(DatabaseHelper.class.getSimpleName());
     private static final ObjectMapper OM = new ObjectMapper();
-    private ConnectionFactory factory;
+    private static final Pattern CVE_REGEX = Pattern.compile("CVE-\\d{4}-\\d{4,7}");
+    private final ConnectionFactory factory;
+    private Connection inputConnection = null;
+    private Channel inputChannel = null;
 
     private final BlockingQueue<List<String>> jobListQueue = new LinkedBlockingQueue<>();
 
+    // TODO: Only pull messages as we do jobs, leaving the rest of the queue intact
     // Define callback handler
-    private final DeliverCallback deliverCallback = (consumerTag, delivery) -> {
+    private static final DeliverCallback deliverCallback = (consumerTag, delivery) -> {
         String message = new String(delivery.getBody(), StandardCharsets.UTF_8);
-        List<String> parsedIds = parseIds(message);
-        if(parsedIds.size() > 0 && !jobListQueue.offer(parsedIds)) logger.error("Job response could not be added to message queue");
+        String cveId = parseMessage(message);
+//        if(cveId != null) new Thread(() -> {
+//            try {
+//                PatchFinder.run(cveId);
+//            } catch (IOException e) {
+//                throw new RuntimeException(e);
+//            }
+//        }).start();
+
+        if(cveId != null) {
+            try {
+                PatchFinder.run(cveId);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        else logger.warn("Could not parse cveId from message '{}'", message);
+//        List<String> parsedIds = parseIds(message);
+//        if(parsedIds.size() > 0 && !jobListQueue.offer(parsedIds)) logger.error("Job response could not be added to message queue");
     };
 
     /**
@@ -71,11 +94,11 @@ public class Messenger {
      */
     public Messenger(String host, String vhost, int port, String username, String password, String inputQueue) {
         this.factory = new ConnectionFactory();
-        factory.setHost(host);
-        factory.setVirtualHost(vhost);
-        factory.setPort(port);
-        factory.setUsername(username);
-        factory.setPassword(password);
+        this.factory.setHost(host);
+        this.factory.setVirtualHost(vhost);
+        this.factory.setPort(port);
+        this.factory.setUsername(username);
+        this.factory.setPassword(password);
 
 //        try {
 //            factory.useSslProtocol();
@@ -88,8 +111,41 @@ public class Messenger {
         this.inputQueue = inputQueue;
     }
 
-    public void setFactory(ConnectionFactory factory) {
+    // For JUnit tests
+    protected Messenger(ConnectionFactory factory, String inputQueue) {
         this.factory = factory;
+
+//        try {
+//            factory.useSslProtocol();
+//        } catch (NoSuchAlgorithmException e) {
+//            throw new RuntimeException(e);
+//        } catch (KeyManagementException e) {
+//            throw new RuntimeException(e);
+//        }
+
+        this.inputQueue = inputQueue;
+    }
+
+    private static Channel createChannel(Connection connection) {
+        try { return connection.createChannel(); }
+        catch (IOException e) { return null; }
+    }
+
+    private Channel getInputChannel() {
+        // Get channel if still open, otherwise create new channel from connection object
+        return this.inputChannel.isOpen() ? this.inputChannel : createChannel(this.inputConnection);
+    }
+
+    public void startHandlingJobs() {
+        // Connect to rabbit input queue and subscribe callback
+        try {
+            this.inputConnection = this.factory.newConnection();
+            this.inputChannel = this.inputConnection.createChannel();
+            this.inputChannel.basicConsume(inputQueue, true, deliverCallback, consumerTag -> { });
+        }
+        catch (IOException | TimeoutException e) {
+            throw new IllegalArgumentException("Rabbit connection could not be established");
+        }
     }
 
     /**
@@ -102,8 +158,12 @@ public class Messenger {
         // Initialize job list
         List<String> cveIds = new ArrayList<>();
 
-        try(Connection connection = factory.newConnection();
-            Channel channel = connection.createChannel()) {
+        final Channel inputChannel = this.getInputChannel();
+        if(inputChannel != null) {
+
+        }
+
+        try(Channel channel = this.inputConnection.createChannel()) {
             // Declare the input queue
             channel.queueDeclare(inputQueue, true, false, false, null);
             channel.basicConsume(inputQueue, true, deliverCallback, consumerTag -> { });
@@ -133,17 +193,18 @@ public class Messenger {
     }
 
     /**
-     * Parse a list of ids from a given json string. (String should be )
+     * Parse an id from a given json string. (String should be {'cveId': 'CVE-2023-1001'})
      * @param jsonString a JSON representation of an array of String CVE ids
      * @return parsed list of ids
      */
-    @SuppressWarnings("unchecked")
-    public List<String> parseIds(String jsonString) {
+    public static String parseMessage(String jsonString) {
         try {
-            return OM.readValue(jsonString, ArrayList.class);
+            logger.info("incoming cve list: {}", jsonString);
+            final JsonNode messageNode = OM.readTree(jsonString);
+            return messageNode.get("cveId").asText();
         } catch (JsonProcessingException e) {
             logger.error("Failed to parse list of ids from json string: {}", e.toString());
-            return new ArrayList<>();
+            return null;
         }
     }
 
@@ -166,18 +227,22 @@ public class Messenger {
     public static void main(String[] args) {
         final String INPUT_QUEUE = "PNE_OUT";
         final Messenger m = new Messenger("localhost", "/", 5672 , "guest", "guest", INPUT_QUEUE);
-        m.sendDummyMessage(INPUT_QUEUE,"[\"CVE-2023-0001\", \"CVE-2023-0002\"]");
-        m.sendDummyMessage(INPUT_QUEUE, "[\"CVE-2023-0003\"]");
-        m.sendDummyMessage(INPUT_QUEUE, "[\"CVE-2023-0004\"]");
-        m.sendDummyMessage(INPUT_QUEUE, "[\"CVE-2023-0005\"]");
-        m.sendDummyMessage(INPUT_QUEUE, "[\"CVE-2023-0006\"]");
-        m.sendDummyMessage(INPUT_QUEUE, "[\"CVE-2023-0007\", \"CVE-2023-0008\", \"CVE-2023-0009\"]");
-
-        try { Thread.sleep(5000); } catch (Exception ignored) { }
-
-        m.sendDummyMessage(INPUT_QUEUE, "[\"CVE-2023-0010\"]");
-        m.sendDummyMessage(INPUT_QUEUE, "[\"CVE-2023-0011\"]");
-        m.sendDummyMessage(INPUT_QUEUE, "[\"CVE-2023-0012\"]");
+        DatabaseHelper dbh = new DatabaseHelper("mysql", "jdbc:mysql://localhost:3306/nvip?useSSL=false&allowPublicKeyRetrieval=true", "root", "root");
+        final Set<String> cveIds = dbh.getAffectedProducts(null).keySet();
+        for (String id : cveIds) {
+            m.sendDummyMessage(INPUT_QUEUE, id);
+        }
+//        m.sendDummyMessage(INPUT_QUEUE, "\"CVE-2023-0002\"");
+//        m.sendDummyMessage(INPUT_QUEUE, "\"CVE-2023-0003\"");
+//        m.sendDummyMessage(INPUT_QUEUE, "\"CVE-2023-0004\"");
+//        m.sendDummyMessage(INPUT_QUEUE, "\"CVE-2023-0005\"");
+//        m.sendDummyMessage(INPUT_QUEUE, "\"CVE-2023-0006\"");
+//
+//        try { Thread.sleep(5000); } catch (Exception ignored) { }
+//
+//        m.sendDummyMessage(INPUT_QUEUE, "\"CVE-2023-007\"");
+//        m.sendDummyMessage(INPUT_QUEUE, "\"CVE-2023-008\"");
+//        m.sendDummyMessage(INPUT_QUEUE, "\"CVE-2023-009\"");
 
 //        m.waitForProductNameExtractorMessage(5);
 //        ObjectMapper OM = new ObjectMapper();

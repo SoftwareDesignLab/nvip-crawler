@@ -51,55 +51,51 @@ public class PatchUrlFinder {
 
 	/**
 	 * Parses possible patch URLs from all CPEs in the given affectedProducts map
-	 * @param possiblePatchUrls map of CVEs -> a list of possible patch urls (output list, initially not empty)
-	 * @param affectedProducts map of CVEs -> CPEs to parse source urls for
+	 * @param cveId id of Cve to parse urls for
+	 * @param affectedProduct map of CVEs -> CPEs to parse source urls for
 	 * @param cveLimit maximum number of CVEs to process
 	 * @param isStale boolean representation of the quality of existing data in possiblePatchUrls
 	 */
-	public void parsePatchURLs(Map<String, ArrayList<String>> possiblePatchUrls, Map<String, CpeGroup> affectedProducts, int cveLimit, boolean isStale) {
+	public List<String> parsePatchURLs(String cveId, CpeGroup affectedProduct, int cveLimit, boolean isStale) {
+		final List<String> urls = new ArrayList<>();
 		int cachedUrlCount = 0, foundCount = 0;
-		for (Map.Entry<String, CpeGroup> entry : affectedProducts.entrySet()) {
-			final long entryStart = System.currentTimeMillis();
-			final String cveId = entry.getKey().trim();
-			final CpeGroup group = entry.getValue();
+		final long entryStart = System.currentTimeMillis();
 
-			// Skip entries that already have values (only if refresh is not needed)
-			if(!isStale) {
-				if(possiblePatchUrls.containsKey(cveId)) {
-//					logger.info("Found {} existing & fresh possible sources for CVE {}, skipping url parsing...", possiblePatchUrls.get(cveId).size(), cveId);
-					final int urlCount = possiblePatchUrls.get(cveId).size();
-					foundCount += urlCount;
-					cachedUrlCount++;
-					if(urlCount != 0) continue;
-				}
-			} else possiblePatchUrls.remove(cveId); // Remove stale entry
+//		// Skip entries that already have values (only if refresh is not needed)
+//		if(!isStale) {
+//			if(urls.containsKey(cveId)) {
+////					logger.info("Found {} existing & fresh possible sources for CVE {}, skipping url parsing...", possiblePatchUrls.get(cveId).size(), cveId);
+//				final int urlCount = urls.size();
+//				foundCount += urlCount;
+//				cachedUrlCount++;
+//				if(urlCount != 0) continue;
+//			}
+//		} else urls.remove(cveId); // Remove stale entry
 
 
-			// Warn and skip blank entries
-			if(cveId.isEmpty() || group.getVersionsCount() == 0) {
-				logger.warn("Unable to parse URLs for empty affected product");
-				continue;
-			}
+		// Warn and skip blank entries
+		if(cveId.isEmpty() || affectedProduct.getVersionsCount() == 0) {
+			logger.warn("Unable to parse URLs for empty affected product");
+			return  urls;
+		}
 
-			// Break out of loop when limit is reached
-			if (cveLimit != 0 && possiblePatchUrls.size() >= cveLimit) {
-				logger.info("CVE limit of {} reached for patchfinder", cveLimit);
-				break;
-			}
+//		// Break out of loop when limit is reached
+//		if (cveLimit != 0 && urls.size() >= cveLimit) {
+//			logger.info("CVE limit of {} reached for patchfinder", cveLimit);
+//			break;
+//		}
 
-			try {
-				// Find urls
-				final ArrayList<String> urls = parseURL(group.getVendor(), group.getProduct());
-
-				// Store found urls
-				possiblePatchUrls.put(cveId, urls);
-				long entryDelta = (System.currentTimeMillis() - entryStart) / 1000;
-				logger.info("Found {} potential patch sources for CVE '{}' in {} seconds", urls.size(), cveId, entryDelta);
-			} catch (IOException e) {
-				logger.error("Failed to parse urls from product {}: {}", group.getProduct(), e);
-			}
+		try {
+			// Find and store urls
+			urls.addAll(parseURL(affectedProduct.getVendor(), affectedProduct.getProduct()));
+			long entryDelta = (System.currentTimeMillis() - entryStart) / 1000;
+			logger.info("Found {} potential patch sources for CVE '{}' in {} seconds", urls.size(), cveId, entryDelta);
+			return urls;
+		} catch (IOException e) {
+			logger.error("Failed to parse urls from product {}: {}", affectedProduct.getProduct(), e);
 		}
 		logger.info("Found {} existing & fresh possible sources for {} CVEs, skipping url parsing...", foundCount, cachedUrlCount);
+		return urls;
 	}
 
 	/**

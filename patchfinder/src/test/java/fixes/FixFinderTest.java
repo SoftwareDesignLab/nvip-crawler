@@ -22,7 +22,9 @@ package fixes; /**
  * SOFTWARE.
  */
 
+import db.DatabaseHelper;
 import env.FixFinderEnvVars;
+import env.SharedEnvVars;
 import model.CpeEntry;
 import model.CpeGroup;
 import org.junit.Before;
@@ -39,6 +41,16 @@ import static org.mockito.Mockito.mock;
  * @author Richard Sawh
  */
 public class FixFinderTest {
+    static {
+        SharedEnvVars.initializeEnvVars(true);
+        final DatabaseHelper dbh = new DatabaseHelper(
+                SharedEnvVars.getDatabaseType(),
+                SharedEnvVars.getHikariUrl(),
+                SharedEnvVars.getHikariUser(),
+                SharedEnvVars.getHikariPassword()
+        );
+        FixFinder.init(dbh);
+    }
 
     @Before
     public void setUp() {

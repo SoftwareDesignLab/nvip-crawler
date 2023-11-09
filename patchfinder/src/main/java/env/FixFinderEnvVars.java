@@ -200,9 +200,8 @@ public class FixFinderEnvVars {
             logger.info("Setting PATCH_SRC_URL_PATH to {}", patchSrcUrlPath);
         } else logger.warn("Could not fetch PATCH_SRC_URL_PATH from env vars, defaulting to {}", patchSrcUrlPath);
 
-        fetchHikariEnvVars(systemProps, fileProps);
+//        fetchHikariEnvVars(systemProps, fileProps);
         fetchRabbitEnvVars(systemProps, fileProps);
-
     }
 
     /**

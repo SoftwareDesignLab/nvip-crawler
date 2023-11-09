@@ -84,19 +84,20 @@ public class GitController {
 			final String[] pathParts = localPath.split("/");
 			logger.info("{} repository does not exist! Cloning repo now, this will take some time...", pathParts[pathParts.length - 1]);
 			localFileDir = new File(localPath);
-			CloneCommand cloneCommand = Git.cloneRepository();
-			cloneCommand.setURI(remotePath);
-			cloneCommand.setDirectory(localFileDir);
-			cloneCommand.call().close();
+			if(!localFileDir.exists()) {
+				CloneCommand cloneCommand = Git.cloneRepository();
+				cloneCommand.setURI(remotePath);
+				cloneCommand.setDirectory(localFileDir);
+				cloneCommand.call().close();
 
-			git = Git.open(localFileDir);
-			StoredConfig config = git.getRepository().getConfig();
-			config.setString("branch", "master", "merge", "refs/heads/master");
-			config.setString("branch", "master", "remote", "origin");
-			config.setString("remote", "origin", "fetch", "+refs/heads/*:refs/remotes/origin/*");
-			config.setString("remote", "origin", "url", remotePath);
-			config.save();
-
+				git = Git.open(localFileDir);
+				StoredConfig config = git.getRepository().getConfig();
+				config.setString("branch", "master", "merge", "refs/heads/master");
+				config.setString("branch", "master", "remote", "origin");
+				config.setString("remote", "origin", "fetch", "+refs/heads/*:refs/remotes/origin/*");
+				config.setString("remote", "origin", "url", remotePath);
+				config.save();
+			} else logger.info("{} repository already exists at path '{}'", pathParts[pathParts.length - 1], localPath);
 		} catch (Exception e) {
 			logger.error("Error while cloning repo at: {}\n{}", remotePath, e);
 			return false;
