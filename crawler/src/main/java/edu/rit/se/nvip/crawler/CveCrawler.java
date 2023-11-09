@@ -146,6 +146,9 @@ public class CveCrawler extends WebCrawler {
 				updateCrawlerReport("No CVEs found at " + pageURL + "!");
 			} else {
 				for (RawVulnerability vulnerability : vulnerabilityList) {
+					if (vulnerability.getCveId().isEmpty()) {
+						continue;
+					}
 					if (foundCVEs.get(vulnerability.getCveId()) != null) {
 						foundCVEs.get(vulnerability.getCveId()).add(vulnerability);
 					} else {
