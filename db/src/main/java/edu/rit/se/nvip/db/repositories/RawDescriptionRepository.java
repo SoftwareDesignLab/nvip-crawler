@@ -103,11 +103,22 @@ public class RawDescriptionRepository {
                         log.error("", e);
                     }
                 }
+                int[] results;
+                try {
+                    results = pstmt.executeBatch();
+                } catch (BatchUpdateException e) {
+                    // we expect this exception to realistically happen for every batch because a batch will likely contain a CVE that matches an existing CVE in the database
+                    // where "matching" means it violates the (cve_id, description_hash, domain) uniqueness constraint.
+                    // technically it could be caused by other insertion errors, but we have no way of distinguishing them with this setup
+                    results = e.getUpdateCounts();
+                }
 
-                int[] results = pstmt.executeBatch();
                 log.info("Size of submittedVulns: {} - Size of results: {}", submittedVulns.size(), results.length);
                 int i = 0;
                 for(RawVulnerability vuln: submittedVulns) {
+                    if (results.length == 0) {
+                        break;
+                    }
                     if (results[i] == Statement.SUCCESS_NO_INFO || results[i] == Statement.KEEP_CURRENT_RESULT || results[i] == Statement.CLOSE_CURRENT_RESULT) {
                         inserted.add(vuln);
                     } else {
@@ -116,18 +127,6 @@ public class RawDescriptionRepository {
                     i++;
                 }
                 pstmt.clearBatch();
-            }
-        } catch (BatchUpdateException e) {
-            log.error("Failed to insert all vulnerabilities in batch: {}", e.getMessage());
-            int[] results = e.getUpdateCounts();
-            if(results.length == vulns.size()){
-                for(int i = 0; i < vulns.size(); i++){
-                    if(results[i] == Statement.SUCCESS_NO_INFO || results[i] == Statement.KEEP_CURRENT_RESULT || results[i] == Statement.CLOSE_CURRENT_RESULT) {
-                        inserted.add(vulns.get(i));
-                    } else {
-                        log.info("Failed to insert {}: {}", vulns.get(i).getCveId(), results[i]);
-                    }
-                }
             }
         } catch (SQLException e) {
             log.error("Failed to execute batch insert");
@@ -183,5 +182,26 @@ public class RawDescriptionRepository {
         }
 
         return rawCves;
+    }
+
+    public static void main(String[] args) {
+        List<RawVulnerability> list = new ArrayList<>();
+        RawDescriptionRepository repo = new RawDescriptionRepository(DatabaseHelper.getInstance().getDataSource());
+
+        List<RawVulnerability> singleList = new ArrayList<>();
+        singleList.add(new RawVulnerability("http://url.gov/page/0", "CVE-1234", "01/01/2023", null, "description", "generic"));
+        singleList.forEach(r->r.setSourceType("cna"));
+
+        list.add(new RawVulnerability("http://url.gov/page/1", "CVE-6666", "01/01/2023", null, "description", "generic"));
+        list.add(new RawVulnerability("http://url.gov/page/2", "CVE-7777", "01/01/2023", null, "description", "generic"));
+        list.add(new RawVulnerability("http://url.gov/page/1", "CVE-8888", "01/01/2023", null, "description", "generic"));
+        list.add(new RawVulnerability("http://url.gov/page/1", "CVE-9999", "01/01/2023", null, "description", "generic"));
+        list.forEach(r->r.setSourceType("cna"));
+
+        List<RawVulnerability> singleInsert = repo.batchInsertRawVulnerability(singleList);
+        System.out.println(singleInsert.size());
+
+        List<RawVulnerability> inserted = repo.batchInsertRawVulnerability(list);
+        System.out.println(inserted.size());
     }
 }
