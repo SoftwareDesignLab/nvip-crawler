@@ -146,6 +146,10 @@ public class CveCrawler extends WebCrawler {
 				updateCrawlerReport("No CVEs found at " + pageURL + "!");
 			} else {
 				for (RawVulnerability vulnerability : vulnerabilityList) {
+					if (vulnerability.getCveId().isEmpty()) {
+						log.info("A cve found by the {} parser at the URL {} has an empty cve_id and will not be inserted", vulnerability.getParserType(), vulnerability.getSourceURL());
+						continue;
+					}
 					if (foundCVEs.get(vulnerability.getCveId()) != null) {
 						foundCVEs.get(vulnerability.getCveId()).add(vulnerability);
 					} else {
