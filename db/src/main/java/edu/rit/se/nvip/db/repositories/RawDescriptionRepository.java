@@ -42,8 +42,14 @@ public class RawDescriptionRepository {
 
             pstmt.setString(1, vuln.getDescription());
             pstmt.setString(2, vuln.getCveId());
-            pstmt.setTimestamp(3, Timestamp.valueOf(vuln.getCreatedDateAsDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
-            pstmt.setTimestamp(4, Timestamp.valueOf(vuln.getPublishDateAsDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
+            Timestamp cdate = Timestamp.valueOf(vuln.getCreatedDateAsDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+            pstmt.setTimestamp(3, cdate);
+            try {
+                pstmt.setTimestamp(4, Timestamp.valueOf(vuln.getPublishDateAsDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
+            } catch (DateTimeParseException e) {
+                log.error("Failed to parse publish date for {}. Insertion will proceed using the created date as the publish date.", vuln.getCveId());
+                pstmt.setTimestamp(4, cdate);
+            }
             try {
                 pstmt.setTimestamp(5, Timestamp.valueOf(vuln.getLastModifiedDateAsDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
             } catch (DateTimeParseException e) {
@@ -84,8 +90,14 @@ public class RawDescriptionRepository {
                     try {
                         pstmt.setString(1, vuln.getDescription());
                         pstmt.setString(2, vuln.getCveId());
-                        pstmt.setTimestamp(3, Timestamp.valueOf(vuln.getCreatedDateAsDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
-                        pstmt.setTimestamp(4, Timestamp.valueOf(vuln.getPublishDateAsDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
+                        Timestamp cdate = Timestamp.valueOf(vuln.getCreatedDateAsDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+                        pstmt.setTimestamp(3, cdate);
+                        try {
+                            pstmt.setTimestamp(4, Timestamp.valueOf(vuln.getPublishDateAsDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
+                        } catch (DateTimeParseException e) {
+                            log.error("Failed to parse publish date for {}. Insertion will proceed using the created date as the publish date.", vuln.getCveId());
+                            pstmt.setTimestamp(4, cdate);
+                        }
                         try {
                             pstmt.setTimestamp(5, Timestamp.valueOf(vuln.getLastModifiedDateAsDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
                         } catch (DateTimeParseException e) {
@@ -192,10 +204,10 @@ public class RawDescriptionRepository {
         singleList.add(new RawVulnerability("http://url.gov/page/0", "CVE-1234", "01/01/2023", null, "description", "generic"));
         singleList.forEach(r->r.setSourceType("cna"));
 
-        list.add(new RawVulnerability("http://url.gov/page/1", "CVE-6666", "01/01/2023", null, "description", "generic"));
-        list.add(new RawVulnerability("http://url.gov/page/2", "CVE-7777", "01/01/2023", null, "description", "generic"));
-        list.add(new RawVulnerability("http://url.gov/page/1", "CVE-8888", "01/01/2023", null, "description", "generic"));
-        list.add(new RawVulnerability("http://url.gov/page/1", "CVE-9999", "01/01/2023", null, "description", "generic"));
+        list.add(new RawVulnerability("http://url.gov/page/1", "CVE-6666", "not a date", null, "description", "generic"));
+        list.add(new RawVulnerability("http://url.gov/page/2", "CVE-7777", "not a date", null, "description", "generic"));
+        list.add(new RawVulnerability("http://url.gov/page/1", "CVE-8888", "not a date", null, "description", "generic"));
+        list.add(new RawVulnerability("http://url.gov/page/1", "CVE-9999", "not a date", null, "description", "generic"));
         list.forEach(r->r.setSourceType("cna"));
 
         List<RawVulnerability> singleInsert = repo.batchInsertRawVulnerability(singleList);
