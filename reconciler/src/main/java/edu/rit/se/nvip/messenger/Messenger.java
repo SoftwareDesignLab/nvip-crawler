@@ -7,6 +7,8 @@ import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.DeliverCallback;
 import edu.rit.se.nvip.DatabaseHelper;
+import edu.rit.se.nvip.ReconcilerController;
+import edu.rit.se.nvip.model.CompositeVulnerability;
 import edu.rit.se.nvip.utils.ReconcilerEnvVars;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -16,7 +18,9 @@ import java.nio.charset.StandardCharsets;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -29,6 +33,8 @@ public class Messenger {
     private static final Logger logger = LogManager.getLogger(DatabaseHelper.class.getSimpleName());
     private static final ObjectMapper OM = new ObjectMapper();
     private ConnectionFactory factory;
+
+    private ReconcilerController rc = new ReconcilerController();
 
     public Messenger(){
         // Instantiate with default values
@@ -71,64 +77,44 @@ public class Messenger {
         this.outputQueue = outputQueue;
     }
 
+    public void run(){
+        logger.info("Waiting for jobs from Crawler...");
+        try(Connection connection = factory.newConnection();
+            Channel channel = connection.createChannel()){
+            channel.queueDeclare(inputQueue, false, false, false, null);
+            channel.queueDeclare(outputQueue, false, false, false, null);
+
+            DeliverCallback deliverCallback = (consumerTag, delivery) -> {
+                String message = new String(delivery.getBody(), StandardCharsets.UTF_8);
+                Set<String> parsedIds = new HashSet<>(parseIds(message));
+                Set<CompositeVulnerability> reconciledVulns = rc.main(parsedIds);
+                reconciledVulns.stream()
+                        .filter(v -> v.getReconciliationStatus() == CompositeVulnerability.ReconciliationStatus.NEW ||
+                                v.getReconciliationStatus() == CompositeVulnerability.ReconciliationStatus.UPDATED)
+                        .map(CompositeVulnerability::getCveId)
+                        .forEach(vuln -> {
+                            try {
+                                channel.basicPublish("", outputQueue, null, genJson(List.of(vuln)).getBytes(StandardCharsets.UTF_8));
+                            } catch (IOException e) {
+                                throw new RuntimeException(e);
+                            }
+                        });
+            };
+            channel.basicConsume(inputQueue, true, deliverCallback, consumerTag -> { });
+
+        } catch (TimeoutException e) {
+            logger.error("Error occurred while sending the Reconciler message to RabbitMQ: {}", e.getMessage());
+        } catch (IOException e) {
+            logger.error(e.getMessage());
+        }
+    }
+
     /**
      * Used in tests to set a mock factory
      * @param factory
      */
     public void setFactory(ConnectionFactory factory) {
         this.factory = factory;
-    }
-
-    /**
-     * Waits for message to be sent from Crawler for rabbitTimeout amount of seconds and retrieves it
-     * @param rabbitTimeout
-     * @return
-     * @throws Exception
-     */
-    public List<String> waitForCrawlerMessage(int rabbitTimeout) throws Exception {
-        logger.info("Waiting for jobs from Crawler...");
-        try(Connection connection = factory.newConnection();
-            Channel channel = connection.createChannel()){
-            channel.queueDeclare(inputQueue, false, false, false, null);
-
-            BlockingQueue<List<String>> messageQueue = new ArrayBlockingQueue<>(1);
-
-            DeliverCallback deliverCallback = (consumerTag, delivery) -> {
-                String message = new String(delivery.getBody(), StandardCharsets.UTF_8);
-                List<String> parsedIds = parseIds(message);
-                messageQueue.offer(parsedIds);
-            };
-            channel.basicConsume(inputQueue, true, deliverCallback, consumerTag -> { });
-            if (rabbitTimeout > 0) {
-                return messageQueue.poll(rabbitTimeout, TimeUnit.SECONDS);
-            } else { // negative number means we don't have a timeout and we'll wait as long as we need to
-                return messageQueue.take();
-            }
-
-        } catch (TimeoutException e) {
-            logger.error("Error occurred while sending the Reconciler message to RabbitMQ: {}", e.getMessage());
-            return null;
-        } catch (IOException e) {
-            logger.error(e.getMessage());
-            throw new RuntimeException(e);
-        }
-    }
-
-    /**
-     * Sends the list of Ids to the PNE
-     * @param ids
-     */
-    public void sendPNEMessage(List<String> ids) {
-
-        try (Connection connection = factory.newConnection();
-             Channel channel = connection.createChannel()) {
-            channel.queueDeclare(outputQueue, false, false, false, null);
-            String message = genJson(ids);
-            channel.basicPublish("", outputQueue, null, message.getBytes(StandardCharsets.UTF_8));
-
-        } catch (TimeoutException | IOException e) {
-            logger.error("Error occurred while sending the PNE message to RabbitMQ: {}", e.getMessage());
-        }
     }
 
     /**
@@ -159,5 +145,9 @@ public class Messenger {
             logger.error("Failed to convert list of ids to json string: {}", e.toString());
             return "";
         }
+    }
+
+    public void setReconcilerController(ReconcilerController rc){
+        this.rc = rc;
     }
 }

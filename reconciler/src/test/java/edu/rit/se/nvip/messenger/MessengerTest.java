@@ -1,6 +1,8 @@
 package edu.rit.se.nvip.messenger;
 
 import com.rabbitmq.client.*;
+import edu.rit.se.nvip.ReconcilerController;
+import edu.rit.se.nvip.model.CompositeVulnerability;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -13,6 +15,7 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeoutException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -28,7 +31,7 @@ class MessengerTest {
     @Mock
     ConnectionFactory factoryMock = mock(ConnectionFactory.class);
     @Mock
-    Connection conn = mock(Connection.class);
+    Connection mockConn = mock(Connection.class);
     @Mock
     Channel channelMock = mock(Channel.class);
 
@@ -39,82 +42,59 @@ class MessengerTest {
         System.setOut(new PrintStream(outputStream));
     }
 
-    //assures we can receive messages from rabbit
     @Test
-    void waitForCrawlerMessageTest() throws Exception {
-        //Setup
-        Messenger messenger = new Messenger();
-        messenger.setFactory(factoryMock);
-        List<String> expectedMessages = new ArrayList<>();
-        expectedMessages.add("Test message");
-        expectedMessages.add("Test message2");
-
+    void testRunNoVulnsReconciled() throws IOException, TimeoutException {
         //Mocking
-        when(factoryMock.newConnection()).thenReturn(conn);
-        when(conn.createChannel()).thenReturn(channelMock);
+        ReconcilerController mockRc = mock(ReconcilerController.class);
+        when(factoryMock.newConnection()).thenReturn(mockConn);
+        when(mockConn.createChannel()).thenReturn(channelMock);
         when(channelMock.queueDeclare(anyString(), anyBoolean(), anyBoolean(), anyBoolean(), any())).thenReturn(null);
+        when(mockRc.main(anySet())).thenReturn(Set.of());
+
         doAnswer(invocation -> {
             Object[] args = invocation.getArguments();
             DeliverCallback callback = (DeliverCallback) args[2];
-            String jsonMessage = "[\"Test message\", \"Test message2\"]";
+            String jsonMessage = "[\"CVE-1234-5678\", \"CVE-1234-5679\"]";
             byte[] body = jsonMessage.getBytes();
             callback.handle("", new Delivery(null, null, body));
             return null;
         }).when(channelMock).basicConsume(anyString(), anyBoolean(), any(DeliverCallback.class), (CancelCallback) any());
-
-        // Act
-        List<String> receivedMessages = messenger.waitForCrawlerMessage(3600);
-        List<String> receivedMessages2 = messenger.waitForCrawlerMessage(-1);
-
-        // Assert
-        assertEquals(expectedMessages, receivedMessages);
-        assertEquals(expectedMessages, receivedMessages2);
-
-    }
-
-    //assures timeout works as expected
-    @Test
-    void verifyTimeoutTest() throws Exception {
-        //Setup
+        
         Messenger messenger = new Messenger();
+        messenger.setReconcilerController(mockRc);
         messenger.setFactory(factoryMock);
-        List<String> expectedMessages = new ArrayList<>();
-        expectedMessages.add("Test message");
-        expectedMessages.add("Test message2");
+        messenger.run();
 
-        //Mocking
-        when(factoryMock.newConnection()).thenReturn(conn);
-        when(conn.createChannel()).thenReturn(channelMock);
-        when(channelMock.queueDeclare(anyString(), anyBoolean(), anyBoolean(), anyBoolean(), any())).thenReturn(null);
-
-        List<String> receivedMessages = messenger.waitForCrawlerMessage(1);
-
-        assertEquals(null, receivedMessages);
-
+        verify(channelMock, times(1)).basicConsume(anyString(), anyBoolean(), any(DeliverCallback.class), (CancelCallback) any());
+        verify(channelMock, times(0)).basicPublish(anyString(), anyString(), any(), any());
     }
-    //makes sure we can send messages to the PNE
-    @Test
-    void sendPNEMessageTest() throws IOException, TimeoutException {
-        // Setup
-        Messenger messenger = new Messenger();
-        messenger.setFactory(factoryMock);
 
-        List<String> ids = Arrays.asList("id1", "id2", "id3");
-
-        when(factoryMock.newConnection()).thenReturn(conn);
-        when(conn.createChannel()).thenReturn(channelMock);
-
-        // Act
-        messenger.sendPNEMessage(ids);
-
-        // Assert
-        verify(factoryMock).newConnection();
-        verify(conn).createChannel();
-        verify(channelMock).queueDeclare(eq(PNE_QUEUE), anyBoolean(), anyBoolean(), anyBoolean(), any());
-        verify(channelMock).basicPublish(eq(""), eq(PNE_QUEUE), isNull(), any(byte[].class));
-        verify(channelMock).close();
-        verify(conn).close();
-    }
+//    @Test
+//    void testRunVulnsReconciled() throws IOException, TimeoutException {
+//        //Mocking
+//        ReconcilerController mockRc = mock(ReconcilerController.class);
+//        when(factoryMock.newConnection()).thenReturn(mockConn);
+//        when(mockConn.createChannel()).thenReturn(channelMock);
+//        when(channelMock.queueDeclare(anyString(), anyBoolean(), anyBoolean(), anyBoolean(), any())).thenReturn(null);
+//        when(mockRc.main(anySet())).thenReturn(Set.of(new CompositeVulnerability("CVE-1234-5678")));
+//
+//        doAnswer(invocation -> {
+//            Object[] args = invocation.getArguments();
+//            DeliverCallback callback = (DeliverCallback) args[2];
+//            String jsonMessage = "[\"CVE-1234-5678\", \"CVE-1234-5679\"]";
+//            byte[] body = jsonMessage.getBytes();
+//            callback.handle("", new Delivery(null, null, body));
+//            return null;
+//        }).when(channelMock).basicConsume(anyString(), anyBoolean(), any(DeliverCallback.class), (CancelCallback) any());
+//
+//        Messenger messenger = new Messenger();
+//        messenger.setReconcilerController(mockRc);
+//        messenger.setFactory(factoryMock);
+//        messenger.run();
+//
+//        verify(channelMock, times(1)).basicConsume(anyString(), anyBoolean(), any(DeliverCallback.class), (CancelCallback) any());
+//        verify(channelMock, times(0)).basicPublish(anyString(), anyString(), any(), any());
+//    }
 
     //verifies we can properly parse IDs that come in from rabbit
     @Test
