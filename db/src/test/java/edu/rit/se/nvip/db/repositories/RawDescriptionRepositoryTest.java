@@ -14,7 +14,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import javax.sql.DataSource;
 import java.sql.*;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.*;
@@ -57,11 +56,11 @@ public class RawDescriptionRepositoryTest {
         InOrder inOrder = Mockito.inOrder(mockPS);
         inOrder.verify(mockPS).setString(1, testVuln.getDescription());
         inOrder.verify(mockPS).setString(2, testVuln.getCveId());
-        inOrder.verify(mockPS).setTimestamp(3, Timestamp.valueOf(testVuln.getCreatedDateAsDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
-        inOrder.verify(mockPS).setTimestamp(4, Timestamp.valueOf(testVuln.getPublishDateAsDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
-        inOrder.verify(mockPS).setTimestamp(5, Timestamp.valueOf(testVuln.getLastModifiedDateAsDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
-        inOrder.verify(mockPS).setString(6, testVuln.getSourceURL());
-        inOrder.verify(mockPS).setString(7, testVuln.getSourceType());
+        inOrder.verify(mockPS).setTimestamp(3, testVuln.getCreateDate());
+        inOrder.verify(mockPS).setTimestamp(4, testVuln.getPublishDate());
+        inOrder.verify(mockPS).setTimestamp(5, testVuln.getLastModifiedDate());
+        inOrder.verify(mockPS).setString(6, testVuln.getSourceUrl());
+        inOrder.verify(mockPS).setString(7, testVuln.getSourceType().type);
         inOrder.verify(mockPS).setString(8, testVuln.getParserType());
         inOrder.verify(mockPS).execute();
 
@@ -87,11 +86,11 @@ public class RawDescriptionRepositoryTest {
         InOrder inOrder = Mockito.inOrder(mockPS);
         inOrder.verify(mockPS).setString(1, testVuln.getDescription());
         inOrder.verify(mockPS).setString(2, testVuln.getCveId());
-        inOrder.verify(mockPS).setTimestamp(3, Timestamp.valueOf(testVuln.getCreatedDateAsDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
-        inOrder.verify(mockPS).setTimestamp(4, Timestamp.valueOf(testVuln.getPublishDateAsDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
-        inOrder.verify(mockPS).setTimestamp(5, Timestamp.valueOf(testVuln.getLastModifiedDateAsDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
-        inOrder.verify(mockPS).setString(6, testVuln.getSourceURL());
-        inOrder.verify(mockPS).setString(7, testVuln.getSourceType());
+        inOrder.verify(mockPS).setTimestamp(3, testVuln.getCreateDate());
+        inOrder.verify(mockPS).setTimestamp(4, testVuln.getPublishDate());
+        inOrder.verify(mockPS).setTimestamp(5, testVuln.getLastModifiedDate());
+        inOrder.verify(mockPS).setString(6, testVuln.getSourceUrl());
+        inOrder.verify(mockPS).setString(7, testVuln.getSourceType().type);
         inOrder.verify(mockPS).setString(8, testVuln.getParserType());
         inOrder.verify(mockPS).execute();
 

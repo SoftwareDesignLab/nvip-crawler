@@ -74,7 +74,7 @@ public class GenericCveParserTest extends AbstractParserTest {
 	public void testOpenwall() {
 		String html = safeReadHtml("src/test/resources/test-openwall.html");
 		List<RawVulnerability> list = parser.parseWebPage("openwall", html);
-		Vulnerability vuln = getVulnerability(list, "CVE-2015-4852");
+		RawVulnerability vuln = getVulnerability(list, "CVE-2015-4852");
 		assertNotNull(vuln);
 		boolean fine = vuln.getDescription().contains("Oracle");
 		assertTrue(fine);

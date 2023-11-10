@@ -1,19 +1,16 @@
 package edu.rit.se.nvip.db.repositories;
 
 import com.google.common.collect.Lists;
-import com.zaxxer.hikari.HikariConfig;
-import com.zaxxer.hikari.HikariDataSource;
 import edu.rit.se.nvip.db.DatabaseHelper;
+import edu.rit.se.nvip.db.model.CompositeDescription;
+import edu.rit.se.nvip.db.model.CompositeVulnerability;
 import edu.rit.se.nvip.db.model.RawVulnerability;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.sql.DataSource;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.sql.*;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.*;
 
@@ -43,7 +40,7 @@ public class RawDescriptionRepository {
             pstmt.setTimestamp(3, vuln.getCreateDate());
             pstmt.setTimestamp(4, vuln.getPublishDate());
             pstmt.setTimestamp(5, vuln.getLastModifiedDate());
-            pstmt.setString(6, vuln.getSourceURL());
+            pstmt.setString(6, vuln.getSourceUrl());
             pstmt.setString(7, vuln.getSourceType().type);
             pstmt.setString(8, vuln.getParserType());
             pstmt.setString(9, vuln.getDomain());
@@ -52,7 +49,7 @@ public class RawDescriptionRepository {
 
             return 1;
         } catch (Exception e) {
-            log.error("ERROR: Failed to insert data for CVE {} (sourceURL: {}) into rawdescription table\n{}", vuln.getCveId(), vuln.getSourceURL(), e);
+            log.error("ERROR: Failed to insert data for CVE {} (sourceURL: {}) into rawdescription table\n{}", vuln.getCveId(), vuln.getSourceUrl(), e);
         }
 
         return 0;
@@ -80,7 +77,7 @@ public class RawDescriptionRepository {
                         pstmt.setTimestamp(3, vuln.getCreateDate());
                         pstmt.setTimestamp(4, vuln.getPublishDate());
                         pstmt.setTimestamp(5, vuln.getLastModifiedDate());
-                        pstmt.setString(6, vuln.getSourceURL());
+                        pstmt.setString(6, vuln.getSourceUrl());
                         pstmt.setString(7, vuln.getSourceType().type);
                         pstmt.setString(8, vuln.getParserType());
                         pstmt.setString(9, vuln.getDomain());
@@ -201,6 +198,98 @@ public class RawDescriptionRepository {
             }
         } catch (SQLException ex) {
             log.error("Error retrieving rawdescriptions.\n{}", ex);
+            return new HashSet<>();
+        }
+        return rawVulns;
+    }
+
+    private String updateFilterStatus = "UPDATE rawdescription SET is_garbage = ? WHERE raw_description_id = ?";
+
+    public void updateFilterStatus(Set<RawVulnerability> rawVulns) {
+        try (Connection conn = dataSource.getConnection(); PreparedStatement pstmt = conn.prepareStatement(updateFilterStatus)) {
+            for (RawVulnerability vuln : rawVulns) {
+                pstmt.setInt(1, vuln.getFilterStatus().value);
+                pstmt.setInt(2, vuln.getId());
+                pstmt.addBatch();
+            }
+            pstmt.executeBatch();
+        } catch (SQLException ex) {
+            log.error("Error marking rawdescriptions as garbage.\n{}", ex);
+        }
+    }
+
+
+    public CompositeVulnerability getCompositeVulnerability(String cveId) {
+        Set<RawVulnerability> usedRawVulns = getUsedRawVulnerabilities(cveId);
+        return getSummaryVulnerability(cveId, usedRawVulns);
+    }
+
+    private String getCompVuln = "SELECT v.created_date, vv.published_date, vv.last_modified_date, d.description_id, d.description, d.created_date AS description_date, d.gpt_func " +
+            "FROM vulnerability AS v " +
+            "INNER JOIN vulnerabilityversion AS vv ON v.vuln_version_id = vv.vuln_version_id " +
+            "INNER JOIN description AS d ON vv.description_id = d.description_id " +
+            "WHERE v.cve_id = ?";
+
+    // very hacky to use the rawVulns as an arg, there's a better way to handle this join
+    private CompositeVulnerability getSummaryVulnerability(String cveId, Set<RawVulnerability> rawVulns) {
+        CompositeVulnerability vuln = null;
+        try (Connection conn = dataSource.getConnection(); PreparedStatement pstmt = conn.prepareStatement(getCompVuln)) {
+            pstmt.setString(1, cveId);
+            ResultSet res = pstmt.executeQuery();
+            if (res.next()) {
+                CompositeDescription compDes = new CompositeDescription(
+                        res.getInt("description_id"),
+                        cveId,
+                        res.getString("description"),
+                        res.getTimestamp("description_date"),
+                        res.getString("gpt_func"),
+                        rawVulns
+                );
+                vuln = new CompositeVulnerability(
+                        cveId,
+                        res.getInt("vuln_id"),
+                        compDes,
+                        res.getTimestamp("published_date"),
+                        res.getTimestamp("last_modified_date"),
+                        res.getTimestamp("created_date")
+                );
+            }
+        } catch (SQLException ex) {
+            log.error("Error retrieving vulnerability {}.\n{}", cveId, ex);
+            return null;
+        }
+        return vuln;
+    }
+
+    private String getUsedRawVulns = "SELECT rd.* " +
+            "FROM vulnerability AS v " +
+            "INNER JOIN vulnerabilityversion AS vv ON v.vuln_version_id = vv.vuln_version_id " +
+            "INNER JOIN description AS d ON vv.description_id = d.description_id " +
+            "INNER JOIN rawdescriptionjt AS rdjt ON d.description_id = rdjt.description_id " +
+            "INNER JOIN rawdescription AS rd ON rdjt.raw_description_id = rd.raw_description_id " +
+            "WHERE v.cve_id = ?";
+
+    public Set<RawVulnerability> getUsedRawVulnerabilities(String cveId) {
+        Set<RawVulnerability> rawVulns = new HashSet<>();
+        try (Connection conn = dataSource.getConnection(); PreparedStatement pstmt = conn.prepareStatement(getUsedRawVulns)) {
+            pstmt.setString(1, cveId);
+            ResultSet res = pstmt.executeQuery();
+            while (res.next()) {
+                RawVulnerability rawVuln = new RawVulnerability(
+                        res.getInt("raw_description_id"),
+                        res.getString("cve_id"),
+                        res.getString("raw_description"),
+                        res.getTimestamp("published_date"),
+                        res.getTimestamp("last_modified_date"),
+                        res.getTimestamp("published_date"),
+                        res.getString("source_url"),
+                        res.getString("source_type"),
+                        res.getInt("is_garbage")
+                );
+                rawVulns.add(rawVuln);
+            }
+        } catch (SQLException ex) {
+            log.error("Error retrieving used rawdescriptions with cve_id {}.\n{}", cveId, ex);
             return new HashSet<>();
         }
         return rawVulns;
