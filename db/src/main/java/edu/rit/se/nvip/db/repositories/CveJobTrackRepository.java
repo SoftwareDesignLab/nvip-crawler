@@ -7,6 +7,9 @@ import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.HashSet;
+import java.util.Set;
 
 
 @Slf4j
@@ -55,6 +58,26 @@ public class CveJobTrackRepository {
         }
 
         return false;
+    }
 
+
+    private final String getJobs = "SELECT * FROM cvejobtrack";
+
+    /**
+     * Gets jobs
+     * @return
+     */
+    public Set<String> getJobs() {
+        Set<String> cveIds = new HashSet<>();
+        try (Connection conn = dataSource.getConnection(); PreparedStatement pstmt = conn.prepareStatement(getJobs)) {
+            ResultSet res = pstmt.executeQuery();
+            while (res.next()) {
+                cveIds.add(res.getString("cve_id"));
+            }
+        } catch (SQLException ex) {
+            log.error("Error retrieving jobs.\n{}", ex);
+            return new HashSet<>();
+        }
+        return cveIds;
     }
 }

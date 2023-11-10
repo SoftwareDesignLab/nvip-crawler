@@ -15,9 +15,7 @@ import java.sql.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 
 @Slf4j
@@ -42,22 +40,11 @@ public class RawDescriptionRepository {
 
             pstmt.setString(1, vuln.getDescription());
             pstmt.setString(2, vuln.getCveId());
-            Timestamp cdate = Timestamp.valueOf(vuln.getCreatedDateAsDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-            pstmt.setTimestamp(3, cdate);
-            try {
-                pstmt.setTimestamp(4, Timestamp.valueOf(vuln.getPublishDateAsDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
-            } catch (DateTimeParseException e) {
-                log.error("Failed to parse publish date for {}. Insertion will proceed using the created date as the publish date.", vuln.getCveId());
-                pstmt.setTimestamp(4, cdate);
-            }
-            try {
-                pstmt.setTimestamp(5, Timestamp.valueOf(vuln.getLastModifiedDateAsDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
-            } catch (DateTimeParseException e) {
-                log.error("Failed to parse last modified date for {}. Insertion will proceed with a null last modified date.", vuln.getCveId());
-                pstmt.setTimestamp(5, null);
-            }
+            pstmt.setTimestamp(3, vuln.getCreateDate());
+            pstmt.setTimestamp(4, vuln.getPublishDate());
+            pstmt.setTimestamp(5, vuln.getLastModifiedDate());
             pstmt.setString(6, vuln.getSourceURL());
-            pstmt.setString(7, vuln.getSourceType());
+            pstmt.setString(7, vuln.getSourceType().type);
             pstmt.setString(8, vuln.getParserType());
             pstmt.setString(9, vuln.getDomain());
 
@@ -90,22 +77,11 @@ public class RawDescriptionRepository {
                     try {
                         pstmt.setString(1, vuln.getDescription());
                         pstmt.setString(2, vuln.getCveId());
-                        Timestamp cdate = Timestamp.valueOf(vuln.getCreatedDateAsDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-                        pstmt.setTimestamp(3, cdate);
-                        try {
-                            pstmt.setTimestamp(4, Timestamp.valueOf(vuln.getPublishDateAsDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
-                        } catch (DateTimeParseException e) {
-                            log.error("Failed to parse publish date for {}. Insertion will proceed using the created date as the publish date.", vuln.getCveId());
-                            pstmt.setTimestamp(4, cdate);
-                        }
-                        try {
-                            pstmt.setTimestamp(5, Timestamp.valueOf(vuln.getLastModifiedDateAsDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
-                        } catch (DateTimeParseException e) {
-                            log.error("Failed to parse last modified date for {}. Insertion will proceed with a null last modified date.", vuln.getCveId());
-                            pstmt.setTimestamp(5, null);
-                        }
+                        pstmt.setTimestamp(3, vuln.getCreateDate());
+                        pstmt.setTimestamp(4, vuln.getPublishDate());
+                        pstmt.setTimestamp(5, vuln.getLastModifiedDate());
                         pstmt.setString(6, vuln.getSourceURL());
-                        pstmt.setString(7, vuln.getSourceType());
+                        pstmt.setString(7, vuln.getSourceType().type);
                         pstmt.setString(8, vuln.getParserType());
                         pstmt.setString(9, vuln.getDomain());
                         pstmt.addBatch();
@@ -195,6 +171,41 @@ public class RawDescriptionRepository {
 
         return rawCves;
     }
+
+
+    private final String getRawVulnByCveId = "SELECT * FROM rawdescription WHERE cve_id = ?";
+
+    /**
+     * Gets a set of Raw Vulnerabilities
+     * @param cveId
+     * @return
+     */
+    public Set<RawVulnerability> getRawVulnerabilities(String cveId) {
+        Set<RawVulnerability> rawVulns = new HashSet<>();
+        try (Connection conn = dataSource.getConnection(); PreparedStatement pstmt = conn.prepareStatement(getRawVulnByCveId)) {
+            pstmt.setString(1, cveId);
+            ResultSet res = pstmt.executeQuery();
+            while (res.next()) {
+                RawVulnerability rawVuln = new RawVulnerability(
+                        res.getInt("raw_description_id"),
+                        res.getString("cve_id"),
+                        res.getString("raw_description"),
+                        res.getTimestamp("published_date"),
+                        res.getTimestamp("last_modified_date"),
+                        res.getTimestamp("published_date"),
+                        res.getString("source_url"),
+                        res.getString("source_type"),
+                        res.getInt("is_garbage")
+                );
+                rawVulns.add(rawVuln);
+            }
+        } catch (SQLException ex) {
+            log.error("Error retrieving rawdescriptions.\n{}", ex);
+            return new HashSet<>();
+        }
+        return rawVulns;
+    }
+
 
     public static void main(String[] args) {
         List<RawVulnerability> list = new ArrayList<>();
