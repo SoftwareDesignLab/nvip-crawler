@@ -22,6 +22,9 @@ package edu.rit.se.nvip.characterizer; /**
  * SOFTWARE.
  */
 
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.rit.se.nvip.DatabaseHelper;
 import edu.rit.se.nvip.automatedcvss.CvssScoreCalculator;
@@ -41,6 +44,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.*;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.file.Paths;
@@ -249,25 +253,16 @@ public class CveCharacterizer {
 			// Create url object
 			final URL url = new URL("http://localhost:5000/ssvc" + getParamsString(params));
 
-//			// Setup connection and parameters
-//			final HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
-//			conn.setRequestMethod("GET");
-//			conn.setDoOutput(true);
-//			DataOutputStream out = new DataOutputStream(conn.getOutputStream());
-//			out.writeBytes(getParamsString(params));
-//			out.flush();
-//			out.close();
-
 			// Build object from request response
 			return OM.readValue(url, SSVC.class);
-
-//			// Extract values from response
-//
-//			// Build SSVC object
-//			final SSVC ssvc = new SSVC(automatable, exploitExists, technicalImpact);
-		} catch (Exception e) {
-			return null;
+		} catch (MalformedURLException e) {
+			logger.error("Invalid URL found when attempting to access SSVC API: {}", e.toString());
+		} catch (JsonProcessingException | UnsupportedEncodingException e) {
+			logger.error("Unable to parse response from SSVC API: {}", e.toString());
+		} catch (IOException e) {
+			logger.error("Unable to access SSVC API: {}", e.toString());
 		}
+		return null;
 	}
 
 	/**
