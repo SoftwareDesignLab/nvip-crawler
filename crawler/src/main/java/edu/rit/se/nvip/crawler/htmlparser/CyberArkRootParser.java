@@ -28,16 +28,17 @@ public class CyberArkRootParser extends AbstractCveParser {
      * is inside that cell
      * @return - text inside cell
      */
-    private String getCellValue(Element row, String colIdentifier) {
+    private String getCellValue(Element row, int colIndex) {
         // each cell contains a span that references the column it is in
-        Element cell = row.children().select("td:contains(" + colIdentifier + ")").first();
+        Element cell = row.children().get(colIndex);
         if (cell == null) return "";
-        String cellText = cell.text();
-        String[] valueSplit = cellText.split(colIdentifier);
-        // 1 or less in split means there is no value inside this table cell
-        if (valueSplit.length > 1)
-            return valueSplit[1].trim();
-        return "";
+        return cell.text();
+//        String cellText = cell.text();
+//        String[] valueSplit = cellText.split(colIdentifier);
+//        // 1 or less in split means there is no value inside this table cell
+//        if (valueSplit.length > 1)
+//            return valueSplit[1].trim();
+//        return "";
     }
 
     /**
@@ -61,17 +62,24 @@ public class CyberArkRootParser extends AbstractCveParser {
         Element tableBody = table.children().select("tbody").first();
         if (tableBody == null) return vulnList;
         Elements rows = tableBody.children();
-
+        int i = 0;
         for (Element row : rows) {
+            i++;
             // get CVE ID from row
-            String cveId = getCellValue(row, "CVE:");
+            String cveId = getCellValue(row, 2);
+
+            // if the cve id is invalid, don't use
+            if (getCVEs(cveId).isEmpty()) {
+                continue;
+            }
+
             // get date from row
-            String date = getCellValue(row, "Date:");
+            String date = getCellValue(row, 8);
             // have our description be a combination of
             // Vendor, Product, and CWE columns
-            String vendor = getCellValue(row, "Vendor:");
-            String product = getCellValue(row, "Product:");
-            String cwe = getCellValue(row, "Vulnerability Type / CWE:");
+            String vendor = getCellValue(row, 3);
+            String product = getCellValue(row, 4);
+            String cwe = getCellValue(row, 5);
             String description = vendor + " " + product + " " + cwe;
 
             vulnList.add(new RawVulnerability(

@@ -18,7 +18,7 @@ public class CyberArkParserTest extends AbstractParserTest {
                 "https://labs.cyberark.com/cyberark-labs-security-advisories/",
                 html
         );
-        assertEquals(132, list.size());
+        assertEquals(129, list.size());
         RawVulnerability vuln = getVulnerability(list, "CVE-2022-23774");
         assertNotNull(vuln);
         assertTrue(vuln.getDescription().contains("Docker"));
