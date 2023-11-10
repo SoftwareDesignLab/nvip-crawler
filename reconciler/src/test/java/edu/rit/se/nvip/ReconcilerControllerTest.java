@@ -54,14 +54,12 @@ class ReconcilerControllerTest {
         FilterHandler mockFH = mock(FilterHandler.class);
         Reconciler mockRecon = mock(Reconciler.class);
         FilterReturn mockFR = mock(FilterReturn.class);
-        Messenger mockMes = mock(Messenger.class);
         MitreCveController mockMitre = mock(MitreCveController.class);
         NvdCveController mockNvd = mock(NvdCveController.class);
         CveCharacterizer mockChar = mock(CveCharacterizer.class);
         rc.setDbh(mockDbh);
         rc.setReconciler(mockRecon);
         rc.setFilterHandler(mockFH);
-        rc.setMessenger(mockMes);
         rc.setNvdController(mockNvd);
         rc.setMitreController(mockMitre);
         rc.setCveCharacterizer(mockChar);
@@ -83,7 +81,6 @@ class ReconcilerControllerTest {
         doNothing().when(mockDbh).updateFilterStatus(anySet());
         when(mockRecon.reconcile(any(CompositeVulnerability.class), anySet())).thenReturn(vuln);
         when(mockDbh.insertOrUpdateVulnerabilityFull(any(CompositeVulnerability.class))).thenReturn(1);
-        doNothing().when(mockMes).sendPNEMessage(anyList());
         when(mockDbh.insertTimeGapsForNewVulns(anySet())).thenReturn(1);
         when(mockDbh.insertRun(any(RunStats.class))).thenReturn(1);
         when(mockDbh.insertCvssBatch(anySet())).thenReturn(1);

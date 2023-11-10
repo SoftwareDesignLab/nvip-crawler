@@ -23,7 +23,6 @@ public class ReconcilerController {
     private DatabaseHelper dbh;
     private Reconciler reconciler;
     private FilterHandler filterHandler;
-    private Messenger messenger = new Messenger();
     private CveCharacterizer cveCharacterizer;
     private NvdCveController nvdController;
     private MitreCveController mitreController;
@@ -44,10 +43,9 @@ public class ReconcilerController {
         }
     }
 
-    public void main(Set<String> jobs) {
+    public Set<CompositeVulnerability> main(Set<String> jobs) {
         logger.info(jobs.size() + " jobs found for reconciliation");
         Set<CompositeVulnerability> reconciledVulns = new HashSet<>();
-
 
         ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
@@ -75,12 +73,6 @@ public class ReconcilerController {
             }
         }
         logger.info("Finished reconciliation stage - sending message to PNE");
-
-        reconciledVulns.stream()
-                .filter(v -> v.getReconciliationStatus() == CompositeVulnerability.ReconciliationStatus.NEW ||
-                        v.getReconciliationStatus() == CompositeVulnerability.ReconciliationStatus.UPDATED)
-                .map(CompositeVulnerability::getCveId)
-                .forEach(vuln -> messenger.sendPNEMessage(List.of(vuln)));
 
         //PNE team changed their mind about streaming jobs as they finish, they now just want one big list
 //        messenger.sendPNEMessage(newOrUpdated.stream().map(CompositeVulnerability::getCveId).collect(Collectors.toList()));
@@ -116,6 +108,7 @@ public class ReconcilerController {
         }
         // PNE team no longer wants a finish message
         //messenger.sendPNEFinishMessage();
+        return reconciledVulns;
     }
 
 
@@ -226,9 +219,6 @@ public class ReconcilerController {
     }
     public void setFilterHandler(FilterHandler fh){
         filterHandler = fh;
-    }
-    public void setMessenger(Messenger m){
-        messenger = m;
     }
     public void setNvdController(NvdCveController nvd){
         nvdController = nvd;
