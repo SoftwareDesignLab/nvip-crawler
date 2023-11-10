@@ -13,10 +13,11 @@ public class ReconcilerMain {
     public static final Map<String, Object> envVars = new HashMap<>();
     private static DatabaseHelper dbh;
     private static ReconcilerController rc = new ReconcilerController();
-    private Messenger messenger = new Messenger();
+    private Messenger messenger;
 
     public static void main(String[] args) throws Exception {
         ReconcilerMain main = new ReconcilerMain();
+        main.setMessenger(new Messenger());
         main.createDatabaseInstance();
         main.main();
     }
@@ -42,23 +43,7 @@ public class ReconcilerMain {
                 break;
             case "rabbit":
                 logger.info("Using Rabbit for acquiring jobs");
-                while (true) {
-                    List<String> jobsList;
-                    try {
-                        jobsList = messenger.waitForCrawlerMessage(ReconcilerEnvVars.getRabbitTimeout());
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
-                    if (jobsList == null) {
-                        logger.error("Timeout reached with no jobs from rabbit");
-                        break;
-                    }
-                    rc.main(new HashSet<>(jobsList));
-                    // if we've set a rabbit timeout then we're implicitly only running once - should replace this with a new envvar
-                    if (ReconcilerEnvVars.getRabbitTimeout() >= 0) {
-                        break;
-                    }
-                }
+                runRabbitMessenger();
             case "dev":
                 final Set<String> devJobs = new HashSet<>();
                 devJobs.add("CVE-2023-2825");
@@ -66,13 +51,19 @@ public class ReconcilerMain {
         }
 
     }
+
+    private void runRabbitMessenger() {
+        messenger.setReconcilerController(rc);
+        messenger.run();
+    }
+
     public void setController(ReconcilerController r){
         rc = r;
     }
     public void setDatabaseHelper(DatabaseHelper db){
         dbh = db;
     }
-    public void setMessenger(Messenger m){
-        messenger = m;
+    public void setMessenger(Messenger messenger){
+        this.messenger = messenger;
     }
 }

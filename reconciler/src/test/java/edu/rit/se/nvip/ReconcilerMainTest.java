@@ -44,7 +44,6 @@ class ReconcilerMainTest {
     @Test
     void testMainWithDb() {
         ReconcilerMain main = new ReconcilerMain();
-        main.setMessenger(mockMes);
         main.setDatabaseHelper(mockDb);
         main.setController(mockCon);
 
@@ -57,15 +56,16 @@ class ReconcilerMainTest {
         mockedEnvVars.when(ReconcilerEnvVars::getInputMode).thenReturn("db");
         when(mockDb.testDbConnection()).thenReturn(true);
         when(mockDb.getJobs()).thenReturn(jobs);
-        doNothing().when(mockCon).main(anySet());
+
         //test for db
         main.main();
+
+        verify(mockCon, times(1)).main(jobs);
     }
 
     @Test
     void testMainWithDbNoJobs() {
         ReconcilerMain main = new ReconcilerMain();
-        main.setMessenger(mockMes);
         main.setDatabaseHelper(mockDb);
         main.setController(mockCon);
 
@@ -80,9 +80,8 @@ class ReconcilerMainTest {
     @Test
     void testMainWithRabbit() {
         ReconcilerMain main = new ReconcilerMain();
-        main.setMessenger(mockMes);
-        main.setDatabaseHelper(mockDb);
         main.setController(mockCon);
+        main.setMessenger(mockMes);
 
         Set<String> jobs = new HashSet<>();
         jobs.add("CVE-2023-1");
@@ -90,40 +89,28 @@ class ReconcilerMainTest {
         jobs.add("CVE-2023-3");
         List<String> jobsList = new ArrayList<>(jobs);
 
-        mockedDb.when(DatabaseHelper::getInstance).thenReturn(mockDb);
         mockedEnvVars.when(ReconcilerEnvVars::getInputMode).thenReturn("rabbit");
-        when(mockDb.testDbConnection()).thenReturn(true);
-        try {
-            when(mockMes.waitForCrawlerMessage(anyInt())).thenReturn(jobsList);
-        } catch (Exception e) {
-            fail("Caught Unexpected exception");
-        }
-        doNothing().when(mockCon).main(anySet());
 
         main.main();
+
+        verify(mockMes, times(1)).run();
     }
 
     @Test
     void testMainWithRabbitNoMessages() {
         ReconcilerMain main = new ReconcilerMain();
-        main.setMessenger(mockMes);
-        main.setDatabaseHelper(mockDb);
         main.setController(mockCon);
+        main.setMessenger(mockMes);
 
         Set<String> jobs = new HashSet<>();
         jobs.add("CVE-2023-1");
         jobs.add("CVE-2023-2");
         jobs.add("CVE-2023-3");
 
-        mockedDb.when(DatabaseHelper::getInstance).thenReturn(mockDb);
         mockedEnvVars.when(ReconcilerEnvVars::getInputMode).thenReturn("rabbit");
-        when(mockDb.testDbConnection()).thenReturn(true);
 
-        try {
-            when(mockMes.waitForCrawlerMessage(anyInt())).thenReturn(null);
-        } catch (Exception e) {
-            fail("Caught Unexpected exception");
-        }
         main.main();
+
+        verify(mockMes, times(1)).run();
     }
 }
