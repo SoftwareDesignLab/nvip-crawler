@@ -101,6 +101,9 @@ public class ReconcilerController {
             try {
                 if(cveCharacterizer == null) {
                     cveCharacterizer = futureCharacterizer.get();
+                    cveCharacterizer.setSSVCApiBaseUrl(ReconcilerEnvVars.getSSVCApiBaseUrl());
+                    cveCharacterizer.setSSVCApiPort(ReconcilerEnvVars.getSSVCApiPort());
+                    cveCharacterizer.setSSVCApiUri(ReconcilerEnvVars.getSSVCApiUri());
                 }
             } catch (InterruptedException | ExecutionException e) {
                 throw new RuntimeException(e);
