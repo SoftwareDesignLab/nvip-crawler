@@ -59,7 +59,7 @@ import java.util.*;
 public class CveCharacterizer {
 	private Logger logger = LogManager.getLogger(CveCharacterizer.class.getSimpleName());
 	private final Map<VDONounGroup, AbstractCveClassifier> nounGroupToClassifier = new HashMap<>();
-	private final static ObjectMapper OM = new ObjectMapper();
+	private ObjectMapper OM = new ObjectMapper();
 	private final DatabaseHelper dbh;
 
 	/**
@@ -69,6 +69,10 @@ public class CveCharacterizer {
 	private PartialCvssVectorGenerator partialCvssVectorGenerator;
 	private CvssScoreCalculator cvssScoreCalculator;
 	private CvePreProcessor cvePreProcessor;
+
+	private String SSVCApiBaseUrl = "http://localhost";
+	private String SSVCApiPort = "5000";
+	private String SSVCApiUri = "/ssvc";
 
 	/**
 	 * Construct a CVE Characterizer. You need to provide an initial training data
@@ -251,7 +255,7 @@ public class CveCharacterizer {
 			params.put("exploitStatus", dbh.exploitExists(vuln.getCveId()) ? "POC" : "NONE");
 
 			// Create url object
-			final URL url = new URL("http://localhost:5000/ssvc" + getParamsString(params));
+			final URL url = new URL(this.getSSVCUrl() + getParamsString(params));
 
 			// Build object from request response
 			return OM.readValue(url, SSVC.class);
@@ -297,5 +301,25 @@ public class CveCharacterizer {
 		return resultString.length() > 0
 				? resultString.substring(0, resultString.length() - 1)
 				: resultString;
+	}
+
+	private String getSSVCUrl(){
+		return String.format("%s:%s%s", SSVCApiBaseUrl, SSVCApiPort, SSVCApiUri);
+	}
+
+	public void setSSVCApiBaseUrl(String url){
+		this.SSVCApiBaseUrl = url;
+	}
+
+	public void setSSVCApiPort(String port){
+		this.SSVCApiPort = port;
+	}
+
+	public void setSSVCApiUri(String uri){
+		this.SSVCApiUri = uri;
+	}
+
+	public void setObjectMapper(ObjectMapper mapper){
+		this.OM = mapper;
 	}
 }
