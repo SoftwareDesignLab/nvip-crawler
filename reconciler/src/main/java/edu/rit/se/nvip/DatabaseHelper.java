@@ -799,9 +799,15 @@ public class DatabaseHelper {
     }
 
     public void insertSSVCSet(Set<CompositeVulnerability> vulns) {
-        try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(INSERT_SSVC)) {
+        String deleteOldSSVC = "DELETE FROM ssvc WHERE cve_id = ?";
+        try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(INSERT_SSVC);
+            PreparedStatement deleteStmt = conn.prepareStatement(deleteOldSSVC)) {
             conn.setAutoCommit(false);
             for (CompositeVulnerability vuln : vulns) {
+                deleteStmt.setString(1, vuln.getCveId());
+                deleteStmt.executeUpdate();
+
+
                 // Get SSVC data
                 final SSVC ssvc = vuln.getSSVC();
 
