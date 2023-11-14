@@ -39,7 +39,7 @@ import static org.mockito.Mockito.mock;
  * @author Richard Sawh
  */
 public class FixFinderTest {
-
+    static {FixFinder.init();}
     @Before
     public void setUp() {
         FixFinderEnvVars.initializeEnvVars(true);
