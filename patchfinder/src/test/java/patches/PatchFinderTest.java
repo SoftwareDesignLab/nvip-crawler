@@ -56,10 +56,8 @@ public class PatchFinderTest {
     @Test
     public void testFindPatchesMultiThreaded2() {
         // Create a sample input for possiblePatchSources
-        Map<String, ArrayList<String>> possiblePatchSources = new HashMap<>();
-        ArrayList<String> patchSources1 = new ArrayList<>();
-        patchSources1.add("https://github.com/apache/airflow");
-        possiblePatchSources.put("CVE-2023-1001", patchSources1);
+        ArrayList<String> possiblePatchSources = new ArrayList<>();
+        possiblePatchSources.add("https://github.com/apache/airflow");
 
         // Mock the ThreadPoolExecutor
         ThreadPoolExecutor e = mock(ThreadPoolExecutor.class);
@@ -68,7 +66,7 @@ public class PatchFinderTest {
         PatchFinder.getPatchCommits().clear();
 
         // Call the method
-        PatchFinder.findPatchesMultiThreaded(possiblePatchSources);
+        PatchFinder.findPatchesMultiThreaded("CVE-2023-1001", possiblePatchSources);
 
         // Add assertions here to validate the expected behavior
         // For example, check if the repos are cleared
@@ -82,12 +80,10 @@ public class PatchFinderTest {
     @Test
     public void testFindPatchesMultiThreaded() {
         // Create a sample input for possiblePatchSources
-        Map<String, ArrayList<String>> possiblePatchSources = new HashMap<>();
-        ArrayList<String> patchSources1 = new ArrayList<>();
-        patchSources1.add("https://github.com/apache/airflow");
-        possiblePatchSources.put("CVE-2023-1001", patchSources1);
+        ArrayList<String> possiblePatchSources = new ArrayList<>();
+        possiblePatchSources.add("https://github.com/apache/airflow");
         // Call the findPatchesMultiThreaded method and assert the expected behavior or outcome
-        PatchFinder.findPatchesMultiThreaded(possiblePatchSources);
+        PatchFinder.findPatchesMultiThreaded("CVE-2023-1001", possiblePatchSources);
         // Assert that the affectedProducts map is empty
         assertEquals(1, possiblePatchSources.size());
 
@@ -97,23 +93,18 @@ public class PatchFinderTest {
     @Test
     public void testRun() {
         // Create a test input map of affected products
-        Map<String, CpeGroup> possiblePatchSources = new HashMap<>();
         //(String vendor, String product, String commonTitle, HashMap<String, CpeEntry> versions)
         //1	CVE-2023-1001	cpe:2.3:a:apache:airflow:1.7.0:rc1:*:*:*:*:*:*	2023-06-20 10:00:00	product_name_value	version_value
         CpeGroup cpeGroup = new CpeGroup("apache", "airflow", "product_name_value", new HashMap<>());
-        possiblePatchSources.put("CVE-2023-1001", cpeGroup);
 
         PatchFinder.init(databaseHelperMock);
         try {
-            final int numPatches = PatchFinder.run(possiblePatchSources, PatchFinder.cveLimit);
+            final int numPatches = PatchFinder.run("CVE-2023-1001", cpeGroup, PatchFinder.cveLimit);
 
             // Call the run method and assert the expected behavior or outcome, should be 0 because they already exist in the db
             if(numPatches == 0) success("patches already exist in the db");
             else if (numPatches == 48) success("patches added to the db");
             else fail("patches not added to the db");
-
-            // Assert that the affectedProducts map is empty
-            assertEquals(1, possiblePatchSources.size());
         } catch (IOException e) {
             fail("Exception occurred: " + e.getMessage());
         }
@@ -137,14 +128,14 @@ public class PatchFinderTest {
         affectedProducts.put(cveId, cpeGroup);
         affectedProducts.put(cveId2, cpeGroup2);
 
-        final int numPatches = PatchFinder.run(affectedProducts, PatchFinder.cveLimit);
+        int numPatches = 0;
+        for (Map.Entry<String, CpeGroup> product : affectedProducts.entrySet()) {
+            numPatches += PatchFinder.run(product.getKey(), product.getValue(), PatchFinder.cveLimit);
+        }
 
         // Call the run method and assert the expected behavior or outcome, should be 0 because they already exist in the db
         if(numPatches == 0) success("patches already exist in the db");
         else if (numPatches == 74) success("patches added to the db");
         else fail("patches not added to the db");
-
-        // Assert that the affectedProducts map is empty
-        assertEquals(2, affectedProducts.size());
     }
 }
