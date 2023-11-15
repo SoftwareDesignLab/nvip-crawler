@@ -93,6 +93,7 @@ public class Messenger {
      * @param password RabbitMQ password
      */
     public Messenger(String host, String vhost, int port, String username, String password, String inputQueue) {
+        logger.info("Initializing Messenger...");
         this.factory = new ConnectionFactory();
         this.factory.setHost(host);
         this.factory.setVirtualHost(vhost);
@@ -100,28 +101,29 @@ public class Messenger {
         this.factory.setUsername(username);
         this.factory.setPassword(password);
 
-//        try {
-//            factory.useSslProtocol();
-//        } catch (NoSuchAlgorithmException e) {
-//            throw new RuntimeException(e);
-//        } catch (KeyManagementException e) {
-//            throw new RuntimeException(e);
-//        }
+        try {
+            factory.useSslProtocol();
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        } catch (KeyManagementException e) {
+            throw new RuntimeException(e);
+        }
 
         this.inputQueue = inputQueue;
     }
 
     // For JUnit tests
     protected Messenger(ConnectionFactory factory, String inputQueue) {
+        logger.info("Initializing Messenger...");
         this.factory = factory;
 
-//        try {
-//            factory.useSslProtocol();
-//        } catch (NoSuchAlgorithmException e) {
-//            throw new RuntimeException(e);
-//        } catch (KeyManagementException e) {
-//            throw new RuntimeException(e);
-//        }
+        try {
+            factory.useSslProtocol();
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        } catch (KeyManagementException e) {
+            throw new RuntimeException(e);
+        }
 
         this.inputQueue = inputQueue;
     }
