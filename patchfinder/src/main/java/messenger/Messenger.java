@@ -169,33 +169,29 @@ public class Messenger {
         final String INPUT_QUEUE = "PNE_OUT";
         final Messenger m = new Messenger("localhost", "/", 5672 , "guest", "guest", INPUT_QUEUE);
         DatabaseHelper dbh = new DatabaseHelper("mysql", "jdbc:mysql://localhost:3306/nvip?useSSL=false&allowPublicKeyRetrieval=true", "root", "root");
-        final Set<String> cveIds = dbh.getAffectedProducts(null).keySet();
+//        final Set<String> cveIds = dbh.getAffectedProducts(null).keySet();
+        final Set<String> cveIds = new HashSet<>();
+        try {
+            ResultSet results = dbh.getConnection().prepareStatement("""
+                    SELECT
+                        v.cve_id
+                    FROM
+                        vulnerability v
+                    JOIN
+                        description d ON v.description_id = d.description_id
+                    JOIN
+                        affectedproduct ap ON v.cve_id = ap.cve_id
+                    WHERE
+                        ap.cpe LIKE '%tensorflow%'
+                    GROUP BY
+                        v.cve_id;
+                    """).executeQuery();
+            while(results != null && results.next()) cveIds.add(results.getString(1));
+        } catch (Exception ignored) { }
+
         for (String id : cveIds) {
             id = "{\"cveId\": \"" + id + "\"}";
             m.sendDummyMessage(INPUT_QUEUE, id);
         }
-//        m.sendDummyMessage(INPUT_QUEUE, "\"CVE-2023-0002\"");
-//        m.sendDummyMessage(INPUT_QUEUE, "\"CVE-2023-0003\"");
-//        m.sendDummyMessage(INPUT_QUEUE, "\"CVE-2023-0004\"");
-//        m.sendDummyMessage(INPUT_QUEUE, "\"CVE-2023-0005\"");
-//        m.sendDummyMessage(INPUT_QUEUE, "\"CVE-2023-0006\"");
-//
-//        try { Thread.sleep(5000); } catch (Exception ignored) { }
-//
-//        m.sendDummyMessage(INPUT_QUEUE, "\"CVE-2023-007\"");
-//        m.sendDummyMessage(INPUT_QUEUE, "\"CVE-2023-008\"");
-//        m.sendDummyMessage(INPUT_QUEUE, "\"CVE-2023-009\"");
-
-//        m.waitForProductNameExtractorMessage(5);
-//        ObjectMapper OM = new ObjectMapper();
-//        try {
-//            OM.writerWithDefaultPrettyPrinter().writeValue(new File("patchfinder/target/test.json"), "test1");
-//            OM.writerWithDefaultPrettyPrinter().writeValue(new File("patchfinder/target/test.json"), "test2");
-////            OM.writeValue(new File("patchfinder/target/test.json"), "test1");
-////            OM.writeValue(new File("patchfinder/target/test.json"), "test2");
-//            Thread.sleep(10000);
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
     }
 }
