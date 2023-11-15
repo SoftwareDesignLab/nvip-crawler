@@ -94,7 +94,7 @@ public class PatchFinder {
 		final Map<String, CpeGroup> affectedProducts = databaseHelper.getAffectedProducts(cveId);
 		final CpeGroup affectedProduct = affectedProducts.get(cveId);
 		if(affectedProduct != null) {
-			logger.info("Successfully got affected products for {} CVEs from the database", affectedProduct.getVersionsCount());
+			logger.info("Successfully got {} affected products for CVE '{}' from the database", affectedProduct.getVersionsCount(), cveId);
 			PatchFinder.run(cveId, affectedProduct, 0);
 		} else logger.warn("No affected products found matching CVE '{}', cannot find patches.", cveId);
 	}

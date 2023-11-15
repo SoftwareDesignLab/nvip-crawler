@@ -27,20 +27,15 @@ package messenger;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.Connection;
-import com.rabbitmq.client.ConnectionFactory;
-import com.rabbitmq.client.DeliverCallback;
+import com.rabbitmq.client.*;
 import db.DatabaseHelper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import patches.PatchFinder;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.security.KeyManagementException;
-import java.security.NoSuchAlgorithmException;
+import java.sql.ResultSet;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.regex.Pattern;
@@ -54,37 +49,10 @@ public class Messenger {
     private final String inputQueue;
     private static final Logger logger = LogManager.getLogger(DatabaseHelper.class.getSimpleName());
     private static final ObjectMapper OM = new ObjectMapper();
-    private static final Pattern CVE_REGEX = Pattern.compile("CVE-\\d{4}-\\d{4,7}");
     private final ConnectionFactory factory;
     private Connection inputConnection = null;
     private Channel inputChannel = null;
-
-    private final BlockingQueue<List<String>> jobListQueue = new LinkedBlockingQueue<>();
-
-    // TODO: Only pull messages as we do jobs, leaving the rest of the queue intact
-    // Define callback handler
-    private static final DeliverCallback deliverCallback = (consumerTag, delivery) -> {
-        String message = new String(delivery.getBody(), StandardCharsets.UTF_8);
-        String cveId = parseMessage(message);
-//        if(cveId != null) new Thread(() -> {
-//            try {
-//                PatchFinder.run(cveId);
-//            } catch (IOException e) {
-//                throw new RuntimeException(e);
-//            }
-//        }).start();
-
-        if(cveId != null) {
-            try {
-                PatchFinder.run(cveId);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
-        else logger.warn("Could not parse cveId from message '{}'", message);
-//        List<String> parsedIds = parseIds(message);
-//        if(parsedIds.size() > 0 && !jobListQueue.offer(parsedIds)) logger.error("Job response could not be added to message queue");
-    };
+//    private static final Pattern CVE_REGEX = Pattern.compile("CVE-\\d{4}-\\d{4,7}");
 
     /**
      * Initialize the Messenger class with RabbitMQ host, username, and password
@@ -143,55 +111,26 @@ public class Messenger {
         try {
             this.inputConnection = this.factory.newConnection();
             this.inputChannel = this.inputConnection.createChannel();
-            this.inputChannel.basicConsume(inputQueue, true, deliverCallback, consumerTag -> { });
+            this.inputChannel.basicConsume(inputQueue, false, new DefaultConsumer(inputChannel) {
+                @Override
+                public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
+                    String message = new String(body, StandardCharsets.UTF_8);
+                    String cveId = parseMessage(message);
+
+                    if(cveId != null) {
+                        try { PatchFinder.run(cveId); }
+                        catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                    else logger.warn("Could not parse cveId from message '{}'", message);
+                    inputChannel.basicAck(envelope.getDeliveryTag(), false);
+                }
+            });
         }
         catch (IOException | TimeoutException e) {
             throw new IllegalArgumentException("Rabbit connection could not be established");
         }
-    }
-
-    /**
-     * Waits for a message from the PNE for pollInterval seconds, returning null unless a valid job was received
-     *
-     * @param pollInterval interval time in seconds to poll the blocking queue
-     * @return null or a list of received CVE ids to find patches for
-     */
-    public List<String> waitForProductNameExtractorMessage(int pollInterval) {
-        // Initialize job list
-        List<String> cveIds = new ArrayList<>();
-
-        final Channel inputChannel = this.getInputChannel();
-        if(inputChannel != null) {
-
-        }
-
-        try(Channel channel = this.inputConnection.createChannel()) {
-            // Declare the input queue
-            channel.queueDeclare(inputQueue, true, false, false, null);
-            channel.basicConsume(inputQueue, true, deliverCallback, consumerTag -> { });
-
-            // Busy-wait loop for jobs
-            while(cveIds.size() == 0) {
-                // Poll queue for jobs every poll interval
-                logger.info("Polling message queue...");
-
-                // Create jobs list of lists for draining queue
-                final List<List<String>> jobs = new ArrayList<>();
-                // Drain queue to jobs list
-                final int numReceivedJobs = jobListQueue.drainTo(jobs);
-                // Flatten jobs into id list
-                jobs.forEach(cveIds::addAll);
-
-                // Sleep if no jobs received
-                if(numReceivedJobs == 0)
-                    synchronized (this) { wait(pollInterval * 1000L); }
-            }
-            logger.info("Received job with CVE(s) {}", cveIds);
-        } catch (TimeoutException | InterruptedException | IOException e) {
-            logger.error("Error occurred while getting jobs from the ProductNameExtractor: {}", e.toString());
-        }
-
-        return cveIds;
     }
 
     /**
@@ -232,6 +171,7 @@ public class Messenger {
         DatabaseHelper dbh = new DatabaseHelper("mysql", "jdbc:mysql://localhost:3306/nvip?useSSL=false&allowPublicKeyRetrieval=true", "root", "root");
         final Set<String> cveIds = dbh.getAffectedProducts(null).keySet();
         for (String id : cveIds) {
+            id = "{\"cveId\": \"" + id + "\"}";
             m.sendDummyMessage(INPUT_QUEUE, id);
         }
 //        m.sendDummyMessage(INPUT_QUEUE, "\"CVE-2023-0002\"");
