@@ -77,7 +77,7 @@ public class GitController {
 	 * 
 	 * @return true if successful, false if not
 	 */
-	public boolean cloneRepo() {
+	public synchronized boolean cloneRepo() {
 		Git git = null;
 		File localFileDir;
 		try {
