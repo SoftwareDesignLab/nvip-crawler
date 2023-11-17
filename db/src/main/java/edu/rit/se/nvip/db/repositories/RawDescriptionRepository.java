@@ -218,49 +218,6 @@ public class RawDescriptionRepository {
         }
     }
 
-
-    public CompositeVulnerability getCompositeVulnerability(String cveId) {
-        Set<RawVulnerability> usedRawVulns = getUsedRawVulnerabilities(cveId);
-        return getSummaryVulnerability(cveId, usedRawVulns);
-    }
-
-    private String getCompVuln = "SELECT v.created_date, vv.published_date, vv.last_modified_date, d.description_id, d.description, d.created_date AS description_date, d.gpt_func " +
-            "FROM vulnerability AS v " +
-            "INNER JOIN vulnerabilityversion AS vv ON v.vuln_version_id = vv.vuln_version_id " +
-            "INNER JOIN description AS d ON vv.description_id = d.description_id " +
-            "WHERE v.cve_id = ?";
-
-    // very hacky to use the rawVulns as an arg, there's a better way to handle this join
-    private CompositeVulnerability getSummaryVulnerability(String cveId, Set<RawVulnerability> rawVulns) {
-        CompositeVulnerability vuln = null;
-        try (Connection conn = dataSource.getConnection(); PreparedStatement pstmt = conn.prepareStatement(getCompVuln)) {
-            pstmt.setString(1, cveId);
-            ResultSet res = pstmt.executeQuery();
-            if (res.next()) {
-                CompositeDescription compDes = new CompositeDescription(
-                        res.getInt("description_id"),
-                        cveId,
-                        res.getString("description"),
-                        res.getTimestamp("description_date"),
-                        res.getString("gpt_func"),
-                        rawVulns
-                );
-                vuln = new CompositeVulnerability(
-                        cveId,
-                        res.getInt("vuln_id"),
-                        compDes,
-                        res.getTimestamp("published_date"),
-                        res.getTimestamp("last_modified_date"),
-                        res.getTimestamp("created_date")
-                );
-            }
-        } catch (SQLException ex) {
-            log.error("Error retrieving vulnerability {}.\n{}", cveId, ex);
-            return null;
-        }
-        return vuln;
-    }
-
     private String getUsedRawVulns = "SELECT rd.* " +
             "FROM vulnerability AS v " +
             "INNER JOIN vulnerabilityversion AS vv ON v.vuln_version_id = vv.vuln_version_id " +
