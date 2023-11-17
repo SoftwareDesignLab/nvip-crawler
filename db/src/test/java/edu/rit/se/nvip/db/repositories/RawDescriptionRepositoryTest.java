@@ -50,6 +50,7 @@ public class RawDescriptionRepositoryTest {
                 "Test",
                 "TestParser"
         );
+        testVuln.setSourceType("CNA");
 
         int insertedCount = repository.insertRawVulnerability(testVuln);
 
@@ -80,6 +81,7 @@ public class RawDescriptionRepositoryTest {
                 "Test",
                 "TestParser"
         );
+        testVuln.setSourceType("CNA");
 
         int insertedCount = repository.insertRawVulnerability(testVuln);
 
@@ -92,6 +94,7 @@ public class RawDescriptionRepositoryTest {
         inOrder.verify(mockPS).setString(6, testVuln.getSourceUrl());
         inOrder.verify(mockPS).setString(7, testVuln.getSourceType().type);
         inOrder.verify(mockPS).setString(8, testVuln.getParserType());
+        inOrder.verify(mockPS).setString(9, testVuln.getDomain());
         inOrder.verify(mockPS).execute();
 
         assertThat(insertedCount).isZero();
