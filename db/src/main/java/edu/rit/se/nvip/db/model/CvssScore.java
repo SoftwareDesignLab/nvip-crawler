@@ -23,6 +23,7 @@
  */
 package edu.rit.se.nvip.db.model;
 
+import edu.rit.se.nvip.db.model.enums.CVSSSeverityClass;
 import lombok.Data;
 
 /**
@@ -33,18 +34,40 @@ import lombok.Data;
 @Data
 public class CvssScore {
 	private String cveId;
-	private final int severityId;
-	private final double severityConfidence;
+	private final CVSSSeverityClass severityClass;
+	private final double baseScore;
+	private final double confidence;
 
-	private final String impactScore;
-	private final double impactConfidence;
-
-	public CvssScore(String cveId, int severityId, double severityConfidence, String impactScore, double impactConfidence) {
+	public CvssScore(String cveId, double baseScore, double confidence) {
 		super();
 		this.cveId = cveId;
-		this.severityId = severityId;
-		this.severityConfidence = severityConfidence;
-		this.impactScore = impactScore;
-		this.impactConfidence = impactConfidence;
+		this.severityClass = CVSSSeverityClass.getCVSSSeverityByScore(baseScore);
+		this.baseScore = baseScore;
+		this.confidence = confidence;
+	}
+
+	public String getCveId() {
+		return cveId;
+	}
+
+	public void setCveId(String cveId) {
+		this.cveId = cveId;
+	}
+
+	public CVSSSeverityClass getSeverityClass() {
+		return severityClass;
+	}
+
+	public double getBaseScore() {
+		return baseScore;
+	}
+
+	public double getConfidence() {
+		return confidence;
+	}
+
+	@Override
+	public String toString() {
+		return "CvssScore [cveId=" + cveId + ", baseSeverity=" + severityClass + ", baseScore=" + baseScore + ", confidence=" + confidence + "]";
 	}
 }
