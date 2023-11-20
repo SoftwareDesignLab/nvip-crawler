@@ -62,18 +62,15 @@ public class PatchFinderTest {
         // Mock the ThreadPoolExecutor
         ThreadPoolExecutor e = mock(ThreadPoolExecutor.class);
 
-        // Clear the patch commits
-        PatchFinder.getPatchCommits().clear();
-
         // Call the method
-        PatchFinder.findPatchesMultiThreaded("CVE-2023-1001", possiblePatchSources);
+        final Set<PatchCommit> patchCommits = PatchFinder.findPatchesMultiThreaded("CVE-2023-1001", possiblePatchSources);
 
         // Add assertions here to validate the expected behavior
         // For example, check if the repos are cleared
         assertTrue(new File(PatchFinder.clonePath).exists());
 
         // Check the patch commits
-        assertEquals(24, PatchFinder.getPatchCommits().size());
+        assertEquals(24, patchCommits.size());
     }
 
 

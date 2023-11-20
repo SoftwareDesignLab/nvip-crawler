@@ -82,12 +82,13 @@ public class GitController {
 		File localFileDir;
 		try {
 			final String[] pathParts = localPath.split("/");
-			logger.info("{} repository does not exist! Cloning repo now, this will take some time...", pathParts[pathParts.length - 1]);
 			localFileDir = new File(localPath);
 			if(!localFileDir.exists()) {
+				logger.info("{} repository does not exist! Cloning repo now, this will take some time...", pathParts[pathParts.length - 1]);
 				CloneCommand cloneCommand = Git.cloneRepository();
 				cloneCommand.setURI(remotePath);
 				cloneCommand.setDirectory(localFileDir);
+				cloneCommand.setBare(true);
 				cloneCommand.call().close();
 
 				git = Git.open(localFileDir);
@@ -97,7 +98,7 @@ public class GitController {
 				config.setString("remote", "origin", "fetch", "+refs/heads/*:refs/remotes/origin/*");
 				config.setString("remote", "origin", "url", remotePath);
 				config.save();
-			} else logger.info("{} repository already exists at path '{}'", pathParts[pathParts.length - 1], localPath);
+			} else logger.info("{} repository found at path '{}'", pathParts[pathParts.length - 1], localPath);
 		} catch (Exception e) {
 			logger.error("Error while cloning repo at: {}\n{}", remotePath, e);
 			return false;

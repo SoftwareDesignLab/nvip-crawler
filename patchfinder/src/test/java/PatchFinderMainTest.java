@@ -47,9 +47,6 @@ public class PatchFinderMainTest {
    @Test
    public void testMain() {
        String[] args = new String[]{"CVE-2023-1001"};
-       // Clear the patch commits
-       PatchFinder.getPatchCommits().clear();
-
        // Create a mock DatabaseHelper
        DatabaseHelper databaseHelperMock = mock(DatabaseHelper.class);
        PatchFinder.init(databaseHelperMock);
@@ -63,27 +60,29 @@ public class PatchFinderMainTest {
        // Create a mock Messenger
        Messenger messengerMock = mock(Messenger.class);
 
-       // Configure mock Messenger to return null after a 10-second delay (simulate timeout)
-       when(messengerMock.waitForProductNameExtractorMessage(anyInt())).thenAnswer(invocation -> {
-           Thread.sleep(10000);
-           return null;
-       });
+//       // Configure mock Messenger to return null after a 10-second delay (simulate timeout)
+//       when(messengerMock.waitForProductNameExtractorMessage(anyInt())).thenAnswer(invocation -> {
+//           Thread.sleep(10000);
+//           return null;
+//       });
 
        // Initialize PatchFinder with the mock Messenger
        PatchFinder.init(databaseHelperMock);
 
        // Call the main method then timeout after 10 seconds
-         CountDownLatch latch = new CountDownLatch(1);
-            new Thread(() -> {
-                try {
-                    new PatchFinderMain(databaseHelperMock).start();
-                } catch (Exception e) {
-                    fail("Exception thrown: " + e.getMessage());
-                }
-                latch.countDown();
-            }).start();
+       CountDownLatch latch = new CountDownLatch(1);
+
+       new Thread(() -> {
+            try {
+                new PatchFinderMain(databaseHelperMock).start();
+            } catch (Exception e) {
+                fail("Exception thrown: " + e.getMessage());
+            }
+            latch.countDown();
+       }).start();
 
        // Assert that no patch commits were collected
-       assertEquals(0, PatchFinder.getPatchCommits().size());
+//       assertEquals(0, patchCommits.size());
+       // TODO: Assert commits inserted via dbh mock, as they cannot be accessed directly at this level (found, inserted, thrown away during main program runtime)
    }
 }

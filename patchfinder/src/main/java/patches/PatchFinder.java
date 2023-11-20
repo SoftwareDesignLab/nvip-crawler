@@ -27,6 +27,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import db.DatabaseHelper;
 import env.PatchFinderEnvVars;
+import fixes.FixFinderThread;
 import model.CpeGroup;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -57,7 +58,7 @@ public class PatchFinder {
 	private static DatabaseHelper databaseHelper;
 	private static PatchUrlFinder patchURLFinder;
 
-	private static final Set<PatchCommit> patchCommits = new HashSet<>();
+//	private static final Set<PatchCommit> patchCommits = new HashSet<>();
 	private static Map<String, List<String>> sourceDict;
 	protected static Instant urlDictLastCompilationDate = Instant.parse("2000-01-01T00:00:00.00Z");
 	protected static final String[] addressBases = PatchFinderEnvVars.getAddressBases();
@@ -142,9 +143,9 @@ public class PatchFinder {
 		final int totalUrlCount = possiblePatchURLs.size();
 
 		if(totalUrlCount > readUrlCount) {
-			logger.info("Successfully parsed {} new possible patch urls for {} CVE(s) in {} seconds",
+			logger.info("Successfully parsed {} new possible patch urls for CVE '{}' in {} seconds",
 					totalUrlCount - readUrlCount,
-					possiblePatchURLs.size(),
+					cveId,
 					(System.currentTimeMillis() - parseUrlsStart) / 1000
 			);
 			updateSourceDict(cveId, newUrls);
@@ -158,10 +159,9 @@ public class PatchFinder {
 		// Repos will be cloned to patch-repos directory, multi-threaded 6 threads.
 		logger.info("Starting patch finder with {} max threads", maxThreads);
 		final long findPatchesStart = System.currentTimeMillis();
-		PatchFinder.findPatchesMultiThreaded(cveId, possiblePatchURLs);
 
 		// Get found patches from patchfinder
-		Set<PatchCommit> patchCommits = PatchFinder.getPatchCommits();
+		Set<PatchCommit> patchCommits = PatchFinder.findPatchesMultiThreaded(cveId, possiblePatchURLs);
 
 		// Insert found patch commits (if any)
 		if(patchCommits.size() > 0) {
@@ -199,7 +199,7 @@ public class PatchFinder {
 								patchCommit.getTimeline(), patchCommit.getTimeToPatch(), patchCommit.getLinesChanged()
 						);
 					} else {
-						logger.warn("Failed to insert patch commit, as it already exists in the database");
+						logger.warn("Failed to insert patch commit '{}' with message '{}' for CVE '{}', as it already exists in the database", commitSha.substring(0, 6), patchCommit.getCommitMessage(), cveId);
 						existingInserts++;
 					}
 				} catch (IllegalArgumentException e) {
@@ -320,6 +320,12 @@ public class PatchFinder {
 		}
 	}
 
+	/**
+	 * Given a cveId and a list of newUrls, update the source dictionary with the new values.
+	 *
+	 * @param cveId cveId to update
+	 * @param newUrls new urls to add
+	 */
 	private synchronized static void updateSourceDict(String cveId, List<String> newUrls) {
 		try {
 			// Get source dict
@@ -339,16 +345,17 @@ public class PatchFinder {
 		}
 	}
 
-	public static Set<PatchCommit> getPatchCommits() {
-		return patchCommits;
-	}
+//	public static Set<PatchCommit> getPatchCommits() {
+//		return patchCommits;
+//	}
 
 	/**
 	 * Git commit parser that implements multiple threads to increase performance. Found patches
 	 * will be stored in the patchCommits member of this class.
 	 * @param possiblePatchSources sources to scrape
 	 */
-	public static void findPatchesMultiThreaded(String cveId, List<String> possiblePatchSources) {
+	public static Set<PatchCommit> findPatchesMultiThreaded(String cveId, List<String> possiblePatchSources) {
+		final Set<PatchCommit> patchCommits = new HashSet<>();
 		// TODO: Move to where the logic actually clones, so this is not called unnecessarily
 		// Init clone path and clear previously stored repos
 		File dir = new File(clonePath);
@@ -356,7 +363,7 @@ public class PatchFinder {
 			logger.warn("Could not locate clone directory at path '{}'", clonePath);
 			try { dir.createNewFile(); }
 			catch (IOException e) { logger.error("Failed to create missing directory '{}'", clonePath); }
-		} else logger.info("Clone directory already exists at {}", clonePath);
+		}/* else logger.info("Clone directory already exists at {}", clonePath);*/
 		//TODO: Figure out a solid solution to handling overwriting existing cloned repos, have had 0 success with
 		// deleting programmatically so far, might be a job for the docker env to handle the destruction of the clone dir
 //		else {
@@ -375,17 +382,21 @@ public class PatchFinder {
 		// Initialize thread pool executor
 //		final int actualThreads = Math.min(maxThreads, totalCVEsToProcess);
 		final int actualThreads = possiblePatchSources.size();
-		final BlockingQueue<Runnable> workQueue = new ArrayBlockingQueue<>(actualThreads);
-		final ThreadPoolExecutor executor = new ThreadPoolExecutor(
-				actualThreads,
-				actualThreads,
-				5,
-				TimeUnit.MINUTES,
-				workQueue
-		);
+//		final BlockingQueue<Runnable> workQueue = new ArrayBlockingQueue<>(actualThreads);
+//		final ThreadPoolExecutor executor = new ThreadPoolExecutor(
+//				actualThreads,
+//				actualThreads,
+//				5,
+//				TimeUnit.MINUTES,
+//				workQueue
+//		);
+
+		// TODO: Implement futures
+		final List<Future<Set<PatchCommit>>> futures = new ArrayList<>();
+		final ExecutorService exe = Executors.newFixedThreadPool(actualThreads);
 
 		// Prestart all assigned threads (this is what runs jobs)
-		executor.prestartAllCoreThreads();
+//		executor.prestartAllCoreThreads();
 
 		// Add jobs to work queue (ignore CVEs with no found sources
 //		final Set<String> CVEsToProcess = possiblePatchSources.keySet()
@@ -394,12 +405,24 @@ public class PatchFinder {
 //				);
 
 		// Partition jobs to all threads
-		if(!workQueue.offer(new PatchFinderThread(cveId, possiblePatchSources, clonePath, 10000))) {
-			logger.error("Could not add job '{}' to work queue", cveId);
+		for (String source : possiblePatchSources) {
+			Future<Set<PatchCommit>> future = exe.submit(() -> {
+				// Create thread, run, and get found patch commits after run has completed
+				final PatchFinderThread thread = new PatchFinderThread(cveId, source, clonePath, 10000);
+				thread.run();
+				return thread.getPatchCommits();
+			});
+			futures.add(future);
 		}
 
 		// Initiate shutdown of executor (waits, but does not hang, for all jobs to complete)
-		executor.shutdown();
+		exe.shutdown();
+
+		for (Future<Set<PatchCommit>> future : futures) {
+			try { final Set<PatchCommit> result = future.get();
+			if(result != null) patchCommits.addAll(result); }
+			catch (Exception e) { logger.error("Error occured while getting future of job: {}", e.toString()); }
+		}
 
 		// TODO: Relocate/remove
 //		// Wait loop (waits for jobs to be processed and updates the user on progress)
@@ -447,5 +470,8 @@ public class PatchFinder {
 //			List<Runnable> remainingTasks = executor.shutdownNow();
 //			logger.error("{} tasks not executed", remainingTasks.size());
 //		}
+
+		logger.info("Returning {} patch commits", patchCommits.size());
+		return patchCommits;
 	}
 }
