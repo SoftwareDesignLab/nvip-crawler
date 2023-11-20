@@ -17,10 +17,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeoutException;
 
 public class Messenger {
@@ -106,7 +103,7 @@ public class Messenger {
                         .map(CompositeVulnerability::getCveId)
                         .forEach(vuln -> {
                             try {
-                                channel.basicPublish("", outputQueue, null, genJson(List.of(vuln)).getBytes(StandardCharsets.UTF_8));
+                                channel.basicPublish("", outputQueue, null, genJson(vuln).getBytes(StandardCharsets.UTF_8));
                             } catch (IOException e) {
                                 throw new RuntimeException(e);
                             }
@@ -150,12 +147,13 @@ public class Messenger {
 
     /**
      * generates the json string from the list of strings
-     * @param ids
+     * @param cveId
      * @return
      */
-    private String genJson(List<String> ids) {
+    private String genJson(String cveId) {
         try {
-            return OM.writeValueAsString(ids);
+            Map<String, String> cveJson = Map.of("cveId", cveId);
+            return OM.writeValueAsString(cveJson);
         } catch (JsonProcessingException e) {
             logger.error("Failed to convert list of ids to json string: {}", e.toString());
             return "";
