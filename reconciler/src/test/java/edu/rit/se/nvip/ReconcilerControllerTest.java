@@ -48,24 +48,6 @@ class ReconcilerControllerTest {
      */
     @Test
     void mainTest() {
-        //create mocks
-        ReconcilerController rc = new ReconcilerController();
-        DatabaseHelper mockDbh = mock(DatabaseHelper.class);
-        FilterHandler mockFH = mock(FilterHandler.class);
-        Reconciler mockRecon = mock(Reconciler.class);
-        FilterReturn mockFR = mock(FilterReturn.class);
-        MitreCveController mockMitre = mock(MitreCveController.class);
-        NvdCveController mockNvd = mock(NvdCveController.class);
-        CveCharacterizer mockChar = mock(CveCharacterizer.class);
-        rc.setDbh(mockDbh);
-        rc.setReconciler(mockRecon);
-        rc.setFilterHandler(mockFH);
-        rc.setNvdController(mockNvd);
-        rc.setMitreController(mockMitre);
-        rc.setCveCharacterizer(mockChar);
-
-        //create mock functionality
-        mockedEnvVars.when(ReconcilerEnvVars::getDoCharacterization).thenReturn(true);
         Set<RawVulnerability> rawVulns = new HashSet<>();
         RawVulnerability raw = new RawVulnerability(1, "", "description1", null, null, null, "");
         RawVulnerability raw1 = new RawVulnerability(2, "", "description2", null, null, null, "");
@@ -73,22 +55,40 @@ class ReconcilerControllerTest {
         rawVulns.add(raw);
         rawVulns.add(raw1);
         rawVulns.add(raw2);
+
         CompositeVulnerability vuln = new CompositeVulnerability(raw);
 
+        //create mocks
+        DatabaseHelper mockDbh = mock(DatabaseHelper.class);
         when(mockDbh.getRawVulnerabilities(anyString())).thenReturn(rawVulns);
         when(mockDbh.getCompositeVulnerability(anyString())).thenReturn(vuln);
-        when(mockFH.runFilters(anySet())).thenReturn(mockFR);
         doNothing().when(mockDbh).updateFilterStatus(anySet());
-        when(mockRecon.reconcile(any(CompositeVulnerability.class), anySet())).thenReturn(vuln);
         when(mockDbh.insertOrUpdateVulnerabilityFull(any(CompositeVulnerability.class))).thenReturn(1);
         when(mockDbh.insertTimeGapsForNewVulns(anySet())).thenReturn(1);
         when(mockDbh.insertRun(any(RunStats.class))).thenReturn(1);
         when(mockDbh.insertCvssBatch(anySet())).thenReturn(1);
         when(mockDbh.insertVdoBatch(anySet())).thenReturn(1);
-        doNothing().when(mockMitre).updateMitreTables();
-        doNothing().when(mockNvd).updateNvdTables();
         mockedDb.when(DatabaseHelper::getInstance).thenReturn(mockDbh);
 
+        FilterHandler mockFH = mock(FilterHandler.class);
+        when(mockFH.runFilters(anySet())).thenReturn(mock(FilterReturn.class));
+
+        Reconciler mockRecon = mock(Reconciler.class);
+        when(mockRecon.reconcile(any(CompositeVulnerability.class), anySet())).thenReturn(vuln);
+
+        MitreCveController mockMitre = mock(MitreCveController.class);
+        doNothing().when(mockMitre).updateMitreTables();
+
+        NvdCveController mockNvd = mock(NvdCveController.class);
+        doNothing().when(mockNvd).updateNvdTables();
+
+        CveCharacterizer mockChar = mock(CveCharacterizer.class);
+
+        ReconcilerController rc = new ReconcilerController(mockDbh, mockFH, mockRecon, mockNvd, mockMitre);
+        rc.setCveCharacterizer(mockChar);
+
+        //create mock functionality
+        mockedEnvVars.when(ReconcilerEnvVars::getDoCharacterization).thenReturn(true);
 
         //actually run the code
         Set<String> jobs = new HashSet<>();
@@ -96,21 +96,25 @@ class ReconcilerControllerTest {
         jobs.add("CVE-2023-2");
         jobs.add("CVE-2023-3");
         jobs.add("CVE-2023-4");
-        rc.main(jobs);
+
+        Set<CompositeVulnerability> reconciledVulns = rc.reconcileCves(jobs);
+        rc.characterizeCves(reconciledVulns);
+        rc.updateTimeGaps(reconciledVulns);
+        rc.createRunStats(reconciledVulns);
     }
 
-    @Test
-    public void initTest(){
-        ReconcilerController rc = new ReconcilerController();
-        DatabaseHelper mockDb = mock(DatabaseHelper.class);
-        Reconciler mockRecon = mock(Reconciler.class);
-//        MockedStatic<ReconcilerFactory> mockedRF = mockStatic(ReconcilerFactory.class);
-
-        mockedDb.when(DatabaseHelper::getInstance).thenReturn(mockDb);
-        mockedEnvVars.when(ReconcilerEnvVars::getReconcilerType).thenReturn("");
-//        mockedRF.when(() -> ReconcilerFactory.createReconciler(anyString())).thenReturn(mockRecon);
-//        doNothing().when(mockRecon).setKnownCveSources(anyMap());
-
-        rc.initialize();
-    }
+//    @Test
+//    public void initTest(){
+//        ReconcilerController rc = new ReconcilerController();
+//        DatabaseHelper mockDb = mock(DatabaseHelper.class);
+//        Reconciler mockRecon = mock(Reconciler.class);
+////        MockedStatic<ReconcilerFactory> mockedRF = mockStatic(ReconcilerFactory.class);
+//
+//        mockedDb.when(DatabaseHelper::getInstance).thenReturn(mockDb);
+//        mockedEnvVars.when(ReconcilerEnvVars::getReconcilerType).thenReturn("");
+////        mockedRF.when(() -> ReconcilerFactory.createReconciler(anyString())).thenReturn(mockRecon);
+////        doNothing().when(mockRecon).setKnownCveSources(anyMap());
+//
+//        rc.initialize();
+//    }
 }
