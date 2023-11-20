@@ -1,6 +1,7 @@
 package fixes.parsers;
 
-import fixes.Fix;
+
+import edu.rit.se.nvip.db.model.Fix;
 import org.jsoup.Jsoup;
 import org.junit.Test;
 

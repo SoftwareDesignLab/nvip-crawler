@@ -22,9 +22,9 @@ package patches; /**
  * SOFTWARE.
  */
 
+import edu.rit.se.nvip.db.model.CpeEntry;
+import edu.rit.se.nvip.db.model.CpeGroup;
 import env.PatchFinderEnvVars;
-import model.CpeEntry;
-import model.CpeGroup;
 import org.junit.Before;
 import org.junit.Test;
 import patches.PatchFinder;

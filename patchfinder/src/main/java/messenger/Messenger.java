@@ -30,7 +30,6 @@ import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.DeliverCallback;
-import db.DatabaseHelper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -50,7 +49,7 @@ import java.util.concurrent.*;
  */
 public class Messenger {
     private final String inputQueue;
-    private static final Logger logger = LogManager.getLogger(DatabaseHelper.class.getSimpleName());
+    private static final Logger logger = LogManager.getLogger(Messenger.class.getSimpleName());
     private static final ObjectMapper OM = new ObjectMapper();
     private ConnectionFactory factory;
 

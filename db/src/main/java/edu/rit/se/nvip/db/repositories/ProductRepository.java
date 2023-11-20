@@ -2,18 +2,24 @@ package edu.rit.se.nvip.db.repositories;
 
 import edu.rit.se.nvip.db.model.AffectedProduct;
 import edu.rit.se.nvip.db.model.CpeCollection;
+import edu.rit.se.nvip.db.model.CpeEntry;
+import edu.rit.se.nvip.db.model.CpeGroup;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.sql.DataSource;
 import java.sql.*;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Slf4j
 @RequiredArgsConstructor
 public class ProductRepository {
+
+    public static final Pattern CPE_PATTERN = Pattern.compile("cpe:2\\.3:[aho\\*\\-]:([^:]*):([^:]*):([^:]*):.*");
 
     private final DataSource dataSource;
 
@@ -137,6 +143,88 @@ public class ProductRepository {
             pstmt.executeUpdate();
         } catch (SQLException e) {
             log.error(e.toString());
+        }
+    }
+
+
+
+
+    private final String selectAffectedProductsSql = "SELECT cve_id, cpe FROM affectedproduct ORDER BY cve_id DESC, version ASC;";
+    private final String selectAffectedProductsByIdsSql = "SELECT ap.cve_id, ap.cpe FROM affectedproduct AS ap " +
+            "JOIN cpeset AS cs ON cs.cpe_set_id = ap.cpe_set_id " +
+            "JOIN vulnerabilityversion AS vv ON vv.cpe_set_id = cs.cpe_set_id " +
+            "WHERE vv.vuln_version_id = ? ORDER BY cve_id DESC, version ASC;";
+
+    /**
+     * Collects a map of CPEs with their correlated CVE and Vuln ID used for
+     * collecting patches given a list of CVE ids.
+     *
+     * @param vulnVersionIds CVEs to get affected products for
+     * @return a map of affected products
+     */
+    public Map<String, CpeGroup> getAffectedProducts(List<Integer> vulnVersionIds) {
+        Map<String, CpeGroup> affectedProducts = new HashMap<>();
+        // Prepare statement
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement getAll = conn.prepareStatement(selectAffectedProductsSql);
+             PreparedStatement getById = conn.prepareStatement(selectAffectedProductsByIdsSql)
+        ) {
+            // Execute correct statement and get result set
+            ResultSet res = null;
+            if(vulnVersionIds == null) {
+                res = getAll.executeQuery();
+                parseAffectedProducts(affectedProducts, res);
+            }
+            else {
+                for (int id : vulnVersionIds) {
+                    getById.setInt(1, id);
+                    res = getById.executeQuery();
+                    parseAffectedProducts(affectedProducts, res);
+                }
+            }
+
+        } catch (Exception e) {
+            log.error("ERROR: Failed to generate affected products map: {}", e.toString());
+        }
+
+        return affectedProducts;
+    }
+
+
+
+    /**
+     * Parses affected product data from the ResultSet into CpeGroup objects in the affectedProducts map.
+     *
+     * @param affectedProducts output map of CVE ids -> products
+     * @param res result set from database query
+     * @throws SQLException if a SQL error occurs
+     */
+    private void parseAffectedProducts(Map<String, CpeGroup> affectedProducts, ResultSet res) throws SQLException {
+        // Parse results
+        while (res.next()) {
+            // Extract cveId and cpe from result
+            final String cveId = res.getString("cve_id");
+            final String cpe = res.getString("cpe");
+
+            // Extract product name and version from cpe
+            final Matcher m = CPE_PATTERN.matcher(cpe);
+            if(!m.find()) {
+                log.warn("Invalid cpe '{}' could not be parsed, skipping product", cpe);
+                continue;
+            }
+            final String vendor = m.group(1);
+            final String name = m.group(2);
+            final String version = m.group(3);
+            final CpeEntry entry = new CpeEntry(name, version, cpe);
+
+            // If we already have this cveId stored, add specific version
+            if (affectedProducts.containsKey(cveId)) {
+                affectedProducts.get(cveId).addVersion(entry);
+            } else {
+                final CpeGroup group = new CpeGroup(vendor, name);
+                group.addVersion(entry);
+                affectedProducts.put(cveId, group);
+            }
         }
     }
 

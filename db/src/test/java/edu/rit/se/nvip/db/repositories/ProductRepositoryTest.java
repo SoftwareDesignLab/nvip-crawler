@@ -1,8 +1,11 @@
 package edu.rit.se.nvip.db.repositories;
 
+import org.junit.Test;
+
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -58,5 +61,11 @@ class ProductRepositoryTest {
 //    }
 //    return products;
 //}
+
+//    @Test
+//    public void testGetAffectedProducts() {
+//        Map<String, CpeGroup> affectedProducts = databaseHelper.getAffectedProducts(null);
+//        assertNotNull(affectedProducts);
+//    }
 
 }

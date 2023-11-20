@@ -23,7 +23,7 @@ package patches; /**
  */
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import model.CpeGroup;
+import edu.rit.se.nvip.db.model.CpeGroup;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eclipse.jgit.api.LsRemoteCommand;

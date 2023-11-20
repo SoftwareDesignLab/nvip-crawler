@@ -24,7 +24,8 @@ package fixes.parsers;
  * SOFTWARE.
  */
 
-import fixes.Fix;
+
+import edu.rit.se.nvip.db.model.Fix;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 

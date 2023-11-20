@@ -23,8 +23,6 @@ package fixes; /**
  */
 
 import env.FixFinderEnvVars;
-import model.CpeEntry;
-import model.CpeGroup;
 import org.junit.Before;
 import org.junit.Test;
 
