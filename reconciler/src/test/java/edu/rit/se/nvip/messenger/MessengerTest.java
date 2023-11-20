@@ -18,6 +18,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -112,11 +113,11 @@ class MessengerTest {
                     )
             ));
 
-            Messenger messenger = new Messenger(factoryMock, "", "", mockRc);
+            Messenger messenger = new Messenger(factoryMock, "IN", "OUT", mockRc);
             messenger.run();
 
             verify(channelMock, times(1)).basicConsume(anyString(), anyBoolean(), any(DeliverCallback.class), (CancelCallback) any());
-            verify(channelMock, times(1)).basicPublish(anyString(), anyString(), any(), any());
+            verify(channelMock, times(1)).basicPublish(eq(""), eq("OUT"), eq(null), eq("{\"cveId\":\"CVE-1234-5678\"}".getBytes(StandardCharsets.UTF_8)));
 
             verify(mockRc, times(1)).reconcileCves(any());
             verify(mockRc, times(1)).characterizeCves(any());

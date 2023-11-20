@@ -211,7 +211,9 @@ public class Messenger {
     @SuppressWarnings("unchecked")
     public List<String> parseIds(String jsonString) {
         try {
-            return OM.readValue(jsonString, ArrayList.class);
+            List<String> ids = new ArrayList<>();
+            ids.add(OM.readTree(jsonString).get("cveId").asText());
+            return ids;
         } catch (JsonProcessingException e) {
             logger.error("Failed to parse list of ids from json string: {}", e.toString());
             return new ArrayList<>();
