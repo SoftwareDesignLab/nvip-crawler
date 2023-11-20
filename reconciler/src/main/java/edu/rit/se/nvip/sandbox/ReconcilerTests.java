@@ -1,8 +1,18 @@
 package edu.rit.se.nvip.sandbox;
 
+import edu.rit.se.nvip.DatabaseHelper;
 import edu.rit.se.nvip.ReconcilerController;
+import edu.rit.se.nvip.filter.FilterHandler;
+import edu.rit.se.nvip.mitre.MitreCveController;
+import edu.rit.se.nvip.model.CompositeVulnerability;
 import edu.rit.se.nvip.model.RawVulnerability;
+import edu.rit.se.nvip.nvd.NvdCveController;
+import edu.rit.se.nvip.reconciler.Reconciler;
+import edu.rit.se.nvip.reconciler.ReconcilerFactory;
+import edu.rit.se.nvip.utils.ReconcilerEnvVars;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -30,8 +40,19 @@ public class ReconcilerTests {
     public void runReconciler(int previouslyPassedHighPrio, int previouslyPassedLowPrio, int numNewHighPrioPassing, int numNewHighPrioFailing, int numNewLowPrioPassing, int numNewLowPrioFailing){
         List<RawVulnerability> run1 = new ArrayList<>();
         List<RawVulnerability> run2 = new ArrayList<>();
-        ReconcilerController recCon = new ReconcilerController();
-        recCon.initialize();
+
+        FilterHandler filterHandler = new FilterHandler(ReconcilerEnvVars.getFilterList());
+        Reconciler reconciler = ReconcilerFactory.createReconciler(ReconcilerEnvVars.getReconcilerType());
+        reconciler.setKnownCveSources(ReconcilerEnvVars.getKnownSourceMap());
+
+        NvdCveController nvdController = new NvdCveController();
+        nvdController.createDatabaseInstance();
+
+        MitreCveController mitreController = new MitreCveController();
+        mitreController.initializeController();
+
+        ReconcilerController recCon = new ReconcilerController(dbh, filterHandler, reconciler, nvdController, mitreController);
+
         if (previouslyPassedHighPrio > 0){
             prevPassedHigh = genRawVulns(previouslyPassedHighPrio, true, false);
             run1.addAll(prevPassedHigh);
@@ -47,7 +68,10 @@ public class ReconcilerTests {
         runSet.add("CVE-2023-12345");
         if (!run1.isEmpty()){
             //run the crawler
-            recCon.main(runSet);
+            Set<CompositeVulnerability> reconciledVulns = recCon.reconcileCves(runSet);
+            recCon.characterizeCves(reconciledVulns);
+            recCon.updateTimeGaps(reconciledVulns);
+            recCon.createRunStats(reconciledVulns);
         }
 
         if (numNewHighPrioPassing > 0){
@@ -72,7 +96,10 @@ public class ReconcilerTests {
             dbh.insertRawVuln(raw);
         }
         //run the crawler
-        recCon.main(runSet);
+        Set<CompositeVulnerability> reconciledVulns = recCon.reconcileCves(runSet);
+        recCon.characterizeCves(reconciledVulns);
+        recCon.updateTimeGaps(reconciledVulns);
+        recCon.createRunStats(reconciledVulns);
     }
 
     private RawVulnerability genRawVuln(int id, boolean isHighPrio, boolean isFailing){

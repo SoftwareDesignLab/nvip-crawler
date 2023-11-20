@@ -21,20 +21,17 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 public class Messenger {
 
     private final String inputQueue;
     private final String outputQueue;
-    private static final Logger logger = LogManager.getLogger(DatabaseHelper.class.getSimpleName());
+    private static final Logger logger = LogManager.getLogger(Messenger.class);
     private static final ObjectMapper OM = new ObjectMapper();
     private ConnectionFactory factory;
 
-    private ReconcilerController rc = new ReconcilerController();
+    private ReconcilerController rc;
 
     public Messenger(){
         // Instantiate with default values
@@ -47,6 +44,14 @@ public class Messenger {
                 ReconcilerEnvVars.getRabbitQueueIn(),
                 ReconcilerEnvVars.getRabbitQueueOut());
     }
+
+    public Messenger(ConnectionFactory factory, String inputQueue, String outputQueue, ReconcilerController rc){
+        this.factory = factory;
+        this.inputQueue = inputQueue;
+        this.outputQueue = outputQueue;
+        this.rc = rc;
+    }
+
 
     /**
      * Instantiate new RabbitMQ Messenger
@@ -78,6 +83,13 @@ public class Messenger {
     }
 
     public void run(){
+
+        DatabaseHelper dbh = DatabaseHelper.getInstance();
+        if (!dbh.testDbConnection()) {
+            logger.error("Error in database connection! Please check if the database configured in DB Envvars is up and running!");
+            System.exit(1);
+        }
+
         logger.info("Waiting for jobs from Crawler...");
         try(Connection connection = factory.newConnection();
             Channel channel = connection.createChannel()){
@@ -87,7 +99,7 @@ public class Messenger {
             DeliverCallback deliverCallback = (consumerTag, delivery) -> {
                 String message = new String(delivery.getBody(), StandardCharsets.UTF_8);
                 Set<String> parsedIds = new HashSet<>(parseIds(message));
-                Set<CompositeVulnerability> reconciledVulns = rc.main(parsedIds);
+                Set<CompositeVulnerability> reconciledVulns = rc.reconcileCves(parsedIds);
                 reconciledVulns.stream()
                         .filter(v -> v.getReconciliationStatus() == CompositeVulnerability.ReconciliationStatus.NEW ||
                                 v.getReconciliationStatus() == CompositeVulnerability.ReconciliationStatus.UPDATED)
@@ -99,6 +111,9 @@ public class Messenger {
                                 throw new RuntimeException(e);
                             }
                         });
+                rc.characterizeCves(reconciledVulns);
+                rc.updateTimeGaps(reconciledVulns);
+                rc.createRunStats(reconciledVulns);
             };
             channel.basicConsume(inputQueue, true, deliverCallback, consumerTag -> { });
 
@@ -145,9 +160,5 @@ public class Messenger {
             logger.error("Failed to convert list of ids to json string: {}", e.toString());
             return "";
         }
-    }
-
-    public void setReconcilerController(ReconcilerController rc){
-        this.rc = rc;
     }
 }

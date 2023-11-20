@@ -27,38 +27,26 @@ public class ReconcilerController {
     private NvdCveController nvdController;
     private MitreCveController mitreController;
 
-
-    public void initialize(){
-        this.dbh = DatabaseHelper.getInstance();
-        filterHandler = new FilterHandler(ReconcilerEnvVars.getFilterList());
-        this.reconciler = ReconcilerFactory.createReconciler(ReconcilerEnvVars.getReconcilerType());
-        this.reconciler.setKnownCveSources(ReconcilerEnvVars.getKnownSourceMap());
-        if(nvdController == null) {
-            this.nvdController = new NvdCveController();
-            this.nvdController.createDatabaseInstance();
-        }
-        if(mitreController == null) {
-            this.mitreController = new MitreCveController();
-            this.mitreController.initializeController();
-        }
+    public ReconcilerController(DatabaseHelper dbh, FilterHandler filterHandler, Reconciler reconciler, NvdCveController nvdController, MitreCveController mitreController) {
+        this.dbh = dbh;
+        this.filterHandler = filterHandler;
+        this.reconciler = reconciler;
+        this.nvdController = nvdController;
+        this.mitreController = mitreController;
     }
 
-    public Set<CompositeVulnerability> main(Set<String> jobs) {
-        logger.info(jobs.size() + " jobs found for reconciliation");
+    public Set<CompositeVulnerability> reconcileCves(Set<String> cveIds){
+        logger.info(cveIds.size() + " jobs found for reconciliation");
         Set<CompositeVulnerability> reconciledVulns = new HashSet<>();
 
         ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
-        //characterizer initialization
-        CharacterizeTask cTask = new CharacterizeTask();
-        Future<CveCharacterizer> futureCharacterizer = executor.submit(cTask);
-
         //set up reconcile job tasks, map from cve id to future
         Map<String, Future<CompositeVulnerability>> futures = new HashMap<>();
-        for (String job : jobs) {
-            ReconcileTask task = new ReconcileTask(job);
+        for (String cveId : cveIds) {
+            ReconcileTask task = new ReconcileTask(cveId);
             Future<CompositeVulnerability> future = executor.submit(task);
-            futures.put(job, future);
+            futures.put(cveId, future);
         }
         executor.shutdown();
         //waits for reconcile jobs
@@ -74,18 +62,15 @@ public class ReconcilerController {
         }
         logger.info("Finished reconciliation stage - sending message to PNE");
 
-        //PNE team changed their mind about streaming jobs as they finish, they now just want one big list
-//        messenger.sendPNEMessage(newOrUpdated.stream().map(CompositeVulnerability::getCveId).collect(Collectors.toList()));
+        return reconciledVulns;
+    }
 
-        logger.info("Starting NVD/MITRE comparisons");
-        updateNvdMitre(); // todo this could be done from the start asynchronously, but attaching shouldn't happen until it's done
-        Set<CompositeVulnerability> inNvdOrMitre = attachNvdMitre(reconciledVulns.stream()
-                .filter(v -> v.getReconciliationStatus() == CompositeVulnerability.ReconciliationStatus.NEW)
-                .collect(Collectors.toSet()));
-        dbh.insertTimeGapsForNewVulns(inNvdOrMitre);
+    public Set<CompositeVulnerability> characterizeCves(Set<CompositeVulnerability> reconciledCves){
+        ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
-        logger.info("Updating runstats");
-        dbh.insertRun(new RunStats(reconciledVulns));
+        //characterizer initialization
+        CharacterizeTask cTask = new CharacterizeTask();
+        Future<CveCharacterizer> futureCharacterizer = executor.submit(cTask);
 
         logger.info("Starting characterization");
         //run characterizer
@@ -98,8 +83,8 @@ public class ReconcilerController {
             } catch (InterruptedException | ExecutionException e) {
                 throw new RuntimeException(e);
             }
-            characterizeCVEs(reconciledVulns);
-            Set<CompositeVulnerability> recharacterized = reconciledVulns.stream()
+            characterizeCVEs(reconciledCves);
+            Set<CompositeVulnerability> recharacterized = reconciledCves.stream()
                     .filter(CompositeVulnerability::isRecharacterized).collect(Collectors.toSet());
 
             dbh.insertCvssBatch(recharacterized);
@@ -108,9 +93,22 @@ public class ReconcilerController {
         }
         // PNE team no longer wants a finish message
         //messenger.sendPNEFinishMessage();
-        return reconciledVulns;
+        return reconciledCves;
     }
 
+    public void createRunStats(Set<CompositeVulnerability> reconciledCves) {
+        logger.info("Updating runstats");
+        dbh.insertRun(new RunStats(reconciledCves));
+    }
+
+    public void updateTimeGaps(Set<CompositeVulnerability> reconciledCves) {
+        logger.info("Starting NVD/MITRE comparisons");
+        updateNvdMitre(); // todo this could be done from the start asynchronously, but attaching shouldn't happen until it's done
+        Set<CompositeVulnerability> inNvdOrMitre = attachNvdMitre(reconciledCves.stream()
+                .filter(v -> v.getReconciliationStatus() == CompositeVulnerability.ReconciliationStatus.NEW)
+                .collect(Collectors.toSet()));
+        dbh.insertTimeGapsForNewVulns(inNvdOrMitre);
+    }
 
     private class ReconcileTask implements Callable<CompositeVulnerability> {
         private final String job;
@@ -204,6 +202,7 @@ public class ReconcilerController {
         nvdController.updateNvdTables();
         mitreController.updateMitreTables();
     }
+
     private Set<CompositeVulnerability> attachNvdMitre(Set<CompositeVulnerability> newVulns) {
         Set<CompositeVulnerability> affected = new HashSet<>();
         affected.addAll(nvdController.compareWithNvd(newVulns));
@@ -214,18 +213,11 @@ public class ReconcilerController {
     public void setDbh(DatabaseHelper db){
         dbh = db;
     }
+
     public void setReconciler(Reconciler rc){
         reconciler = rc;
     }
-    public void setFilterHandler(FilterHandler fh){
-        filterHandler = fh;
-    }
-    public void setNvdController(NvdCveController nvd){
-        nvdController = nvd;
-    }
-    public void setMitreController(MitreCveController mit){
-        mitreController = mit;
-    }
+
     public void setCveCharacterizer(CveCharacterizer ch){
         cveCharacterizer = ch;
     }
