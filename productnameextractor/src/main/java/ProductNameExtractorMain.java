@@ -22,15 +22,17 @@
  * SOFTWARE.
  */
 
+import edu.rit.se.nvip.db.DatabaseHelper;
+import edu.rit.se.nvip.db.repositories.ProductRepository;
+import edu.rit.se.nvip.db.repositories.VulnerabilityRepository;
 import messenger.*;
-import model.CpeCollection;
+import edu.rit.se.nvip.db.model.CpeCollection;
 import productdetection.AffectedProductIdentifier;
 import com.opencsv.CSVReader;
-import db.DatabaseHelper;
 import env.ProductNameExtractorEnvVars;
-import model.cpe.AffectedProduct;
+import edu.rit.se.nvip.db.model.AffectedProduct;
 import model.cpe.CpeGroup;
-import model.cve.CompositeVulnerability;
+import edu.rit.se.nvip.db.model.CompositeVulnerability;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import dictionary.ProductDictionary;
@@ -145,7 +147,7 @@ public class ProductNameExtractorMain {
                         Integer.parseInt(line[0]),
                         line[1],
                         line[2],
-                        CompositeVulnerability.CveReconcileStatus.UPDATE
+                        CompositeVulnerability.ReconciliationStatus.UPDATED
                 );
 
                 vulnList.add(vulnerability);
@@ -175,7 +177,7 @@ public class ProductNameExtractorMain {
                 List<AffectedProduct> affectedProducts = new ArrayList<>(vulnerability.getAffectedProducts());
 
                 StringBuilder builder = new StringBuilder();
-                builder.append(vulnerability.getVulnID()).append("\t\t\t").append(vulnerability.getCveId()).append("\t\t\t")
+                builder.append(vulnerability.getId()).append("\t\t\t").append(vulnerability.getCveId()).append("\t\t\t")
                         .append(vulnerability.getDescription()).append("\n");
                 builder.append("\n");
 
@@ -203,7 +205,9 @@ public class ProductNameExtractorMain {
 
     // If in Database mode, grab CVE limit number of CVEs from the database and process those
     private static void dbMain(DatabaseHelper databaseHelper) {
-        List<CompositeVulnerability> vulnList = databaseHelper.getAllCompositeVulnerabilities(ProductNameExtractorEnvVars.getCveLimit());
+        VulnerabilityRepository vulnRepo = new VulnerabilityRepository(databaseHelper.getDataSource());
+        ProductRepository prodRepo = new ProductRepository(databaseHelper.getDataSource());
+        List<CompositeVulnerability> vulnList = vulnRepo.getAllCompositeVulnerabilities(ProductNameExtractorEnvVars.getCveLimit());
 
         initializeProductIdentifier(vulnList);
 
@@ -217,12 +221,14 @@ public class ProductNameExtractorMain {
         logger.info("Product Name Extractor found {} affected products in {} seconds", numAffectedProducts, Math.floor(((double) (System.currentTimeMillis() - getProdStart) / 1000) * 100) / 100);
 
         // Insert the affected products found into the database
-        databaseHelper.insertAffectedProductsToDB(groupedProds);
+        prodRepo.insertAffectedProductsToDB(groupedProds);
         logger.info("Product Name Extractor found and inserted {} affected products to the database in {} seconds", affectedProducts.size(), Math.floor(((double) (System.currentTimeMillis() - getProdStart) / 1000) * 100) / 100);
     }
 
     // Using RabbitMQ, get the list of cve IDs from the reconciler and create vuln list from those
     private static void rabbitMain(DatabaseHelper databaseHelper) {
+        VulnerabilityRepository vulnRepo = new VulnerabilityRepository(databaseHelper.getDataSource());
+        ProductRepository prodRepo = new ProductRepository(databaseHelper.getDataSource());
         List<CompositeVulnerability> vulnList;
         final Messenger rabbitMQ = new Messenger();
         while(true) {
@@ -234,7 +240,7 @@ public class ProductNameExtractorMain {
                 // If 'TERMINATE' message sent, initiate shutdown sequence and exit process
                 if (msg.getCommand().equals("TERMINATE")) {
                     logger.info("TERMINATE message received from the Reconciler, shutting down...");
-                    databaseHelper.shutdown();
+                    // used to be a db shutdown on this line
                     logger.info("Shutdown completed.");
                     System.exit(1);
 
@@ -253,7 +259,7 @@ public class ProductNameExtractorMain {
                     logger.info("Received job with CVE(s) {}", cveIds);
 
                     // Pull specific cve information from database for each CVE ID passed from reconciler
-                    vulnList = databaseHelper.getSpecificCompositeVulnerabilities(vulnVersionIds);
+                    vulnList = vulnRepo.getSpecificCompositeVulnerabilities(vulnVersionIds);
 
                     // Initialize the affectedProductIdentifier and get ready to process cveIds
                     initializeProductIdentifier(vulnList);
@@ -265,7 +271,7 @@ public class ProductNameExtractorMain {
                     List<CpeCollection> groupedProds = vulnList.stream().map(v->new CpeCollection(v, cveToCpes.get(v.getCveId()))).collect(Collectors.toList());
 
                     // Insert the affected products found into the database
-                    databaseHelper.insertAffectedProductsToDB(groupedProds);
+                    prodRepo.insertAffectedProductsToDB(groupedProds);
                     logger.info("Product Name Extractor found and inserted {} affected products to the database in {} seconds", affectedProducts.size(), Math.floor(((double) (System.currentTimeMillis() - getProdStart) / 1000) * 100) / 100);
 
                     List<PFInputJob> pfJobs = new ArrayList<>();
@@ -280,7 +286,7 @@ public class ProductNameExtractorMain {
 
             } catch (Exception e) {
                 logger.error("Failed to get jobs from RabbitMQ, exiting program with error: {}", e.toString());
-                databaseHelper.shutdown();
+                // removed a db shutdown call that was on this line
                 System.exit(1);
             }
         }
@@ -317,7 +323,7 @@ public class ProductNameExtractorMain {
     public static void main(String[] args) {
 
         // Initialize Database Helper and Product Dictionary
-        DatabaseHelper databaseHelper = new DatabaseHelper(databaseType, hikariUrl, hikariUser, hikariPassword);
+        DatabaseHelper databaseHelper = DatabaseHelper.getInstance();
         ProductDictionary.initializeProductDict();
 
         String inputMode = ProductNameExtractorEnvVars.getInputMode();

@@ -1,7 +1,4 @@
-package model;
-
-import model.cpe.AffectedProduct;
-import model.cve.CompositeVulnerability;
+package edu.rit.se.nvip.db.model;
 
 import java.util.List;
 
