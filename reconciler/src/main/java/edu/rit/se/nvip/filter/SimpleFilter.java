@@ -23,7 +23,7 @@
  */
 package edu.rit.se.nvip.filter;
 
-import edu.rit.se.nvip.model.RawVulnerability;
+import edu.rit.se.nvip.db.model.RawVulnerability;
 
 public class SimpleFilter extends Filter {
     @Override

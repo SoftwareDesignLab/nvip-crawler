@@ -23,29 +23,20 @@ package edu.rit.se.nvip.characterizer;
  * SOFTWARE.
  */
 
-import edu.rit.se.nvip.DatabaseHelper;
 import edu.rit.se.nvip.automatedcvss.CvssScoreCalculator;
 import edu.rit.se.nvip.automatedcvss.PartialCvssVectorGenerator;
 import edu.rit.se.nvip.automatedcvss.preprocessor.CvePreProcessor;
-import edu.rit.se.nvip.characterizer.classifier.AbstractCveClassifier;
 import edu.rit.se.nvip.characterizer.classifier.CveClassifierFactory;
 import edu.rit.se.nvip.characterizer.classifier.OrdinaryCveClassifier;
-import edu.rit.se.nvip.characterizer.enums.VDOLabel;
-import edu.rit.se.nvip.characterizer.enums.VDONounGroup;
-import edu.rit.se.nvip.model.CompositeVulnerability;
-import edu.rit.se.nvip.model.RawVulnerability;
+import edu.rit.se.nvip.db.model.enums.VDOLabel;
+import edu.rit.se.nvip.db.model.CompositeVulnerability;
+import edu.rit.se.nvip.db.model.RawVulnerability;
 import edu.rit.se.nvip.utils.CsvUtils;
 import edu.rit.se.nvip.utils.ReconcilerEnvVars;
 import org.apache.commons.io.FileUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.junit.Ignore;
 import org.junit.Test;
-import org.mockito.MockedConstruction;
 import org.mockito.MockedStatic;
 import org.mockito.stubbing.Answer;
-import weka.classifiers.Classifier;
-import weka.classifiers.bayes.NaiveBayes;
 
 import java.util.*;
 import java.nio.file.Paths;

@@ -1,7 +1,7 @@
 package edu.rit.se.nvip.metrics;
 
 import edu.rit.se.nvip.filter.FilterHandler;
-import edu.rit.se.nvip.model.RawVulnerability;
+import edu.rit.se.nvip.db.model.RawVulnerability;
 import edu.rit.se.nvip.utils.metrics.CrawlerRun;
 import edu.rit.se.nvip.utils.metrics.FilterMetrics;
 import org.junit.jupiter.api.Nested;

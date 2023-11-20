@@ -3,7 +3,7 @@ package edu.rit.se.nvip.sandbox;
 import edu.rit.se.nvip.filter.Filter;
 import edu.rit.se.nvip.filter.FilterFactory;
 import edu.rit.se.nvip.filter.GPTFilter;
-import edu.rit.se.nvip.model.RawVulnerability;
+import edu.rit.se.nvip.db.model.*;
 import edu.rit.se.nvip.model.VulnSetWrapper;
 import edu.rit.se.nvip.openai.OpenAIRequestHandler;
 
@@ -59,11 +59,14 @@ public class DatasetHandler {
                     jo.getString("source_url")
             ), jo.getInt("is_garbage"));
         }
-        db.clearAndInsertFilterDataset(vulns);
+        // todo commenting this out because db architecture has changed and it's not worth updating the sandbox
+        //db.clearAndInsertFilterDataset(vulns);
     }
 
     public void dbToJson(String jsonPath) {
-        LinkedHashMap<RawVulnerability, Integer> vulnMap = db.getFilterDataset();
+        // todo commenting this out because db architecture has changed and it's not worth updating the sandbox
+        //LinkedHashMap<RawVulnerability, Integer> vulnMap = db.getFilterDataset();
+        LinkedHashMap<RawVulnerability, Integer> vulnMap = new LinkedHashMap<>();
         JsonArrayBuilder builder = Json.createArrayBuilder();
         for (RawVulnerability vuln : vulnMap.keySet()) {
             JsonObjectBuilder ob = Json.createObjectBuilder();

@@ -24,7 +24,7 @@
 package edu.rit.se.nvip.filter;
 
 
-import edu.rit.se.nvip.model.RawVulnerability;
+import edu.rit.se.nvip.db.model.RawVulnerability;
 
 /**
  * This class acts as a filter for rawVuln entries where the description matches the CVE ID

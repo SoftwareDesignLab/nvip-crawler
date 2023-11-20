@@ -16,7 +16,7 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class CharacterizationRepository {
 
-    private DataSource dataSource;
+    private final DataSource dataSource;
 
     public int insertVdoCvssBatch(Set<CompositeVulnerability> vulns) {
         for (CompositeVulnerability vuln : vulns) {

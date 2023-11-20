@@ -23,8 +23,9 @@
  */
 package edu.rit.se.nvip.automatedcvss;
 
-import edu.rit.se.nvip.characterizer.enums.VDOLabel;
-import edu.rit.se.nvip.characterizer.enums.VDONounGroup;
+
+import edu.rit.se.nvip.db.model.enums.VDOLabel;
+import edu.rit.se.nvip.db.model.enums.VDONounGroup;
 
 import java.io.FileWriter;
 import java.io.IOException;

@@ -1,8 +1,7 @@
 package edu.rit.se.nvip.automatedcvss;
 
-import edu.rit.se.nvip.characterizer.enums.VDOLabel;
-import edu.rit.se.nvip.characterizer.enums.VDONounGroup;
-import org.apache.commons.collections.list.SynchronizedList;
+
+import edu.rit.se.nvip.db.model.enums.VDOLabel;
 import org.junit.jupiter.api.Test;
 
 import java.util.*;

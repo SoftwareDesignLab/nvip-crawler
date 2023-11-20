@@ -1,6 +1,6 @@
 package edu.rit.se.nvip.filter;
 
-import edu.rit.se.nvip.model.RawVulnerability;
+import edu.rit.se.nvip.db.model.RawVulnerability;
 import edu.rit.se.nvip.openai.GPTFilterModel;
 
 public class GPTFilter extends AsyncFilter {

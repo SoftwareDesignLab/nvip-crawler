@@ -32,13 +32,10 @@ import edu.rit.se.nvip.automatedcvss.PartialCvssVectorGenerator;
 import edu.rit.se.nvip.automatedcvss.preprocessor.CvePreProcessor;
 import edu.rit.se.nvip.characterizer.classifier.AbstractCveClassifier;
 import edu.rit.se.nvip.characterizer.classifier.CveClassifierFactory;
-import edu.rit.se.nvip.characterizer.enums.CVSSSeverityClass;
-import edu.rit.se.nvip.characterizer.enums.VDOLabel;
-import edu.rit.se.nvip.characterizer.enums.VDONounGroup;
-import edu.rit.se.nvip.model.CompositeVulnerability;
-import edu.rit.se.nvip.model.CvssScore;
-import edu.rit.se.nvip.model.SSVC;
-import edu.rit.se.nvip.model.VdoCharacteristic;
+import edu.rit.se.nvip.db.model.enums.VDOLabel;
+import edu.rit.se.nvip.db.model.enums.VDONounGroup;
+import edu.rit.se.nvip.db.repositories.CharacterizationRepository;
+import edu.rit.se.nvip.db.model.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -60,7 +57,7 @@ public class CveCharacterizer {
 	private Logger logger = LogManager.getLogger(CveCharacterizer.class.getSimpleName());
 	private final Map<VDONounGroup, AbstractCveClassifier> nounGroupToClassifier = new HashMap<>();
 	private final static ObjectMapper OM = new ObjectMapper();
-	private final DatabaseHelper dbh;
+	private final CharacterizationRepository dbh;
 
 	/**
 	 * these two vars are used to derive the CVSS vector from VDO labels and then
@@ -85,7 +82,7 @@ public class CveCharacterizer {
 							CvssScoreCalculator cvssScoreCalculator,
 							PartialCvssVectorGenerator partialCvssVectorGenerator,
 							String trainingDataPath, String trainingDataFiles, String approach, String method,
-							DatabaseHelper dbh) {
+							CharacterizationRepository dbh) {
 		this.cvssScoreCalculator = cvssScoreCalculator;
 		this.partialCvssVectorGenerator = partialCvssVectorGenerator;
 		this.cvePreProcessor = cvePreProcessor;
@@ -145,7 +142,7 @@ public class CveCharacterizer {
 	 */
 
 	//removed  boolean loadSerializedModels as well as exploitability package
-	public CveCharacterizer(String trainingDataPath, String trainingDataFiles, String approach, String method, DatabaseHelper dbh) {
+	public CveCharacterizer(String trainingDataPath, String trainingDataFiles, String approach, String method, CharacterizationRepository dbh) {
 		this(new CvePreProcessor(true), new CveClassifierFactory(), new CvssScoreCalculator(), new PartialCvssVectorGenerator(), trainingDataPath, trainingDataFiles, approach, method, dbh);
 	}
 

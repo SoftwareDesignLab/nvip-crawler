@@ -3,6 +3,7 @@ package edu.rit.se.nvip.model;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
+import edu.rit.se.nvip.db.model.RawVulnerability;
 
 public class VulnSetWrapper {
     private final Set<RawVulnerability> vulns;

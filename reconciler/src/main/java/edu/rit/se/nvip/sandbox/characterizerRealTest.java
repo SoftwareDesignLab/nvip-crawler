@@ -1,8 +1,8 @@
 package edu.rit.se.nvip.sandbox;
 
 import edu.rit.se.nvip.characterizer.CveCharacterizer;
-import edu.rit.se.nvip.model.CompositeVulnerability;
-import edu.rit.se.nvip.model.RawVulnerability;
+import edu.rit.se.nvip.db.model.CompositeVulnerability;
+import edu.rit.se.nvip.db.model.RawVulnerability;
 import edu.rit.se.nvip.utils.ReconcilerEnvVars;
 
 import java.sql.Timestamp;
