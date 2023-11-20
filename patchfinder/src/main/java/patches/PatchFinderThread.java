@@ -49,12 +49,13 @@ import utils.GitController;
  */
 public class PatchFinderThread implements Runnable {
 	private final String cveId;
-	private final List<String> cvePatchEntry;
+	private final String source;
 	private final String clonePath;
 	private final long timeoutMilli;
+	private final Set<PatchCommit> patchCommits;
 	private RevWalk walk; // TODO: remove
 	//TODO: Improve these patterns, currently we are getting many commits not directly related to the specific cve we claim
-	private static final Pattern[] patchPatterns = new Pattern[] {Pattern.compile("vulnerability|Vulnerability|vuln|Vuln|VULN[ #]*([0-9]+)")};
+	private static final Pattern[] patchPatterns = new Pattern[] {Pattern.compile("vulnerability|Vulnerability|vuln|Vuln|VULN[ #]*([0-9]+)")}; // vulnerability #1345
 	private static final Logger logger = LogManager.getLogger(PatchFinder.class.getName());
 
 	/**
@@ -64,12 +65,15 @@ public class PatchFinderThread implements Runnable {
 	 * @param clonePath path to clone repos to
 	 * @param timeoutMilli milliseconds until timeout // TODO for what
 	 */
-	public PatchFinderThread(String cveId, List<String> possiblePatchSources, String clonePath, long timeoutMilli) {
+	public PatchFinderThread(String cveId, String source, String clonePath, long timeoutMilli) {
 		this.cveId = cveId;
-		this.cvePatchEntry = possiblePatchSources;
+		this.source = source;
 		this.clonePath = clonePath;
 		this.timeoutMilli = timeoutMilli;
+		this.patchCommits = new HashSet<>();
 	}
+
+	public Set<PatchCommit> getPatchCommits() { return this.patchCommits; }
 
 	/**
 	 * Used for cloning, crawling, and deleting product repos to find patch commits
@@ -78,59 +82,46 @@ public class PatchFinderThread implements Runnable {
 	public void run() {
 		final long totalStart = System.currentTimeMillis();
 
-		final ArrayList<PatchCommit> foundPatchCommits = new ArrayList<>();
+		// TODO: Move up a level
+//		// Order sources by repo size ascending
+//		final List<Integer> sourceRepoSizes = orderSources(cvePatchEntry);
 
-		// Order sources by repo size ascending
-		final List<Integer> sourceRepoSizes = orderSources(cvePatchEntry);
-
-
-		// For each CVE, iterate through the list of possible patch sources and
-		// Clone/Scrape the repo for patch commits (if any)
-		for (int i = 0; i < cvePatchEntry.size(); i++) {
-			findPatchCommits(foundPatchCommits, cveId, cvePatchEntry.get(i), sourceRepoSizes.get(i), clonePath);
-		}
-
-		//TODO: Instead of collecting patch commits for a final insertion, change getPatchCommits
-		// to addAndInsertPatchCommits, so they program is not dependant on run completion
-
-		// Add found commits to total list after finished
-		PatchFinder.getPatchCommits().addAll(foundPatchCommits); // TODO: This may be causing race conditions
+		findPatchCommits(patchCommits, cveId, source, getCommitCount(), clonePath);
 
 		final long delta = (System.currentTimeMillis() - totalStart) / 1000;
 		logger.info("Done scraping {} patch commits from CVE '{}' in {} seconds",
-				foundPatchCommits.size(),
+				patchCommits.size(),
 				cveId,
 				delta
 		);
 	}
 
-	/**
-	 * Sort sources by repo size to improve run performance
-	 *
-	 * @param sources sources to sort
-	 * @return list of source counts (1:1 with sorted sources list)
-	 */
-	private List<Integer> orderSources(List<String> sources) {
-		// Map commit counts to their respective sources
-		final HashMap<String, Integer> sourceCounts = new HashMap<>(sources.size());
-		sources.forEach(s -> sourceCounts.put(s, getCommitCount(s)));
-
-		// Sort list based on collected counts
-		sources.sort(Comparator.comparingInt(sourceCounts::get));
-
-		// Return counts list
-		final ArrayList<Integer> counts = new ArrayList<>(sourceCounts.values());
-		Collections.sort(counts);
-		return counts;
-	}
+//	/**
+//	 * Sort sources by repo size to improve run performance
+//	 *
+//	 * @param sources sources to sort
+//	 * @return list of source counts (1:1 with sorted sources list)
+//	 */
+//	private List<Integer> orderSources(List<String> sources) {
+//		// Map commit counts to their respective sources
+//		final HashMap<String, Integer> sourceCounts = new HashMap<>(sources.size());
+//		sources.forEach(s -> sourceCounts.put(s, getCommitCount(s)));
+//
+//		// Sort list based on collected counts
+//		sources.sort(Comparator.comparingInt(sourceCounts::get));
+//
+//		// Return counts list
+//		final ArrayList<Integer> counts = new ArrayList<>(sourceCounts.values());
+//		Collections.sort(counts);
+//		return counts;
+//	}
 
 	/**
 	 * Gets the commit count from a given source page
 	 *
-	 * @param source page to scrape
 	 * @return found commit count
 	 */
-	private int getCommitCount(String source) {
+	private int getCommitCount() {
 		try {
 			final long connStart = System.nanoTime();
 
@@ -187,7 +178,7 @@ public class PatchFinderThread implements Runnable {
 	 * @param patchSource patch source being scraped
 	 * @param commitCount number of commits in the patch source
 	 */
-	private static synchronized void findPatchCommits(ArrayList<PatchCommit> foundPatchCommits, String cve, String patchSource, int commitCount, String clonePath) {
+	private static void findPatchCommits(Set<PatchCommit> foundPatchCommits, String cve, String patchSource, int commitCount, String clonePath) {
 		try {
 			// Process found repository based on size (commit count on master branch)
 
@@ -219,7 +210,7 @@ public class PatchFinderThread implements Runnable {
 	 * @param patchSource patch source being scraped
 	 * @param commitCount number of commits in the patch source
 	 */
-	private static void findPatchCommitsFromUrl(ArrayList<PatchCommit> foundPatchCommits, String cve, String patchSource, int commitCount) {
+	private static void findPatchCommitsFromUrl(Set<PatchCommit> foundPatchCommits, String cve, String patchSource, int commitCount) {
 		// Define page range
 		final int numPages = (int) Math.ceil((double) commitCount / 35);
 		final String baseCommitsUrl = patchSource + "/commits";
@@ -272,7 +263,7 @@ public class PatchFinderThread implements Runnable {
 	 * @param cve cve being analyzed
 	 * @param patchSource patch source being cloned
 	 */
-	private static void findPatchCommitsFromRepo(ArrayList<PatchCommit> foundPatchCommits, String cve, String patchSource, String clonePath) {
+	private static void findPatchCommitsFromRepo(Set<PatchCommit> foundPatchCommits, String cve, String patchSource, String clonePath) {
 		try {
 			// Split source URI into parts to build local download path string
 			final String[] sourceParts = patchSource.split("/");
@@ -293,8 +284,7 @@ public class PatchFinderThread implements Runnable {
 					localDownloadLoc,
 					patchSource
 			);
-			List<PatchCommit> patchCommits = commitScraper.parseCommits(cve, patchPatterns);
-			foundPatchCommits.addAll(patchCommits);
+			commitScraper.parseCommits(foundPatchCommits, cve);
 
 			// TODO: Fix, as we need to prevent accumulation of repos if possible
 			// Delete repo when done
@@ -312,48 +302,45 @@ public class PatchFinderThread implements Runnable {
 	 * @param cve cve being analyzed
 	 * @param commitElements collection of commit elements
 	 */
-	private static void parseCommitObjects(List<PatchCommit> foundPatchCommits, String cve, Elements commitElements) {
-		// Check if the commit message matches any of the regex provided
-		for (Pattern pattern : patchPatterns) {
-			for (Element object : commitElements) {
-				Matcher matcher = pattern.matcher(object.text());
-				// If found the CVE ID is found, add the patch commit to the returned list
-				if (matcher.find() || object.text().contains(cve)) {
-					String commitUrl = object.attr("href");
-					logger.info("Found patch commit @ URL '{}'", commitUrl);
+	private static void parseCommitObjects(Set<PatchCommit> foundPatchCommits, String cve, Elements commitElements) {
+		for (Element object : commitElements) {
+			// If found the CVE ID is found, add the patch commit to the returned list
+			if (object.text().contains(cve)) {
+				String commitUrl = object.attr("href");
+				logger.info("Found patch commit @ URL '{}'", commitUrl);
 
-					try {
-						// Connect to the commit URL and retrieve the unified diff
-						Document commitPage = Jsoup.connect(commitUrl).get();
-						Elements diffElements = commitPage.select("div.file-actions");
-						String unifiedDiffString = diffElements.text();
+				try {
+					// Connect to the commit URL and retrieve the unified diff
+					Document commitPage = Jsoup.connect(commitUrl).get();
+					Elements diffElements = commitPage.select("div.file-actions");
+					String unifiedDiffString = diffElements.text();
 
-						// Extract the commit timeline, time to patch, and lines changed from the commit page
-						Elements timelineElements = commitPage.select("div.timeline-item");
-						List<String> timelineString = parseTimeline(timelineElements);
-						String timeToPatch = extractTimeToPatch(commitPage);
-						int linesChanged = extractLinesChanged(commitPage);
-						List<String> commitTimeline = new ArrayList<>(); // Create a new commit timeline list
-						String commitHash = matcher.group(1);
+					// Extract the commit timeline, time to patch, and lines changed from the commit page
+					Elements timelineElements = commitPage.select("div.timeline-item");
+					List<String> timelineString = parseTimeline(timelineElements);
+					String timeToPatch = extractTimeToPatch(commitPage);
+					int linesChanged = extractLinesChanged(commitPage);
+					List<String> commitTimeline = new ArrayList<>(); // Create a new commit timeline list
+//					String commitHash = matcher.group(1);
+					String commitHash = "UNKNOWN";
 
-						commitTimeline.add(commitHash); // Add the current commit hash to the commit timeline
+					commitTimeline.add(commitHash); // Add the current commit hash to the commit timeline
 
-						PatchCommit patchCommit = new PatchCommit(
-								commitUrl,
-								cve,
-								object.text(),
-								new Date(object.attr("commitTime")),
-								object.text(),
-								unifiedDiffString, // unifiedDiff
-								commitTimeline, // timeline
-								timeToPatch, // timeToPatch
-								linesChanged // linesChanged
-						);
+					PatchCommit patchCommit = new PatchCommit(
+							commitUrl,
+							cve,
+							object.text(),
+							new Date(object.attr("commitTime")),
+							object.text(),
+							unifiedDiffString, // unifiedDiff
+							commitTimeline, // timeline
+							timeToPatch, // timeToPatch
+							linesChanged // linesChanged
+					);
 
-						foundPatchCommits.add(patchCommit);
-					} catch (IOException e) {
-						logger.error("Failed to scrape unified diff from commit URL '{}': {}", commitUrl, e);
-					}
+					foundPatchCommits.add(patchCommit);
+				} catch (IOException e) {
+					logger.error("Failed to scrape unified diff from commit URL '{}': {}", commitUrl, e);
 				}
 			}
 		}

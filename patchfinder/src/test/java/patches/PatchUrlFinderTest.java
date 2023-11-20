@@ -30,6 +30,7 @@ import patches.PatchUrlFinder;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -71,12 +72,12 @@ public class PatchUrlFinderTest {
         int cveLimit = 10; // Set the desired CVE limit for testing
 
         // Invoke the method being tested
-        Map<String, ArrayList<String>> cveCpeUrls = new HashMap<>();
-        patchUrlFinder.parsePatchURLs(cveCpeUrls, affectedProducts, cveLimit, true);
-
-        // Perform assertions to check the results
-        Assertions.assertNotNull(cveCpeUrls);
-        // Add more assertions as needed
+        for (Map.Entry<String, CpeGroup> product : affectedProducts.entrySet()) {
+            final List<String> urls = patchUrlFinder.parsePatchURLs(product.getKey(), product.getValue(), cveLimit, true);
+            // Perform assertions to check the results
+            Assertions.assertNotNull(urls);
+            // Add more assertions as needed
+        }
     }
 
     @Test
@@ -112,12 +113,12 @@ public class PatchUrlFinderTest {
         int cveLimit = 5; // Set the desired CVE limit for testing
 
         // Invoke the method being tested
-        Map<String, ArrayList<String>> cveCpeUrls = new HashMap<>();
-        patchUrlFinder.parsePatchURLs(cveCpeUrls, affectedProducts, cveLimit, true);
-
-        // Perform assertions to check the results
-        Assertions.assertNotNull(cveCpeUrls);
-        // Add more assertions as needed
+        for (Map.Entry<String, CpeGroup> product : affectedProducts.entrySet()) {
+            final List<String> urls = patchUrlFinder.parsePatchURLs(product.getKey(), product.getValue(), cveLimit, true);
+            // Perform assertions to check the results
+            Assertions.assertNotNull(urls);
+            // Add more assertions as needed
+        }
     }
 
 }

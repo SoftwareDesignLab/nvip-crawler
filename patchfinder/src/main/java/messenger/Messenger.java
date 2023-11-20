@@ -142,11 +142,11 @@ public class Messenger {
      */
     public static String parseMessage(String jsonString) {
         try {
-            logger.info("incoming cve list: {}", jsonString);
+            logger.info("Incoming CVE: '{}'", jsonString);
             final JsonNode messageNode = OM.readTree(jsonString);
             return messageNode.get("cveId").asText();
         } catch (JsonProcessingException e) {
-            logger.error("Failed to parse list of ids from json string: {}", e.toString());
+            logger.error("Failed to parse id from json string: {}", e.toString());
             return null;
         }
     }
@@ -171,25 +171,25 @@ public class Messenger {
         final String INPUT_QUEUE = "PNE_OUT";
         final Messenger m = new Messenger("localhost", "/", 5672 , "guest", "guest", INPUT_QUEUE);
         DatabaseHelper dbh = new DatabaseHelper("mysql", "jdbc:mysql://localhost:3306/nvip?useSSL=false&allowPublicKeyRetrieval=true", "root", "root");
-//        final Set<String> cveIds = dbh.getAffectedProducts(null).keySet();
-        final Set<String> cveIds = new HashSet<>();
-        try {
-            ResultSet results = dbh.getConnection().prepareStatement("""
-                    SELECT
-                        v.cve_id
-                    FROM
-                        vulnerability v
-                    JOIN
-                        description d ON v.description_id = d.description_id
-                    JOIN
-                        affectedproduct ap ON v.cve_id = ap.cve_id
-                    WHERE
-                        ap.cpe LIKE '%tensorflow%'
-                    GROUP BY
-                        v.cve_id;
-                    """).executeQuery();
-            while(results != null && results.next()) cveIds.add(results.getString(1));
-        } catch (Exception ignored) { }
+        final Set<String> cveIds = dbh.getAffectedProducts(null).keySet();
+//        final Set<String> cveIds = new HashSet<>();
+//        try {
+//            ResultSet results = dbh.getConnection().prepareStatement("""
+//                    SELECT
+//                        v.cve_id
+//                    FROM
+//                        vulnerability v
+//                    JOIN
+//                        description d ON v.description_id = d.description_id
+//                    JOIN
+//                        affectedproduct ap ON v.cve_id = ap.cve_id
+//                    WHERE
+//                        ap.cpe LIKE '%tensorflow%'
+//                    GROUP BY
+//                        v.cve_id;
+//                    """).executeQuery();
+//            while(results != null && results.next()) cveIds.add(results.getString(1));
+//        } catch (Exception ignored) { }
 
         for (String id : cveIds) {
             id = "{\"cveId\": \"" + id + "\"}";

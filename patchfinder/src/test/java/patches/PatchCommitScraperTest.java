@@ -32,7 +32,9 @@ import utils.GitController;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import static org.junit.Assert.fail;
@@ -50,7 +52,8 @@ public class PatchCommitScraperTest {
         Pattern[] patchPatterns = {Pattern.compile("fix")};
 
         PatchCommitScraper scraper = new PatchCommitScraper("local/repo", "https://github.com/example/repo");
-        List<PatchCommit> patchCommits = scraper.parseCommits(cveId, patchPatterns);
+        Set<PatchCommit> patchCommits = new HashSet<>();
+        scraper.parseCommits(patchCommits, cveId);
 
         Assertions.assertEquals(0, patchCommits.size());
     }
@@ -81,11 +84,12 @@ public class PatchCommitScraperTest {
         PatchCommitScraper commitScraper = new PatchCommitScraper(tempDir.toString(), repoSource);
 
         // Call the parseCommits method
-        List<PatchCommit> patchCommits = commitScraper.parseCommits(cveId, patchPatterns);
+        Set<PatchCommit> patchCommits = new HashSet<>();
+        commitScraper.parseCommits(patchCommits, cveId);
 
         // Assertions
         Assert.assertEquals(11, patchCommits.size());
-        PatchCommit patchCommit = patchCommits.get(0);
+        PatchCommit patchCommit = patchCommits.toArray(PatchCommit[]::new)[0];
         Assert.assertEquals(cveId, patchCommit.getCveId());
 
         // Delete the cloned repository

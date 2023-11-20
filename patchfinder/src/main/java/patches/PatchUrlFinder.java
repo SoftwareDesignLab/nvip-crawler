@@ -56,7 +56,7 @@ public class PatchUrlFinder {
 	 * @param cveLimit maximum number of CVEs to process
 	 * @param isStale boolean representation of the quality of existing data in possiblePatchUrls
 	 */
-	public List<String> parsePatchURLs(String cveId, CpeGroup affectedProduct, int cveLimit, boolean isStale) {
+	public static List<String> parsePatchURLs(String cveId, CpeGroup affectedProduct, int cveLimit, boolean isStale) {
 		final List<String> urls = new ArrayList<>();
 		int cachedUrlCount = 0, foundCount = 0;
 		final long entryStart = System.currentTimeMillis();
@@ -107,7 +107,7 @@ public class PatchUrlFinder {
 	 * @throws IOException if an IO error occurs while testing the url connection
 	 */
 	// TODO: Consider using https://www.cve.org to lookup existing github references to repos/PRs
-	private ArrayList<String> parseURL(String vendor, String product) throws IOException {
+	private static ArrayList<String> parseURL(String vendor, String product) throws IOException {
 		ArrayList<String> newAddresses = new ArrayList<>();
 
 		// Parse keywords from CPE to create links for GitHub, Bitbucket, and GitLab
@@ -144,7 +144,7 @@ public class PatchUrlFinder {
 	/**
 	 * Initialize the address set with additional addresses based on cpe keywords
 	 */
-	private HashSet<String> initializeAddresses(String keyword) {
+	private static HashSet<String> initializeAddresses(String keyword) {
 		HashSet<String> addresses = new HashSet<>();
 
 		for (String base : PatchFinder.addressBases) {
@@ -163,7 +163,7 @@ public class PatchUrlFinder {
 	 * @return a list of valid addresses
 	 * @throws IOException if an error occurs during the testing of the given address
 	 */
-	private ArrayList<String> testConnection(String address) throws IOException {
+	private static ArrayList<String> testConnection(String address) throws IOException {
 
 		logger.info("Testing Connection for address: " + address);
 		ArrayList<String> urlList = new ArrayList<>();
@@ -218,7 +218,7 @@ public class PatchUrlFinder {
 	 *
 	 * @param newURL url to search
 	 */
-	private ArrayList<String> searchForRepos(String newURL) {
+	private static ArrayList<String> searchForRepos(String newURL) {
 		logger.info("Grabbing repos from github user page...");
 
 		ArrayList<String> urls = new ArrayList<>();
@@ -263,7 +263,7 @@ public class PatchUrlFinder {
 	 * @param repoLinks collection of page elements containing link data
 	 * @return list of valid links only
 	 */
-	private ArrayList<String> testLinks(Elements repoLinks) {
+	private static ArrayList<String> testLinks(Elements repoLinks) {
 		ArrayList<String> urls = new ArrayList<>();
 		String repoURL;
 
@@ -289,7 +289,7 @@ public class PatchUrlFinder {
 	 * @return a list of found links
 	 */
 	@SuppressWarnings({"unchecked", "rawtypes"})
-	private ArrayList<String> advanceParseSearch(String vendor, String product) {
+	private static ArrayList<String> advanceParseSearch(String vendor, String product) {
 
 		String searchParams = PatchFinder.addressBases[0] + "search?q=";
 		ArrayList<String> urls = new ArrayList<>();
@@ -369,6 +369,8 @@ public class PatchUrlFinder {
 
 			} catch (IOException | InterruptedException e) {
 				logger.error(e.toString());
+				// If ratelimiting is detected, manually trigger sleep
+				if(e.toString().contains("Status=429")) advancedSearchCount = 10;
 			}
 
 		return urls;
@@ -385,7 +387,7 @@ public class PatchUrlFinder {
 	 * @param product product name
 	 * @return result of verification
 	 */
-	private boolean verifyGitRemote(String repoURL, String description, String vendor, String product) {
+	private static boolean verifyGitRemote(String repoURL, String description, String vendor, String product) {
 
 		// Verify if the repo is correlated to the product by checking if the keywords
 		// lie in the inner text of the html link via regex

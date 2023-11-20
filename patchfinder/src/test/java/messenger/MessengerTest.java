@@ -47,50 +47,51 @@ import static org.mockito.Mockito.*;
 public class MessengerTest {
 
 
-    @Test
-    public void testWaitForProductNameExtractorMessage_ValidMessageReceived() throws Exception {
-        // Create a mock ConnectionFactory and Channel
-        ConnectionFactory factoryMock = mock(ConnectionFactory.class);
-        Connection connectionMock = mock(Connection.class);
-        Channel channelMock = mock(Channel.class);
-        when(factoryMock.newConnection()).thenReturn(connectionMock);
-        when(connectionMock.createChannel()).thenReturn(channelMock);
-
-        // Create a Messenger instance with the mock ConnectionFactory
-        Messenger messenger = new Messenger(factoryMock, "PNE_OUT");
-
-        // Create a message queue and a message to be received
-        BlockingQueue<List<String>> messageQueue = new ArrayBlockingQueue<>(1);
-        List<String> expectedMessage = Arrays.asList("job1", "job2");
-        ObjectMapper objectMapper = new ObjectMapper();
-        String jsonMessage = objectMapper.writeValueAsString(expectedMessage);
-
-        // Set up the mock channel to deliver the message
-        doAnswer(invocation -> {
-            String consumerTag = invocation.getArgument(0);
-            DeliverCallback deliverCallback = invocation.getArgument(2);
-            deliverCallback.handle(consumerTag, new Delivery(null, null, jsonMessage.getBytes()));
-            return consumerTag;
-        }).when(channelMock).basicConsume((String) eq("patchfinder"), eq(true), (DeliverCallback) any(), (CancelCallback) any());
-
-        // Invoke the method under test asynchronously using CompletableFuture
-        CompletableFuture<List<String>> completableFuture = CompletableFuture.supplyAsync(() -> {
-            try {
-                return messenger.waitForProductNameExtractorMessage(5);
-            } catch (Exception e) {
-                e.printStackTrace();
-                return null;
-            }
-        });
-
-        // Wait for the message to be delivered and the method under test to complete or timeout after 5 seconds
-        try {
-            List<String> actualMessage = completableFuture.get(5, TimeUnit.SECONDS);
-            assertNotNull(actualMessage);
-        } catch (TimeoutException e) {
-            success("Message not received within the specified timeout.");
-        }
-    }
+    // TODO: Rework to test job streaming
+//    @Test
+//    public void testWaitForProductNameExtractorMessage_ValidMessageReceived() throws Exception {
+//        // Create a mock ConnectionFactory and Channel
+//        ConnectionFactory factoryMock = mock(ConnectionFactory.class);
+//        Connection connectionMock = mock(Connection.class);
+//        Channel channelMock = mock(Channel.class);
+//        when(factoryMock.newConnection()).thenReturn(connectionMock);
+//        when(connectionMock.createChannel()).thenReturn(channelMock);
+//
+//        // Create a Messenger instance with the mock ConnectionFactory
+//        Messenger messenger = new Messenger(factoryMock, "PNE_OUT");
+//
+//        // Create a message queue and a message to be received
+//        BlockingQueue<List<String>> messageQueue = new ArrayBlockingQueue<>(1);
+//        List<String> expectedMessage = Arrays.asList("job1", "job2");
+//        ObjectMapper objectMapper = new ObjectMapper();
+//        String jsonMessage = objectMapper.writeValueAsString(expectedMessage);
+//
+//        // Set up the mock channel to deliver the message
+//        doAnswer(invocation -> {
+//            String consumerTag = invocation.getArgument(0);
+//            DeliverCallback deliverCallback = invocation.getArgument(2);
+//            deliverCallback.handle(consumerTag, new Delivery(null, null, jsonMessage.getBytes()));
+//            return consumerTag;
+//        }).when(channelMock).basicConsume((String) eq("patchfinder"), eq(true), (DeliverCallback) any(), (CancelCallback) any());
+//
+//        // Invoke the method under test asynchronously using CompletableFuture
+//        CompletableFuture<List<String>> completableFuture = CompletableFuture.supplyAsync(() -> {
+//            try {
+//                return messenger.waitForProductNameExtractorMessage(5);
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//                return null;
+//            }
+//        });
+//
+//        // Wait for the message to be delivered and the method under test to complete or timeout after 5 seconds
+//        try {
+//            List<String> actualMessage = completableFuture.get(5, TimeUnit.SECONDS);
+//            assertNotNull(actualMessage);
+//        } catch (TimeoutException e) {
+//            success("Message not received within the specified timeout.");
+//        }
+//    }
 
 
 
@@ -116,11 +117,11 @@ public class MessengerTest {
     // Test that CVE strings are validated
     @Test
     public void testParseIds_ValidJsonString() {
-        String expectedId = "CVE-2023-0001";
+        String expectedId = "{\"cveId\": \"CVE-2023-0001\"}";
 
         String actualId = Messenger.parseMessage(expectedId);
 
-        assertEquals(expectedId, actualId);
+        assertEquals("CVE-2023-0001", actualId);
     }
 
     // Test invalid CVE string
