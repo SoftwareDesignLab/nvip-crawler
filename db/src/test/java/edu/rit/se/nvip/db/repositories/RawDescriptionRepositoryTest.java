@@ -14,9 +14,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import javax.sql.DataSource;
 import java.sql.*;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.*;
 
 
@@ -168,4 +171,67 @@ public class RawDescriptionRepositoryTest {
 
         assertThat(data).containsExactly(entry(expectedVulnId, expectedTime.toLocalDateTime()));
     }
+
+    // todo update these tests
+//    @org.junit.Test
+//    public void getRawVulnerabilitiesTest() {
+//        try {
+//            when(res.next()).thenReturn(true, false);
+//
+//            // Set up the expected data
+//            String cveId = "CVE-2023-5678";
+//
+//            // Call the method under test
+//            Set<RawVulnerability> result = dbh.getRawVulnerabilities(cveId);
+//
+//            // Verify the expected output
+//            assertEquals(1, result.size());
+//
+//            // Verify pstmt.setString() call
+//            verify(pstmt).setString(1, cveId);
+//        } catch (SQLException ignored) {
+//            logger.error("Error loading database");
+//        }
+//    }
+
+//    @org.junit.Test
+//    public void markGarbageTest() throws SQLException {
+//
+//        Set<RawVulnerability> mockedRawVulns = new HashSet<>();
+//        mockedRawVulns.add(new RawVulnerability(1, "CVE-2021-1234", "Description", null, null, null, ""));
+//        mockedRawVulns.add(new RawVulnerability(2, "CVE-2021-5678", "Description", null, null, null, ""));
+//
+//        // Call the updateFilterStatus method
+//        dbh.updateFilterStatus(mockedRawVulns);
+//
+//        // Verify that pstmt.setInt() is called with the correct arguments
+//        verify(pstmt, times(2)).setInt(eq(1), eq(1));
+//        verify(pstmt).setInt(eq(2), eq(1));
+//        verify(pstmt).setInt(eq(2), eq(2));
+//
+//        // Verify that pstmt.addBatch() is called for each RawVulnerability
+//        verify(pstmt, times(2)).addBatch();
+//
+//        // Verify that pstmt.executeBatch() is called once
+//        verify(pstmt).executeBatch();
+//    }
+
+    //    @Test
+    //    public void getUsedRawVulnerabilitiesTest() {
+    //       try{
+    //            when(res.next()).thenReturn(true, true, false);
+    //            when(res.getInt(anyString())).thenReturn(1);
+    //            when(res.getString(anyString())).thenReturn("desc");
+    //            when(res.getTimestamp(anyString())).thenReturn(new Timestamp(System.currentTimeMillis()));
+    //
+    //            Set<RawVulnerability> rawVulns = dbh.getUsedRawVulnerabilities("cveId");
+    //
+    //           verify(pstmt).setString(1, "cveId");
+    //
+    //            assertEquals(1, rawVulns.size());
+    //
+    //       } catch (SQLException e) {
+    //           logger.error("Error loading Database");
+    //        }
+    //    }
 }

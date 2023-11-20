@@ -1,4 +1,4 @@
-package edu.rit.se.nvip.model;
+package edu.rit.se.nvip.db.model;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;

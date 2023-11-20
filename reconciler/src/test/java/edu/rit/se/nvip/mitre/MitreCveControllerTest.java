@@ -1,7 +1,7 @@
 package edu.rit.se.nvip.mitre;
 
 import com.google.gson.JsonObject;
-import edu.rit.se.nvip.DatabaseHelper;
+import edu.rit.se.nvip.db.DatabaseHelper;
 import edu.rit.se.nvip.db.repositories.NvdMitreRepository;
 import edu.rit.se.nvip.db.model.CompositeVulnerability;
 import edu.rit.se.nvip.db.model.MitreVulnerability;

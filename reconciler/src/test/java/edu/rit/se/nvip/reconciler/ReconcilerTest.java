@@ -10,7 +10,7 @@ import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-import static edu.rit.se.nvip.model.CompositeDescription.equivalentBuildStrings;
+import static edu.rit.se.nvip.db.model.CompositeDescription.equivalentBuildStrings;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 

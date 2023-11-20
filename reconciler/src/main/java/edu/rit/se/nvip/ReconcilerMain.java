@@ -1,7 +1,9 @@
 package edu.rit.se.nvip;
 
+import edu.rit.se.nvip.db.repositories.CveJobTrackRepository;
 import edu.rit.se.nvip.messenger.Messenger;
 import edu.rit.se.nvip.utils.ReconcilerEnvVars;
+import edu.rit.se.nvip.db.DatabaseHelper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -33,7 +35,7 @@ public class ReconcilerMain {
         switch(ReconcilerEnvVars.getInputMode()){
             case "db":
                 logger.info("Using Database for acquiring jobs");
-                Set<String> jobs = dbh.getJobs();
+                Set<String> jobs = new CveJobTrackRepository(dbh.getDataSource()).getJobs();
                 if (jobs == null){
                     logger.error("No Jobs found in database");
                     break;

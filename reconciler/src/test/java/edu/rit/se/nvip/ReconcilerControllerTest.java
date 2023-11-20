@@ -1,16 +1,15 @@
 package edu.rit.se.nvip;
 
 import edu.rit.se.nvip.characterizer.CveCharacterizer;
+import edu.rit.se.nvip.db.DatabaseHelper;
 import edu.rit.se.nvip.filter.FilterHandler;
 import edu.rit.se.nvip.filter.FilterReturn;
 import edu.rit.se.nvip.messenger.Messenger;
 import edu.rit.se.nvip.mitre.MitreCveController;
 import edu.rit.se.nvip.db.model.CompositeVulnerability;
 import edu.rit.se.nvip.db.model.RawVulnerability;
-import edu.rit.se.nvip.db.model.RunStats;
 import edu.rit.se.nvip.nvd.NvdCveController;
 import edu.rit.se.nvip.reconciler.Reconciler;
-import edu.rit.se.nvip.reconciler.ReconcilerFactory;
 import edu.rit.se.nvip.utils.ReconcilerEnvVars;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;

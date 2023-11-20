@@ -12,7 +12,11 @@ import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.HashSet;
+import java.util.Set;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -66,4 +70,26 @@ public class CveJobTrackRepositoryTest {
 
         assertFalse(repository.isCveInJobTrack("CVE-1234-5678"));
     }
+
+    // todo update these tests
+
+//    @org.junit.Test
+//    public void getJobsTest() {
+//        try {
+//            when(res.next()).thenReturn(true, true, false);
+//            when(res.getString("cve_id")).thenReturn("CVE-2021-1234", "CVE-2021-5678");
+//
+//
+//            // Call the method under test
+//            Set<String> result = dbh.getJobs();
+//
+//            // Verify the expected output
+//            Set<String> expected = new HashSet<>();
+//            expected.add("CVE-2021-1234");
+//            expected.add("CVE-2021-5678");
+//            assertEquals(expected, result);
+//        } catch (SQLException e) {
+//            logger.error("Error loading database");
+//        }
+//    }
 }
