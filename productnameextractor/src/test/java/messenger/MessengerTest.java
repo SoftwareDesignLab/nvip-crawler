@@ -95,8 +95,8 @@ public class MessengerTest {
     @Test
     public void testParseIds_ValidJsonString() {
         Messenger messenger = new Messenger("localhost", "/", 5672,"guest", "guest", "RECONCILER_OUT", "PNE_OUT");
-        String jsonString = "[\"id1\",\"id2\",\"id3\"]";
-        List<String> expectedIds = Arrays.asList("id1", "id2", "id3");
+        String jsonString = "{\"cveId\":\"id1\"}";
+        List<String> expectedIds = Arrays.asList("id1");
 
         List<String> actualIds = messenger.parseIds(jsonString);
 
