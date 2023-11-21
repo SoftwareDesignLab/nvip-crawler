@@ -25,6 +25,7 @@ package messenger;
  */
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
@@ -112,8 +113,7 @@ public class Messenger {
                 logger.info("Jobs have been sent!\n\n");
             };
 
-            channel.basicConsume(inputQueue, true, deliverCallback, consumerTag -> {
-            });
+            channel.basicConsume(inputQueue, true, deliverCallback, consumerTag -> {});
 
         } catch (IOException | TimeoutException e) {
             throw new RuntimeException(e);
@@ -130,7 +130,10 @@ public class Messenger {
     public List<String> parseIds(String jsonString) {
         try {
             List<String> ids = new ArrayList<>();
-            ids.add(OM.readTree(jsonString).get("cveId").asText());
+            JsonNode node = OM.readTree(jsonString);
+            if (node.has("cveId")){
+                ids.add(node.get("cveId").asText());
+            }
             return ids;
         } catch (JsonProcessingException e) {
             logger.error("Failed to parse list of ids from json string: {}", e.toString());
