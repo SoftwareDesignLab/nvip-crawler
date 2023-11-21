@@ -31,6 +31,7 @@ import org.jsoup.select.Elements;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 
 /**
@@ -91,7 +92,7 @@ public class GenericParser extends FixParser {
     //TODO: Implement logic to determine the location of the desired content (fix information) and collect/store
     // said information with a high confidence of accuracy
     @Override
-    protected List<Fix> parseWebPage() {
+    protected Set<Fix> parseWebPage() {
         // Select header objects to be potential anchors
         final Elements headerElements = this.DOM.select("h1, h2, h3, h4, h5");
 
@@ -121,7 +122,7 @@ public class GenericParser extends FixParser {
 
                     // If data was found, store in a new Fix object and add to list of found fixes
                     if(fixDescription.length() > 0)
-                        this.fixes.add(new Fix(cveId, fixDescription.toString(), url));
+                        this.fixes.add(new Fix(cveId, fixDescription, url));
 
                     // Skip to next header
                     break;

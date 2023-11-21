@@ -28,9 +28,9 @@ import fixes.Fix;
 import org.jsoup.Jsoup;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
 import java.net.URL;
+import java.util.Set;
 
 /**
  * HTML parser for redhat web pages
@@ -40,7 +40,7 @@ public class RedhatParser extends FixParser {
         super(cveId, url);
     }
 
-    protected List<Fix> parseWebPage() throws IOException{
+    protected Set<Fix> parseWebPage() throws IOException{
         throw new UnsupportedOperationException();
     }
 
@@ -49,9 +49,9 @@ public class RedhatParser extends FixParser {
      * @return list of all found fixes
      */
     @Override
-    public List<Fix> parse(){
+    public Set<Fix> parse(){
         // Init fixes list
-        this.fixes = new ArrayList<>();
+        this.fixes = new HashSet<>();
 
         // Delegate to correct sub-parser
         // Parser : URL

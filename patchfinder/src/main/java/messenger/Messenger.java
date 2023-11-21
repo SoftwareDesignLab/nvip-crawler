@@ -29,18 +29,15 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.*;
 import db.DatabaseHelper;
+import fixes.FixFinder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import patches.PatchFinder;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.security.KeyManagementException;
-import java.security.NoSuchAlgorithmException;
-import java.sql.ResultSet;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.regex.Pattern;
 
 /**
  * Messenger class that handles RabbitMQ interaction
@@ -71,6 +68,7 @@ public class Messenger {
         this.factory.setUsername(username);
         this.factory.setPassword(password);
 
+        // TODO: Re-enable for deployment
 //        try {
 //            factory.useSslProtocol();
 //        } catch (NoSuchAlgorithmException e) {
@@ -87,6 +85,7 @@ public class Messenger {
         logger.info("Initializing Messenger...");
         this.factory = factory;
 
+        // TODO: Re-enable for deployment
 //        try {
 //            factory.useSslProtocol();
 //        } catch (NoSuchAlgorithmException e) {
@@ -108,7 +107,7 @@ public class Messenger {
         return this.inputChannel.isOpen() ? this.inputChannel : createChannel(this.inputConnection);
     }
 
-    public void startHandlingJobs() {
+    public void startHandlingPatchJobs() {
         // Connect to rabbit input queue and subscribe callback
         try {
             this.inputConnection = this.factory.newConnection();
@@ -125,6 +124,28 @@ public class Messenger {
                             throw new RuntimeException(e);
                         }
                     }
+                    else logger.warn("Could not parse cveId from message '{}'", message);
+                    inputChannel.basicAck(envelope.getDeliveryTag(), false);
+                }
+            });
+        }
+        catch (IOException | TimeoutException e) {
+            throw new IllegalArgumentException("Rabbit connection could not be established");
+        }
+    }
+
+    public void startHandlingFixJobs() {
+        // Connect to rabbit input queue and subscribe callback
+        try {
+            this.inputConnection = this.factory.newConnection();
+            this.inputChannel = this.inputConnection.createChannel();
+            this.inputChannel.basicConsume(inputQueue, false, new DefaultConsumer(inputChannel) {
+                @Override
+                public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
+                    String message = new String(body, StandardCharsets.UTF_8);
+                    String cveId = parseMessage(message);
+
+                    if(cveId != null) FixFinder.run(cveId);
                     else logger.warn("Could not parse cveId from message '{}'", message);
                     inputChannel.basicAck(envelope.getDeliveryTag(), false);
                 }
@@ -153,14 +174,13 @@ public class Messenger {
 
     /**
      * Testing method for sending RabbitMQ messages
-     * @param queue target queue
      * @param message message to be sent
      */
-    private void sendDummyMessage(String queue, String message) {
+    private void sendDummyMessage(String message) {
         try(Connection connection = factory.newConnection();
             Channel channel = connection.createChannel()){
 
-            channel.basicPublish("", queue, null, message.getBytes(StandardCharsets.UTF_8));
+            channel.basicPublish("", this.inputQueue, null, message.getBytes(StandardCharsets.UTF_8));
 
         } catch (IOException | TimeoutException e) {
             logger.error("Failed to send dummy message: {}", e.toString());
@@ -168,8 +188,10 @@ public class Messenger {
     }
 
     public static void main(String[] args) {
-        final String INPUT_QUEUE = "PNE_OUT";
-        final Messenger m = new Messenger("localhost", "/", 5672 , "guest", "guest", INPUT_QUEUE);
+        final String PF_INPUT_QUEUE = "PNE_OUT_FIX";
+        final String FF_INPUT_QUEUE = "PNE_OUT_PATCH";
+        final Messenger patchMessenger = new Messenger("localhost", "/", 5672 , "guest", "guest", PF_INPUT_QUEUE);
+        final Messenger fixMessenger = new Messenger("localhost", "/", 5672 , "guest", "guest", FF_INPUT_QUEUE);
         DatabaseHelper dbh = new DatabaseHelper("mysql", "jdbc:mysql://localhost:3306/nvip?useSSL=false&allowPublicKeyRetrieval=true", "root", "root");
         final Set<String> cveIds = dbh.getAffectedProducts(null).keySet();
 //        final Set<String> cveIds = new HashSet<>();
@@ -193,7 +215,8 @@ public class Messenger {
 
         for (String id : cveIds) {
             id = "{\"cveId\": \"" + id + "\"}";
-            m.sendDummyMessage(INPUT_QUEUE, id);
+            patchMessenger.sendDummyMessage(id);
+            fixMessenger.sendDummyMessage(id);
         }
     }
 }

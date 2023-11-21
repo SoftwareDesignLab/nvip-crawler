@@ -31,8 +31,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -106,7 +104,7 @@ public class PatchCommitScraper {
 							List<String> commitTimeline = calculateCommitTimeline(repository, startingRevision, commit);
 							int linesChanged = getLinesChanged(repository, commit);
 							List<RevCommit> commitList = calculateCommitTimelineElapsed(repository, startingRevision, commit);
-							Long timeToPatch = calculateTimeToPatch(commitList);
+							long timeToPatch = calculateTimeToPatch(commitList);
 							String formattedTimeToPatch = formatTimeToPatch(timeToPatch);
 							String commitMessage = commit.getFullMessage();
 							if(commitMessage.length() > COM_MESSAGE_LIMIT) {

@@ -1,13 +1,13 @@
 package fixes.parsers;
 
 import fixes.Fix;
-import org.jsoup.Jsoup;
 import org.junit.Test;
 
-import java.io.IOException;
-import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+
 import static org.junit.Assert.assertEquals;
 
 public class CXSecurityParserTest extends FixParserTest<CXSecurityParser> {
@@ -34,8 +34,8 @@ public class CXSecurityParserTest extends FixParserTest<CXSecurityParser> {
         String url ="https://cxsecurity.com/cveshow/CVE-2023-3990";
         this.setFixParser(getNewParser(cveId, url));
 
-        List <Fix> actual =  this.fixParser().parse();
-        List <Fix> expected = new ArrayList<>();
+        Set<Fix> actual =  this.fixParser().parse();
+        Set <Fix> expected = new HashSet<>();
 
         assertEquals(expected, actual);
     }

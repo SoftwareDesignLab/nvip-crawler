@@ -25,15 +25,8 @@ package fixes; /**
 import db.DatabaseHelper;
 import env.FixFinderEnvVars;
 import env.SharedEnvVars;
-import model.CpeEntry;
-import model.CpeGroup;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.util.concurrent.ThreadPoolExecutor;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.mock;
 
 /**
  * Unit tests for FixFinder class

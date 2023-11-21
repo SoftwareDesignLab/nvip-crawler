@@ -24,6 +24,8 @@
 
 import db.DatabaseHelper;
 import env.FixFinderEnvVars;
+import env.SharedEnvVars;
+import messenger.Messenger;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import fixes.FixFinder;
@@ -82,16 +84,22 @@ public class FixFinderMain extends Thread {
         List<String> cveIds = new ArrayList<>(FixFinder.getDatabaseHelper().getCves(FixFinderEnvVars.getCveLimit()));
         logger.info("Successfully got {} CVEs from the database", cveIds.size());
 
-        try {
-            FixFinder.run(cveIds);
-        } catch (Exception e) {
-            logger.error("A fatal error attempting to complete jobs: {}", e.toString());
-        }
+        for (String cveId : cveIds) FixFinder.run(cveId);
     }
 
+    // TODO: Support end message
     private void runRabbit() {
-        // TODO: RabbitMQ integration (with job streaming), wait until PoC is accepted to complete this
-        throw new UnsupportedOperationException();
+        // Initialize messenger
+        final Messenger messenger = new Messenger(
+                SharedEnvVars.getRabbitHost(),
+                SharedEnvVars.getRabbitVHost(),
+                SharedEnvVars.getRabbitPort(),SharedEnvVars.getRabbitUsername(),
+                SharedEnvVars.getRabbitPassword(),
+                SharedEnvVars.getFixFinderInputQueue()
+        );
+
+        // Start job handling
+        messenger.startHandlingFixJobs();
     }
 
     private void runDev() {
@@ -99,15 +107,6 @@ public class FixFinderMain extends Thread {
         List<String> cveIds = new ArrayList<>();
         cveIds.add("CVE-2023-38571");
 
-        try {
-            FixFinder.run(cveIds);
-        } catch (Exception e) {
-            logger.error("A fatal error attempting to complete jobs: {}", e.toString());
-        }
-    }
-
-    public static void main(String[] args) {
-//        FixFinderMain finder = new FixFinderMain();
-//        finder.start();
+        for (String cveId : cveIds) FixFinder.run(cveId);
     }
 }

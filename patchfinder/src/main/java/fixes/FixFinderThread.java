@@ -24,19 +24,12 @@ package fixes;
  * SOFTWARE.
  */
 
-import db.DatabaseHelper;
 import fixes.parsers.FixParser;
-import fixes.parsers.CISAParser;
-import fixes.parsers.GenericParser;
-import fixes.parsers.NVDParser;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
+import java.util.Set;
 
 /**
  * Runnable thread class for multithreaded FixFinder. Used for finding fixes for CVEs from sources.
@@ -49,22 +42,22 @@ import java.util.concurrent.ExecutionException;
 public class FixFinderThread implements Runnable {
 	private static final Logger logger = LogManager.getLogger(FixFinder.class.getName());
 	private final String cveId;
-	private final List<String> urls;
-	private List<Fix> fixes;
+	private final String url;
+	private Set<Fix> fixes;
 
 	// Get list of fixes
-	public List<Fix> getFixes(){ return fixes; }
+	public Set<Fix> getFixes(){ return this.fixes; }
 
 	/**
 	 * Constructor for FixFinderThread. Takes in a CVE and a list of URLs
 	 * to webpages which should be parsed for possible fixes for the vulnerability.
 	 *
 	 * @param cveId CVE to find fixes for
-	 * @param urls Possible URLs to be scraped that may contain fixes
+	 * @param url Possible URL to be scraped that may contain fixes
 	 */
-	public FixFinderThread(String cveId, List<String> urls){
+	public FixFinderThread(String cveId, String url){
 		this.cveId = cveId;
-		this.urls = urls;
+		this.url = url;
 	}
 
 	/**
@@ -77,59 +70,12 @@ public class FixFinderThread implements Runnable {
 	 */
 	@Override
 	public void run() {
-		// TODO: Create/finish parsers for web pages to find fix info. I already have the NVD one somewhat created for
-		//  the vulnerability CVE-2022-2967 (see FixFinderMain), finish that or I will so that we can actually have our
-		//  first working cve with a fix found.
-		List<CompletableFuture<List<Fix>>> futures = new ArrayList<>();
-
-		for (String url : urls) {
-			CompletableFuture<List<Fix>> future = CompletableFuture.supplyAsync(() -> {
-				try{
-					FixParser parser = FixParser.getParser(cveId, url);
-					return parser.parse();
-				} catch(IOException e){
-					logger.error("Error occurred while parsing url {} for CVE {}: {}", url, cveId, e.toString());
-					e.printStackTrace();
-					return null;
-				}
-			});
-
-			futures.add(future);
+		try{
+			this.fixes = FixParser.getParser(cveId, url).parse();
+		} catch(IOException e){
+			logger.error("Error occurred while parsing url {} for CVE {}: {}", url, cveId, e.toString());
+			e.printStackTrace();
 		}
-
-		int totalFixes = 0;
-		int totalFailedInserts = 0;
-		int totalExistingInserts = 0;
-
-		// Wait for all futures to complete and collect their results
-		for (CompletableFuture<List<Fix>> future : futures) {
-			try {
-				// Get results of the future
-				final List<Fix> fixes = future.get();
-				// Ensure no null values are allowed past here
-				if(fixes != null) {
-					// Insert fixes as jobs complete
-					final int[] results = FixFinder.getDatabaseHelper().insertFixes(fixes);
-					// Collect insert results
-					totalFailedInserts += results[0];
-					totalExistingInserts += results[1];
-					totalFixes += fixes.size();
-
-					logger.info("{} fixes found for CVE: {}", fixes.size(), cveId);
-				}
-				else logger.warn("Future returned null");
-			} catch (InterruptedException | ExecutionException e) {
-				// Handle exceptions as needed
-				e.printStackTrace();
-			}
-		}
-
-		// Final stats logging for thread
-		logger.info("Successfully inserted {} fixes into the database ({} failed, {} already existed)",
-				totalFixes - (totalFailedInserts + totalExistingInserts),
-				totalFailedInserts,
-				totalExistingInserts
-		);
 	}
 
 }

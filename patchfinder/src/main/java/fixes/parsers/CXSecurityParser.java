@@ -3,10 +3,9 @@ package fixes.parsers;
 import fixes.Fix;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
+import java.util.HashSet;
+import java.util.Set;
+
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 public class CXSecurityParser extends FixParser {
@@ -15,8 +14,8 @@ public class CXSecurityParser extends FixParser {
     }
 
     @Override
-    protected List<Fix> parseWebPage() throws IOException {
-        List<String> fixSources = new ArrayList<>();
+    protected Set<Fix> parseWebPage() throws IOException {
+        Set<String> fixSources = new HashSet<>();
 
         // Retrieve description
         String description = String.valueOf(this.DOM.select("h6").first().text());
