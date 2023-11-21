@@ -235,7 +235,7 @@ public class AffectedProductIdentifier {
 	 *
 	 * @return list of affected products
 	 */
-	public List<AffectedProduct> identifyAffectedProducts() {
+	public List<AffectedProduct> identifyAffectedProducts(List<CompositeVulnerability> vulnList) {
 
 		int totalCVEtoProcess = vulnList.size();
 
