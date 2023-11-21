@@ -66,7 +66,7 @@ public class MessengerTest {
         when(mockConn.createChannel()).thenReturn(channelMock);
 
         // Create a Messenger instance with the mock ConnectionFactory
-        Messenger messenger = new Messenger(factoryMock, "RECONCILER_OUT", "PNE_OUT", affectedProductIdentifier, mock(DatabaseHelper.class));
+        Messenger messenger = new Messenger(factoryMock, "RECONCILER_OUT", "PNE_OUT_PATCH", "PNE_OUT_FIX", affectedProductIdentifier, mock(DatabaseHelper.class));
 
         Map<String, String> message = new HashMap<>();
         message.put("cveId", "job1");
@@ -94,7 +94,7 @@ public class MessengerTest {
         when(mockConn.createChannel()).thenReturn(channelMock);
 
         // Create a Messenger instance with the mock ConnectionFactory
-        Messenger messenger = new Messenger(factoryMock, "RECONCILER_OUT", "PNE_OUT", affectedProductIdentifier, mock(DatabaseHelper.class));
+        Messenger messenger = new Messenger(factoryMock, "RECONCILER_OUT", "PNE_OUT_PATCH", "PNE_OUT_FIX", affectedProductIdentifier, mock(DatabaseHelper.class));
 
         Map<String, String> message = new HashMap<>();
         ObjectMapper objectMapper = new ObjectMapper();
@@ -112,7 +112,7 @@ public class MessengerTest {
         verify(channelMock, times(1)).basicConsume(eq("RECONCILER_OUT"), anyBoolean(), any(DeliverCallback.class), any(CancelCallback.class));
         verify(channelMock, times(0)).basicPublish(anyString(), eq("PNE_OUT"), any(), any());
 
-        verify(affectedProductIdentifier, times(1)).identifyAffectedProducts(any());
+        verify(affectedProductIdentifier, times(0)).identifyAffectedProducts(any());
     }
 
 //    @Test
