@@ -41,7 +41,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class GitControllerTest {
     private static final String LOCAL_PATH = "src/main/resources/patch-repos/apache-airflow";
 
-    private static final String REMOTE_PATH = "https://github.com/apache/airflow.git";
+    private static final String REMOTE_PATH = "https://github.com/apache/airflow";
     private GitController gitController;
 
     @Before

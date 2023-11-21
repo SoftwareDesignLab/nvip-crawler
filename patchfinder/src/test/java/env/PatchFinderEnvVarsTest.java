@@ -41,8 +41,8 @@ public class PatchFinderEnvVarsTest {
         String[] addressBases = PatchFinderEnvVars.getAddressBases();
         assertEquals(addressBases[0], "https://www.github.com/");
         assertEquals(addressBases[1], "https://www.gitlab.com/");
-        assertEquals(1000, PatchFinderEnvVars.getCloneCommitThreshold());
-        assertEquals(50000, PatchFinderEnvVars.getCloneCommitLimit());
+        assertEquals(250, PatchFinderEnvVars.getCloneCommitThreshold());
+        assertEquals(200000, PatchFinderEnvVars.getCloneCommitLimit());
 
         // TODO: Move to SharedEnvVarsTest
         // Default values for database environment variables
