@@ -96,7 +96,7 @@ public class PatchFinderTest {
 
         PatchFinder.init(databaseHelperMock);
         try {
-            final int numPatches = PatchFinder.run("CVE-2023-1001", cpeGroup, PatchFinder.cveLimit);
+            final int numPatches = PatchFinder.run("CVE-2023-1001", cpeGroup);
 
             // Call the run method and assert the expected behavior or outcome, should be 0 because they already exist in the db
             if(numPatches == 0) success("patches already exist in the db");
@@ -127,7 +127,7 @@ public class PatchFinderTest {
 
         int numPatches = 0;
         for (Map.Entry<String, CpeGroup> product : affectedProducts.entrySet()) {
-            numPatches += PatchFinder.run(product.getKey(), product.getValue(), PatchFinder.cveLimit);
+            numPatches += PatchFinder.run(product.getKey(), product.getValue());
         }
 
         // Call the run method and assert the expected behavior or outcome, should be 0 because they already exist in the db

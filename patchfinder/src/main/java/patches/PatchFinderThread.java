@@ -24,7 +24,6 @@ package patches; /**
 
 import java.io.IOException;
 import java.util.*;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import env.PatchFinderEnvVars;
@@ -61,7 +60,7 @@ public class PatchFinderThread implements Runnable {
 	/**
 	 * Thread object used for multithreaded patch finding
 	 *
-	 * @param possiblePatchSources map of CVEs to possible patch sources
+	 * @param source source to scrape
 	 * @param clonePath path to clone repos to
 	 * @param timeoutMilli milliseconds until timeout // TODO for what
 	 */
@@ -82,10 +81,6 @@ public class PatchFinderThread implements Runnable {
 	public void run() {
 		final long totalStart = System.currentTimeMillis();
 
-		// TODO: Move up a level
-//		// Order sources by repo size ascending
-//		final List<Integer> sourceRepoSizes = orderSources(cvePatchEntry);
-
 		findPatchCommits(patchCommits, cveId, source, getCommitCount(), clonePath);
 
 		final long delta = (System.currentTimeMillis() - totalStart) / 1000;
@@ -95,26 +90,6 @@ public class PatchFinderThread implements Runnable {
 				delta
 		);
 	}
-
-//	/**
-//	 * Sort sources by repo size to improve run performance
-//	 *
-//	 * @param sources sources to sort
-//	 * @return list of source counts (1:1 with sorted sources list)
-//	 */
-//	private List<Integer> orderSources(List<String> sources) {
-//		// Map commit counts to their respective sources
-//		final HashMap<String, Integer> sourceCounts = new HashMap<>(sources.size());
-//		sources.forEach(s -> sourceCounts.put(s, getCommitCount(s)));
-//
-//		// Sort list based on collected counts
-//		sources.sort(Comparator.comparingInt(sourceCounts::get));
-//
-//		// Return counts list
-//		final ArrayList<Integer> counts = new ArrayList<>(sourceCounts.values());
-//		Collections.sort(counts);
-//		return counts;
-//	}
 
 	/**
 	 * Gets the commit count from a given source page

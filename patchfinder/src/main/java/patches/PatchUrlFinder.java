@@ -61,29 +61,11 @@ public class PatchUrlFinder {
 		int cachedUrlCount = 0, foundCount = 0;
 		final long entryStart = System.currentTimeMillis();
 
-//		// Skip entries that already have values (only if refresh is not needed)
-//		if(!isStale) {
-//			if(urls.containsKey(cveId)) {
-////					logger.info("Found {} existing & fresh possible sources for CVE {}, skipping url parsing...", possiblePatchUrls.get(cveId).size(), cveId);
-//				final int urlCount = urls.size();
-//				foundCount += urlCount;
-//				cachedUrlCount++;
-//				if(urlCount != 0) continue;
-//			}
-//		} else urls.remove(cveId); // Remove stale entry
-
-
 		// Warn and skip blank entries
 		if(cveId.isEmpty() || affectedProduct.getVersionsCount() == 0) {
 			logger.warn("Unable to parse URLs for empty affected product");
 			return  urls;
 		}
-
-//		// Break out of loop when limit is reached
-//		if (cveLimit != 0 && urls.size() >= cveLimit) {
-//			logger.info("CVE limit of {} reached for patchfinder", cveLimit);
-//			break;
-//		}
 
 		try {
 			// Find and store urls
@@ -353,20 +335,6 @@ public class PatchUrlFinder {
 						logger.warn("Failed to validate/verify URL {}: {}", newURL, e);
 					}
 				}
-
-				// TODO: Remove when this method is fixed
-//				Elements searchResults = searchPage.select("li.repo-list-item a[href]");
-//
-//				for (Element searchResult : searchResults) {
-//					if (!searchResult.attr("href").isEmpty()) {
-//						String newURL = searchResult.attr("abs:href");
-//						String innerText = searchResult.text();
-//						if (verifyGitRemote(newURL, innerText, vendor, product)) {
-//							urls.add(newURL);
-//						}
-//					}
-//				}
-
 			} catch (IOException | InterruptedException e) {
 				logger.error(e.toString());
 				// If ratelimiting is detected, manually trigger sleep

@@ -24,11 +24,11 @@
 
 import db.DatabaseHelper;
 import env.PatchFinderEnvVars;
+import env.SharedEnvVars;
 import messenger.Messenger;
 import model.CpeGroup;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
@@ -79,7 +79,7 @@ public class PatchFinderMain extends Thread {
         try {
             // TODO: Delegate to threads
             for (String cveId : affectedProducts.keySet()) {
-                PatchFinder.run(cveId, affectedProducts.get(cveId), PatchFinderEnvVars.getCveLimit());
+                PatchFinder.run(cveId, affectedProducts.get(cveId));
             }
 
             // When all threads are done, write source dict to file
@@ -89,34 +89,18 @@ public class PatchFinderMain extends Thread {
         }
     }
 
-    // TODO: Implement job streaming (queue received jobs to be consumed, support end messages)
+    // TODO: Support end message
     private void runRabbit() {
         // Initialize messenger
         final Messenger messenger = new Messenger(
-                PatchFinderEnvVars.getRabbitHost(),
-                PatchFinderEnvVars.getRabbitVHost(),
-                    PatchFinderEnvVars.getRabbitPort(),PatchFinderEnvVars.getRabbitUsername(),
-                PatchFinderEnvVars.getRabbitPassword(),
-                    PatchFinderEnvVars.getRabbitInputQueue()
+                SharedEnvVars.getRabbitHost(),
+                SharedEnvVars.getRabbitVHost(),
+                SharedEnvVars.getRabbitPort(),SharedEnvVars.getRabbitUsername(),
+                SharedEnvVars.getRabbitPassword(),
+                SharedEnvVars.getPatchFinderInputQueue()
         );
 
         // Start job handling
-        messenger.startHandlingJobs();
-//        logger.info("Starting busy-wait loop for jobs...");
-//        while(true) {
-//            try {
-//                // Wait and get jobs
-//                final List<String> jobs = rabbitMQ.waitForProductNameExtractorMessage(PatchFinderEnvVars.getRabbitPollInterval());
-//
-//                // If null is returned, either and error occurred or intentional program quit
-//                if(jobs == null) break;
-//
-//                // Otherwise, run received jobs
-//                PatchFinder.run(jobs);
-//            } catch (IOException e) {
-//                logger.error("A fatal error occurred during job waiting: {}", e.toString());
-//                break;
-//            }
-//        }
+        messenger.startHandlingPatchJobs();
     }
 }

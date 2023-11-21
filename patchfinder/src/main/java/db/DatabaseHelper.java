@@ -410,7 +410,7 @@ public class DatabaseHelper {
 		return cves;
 	}
 
-	public int[] insertFixes(List<Fix> fixes) {
+	public int[] insertFixes(Set<Fix> fixes) {
 		int failedInserts = 0;
 		int existingInserts = 0;
 

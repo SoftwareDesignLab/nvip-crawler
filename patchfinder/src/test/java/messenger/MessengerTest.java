@@ -24,20 +24,12 @@ package messenger;
  * SOFTWARE.
  */
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.rabbitmq.client.*;
-import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
-import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.*;
 
 import static org.junit.Assert.*;
-import static org.junit.platform.commons.function.Try.success;
-import static org.mockito.Mockito.*;
 
 /**
  * Unit tests for Messenger class

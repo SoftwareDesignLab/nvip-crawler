@@ -25,11 +25,9 @@ package patches; /**
 import org.junit.Ignore;
 import patches.PatchCommit;
 import org.junit.Test;
-import org.mockito.Mockito;
 import patches.PatchFinder;
 import patches.PatchFinderThread;
 
-import java.io.IOException;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

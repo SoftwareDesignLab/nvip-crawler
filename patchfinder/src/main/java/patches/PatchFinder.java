@@ -27,11 +27,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import db.DatabaseHelper;
 import env.PatchFinderEnvVars;
-import fixes.FixFinderThread;
 import model.CpeGroup;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.eclipse.jgit.util.FileUtils;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -42,8 +40,6 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 /**
  * Main class for collecting CVE Patches within repos that were
@@ -56,7 +52,6 @@ public class PatchFinder {
 
 	private static final ObjectMapper OM = new ObjectMapper();
 	private static DatabaseHelper databaseHelper;
-	private static PatchUrlFinder patchURLFinder;
 
 //	private static final Set<PatchCommit> patchCommits = new HashSet<>();
 	private static Map<String, List<String>> sourceDict;
@@ -79,10 +74,6 @@ public class PatchFinder {
 		// Init db helper
 		logger.info("Initializing DatabaseHelper...");
 		databaseHelper = dbh;
-
-		// Init PatchUrlFinder
-		logger.info("Initializing PatchUrlFinder...");
-		patchURLFinder = new PatchUrlFinder();
 	}
 
 	/**
@@ -96,7 +87,7 @@ public class PatchFinder {
 		final CpeGroup affectedProduct = affectedProducts.get(cveId);
 		if(affectedProduct != null) {
 			logger.info("Successfully got {} affected products for CVE '{}' from the database", affectedProduct.getVersionsCount(), cveId);
-			PatchFinder.run(cveId, affectedProduct, 0);
+			PatchFinder.run(cveId, affectedProduct);
 		} else logger.warn("No affected products found matching CVE '{}', cannot find patches.", cveId);
 	}
 
@@ -107,28 +98,12 @@ public class PatchFinder {
 	 *
 	 * @return number of successfully imported patch commits
 	 */
-	public static int run(String cveId, CpeGroup affectedProduct, int cveLimit) throws IOException {
-		final long totalStart = System.currentTimeMillis();
+	public static int run(String cveId, CpeGroup affectedProduct) throws IOException {
 		int successfulInserts = 0;
 
 		// Attempt to find source urls from pre-written file (ensure file existence/freshness)
 		final List<String> possiblePatchURLs = getDictUrls(cveId);
 		final int readUrlCount = possiblePatchURLs.size();
-
-//		// Filter any sources that are not a current job
-//		final Set<String> cachedCVEs = possiblePatchURLs.keySet();
-//		final Set<String> newCVEs = new HashSet<>(affectedProducts.keySet()); // Prevents concurrent mod exceptions
-//		List<String> keysToRemove = new ArrayList<>();
-//		for (String key : cachedCVEs) {
-//			if (!newCVEs.contains(key)) {
-//				keysToRemove.add(key);
-//			}
-//		}
-
-//		// Remove keys outside the loop
-//		for (String keyToRemove : keysToRemove) {
-//			possiblePatchURLs.remove(keyToRemove);
-//		}
 
 		// Parse patch source urls from any affectedProducts that do not have fresh urls read from file
 		logger.info("Parsing patch urls from affected product CVEs (limit: {} CVEs)...", cveLimit);
@@ -138,7 +113,7 @@ public class PatchFinder {
 		final boolean isStale = urlDictLastCompilationDate.until(Instant.now(), ChronoUnit.DAYS) >= 1;
 
 		// Parse new urls
-		final List<String> newUrls = patchURLFinder.parsePatchURLs(cveId, affectedProduct, cveLimit, isStale);
+		final List<String> newUrls = PatchUrlFinder.parsePatchURLs(cveId, affectedProduct, cveLimit, isStale);
 		possiblePatchURLs.addAll(newUrls);
 		final int totalUrlCount = possiblePatchURLs.size();
 
@@ -216,13 +191,6 @@ public class PatchFinder {
 					existingInserts
 			);
 		} else logger.info("No patch commits found"); // Otherwise log failure to find patch
-
-//		final long delta = (System.currentTimeMillis() - totalStart) / 1000;
-//		logger.info("Successfully collected {} patch commits from {} CVEs in {} seconds",
-//				patchCommits.size(),
-//				Math.min(cveLimit, affectedProducts.size()),
-//				delta
-//		);
 
 		return successfulInserts;
 	}
@@ -345,10 +313,6 @@ public class PatchFinder {
 		}
 	}
 
-//	public static Set<PatchCommit> getPatchCommits() {
-//		return patchCommits;
-//	}
-
 	/**
 	 * Git commit parser that implements multiple threads to increase performance. Found patches
 	 * will be stored in the patchCommits member of this class.
@@ -363,46 +327,13 @@ public class PatchFinder {
 			logger.warn("Could not locate clone directory at path '{}'", clonePath);
 			try { dir.createNewFile(); }
 			catch (IOException e) { logger.error("Failed to create missing directory '{}'", clonePath); }
-		}/* else logger.info("Clone directory already exists at {}", clonePath);*/
-		//TODO: Figure out a solid solution to handling overwriting existing cloned repos, have had 0 success with
-		// deleting programmatically so far, might be a job for the docker env to handle the destruction of the clone dir
-//		else {
-//			logger.info("Clearing any existing repos @ '{}'", clonePath);
-//			try { FileUtils.delete(dir, FileUtils.RECURSIVE); }
-//			catch (IOException e) { logger.error("Failed to clear clone dir @ '{}': {}", dir, e); }
-//		}
+		}
 
-//		// Determine the actual number of CVEs to be processed
-//		final int totalCVEsToProcess = Math.min(possiblePatchSources.size(), cveLimit);
-//
-//		// Determine the total number of possible patch sources to scrape
-//		final AtomicInteger totalPatchSources = new AtomicInteger();
-//		possiblePatchSources.values().stream().map(ArrayList::size).forEach(totalPatchSources::addAndGet);
-
-		// Initialize thread pool executor
-//		final int actualThreads = Math.min(maxThreads, totalCVEsToProcess);
 		final int actualThreads = possiblePatchSources.size();
-//		final BlockingQueue<Runnable> workQueue = new ArrayBlockingQueue<>(actualThreads);
-//		final ThreadPoolExecutor executor = new ThreadPoolExecutor(
-//				actualThreads,
-//				actualThreads,
-//				5,
-//				TimeUnit.MINUTES,
-//				workQueue
-//		);
 
 		// TODO: Implement futures
 		final List<Future<Set<PatchCommit>>> futures = new ArrayList<>();
 		final ExecutorService exe = Executors.newFixedThreadPool(actualThreads);
-
-		// Prestart all assigned threads (this is what runs jobs)
-//		executor.prestartAllCoreThreads();
-
-		// Add jobs to work queue (ignore CVEs with no found sources
-//		final Set<String> CVEsToProcess = possiblePatchSources.keySet()
-//				.stream().filter(
-//						k -> possiblePatchSources.get(k).size() > 0).collect(Collectors.toSet()
-//				);
 
 		// Partition jobs to all threads
 		for (String source : possiblePatchSources) {
@@ -419,57 +350,11 @@ public class PatchFinder {
 		exe.shutdown();
 
 		for (Future<Set<PatchCommit>> future : futures) {
-			try { final Set<PatchCommit> result = future.get();
-			if(result != null) patchCommits.addAll(result); }
-			catch (Exception e) { logger.error("Error occured while getting future of job: {}", e.toString()); }
+			try {
+				final Set<PatchCommit> result = future.get();
+				if(result != null) patchCommits.addAll(result);
+			} catch (Exception e) { logger.error("Error occured while getting future of job: {}", e.toString()); }
 		}
-
-		// TODO: Relocate/remove
-//		// Wait loop (waits for jobs to be processed and updates the user on progress)
-//		final int timeout = 15;
-//		long secondsWaiting = 0;
-//		int numCVEsProcessed = 0;
-//		int lastNumCVEs = totalCVEsToProcess;
-//		try {
-//			while(!executor.awaitTermination(timeout, TimeUnit.SECONDS)) {
-//				secondsWaiting += timeout;
-//
-//				// Every minute, log a progress update
-//				if(secondsWaiting % 60 == 0) {
-//
-//					// Determine number of CVEs processed
-//					final int activeJobs = executor.getActiveCount();
-//					final int currNumCVEs = workQueue.size() + activeJobs; // Current number of remaining CVEs
-//					final int deltaNumCVEs = lastNumCVEs - currNumCVEs; // Change in CVEs since last progress update
-//
-//					// Sum number processed
-//					numCVEsProcessed += deltaNumCVEs;
-//
-//					// Calculate rate, avg rate, and remaining time
-//					final double avgRate = (double) numCVEsProcessed / ((double) secondsWaiting / 60); // CVEs/sec
-//					final double remainingAvgTime = currNumCVEs / avgRate; // CVEs / CVEs/min = remaining mins
-//
-//					// Log stats
-//					logger.info(
-//							"{} out of {} CVEs done (SP: {} CVEs/min | AVG SP: {} CVEs/min | Est time remaining: {} minutes ({} seconds) | {} active jobs)...",
-//							totalCVEsToProcess - currNumCVEs,
-//							totalCVEsToProcess,
-//							Math.floor((double) deltaNumCVEs * 100) / 100,
-//							Math.floor(avgRate * 100) / 100,
-//							Math.floor(remainingAvgTime * 100) / 100,
-//							Math.floor(remainingAvgTime * 60 * 100) / 100,
-//							activeJobs
-//					);
-//
-//					// Update lastNumCVEs
-//					lastNumCVEs = currNumCVEs;
-//				}
-//			}
-//		} catch (Exception e) {
-//			logger.error("Patch finding failed: {}", e.toString());
-//			List<Runnable> remainingTasks = executor.shutdownNow();
-//			logger.error("{} tasks not executed", remainingTasks.size());
-//		}
 
 		logger.info("Returning {} patch commits", patchCommits.size());
 		return patchCommits;

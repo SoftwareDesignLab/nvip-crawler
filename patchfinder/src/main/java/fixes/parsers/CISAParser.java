@@ -25,13 +25,9 @@ package fixes.parsers;
  */
 
 import fixes.Fix;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Set;
 
 /**
  * Abstract class for FixFinder HTMl Parsers
@@ -47,7 +43,7 @@ public class CISAParser extends FixParser {
     }
 
     @Override
-    protected List<Fix> parseWebPage() throws IOException {
+    protected Set<Fix> parseWebPage() {
         Elements headers = this.DOM.select("div[id=1-full__main]").first().select("h");
 
         return this.fixes;

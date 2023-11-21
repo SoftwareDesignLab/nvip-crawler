@@ -33,8 +33,8 @@ import org.jsoup.nodes.Document;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Abstract class for FixFinder HTMl Parsers
@@ -47,7 +47,7 @@ public abstract class FixParser {
     protected final String cveId;
     protected final String url;
 
-    protected List<Fix> fixes;
+    protected Set<Fix> fixes;
     protected Document DOM;
 
     protected FixParser(String cveId, String url){
@@ -55,9 +55,9 @@ public abstract class FixParser {
         this.url = url;
     }
 
-    public List<Fix> parse() {
+    public Set<Fix> parse() {
         // Init list for storing fixes
-        this.fixes = new ArrayList<>();
+        this.fixes = new HashSet<>();
 
         // Attempt to parse page and store returned Document object
         try {
@@ -81,7 +81,7 @@ public abstract class FixParser {
 
     //TODO: Remove this throws unless we really need it, as URL interaction has been
     // moved to parse() and the IOExceptions are handled there
-    protected abstract List<Fix> parseWebPage() throws IOException;
+    protected abstract Set<Fix> parseWebPage() throws IOException;
 
     /**
      * Delegation method to determine which parser should be used to find fixes from the given url.
