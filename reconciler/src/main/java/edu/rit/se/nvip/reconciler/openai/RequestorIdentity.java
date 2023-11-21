@@ -1,4 +1,4 @@
-package edu.rit.se.nvip.openai;
+package edu.rit.se.nvip.reconciler.openai;
 
 public enum RequestorIdentity {
     RECONCILE(0),

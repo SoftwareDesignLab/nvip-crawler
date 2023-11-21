@@ -1,8 +1,7 @@
 package edu.rit.se.nvip.sandbox;
 
-import edu.rit.se.nvip.DatabaseHelper;
 import edu.rit.se.nvip.ReconcilerController;
-import edu.rit.se.nvip.filter.FilterHandler;
+import edu.rit.se.nvip.reconciler.filter.FilterHandler;
 import edu.rit.se.nvip.mitre.MitreCveController;
 import edu.rit.se.nvip.model.CompositeVulnerability;
 import edu.rit.se.nvip.model.RawVulnerability;
@@ -11,8 +10,6 @@ import edu.rit.se.nvip.reconciler.Reconciler;
 import edu.rit.se.nvip.reconciler.ReconcilerFactory;
 import edu.rit.se.nvip.utils.ReconcilerEnvVars;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashSet;

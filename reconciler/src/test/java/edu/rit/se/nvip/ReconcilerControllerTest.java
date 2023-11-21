@@ -1,16 +1,14 @@
 package edu.rit.se.nvip;
 
 import edu.rit.se.nvip.characterizer.CveCharacterizer;
-import edu.rit.se.nvip.filter.FilterHandler;
-import edu.rit.se.nvip.filter.FilterReturn;
-import edu.rit.se.nvip.messenger.Messenger;
+import edu.rit.se.nvip.reconciler.filter.FilterHandler;
+import edu.rit.se.nvip.reconciler.filter.FilterReturn;
 import edu.rit.se.nvip.mitre.MitreCveController;
 import edu.rit.se.nvip.model.CompositeVulnerability;
 import edu.rit.se.nvip.model.RawVulnerability;
 import edu.rit.se.nvip.model.RunStats;
 import edu.rit.se.nvip.nvd.NvdCveController;
 import edu.rit.se.nvip.reconciler.Reconciler;
-import edu.rit.se.nvip.reconciler.ReconcilerFactory;
 import edu.rit.se.nvip.utils.ReconcilerEnvVars;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,7 +20,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.HashSet;
 import java.util.Set;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
