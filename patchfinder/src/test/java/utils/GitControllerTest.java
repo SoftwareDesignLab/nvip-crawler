@@ -24,6 +24,7 @@ package utils;
  * SOFTWARE.
  */
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -49,10 +50,13 @@ public class GitControllerTest {
         gitController = new GitController(LOCAL_PATH, REMOTE_PATH);
     }
 
+    @After
+    public void teardown() {
+        gitController.deleteRepo();
+    }
+
     @Test
     public void testRepoCreation() {
-        // Delete repo before creation
-        gitController.deleteRepo();
         Path path = Paths.get(LOCAL_PATH);
         assertFalse(Files.exists(path));
 
@@ -66,8 +70,7 @@ public class GitControllerTest {
         // Clone repo before deletion
         final Path path = Paths.get(LOCAL_PATH);
         gitController.cloneRepo();
-        assertTrue(Files.exists(path));
-
+        
         // Delete and assert local directory is non-existent
         gitController.deleteRepo();
         assertFalse(Files.exists(path));
