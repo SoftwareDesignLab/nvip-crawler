@@ -10,6 +10,8 @@ import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import javax.sql.DataSource;
 import java.sql.*;
@@ -23,7 +25,9 @@ import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.*;
 
 
+
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class RawDescriptionRepositoryTest {
 
     @Mock DataSource dataSource;
@@ -36,6 +40,7 @@ public class RawDescriptionRepositoryTest {
     @SneakyThrows
     @BeforeEach
     void initializeMocks(){
+        when(mockPS.executeQuery()).thenReturn(mockRS);
         when(mockConnection.prepareStatement(anyString())).thenReturn(mockPS);
         when(dataSource.getConnection()).thenReturn(mockConnection);
 
@@ -172,66 +177,60 @@ public class RawDescriptionRepositoryTest {
         assertThat(data).containsExactly(entry(expectedVulnId, expectedTime.toLocalDateTime()));
     }
 
-    // todo update these tests
-//    @org.junit.Test
-//    public void getRawVulnerabilitiesTest() {
-//        try {
-//            when(res.next()).thenReturn(true, false);
-//
-//            // Set up the expected data
-//            String cveId = "CVE-2023-5678";
-//
-//            // Call the method under test
-//            Set<RawVulnerability> result = dbh.getRawVulnerabilities(cveId);
-//
-//            // Verify the expected output
-//            assertEquals(1, result.size());
-//
-//            // Verify pstmt.setString() call
-//            verify(pstmt).setString(1, cveId);
-//        } catch (SQLException ignored) {
-//            logger.error("Error loading database");
-//        }
-//    }
+    @Test
+    @SneakyThrows
+    public void getRawVulnerabilitiesTest() {
+        when(mockRS.next()).thenReturn(true, false);
 
-//    @org.junit.Test
-//    public void markGarbageTest() throws SQLException {
-//
-//        Set<RawVulnerability> mockedRawVulns = new HashSet<>();
-//        mockedRawVulns.add(new RawVulnerability(1, "CVE-2021-1234", "Description", null, null, null, ""));
-//        mockedRawVulns.add(new RawVulnerability(2, "CVE-2021-5678", "Description", null, null, null, ""));
-//
-//        // Call the updateFilterStatus method
-//        dbh.updateFilterStatus(mockedRawVulns);
-//
-//        // Verify that pstmt.setInt() is called with the correct arguments
-//        verify(pstmt, times(2)).setInt(eq(1), eq(1));
-//        verify(pstmt).setInt(eq(2), eq(1));
-//        verify(pstmt).setInt(eq(2), eq(2));
-//
-//        // Verify that pstmt.addBatch() is called for each RawVulnerability
-//        verify(pstmt, times(2)).addBatch();
-//
-//        // Verify that pstmt.executeBatch() is called once
-//        verify(pstmt).executeBatch();
-//    }
+        // Set up the expected data
+        String cveId = "CVE-2023-5678";
 
-    //    @Test
-    //    public void getUsedRawVulnerabilitiesTest() {
-    //       try{
-    //            when(res.next()).thenReturn(true, true, false);
-    //            when(res.getInt(anyString())).thenReturn(1);
-    //            when(res.getString(anyString())).thenReturn("desc");
-    //            when(res.getTimestamp(anyString())).thenReturn(new Timestamp(System.currentTimeMillis()));
-    //
-    //            Set<RawVulnerability> rawVulns = dbh.getUsedRawVulnerabilities("cveId");
-    //
-    //           verify(pstmt).setString(1, "cveId");
-    //
-    //            assertEquals(1, rawVulns.size());
-    //
-    //       } catch (SQLException e) {
-    //           logger.error("Error loading Database");
-    //        }
-    //    }
+        // Call the method under test
+        Set<RawVulnerability> result = repository.getRawVulnerabilities(cveId);
+
+        // Verify the expected output
+        assertEquals(1, result.size());
+
+        // Verify pstmt.setString() call
+        verify(mockPS).setString(1, cveId);
+    }
+
+    @Test
+    @SneakyThrows
+    public void markGarbageTest() {
+
+        Set<RawVulnerability> mockedRawVulns = new HashSet<>();
+        mockedRawVulns.add(new RawVulnerability(1, "CVE-2021-1234", "Description", null, null, null, ""));
+        mockedRawVulns.add(new RawVulnerability(2, "CVE-2021-5678", "Description", null, null, null, ""));
+
+        // Call the updateFilterStatus method
+        repository.updateFilterStatus(mockedRawVulns);
+
+        // Verify that pstmt.setInt() is called with the correct arguments
+        verify(mockPS, times(2)).setInt(eq(1), eq(1));
+        verify(mockPS).setInt(eq(2), eq(1));
+        verify(mockPS).setInt(eq(2), eq(2));
+
+        // Verify that pstmt.addBatch() is called for each RawVulnerability
+        verify(mockPS, times(2)).addBatch();
+
+        // Verify that pstmt.executeBatch() is called once
+        verify(mockPS).executeBatch();
+    }
+
+    @Test
+    @SneakyThrows
+    public void getUsedRawVulnerabilitiesTest() {
+        when(mockRS.next()).thenReturn(true, true, false);
+        when(mockRS.getInt(anyString())).thenReturn(1);
+        when(mockRS.getString(anyString())).thenReturn("desc");
+        when(mockRS.getTimestamp(anyString())).thenReturn(new Timestamp(System.currentTimeMillis()));
+
+        Set<RawVulnerability> rawVulns = repository.getUsedRawVulnerabilities("cveId");
+
+       verify(mockPS).setString(1, "cveId");
+
+        assertEquals(2, rawVulns.size());
+
+    }
 }
