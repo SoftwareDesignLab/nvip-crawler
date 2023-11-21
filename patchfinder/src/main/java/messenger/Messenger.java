@@ -45,7 +45,6 @@ import java.util.concurrent.*;
  * @author Dylan Mulligan
  */
 public class Messenger {
-    private final String inputQueue;
     private static final Logger logger = LogManager.getLogger(DatabaseHelper.class.getSimpleName());
     private static final ObjectMapper OM = new ObjectMapper();
     private final ConnectionFactory factory;
@@ -59,7 +58,7 @@ public class Messenger {
      * @param username RabbitMQ username
      * @param password RabbitMQ password
      */
-    public Messenger(String host, String vhost, int port, String username, String password, String inputQueue) {
+    public Messenger(String host, String vhost, int port, String username, String password) {
         logger.info("Initializing Messenger...");
         this.factory = new ConnectionFactory();
         this.factory.setHost(host);
@@ -76,12 +75,10 @@ public class Messenger {
 //        } catch (KeyManagementException e) {
 //            throw new RuntimeException(e);
 //        }
-
-        this.inputQueue = inputQueue;
     }
 
     // For JUnit tests
-    protected Messenger(ConnectionFactory factory, String inputQueue) {
+    protected Messenger(ConnectionFactory factory) {
         logger.info("Initializing Messenger...");
         this.factory = factory;
 
@@ -93,21 +90,19 @@ public class Messenger {
 //        } catch (KeyManagementException e) {
 //            throw new RuntimeException(e);
 //        }
-
-        this.inputQueue = inputQueue;
     }
 
-    private static Channel createChannel(Connection connection) {
-        try { return connection.createChannel(); }
-        catch (IOException e) { return null; }
-    }
+//    private static Channel createChannel(Connection connection) {
+//        try { return connection.createChannel(); }
+//        catch (IOException e) { return null; }
+//    }
 
-    private Channel getInputChannel() {
-        // Get channel if still open, otherwise create new channel from connection object
-        return this.inputChannel.isOpen() ? this.inputChannel : createChannel(this.inputConnection);
-    }
+//    private Channel getInputChannel() {
+//        // Get channel if still open, otherwise create new channel from connection object
+//        return this.inputChannel.isOpen() ? this.inputChannel : createChannel(this.inputConnection);
+//    }
 
-    public void startHandlingPatchJobs() {
+    public void startHandlingPatchJobs(String inputQueue) {
         // Connect to rabbit input queue and subscribe callback
         try {
             this.inputConnection = this.factory.newConnection();
@@ -134,7 +129,7 @@ public class Messenger {
         }
     }
 
-    public void startHandlingFixJobs() {
+    public void startHandlingFixJobs(String inputQueue) {
         // Connect to rabbit input queue and subscribe callback
         try {
             this.inputConnection = this.factory.newConnection();
@@ -176,11 +171,11 @@ public class Messenger {
      * Testing method for sending RabbitMQ messages
      * @param message message to be sent
      */
-    private void sendDummyMessage(String message) {
+    private void sendDummyMessage(String message, String inputQueue) {
         try(Connection connection = factory.newConnection();
             Channel channel = connection.createChannel()){
 
-            channel.basicPublish("", this.inputQueue, null, message.getBytes(StandardCharsets.UTF_8));
+            channel.basicPublish("", inputQueue, null, message.getBytes(StandardCharsets.UTF_8));
 
         } catch (IOException | TimeoutException e) {
             logger.error("Failed to send dummy message: {}", e.toString());
@@ -190,8 +185,7 @@ public class Messenger {
     public static void main(String[] args) {
         final String PF_INPUT_QUEUE = "PNE_OUT_FIX";
         final String FF_INPUT_QUEUE = "PNE_OUT_PATCH";
-        final Messenger patchMessenger = new Messenger("localhost", "/", 5672 , "guest", "guest", PF_INPUT_QUEUE);
-        final Messenger fixMessenger = new Messenger("localhost", "/", 5672 , "guest", "guest", FF_INPUT_QUEUE);
+        final Messenger m = new Messenger("localhost", "/", 5672 , "guest", "guest");
         DatabaseHelper dbh = new DatabaseHelper("mysql", "jdbc:mysql://localhost:3306/nvip?useSSL=false&allowPublicKeyRetrieval=true", "root", "root");
         final Set<String> cveIds = dbh.getAffectedProducts(null).keySet();
 //        final Set<String> cveIds = new HashSet<>();
@@ -215,8 +209,8 @@ public class Messenger {
 
         for (String id : cveIds) {
             id = "{\"cveId\": \"" + id + "\"}";
-            patchMessenger.sendDummyMessage(id);
-            fixMessenger.sendDummyMessage(id);
+            m.sendDummyMessage(id, PF_INPUT_QUEUE);
+            m.sendDummyMessage(id, FF_INPUT_QUEUE);
         }
     }
 }

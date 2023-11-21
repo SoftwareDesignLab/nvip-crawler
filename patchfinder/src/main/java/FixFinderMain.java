@@ -41,9 +41,11 @@ import java.util.List;
 public class FixFinderMain extends Thread {
     private final static Logger logger = LogManager.getLogger(FixFinderMain.class);
     private final DatabaseHelper databaseHelper;
+    private final Messenger messenger;
 
-    public FixFinderMain(DatabaseHelper dbh) {
+    public FixFinderMain(DatabaseHelper dbh, Messenger messenger) {
         this.databaseHelper = dbh;
+        this.messenger = messenger;
     }
 
     /**
@@ -89,17 +91,8 @@ public class FixFinderMain extends Thread {
 
     // TODO: Support end message
     private void runRabbit() {
-        // Initialize messenger
-        final Messenger messenger = new Messenger(
-                SharedEnvVars.getRabbitHost(),
-                SharedEnvVars.getRabbitVHost(),
-                SharedEnvVars.getRabbitPort(),SharedEnvVars.getRabbitUsername(),
-                SharedEnvVars.getRabbitPassword(),
-                SharedEnvVars.getFixFinderInputQueue()
-        );
-
         // Start job handling
-        messenger.startHandlingFixJobs();
+        messenger.startHandlingFixJobs(SharedEnvVars.getFixFinderInputQueue());
     }
 
     private void runDev() {
