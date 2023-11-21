@@ -1,4 +1,4 @@
-package edu.rit.se.nvip.openai;
+package edu.rit.se.nvip.reconciler.openai;
 
 import com.theokanning.openai.completion.chat.ChatCompletionRequest;
 import com.theokanning.openai.completion.chat.ChatCompletionResult;

@@ -1,7 +1,7 @@
 package edu.rit.se.nvip;
 
 import com.rabbitmq.client.ConnectionFactory;
-import edu.rit.se.nvip.filter.FilterHandler;
+import edu.rit.se.nvip.reconciler.filter.FilterHandler;
 import edu.rit.se.nvip.messenger.Messenger;
 import edu.rit.se.nvip.mitre.MitreCveController;
 import edu.rit.se.nvip.nvd.NvdCveController;

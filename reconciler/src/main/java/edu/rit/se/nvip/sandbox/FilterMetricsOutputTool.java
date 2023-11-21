@@ -1,8 +1,8 @@
 package edu.rit.se.nvip.sandbox;
 
-import edu.rit.se.nvip.filter.Filter;
-import edu.rit.se.nvip.filter.FilterFactory;
-import edu.rit.se.nvip.filter.FilterHandler;
+import edu.rit.se.nvip.reconciler.filter.Filter;
+import edu.rit.se.nvip.reconciler.filter.FilterFactory;
+import edu.rit.se.nvip.reconciler.filter.FilterHandler;
 import edu.rit.se.nvip.model.RawVulnerability;
 import edu.rit.se.nvip.utils.metrics.CrawlerRun;
 import edu.rit.se.nvip.utils.metrics.FilterMetrics;
