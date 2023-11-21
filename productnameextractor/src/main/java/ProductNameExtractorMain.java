@@ -210,7 +210,12 @@ public class ProductNameExtractorMain {
 
         // Process vulnerabilities
         final long getProdStart = System.currentTimeMillis();
-        final List<AffectedProduct> affectedProducts = affectedProductIdentifier.identifyAffectedProducts(vulnList);
+        final List<AffectedProduct> affectedProducts = new ArrayList<>();
+
+        for(CompositeVulnerability vuln : vulnList) {
+            affectedProducts.addAll(affectedProductIdentifier.identifyAffectedProducts(vuln));
+        }
+
         int numAffectedProducts = affectedProducts.size();
 
         logger.info("Product Name Extractor found {} affected products in {} seconds", numAffectedProducts, Math.floor(((double) (System.currentTimeMillis() - getProdStart) / 1000) * 100) / 100);
@@ -245,7 +250,8 @@ public class ProductNameExtractorMain {
         final Messenger rabbitMQ = new Messenger(
                 factory,
                 ProductNameExtractorEnvVars.getRabbitInputQueue(),
-                ProductNameExtractorEnvVars.getRabbitOutputQueue(),
+                ProductNameExtractorEnvVars.getRabbitPatchfinderOutputQueue(),
+                ProductNameExtractorEnvVars.getRabbitFixfinderOutputQueue(),
                 affectedProductIdentifier,
                 databaseHelper);
 
@@ -258,11 +264,17 @@ public class ProductNameExtractorMain {
         logger.info("Test mode enabled, creating test vulnerability list...");
         vulnList = createTestVulnList();
 
+        // TODO: Deprecate and remove
         initializeProductIdentifier(vulnList);
 
         // Process vulnerabilities
         long getProdStart = System.currentTimeMillis();
-        int numAffectedProducts = affectedProductIdentifier.identifyAffectedProducts(vulnList).size();
+        final List<AffectedProduct> affectedProducts = new ArrayList<>();
+        for(CompositeVulnerability vuln : vulnList) {
+            affectedProducts.addAll(affectedProductIdentifier.identifyAffectedProducts(vuln));
+        }
+
+        int numAffectedProducts = affectedProducts.size();
 
         logger.info("Product Name Extractor found {} affected products in the test run in {} seconds", numAffectedProducts, Math.floor(((double) (System.currentTimeMillis() - getProdStart) / 1000) * 100) / 100);
 

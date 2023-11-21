@@ -27,10 +27,7 @@ package messenger;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.Connection;
-import com.rabbitmq.client.ConnectionFactory;
-import com.rabbitmq.client.DeliverCallback;
+import com.rabbitmq.client.*;
 import db.DatabaseHelper;
 import model.cpe.AffectedProduct;
 import model.cve.CompositeVulnerability;
@@ -47,6 +44,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.*;
 
 /**
@@ -60,7 +58,8 @@ import java.util.concurrent.*;
  */
 public class Messenger {
     private final String inputQueue;
-    private final String outputQueue;
+    private final String patchFinderOutputQueue;
+    private final String fixFinderOutputQueue;
     private static final Logger logger = LogManager.getLogger(Messenger.class.getSimpleName());
     private static final ObjectMapper OM = new ObjectMapper();
 
@@ -69,10 +68,11 @@ public class Messenger {
     private DatabaseHelper databaseHelper;
 
 
-    public Messenger(ConnectionFactory connectionFactory, String inputQueue, String outputQueue, AffectedProductIdentifier affectedProductIdentifier, DatabaseHelper databaseHelper){
+    public Messenger(ConnectionFactory connectionFactory, String inputQueue, String patchFinderOutputQueue, String fixFinderOutputQueue, AffectedProductIdentifier affectedProductIdentifier, DatabaseHelper databaseHelper){
         this.factory = connectionFactory;
         this.inputQueue = inputQueue;
-        this.outputQueue = outputQueue;
+        this.patchFinderOutputQueue = patchFinderOutputQueue;
+        this.fixFinderOutputQueue = fixFinderOutputQueue;
         this.affectedProductIdentifier = affectedProductIdentifier;
         this.databaseHelper = databaseHelper;
     }
@@ -81,41 +81,76 @@ public class Messenger {
         try (Connection connection = factory.newConnection();
              Channel channel = connection.createChannel()) {
 
-            channel.queueDeclare(inputQueue, false, false, false, null);
-            channel.queueDeclare(outputQueue, false, false, false, null);
+            // TODO: Needed?
+//            channel.queueDeclare(inputQueue, true, false, false, null);
+//            channel.queueDeclare(outputQueue, true, false, false, null);
 
-            DeliverCallback deliverCallback = (consumerTag, delivery) -> {
-                String message = new String(delivery.getBody(), StandardCharsets.UTF_8);
-                List<String> cveIds = parseIds(message);
+            channel.basicConsume(inputQueue, false, new DefaultConsumer(channel) {
+                @Override
+                public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
+                    // Get cveId and ensure it is not null
+                    String cveId = parseMessage(new String(body, StandardCharsets.UTF_8));
 
-                if(!cveIds.isEmpty()){
-                    logger.info("Received job with CVE(s) {}", cveIds);
+                    if(cveId != null){
+                        // Pull specific cve information from database for each CVE ID passed from reconciler
+                        CompositeVulnerability vuln = databaseHelper.getSpecificCompositeVulnerability(cveId);
 
-                    // Pull specific cve information from database for each CVE ID passed from reconciler
-                    List<CompositeVulnerability> vulnList = databaseHelper.getSpecificCompositeVulnerabilities(cveIds);
+                        // Identify affected products from the CVEs
+                        final long getProdStart = System.currentTimeMillis();
+                        List<AffectedProduct> affectedProducts = affectedProductIdentifier.identifyAffectedProducts(vuln);
 
-                    // Identify affected products from the CVEs
-                    final long getProdStart = System.currentTimeMillis();
-                    List<AffectedProduct> affectedProducts = affectedProductIdentifier.identifyAffectedProducts(vulnList);
+                        // Insert the affected products found into the database
+                        databaseHelper.insertAffectedProductsToDB(affectedProducts);
+                        logger.info("Product Name Extractor found and inserted {} affected products to the database in {} seconds", affectedProducts.size(), Math.floor(((double) (System.currentTimeMillis() - getProdStart) / 1000) * 100) / 100);
 
-                    // Insert the affected products found into the database
-                    databaseHelper.insertAffectedProductsToDB(affectedProducts);
-                    logger.info("Product Name Extractor found and inserted {} affected products to the database in {} seconds", affectedProducts.size(), Math.floor(((double) (System.currentTimeMillis() - getProdStart) / 1000) * 100) / 100);
+//                        // Clear cveIds, extract only the cveIds for which affected products were found to be sent to the Patchfinder
+//                        cveIds.clear();
+//                        for (AffectedProduct affectedProduct : affectedProducts) {
+//                            if (!cveIds.contains(affectedProduct.getCveId())) cveIds.add(affectedProduct.getCveId());
+//                        }
 
-                    // Clear cveIds, extract only the cveIds for which affected products were found to be sent to the Patchfinder
-                    cveIds.clear();
-                    for (AffectedProduct affectedProduct : affectedProducts) {
-                        if (!cveIds.contains(affectedProduct.getCveId())) cveIds.add(affectedProduct.getCveId());
+                        logger.info("Sending jobs to patchfinder and fixfinder...");
+                        String response = genJson(cveId);
+                        channel.basicPublish("", patchFinderOutputQueue, null, response.getBytes(StandardCharsets.UTF_8));
+                        channel.basicPublish("", fixFinderOutputQueue, null, response.getBytes(StandardCharsets.UTF_8));
+                        logger.info("Jobs have been sent!\n\n");
+                        channel.basicAck(envelope.getDeliveryTag(), false);
                     }
-
-                    logger.info("Sending jobs to patchfinder...");
-                    String response = genJson(cveIds);
-                    channel.basicPublish("", outputQueue, null, response.getBytes(StandardCharsets.UTF_8));
-                    logger.info("Jobs have been sent!\n\n");
                 }
-            };
+            });
 
-            channel.basicConsume(inputQueue, true, deliverCallback, consumerTag -> {});
+//            DeliverCallback deliverCallback = (consumerTag, delivery) -> {
+//                String message = new String(delivery.getBody(), StandardCharsets.UTF_8);
+//                List<String> cveIds = parseIds(message);
+//
+//                if(!cveIds.isEmpty()){
+//                    logger.info("Received job with CVE(s) {}", cveIds);
+//
+//                    // Pull specific cve information from database for each CVE ID passed from reconciler
+//                    List<CompositeVulnerability> vulnList = databaseHelper.getSpecificCompositeVulnerabilities(cveIds);
+//
+//                    // Identify affected products from the CVEs
+//                    final long getProdStart = System.currentTimeMillis();
+//                    List<AffectedProduct> affectedProducts = affectedProductIdentifier.identifyAffectedProducts(vulnList);
+//
+//                    // Insert the affected products found into the database
+//                    databaseHelper.insertAffectedProductsToDB(affectedProducts);
+//                    logger.info("Product Name Extractor found and inserted {} affected products to the database in {} seconds", affectedProducts.size(), Math.floor(((double) (System.currentTimeMillis() - getProdStart) / 1000) * 100) / 100);
+//
+//                    // Clear cveIds, extract only the cveIds for which affected products were found to be sent to the Patchfinder
+//                    cveIds.clear();
+//                    for (AffectedProduct affectedProduct : affectedProducts) {
+//                        if (!cveIds.contains(affectedProduct.getCveId())) cveIds.add(affectedProduct.getCveId());
+//                    }
+//
+//                    logger.info("Sending jobs to patchfinder...");
+//                    String response = genJson(cveIds);
+//                    channel.basicPublish("", outputQueue, null, response.getBytes(StandardCharsets.UTF_8));
+//                    logger.info("Jobs have been sent!\n\n");
+//                }
+//            };
+
+//            channel.basicConsume(inputQueue, true, deliverCallback, consumerTag -> {});
 
         } catch (IOException | TimeoutException e) {
             throw new RuntimeException(e);
@@ -123,46 +158,41 @@ public class Messenger {
     }
 
     /**
-     * Takes a JSON string containing all CVE jobs to be processed and splits them into a list
-     *
-     * @param jsonString string containing the CVE IDs
-     * @return list of CVE IDs
+     * Parse an id from a given json string. (String should be {'cveId': 'CVE-2023-1001'})
+     * @param jsonString a JSON representation of an array of String CVE ids
+     * @return parsed list of ids
      */
-    @SuppressWarnings("unchecked")
-    public List<String> parseIds(String jsonString) {
+    public static String parseMessage(String jsonString) {
         try {
-            List<String> ids = new ArrayList<>();
-            JsonNode node = OM.readTree(jsonString);
-            if (node.has("cveId")){
-                ids.add(node.get("cveId").asText());
-            }
-            return ids;
+            logger.info("Incoming CVE: '{}'", jsonString);
+            final JsonNode messageNode = OM.readTree(jsonString);
+            return messageNode.get("cveId").asText();
         } catch (JsonProcessingException e) {
-            logger.error("Failed to parse list of ids from json string: {}", e.toString());
-            return new ArrayList<>();
+            logger.error("Failed to parse id from json string: {}", e.toString());
+            return null;
         }
     }
 
     /**
-     * Takes in a list of CVE IDs and transforms it into a JSON string to be sent via RabbitMQ.
-     *
-     * @param cveIds list of CVE IDs
-     * @return single JSON string of all CVE IDs
+     * Generates the json string from the cveId string
+     * @param cveId
+     * @return
      */
-    private String genJson(List<String> cveIds) {
+    private String genJson(String cveId) {
         try {
-            return OM.writeValueAsString(cveIds);
+            Map<String, String> cveJson = Map.of("cveId", cveId);
+            return OM.writeValueAsString(cveJson);
         } catch (JsonProcessingException e) {
             logger.error("Failed to convert list of ids to json string: {}", e.toString());
             return "";
         }
     }
 
-    private void sendDummyMessage(String queue, List<String> cveIds) {
+    private void sendDummyMessage(String queue, String cveId) {
         try (Connection connection = factory.newConnection();
              Channel channel = connection.createChannel()) {
             channel.queueDeclare(queue, false, false, false, null);
-            String message = genJson(cveIds);
+            String message = genJson(cveId);
             channel.basicPublish("", queue, null, message.getBytes(StandardCharsets.UTF_8));
             logger.info("Successfully sent message:\n\"{}\"", message);
         } catch (IOException | TimeoutException e) { logger.error("Error sending message: {}", e.toString()); }
@@ -177,22 +207,22 @@ public class Messenger {
         return new ArrayList<>();
     }
 
-    private void sendDummyBatchedList(String queue, List<String> messages, int batchSize) {
-        // 0 results in no batching
-        if(batchSize == 0) batchSize = messages.size();
-
-        // Get number of batches (including any partial batches)
-        final int numBatches = (int) Math.ceil((double) messages.size() / batchSize);
-
-        // Determine if there is a partial batch
-        final boolean hasPartial = messages.size() % batchSize != 0;
-
-        // Send batches
-        for (int i = 0; i < numBatches; i++) {
-            if(!hasPartial && i + 1 == numBatches) this.sendDummyMessage(queue, messages.subList(i * batchSize, messages.size() - 1));
-            else this.sendDummyMessage(queue, messages.subList(i * batchSize, (i + 1) * batchSize));
-        }
-    }
+//    private void sendDummyBatchedList(String queue, List<String> messages, int batchSize) {
+//        // 0 results in no batching
+//        if(batchSize == 0) batchSize = messages.size();
+//
+//        // Get number of batches (including any partial batches)
+//        final int numBatches = (int) Math.ceil((double) messages.size() / batchSize);
+//
+//        // Determine if there is a partial batch
+//        final boolean hasPartial = messages.size() % batchSize != 0;
+//
+//        // Send batches
+//        for (int i = 0; i < numBatches; i++) {
+//            if(!hasPartial && i + 1 == numBatches) this.sendDummyMessage(queue, messages.subList(i * batchSize, messages.size() - 1));
+//            else this.sendDummyMessage(queue, messages.subList(i * batchSize, (i + 1) * batchSize));
+//        }
+//    }
 
     private static List<String> getIdsFromJson(String path) {
         try {

@@ -254,46 +254,43 @@ public class DatabaseHelper {
 	}
 
 	/**
-	 * Gets list of specific vulnerabilities by their CVE IDs from the database,
-	 * formats them into CompositeVulnerability objects, and returns the list.
+	 * Gets specific vulnerability by CVE ID from the database,
+	 * formats them into a CompositeVulnerability object and returns it.
+	 * Returns null if no vulnerability found
 	 *
-	 * @param cveIds list of CVEs to be pulled from database
-	 * @return list of fetched vulnerabilities
+	 * @param cveId CVE to be pulled from database
+	 * @return fetched vulnerability
 	 */
-	public List<CompositeVulnerability> getSpecificCompositeVulnerabilities(List<String> cveIds){
-		ArrayList<CompositeVulnerability> vulnList = new ArrayList<>();
+	public CompositeVulnerability getSpecificCompositeVulnerability(String cveId){
 		synchronized (DatabaseHelper.class) {
 			try (Connection connection = getConnection()) {
 
 				// For each CVE ID in cveIds, query database for info specific to that cve
-				for(String cveId : cveIds){
-					PreparedStatement pstmt = connection.prepareStatement(selectSpecificVulnerabilitySql);
-					pstmt.setString(1, cveId);
+				PreparedStatement pstmt = connection.prepareStatement(selectSpecificVulnerabilitySql);
+				pstmt.setString(1, cveId);
 
-					ResultSet rs = pstmt.executeQuery();
+				ResultSet rs = pstmt.executeQuery();
 
-					while (rs.next()) {
-						int vulnId = rs.getInt("vuln_id");
-						String description = rs.getString("description");
+				// If result found
+				if(rs.next()) {
+					int vulnId = rs.getInt("vuln_id");
+					String description = rs.getString("description");
 
-						CompositeVulnerability vulnerability = new CompositeVulnerability(
-								vulnId,
-								cveId,
-								description,
-								CompositeVulnerability.CveReconcileStatus.UPDATE
-						);
-						vulnList.add(vulnerability);
-					}
-				}
-				logger.info("Successfully loaded {} existing CVE items from DB! {} CVE items were not found in the DB", vulnList.size(), cveIds.size() - vulnList.size());
+					logger.info("Successfully found CVE '{}' from DB!", cveId);
+					return new CompositeVulnerability(
+							vulnId,
+							cveId,
+							description,
+							CompositeVulnerability.CveReconcileStatus.UPDATE
+					);
+				} else logger.warn("CVE '{}' was not found in the DB!", cveId);
 			} catch (Exception e) {
 				logger.error("Error while getting existing vulnerabilities from DB\nException: {}", e.getMessage());
 				logger.error("This is a serious error! Product Name Extraction will not be able to proceed! Exiting...");
 				System.exit(1);
 			}
 		}
-
-		return vulnList;
+		return null;
 	}
 
 	/**
