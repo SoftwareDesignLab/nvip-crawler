@@ -25,7 +25,7 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
-class CharacterizationRepositoryTest {
+public class CharacterizationRepositoryTest {
 
     @Mock
     DataSource dataSource;
