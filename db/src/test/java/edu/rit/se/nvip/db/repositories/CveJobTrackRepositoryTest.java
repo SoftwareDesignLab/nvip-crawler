@@ -6,6 +6,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import javax.sql.DataSource;
 
@@ -22,17 +24,21 @@ import static org.mockito.Mockito.*;
 
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class CveJobTrackRepositoryTest {
 
     @Mock DataSource dataSource;
     @Mock Connection mockConnection;
     @Mock PreparedStatement mockPS;
+    @Mock
+    ResultSet mockRS;
 
     CveJobTrackRepository repository;
 
     @SneakyThrows
     @BeforeEach
     void initializeMocks(){
+        when(mockPS.executeQuery()).thenReturn(mockRS);
         when(mockConnection.prepareStatement(anyString())).thenReturn(mockPS);
         when(dataSource.getConnection()).thenReturn(mockConnection);
 
@@ -70,26 +76,20 @@ public class CveJobTrackRepositoryTest {
 
         assertFalse(repository.isCveInJobTrack("CVE-1234-5678"));
     }
+    @Test
+    @SneakyThrows
+    public void getJobsTest() {
+        when(mockRS.next()).thenReturn(true, true, false);
+        when(mockRS.getString("cve_id")).thenReturn("CVE-2021-1234", "CVE-2021-5678");
 
-    // todo update these tests
 
-//    @org.junit.Test
-//    public void getJobsTest() {
-//        try {
-//            when(res.next()).thenReturn(true, true, false);
-//            when(res.getString("cve_id")).thenReturn("CVE-2021-1234", "CVE-2021-5678");
-//
-//
-//            // Call the method under test
-//            Set<String> result = dbh.getJobs();
-//
-//            // Verify the expected output
-//            Set<String> expected = new HashSet<>();
-//            expected.add("CVE-2021-1234");
-//            expected.add("CVE-2021-5678");
-//            assertEquals(expected, result);
-//        } catch (SQLException e) {
-//            logger.error("Error loading database");
-//        }
-//    }
+        // Call the method under test
+        Set<String> result = repository.getJobs();
+
+        // Verify the expected output
+        Set<String> expected = new HashSet<>();
+        expected.add("CVE-2021-1234");
+        expected.add("CVE-2021-5678");
+        assertEquals(expected, result);
+    }
 }
