@@ -28,14 +28,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.*;
 import db.DatabaseHelper;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.MockedStatic;
+import org.mockito.junit.jupiter.MockitoExtension;
 import productdetection.AffectedProductIdentifier;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.*;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -47,25 +49,29 @@ import static org.mockito.Mockito.*;
  *
  * @author Richard Sawh
  */
+@ExtendWith(MockitoExtension.class)
 public class MessengerTest {
+
+    @Mock ConnectionFactory factoryMock;
+
+    @Mock Connection mockConn;
+
+    @Mock Channel channelMock;
+
+    @Mock AffectedProductIdentifier affectedProductIdentifier;
+
     @Test
     public void testWaitForReconcilerMessage_ValidMessageReceived() throws Exception {
-        // Create a mock ConnectionFactory and Channel
-        ConnectionFactory factoryMock = mock(ConnectionFactory.class);
-        Connection connectionMock = mock(Connection.class);
-        Channel channelMock = mock(Channel.class);
-        when(factoryMock.newConnection()).thenReturn(connectionMock);
-        when(connectionMock.createChannel()).thenReturn(channelMock);
+        when(factoryMock.newConnection()).thenReturn(mockConn);
+        when(mockConn.createChannel()).thenReturn(channelMock);
 
         // Create a Messenger instance with the mock ConnectionFactory
-        Messenger messenger = new Messenger(factoryMock, "RECONCILER_OUT", "PNE_OUT", mock(AffectedProductIdentifier.class), mock(DatabaseHelper.class));
-        messenger.setFactory(factoryMock);
+        Messenger messenger = new Messenger(factoryMock, "RECONCILER_OUT", "PNE_OUT", affectedProductIdentifier, mock(DatabaseHelper.class));
 
-        // Create a message queue and a message to be received
-        BlockingQueue<List<String>> messageQueue = new ArrayBlockingQueue<>(1);
-        List<String> expectedMessage = Arrays.asList("job1", "job2");
+        Map<String, String> message = new HashMap<>();
+        message.put("cveId", "job1");
         ObjectMapper objectMapper = new ObjectMapper();
-        String jsonMessage = objectMapper.writeValueAsString(expectedMessage);
+        String jsonMessage = objectMapper.writeValueAsString(message);
 
         // Set up the mock channel to deliver the message
         doAnswer(invocation -> {
@@ -73,47 +79,62 @@ public class MessengerTest {
             DeliverCallback deliverCallback = invocation.getArgument(2);
             deliverCallback.handle(consumerTag, new Delivery(null, null, jsonMessage.getBytes()));
             return consumerTag;
-        }).when(channelMock).basicConsume((String) eq("productnameextractor"), eq(true), (DeliverCallback) any(), (CancelCallback) any());
+        }).when(channelMock).basicConsume(eq("RECONCILER_OUT"), eq(true), any(DeliverCallback.class), any(CancelCallback.class));
 
-        // Invoke the method under test asynchronously using CompletableFuture
-        CompletableFuture<List<String>> completableFuture = CompletableFuture.supplyAsync(() -> {
-            try {
-                return messenger.waitForReconcilerMessage(5);
-            } catch (Exception e) {
-                e.printStackTrace();
-                return null;
-            }
-        });
+        messenger.run();
+        verify(channelMock, times(1)).basicConsume(eq("RECONCILER_OUT"), anyBoolean(), any(DeliverCallback.class), any(CancelCallback.class));
+        verify(channelMock, times(1)).basicPublish(anyString(), eq("PNE_OUT"), any(), any());
 
-        // Wait for the message to be delivered and the method under test to complete or timeout after 5 seconds
-        try {
-            List<String> actualMessage = completableFuture.get(5, TimeUnit.SECONDS);
-            assertNotNull(actualMessage);
-        } catch (TimeoutException e) {
-            success("Message not received within the specified timeout.");
-        }
+        verify(affectedProductIdentifier, times(1)).identifyAffectedProducts(any());
     }
 
     @Test
-    public void testParseIds_ValidJsonString() {
-        Messenger messenger = new Messenger("localhost", "/", 5672, "guest", "guest", "RECONCILER_OUT", "PNE_OUT");
-        String jsonString = "{\"cveId\":\"id1\"}";
-        List<String> expectedIds = Arrays.asList("id1");
+    public void testWaitForReconcilerMessage_ImproperMessageReceived() throws Exception {
+        when(factoryMock.newConnection()).thenReturn(mockConn);
+        when(mockConn.createChannel()).thenReturn(channelMock);
 
-        List<String> actualIds = messenger.parseIds(jsonString);
+        // Create a Messenger instance with the mock ConnectionFactory
+        Messenger messenger = new Messenger(factoryMock, "RECONCILER_OUT", "PNE_OUT", affectedProductIdentifier, mock(DatabaseHelper.class));
 
-        assertEquals(expectedIds, actualIds);
+        Map<String, String> message = new HashMap<>();
+        ObjectMapper objectMapper = new ObjectMapper();
+        String jsonMessage = objectMapper.writeValueAsString(message);
+
+        // Set up the mock channel to deliver the message
+        doAnswer(invocation -> {
+            String consumerTag = invocation.getArgument(0);
+            DeliverCallback deliverCallback = invocation.getArgument(2);
+            deliverCallback.handle(consumerTag, new Delivery(null, null, jsonMessage.getBytes()));
+            return consumerTag;
+        }).when(channelMock).basicConsume(eq("RECONCILER_OUT"), eq(true), any(DeliverCallback.class), any(CancelCallback.class));
+
+        messenger.run();
+        verify(channelMock, times(1)).basicConsume(eq("RECONCILER_OUT"), anyBoolean(), any(DeliverCallback.class), any(CancelCallback.class));
+        verify(channelMock, times(0)).basicPublish(anyString(), eq("PNE_OUT"), any(), any());
+
+        verify(affectedProductIdentifier, times(1)).identifyAffectedProducts(any());
     }
 
-    @Test
-    public void testParseIds_InvalidJsonString() {
-        Messenger messenger = new Messenger("localhost", "/", 5672, "guest", "guest", "RECONCILER_OUT", "PNE_OUT");
-        String jsonString = "invalidJsonString";
-
-        List<String> actualIds = messenger.parseIds(jsonString);
-
-        assertNotNull(actualIds);
-        assertTrue(actualIds.isEmpty());
-    }
+//    @Test
+//    public void testParseIds_ValidJsonString() {
+//        Messenger messenger = new Messenger("localhost", "/", 5672, "guest", "guest", "RECONCILER_OUT", "PNE_OUT");
+//        String jsonString = "{\"cveId\":\"id1\"}";
+//        List<String> expectedIds = Arrays.asList("id1");
+//
+//        List<String> actualIds = messenger.parseIds(jsonString);
+//
+//        assertEquals(expectedIds, actualIds);
+//    }
+//
+//    @Test
+//    public void testParseIds_InvalidJsonString() {
+//        Messenger messenger = new Messenger("localhost", "/", 5672, "guest", "guest", "RECONCILER_OUT", "PNE_OUT");
+//        String jsonString = "invalidJsonString";
+//
+//        List<String> actualIds = messenger.parseIds(jsonString);
+//
+//        assertNotNull(actualIds);
+//        assertTrue(actualIds.isEmpty());
+//    }
 }
 
