@@ -57,20 +57,20 @@ public class PatchFinderTest {
     public void testFindPatchesMultiThreaded2() {
         // Create a sample input for possiblePatchSources
         ArrayList<String> possiblePatchSources = new ArrayList<>();
-        possiblePatchSources.add("https://github.com/apache/airflow");
+        possiblePatchSources.add("https://www.github.com/python-pillow/Pillow");
 
         // Mock the ThreadPoolExecutor
         ThreadPoolExecutor e = mock(ThreadPoolExecutor.class);
 
         // Call the method
-        final Set<PatchCommit> patchCommits = PatchFinder.findPatchesMultiThreaded("CVE-2023-1001", possiblePatchSources);
+        final Set<PatchCommit> patchCommits = PatchFinder.findPatchesMultiThreaded("CVE-2016-0775", possiblePatchSources);
 
         // Add assertions here to validate the expected behavior
         // For example, check if the repos are cleared
         assertTrue(new File(PatchFinder.clonePath).exists());
 
         // Check the patch commits
-        assertEquals(24, patchCommits.size());
+        assertEquals(1, patchCommits.size());
     }
 
 

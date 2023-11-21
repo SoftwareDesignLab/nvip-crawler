@@ -56,6 +56,7 @@ public class PatchFinderEnvVarsTest {
         assertEquals("host.docker.internal", SharedEnvVars.getRabbitHost());
         assertEquals("guest", SharedEnvVars.getRabbitUsername());
         assertEquals("guest", SharedEnvVars.getRabbitPassword());
-        assertEquals("PNE_OUT", SharedEnvVars.getPatchFinderInputQueue());
+        assertEquals("PNE_OUT_PATCH", SharedEnvVars.getPatchFinderInputQueue());
+        assertEquals("PNE_OUT_FIX", SharedEnvVars.getFixFinderInputQueue());
     }
 }
