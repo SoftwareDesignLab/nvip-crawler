@@ -79,7 +79,7 @@ public class MessengerTest {
             DeliverCallback deliverCallback = invocation.getArgument(2);
             deliverCallback.handle(consumerTag, new Delivery(null, null, jsonMessage.getBytes()));
             return consumerTag;
-        }).when(channelMock).basicConsume(eq("RECONCILER_OUT"), eq(true), any(DeliverCallback.class), any(CancelCallback.class));
+        }).when(channelMock).basicConsume(eq("RECONCILER_OUT"), eq(false), any(DefaultConsumer.class));
 
         messenger.run();
         verify(channelMock, times(1)).basicConsume(eq("RECONCILER_OUT"), anyBoolean(), any(DeliverCallback.class), any(CancelCallback.class));
@@ -106,7 +106,7 @@ public class MessengerTest {
             DeliverCallback deliverCallback = invocation.getArgument(2);
             deliverCallback.handle(consumerTag, new Delivery(null, null, jsonMessage.getBytes()));
             return consumerTag;
-        }).when(channelMock).basicConsume(eq("RECONCILER_OUT"), eq(true), any(DeliverCallback.class), any(CancelCallback.class));
+        }).when(channelMock).basicConsume(eq("RECONCILER_OUT"), eq(false), any(DefaultConsumer.class));
 
         messenger.run();
         verify(channelMock, times(1)).basicConsume(eq("RECONCILER_OUT"), anyBoolean(), any(DeliverCallback.class), any(CancelCallback.class));
