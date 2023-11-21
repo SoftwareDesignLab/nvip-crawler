@@ -92,16 +92,6 @@ public class Messenger {
 //        }
     }
 
-//    private static Channel createChannel(Connection connection) {
-//        try { return connection.createChannel(); }
-//        catch (IOException e) { return null; }
-//    }
-
-//    private Channel getInputChannel() {
-//        // Get channel if still open, otherwise create new channel from connection object
-//        return this.inputChannel.isOpen() ? this.inputChannel : createChannel(this.inputConnection);
-//    }
-
     public void startHandlingPatchJobs(String inputQueue) {
         // Connect to rabbit input queue and subscribe callback
         try {
