@@ -1,5 +1,6 @@
 package edu.rit.se.nvip.cwe;
 
+import edu.rit.se.nvip.characterizer.cwe.CWE;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;

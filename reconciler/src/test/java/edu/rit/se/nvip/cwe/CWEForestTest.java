@@ -1,5 +1,7 @@
 package edu.rit.se.nvip.cwe;
 
+import edu.rit.se.nvip.characterizer.cwe.CWE;
+import edu.rit.se.nvip.characterizer.cwe.CWEForest;
 import org.junit.jupiter.api.Test;
 
 import java.util.HashSet;
