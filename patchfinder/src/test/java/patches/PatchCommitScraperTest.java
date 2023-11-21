@@ -59,39 +59,26 @@ public class PatchCommitScraperTest {
 
     @Test
     public void testParseCommits() {
-        String cveId = "CVE-2023-5678";
-        Pattern[] patchPatterns = {Pattern.compile("patch")};
+        String cveId = "CVE-2020-11651";
 
         // Set up the localDownloadLoc and repoSource
-        String localDownloadLoc = "target/testrepo/dash-core-components";
-        String repoSource = "https://github.com/plotly/dash-core-components";
-
-        // Create a temporary directory to clone the repository
-        Path tempDir;
-        try {
-            tempDir = Files.createTempDirectory("temp-repo");
-        } catch (IOException e) {
-            fail("Failed to create temporary directory for cloning repository");
-            return;
-        }
+        String localDownloadLoc = "src/main/resources/patch-repos/saltstack-salt";
+        String repoSource = "https://github.com/saltstack/salt";
 
         // Clone the git repository
-        GitController gitController = new GitController(tempDir.toString(), repoSource + ".git");
+        GitController gitController = new GitController(localDownloadLoc, repoSource);
         gitController.cloneRepo();
 
         // Create the PatchCommitScraper instance
-        PatchCommitScraper commitScraper = new PatchCommitScraper(tempDir.toString(), repoSource);
+        PatchCommitScraper commitScraper = new PatchCommitScraper(localDownloadLoc, repoSource);
 
         // Call the parseCommits method
         Set<PatchCommit> patchCommits = new HashSet<>();
         commitScraper.parseCommits(patchCommits, cveId);
 
         // Assertions
-        Assert.assertEquals(11, patchCommits.size());
+        Assert.assertEquals(1, patchCommits.size());
         PatchCommit patchCommit = patchCommits.toArray(PatchCommit[]::new)[0];
         Assert.assertEquals(cveId, patchCommit.getCveId());
-
-        // Delete the cloned repository
-        gitController.deleteRepo();
     }
 }

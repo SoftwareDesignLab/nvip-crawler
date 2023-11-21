@@ -39,7 +39,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * @author Richard Sawh
  */
 public class GitControllerTest {
-    private static final String LOCAL_PATH = "src/main/resources/patch-repos";
+    private static final String LOCAL_PATH = "src/main/resources/patch-repos/apache-airflow";
 
     private static final String REMOTE_PATH = "https://github.com/apache/airflow.git";
     private GitController gitController;
@@ -47,22 +47,29 @@ public class GitControllerTest {
     @Before
     public void setup() {
         gitController = new GitController(LOCAL_PATH, REMOTE_PATH);
-        gitController.deleteRepo();
     }
 
     @Test
     public void testRepoCreation() {
+        // Delete repo before creation
+        gitController.deleteRepo();
         Path path = Paths.get(LOCAL_PATH);
         assertFalse(Files.exists(path));
+
+        // Clone repo, assert success and that local repo destination is created
         assertTrue(gitController.cloneRepo());
-        assertTrue(gitController.pullRepo());
         assertTrue(Files.exists(path));
     }
 
     @Test
     public void testRepoDeletion() {
-        gitController.deleteRepo();
-        assertFalse(Files.exists(Paths.get(LOCAL_PATH)));
-    }
+        // Clone repo before deletion
+        final Path path = Paths.get(LOCAL_PATH);
+        gitController.cloneRepo();
+        assertTrue(Files.exists(path));
 
+        // Delete and assert local directory is non-existent
+        gitController.deleteRepo();
+        assertFalse(Files.exists(path));
+    }
 }
