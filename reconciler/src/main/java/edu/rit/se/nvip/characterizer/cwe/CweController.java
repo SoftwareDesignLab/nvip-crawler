@@ -1,4 +1,4 @@
-package edu.rit.se.nvip.cwe;
+package edu.rit.se.nvip.characterizer.cwe;
 
 import edu.rit.se.nvip.characterizer.CveCharacterizer;
 import edu.rit.se.nvip.model.CompositeVulnerability;

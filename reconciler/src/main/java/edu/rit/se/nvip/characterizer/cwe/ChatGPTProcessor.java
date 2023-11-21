@@ -1,4 +1,4 @@
-package edu.rit.se.nvip.cwe;
+package edu.rit.se.nvip.characterizer.cwe;
 
 import com.theokanning.openai.OpenAiHttpException;
 import com.theokanning.openai.completion.chat.ChatCompletionRequest;

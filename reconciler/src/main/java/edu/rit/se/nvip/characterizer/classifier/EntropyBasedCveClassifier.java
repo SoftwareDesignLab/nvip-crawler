@@ -23,7 +23,7 @@
  */
 package edu.rit.se.nvip.characterizer.classifier;
 
-import edu.rit.se.nvip.divergence.VdoLabelDistribution;
+import edu.rit.se.nvip.characterizer.divergence.VdoLabelDistribution;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

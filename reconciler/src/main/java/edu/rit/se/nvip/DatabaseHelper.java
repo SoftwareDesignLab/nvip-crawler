@@ -3,7 +3,7 @@ package edu.rit.se.nvip;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import com.zaxxer.hikari.pool.HikariPool;
-import edu.rit.se.nvip.cwe.CWE;
+import edu.rit.se.nvip.characterizer.cwe.CWE;
 import edu.rit.se.nvip.model.*;
 import edu.rit.se.nvip.utils.ReconcilerEnvVars;
 import org.apache.logging.log4j.LogManager;

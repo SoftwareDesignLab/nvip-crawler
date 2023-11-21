@@ -23,7 +23,7 @@
  */
 package edu.rit.se.nvip.characterizer.classifier;
 
-import edu.rit.se.nvip.divergence.VdoLabelDistribution;
+import edu.rit.se.nvip.characterizer.divergence.VdoLabelDistribution;
 import edu.rit.se.nvip.utils.ReconcilerEnvVars;
 import org.junit.Test;
 import edu.rit.se.nvip.automatedcvss.preprocessor.CvePreProcessor;
