@@ -23,6 +23,7 @@
  */
 
 import edu.rit.se.nvip.db.DatabaseHelper;
+import edu.rit.se.nvip.db.model.CpeGroup;
 import edu.rit.se.nvip.db.repositories.ProductRepository;
 import edu.rit.se.nvip.db.repositories.VulnerabilityRepository;
 import messenger.*;
@@ -31,7 +32,6 @@ import productdetection.AffectedProductIdentifier;
 import com.opencsv.CSVReader;
 import env.ProductNameExtractorEnvVars;
 import edu.rit.se.nvip.db.model.AffectedProduct;
-import model.cpe.CpeGroup;
 import edu.rit.se.nvip.db.model.CompositeVulnerability;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

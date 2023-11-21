@@ -24,7 +24,7 @@ package productdetection;
  * SOFTWARE.
  */
 
-import model.cpe.CpeGroup;
+import edu.rit.se.nvip.db.model.CpeGroup;
 import model.cpe.ProductItem;
 import edu.rit.se.nvip.db.model.AffectedProduct;
 import edu.rit.se.nvip.db.model.CompositeVulnerability;

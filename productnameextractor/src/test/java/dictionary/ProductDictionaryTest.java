@@ -22,8 +22,8 @@ package dictionary; /**
  * SOFTWARE.
  */
 
-import model.cpe.CpeEntry;
-import model.cpe.CpeGroup;
+import edu.rit.se.nvip.db.model.CpeEntry;
+import edu.rit.se.nvip.db.model.CpeGroup;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Assertions;
 

@@ -22,10 +22,10 @@ package productdetection; /**
  * SOFTWARE.
  */
 
+import edu.rit.se.nvip.db.model.CpeGroup;
 import env.ProductNameExtractorEnvVars;
 import edu.rit.se.nvip.db.model.AffectedProduct;
 import edu.rit.se.nvip.db.model.CompositeVulnerability;
-import model.cpe.CpeGroup;
 import org.junit.jupiter.api.Test;
 import dictionary.ProductDictionary;
 
