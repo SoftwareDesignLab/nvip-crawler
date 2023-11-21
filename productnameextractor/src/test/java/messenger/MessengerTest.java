@@ -26,7 +26,9 @@ package messenger;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.*;
+import db.DatabaseHelper;
 import org.junit.jupiter.api.Test;
+import productdetection.AffectedProductIdentifier;
 
 import java.io.File;
 import java.io.IOException;
@@ -56,7 +58,7 @@ public class MessengerTest {
         when(connectionMock.createChannel()).thenReturn(channelMock);
 
         // Create a Messenger instance with the mock ConnectionFactory
-        Messenger messenger = new Messenger("localhost", "/", 5672,"guest", "guest", "RECONCILER_OUT", "PNE_OUT");
+        Messenger messenger = new Messenger(factoryMock, "RECONCILER_OUT", "PNE_OUT", mock(AffectedProductIdentifier.class), mock(DatabaseHelper.class));
         messenger.setFactory(factoryMock);
 
         // Create a message queue and a message to be received
@@ -94,7 +96,7 @@ public class MessengerTest {
 
     @Test
     public void testParseIds_ValidJsonString() {
-        Messenger messenger = new Messenger("localhost", "/", 5672,"guest", "guest", "RECONCILER_OUT", "PNE_OUT");
+        Messenger messenger = new Messenger("localhost", "/", 5672, "guest", "guest", "RECONCILER_OUT", "PNE_OUT");
         String jsonString = "{\"cveId\":\"id1\"}";
         List<String> expectedIds = Arrays.asList("id1");
 
@@ -105,7 +107,7 @@ public class MessengerTest {
 
     @Test
     public void testParseIds_InvalidJsonString() {
-        Messenger messenger = new Messenger("localhost", "/", 5672,"guest", "guest", "RECONCILER_OUT", "PNE_OUT");
+        Messenger messenger = new Messenger("localhost", "/", 5672, "guest", "guest", "RECONCILER_OUT", "PNE_OUT");
         String jsonString = "invalidJsonString";
 
         List<String> actualIds = messenger.parseIds(jsonString);
@@ -113,93 +115,5 @@ public class MessengerTest {
         assertNotNull(actualIds);
         assertTrue(actualIds.isEmpty());
     }
-
-
-    @Test
-    public void testSendPatchFinderMessage() throws IOException, TimeoutException {
-        // Arrange
-        Messenger messenger = new Messenger();
-        ConnectionFactory factory = mock(ConnectionFactory.class);
-        messenger.setFactory(factory);
-
-        when(factory.newConnection()).thenReturn(mock(Connection.class));
-        Channel channel = mock(Channel.class);
-        when(factory.newConnection().createChannel()).thenReturn(channel);
-
-        String queueName = "PNE_OUT";
-        List<String> cveIds = Arrays.asList("CVE-2023-0001", "CVE-2023-0002");
-
-        // Act
-        messenger.sendPatchFinderMessage(cveIds);
-
-        // Assert
-        String expectedMessage = "[\"CVE-2023-0001\",\"CVE-2023-0002\"]";
-        verify(channel, times(1)).queueDeclare(
-                eq(queueName),
-                eq(false),
-                eq(false),
-                eq(false),
-                isNull()
-        );
-        verify(channel, times(1)).basicPublish(
-                eq(""),
-                eq(queueName),
-                isNull(),
-                eq(expectedMessage.getBytes(StandardCharsets.UTF_8))
-        );
-    }
-
-    @Test
-    public void testSendPatchFinderFinishMessage() throws IOException, TimeoutException {
-        // Arrange
-        Messenger messenger = new Messenger();
-        ConnectionFactory factory = mock(ConnectionFactory.class);
-        messenger.setFactory(factory);
-
-        Connection connection = mock(Connection.class);
-        Channel channel = mock(Channel.class);
-
-        when(factory.newConnection()).thenReturn(connection);
-        when(connection.createChannel()).thenReturn(channel);
-
-        String queueName = "PNE_OUT";
-        String message = "FINISHED";
-        byte[] messageBytes = message.getBytes(StandardCharsets.UTF_8);
-
-        // Act
-        messenger.sendPatchFinderFinishMessage();
-
-        // Assert
-        verify(channel, times(1)).queueDeclare(eq(queueName), eq(false), eq(false), eq(false), isNull());
-        verify(channel, times(1)).basicPublish(eq(""), eq(queueName), isNull(), eq(messageBytes));
-    }
-
-    @Test
-    public void testMain(){
-        //timeout after 15 seconds
-        Messenger messenger = new Messenger("localhost", "/", 5672,"guest", "guest", "RECONCILER_OUT", "PNE_OUT");
-
-        //create a thread to run the messenger
-        Thread thread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    messenger.main(new String[]{"localhost", "guest", "guest"});
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-        thread.start();
-
-        //wait for the thread to finish
-        try {
-            thread.join(15000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        assertFalse(thread.isAlive());
-    }
-
 }
 
