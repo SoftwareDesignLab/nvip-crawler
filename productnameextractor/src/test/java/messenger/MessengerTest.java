@@ -76,13 +76,13 @@ public class MessengerTest {
         // Set up the mock channel to deliver the message
         doAnswer(invocation -> {
             String consumerTag = invocation.getArgument(0);
-            DeliverCallback deliverCallback = invocation.getArgument(2);
-            deliverCallback.handle(consumerTag, new Delivery(null, null, jsonMessage.getBytes()));
+            DefaultConsumer defaultConsumer = invocation.getArgument(2);
+            defaultConsumer.handleDelivery(consumerTag, null, null, jsonMessage.getBytes());
             return consumerTag;
         }).when(channelMock).basicConsume(eq("RECONCILER_OUT"), eq(false), any(DefaultConsumer.class));
 
         messenger.run();
-        verify(channelMock, times(1)).basicConsume(eq("RECONCILER_OUT"), anyBoolean(), any(DeliverCallback.class), any(CancelCallback.class));
+        verify(channelMock, times(1)).basicConsume(eq("RECONCILER_OUT"), anyBoolean(), any(DefaultConsumer.class));
         verify(channelMock, times(1)).basicPublish(anyString(), eq("PNE_OUT"), any(), any());
 
         verify(affectedProductIdentifier, times(1)).identifyAffectedProducts(any());
@@ -103,13 +103,13 @@ public class MessengerTest {
         // Set up the mock channel to deliver the message
         doAnswer(invocation -> {
             String consumerTag = invocation.getArgument(0);
-            DeliverCallback deliverCallback = invocation.getArgument(2);
-            deliverCallback.handle(consumerTag, new Delivery(null, null, jsonMessage.getBytes()));
+            DefaultConsumer defaultConsumer = invocation.getArgument(2);
+            defaultConsumer.handleDelivery(consumerTag, null, null, jsonMessage.getBytes());
             return consumerTag;
         }).when(channelMock).basicConsume(eq("RECONCILER_OUT"), eq(false), any(DefaultConsumer.class));
 
         messenger.run();
-        verify(channelMock, times(1)).basicConsume(eq("RECONCILER_OUT"), anyBoolean(), any(DeliverCallback.class), any(CancelCallback.class));
+        verify(channelMock, times(1)).basicConsume(eq("RECONCILER_OUT"), anyBoolean(), any(DefaultConsumer.class));
         verify(channelMock, times(0)).basicPublish(anyString(), eq("PNE_OUT"), any(), any());
 
         verify(affectedProductIdentifier, times(0)).identifyAffectedProducts(any());
