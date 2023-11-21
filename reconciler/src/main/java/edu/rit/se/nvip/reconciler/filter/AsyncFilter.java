@@ -1,4 +1,4 @@
-package edu.rit.se.nvip.filter;
+package edu.rit.se.nvip.reconciler.filter;
 
 import edu.rit.se.nvip.model.RawVulnerability;
 

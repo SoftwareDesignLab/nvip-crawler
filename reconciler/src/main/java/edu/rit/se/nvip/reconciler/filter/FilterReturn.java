@@ -1,4 +1,4 @@
-package edu.rit.se.nvip.filter;
+package edu.rit.se.nvip.reconciler.filter;
 
 public class FilterReturn {
     public int numIn;

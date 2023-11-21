@@ -1,19 +1,16 @@
 package edu.rit.se.nvip;
 
 import edu.rit.se.nvip.characterizer.CveCharacterizer;
-import edu.rit.se.nvip.filter.FilterHandler;
-import edu.rit.se.nvip.filter.FilterReturn;
-import edu.rit.se.nvip.messenger.Messenger;
+import edu.rit.se.nvip.reconciler.filter.FilterHandler;
+import edu.rit.se.nvip.reconciler.filter.FilterReturn;
 import edu.rit.se.nvip.mitre.MitreCveController;
 import edu.rit.se.nvip.model.*;
 import edu.rit.se.nvip.nvd.NvdCveController;
 import edu.rit.se.nvip.reconciler.Reconciler;
-import edu.rit.se.nvip.reconciler.ReconcilerFactory;
 import edu.rit.se.nvip.utils.ReconcilerEnvVars;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;

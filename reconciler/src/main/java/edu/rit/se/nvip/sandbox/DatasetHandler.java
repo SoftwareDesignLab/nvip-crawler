@@ -1,11 +1,11 @@
 package edu.rit.se.nvip.sandbox;
 
-import edu.rit.se.nvip.filter.Filter;
-import edu.rit.se.nvip.filter.FilterFactory;
-import edu.rit.se.nvip.filter.GPTFilter;
+import edu.rit.se.nvip.reconciler.filter.Filter;
+import edu.rit.se.nvip.reconciler.filter.FilterFactory;
+import edu.rit.se.nvip.reconciler.filter.GPTFilter;
 import edu.rit.se.nvip.model.RawVulnerability;
 import edu.rit.se.nvip.model.VulnSetWrapper;
-import edu.rit.se.nvip.openai.OpenAIRequestHandler;
+import edu.rit.se.nvip.reconciler.openai.OpenAIRequestHandler;
 
 import javax.json.*;
 import java.io.*;

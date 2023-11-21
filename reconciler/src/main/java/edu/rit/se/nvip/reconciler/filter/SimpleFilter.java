@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package edu.rit.se.nvip.filter;
+package edu.rit.se.nvip.reconciler.filter;
 
 import edu.rit.se.nvip.model.RawVulnerability;
 
