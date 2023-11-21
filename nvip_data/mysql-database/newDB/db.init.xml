@@ -1053,10 +1053,10 @@
         </sql>
         <sql>
             UPDATE vdoset vs
-            SET cvss_score = (
+            SET cvss_base_score = (
                 SELECT base_score FROM cvss
                 WHERE vs.cve_id = cvss.cve_id
-                ORDER BY ABS(TIMESTAMPDIFF(SECOND, vs.created_date, cvss.created_date)
+                ORDER BY ABS(TIMESTAMPDIFF(SECOND, vs.created_date, cvss.create_date))
                 LIMIT 1
             );
         </sql>

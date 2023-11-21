@@ -52,6 +52,7 @@ public class ReconcilerController {
             this.mitreController = new MitreCveController();
             this.mitreController.initializeController();
         }
+        dbSetup();
     }
 
     private void dbSetup() {

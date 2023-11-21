@@ -268,7 +268,8 @@ public class ProductNameExtractorMain {
                     final long getProdStart = System.currentTimeMillis();
                     List<AffectedProduct> affectedProducts = affectedProductIdentifier.identifyAffectedProducts();
                     Map<String, List<AffectedProduct>> cveToCpes = affectedProducts.stream().collect(Collectors.groupingBy(AffectedProduct::getCveId));
-                    List<CpeCollection> groupedProds = vulnList.stream().map(v->new CpeCollection(v, cveToCpes.get(v.getCveId()))).collect(Collectors.toList());
+                    List<CpeCollection> groupedProds = vulnList.stream().filter(v-> cveToCpes.containsKey(v.getCveId()))
+                            .map(v->new CpeCollection(v, cveToCpes.get(v.getCveId()))).collect(Collectors.toList());
 
                     // Insert the affected products found into the database
                     prodRepo.insertAffectedProductsToDB(groupedProds);
@@ -286,7 +287,7 @@ public class ProductNameExtractorMain {
 
             } catch (Exception e) {
                 logger.error("Failed to get jobs from RabbitMQ, exiting program with error: {}", e.toString());
-                // removed a db shutdown call that was on this line
+                e.printStackTrace();
                 System.exit(1);
             }
         }

@@ -308,7 +308,7 @@ public class NvdMitreRepository {
 
 
 
-    private final String getCveSourcesNVDSql = "SELECT cve_id, source_url FROM nvip.nvdsourceurl WHERE cve_id = ?;";
+    private final String getCveSourcesNVDSql = "SELECT cve_id, source_url FROM nvdsourceurl WHERE cve_id = ?;";
     /**
      * Method for getting the source url from nvddata
      *
