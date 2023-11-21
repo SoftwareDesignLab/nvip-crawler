@@ -73,7 +73,7 @@ public class PatchFinderMainTest {
 
        new Thread(() -> {
             try {
-                new PatchFinderMain(databaseHelperMock).start();
+                new PatchFinderMain(databaseHelperMock, messengerMock).start();
             } catch (Exception e) {
                 fail("Exception thrown: " + e.getMessage());
             }

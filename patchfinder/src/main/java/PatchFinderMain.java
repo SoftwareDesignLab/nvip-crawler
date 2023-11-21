@@ -43,9 +43,11 @@ import patches.PatchFinder;
 public class PatchFinderMain extends Thread {
     private final static Logger logger = LogManager.getLogger(PatchFinderMain.class);
     private final DatabaseHelper databaseHelper;
+    private final Messenger messenger;
 
-    public PatchFinderMain(DatabaseHelper dbh) {
+    public PatchFinderMain(DatabaseHelper dbh, Messenger messenger) {
         this.databaseHelper = dbh;
+        this.messenger = messenger;
     }
 
     /**
@@ -91,16 +93,7 @@ public class PatchFinderMain extends Thread {
 
     // TODO: Support end message
     private void runRabbit() {
-        // Initialize messenger
-        final Messenger messenger = new Messenger(
-                SharedEnvVars.getRabbitHost(),
-                SharedEnvVars.getRabbitVHost(),
-                SharedEnvVars.getRabbitPort(),SharedEnvVars.getRabbitUsername(),
-                SharedEnvVars.getRabbitPassword(),
-                SharedEnvVars.getPatchFinderInputQueue()
-        );
-
         // Start job handling
-        messenger.startHandlingPatchJobs();
+        messenger.startHandlingPatchJobs(SharedEnvVars.getPatchFinderInputQueue());
     }
 }
