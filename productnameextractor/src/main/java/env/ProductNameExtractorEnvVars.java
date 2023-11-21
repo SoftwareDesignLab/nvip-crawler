@@ -89,7 +89,8 @@ public class ProductNameExtractorEnvVars {
     private static String rabbitUsername = "guest";
     private static String rabbitPassword = "guest";
     private static String rabbitInputQueue = "RECONCILER_OUT";
-    private static String rabbitOutputQueue = "PNE_OUT";
+    private static String rabbitPatchfinderOutputQueue = "PNE_OUT_PATCH";
+    private static String rabbitFixfinderOutputQueue = "PNE_OUT_RABBIT";
 
     // Automatically load env vars
     static{
@@ -155,7 +156,8 @@ public class ProductNameExtractorEnvVars {
     public static String getRabbitUsername() { return rabbitUsername; }
     public static String getRabbitPassword() { return rabbitPassword; }
     public static String getRabbitInputQueue() { return rabbitInputQueue; }
-    public static String getRabbitOutputQueue() { return rabbitOutputQueue; }
+    public static String getRabbitPatchfinderOutputQueue() { return rabbitPatchfinderOutputQueue; }
+    public static String getRabbitFixfinderOutputQueue() { return rabbitFixfinderOutputQueue; }
     public static String getInputMode() { return inputMode; }
     public static int getCveLimit() { return cveLimit; }
 
@@ -414,14 +416,21 @@ public class ProductNameExtractorEnvVars {
             logger.info("Setting PNE_INPUT_QUEUE to {}", rabbitInputQueue);
         } else logger.warn("Could not fetch PNE_INPUT_QUEUE from env vars, defaulting to {}", rabbitInputQueue);
 
-        if(systemProps.containsKey("PNE_OUTPUT_QUEUE")) {
-            rabbitOutputQueue = systemProps.get("PNE_OUTPUT_QUEUE");
-            logger.info("Setting PNE_OUTPUT_QUEUE to {}", rabbitOutputQueue);
-        } else if (fileProps.containsKey("PNE_OUTPUT_QUEUE")) {
-            rabbitOutputQueue = fileProps.get("PNE_OUTPUT_QUEUE");
-            logger.info("Setting PNE_OUTPUT_QUEUE to {}", rabbitOutputQueue);
-        } else logger.warn("Could not fetch PNE_OUTPUT_QUEUE from env vars, defaulting to {}", rabbitOutputQueue);
+        if(systemProps.containsKey("PNE_OUTPUT_QUEUE_PATCH")) {
+            rabbitPatchfinderOutputQueue = systemProps.get("PNE_OUTPUT_QUEUE_PATCH");
+            logger.info("Setting PNE_OUTPUT_QUEUE_PATCH to {}", rabbitPatchfinderOutputQueue);
+        } else if (fileProps.containsKey("PNE_OUTPUT_QUEUE_PATCH")) {
+            rabbitPatchfinderOutputQueue = fileProps.get("PNE_OUTPUT_QUEUE_PATCH");
+            logger.info("Setting PNE_OUTPUT_QUEUE_PATCH to {}", rabbitPatchfinderOutputQueue);
+        } else logger.warn("Could not fetch PNE_OUTPUT_QUEUE_PATCH from env vars, defaulting to {}", rabbitPatchfinderOutputQueue);
 
+        if(systemProps.containsKey("PNE_OUTPUT_QUEUE_FIX")) {
+            rabbitFixfinderOutputQueue = systemProps.get("PNE_OUTPUT_QUEUE_FIX");
+            logger.info("Setting PNE_OUTPUT_QUEUE_FIX to {}", rabbitFixfinderOutputQueue);
+        } else if (fileProps.containsKey("PNE_OUTPUT_QUEUE_FIX")) {
+            rabbitFixfinderOutputQueue = fileProps.get("PNE_OUTPUT_QUEUE_FIX");
+            logger.info("Setting PNE_OUTPUT_QUEUE_FIX to {}", rabbitFixfinderOutputQueue);
+        } else logger.warn("Could not fetch PNE_OUTPUT_QUEUE_FIX from env vars, defaulting to {}", rabbitFixfinderOutputQueue);
     }
 
     /**

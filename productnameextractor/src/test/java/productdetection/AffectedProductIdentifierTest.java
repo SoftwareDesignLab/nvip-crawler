@@ -74,7 +74,7 @@ public class AffectedProductIdentifierTest {
 		}
 
 		// Identify releases
-		affectedProductIdentifier.identifyAffectedProducts(vulnList);
+		affectedProductIdentifier.identifyAffectedProducts(v);
 
 		System.out.println(v.getAffectedProducts());
 
@@ -119,7 +119,7 @@ public class AffectedProductIdentifierTest {
 		AffectedProductIdentifier identifier = new AffectedProductIdentifier(2, vulnList);
 
 		// Simulate the method call
-		List<AffectedProduct> affectedProducts = identifier.identifyAffectedProducts(vulnList);
+		List<AffectedProduct> affectedProducts = identifier.identifyAffectedProducts(vulnerability);
 
 		// Add assertions based on the expected behavior of the method
 		assertEquals(affectedProducts.size(), 0);

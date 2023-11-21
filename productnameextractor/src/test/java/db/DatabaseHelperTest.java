@@ -163,9 +163,11 @@ public class DatabaseHelperTest {
 	}
 
 //	@Test
-	public void getSpecificCompositeVulnerabilitiesTest() throws SQLException{
+	public void getSpecificCompositeVulnerabilityTest() throws SQLException{
 		List<String> cveIds = new ArrayList<>();
+		List<String> descriptions = new ArrayList<>();
 
+		// Create test data
 		String cveId1 = "CVE-2021-20105";
 		String description1 = "Machform prior to version 16 is vulnerable to an open redirect in Safari_init.php due to an improperly sanitized 'ref' parameter.";
 
@@ -175,9 +177,14 @@ public class DatabaseHelperTest {
 		String cveId3 = "CVE-2019-3915";
 		String description3 = "Authentication Bypass by Capture-replay vulnerability in Verizon Fios Quantum Gateway (G1100) firmware version 02.01.00.05 allows an unauthenticated attacker with adjacent network access to intercept and replay login requests to gain access to the administrative web interface.";
 
+		// Store in list
 		cveIds.add(cveId1);
 		cveIds.add(cveId2);
 		cveIds.add(cveId3);
+
+		descriptions.add(description1);
+		descriptions.add(description2);
+		descriptions.add(description3);
 
 		// Mock the database interactions
 		when(conn.prepareStatement(anyString())).thenReturn(pstmt);
@@ -186,16 +193,14 @@ public class DatabaseHelperTest {
 		when(res.getInt("vuln_id")).thenReturn(1, 2, 3);
 		when(res.getString("description")).thenReturn(description1, description2, description3);
 
-		List<CompositeVulnerability> vulnList = dbh.getSpecificCompositeVulnerabilities(cveIds);
-		assertEquals(vulnList.size(), cveIds.size());
-
-		CompositeVulnerability vuln1 = vulnList.get(0);
-		CompositeVulnerability vuln2 = vulnList.get(1);
-		CompositeVulnerability vuln3 = vulnList.get(2);
-
-		assertEquals(vuln1.getDescription(), description1);
-		assertEquals(vuln2.getDescription(), description2);
-		assertEquals(vuln3.getDescription(), description3);
+		// Test vulns
+		for (int i = 0; i < cveIds.size(); i++) {
+			String cveId = cveIds.get(i);
+			String description = descriptions.get(i);
+			CompositeVulnerability vuln = dbh.getSpecificCompositeVulnerability(cveId);
+			assertNotNull(vuln);
+			assertEquals(vuln.getDescription(), description);
+		}
 	}
 
 //	@Test
