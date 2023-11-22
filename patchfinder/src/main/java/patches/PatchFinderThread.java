@@ -152,6 +152,7 @@ public class PatchFinderThread implements Runnable {
 	 * @param cve cve being analyzed
 	 * @param patchSource patch source being scraped
 	 * @param commitCount number of commits in the patch source
+	 * @param clonePath path to clone gitrepo to
 	 */
 	private static void findPatchCommits(Set<PatchCommit> foundPatchCommits, String cve, String patchSource, int commitCount, String clonePath) {
 		try {
@@ -237,6 +238,7 @@ public class PatchFinderThread implements Runnable {
 	 * @param foundPatchCommits output list of found patch commits
 	 * @param cve cve being analyzed
 	 * @param patchSource patch source being cloned
+	 * @param clonePath Path to clone gitrepo to
 	 */
 	private static void findPatchCommitsFromRepo(Set<PatchCommit> foundPatchCommits, String cve, String patchSource, String clonePath) {
 		try {
