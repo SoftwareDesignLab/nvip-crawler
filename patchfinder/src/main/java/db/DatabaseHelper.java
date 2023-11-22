@@ -306,6 +306,7 @@ public class DatabaseHelper {
 	 * Method for inserting a patch commit into the patchcommit table
 	 *
 	 * @param sourceId id of the source url
+	 * @param cveId, id of the cve that will be updated with the patch
 	 * @param commitSha commit SHA
 	 * @param commitDate commit date
 	 * @param commitMessage commit message
@@ -364,6 +365,11 @@ public class DatabaseHelper {
 		}
 	}
 
+	/**Gets a list of sources for a certain cve_id
+	 *
+	 * @param cve_id the cve to gather sources for
+	 * @return sources, arraylist of all sources for a given CVE id
+	 */
 	public ArrayList<String> getCveSources(String cve_id) {
 		ArrayList<String> sources = new ArrayList<>();
 		try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(getCveSourcesSql)) {
@@ -378,6 +384,11 @@ public class DatabaseHelper {
 		return sources;
 	}
 
+	/**Gets a list of sources for a certain cve_id
+	 *
+	 * @param cve_id cve to get sources for
+	 * @return Arraylist of sources for a cve
+	 */
 	public ArrayList<String> getSpecificCveSources(String cve_id) {
 		ArrayList<String> sources = new ArrayList<>();
 		try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(getSpecificCveSourcesSql)) {
@@ -396,6 +407,11 @@ public class DatabaseHelper {
 	// Fixes
 	//
 
+	/**Gets a list of cve up to the number set by CVE Limit
+	 *
+	 * @param cveLimit maximum number of CVE to request from sql
+	 * @return list of CVES size of up to CVElimit
+	 */
 	public List<String> getCves(int cveLimit) {
 		ArrayList<String> cves = new ArrayList<>();
 		try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(getCvesSql)) {
@@ -410,6 +426,11 @@ public class DatabaseHelper {
 		return cves;
 	}
 
+	/**Attempts to insert a set of fixes using the insertfix method
+	 * Successes are not referenced later in this method
+	 * @param fixes a set of fix objects to attempt to insert
+	 * @return the number of failed inserts and the number of existing inserts, in {failed,existing} format
+	 */
 	public int[] insertFixes(Set<Fix> fixes) {
 		int failedInserts = 0;
 		int existingInserts = 0;

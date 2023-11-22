@@ -60,6 +60,11 @@ public class PatchCommitScraper {
 
 	private static final int COM_MESSAGE_LIMIT = 1000;
 
+	/**Method to set proper parameters for the scraper
+	 *
+	 * @param localDownloadLoc - location for local download
+	 * @param repoSource - repository source
+	 */
 	public PatchCommitScraper(String localDownloadLoc, String repoSource) {
 		this.localDownloadLoc = localDownloadLoc;
 		this.repoSource = repoSource;
@@ -184,12 +189,12 @@ public class PatchCommitScraper {
 
 	/**
 	 * prepare a timeline of commits between the vulnerable commit, and the patch commit. Keep track of timeline, estimate how long it took to patch, how many lines needed to be change.
-	 * @param repository
-	 * @param startingRevision
-	 * @param commit
-	 * @return
-	 * @throws IOException
-	 * @throws GitAPIException
+	 * @param repository the git repository
+	 * @param startingRevision first revision to calculate time off of
+	 * @param commit most recent commit
+	 * @return Timeline for commits
+	 * @throws IOException if an IO error occurs
+	 * @throws GitAPIException if a GitAPI exception occurs
 	 */
 	private List<String> calculateCommitTimeline(Repository repository, ObjectId startingRevision, RevCommit commit) throws IOException {
 		List<String> commitTimeline = new ArrayList<>();
@@ -230,6 +235,14 @@ public class PatchCommitScraper {
 	}
 
 
+	/**Calculate timeline between commits
+	 *
+	 * @param repository Git repository to use
+	 * @param startingRevision original revision
+	 * @param commit most recent commit
+	 * @return Timeline of commits, number of commits since original
+	 * @throws IOException if an io error occurs
+	 */
 	private List<RevCommit> calculateCommitTimelineElapsed(Repository repository, ObjectId startingRevision, RevCommit commit) throws IOException {
 		List<RevCommit> commitTimeline = new ArrayList<>();
 		try (RevWalk walk = new RevWalk(repository)) {
@@ -293,6 +306,13 @@ public class PatchCommitScraper {
 		return 0;
 	}
 
+	/**Counts the number of lines changed between entries
+	 *
+	 * @param diffEntry the different entries that are being compared
+	 * @param repository git repository to use
+	 * @return number of lines changed between the two entries
+	 * @throws IOException if an IO error occurs
+	 */
 	private int countLinesChanged(DiffEntry diffEntry, Repository repository) throws IOException {
 		int linesChanged = 0;
 		try (DiffFormatter diffFormatter = new DiffFormatter(DisabledOutputStream.INSTANCE)) {
@@ -305,6 +325,11 @@ public class PatchCommitScraper {
 		return linesChanged;
 	}
 
+	/** Calculates the time between the initial and patch commits
+	 *
+	 * @param commitTimeline list of revisions in a timeline
+	 * @return time between initial commit and fix in milliseconds
+	 */
 	private long calculateTimeToPatch(List<RevCommit> commitTimeline) {
 		if (commitTimeline.size() <= 1) {
 			// If there are no or only one commit in the timeline, return 0 indicating no patch time
@@ -322,6 +347,11 @@ public class PatchCommitScraper {
 		return Math.abs(elapsedMillis / (1000 * 60 * 60 * 24));
 	}
 
+	/**Formats the time to human-readable string
+	 *
+	 * @param elapsedHours time elapsed in hours
+	 * @return human-readable expression of elapsed time
+	 */
 	private String formatTimeToPatch(long elapsedHours) {
 		long days = elapsedHours / 24;
 		long hours = elapsedHours % 24;
