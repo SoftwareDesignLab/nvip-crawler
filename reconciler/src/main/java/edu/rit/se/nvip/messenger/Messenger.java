@@ -79,7 +79,7 @@ public class Messenger {
         this.outputQueue = outputQueue;
     }
 
-    public void run(){
+    public void run() throws IOException, TimeoutException {
 
         DatabaseHelper dbh = DatabaseHelper.getInstance();
         if (!dbh.testDbConnection()) {
@@ -88,37 +88,31 @@ public class Messenger {
         }
 
         logger.info("Waiting for jobs from Crawler...");
-        try(Connection connection = factory.newConnection();
-            Channel channel = connection.createChannel()){
-            channel.queueDeclare(inputQueue, false, false, false, null);
-            channel.queueDeclare(outputQueue, false, false, false, null);
+        Connection connection = factory.newConnection();
+        Channel channel = connection.createChannel();
+        channel.queueDeclare(inputQueue, false, false, false, null);
+        channel.queueDeclare(outputQueue, false, false, false, null);
 
-            DeliverCallback deliverCallback = (consumerTag, delivery) -> {
-                String message = new String(delivery.getBody(), StandardCharsets.UTF_8);
-                Set<String> parsedIds = new HashSet<>(parseIds(message));
-                Set<CompositeVulnerability> reconciledVulns = rc.reconcileCves(parsedIds);
-                reconciledVulns.stream()
-                        .filter(v -> v.getReconciliationStatus() == CompositeVulnerability.ReconciliationStatus.NEW ||
-                                v.getReconciliationStatus() == CompositeVulnerability.ReconciliationStatus.UPDATED)
-                        .map(CompositeVulnerability::getCveId)
-                        .forEach(vuln -> {
-                            try {
-                                channel.basicPublish("", outputQueue, null, genJson(vuln).getBytes(StandardCharsets.UTF_8));
-                            } catch (IOException e) {
-                                throw new RuntimeException(e);
-                            }
-                        });
-                rc.characterizeCves(reconciledVulns);
-                rc.updateTimeGaps(reconciledVulns);
-                rc.createRunStats(reconciledVulns);
-            };
-            channel.basicConsume(inputQueue, true, deliverCallback, consumerTag -> { });
-
-        } catch (TimeoutException e) {
-            logger.error("Error occurred while sending the Reconciler message to RabbitMQ: {}", e.getMessage());
-        } catch (IOException e) {
-            logger.error(e.getMessage());
-        }
+        DeliverCallback deliverCallback = (consumerTag, delivery) -> {
+            String message = new String(delivery.getBody(), StandardCharsets.UTF_8);
+            Set<String> parsedIds = new HashSet<>(parseIds(message));
+            Set<CompositeVulnerability> reconciledVulns = rc.reconcileCves(parsedIds);
+            reconciledVulns.stream()
+                    .filter(v -> v.getReconciliationStatus() == CompositeVulnerability.ReconciliationStatus.NEW ||
+                            v.getReconciliationStatus() == CompositeVulnerability.ReconciliationStatus.UPDATED)
+                    .map(CompositeVulnerability::getCveId)
+                    .forEach(vuln -> {
+                        try {
+                            channel.basicPublish("", outputQueue, null, genJson(vuln).getBytes(StandardCharsets.UTF_8));
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                    });
+            rc.characterizeCves(reconciledVulns);
+            rc.updateTimeGaps(reconciledVulns);
+            rc.createRunStats(reconciledVulns);
+        };
+        channel.basicConsume(inputQueue, true, deliverCallback, consumerTag -> { });
     }
 
     /**
