@@ -58,7 +58,7 @@ public class PatchCommitScraperTest {
         String cveId = "CVE-2020-11651";
 
         // Set up the localDownloadLoc and repoSource
-        String localDownloadLoc = "src/main/resources/patch-repos/saltstack-salt";
+        String localDownloadLoc = "saltstack-salt";
         String repoSource = "https://github.com/saltstack/salt";
 
         // Clone the git repository
