@@ -112,11 +112,11 @@ public class Messenger {
     //                            if (!cveIds.contains(affectedProduct.getCveId())) cveIds.add(affectedProduct.getCveId());
     //                        }
 
-                            logger.info("Sending jobs to patchfinder and fixfinder...");
+//                            logger.info("Sending jobs to patchfinder and fixfinder...");
                             String response = genJson(cveId);
                             channel.basicPublish("", patchFinderOutputQueue, null, response.getBytes(StandardCharsets.UTF_8));
                             channel.basicPublish("", fixFinderOutputQueue, null, response.getBytes(StandardCharsets.UTF_8));
-                            logger.info("Jobs have been sent!\n\n");
+                            logger.info("Jobs have been sent to the Patchfinder and Fixfinder!\n");
                         }
 
                         // Acknowledge job after completion
