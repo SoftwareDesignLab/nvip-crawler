@@ -20,7 +20,7 @@ ADD productnameextractor/src/main productnameextractor/src/main
 RUN mvn package -Dmaven.test.skip=true --projects=db,productnameextractor
 
 ### Run Stage
-FROM openjdk:11-jre-slim
+FROM eclipse-temurin:17-jre AS pne
 
 # Mount data directory
 VOLUME /usr/local/lib/nvip_data

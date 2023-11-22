@@ -20,7 +20,7 @@ ADD patchfinder/src/main patchfinder/src/main
 RUN mvn package -Dmaven.test.skip=true --projects=patchfinder
 
 ### Patchfinder Run Stage
-FROM openjdk:11-jre-slim AS patchfinder
+FROM eclipse-temurin:17-jre AS patchfinder
 
 # Mount data directory
 VOLUME /usr/local/lib/nvip_data
