@@ -24,8 +24,9 @@ package model;
  * SOFTWARE.
  */
 
+import org.junit.jupiter.api.Test;
+
 import static org.junit.jupiter.api.Assertions.*;
-import org.junit.Test;
 
 /**
  * Unit tests for CpeEntry class

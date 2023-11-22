@@ -25,8 +25,8 @@ package fixes; /**
 import db.DatabaseHelper;
 import env.FixFinderEnvVars;
 import env.SharedEnvVars;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * Unit tests for FixFinder class
@@ -45,7 +45,7 @@ public class FixFinderTest {
         FixFinder.init(dbh);
     }
 
-    @Before
+    @BeforeEach
     public void setUp() {
         FixFinderEnvVars.initializeEnvVars(true);
     }

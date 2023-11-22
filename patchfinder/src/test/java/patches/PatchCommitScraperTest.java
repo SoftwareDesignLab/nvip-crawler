@@ -24,19 +24,15 @@ package patches;
  * SOFTWARE.
  */
 
-import org.junit.Assert;
-import org.junit.jupiter.api.Assertions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import utils.GitController;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Pattern;
 
 import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Unit tests for PatchCommitScraper class
@@ -54,7 +50,7 @@ public class PatchCommitScraperTest {
         Set<PatchCommit> patchCommits = new HashSet<>();
         scraper.parseCommits(patchCommits, cveId);
 
-        Assertions.assertEquals(0, patchCommits.size());
+        assertEquals(0, patchCommits.size());
     }
 
     @Test
@@ -77,8 +73,8 @@ public class PatchCommitScraperTest {
         commitScraper.parseCommits(patchCommits, cveId);
 
         // Assertions
-        Assert.assertEquals(1, patchCommits.size());
+        assertEquals(1, patchCommits.size());
         PatchCommit patchCommit = patchCommits.toArray(PatchCommit[]::new)[0];
-        Assert.assertEquals(cveId, patchCommit.getCveId());
+        assertEquals(cveId, patchCommit.getCveId());
     }
 }

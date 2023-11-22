@@ -26,9 +26,8 @@ import db.DatabaseHelper;
 import env.PatchFinderEnvVars;
 import model.CpeEntry;
 import model.CpeGroup;
-import org.junit.Before;
-import org.junit.Test;
-import patches.PatchFinder;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -47,7 +46,7 @@ import static org.mockito.Mockito.*;
 public class PatchFinderTest {
     private final DatabaseHelper databaseHelperMock = mock(DatabaseHelper.class);
 
-    @Before
+    @BeforeEach
     public void setUp() {
         PatchFinderEnvVars.initializeEnvVars(true);
         PatchFinder.init(databaseHelperMock);

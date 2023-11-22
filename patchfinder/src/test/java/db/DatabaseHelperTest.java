@@ -25,10 +25,10 @@ package db;
  */
 
 import model.CpeGroup;
-import org.junit.Before;
 import org.junit.jupiter.api.AfterAll;
-import org.junit.Test;
 import env.EnvVarLoader;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.FileNotFoundException;
 import java.util.*;
@@ -47,7 +47,7 @@ public class DatabaseHelperTest {
 
     private static DatabaseHelper databaseHelper;
 
-    @Before
+    @BeforeEach
     public void setUp() throws FileNotFoundException {
         final Map<String, String> vars = EnvVarLoader.loadEnvVarsFromFile("src/test/test_env.list");
         databaseHelper = new DatabaseHelper(vars.get("DB_TYPE"), vars.get("HIKARI_URL"), vars.get("HIKARI_USER"), vars.get("HIKARI_PASSWORD"));

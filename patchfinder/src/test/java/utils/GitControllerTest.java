@@ -24,9 +24,9 @@ package utils;
  * SOFTWARE.
  */
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -45,12 +45,12 @@ public class GitControllerTest {
     private static final String REMOTE_PATH = "https://github.com/apache/airflow";
     private GitController gitController;
 
-    @Before
+    @BeforeEach
     public void setup() {
         gitController = new GitController(LOCAL_PATH, REMOTE_PATH);
     }
 
-    @After
+    @AfterEach
     public void teardown() {
         gitController.deleteRepo();
     }
