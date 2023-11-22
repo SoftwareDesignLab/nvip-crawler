@@ -24,12 +24,13 @@ package messenger;
  * SOFTWARE.
  */
 
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Unit tests for Messenger class
@@ -84,7 +85,6 @@ public class MessengerTest {
 //            success("Message not received within the specified timeout.");
 //        }
 //    }
-
 
 
     @Test

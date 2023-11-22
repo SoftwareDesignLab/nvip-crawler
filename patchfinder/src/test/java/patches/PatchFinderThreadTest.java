@@ -22,11 +22,9 @@ package patches; /**
  * SOFTWARE.
  */
 
-import org.junit.Ignore;
-import patches.PatchCommit;
-import org.junit.Test;
-import patches.PatchFinder;
-import patches.PatchFinderThread;
+
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import java.util.*;
 
@@ -41,7 +39,7 @@ public class PatchFinderThreadTest {
 
     //TODO: This needs to be re-written to utilize mocks. This test was failing because the apache airflow github added more patch commits
     @Test
-    @Ignore
+    @Disabled
     public void testRun() {
         String clonePath = PatchFinder.clonePath;
         long timeoutMilli = 5000;

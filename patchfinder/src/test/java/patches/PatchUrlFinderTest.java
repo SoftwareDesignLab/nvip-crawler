@@ -25,8 +25,7 @@ package patches; /**
 import model.CpeEntry;
 import model.CpeGroup;
 import org.junit.jupiter.api.Assertions;
-import org.junit.Test;
-import patches.PatchUrlFinder;
+import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
 import java.util.List;

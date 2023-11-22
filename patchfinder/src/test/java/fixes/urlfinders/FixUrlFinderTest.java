@@ -1,7 +1,7 @@
 package fixes.urlfinders;
 
 import env.FixFinderEnvVars;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public abstract class FixUrlFinderTest<T extends FixUrlFinder> {
     final protected T fixUrlFinder;
