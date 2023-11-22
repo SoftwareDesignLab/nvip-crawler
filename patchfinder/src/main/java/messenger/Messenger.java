@@ -36,6 +36,8 @@ import patches.PatchFinder;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -67,14 +69,13 @@ public class Messenger {
         this.factory.setUsername(username);
         this.factory.setPassword(password);
 
-        // TODO: Re-enable for deployment
-//        try {
-//            factory.useSslProtocol();
-//        } catch (NoSuchAlgorithmException e) {
-//            throw new RuntimeException(e);
-//        } catch (KeyManagementException e) {
-//            throw new RuntimeException(e);
-//        }
+        try {
+            factory.useSslProtocol();
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        } catch (KeyManagementException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     // For JUnit tests
@@ -82,14 +83,13 @@ public class Messenger {
         logger.info("Initializing Messenger...");
         this.factory = factory;
 
-        // TODO: Re-enable for deployment
-//        try {
-//            factory.useSslProtocol();
-//        } catch (NoSuchAlgorithmException e) {
-//            throw new RuntimeException(e);
-//        } catch (KeyManagementException e) {
-//            throw new RuntimeException(e);
-//        }
+        try {
+            factory.useSslProtocol();
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        } catch (KeyManagementException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public void startHandlingPatchJobs(String inputQueue) {
