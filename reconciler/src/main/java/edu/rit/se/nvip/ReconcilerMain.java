@@ -11,8 +11,10 @@ import edu.rit.se.nvip.utils.ReconcilerEnvVars;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.IOException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
+import java.util.concurrent.TimeoutException;
 
 
 public class ReconcilerMain {
@@ -70,8 +72,14 @@ public class ReconcilerMain {
 
                 ReconcilerController rc = new ReconcilerController(DatabaseHelper.getInstance(), filterHandler, reconciler, nvdController, mitreController);
 
-                Messenger messenger = new Messenger(connectionFactory, inputQueueName, outputQueueName, rc);
-                messenger.run();
+                try{
+                    Messenger messenger = new Messenger(connectionFactory, inputQueueName, outputQueueName, rc);
+                    messenger.run();
+                } catch (TimeoutException e) {
+                    logger.error("Error occurred while sending the Reconciler message to RabbitMQ: {}", e.getMessage());
+                } catch (IOException e) {
+                    logger.error(e.getMessage());
+                }
 //            case "dev":
 //                final Set<String> devJobs = new HashSet<>();
 //                devJobs.add("CVE-2023-2825");
