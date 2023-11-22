@@ -102,7 +102,7 @@ public class ProductDetectorTest {
         when(nerModel.classifyComplex(ArgumentMatchers.eq(words))).thenReturn(nerResult);
 
 
-        String productResult = "[The: OTHER, software: OTHER, version: OTHER, is: OTHER, vulnerable: OTHER, before: SOFTWARE_VERSION, 2.1.0: SOFTWARE_VERSION]";
+        String productResult = "<[The: OTHER, software: OTHER, version: OTHER, is: OTHER, vulnerable: OTHER, before: SOFTWARE_VERSION, 2.1.0: SOFTWARE_VERSION]>";
 
         assertEquals(productResult, productDetector.classifyWordsInDescription(words).toString());
         assertEquals(nerResult.toString(), nerModel.classifyComplex(words).toString());
