@@ -240,13 +240,13 @@ public class ProductNameExtractorMain {
         factory.setUsername(ProductNameExtractorEnvVars.getRabbitUsername());
         factory.setPassword(ProductNameExtractorEnvVars.getRabbitPassword());
 
-//        try {
-//            factory.useSslProtocol();
-//        } catch (NoSuchAlgorithmException e) {
-//            throw new RuntimeException(e);
-//        } catch (KeyManagementException e) {
-//            throw new RuntimeException(e);
-//        }
+        try {
+            factory.useSslProtocol();
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        } catch (KeyManagementException e) {
+            throw new RuntimeException(e);
+        }
 
         final Messenger rabbitMQ = new Messenger(
                 factory,
