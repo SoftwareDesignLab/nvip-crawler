@@ -210,19 +210,20 @@ public class ProductNameExtractorMain {
 
         // Process vulnerabilities
         final long getProdStart = System.currentTimeMillis();
-        final List<AffectedProduct> affectedProducts = new ArrayList<>();
+        int numAffectedProducts = 0;
 
         for(CompositeVulnerability vuln : vulnList) {
-            affectedProducts.addAll(affectedProductIdentifier.identifyAffectedProducts(vuln));
+            final List<AffectedProduct> products = affectedProductIdentifier.identifyAffectedProducts(vuln);
+            databaseHelper.insertAffectedProductsToDB(products);
+            numAffectedProducts += products.size();
         }
 
-        int numAffectedProducts = affectedProducts.size();
 
         logger.info("Product Name Extractor found {} affected products in {} seconds", numAffectedProducts, Math.floor(((double) (System.currentTimeMillis() - getProdStart) / 1000) * 100) / 100);
 
-        // Insert the affected products found into the database
-        databaseHelper.insertAffectedProductsToDB(affectedProducts);
-        logger.info("Product Name Extractor found and inserted {} affected products to the database in {} seconds", affectedProducts.size(), Math.floor(((double) (System.currentTimeMillis() - getProdStart) / 1000) * 100) / 100);
+//        // Insert the affected products found into the database
+//        databaseHelper.insertAffectedProductsToDB(affectedProducts);
+//        logger.info("Product Name Extractor found and inserted {} affected products to the database in {} seconds", affectedProducts.size(), Math.floor(((double) (System.currentTimeMillis() - getProdStart) / 1000) * 100) / 100);
     }
 
     // TODO: Implement job streaming (queue received jobs to be consumed, support end messages)
@@ -239,13 +240,13 @@ public class ProductNameExtractorMain {
         factory.setUsername(ProductNameExtractorEnvVars.getRabbitUsername());
         factory.setPassword(ProductNameExtractorEnvVars.getRabbitPassword());
 
-        try {
-            factory.useSslProtocol();
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        } catch (KeyManagementException e) {
-            throw new RuntimeException(e);
-        }
+//        try {
+//            factory.useSslProtocol();
+//        } catch (NoSuchAlgorithmException e) {
+//            throw new RuntimeException(e);
+//        } catch (KeyManagementException e) {
+//            throw new RuntimeException(e);
+//        }
 
         final Messenger rabbitMQ = new Messenger(
                 factory,

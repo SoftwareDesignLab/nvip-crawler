@@ -334,7 +334,7 @@ public class AffectedProductIdentifier {
 		final int result = processVulnerability(productDetector, cpeLookUp, vuln);
 
 		List<AffectedProduct> affectedProducts = new ArrayList<>();
-		if (vuln.getCveReconcileStatus() == CompositeVulnerability.CveReconcileStatus.DO_NOT_CHANGE)
+		if (vuln.getCveReconcileStatus() != CompositeVulnerability.CveReconcileStatus.DO_NOT_CHANGE)
 			affectedProducts.addAll(vuln.getAffectedProducts());
 
 		return affectedProducts;
