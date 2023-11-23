@@ -97,6 +97,9 @@ public class Messenger {
         try {
             this.inputConnection = this.factory.newConnection();
             this.inputChannel = this.inputConnection.createChannel();
+
+            this.inputChannel.queueDeclare(inputQueue, true, false, false, null);
+
             this.inputChannel.basicConsume(inputQueue, false, new DefaultConsumer(inputChannel) {
                 @Override
                 public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
