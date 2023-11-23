@@ -55,10 +55,13 @@ public class Messenger {
 //    private static final Pattern CVE_REGEX = Pattern.compile("CVE-\\d{4}-\\d{4,7}");
 
     /**
-     * Initialize the Messenger class with RabbitMQ host, username, and password
+     * Initialize the Messenger class with RabbitMQ host, virtualhost, port, username, and password
      * @param host RabbitMQ host
+     * @param vhost RabbitMQ virtualhost
+     * @param port RabbitMQ port
      * @param username RabbitMQ username
      * @param password RabbitMQ password
+     * throws runtimeexceptions if no such algorithm exists or keymanagement fails
      */
     public Messenger(String host, String vhost, int port, String username, String password) {
         logger.info("Initializing Messenger...");
@@ -79,6 +82,12 @@ public class Messenger {
     }
 
     // For JUnit tests
+
+    /**Starts up messenger using a given factory
+     *
+     * @param factory ConnectionFactory to use for ssl connection
+     * throws runtimeexceptions if no such algorithm exists or keymanagement fails
+     */
     protected Messenger(ConnectionFactory factory) {
         logger.info("Initializing Messenger...");
         this.factory = factory;
@@ -92,6 +101,10 @@ public class Messenger {
         }
     }
 
+    /**Connects patchfinder to the rabbit queue output frmo product name extractor
+     *
+     * @param inputQueue rabbit queue from product name extractor
+     */
     public void startHandlingPatchJobs(String inputQueue) {
         // Connect to rabbit input queue and subscribe callback
         try {
@@ -122,6 +135,10 @@ public class Messenger {
         }
     }
 
+    /**Connects patchfinder to the rabbit queue output frmo product name extractor
+     *
+     * @param inputQueue rabbit queue from product name extractor
+     */
     public void startHandlingFixJobs(String inputQueue) {
         // Connect to rabbit input queue and subscribe callback
         try {
@@ -175,6 +192,10 @@ public class Messenger {
         }
     }
 
+    /**Sets up messenger, database helper, cveIDs, and then queries database to find cves
+     *
+     * @param args main function requirement.
+     */
     public static void main(String[] args) {
         final String PF_INPUT_QUEUE = "PNE_OUT_FIX";
         final String FF_INPUT_QUEUE = "PNE_OUT_PATCH";

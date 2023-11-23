@@ -44,6 +44,11 @@ public class GitController {
 	private final String localPath;
 	private final String remotePath;
 
+	/**Initializes the gitcontroller
+	 *
+	 * @param localPath the local path for the repo
+	 * @param remotePath the remote path for the repo
+	 */
 	public GitController(String localPath, String remotePath) {
 		super();
 		this.localPath = localPath;
@@ -51,7 +56,7 @@ public class GitController {
 	}
 
 	/**
-	 * pull repo
+	 * pull the remote repo into the local repo
 	 * 
 	 * @return true if successful, false if not
 	 */
@@ -73,7 +78,7 @@ public class GitController {
 	}
 
 	/**
-	 * clone git repo
+	 * clone git repo into local path
 	 * 
 	 * @return true if successful, false if not
 	 */
@@ -110,7 +115,7 @@ public class GitController {
 	}
 
 	/**
-	 * For deleting the repo at the assigned location
+	 * Delete the repo at localpath
 	 */
 	public void deleteRepo() {
 		logger.info("Deleting local repo '{}'...", localPath);
@@ -122,6 +127,10 @@ public class GitController {
 		}
 	}
 
+	/**Sets the local and remote paths for the gitcontroller, then clones remote to local and deletes local repo
+	 *
+	 * @param args
+	 */
 	public static void main(String[] args) {
 		final GitController git = new GitController("nvip_data/patch-repos/testrepo", "https://github.com/rmccue/test-repository");
 		git.cloneRepo();

@@ -125,6 +125,8 @@ public class PatchUrlFinder {
 
 	/**
 	 * Initialize the address set with additional addresses based on cpe keywords
+	 *
+	 * @param keyword the keywords used to initialize
 	 */
 	private static HashSet<String> initializeAddresses(String keyword) {
 		HashSet<String> addresses = new HashSet<>();
