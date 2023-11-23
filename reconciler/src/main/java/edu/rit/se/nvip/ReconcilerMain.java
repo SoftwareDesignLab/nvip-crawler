@@ -72,14 +72,8 @@ public class ReconcilerMain {
 
                 ReconcilerController rc = new ReconcilerController(DatabaseHelper.getInstance(), filterHandler, reconciler, nvdController, mitreController);
 
-                try{
-                    Messenger messenger = new Messenger(connectionFactory, inputQueueName, outputQueueName, rc);
-                    messenger.run();
-                } catch (TimeoutException e) {
-                    logger.error("Error occurred while sending the Reconciler message to RabbitMQ: {}", e.getMessage());
-                } catch (IOException e) {
-                    logger.error(e.getMessage());
-                }
+                Messenger messenger = new Messenger(connectionFactory, inputQueueName, outputQueueName, rc);
+                messenger.run();
 //            case "dev":
 //                final Set<String> devJobs = new HashSet<>();
 //                devJobs.add("CVE-2023-2825");
