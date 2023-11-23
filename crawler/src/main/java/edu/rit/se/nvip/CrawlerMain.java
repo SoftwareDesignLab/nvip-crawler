@@ -582,7 +582,7 @@ public class CrawlerMain {
 
                 // Declare a queue and send the message
                 String queueName = dataVars.get("mqQueueName") + "";
-                channel.queueDeclare(queueName, false, false, false, null);
+                channel.queueDeclare(queueName, true, false, false, null);
                 log.info("Queue '{}' created successfully.", queueName);
                 log.info("Sending message to broker: {}", cveArray);
                 channel.basicPublish("", queueName, null, cveArray.getBytes());

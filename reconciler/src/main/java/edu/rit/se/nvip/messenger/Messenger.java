@@ -90,8 +90,8 @@ public class Messenger {
         logger.info("Waiting for jobs from Crawler...");
         try(Connection connection = factory.newConnection();
             Channel channel = connection.createChannel()){
-            channel.queueDeclare(inputQueue, false, false, false, null);
-            channel.queueDeclare(outputQueue, false, false, false, null);
+            channel.queueDeclare(inputQueue, true, false, false, null);
+            channel.queueDeclare(outputQueue, true, false, false, null);
 
             DeliverCallback deliverCallback = (consumerTag, delivery) -> {
                 String message = new String(delivery.getBody(), StandardCharsets.UTF_8);
