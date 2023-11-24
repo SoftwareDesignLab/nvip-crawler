@@ -88,8 +88,9 @@ public class Messenger {
         }
 
         logger.info("Waiting for jobs from Crawler...");
-        try(Connection connection = factory.newConnection();
-            Channel channel = connection.createChannel()){
+        try {
+            Connection connection = factory.newConnection();
+            Channel channel = connection.createChannel();
             channel.queueDeclare(inputQueue, true, false, false, null);
             channel.queueDeclare(outputQueue, true, false, false, null);
 
@@ -118,6 +119,7 @@ public class Messenger {
             logger.error("Error occurred while sending the Reconciler message to RabbitMQ: {}", e.getMessage());
         } catch (IOException e) {
             logger.error(e.getMessage());
+            e.printStackTrace();
         }
     }
 
