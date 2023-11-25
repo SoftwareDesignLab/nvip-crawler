@@ -109,9 +109,12 @@ public class Messenger {
                                 throw new RuntimeException(e);
                             }
                         });
-                rc.characterizeCves(reconciledVulns);
-                rc.updateTimeGaps(reconciledVulns);
-                rc.createRunStats(reconciledVulns);
+                try { rc.characterizeCves(reconciledVulns); }
+                catch (Exception e) { logger.error(e.toString()); }
+                try { rc.updateTimeGaps(reconciledVulns); }
+                catch (Exception e) { logger.error(e.toString()); }
+                try { rc.createRunStats(reconciledVulns); }
+                catch (Exception e) { logger.error(e.toString()); }
             };
             channel.basicConsume(inputQueue, true, deliverCallback, consumerTag -> { });
 
