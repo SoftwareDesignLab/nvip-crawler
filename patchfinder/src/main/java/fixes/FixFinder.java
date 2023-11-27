@@ -52,22 +52,20 @@ public class FixFinder {
 	private static final ObjectMapper OM = new ObjectMapper();
 	private static DatabaseHelper databaseHelper;
 	private static final List<FixUrlFinder> fixURLFinders = new ArrayList<>();
-	private static final ArrayList<Fix> fixes = new ArrayList<>();
 	protected static int cveLimit = FixFinderEnvVars.getCveLimit();
 	protected static int maxThreads = FixFinderEnvVars.getMaxThreads();
 
 	public static DatabaseHelper getDatabaseHelper() { return databaseHelper; }
-	public static ArrayList<Fix> getFixes() { return fixes; }
 
 	/**
 	 * Initialize the FixFinder and its subcomponents
 	 */
-	public static void init() {
+	public static void init(DatabaseHelper dbh) {
 		logger.info("Initializing FixFinder...");
 
 		// Init db helper
 		logger.info("Initializing DatabaseHelper...");
-		databaseHelper = DatabaseHelper.getInstance();
+		databaseHelper = dbh;
 
 		// Init FixUrlFinders
 		logger.info("Initializing FixUrlFinders...");
@@ -81,45 +79,57 @@ public class FixFinder {
 
 	// TODO: at some point, need to figure out how we are going to get input for which cves to find fixes
 	// 	right now, just doing a list of cveIds
-	public static void run(List<String> cveIds) {
-		PatchFixRepository pfRepo = new PatchFixRepository(databaseHelper.getDataSource());
-		Map<String, List<String>> cveToUrls = new HashMap<>();
+	public static void run(String cveId) {
+        PatchFixRepository pfRepo = new PatchFixRepository(databaseHelper);
+		// Find fixes with multithreading (on sources)
+		final Set<Fix> fixes = FixFinder.findFixesMultiThreaded(cveId);
+
+		// Insert found fixes
+		final int[] insertStats = pfRepo.insertFixes(fixes);
+		final int failedInserts = insertStats[0];
+		final int existingInserts = insertStats[1];
+
+		logger.info("Successfully inserted {} patch commits into the database ({} failed, {} already existed)",
+				fixes.size() - failedInserts - existingInserts,
+				failedInserts,
+				existingInserts
+		);
+	}
+
+	private static Set<Fix> findFixesMultiThreaded(String cveId) {
+		final Set<Fix> fixes = new HashSet<>();
 		ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors()); // Adjust the thread pool size as needed
-		List<Future<?>> futures = new ArrayList<>();
+		List<Future<Set<Fix>>> futures = new ArrayList<>();
 
-		for (String cveId : cveIds) {
-			final List<String> sourceUrls = new ArrayList<>();
-			try {
-				for (FixUrlFinder finder : fixURLFinders) {
-					final int prevUrlsNum = sourceUrls.size();
-					sourceUrls.addAll(finder.run(cveId));
-					logger.info("{} found {} potential fix urls for CVE: {}",
-							finder.getClass().getSimpleName(),
-							sourceUrls.size() - prevUrlsNum,
-							cveId
-					);
-				}
-
-			} catch (Exception e) {
-				logger.info("Ran into error while finding URLs: {}", e.toString());
+		final List<String> sourceUrls = new ArrayList<>();
+		try {
+			for (FixUrlFinder finder : fixURLFinders) {
+				final int prevUrlsNum = sourceUrls.size();
+				sourceUrls.addAll(finder.run(cveId));
+				logger.info("{} found {} potential fix urls for CVE: {}",
+						finder.getClass().getSimpleName(),
+						sourceUrls.size() - prevUrlsNum,
+						cveId
+				);
 			}
 
-			cveToUrls.put(cveId, sourceUrls);
+		} catch (Exception e) {
+			logger.info("Ran into error while finding URLs: {}", e.toString());
 		}
 
-		for (String cveId : cveToUrls.keySet()) {
-			Future<?> future = executorService.submit(() -> {
-				FixFinderThread thread = new FixFinderThread(cveId, cveToUrls.get(cveId));
+		for (String source : sourceUrls) {
+			Future<Set<Fix>> future = executorService.submit(() -> {
+				FixFinderThread thread = new FixFinderThread(cveId, source);
 				thread.run();
+				return thread.getFixes();
 			});
 			futures.add(future);
 		}
 
 		// Wait for all threads to complete
-		for (Future<?> future : futures) {
+		for (Future<Set<Fix>> future : futures) {
 			try {
-				// TODO: Fix NullPointerException here
-				future.get(); // This will block until the thread is finished
+				fixes.addAll(future.get()); // This will block until the thread is finished
 			} catch (Exception e) {
 				logger.error("Error occurred while executing a thread: {}", e.toString());
 			}
@@ -133,38 +143,11 @@ public class FixFinder {
 			logger.error("ExecutorService was interrupted: {}", e.toString());
 		}
 
-		// After all threads have been run, insert found fixes into the database
-		int existingInserts = 0;
-		int failedInserts = 0;
+		return fixes;
+	}
 
-		for (Fix fix : fixes) {
-			try {
-				final int result = pfRepo.insertFix(fix);
-
-				// Result of operation, 0 for OK, 1 for error, 2 for already exists
-				switch (result) {
-					case 2:
-						existingInserts++;
-						break;
-					case 1:
-						failedInserts++;
-						break;
-					default:
-						break;
-				}
-			} catch (Exception e) {
-				logger.error("Error occurred while inserting fix for CVE {} into the database: {}",
-						fix.getCveId(),
-						e.toString()
-				);
-			}
-		}
-
-		logger.info("Successfully inserted {} patch commits into the database ({} failed, {} already existed)",
-				fixes.size() - failedInserts - existingInserts,
-//				(System.currentTimeMillis() - insertPatchesStart) / 1000,
-				failedInserts,
-				existingInserts
-		);
+	@Override
+	public String toString() {
+		return this.getClass().getSimpleName();
 	}
 }

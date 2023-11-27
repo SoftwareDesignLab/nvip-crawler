@@ -65,18 +65,72 @@ public class PatchCommit {
 		this.linesChanged = linesChanged;
 	}
 
+	/** Get function for a patch paramater
+	 *
+	 * @return the commitURL of the patch
+	 */
 	public String getCommitURL() {return commitURL;}
+	/** Get function for a patch paramater
+	 *
+	 * @return the cveID for the patch
+	 */
 	public String getCveId() {return cveId;}
+	/** Get function for a patch paramater
+	 *
+	 * @return the commitId of the patch
+	 */
 	public String getCommitId() {return commitId;}
+	/** Get function for a patch paramater
+	 *
+	 * @return the commitDate of the patch
+	 */
 	public Date getCommitDate() {return commitDate;}
+	/** Get function for a patch paramater
+	 *
+	 * @return the commitURL of the patch
+	 */
 	public String getCommitUrl() {return commitURL;}
+	/** Get function for a patch paramater
+	 *
+	 * @return the commitMessage of the patch
+	 */
 	public String getCommitMessage() {return commitMessage;}
+	/** Get function for a patch paramater
+	 *
+	 * @return the uniDiff of the patch
+	 */
 	public String getUniDiff() {return uniDiff;}
+	/** Get function for a patch paramater
+	 *
+	 * @return the timeline of the patch
+	 */
 	public List<String> getTimeline() {return timeline;}
+
+	/**Set function for patch parameter
+	 *
+	 * @param timeline the timeline to set for the patch
+	 */
 	public void setTimeline(List<String> timeline) {this.timeline = timeline;}
+	/** Get function for a patch paramater
+	 *
+	 * @return the timeToPatch of the patch
+	 */
 	public String getTimeToPatch() {return timeToPatch;}
+
+	/**Set function for a patch parameter
+	 *
+	 * @param timeToPatch string to set patch parameter to
+	 */
 	public void setTimeToPatch(String timeToPatch) {this.timeToPatch = timeToPatch;}
+	/** Get function for a patch paramater
+	 *
+	 * @return the linesChanged of the patch
+	 */
 	public int getLinesChanged() {return linesChanged;}
+	/** Set function for a patch paramater
+	 *
+	 * @param linesChanged int to set lineschanged parameter of patch to
+	 */
 	public void setLinesChanged(int linesChanged) {this.linesChanged = linesChanged;}
 
 

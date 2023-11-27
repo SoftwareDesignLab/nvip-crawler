@@ -21,25 +21,22 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package edu.rit.se.nvip.filter;
+package edu.rit.se.nvip.reconciler.filter;
+
 
 import edu.rit.se.nvip.db.model.RawVulnerability;
 
-import java.util.regex.Pattern;
-
 /**
- * This class acts as a filter for rawVuln entries where the description contains multiple CVE IDs
+ * This class acts as a filter for rawVuln entries where the description matches the CVE ID
  *
  * @author jqm4954@rit.edu
  */
-public class MultipleCveDescriptionsFilter extends Filter{
+public class CveMatchesDescriptionFilter extends Filter{
     @Override
     public boolean passesFilter(RawVulnerability rawVuln) {
         String description = rawVuln.getDescription();
+        String cveId = rawVuln.getCveId();
         description = description.trim();
-
-        return !Pattern.matches("CVE-\\d{4}-\\d{4,5}, GHSA-\\w{4}-\\w{4}-\\w{4}", description) &&
-                !Pattern.matches("CVE-\\d{4}-\\d{4,5}, GHSA-\\w{4}-\\w{4}-\\w{4}, and \\d more", description) &&
-                !Pattern.matches("CVE-\\d{4}-\\d{4,5}, CVE-\\d{4}-\\d{4,5}, and \\d more", description);
+        return !description.equals(cveId);
     }
 }

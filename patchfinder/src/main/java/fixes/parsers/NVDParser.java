@@ -33,9 +33,9 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.io.IOException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * HTML parser for NVD web pages
@@ -82,7 +82,7 @@ public class NVDParser extends FixParser {
      * @throws IOException if an error occurs during scraping
      */
     @Override
-    public List<Fix> parseWebPage() throws IOException{
+    public Set<Fix> parseWebPage() throws IOException{
         // Isolate the HTML for the references table
         Elements rows = this.DOM.select("div[id=vulnHyperlinksPanel]").first().select("table").first().select("tbody").select("tr");
 

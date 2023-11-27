@@ -25,21 +25,20 @@ package messenger;
  */
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.Connection;
-import com.rabbitmq.client.ConnectionFactory;
-import com.rabbitmq.client.DeliverCallback;
+import com.rabbitmq.client.*;
+import db.DatabaseHelper;
+import fixes.FixFinder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import patches.PatchFinder;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.*;
 
 /**
@@ -48,24 +47,30 @@ import java.util.concurrent.*;
  * @author Dylan Mulligan
  */
 public class Messenger {
-    private final String inputQueue;
-    private static final Logger logger = LogManager.getLogger(Messenger.class.getSimpleName());
+    private static final Logger logger = LogManager.getLogger(DatabaseHelper.class.getSimpleName());
     private static final ObjectMapper OM = new ObjectMapper();
-    private ConnectionFactory factory;
+    private final ConnectionFactory factory;
+    private Connection inputConnection = null;
+    private Channel inputChannel = null;
+//    private static final Pattern CVE_REGEX = Pattern.compile("CVE-\\d{4}-\\d{4,7}");
 
     /**
-     * Initialize the Messenger class with RabbitMQ host, username, and password
+     * Initialize the Messenger class with RabbitMQ host, virtualhost, port, username, and password
      * @param host RabbitMQ host
+     * @param vhost RabbitMQ virtualhost
+     * @param port RabbitMQ port
      * @param username RabbitMQ username
      * @param password RabbitMQ password
+     * throws runtimeexceptions if no such algorithm exists or keymanagement fails
      */
-    public Messenger(String host, String vhost, int port, String username, String password, String inputQueue) {
+    public Messenger(String host, String vhost, int port, String username, String password) {
+        logger.info("Initializing Messenger...");
         this.factory = new ConnectionFactory();
-        factory.setHost(host);
-        factory.setVirtualHost(vhost);
-        factory.setPort(port);
-        factory.setUsername(username);
-        factory.setPassword(password);
+        this.factory.setHost(host);
+        this.factory.setVirtualHost(vhost);
+        this.factory.setPort(port);
+        this.factory.setUsername(username);
+        this.factory.setPassword(password);
 
         try {
             factory.useSslProtocol();
@@ -74,100 +79,155 @@ public class Messenger {
         } catch (KeyManagementException e) {
             throw new RuntimeException(e);
         }
-
-        this.inputQueue = inputQueue;
     }
 
-    public void setFactory(ConnectionFactory factory) {
-        this.factory = factory;
-    }
+    // For JUnit tests
 
-    /**
-     * Waits for a message from the PNE for pollInterval seconds, returning null unless a valid job was received
+    /**Starts up messenger using a given factory
      *
-     * @param pollInterval time to wait before timing out and returning null
-     * @return null or a list of received CVE ids to find patches for
+     * @param factory ConnectionFactory to use for ssl connection
+     * throws runtimeexceptions if no such algorithm exists or keymanagement fails
      */
-    public PFInputMessage waitForProductNameExtractorMessage(int pollInterval) {
-        // Initialize job list
-        PFInputMessage retVal = null;
+    protected Messenger(ConnectionFactory factory) {
+        logger.info("Initializing Messenger...");
+        this.factory = factory;
 
-        // Busy-wait loop for jobs
-        while(retVal == null) {
-            try(Connection connection = factory.newConnection();
-                Channel channel = connection.createChannel()){
-
-                channel.queueDeclare(inputQueue, false, false, false, null);
-
-                BlockingQueue<PFInputMessage> messageQueue = new ArrayBlockingQueue<>(1);
-
-                DeliverCallback deliverCallback = (consumerTag, delivery) -> {
-                    String message = new String(delivery.getBody(), StandardCharsets.UTF_8);
-                    PFInputMessage msg = parseMsg(message);
-                    if(!messageQueue.offer(msg)) {
-                        logger.error("Job response could not be added to message queue");
-                    }
-                };
-                channel.basicConsume(inputQueue, true, deliverCallback, consumerTag -> { });
-
-                logger.info("Polling message queue...");
-                retVal = messageQueue.poll(pollInterval, TimeUnit.SECONDS);
-
-            } catch (TimeoutException | InterruptedException | IOException e) {
-                logger.error("Error occurred while getting jobs from the ProductNameExtractor: {}", e.toString());
-                break;
-            }
+        try {
+            factory.useSslProtocol();
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        } catch (KeyManagementException e) {
+            throw new RuntimeException(e);
         }
+    }
 
+    /**Connects patchfinder to the rabbit queue output frmo product name extractor
+     *
+     * @param inputQueue rabbit queue from product name extractor
+     */
+    public void startHandlingPatchJobs(String inputQueue) {
+        // Connect to rabbit input queue and subscribe callback
+        try {
+            this.inputConnection = this.factory.newConnection();
+            this.inputChannel = this.inputConnection.createChannel();
 
-        return retVal;
+            this.inputChannel.queueDeclare(inputQueue, true, false, false, null);
+
+            this.inputChannel.basicConsume(inputQueue, false, new DefaultConsumer(inputChannel) {
+                @Override
+                public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
+                    String message = new String(body, StandardCharsets.UTF_8);
+                    String cveId = parseMessage(message);
+
+                    if(cveId != null) {
+                        try { PatchFinder.run(cveId); }
+                        catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                    else logger.warn("Could not parse cveId from message '{}'", message);
+                    inputChannel.basicAck(envelope.getDeliveryTag(), false);
+                }
+            });
+        }
+        catch (IOException | TimeoutException e) {
+            throw new IllegalArgumentException("Rabbit connection could not be established");
+        }
+    }
+
+    /**Connects patchfinder to the rabbit queue output frmo product name extractor
+     *
+     * @param inputQueue rabbit queue from product name extractor
+     */
+    public void startHandlingFixJobs(String inputQueue) {
+        // Connect to rabbit input queue and subscribe callback
+        try {
+            this.inputConnection = this.factory.newConnection();
+            this.inputChannel = this.inputConnection.createChannel();
+
+            this.inputChannel.queueDeclare(inputQueue, true, false, false, null);
+
+            this.inputChannel.basicConsume(inputQueue, false, new DefaultConsumer(inputChannel) {
+                @Override
+                public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
+                    String message = new String(body, StandardCharsets.UTF_8);
+                    String cveId = parseMessage(message);
+
+                    if(cveId != null) FixFinder.run(cveId);
+                    else logger.warn("Could not parse cveId from message '{}'", message);
+                    inputChannel.basicAck(envelope.getDeliveryTag(), false);
+                }
+            });
+        }
+        catch (IOException | TimeoutException e) {
+            throw new IllegalArgumentException("Rabbit connection could not be established");
+        }
     }
 
     /**
-     * Parse a list of ids from a given json string. (String should be )
+     * Parse an id from a given json string. (String should be {'cveId': 'CVE-2023-1001'})
      * @param jsonString a JSON representation of an array of String CVE ids
      * @return parsed list of ids
      */
-    @SuppressWarnings("unchecked")
-    public PFInputMessage parseMsg(String jsonString) {
+    public static String parseMessage(String jsonString) {
         try {
-            return OM.readValue(jsonString, PFInputMessage.class);
+            logger.info("Incoming CVE: '{}'", jsonString);
+            final JsonNode messageNode = OM.readTree(jsonString);
+            return messageNode.get("cveId").asText();
         } catch (JsonProcessingException e) {
-            logger.error("Failed to parse list of ids from json string: {}", e.toString());
+            logger.error("Failed to parse id from json string: {}", e.toString());
             return null;
         }
     }
 
     /**
      * Testing method for sending RabbitMQ messages
-     * @param queue target queue
      * @param message message to be sent
      */
-    private void sendDummyMessage(String queue, String message) {
+    private void sendDummyMessage(String message, String inputQueue) {
         try(Connection connection = factory.newConnection();
             Channel channel = connection.createChannel()){
 
-            channel.queueDeclare(queue, false, false, false, null);
-
-            channel.basicPublish("", queue, null, message.getBytes());
+            channel.basicPublish("", inputQueue, null, message.getBytes(StandardCharsets.UTF_8));
 
         } catch (IOException | TimeoutException e) {
             logger.error("Failed to send dummy message: {}", e.toString());
         }
     }
 
+    /**Sets up messenger, database helper, cveIDs, and then queries database to find cves
+     *
+     * @param args main function requirement.
+     */
     public static void main(String[] args) {
-//        final Messenger m = new Messenger("localhost", "guest", "guest");
-//        m.sendDummyMessage(INPUT_QUEUE, "[\"CVE-2023-2933\", \"CVE-2023-2934\"]");
-        ObjectMapper OM = new ObjectMapper();
-        try {
-            OM.writerWithDefaultPrettyPrinter().writeValue(new File("patchfinder/target/test.json"), "test1");
-            OM.writerWithDefaultPrettyPrinter().writeValue(new File("patchfinder/target/test.json"), "test2");
-//            OM.writeValue(new File("patchfinder/target/test.json"), "test1");
-//            OM.writeValue(new File("patchfinder/target/test.json"), "test2");
-            Thread.sleep(10000);
-        } catch (Exception e) {
-            e.printStackTrace();
+        final String PF_INPUT_QUEUE = "PNE_OUT_FIX";
+        final String FF_INPUT_QUEUE = "PNE_OUT_PATCH";
+        final Messenger m = new Messenger("localhost", "/", 5672 , "guest", "guest");
+        DatabaseHelper dbh = new DatabaseHelper("mysql", "jdbc:mysql://localhost:3306/nvip?useSSL=false&allowPublicKeyRetrieval=true", "root", "root");
+        final Set<String> cveIds = dbh.getAffectedProducts(null).keySet();
+//        final Set<String> cveIds = new HashSet<>();
+//        try {
+//            ResultSet results = dbh.getConnection().prepareStatement("""
+//                    SELECT
+//                        v.cve_id
+//                    FROM
+//                        vulnerability v
+//                    JOIN
+//                        description d ON v.description_id = d.description_id
+//                    JOIN
+//                        affectedproduct ap ON v.cve_id = ap.cve_id
+//                    WHERE
+//                        ap.cpe LIKE '%tensorflow%'
+//                    GROUP BY
+//                        v.cve_id;
+//                    """).executeQuery();
+//            while(results != null && results.next()) cveIds.add(results.getString(1));
+//        } catch (Exception ignored) { }
+
+        for (String id : cveIds) {
+            id = "{\"cveId\": \"" + id + "\"}";
+            m.sendDummyMessage(id, PF_INPUT_QUEUE);
+            m.sendDummyMessage(id, FF_INPUT_QUEUE);
         }
     }
 }

@@ -44,6 +44,11 @@ public class GitController {
 	private final String localPath;
 	private final String remotePath;
 
+	/**Initializes the gitcontroller
+	 *
+	 * @param localPath the local path for the repo
+	 * @param remotePath the remote path for the repo
+	 */
 	public GitController(String localPath, String remotePath) {
 		super();
 		this.localPath = localPath;
@@ -51,7 +56,7 @@ public class GitController {
 	}
 
 	/**
-	 * pull repo
+	 * pull the remote repo into the local repo
 	 * 
 	 * @return true if successful, false if not
 	 */
@@ -73,30 +78,32 @@ public class GitController {
 	}
 
 	/**
-	 * clone git repo
+	 * clone git repo into local path
 	 * 
 	 * @return true if successful, false if not
 	 */
-	public boolean cloneRepo() {
+	public synchronized boolean cloneRepo() {
 		Git git = null;
 		File localFileDir;
 		try {
 			final String[] pathParts = localPath.split("/");
-			logger.info("{} repository does not exist! Cloning repo now, this will take some time...", pathParts[pathParts.length - 1]);
 			localFileDir = new File(localPath);
-			CloneCommand cloneCommand = Git.cloneRepository();
-			cloneCommand.setURI(remotePath);
-			cloneCommand.setDirectory(localFileDir);
-			cloneCommand.call().close();
+			if(!localFileDir.exists()) {
+				logger.info("{} repository does not exist! Cloning repo now, this will take some time...", pathParts[pathParts.length - 1]);
+				CloneCommand cloneCommand = Git.cloneRepository();
+				cloneCommand.setURI(remotePath);
+				cloneCommand.setDirectory(localFileDir);
+				cloneCommand.setBare(true);
+				cloneCommand.call().close();
 
-			git = Git.open(localFileDir);
-			StoredConfig config = git.getRepository().getConfig();
-			config.setString("branch", "master", "merge", "refs/heads/master");
-			config.setString("branch", "master", "remote", "origin");
-			config.setString("remote", "origin", "fetch", "+refs/heads/*:refs/remotes/origin/*");
-			config.setString("remote", "origin", "url", remotePath);
-			config.save();
-
+				git = Git.open(localFileDir);
+				StoredConfig config = git.getRepository().getConfig();
+				config.setString("branch", "master", "merge", "refs/heads/master");
+				config.setString("branch", "master", "remote", "origin");
+				config.setString("remote", "origin", "fetch", "+refs/heads/*:refs/remotes/origin/*");
+				config.setString("remote", "origin", "url", remotePath);
+				config.save();
+			} else logger.info("{} repository found at path '{}'", pathParts[pathParts.length - 1], localPath);
 		} catch (Exception e) {
 			logger.error("Error while cloning repo at: {}\n{}", remotePath, e);
 			return false;
@@ -108,7 +115,7 @@ public class GitController {
 	}
 
 	/**
-	 * For deleting the repo at the assigned location
+	 * Delete the repo at localpath
 	 */
 	public void deleteRepo() {
 		logger.info("Deleting local repo '{}'...", localPath);
@@ -120,6 +127,10 @@ public class GitController {
 		}
 	}
 
+	/**Sets the local and remote paths for the gitcontroller, then clones remote to local and deletes local repo
+	 *
+	 * @param args
+	 */
 	public static void main(String[] args) {
 		final GitController git = new GitController("nvip_data/patch-repos/testrepo", "https://github.com/rmccue/test-repository");
 		git.cloneRepo();

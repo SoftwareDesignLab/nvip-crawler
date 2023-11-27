@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package edu.rit.se.nvip.divergence;
+package edu.rit.se.nvip.characterizer.divergence;
 
 import org.apache.commons.math3.util.FastMath;
 import org.apache.logging.log4j.LogManager;

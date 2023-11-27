@@ -3,9 +3,8 @@ package fixes.parsers;
 
 import edu.rit.se.nvip.db.model.Fix;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 public class RedhatBugzillaParser extends RedhatParser {
     protected RedhatBugzillaParser(String cveId, String url){
@@ -14,8 +13,8 @@ public class RedhatBugzillaParser extends RedhatParser {
 
 
     @Override
-    protected List<Fix> parseWebPage() throws IOException {
-        List<Fix> newFixes = new ArrayList<>();
+    protected Set<Fix> parseWebPage() {
+        Set<Fix> newFixes = new HashSet<>();
 
         // TODO: Add Bugzilla specific implementation
         String resolution = this.DOM.select("section[class=field_kcs_resolution_txt]").select("p").text();

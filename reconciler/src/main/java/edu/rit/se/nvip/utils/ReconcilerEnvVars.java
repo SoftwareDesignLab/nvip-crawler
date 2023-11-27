@@ -40,6 +40,10 @@ public class ReconcilerEnvVars extends Properties {
     private static String mitreGithubUrl;
     private static String nvdApiUrl;
 
+    private static String ssvcApiBaseUrl;
+    private static String ssvcApiPort;
+    private static String ssvcApiUri;
+
     /**
      * Ensures vars are loaded before anybody else uses this class. They can be reloaded by calling any public load method manually
      */
@@ -174,6 +178,15 @@ public class ReconcilerEnvVars extends Properties {
                 case NVD_API_URL:
                     nvdApiUrl = addEnvvarString(envName, envVar, "https://services.nvd.nist.gov/rest/json/cves/2.0?pubStartDate=<StartDate>&pubEndDate=<EndDate>");
                     break;
+                case SSVC_API_BASE_URL:
+                    ssvcApiBaseUrl = addEnvvarString(envName, envVar, "http://localhost");
+                    break;
+                case SSVC_API_PORT:
+                    ssvcApiPort = addEnvvarString(envName, envVar, "5000");
+                    break;
+                case SSVC_API_URI:
+                    ssvcApiUri = addEnvvarString(envName, envVar, "/ssvc");
+                    break;
             }
         }
     }
@@ -209,6 +222,18 @@ public class ReconcilerEnvVars extends Properties {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public static String getSSVCApiBaseUrl() {
+        return ssvcApiBaseUrl;
+    }
+
+    public static String getSSVCApiPort() {
+        return ssvcApiPort;
+    }
+
+    public static String getSSVCApiUri() {
+        return ssvcApiUri;
     }
 
     public void setEnvListPath(String path){
@@ -300,7 +325,6 @@ public class ReconcilerEnvVars extends Properties {
     public static String getRabbitQueueIn() {return rabbitQueueIn;}
     public static String getMitreGithubUrl() {return mitreGithubUrl;}
     public static String getNvdApiUrl() {return nvdApiUrl;}
-
 
     private static String addEnvvarString(String name, String value, String defaultValue) {
         if (value != null && !value.isEmpty()) {

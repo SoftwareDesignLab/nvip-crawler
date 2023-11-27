@@ -1,4 +1,4 @@
-package edu.rit.se.nvip.cwe;
+package edu.rit.se.nvip.characterizer.cwe;
 
 import java.util.HashMap;
 import java.util.HashSet;

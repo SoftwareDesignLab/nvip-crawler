@@ -21,22 +21,20 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package edu.rit.se.nvip.filter;
+package edu.rit.se.nvip.reconciler.filter;
 
 import edu.rit.se.nvip.db.model.RawVulnerability;
 
-import java.util.regex.Pattern;
-
 /**
- * This class acts as a filter for rawVuln entries where the description is a single integer
+ * This class acts as a filter for rawVuln entries where the description is greater than 1,000 characters
  *
  * @author jqm4954@rit.edu
  */
-public class IntegerDescriptionFilter extends Filter{
+public class DescriptionSizeFilter extends Filter{
     @Override
     public boolean passesFilter(RawVulnerability rawVuln) {
         String description = rawVuln.getDescription();
         description = description.trim();
-        return !Pattern.matches("\\d+", description);
+        return description.length() <= 1000;
     }
 }

@@ -1,4 +1,4 @@
-package edu.rit.se.nvip.cwe;
+package edu.rit.se.nvip.characterizer.cwe;
 
 import com.theokanning.openai.OpenAiHttpException;
 import com.theokanning.openai.completion.chat.ChatCompletionRequest;
@@ -7,6 +7,9 @@ import com.theokanning.openai.completion.chat.ChatMessage;
 import edu.rit.se.nvip.db.model.CompositeVulnerability;
 import edu.rit.se.nvip.openai.OpenAIRequestHandler;
 import edu.rit.se.nvip.openai.RequestorIdentity;
+import edu.rit.se.nvip.model.CompositeVulnerability;
+import edu.rit.se.nvip.reconciler.openai.OpenAIRequestHandler;
+import edu.rit.se.nvip.reconciler.openai.RequestorIdentity;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

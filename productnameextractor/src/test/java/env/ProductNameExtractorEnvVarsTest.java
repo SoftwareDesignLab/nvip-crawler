@@ -79,7 +79,8 @@ public class ProductNameExtractorEnvVarsTest {
         assertEquals("guest", ProductNameExtractorEnvVars.getRabbitUsername());
         assertEquals("guest", ProductNameExtractorEnvVars.getRabbitPassword());
         assertEquals("RECONCILER_OUT", ProductNameExtractorEnvVars.getRabbitInputQueue());
-        assertEquals("PNE_OUT", ProductNameExtractorEnvVars.getRabbitOutputQueue());
+        assertEquals("PNE_OUT_PATCH", ProductNameExtractorEnvVars.getRabbitPatchfinderOutputQueue());
+        assertEquals("PNE_OUT_FIX", ProductNameExtractorEnvVars.getRabbitFixfinderOutputQueue());
 
     }
 }

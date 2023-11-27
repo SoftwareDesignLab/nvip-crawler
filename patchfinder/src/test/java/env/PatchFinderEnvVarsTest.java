@@ -22,8 +22,8 @@ package env; /**
  * SOFTWARE.
  */
 
-import env.PatchFinderEnvVars;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -42,20 +42,22 @@ public class PatchFinderEnvVarsTest {
         String[] addressBases = PatchFinderEnvVars.getAddressBases();
         assertEquals(addressBases[0], "https://www.github.com/");
         assertEquals(addressBases[1], "https://www.gitlab.com/");
-        assertEquals(1000, PatchFinderEnvVars.getCloneCommitThreshold());
-        assertEquals(50000, PatchFinderEnvVars.getCloneCommitLimit());
+        assertEquals(250, PatchFinderEnvVars.getCloneCommitThreshold());
+        assertEquals(200000, PatchFinderEnvVars.getCloneCommitLimit());
 
+        // TODO: Move to SharedEnvVarsTest
         // Default values for database environment variables
-        assertEquals("mysql", PatchFinderEnvVars.getDatabaseType());
-        assertEquals("jdbc:mysql://localhost:3306/nvip?useSSL=false&allowPublicKeyRetrieval=true", PatchFinderEnvVars.getHikariUrl());
-        assertEquals("root", PatchFinderEnvVars.getHikariUser());
-        assertEquals("root", PatchFinderEnvVars.getHikariPassword());
+        assertEquals("mysql", SharedEnvVars.getDatabaseType());
+        assertEquals("jdbc:mysql://localhost:3306/nvip?useSSL=false&allowPublicKeyRetrieval=true", SharedEnvVars.getHikariUrl());
+        assertEquals("root", SharedEnvVars.getHikariUser());
+        assertEquals("root", SharedEnvVars.getHikariPassword());
 
         // Default values for RabbitMQ environment variables
-        assertEquals(60, PatchFinderEnvVars.getRabbitPollInterval());
-        assertEquals("host.docker.internal", PatchFinderEnvVars.getRabbitHost());
-        assertEquals("guest", PatchFinderEnvVars.getRabbitUsername());
-        assertEquals("guest", PatchFinderEnvVars.getRabbitPassword());
-        assertEquals("PNE_OUT", PatchFinderEnvVars.getRabbitInputQueue());
+        assertEquals(60, SharedEnvVars.getRabbitPollInterval());
+        assertEquals("host.docker.internal", SharedEnvVars.getRabbitHost());
+        assertEquals("guest", SharedEnvVars.getRabbitUsername());
+        assertEquals("guest", SharedEnvVars.getRabbitPassword());
+        assertEquals("PNE_OUT_PATCH", SharedEnvVars.getPatchFinderInputQueue());
+        assertEquals("PNE_OUT_FIX", SharedEnvVars.getFixFinderInputQueue());
     }
 }

@@ -22,18 +22,11 @@ package patches; /**
  * SOFTWARE.
  */
 
-import org.junit.Ignore;
-import patches.PatchCommit;
-import org.junit.Test;
-import org.mockito.Mockito;
-import patches.PatchFinder;
-import patches.PatchFinderThread;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Set;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -46,61 +39,47 @@ public class PatchFinderThreadTest {
 
     //TODO: This needs to be re-written to utilize mocks. This test was failing because the apache airflow github added more patch commits
     @Test
-    @Ignore
+    @Disabled
     public void testRun() {
-        HashMap<String, ArrayList<String>> cvePatchEntry = new HashMap<>();
-        ArrayList<String> patchSources = new ArrayList<>();
-        patchSources.add("https://github.com/apache/airflow");
-        cvePatchEntry.put("CVE-2023-1001", patchSources);
         String clonePath = PatchFinder.clonePath;
         long timeoutMilli = 5000;
 
-        PatchFinderThread patchFinderThread = new PatchFinderThread(cvePatchEntry, clonePath, timeoutMilli);
+        PatchFinderThread patchFinderThread = new PatchFinderThread("CVE-2023-1001", "https://github.com/apache/airflow", clonePath, timeoutMilli);
         patchFinderThread.run();
 
-        PatchFinder patchFinder = Mockito.mock(PatchFinder.class);
         //check the patch commits
-        Set<PatchCommit> patchCommits = PatchFinder.getPatchCommits();
+        Set<PatchCommit> patchCommits = patchFinderThread.getPatchCommits();
         assertEquals(24, patchCommits.size());
     }
 
     //Cant find a repo to test this with that matches the >1000 commits threshold
     @Test
     public void testFindPatchCommitsFromUrl() {
-        HashMap<String, ArrayList<String>> cvePatchEntry = new HashMap<>();
-        //clear patchcommits
-        PatchFinder.getPatchCommits().clear();
         ArrayList<String> patchSources = new ArrayList<>();
         patchSources.add("https://github.com/OpenCycleCompass/server-php");
-        cvePatchEntry.put("CVE-2015-10086", patchSources);
         String clonePath = PatchFinder.clonePath;
         long timeoutMilli = 5000;
 
-        PatchFinderThread patchFinderThread = new PatchFinderThread(cvePatchEntry, clonePath, timeoutMilli);
-        patchFinderThread.run();
+        final Set<PatchCommit> patchCommits = new HashSet<>();
+        for (String source : patchSources) {
+            PatchFinderThread patchFinderThread = new PatchFinderThread("CVE-2015-10086", source, clonePath, timeoutMilli);
+            patchFinderThread.run();
+            patchCommits.addAll(patchFinderThread.getPatchCommits());
+        }
 
-        PatchFinder patchFinder = Mockito.mock(PatchFinder.class);
         //check the patch commits
-        Set<PatchCommit> patchCommits = PatchFinder.getPatchCommits();
         assertEquals(0, patchCommits.size());
 
     }
 
     @Test
-    public void testParseCommitObjects() throws IOException {
-        HashMap<String, ArrayList<String>> cvePatchEntry = new HashMap<>();
+    public void testParseCommitObjects() {
         ArrayList<String> patchSources = new ArrayList<>();
         patchSources.add("https://github.com/kkent030315/CVE-2022-42046");
-        cvePatchEntry.put("CVE-2022-42046", patchSources);
 //        String clonePath = PatchFinder.clonePath;
 //        long timeoutMilli = 5000;
-        //clear patchcommits
-        PatchFinder.getPatchCommits().clear();
         //want parseCommitObjects to be called, so we have to check the url using findPatchCommitsFromUrl
-        PatchFinder.findPatchesMultiThreaded(cvePatchEntry);
-        Set<PatchCommit> patchCommits = PatchFinder.getPatchCommits();
+        Set<PatchCommit> patchCommits = PatchFinder.findPatchesMultiThreaded("CVE-2022-42046", patchSources);
         assertEquals(0, patchCommits.size());
-
     }
-
 }

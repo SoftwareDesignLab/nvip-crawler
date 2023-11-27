@@ -27,7 +27,7 @@ package fixes.parsers;
 import edu.rit.se.nvip.db.model.Fix;
 
 import java.io.IOException;
-import java.util.List;
+import java.util.Set;
 
 public class RedhatSecurityParser extends RedhatParser {
 
@@ -36,7 +36,7 @@ public class RedhatSecurityParser extends RedhatParser {
     }
 
     @Override
-    protected List<Fix> parseWebPage() throws IOException {
+    protected Set<Fix> parseWebPage() throws IOException {
         return null;
     }
 }

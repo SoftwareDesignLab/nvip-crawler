@@ -23,10 +23,10 @@ package fixes.parsers;
  * SOFTWARE.
  */
 
+import fixes.Fix;
 
-import edu.rit.se.nvip.db.model.Fix;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 public class RedhatSolutionsParser extends RedhatParser {
 
@@ -39,8 +39,8 @@ public class RedhatSolutionsParser extends RedhatParser {
      * @return resolution data
      */
     @Override
-    protected List<Fix> parseWebPage(){
-        List<Fix> newFixes = new ArrayList<>();
+    protected Set<Fix> parseWebPage(){
+        Set<Fix> newFixes = new HashSet<>();
         String resolution = this.DOM.select("section[class=field_kcs_resolution_txt]").select("p").text();
         newFixes.add(new Fix(cveId, resolution, url));
         return newFixes;

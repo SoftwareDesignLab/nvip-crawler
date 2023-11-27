@@ -26,11 +26,10 @@ import edu.rit.se.nvip.db.DatabaseHelper;
 import edu.rit.se.nvip.db.model.CpeGroup;
 import edu.rit.se.nvip.db.repositories.ProductRepository;
 import env.PatchFinderEnvVars;
+import env.SharedEnvVars;
 import messenger.Messenger;
-import messenger.PFInputMessage;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
@@ -44,6 +43,13 @@ import patches.PatchFinder;
  */
 public class PatchFinderMain extends Thread {
     private final static Logger logger = LogManager.getLogger(PatchFinderMain.class);
+    private final DatabaseHelper databaseHelper;
+    private final Messenger messenger;
+
+    public PatchFinderMain(DatabaseHelper dbh, Messenger messenger) {
+        this.databaseHelper = dbh;
+        this.messenger = messenger;
+    }
 
     /**
      * Entry point for the PatchFinder, initializes necessary classes and start listening for jobs with RabbitMQ
@@ -52,7 +58,7 @@ public class PatchFinderMain extends Thread {
     public void run() {
         logger.info("Starting PatchFinder...");
         // Init PatchFinder
-        PatchFinder.init();
+        PatchFinder.init(this.databaseHelper);
 
         // Determine run mode and start PatchFinder
         switch (PatchFinderEnvVars.getInputMode()) {
@@ -70,43 +76,25 @@ public class PatchFinderMain extends Thread {
 
     private void runDb() {
         // Fetch affectedProducts from db
-        DatabaseHelper dbh = PatchFinder.getDatabaseHelper();
-        ProductRepository prodRepo = new ProductRepository(dbh.getDataSource());
-
-        Map<String, CpeGroup> affectedProducts = prodRepo.getAffectedProducts(null);
+        Map<String, CpeGroup> affectedProducts = PatchFinder.getDatabaseHelper().getAffectedProducts(null);
         final int affectedProductsCount = affectedProducts.values().stream().map(CpeGroup::getVersionsCount).reduce(0, Integer::sum);
         logger.info("Successfully got {} CVEs mapped to {} affected products from the database", affectedProducts.size(), affectedProductsCount);
         try {
-            PatchFinder.run(affectedProducts, PatchFinderEnvVars.getCveLimit());
+            // TODO: Delegate to threads
+            for (String cveId : affectedProducts.keySet()) {
+                PatchFinder.run(cveId, affectedProducts.get(cveId));
+            }
+
+            // When all threads are done, write source dict to file
+            PatchFinder.writeSourceDict();
         } catch (IOException e) {
             logger.error("A fatal error attempting to complete jobs: {}", e.toString());
         }
     }
 
+    // TODO: Support end message
     private void runRabbit() {
-        // Start busy-wait loop
-        final Messenger rabbitMQ = new Messenger(
-                PatchFinderEnvVars.getRabbitHost(),
-                PatchFinderEnvVars.getRabbitVHost(),
-                    PatchFinderEnvVars.getRabbitPort(),PatchFinderEnvVars.getRabbitUsername(),
-                PatchFinderEnvVars.getRabbitPassword(),
-                    PatchFinderEnvVars.getRabbitInputQueue()
-        );
-        logger.info("Starting busy-wait loop for jobs...");
-        while(true) {
-            try {
-                // Wait and get jobs
-                final PFInputMessage msg = rabbitMQ.waitForProductNameExtractorMessage(PatchFinderEnvVars.getRabbitPollInterval());
-
-                // If null is returned, either and error occurred or intentional program quit
-                if(msg == null) break;
-
-                // Otherwise, run received jobs
-                PatchFinder.run(msg.getJobs());
-            } catch (IOException | InterruptedException e) {
-                logger.error("A fatal error occurred during job waiting: {}", e.toString());
-                break;
-            }
-        }
+        // Start job handling
+        messenger.startHandlingPatchJobs(SharedEnvVars.getPatchFinderInputQueue());
     }
 }

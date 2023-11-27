@@ -1,5 +1,7 @@
 package edu.rit.se.nvip.filter;
 
+import edu.rit.se.nvip.reconciler.filter.FilterHandler;
+import edu.rit.se.nvip.reconciler.filter.FilterReturn;
 import edu.rit.se.nvip.db.model.RawVulnerability;
 import org.junit.jupiter.api.Test;
 

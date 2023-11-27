@@ -25,15 +25,17 @@ package messenger;
  */
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.Connection;
-import com.rabbitmq.client.ConnectionFactory;
-import com.rabbitmq.client.DeliverCallback;
+import com.rabbitmq.client.*;
+import db.DatabaseHelper;
+import model.cpe.AffectedProduct;
+import model.cve.CompositeVulnerability;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import env.ProductNameExtractorEnvVars;
+import productdetection.AffectedProductIdentifier;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -42,6 +44,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.*;
 
 /**
@@ -55,184 +58,118 @@ import java.util.concurrent.*;
  */
 public class Messenger {
     private final String inputQueue;
-    private final String outputQueue;
+    private final String patchFinderOutputQueue;
+    private final String fixFinderOutputQueue;
     private static final Logger logger = LogManager.getLogger(Messenger.class.getSimpleName());
     private static final ObjectMapper OM = new ObjectMapper();
+
     private ConnectionFactory factory;
+    private AffectedProductIdentifier affectedProductIdentifier;
+    private DatabaseHelper databaseHelper;
 
-    public Messenger(){
-        // Instantiate with default values
-        this(
-                ProductNameExtractorEnvVars.getRabbitHost(),
-                ProductNameExtractorEnvVars.getRabbitVHost(),
-                ProductNameExtractorEnvVars.getRabbitPort(),
-                ProductNameExtractorEnvVars.getRabbitUsername(),
-                ProductNameExtractorEnvVars.getRabbitPassword(),
-                ProductNameExtractorEnvVars.getRabbitInputQueue(),
-                ProductNameExtractorEnvVars.getRabbitOutputQueue()
-        );
-    }
 
-    /**
-     * Instantiate new RabbitMQ Messenger
-     * @param host hostname
-     * @param username username
-     * @param password password
-     */
-    public Messenger(String host, String vhost, int port, String username, String password, String inputQueue, String outputQueue){
-        factory = new ConnectionFactory();
-        factory.setHost(host);
-        factory.setVirtualHost(vhost);
-        factory.setPort(port);
-        factory.setUsername(username);
-        factory.setPassword(password);
-
-        try {
-            factory.useSslProtocol();
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        } catch (KeyManagementException e) {
-            throw new RuntimeException(e);
-        }
-
+    public Messenger(ConnectionFactory connectionFactory, String inputQueue, String patchFinderOutputQueue, String fixFinderOutputQueue, AffectedProductIdentifier affectedProductIdentifier, DatabaseHelper databaseHelper){
+        this.factory = connectionFactory;
         this.inputQueue = inputQueue;
-        this.outputQueue = outputQueue;
+        this.patchFinderOutputQueue = patchFinderOutputQueue;
+        this.fixFinderOutputQueue = fixFinderOutputQueue;
+        this.affectedProductIdentifier = affectedProductIdentifier;
+        this.databaseHelper = databaseHelper;
     }
 
-    /**
-     * Manually sets the factory
-     *
-     * @param factory ConnectionFactory to be set
-     */
-    public void setFactory(ConnectionFactory factory){
-        this.factory = factory;
-    }
+    public void run() {
+        try {
+            Connection connection = factory.newConnection();
+            Channel channel = connection.createChannel();
 
-    /**
-     * Function to wait for jobs from the Reconciler, which upon reception will be passed to main to be processed.
-     * Will continuously poll every pollInterval number of seconds until a message is received. Also handles
-     * 'FINISHED' and 'TERMINATE' cases.
-     *
-     * @param pollInterval number of seconds between each poll to the queue
-     * @return list of jobs or one-element list containing 'FINISHED' or 'TERMINATE'
-     */
-    public PNEInputMessage waitForReconcilerMessage(int pollInterval) {
-        // Initialize job list
-        PNEInputMessage retVal = null;
-        logger.info("Waiting for jobs from Reconciler...");
-        final long startTime = System.currentTimeMillis();
+            // TODO: Needed?
+            channel.queueDeclare(inputQueue, true, false, false, null);
+            channel.queueDeclare(patchFinderOutputQueue, true, false, false, null);
+            channel.queueDeclare(fixFinderOutputQueue, true, false, false, null);
 
-        // Busy-wait loop for jobs
-        while(retVal == null) {
-            try(Connection connection = factory.newConnection();
-                Channel channel = connection.createChannel()){
+            channel.basicConsume(inputQueue, false, new DefaultConsumer(channel) {
+                @Override
+                public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
+                    // Get cveId and ensure it is not null
+                    String cveId = parseMessage(new String(body, StandardCharsets.UTF_8));
+                    if(cveId != null){
+                        // Pull specific cve information from database for each CVE ID passed from reconciler (ensure not null)
+                        CompositeVulnerability vuln = databaseHelper.getSpecificCompositeVulnerability(cveId);
+                        if(vuln == null) {
+                            logger.warn("Could not find CVE '{}' in database", cveId);
+                        } else {
+                            // Identify affected products from the CVEs
+                            final long getProdStart = System.currentTimeMillis();
+                            List<AffectedProduct> affectedProducts = affectedProductIdentifier.identifyAffectedProducts(vuln);
 
-                channel.queueDeclare(inputQueue, false, false, false, null);
+                            // Insert the affected products found into the database
+                            databaseHelper.insertAffectedProductsToDB(affectedProducts);
+                            logger.info("Product Name Extractor found and inserted {} affected products to the database in {} seconds", affectedProducts.size(), Math.floor(((double) (System.currentTimeMillis() - getProdStart) / 1000) * 100) / 100);
 
-                BlockingQueue<PNEInputMessage> messageQueue = new ArrayBlockingQueue<>(1);
+    //                        // Clear cveIds, extract only the cveIds for which affected products were found to be sent to the Patchfinder
+    //                        cveIds.clear();
+    //                        for (AffectedProduct affectedProduct : affectedProducts) {
+    //                            if (!cveIds.contains(affectedProduct.getCveId())) cveIds.add(affectedProduct.getCveId());
+    //                        }
 
-                DeliverCallback deliverCallback = (consumerTag, delivery) -> {
-                    String message = new String(delivery.getBody(), StandardCharsets.UTF_8);
-                    PNEInputMessage msg = parseInput(message);
-                    if(!messageQueue.offer(msg)) {
-                        logger.error("Job response could not be added to message queue");
+//                            logger.info("Sending jobs to patchfinder and fixfinder...");
+                            String response = genJson(cveId);
+                            channel.basicPublish("", patchFinderOutputQueue, null, response.getBytes(StandardCharsets.UTF_8));
+                            channel.basicPublish("", fixFinderOutputQueue, null, response.getBytes(StandardCharsets.UTF_8));
+                            logger.info("Jobs have been sent to the Patchfinder and Fixfinder!\n");
+                        }
+
+                        // Acknowledge job after completion
+                        channel.basicAck(envelope.getDeliveryTag(), false);
                     }
-                };
-
-                channel.basicConsume(inputQueue, true, deliverCallback, consumerTag -> { });
-
-                logger.info("Polling message queue...");
-                retVal = messageQueue.poll(pollInterval, TimeUnit.SECONDS);
-                final long elapsedTime = System.currentTimeMillis() - startTime;
-
-                // Status log every 10 minutes
-                if(elapsedTime / 1000 % 600 == 0){
-                    logger.info("Messenger has been waiting for a message for {} minute(s)", elapsedTime / 1000 / 60);
                 }
+            });
 
-            } catch (TimeoutException | InterruptedException | IOException e) {
-                logger.error("Error occurred while getting jobs from the ProductNameExtractor: {}", e.toString());
-                break;
-            }
-        }
-
-        return retVal;
-    }
-
-    /**
-     * Sends a list of jobs in the form of CVE IDs to be processed by the PatchFinder to the 'PNE_OUT' queue.
-     *
-     * @param msg list of jobs to be processed
-     */
-    public void sendPatchFinderMessage(PFInputMessage msg) {
-
-        try (Connection connection = factory.newConnection();
-             Channel channel = connection.createChannel()) {
-            channel.queueDeclare(outputQueue, false, false, false, null);
-            String message = genJson(msg);
-            channel.basicPublish("", outputQueue, null, message.getBytes(StandardCharsets.UTF_8));
-
-        } catch (TimeoutException | IOException e) {
-            logger.error("Error occurred while sending the PNE message to RabbitMQ: {}", e.getMessage());
+        } catch (IOException | TimeoutException e) {
+            throw new RuntimeException(e);
         }
     }
 
     /**
-     * Sends 'FINISHED' to the PatchFinder to notify it that all jobs have been processed within the PNE
-     * and to not expect to receive any more jobs for the time being.
+     * Parse an id from a given json string. (String should be {'cveId': 'CVE-2023-1001'})
+     * @param jsonString a JSON representation of an array of String CVE ids
+     * @return parsed list of ids
      */
-    public void sendPatchFinderFinishMessage() {
-        try (Connection connection = factory.newConnection();
-             Channel channel = connection.createChannel()) {
-            channel.queueDeclare(outputQueue, false, false, false, null);
-            PFInputMessage pfm = new PFInputMessage("FINISHED", new ArrayList<>());
-            channel.basicPublish("", outputQueue, null, genJson(pfm).getBytes(StandardCharsets.UTF_8));
-
-        } catch (TimeoutException | IOException e) {
-            logger.error("Error occurred while sending the PNE message to RabbitMQ: {}", e.getMessage());
-        }
-    }
-
-    /**
-     * Takes a JSON string containing all CVE jobs to be processed and splits them into a list
-     *
-     * @param jsonString string containing the CVE IDs
-     * @return list of CVE IDs
-     */
-    @SuppressWarnings("unchecked")
-    public PNEInputMessage parseInput(String jsonString) {
+    public static String parseMessage(String jsonString) {
         try {
-            return OM.readValue(jsonString, PNEInputMessage.class);
+            logger.info("Incoming CVE: '{}'", jsonString);
+            final JsonNode messageNode = OM.readTree(jsonString);
+            return messageNode.get("cveId").asText();
         } catch (JsonProcessingException e) {
-            logger.error("Failed to parse list of ids from json string: {}", e.toString());
-            return new PNEInputMessage("", new ArrayList<>());
+            logger.error("Failed to parse id from json string: {}", e.toString());
+            return null;
         }
     }
 
     /**
-     * Takes in a list of CVE IDs and transforms it into a JSON string to be sent via RabbitMQ.
-     *
-     * @param msg list of CVE IDs
-     * @return single JSON string of all CVE IDs
+     * Generates the json string from the cveId string
+     * @param cveId
+     * @return
      */
-    private String genJson(PFInputMessage msg) {
+    private String genJson(String cveId) {
         try {
-            return OM.writeValueAsString(msg);
+            Map<String, String> cveJson = Map.of("cveId", cveId);
+            return OM.writeValueAsString(cveJson);
         } catch (JsonProcessingException e) {
             logger.error("Failed to convert list of ids to json string: {}", e.toString());
             return "";
         }
     }
 
-//    private void sendDummyMessage(String queue, List<String> cveIds) {
-//        try (Connection connection = factory.newConnection();
-//             Channel channel = connection.createChannel()) {
-//            channel.queueDeclare(queue, false, false, false, null);
-//            String message = genJson(cveIds);
-//            channel.basicPublish("", queue, null, message.getBytes(StandardCharsets.UTF_8));
-//            logger.info("Successfully sent message:\n\"{}\"", message);
-//        } catch (IOException | TimeoutException e) { logger.error("Error sending message: {}", e.toString()); }
-//    }
+    private void sendDummyMessage(String queue, String cveId) {
+        try (Connection connection = factory.newConnection();
+             Channel channel = connection.createChannel()) {
+            channel.queueDeclare(queue, true, false, false, null);
+            String message = genJson(cveId);
+            channel.basicPublish("", queue, null, message.getBytes(StandardCharsets.UTF_8));
+            logger.info("Successfully sent message:\n\"{}\"", message);
+        } catch (IOException | TimeoutException e) { logger.error("Error sending message: {}", e.toString()); }
+    }
 
     private static List<String> getIdsFromFile(String filename) {
         try {
@@ -282,31 +219,50 @@ public class Messenger {
         }
     }
 
+    /**
+     * Manually sets the factory
+     *
+     * @param factory ConnectionFactory to be set
+     */
+    public void setFactory(ConnectionFactory factory){
+        this.factory = factory;
+    }
+
     public static void main(String[] args) {
-        Messenger messenger = new Messenger();
-        List<String> cveIds = new ArrayList<>();
-        cveIds.addAll(getIdsFromJson("test_output.json"));
-        writeIdsToFile(cveIds, "test_ids.txt");
-//        messenger.sendDummyMessage("CRAWLER_OUT", cveIds);
+        List<CompositeVulnerability> vulnList = new ArrayList<>();
+        // Initialize the affectedProductIdentifier and get ready to process cveIds
 
+        ConnectionFactory factory = new ConnectionFactory();
+        factory.setHost(ProductNameExtractorEnvVars.getRabbitHost());
+        factory.setVirtualHost(ProductNameExtractorEnvVars.getRabbitVHost());
+        factory.setPort(ProductNameExtractorEnvVars.getRabbitPort());
+        factory.setUsername(ProductNameExtractorEnvVars.getRabbitUsername());
+        factory.setPassword(ProductNameExtractorEnvVars.getRabbitPassword());
 
+//        try {
+//            factory.useSslProtocol();
+//        } catch (NoSuchAlgorithmException e) {
+//            throw new RuntimeException(e);
+//        } catch (KeyManagementException e) {
+//            throw new RuntimeException(e);
+//        }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        Messenger messenger = new Messenger(
+                factory,
+                ProductNameExtractorEnvVars.getRabbitInputQueue(),
+                ProductNameExtractorEnvVars.getRabbitPatchfinderOutputQueue(),
+                ProductNameExtractorEnvVars.getRabbitFixfinderOutputQueue(),
+                null,
+                new DatabaseHelper(
+                        ProductNameExtractorEnvVars.getDatabaseType(),
+                        ProductNameExtractorEnvVars.getHikariUrl(),
+                        ProductNameExtractorEnvVars.getHikariUser(),
+                        ProductNameExtractorEnvVars.getHikariPassword()
+                ));
+//        List<String> cveIds = new ArrayList<>();
+//        cveIds.addAll(getIdsFromJson("test_output.json"));
+//        writeIdsToFile(cveIds, "test_ids.txt");
+        messenger.sendDummyMessage("RECONCILER_OUT", "CVE-2013-4190");
 //        cveIds.add("CVE-2008-2951");
 //        cveIds.add("CVE-2014-0472");
 //        cveIds.add("TERMINATE");

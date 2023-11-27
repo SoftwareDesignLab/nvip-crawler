@@ -22,17 +22,15 @@
  * SOFTWARE.
  */
 
-import edu.rit.se.nvip.db.DatabaseHelper;
-import edu.rit.se.nvip.db.model.CpeGroup;
-import edu.rit.se.nvip.db.repositories.ProductRepository;
-import edu.rit.se.nvip.db.repositories.VulnerabilityRepository;
-import messenger.*;
-import edu.rit.se.nvip.db.model.CpeCollection;
+import com.rabbitmq.client.ConnectionFactory;
 import productdetection.AffectedProductIdentifier;
 import com.opencsv.CSVReader;
+import db.DatabaseHelper;
 import env.ProductNameExtractorEnvVars;
-import edu.rit.se.nvip.db.model.AffectedProduct;
-import edu.rit.se.nvip.db.model.CompositeVulnerability;
+import messenger.Messenger;
+import model.cpe.AffectedProduct;
+import model.cpe.CpeGroup;
+import model.cve.CompositeVulnerability;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import dictionary.ProductDictionary;
@@ -41,10 +39,11 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.PrintWriter;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * Main class and driver for the NVIP Product Name Extractor.
@@ -147,7 +146,7 @@ public class ProductNameExtractorMain {
                         Integer.parseInt(line[0]),
                         line[1],
                         line[2],
-                        CompositeVulnerability.ReconciliationStatus.UPDATED
+                        CompositeVulnerability.CveReconcileStatus.UPDATE
                 );
 
                 vulnList.add(vulnerability);
@@ -177,7 +176,7 @@ public class ProductNameExtractorMain {
                 List<AffectedProduct> affectedProducts = new ArrayList<>(vulnerability.getAffectedProducts());
 
                 StringBuilder builder = new StringBuilder();
-                builder.append(vulnerability.getId()).append("\t\t\t").append(vulnerability.getCveId()).append("\t\t\t")
+                builder.append(vulnerability.getVulnID()).append("\t\t\t").append(vulnerability.getCveId()).append("\t\t\t")
                         .append(vulnerability.getDescription()).append("\n");
                 builder.append("\n");
 
@@ -205,92 +204,59 @@ public class ProductNameExtractorMain {
 
     // If in Database mode, grab CVE limit number of CVEs from the database and process those
     private static void dbMain(DatabaseHelper databaseHelper) {
-        VulnerabilityRepository vulnRepo = new VulnerabilityRepository(databaseHelper.getDataSource());
-        ProductRepository prodRepo = new ProductRepository(databaseHelper.getDataSource());
-        List<CompositeVulnerability> vulnList = vulnRepo.getAllCompositeVulnerabilities(ProductNameExtractorEnvVars.getCveLimit());
+        List<CompositeVulnerability> vulnList = databaseHelper.getAllCompositeVulnerabilities(ProductNameExtractorEnvVars.getCveLimit());
 
         initializeProductIdentifier(vulnList);
 
         // Process vulnerabilities
         final long getProdStart = System.currentTimeMillis();
-        final List<AffectedProduct> affectedProducts = affectedProductIdentifier.identifyAffectedProducts();
-        int numAffectedProducts = affectedProducts.size();
-        Map<String, List<AffectedProduct>> cveToCpes = affectedProducts.stream().collect(Collectors.groupingBy(AffectedProduct::getCveId));
-        List<CpeCollection> groupedProds = vulnList.stream().map(v->new CpeCollection(v, cveToCpes.get(v.getCveId()))).collect(Collectors.toList());
+        int numAffectedProducts = 0;
+
+        for(CompositeVulnerability vuln : vulnList) {
+            final List<AffectedProduct> products = affectedProductIdentifier.identifyAffectedProducts(vuln);
+            databaseHelper.insertAffectedProductsToDB(products);
+            numAffectedProducts += products.size();
+        }
+
 
         logger.info("Product Name Extractor found {} affected products in {} seconds", numAffectedProducts, Math.floor(((double) (System.currentTimeMillis() - getProdStart) / 1000) * 100) / 100);
 
-        // Insert the affected products found into the database
-        prodRepo.insertAffectedProductsToDB(groupedProds);
-        logger.info("Product Name Extractor found and inserted {} affected products to the database in {} seconds", affectedProducts.size(), Math.floor(((double) (System.currentTimeMillis() - getProdStart) / 1000) * 100) / 100);
+//        // Insert the affected products found into the database
+//        databaseHelper.insertAffectedProductsToDB(affectedProducts);
+//        logger.info("Product Name Extractor found and inserted {} affected products to the database in {} seconds", affectedProducts.size(), Math.floor(((double) (System.currentTimeMillis() - getProdStart) / 1000) * 100) / 100);
     }
 
+    // TODO: Implement job streaming (queue received jobs to be consumed, support end messages)
     // Using RabbitMQ, get the list of cve IDs from the reconciler and create vuln list from those
     private static void rabbitMain(DatabaseHelper databaseHelper) {
-        VulnerabilityRepository vulnRepo = new VulnerabilityRepository(databaseHelper.getDataSource());
-        ProductRepository prodRepo = new ProductRepository(databaseHelper.getDataSource());
-        List<CompositeVulnerability> vulnList;
-        final Messenger rabbitMQ = new Messenger();
-        while(true) {
-            try {
+        List<CompositeVulnerability> vulnList = new ArrayList<>();
+        // Initialize the affectedProductIdentifier and get ready to process cveIds
+        initializeProductIdentifier(vulnList);
 
-                // Get CVE IDs to be processed from reconciler
-                PNEInputMessage msg = rabbitMQ.waitForReconcilerMessage(rabbitPollInterval);
+        ConnectionFactory factory = new ConnectionFactory();
+        factory.setHost(ProductNameExtractorEnvVars.getRabbitHost());
+        factory.setVirtualHost(ProductNameExtractorEnvVars.getRabbitVHost());
+        factory.setPort(ProductNameExtractorEnvVars.getRabbitPort());
+        factory.setUsername(ProductNameExtractorEnvVars.getRabbitUsername());
+        factory.setPassword(ProductNameExtractorEnvVars.getRabbitPassword());
 
-                // If 'TERMINATE' message sent, initiate shutdown sequence and exit process
-                if (msg.getCommand().equals("TERMINATE")) {
-                    logger.info("TERMINATE message received from the Reconciler, shutting down...");
-                    // used to be a db shutdown on this line
-                    logger.info("Shutdown completed.");
-                    System.exit(1);
-
-                    // If 'FINISHED' message sent, jobs are done for now, release resources
-                } else if (msg.getCommand().equals("FINISHED")) {
-                    logger.info("FINISHED message received from the Reconciler, releasing resources...");
-                    releaseResources();
-
-                    // If PNE is finished, notify PatchFinder
-                    rabbitMQ.sendPatchFinderFinishMessage();
-
-                    // Otherwise, CVE jobs were received, process them
-                } else if (msg.hasJobArray()){
-                    List<String> cveIds = msg.getJobs().stream().map(PNEInputJob::getCveId).collect(Collectors.toList());
-                    List<Integer> vulnVersionIds = msg.getJobs().stream().map(PNEInputJob::getVulnVersionId).collect(Collectors.toList());
-                    logger.info("Received job with CVE(s) {}", cveIds);
-
-                    // Pull specific cve information from database for each CVE ID passed from reconciler
-                    vulnList = vulnRepo.getSpecificCompositeVulnerabilities(vulnVersionIds);
-
-                    // Initialize the affectedProductIdentifier and get ready to process cveIds
-                    initializeProductIdentifier(vulnList);
-
-                    // Identify affected products from the CVEs
-                    final long getProdStart = System.currentTimeMillis();
-                    List<AffectedProduct> affectedProducts = affectedProductIdentifier.identifyAffectedProducts();
-                    Map<String, List<AffectedProduct>> cveToCpes = affectedProducts.stream().collect(Collectors.groupingBy(AffectedProduct::getCveId));
-                    List<CpeCollection> groupedProds = vulnList.stream().filter(v-> cveToCpes.containsKey(v.getCveId()))
-                            .map(v->new CpeCollection(v, cveToCpes.get(v.getCveId()))).collect(Collectors.toList());
-
-                    // Insert the affected products found into the database
-                    prodRepo.insertAffectedProductsToDB(groupedProds);
-                    logger.info("Product Name Extractor found and inserted {} affected products to the database in {} seconds", affectedProducts.size(), Math.floor(((double) (System.currentTimeMillis() - getProdStart) / 1000) * 100) / 100);
-
-                    List<PFInputJob> pfJobs = new ArrayList<>();
-                    groupedProds.forEach(g->pfJobs.add(new PFInputJob(g.getCve().getCveId(), g.getCve().getVersionId())));
-                    PFInputMessage pfm = new PFInputMessage(pfJobs);
-
-                    // Send list of cveIds to Patchfinder
-                    logger.info("Sending jobs to patchfinder...");
-                    rabbitMQ.sendPatchFinderMessage(pfm);
-                    logger.info("Jobs have been sent!\n\n");
-                }
-
-            } catch (Exception e) {
-                logger.error("Failed to get jobs from RabbitMQ, exiting program with error: {}", e.toString());
-                e.printStackTrace();
-                System.exit(1);
-            }
+        try {
+            factory.useSslProtocol();
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        } catch (KeyManagementException e) {
+            throw new RuntimeException(e);
         }
+
+        final Messenger rabbitMQ = new Messenger(
+                factory,
+                ProductNameExtractorEnvVars.getRabbitInputQueue(),
+                ProductNameExtractorEnvVars.getRabbitPatchfinderOutputQueue(),
+                ProductNameExtractorEnvVars.getRabbitFixfinderOutputQueue(),
+                affectedProductIdentifier,
+                databaseHelper);
+
+        rabbitMQ.run();
     }
 
     // If in test mode, create manual vulnerability list
@@ -299,11 +265,17 @@ public class ProductNameExtractorMain {
         logger.info("Test mode enabled, creating test vulnerability list...");
         vulnList = createTestVulnList();
 
+        // TODO: Deprecate and remove
         initializeProductIdentifier(vulnList);
 
         // Process vulnerabilities
         long getProdStart = System.currentTimeMillis();
-        int numAffectedProducts = affectedProductIdentifier.identifyAffectedProducts().size();
+        final List<AffectedProduct> affectedProducts = new ArrayList<>();
+        for(CompositeVulnerability vuln : vulnList) {
+            affectedProducts.addAll(affectedProductIdentifier.identifyAffectedProducts(vuln));
+        }
+
+        int numAffectedProducts = affectedProducts.size();
 
         logger.info("Product Name Extractor found {} affected products in the test run in {} seconds", numAffectedProducts, Math.floor(((double) (System.currentTimeMillis() - getProdStart) / 1000) * 100) / 100);
 
@@ -324,7 +296,7 @@ public class ProductNameExtractorMain {
     public static void main(String[] args) {
 
         // Initialize Database Helper and Product Dictionary
-        DatabaseHelper databaseHelper = DatabaseHelper.getInstance();
+        DatabaseHelper databaseHelper = new DatabaseHelper(databaseType, hikariUrl, hikariUser, hikariPassword);
         ProductDictionary.initializeProductDict();
 
         String inputMode = ProductNameExtractorEnvVars.getInputMode();

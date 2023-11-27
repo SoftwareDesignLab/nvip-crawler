@@ -21,22 +21,22 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package edu.rit.se.nvip.filter;
-
+package edu.rit.se.nvip.reconciler.filter;
 
 import edu.rit.se.nvip.db.model.RawVulnerability;
 
+import java.util.regex.Pattern;
+
 /**
- * This class acts as a filter for rawVuln entries where the description matches the CVE ID
+ * This class acts as a filter for rawVuln entries where the description is a single integer
  *
  * @author jqm4954@rit.edu
  */
-public class CveMatchesDescriptionFilter extends Filter{
+public class IntegerDescriptionFilter extends Filter{
     @Override
     public boolean passesFilter(RawVulnerability rawVuln) {
         String description = rawVuln.getDescription();
-        String cveId = rawVuln.getCveId();
         description = description.trim();
-        return !description.equals(cveId);
+        return !Pattern.matches("\\d+", description);
     }
 }

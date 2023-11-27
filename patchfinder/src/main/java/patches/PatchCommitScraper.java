@@ -30,8 +30,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -61,6 +60,11 @@ public class PatchCommitScraper {
 
 	private static final int COM_MESSAGE_LIMIT = 1000;
 
+	/**Method to set proper parameters for the scraper
+	 *
+	 * @param localDownloadLoc - location for local download
+	 * @param repoSource - repository source
+	 */
 	public PatchCommitScraper(String localDownloadLoc, String repoSource) {
 		this.localDownloadLoc = localDownloadLoc;
 		this.repoSource = repoSource;
@@ -74,55 +78,47 @@ public class PatchCommitScraper {
 	 * @throws GitAPIException
 	 * @return
 	 */
-	public List<PatchCommit> parseCommits(String cveId, Pattern[] patchPatterns) {
-		List<PatchCommit> patchCommits = new ArrayList<>();
-
+	public void parseCommits(Set<PatchCommit> patchCommits, String cveId) {
 		logger.info("Grabbing Commits List for repo @ {}...", localDownloadLoc);
 
 		final String[] localDownloadParts = localDownloadLoc.split("/");
 		final String localName = localDownloadParts[localDownloadParts.length - 1];
 
 		// Initialize commit list form the repo's .git folder
-		try (final Repository repository = new FileRepositoryBuilder().setGitDir(new File(localDownloadLoc+"/.git")).build()){
+		try (final Repository repository = new FileRepositoryBuilder().setGitDir(new File(localDownloadLoc)).build()){
 			try(final Git git = new Git(repository)) {
 				// Iterate through each commit and check if there's a commit message that contains a CVE ID
 				// or the 'vulnerability' keyword
-				// TODO: Test now that localDownloadLoc is fixed
 				final ObjectId startingRevision = repository.resolve("refs/heads/master");
 				if(startingRevision != null || true) {
-					// TODO: Catch NoHeadException, possibly due to empty repos, investigate further
-					final Iterable<RevCommit> commits = git.log()/*.add(startingRevision)*/.call();
+					final Iterable<RevCommit> commits = git.log().call();
 
 					int ignoredCounter = 0;
 
 					for (RevCommit commit : commits) {
-						// Check if the commit message matches any of the regex provided
-						for (Pattern pattern : patchPatterns) {
-							Matcher matcher = pattern.matcher(commit.getFullMessage());
-							// If found the CVE ID is found, add the patch commit to the returned list
-							if (matcher.find() || commit.getFullMessage().contains(cveId)) {
-								String commitUrl = repository.getConfig().getString("remote", "origin", "url");
-								logger.info("Found patch commit @ {} in repo {}", commitUrl, localDownloadLoc);
-								String unifiedDiff = generateUnifiedDiff(git, commit);
-								// Truncate unidiff to char limit
-								if(unifiedDiff.length() > UNI_DIFF_LIMIT) {
-									logger.warn("Unified diff was longer than UNI_DIFF_LIMIT ({}), and was truncated", UNI_DIFF_LIMIT);
-									unifiedDiff = unifiedDiff.substring(0, UNI_DIFF_LIMIT);
-								}
-								List<String> commitTimeline = calculateCommitTimeline(repository, startingRevision, commit);
-								int linesChanged = getLinesChanged(repository, commit);
-								List<RevCommit> commitList = calculateCommitTimelineElapsed(repository, startingRevision, commit);
-								Long timeToPatch = calculateTimeToPatch(commitList);
-								String formattedTimeToPatch = formatTimeToPatch(timeToPatch);
-								String commitMessage = commit.getFullMessage();
-								if(commitMessage.length() > COM_MESSAGE_LIMIT) {
-									logger.warn("Commit message was longer than COM_MESSAGE_LIMIT ({}), and was truncated", COM_MESSAGE_LIMIT);
-									commitMessage = commitMessage.substring(0, COM_MESSAGE_LIMIT-3) + "...";
-								}
-								PatchCommit patchCommit = new PatchCommit(commitUrl, cveId, commit.getName(), new Date(commit.getCommitTime() * 1000L), commitMessage, unifiedDiff, commitTimeline, formattedTimeToPatch, linesChanged);
-								patchCommits.add(patchCommit);
-							} else ignoredCounter++;
-						}
+						// If found the CVE ID is found, add the patch commit to the returned list
+						if (commit.getFullMessage().contains(cveId)) {
+							String commitUrl = repository.getConfig().getString("remote", "origin", "url");
+							logger.info("Found patch commit from CVE '{}' @ {} in repo {}", cveId, commitUrl, localDownloadLoc);
+							String unifiedDiff = generateUnifiedDiff(git, commit);
+							// Truncate unidiff to char limit
+							if(unifiedDiff.length() > UNI_DIFF_LIMIT) {
+								logger.warn("Unified diff was longer than UNI_DIFF_LIMIT ({}), and was truncated", UNI_DIFF_LIMIT);
+								unifiedDiff = unifiedDiff.substring(0, UNI_DIFF_LIMIT);
+							}
+							List<String> commitTimeline = calculateCommitTimeline(repository, startingRevision, commit);
+							int linesChanged = getLinesChanged(repository, commit);
+							List<RevCommit> commitList = calculateCommitTimelineElapsed(repository, startingRevision, commit);
+							long timeToPatch = calculateTimeToPatch(commitList);
+							String formattedTimeToPatch = formatTimeToPatch(timeToPatch);
+							String commitMessage = commit.getFullMessage();
+							if(commitMessage.length() > COM_MESSAGE_LIMIT) {
+								logger.warn("Commit message was longer than COM_MESSAGE_LIMIT ({}), and was truncated", COM_MESSAGE_LIMIT);
+								commitMessage = commitMessage.substring(0, COM_MESSAGE_LIMIT-3) + "...";
+							}
+							PatchCommit patchCommit = new PatchCommit(commitUrl, cveId, commit.getName(), new Date(commit.getCommitTime() * 1000L), commitMessage, unifiedDiff, commitTimeline, formattedTimeToPatch, linesChanged);
+							patchCommits.add(patchCommit);
+						} else ignoredCounter++;
 					}
 
 //					logger.info("Ignored {} non-patch commits", ignoredCounter);
@@ -134,9 +130,8 @@ public class PatchCommitScraper {
 			}
 		} catch (IOException | GitAPIException e) {
 			logger.error("ERROR: Failed to scrape repo @ {} for patch commits for CVE {}\n{}", repoSource, cveId, e);
+			e.printStackTrace();
 		}
-
-		return patchCommits;
 	}
 
 	/**
@@ -194,12 +189,12 @@ public class PatchCommitScraper {
 
 	/**
 	 * prepare a timeline of commits between the vulnerable commit, and the patch commit. Keep track of timeline, estimate how long it took to patch, how many lines needed to be change.
-	 * @param repository
-	 * @param startingRevision
-	 * @param commit
-	 * @return
-	 * @throws IOException
-	 * @throws GitAPIException
+	 * @param repository the git repository
+	 * @param startingRevision first revision to calculate time off of
+	 * @param commit most recent commit
+	 * @return Timeline for commits
+	 * @throws IOException if an IO error occurs
+	 * @throws GitAPIException if a GitAPI exception occurs
 	 */
 	private List<String> calculateCommitTimeline(Repository repository, ObjectId startingRevision, RevCommit commit) throws IOException {
 		List<String> commitTimeline = new ArrayList<>();
@@ -240,6 +235,14 @@ public class PatchCommitScraper {
 	}
 
 
+	/**Calculate timeline between commits
+	 *
+	 * @param repository Git repository to use
+	 * @param startingRevision original revision
+	 * @param commit most recent commit
+	 * @return Timeline of commits, number of commits since original
+	 * @throws IOException if an io error occurs
+	 */
 	private List<RevCommit> calculateCommitTimelineElapsed(Repository repository, ObjectId startingRevision, RevCommit commit) throws IOException {
 		List<RevCommit> commitTimeline = new ArrayList<>();
 		try (RevWalk walk = new RevWalk(repository)) {
@@ -303,6 +306,13 @@ public class PatchCommitScraper {
 		return 0;
 	}
 
+	/**Counts the number of lines changed between entries
+	 *
+	 * @param diffEntry the different entries that are being compared
+	 * @param repository git repository to use
+	 * @return number of lines changed between the two entries
+	 * @throws IOException if an IO error occurs
+	 */
 	private int countLinesChanged(DiffEntry diffEntry, Repository repository) throws IOException {
 		int linesChanged = 0;
 		try (DiffFormatter diffFormatter = new DiffFormatter(DisabledOutputStream.INSTANCE)) {
@@ -315,6 +325,11 @@ public class PatchCommitScraper {
 		return linesChanged;
 	}
 
+	/** Calculates the time between the initial and patch commits
+	 *
+	 * @param commitTimeline list of revisions in a timeline
+	 * @return time between initial commit and fix in milliseconds
+	 */
 	private long calculateTimeToPatch(List<RevCommit> commitTimeline) {
 		if (commitTimeline.size() <= 1) {
 			// If there are no or only one commit in the timeline, return 0 indicating no patch time
@@ -332,6 +347,11 @@ public class PatchCommitScraper {
 		return Math.abs(elapsedMillis / (1000 * 60 * 60 * 24));
 	}
 
+	/**Formats the time to human-readable string
+	 *
+	 * @param elapsedHours time elapsed in hours
+	 * @return human-readable expression of elapsed time
+	 */
 	private String formatTimeToPatch(long elapsedHours) {
 		long days = elapsedHours / 24;
 		long hours = elapsedHours % 24;

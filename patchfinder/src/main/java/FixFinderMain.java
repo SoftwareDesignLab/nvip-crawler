@@ -24,6 +24,8 @@
 
 import edu.rit.se.nvip.db.repositories.VulnerabilityRepository;
 import env.FixFinderEnvVars;
+import env.SharedEnvVars;
+import messenger.Messenger;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import fixes.FixFinder;
@@ -39,6 +41,13 @@ import java.util.List;
  */
 public class FixFinderMain extends Thread {
     private final static Logger logger = LogManager.getLogger(FixFinderMain.class);
+    private final DatabaseHelper databaseHelper;
+    private final Messenger messenger;
+
+    public FixFinderMain(DatabaseHelper dbh, Messenger messenger) {
+        this.databaseHelper = dbh;
+        this.messenger = messenger;
+    }
 
     /**
      * Entry point for the FixFinder, initializes necessary classes and start listening for jobs with RabbitMQ
@@ -47,18 +56,24 @@ public class FixFinderMain extends Thread {
     public void run() {
         logger.info("Starting FixFinder...");
 
-        // Init FixFinder
-        FixFinder.init();
+        // Get input mode
+        final String inputMode = FixFinderEnvVars.getInputMode();
 
         // Determine run mode and start PatchFinder
-        switch (FixFinderEnvVars.getInputMode()) {
+        switch (inputMode) {
             case "db":
+                // Init FixFinder
+                FixFinder.init(this.databaseHelper);
                 runDb();
                 break;
             case "rabbit":
+                // Init FixFinder
+                FixFinder.init(this.databaseHelper);
                 runRabbit();
                 break;
             case "dev":
+                // Init FixFinder
+                FixFinder.init(this.databaseHelper);
                 runDev();
                 break;
             default:
@@ -69,21 +84,17 @@ public class FixFinderMain extends Thread {
 
     private void runDb() {
         // Fetch cves from db
-        DataSource ds = FixFinder.getDatabaseHelper().getDataSource();
-        VulnerabilityRepository vulnRepo = new VulnerabilityRepository(ds);
-        List<String> cveIds = vulnRepo.getCves(FixFinderEnvVars.getCveLimit());
+        VulnerabilityRepository vulnRepo = new VulnerabilityRepository(databaseHelper);
+        List<String> cveIds = new ArrayList<>(FixFinder.getDatabaseHelper().getCves(FixFinderEnvVars.getCveLimit()));
         logger.info("Successfully got {} CVEs from the database", cveIds.size());
 
-        try {
-            FixFinder.run(cveIds);
-        } catch (Exception e) {
-            logger.error("A fatal error attempting to complete jobs: {}", e.toString());
-        }
+        for (String cveId : cveIds) FixFinder.run(cveId);
     }
 
+    // TODO: Support end message
     private void runRabbit() {
-        // TODO: RabbitMQ integration, wait until PoC is accepted to complete this
-        throw new UnsupportedOperationException();
+        // Start job handling
+        messenger.startHandlingFixJobs(SharedEnvVars.getFixFinderInputQueue());
     }
 
     private void runDev() {
@@ -91,15 +102,6 @@ public class FixFinderMain extends Thread {
         List<String> cveIds = new ArrayList<>();
         cveIds.add("CVE-2023-38571");
 
-        try {
-            FixFinder.run(cveIds);
-        } catch (Exception e) {
-            logger.error("A fatal error attempting to complete jobs: {}", e.toString());
-        }
-    }
-
-    public static void main(String[] args) {
-        FixFinderMain finder = new FixFinderMain();
-        finder.start();
+        for (String cveId : cveIds) FixFinder.run(cveId);
     }
 }

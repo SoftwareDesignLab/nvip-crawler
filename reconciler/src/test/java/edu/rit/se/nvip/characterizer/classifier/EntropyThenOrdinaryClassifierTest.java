@@ -23,15 +23,13 @@
  */
 package edu.rit.se.nvip.characterizer.classifier;
 
-import edu.rit.se.nvip.divergence.VdoLabelDistribution;
+import edu.rit.se.nvip.characterizer.divergence.VdoLabelDistribution;
 import edu.rit.se.nvip.utils.ReconcilerEnvVars;
-import jnr.ffi.annotations.In;
 import org.junit.Test;
 import weka.core.Instance;
 
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
