@@ -91,15 +91,18 @@ public class CharacterizationRepository {
 
     private static final String INSERT_SSVC = "INSERT INTO ssvc (cve_id, automatable, exploit_status, technical_impact) VALUES (?, ?, ?, ?)";
     public void insertSSVCSet(Set<CompositeVulnerability> vulns) {
-        try (Connection conn = dataSource.getConnection(); PreparedStatement pstmt = conn.prepareStatement(INSERT_SSVC)) {
+        String deleteOldSSVC = "DELETE FROM ssvc WHERE cve_id = ?";
+        try (Connection conn = dataSource.getConnection(); PreparedStatement pstmt = conn.prepareStatement(INSERT_SSVC);
+             PreparedStatement deleteStmt = conn.prepareStatement(deleteOldSSVC)) {
             conn.setAutoCommit(false);
             for (CompositeVulnerability vuln : vulns) {
                 // Get SSVC data
                 final SSVC ssvc = vuln.getSSVC();
-
                 // Skip vulns w/o data
                 if (!vuln.isRecharacterized() || ssvc == null) continue;
-
+                // proceed with ssvc delete/insert
+                deleteStmt.setString(1, vuln.getCveId());
+                deleteStmt.executeUpdate();
                 // Insert data into statement
                 pstmt.setString(1, vuln.getCveId());
                 pstmt.setBoolean(2, ssvc.isAutomatable());

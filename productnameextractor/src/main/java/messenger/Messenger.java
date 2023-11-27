@@ -28,15 +28,19 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.*;
-import db.DatabaseHelper;
-import model.cpe.AffectedProduct;
-import model.cve.CompositeVulnerability;
+import edu.rit.se.nvip.db.DatabaseHelper;
+import edu.rit.se.nvip.db.model.AffectedProduct;
+import edu.rit.se.nvip.db.model.CompositeVulnerability;
+import edu.rit.se.nvip.db.model.CpeCollection;
+import edu.rit.se.nvip.db.repositories.ProductRepository;
+import edu.rit.se.nvip.db.repositories.VulnerabilityRepository;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import env.ProductNameExtractorEnvVars;
 import productdetection.AffectedProductIdentifier;
 
+import javax.sql.DataSource;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyManagementException;
@@ -65,16 +69,18 @@ public class Messenger {
 
     private ConnectionFactory factory;
     private AffectedProductIdentifier affectedProductIdentifier;
-    private DatabaseHelper databaseHelper;
+    private ProductRepository prodRepo;
+    private VulnerabilityRepository vulnRepo;
 
 
-    public Messenger(ConnectionFactory connectionFactory, String inputQueue, String patchFinderOutputQueue, String fixFinderOutputQueue, AffectedProductIdentifier affectedProductIdentifier, DatabaseHelper databaseHelper){
+    public Messenger(ConnectionFactory connectionFactory, String inputQueue, String patchFinderOutputQueue, String fixFinderOutputQueue, AffectedProductIdentifier affectedProductIdentifier, ProductRepository prodRepo, VulnerabilityRepository vulnRepo){
         this.factory = connectionFactory;
         this.inputQueue = inputQueue;
         this.patchFinderOutputQueue = patchFinderOutputQueue;
         this.fixFinderOutputQueue = fixFinderOutputQueue;
         this.affectedProductIdentifier = affectedProductIdentifier;
-        this.databaseHelper = databaseHelper;
+        this.prodRepo = prodRepo;
+        this.vulnRepo = vulnRepo;
     }
 
     public void run() {
@@ -91,20 +97,20 @@ public class Messenger {
                 @Override
                 public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
                     // Get cveId and ensure it is not null
-                    String cveId = parseMessage(new String(body, StandardCharsets.UTF_8));
-                    if(cveId != null){
+                    int versionId = parseMessage(new String(body, StandardCharsets.UTF_8));
+                    if(versionId != 0){
                         // Pull specific cve information from database for each CVE ID passed from reconciler (ensure not null)
-                        CompositeVulnerability vuln = databaseHelper.getSpecificCompositeVulnerability(cveId);
+                        CompositeVulnerability vuln = vulnRepo.getSpecificCompositeVulnerability(versionId);
                         if(vuln == null) {
-                            logger.warn("Could not find CVE '{}' in database", cveId);
+                            logger.warn("Could not find CVE '{}' in database", versionId);
                         } else {
                             // Identify affected products from the CVEs
                             final long getProdStart = System.currentTimeMillis();
-                            List<AffectedProduct> affectedProducts = affectedProductIdentifier.identifyAffectedProducts(vuln);
+                            CpeCollection prods = new CpeCollection(vuln, affectedProductIdentifier.identifyAffectedProducts(vuln));
 
                             // Insert the affected products found into the database
-                            databaseHelper.insertAffectedProductsToDB(affectedProducts);
-                            logger.info("Product Name Extractor found and inserted {} affected products to the database in {} seconds", affectedProducts.size(), Math.floor(((double) (System.currentTimeMillis() - getProdStart) / 1000) * 100) / 100);
+                            prodRepo.insertAffectedProductsToDB(prods);
+                            logger.info("Product Name Extractor found and inserted {} affected products to the database in {} seconds", prods.getCpes().size(), Math.floor(((double) (System.currentTimeMillis() - getProdStart) / 1000) * 100) / 100);
 
     //                        // Clear cveIds, extract only the cveIds for which affected products were found to be sent to the Patchfinder
     //                        cveIds.clear();
@@ -113,7 +119,7 @@ public class Messenger {
     //                        }
 
 //                            logger.info("Sending jobs to patchfinder and fixfinder...");
-                            String response = genJson(cveId);
+                            String response = genJson(versionId);
                             channel.basicPublish("", patchFinderOutputQueue, null, response.getBytes(StandardCharsets.UTF_8));
                             channel.basicPublish("", fixFinderOutputQueue, null, response.getBytes(StandardCharsets.UTF_8));
                             logger.info("Jobs have been sent to the Patchfinder and Fixfinder!\n");
@@ -131,29 +137,29 @@ public class Messenger {
     }
 
     /**
-     * Parse an id from a given json string. (String should be {'cveId': 'CVE-2023-1001'})
+     * Parse an id from a given json string. (String should be {'vulnVersionId': '1234'})
      * @param jsonString a JSON representation of an array of String CVE ids
      * @return parsed list of ids
      */
-    public static String parseMessage(String jsonString) {
+    public static int parseMessage(String jsonString) {
         try {
             logger.info("Incoming CVE: '{}'", jsonString);
             final JsonNode messageNode = OM.readTree(jsonString);
-            return messageNode.get("cveId").asText();
+            return Integer.parseInt(messageNode.get("vulnVersionId").asText());
         } catch (JsonProcessingException e) {
             logger.error("Failed to parse id from json string: {}", e.toString());
-            return null;
+            return 0;
         }
     }
 
     /**
      * Generates the json string from the cveId string
-     * @param cveId
+     * @param vulnVersionId
      * @return
      */
-    private String genJson(String cveId) {
+    private String genJson(int vulnVersionId) {
         try {
-            Map<String, String> cveJson = Map.of("cveId", cveId);
+            Map<String, String> cveJson = Map.of("vulnVersionId", String.valueOf(vulnVersionId));
             return OM.writeValueAsString(cveJson);
         } catch (JsonProcessingException e) {
             logger.error("Failed to convert list of ids to json string: {}", e.toString());
@@ -161,11 +167,11 @@ public class Messenger {
         }
     }
 
-    private void sendDummyMessage(String queue, String cveId) {
+    private void sendDummyMessage(String queue, int vulnVersionId) {
         try (Connection connection = factory.newConnection();
              Channel channel = connection.createChannel()) {
             channel.queueDeclare(queue, true, false, false, null);
-            String message = genJson(cveId);
+            String message = genJson(vulnVersionId);
             channel.basicPublish("", queue, null, message.getBytes(StandardCharsets.UTF_8));
             logger.info("Successfully sent message:\n\"{}\"", message);
         } catch (IOException | TimeoutException e) { logger.error("Error sending message: {}", e.toString()); }
@@ -246,6 +252,7 @@ public class Messenger {
 //        } catch (KeyManagementException e) {
 //            throw new RuntimeException(e);
 //        }
+        DataSource ds = DatabaseHelper.getInstance().getDataSource();
 
         Messenger messenger = new Messenger(
                 factory,
@@ -253,16 +260,12 @@ public class Messenger {
                 ProductNameExtractorEnvVars.getRabbitPatchfinderOutputQueue(),
                 ProductNameExtractorEnvVars.getRabbitFixfinderOutputQueue(),
                 null,
-                new DatabaseHelper(
-                        ProductNameExtractorEnvVars.getDatabaseType(),
-                        ProductNameExtractorEnvVars.getHikariUrl(),
-                        ProductNameExtractorEnvVars.getHikariUser(),
-                        ProductNameExtractorEnvVars.getHikariPassword()
-                ));
+                new ProductRepository(ds),
+                new VulnerabilityRepository(ds));
 //        List<String> cveIds = new ArrayList<>();
 //        cveIds.addAll(getIdsFromJson("test_output.json"));
 //        writeIdsToFile(cveIds, "test_ids.txt");
-        messenger.sendDummyMessage("RECONCILER_OUT", "CVE-2013-4190");
+        messenger.sendDummyMessage("RECONCILER_OUT", 1234);
 //        cveIds.add("CVE-2008-2951");
 //        cveIds.add("CVE-2014-0472");
 //        cveIds.add("TERMINATE");

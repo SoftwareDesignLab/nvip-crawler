@@ -1,7 +1,6 @@
 package edu.rit.se.nvip.filter;
 
 import edu.rit.se.nvip.db.model.RawVulnerability;
-import edu.rit.se.nvip.model.RawVulnerability;
 import edu.rit.se.nvip.reconciler.filter.AsyncFilter;
 import edu.rit.se.nvip.reconciler.filter.SimpleFilter;
 import org.junit.jupiter.api.Test;

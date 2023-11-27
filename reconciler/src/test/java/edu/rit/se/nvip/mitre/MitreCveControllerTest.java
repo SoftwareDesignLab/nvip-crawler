@@ -112,10 +112,8 @@ public class MitreCveControllerTest {
 
     @Test
     public void initializeTest(){
-        MockedStatic<DatabaseHelper> mockedDb = mockStatic(DatabaseHelper.class);
-        mockedDb.when(DatabaseHelper::getInstance).thenReturn(mockDbh);
+        mitreCveController.setDatabaseHelper(mockDbh);
         when(mockDbh.isMitreTableEmpty()).thenReturn(false);
         mitreCveController.initializeController();
-        mockedDb.close();
     }
 }

@@ -224,4 +224,36 @@ public class PatchFixRepository {
         // If statement execution was successful, return 0
         return 0;
     }
+
+    /**Attempts to insert a set of fixes using the insertfix method
+     * Successes are not referenced later in this method
+     * @param fixes a set of fix objects to attempt to insert
+     * @return the number of failed inserts and the number of existing inserts, in {failed,existing} format
+     */
+    public int[] insertFixes(Set<Fix> fixes) {
+        int failedInserts = 0;
+        int existingInserts = 0;
+
+        for (Fix fix : fixes) {
+            try {
+                final int result = this.insertFix(fix);
+                // Result of operation, 0 for OK, 1 for failed, 2 for already exists
+                switch (result) {
+                    case 1:
+                        failedInserts++;
+                        break;
+                    case 2:
+                        existingInserts++;
+                        break;
+                    default:
+                        break;
+                }
+            }
+            catch (SQLException e) {
+                log.error("Failed to insert fix {}: {}", fix, e.toString());
+            }
+        }
+
+        return new int[] {failedInserts, existingInserts};
+    }
 }

@@ -24,7 +24,6 @@
 package edu.rit.se.nvip.filter;
 
 import edu.rit.se.nvip.db.model.RawVulnerability;
-import edu.rit.se.nvip.model.RawVulnerability;
 import edu.rit.se.nvip.reconciler.filter.BlankDescriptionFilter;
 import edu.rit.se.nvip.reconciler.filter.Filter;
 import org.junit.jupiter.api.Test;

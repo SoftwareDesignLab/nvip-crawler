@@ -22,6 +22,8 @@
  * SOFTWARE.
  */
 
+import edu.rit.se.nvip.db.DatabaseHelper;
+import edu.rit.se.nvip.db.repositories.PatchFixRepository;
 import edu.rit.se.nvip.db.repositories.VulnerabilityRepository;
 import env.FixFinderEnvVars;
 import env.SharedEnvVars;
@@ -63,17 +65,17 @@ public class FixFinderMain extends Thread {
         switch (inputMode) {
             case "db":
                 // Init FixFinder
-                FixFinder.init(this.databaseHelper);
+                FixFinder.init(this.databaseHelper, new PatchFixRepository(databaseHelper.getDataSource()), new VulnerabilityRepository(databaseHelper.getDataSource()));
                 runDb();
                 break;
             case "rabbit":
                 // Init FixFinder
-                FixFinder.init(this.databaseHelper);
+                FixFinder.init(this.databaseHelper, new PatchFixRepository(databaseHelper.getDataSource()), new VulnerabilityRepository(databaseHelper.getDataSource()));
                 runRabbit();
                 break;
             case "dev":
                 // Init FixFinder
-                FixFinder.init(this.databaseHelper);
+                FixFinder.init(this.databaseHelper, new PatchFixRepository(databaseHelper.getDataSource()), new VulnerabilityRepository(databaseHelper.getDataSource()));
                 runDev();
                 break;
             default:
@@ -84,11 +86,11 @@ public class FixFinderMain extends Thread {
 
     private void runDb() {
         // Fetch cves from db
-        VulnerabilityRepository vulnRepo = new VulnerabilityRepository(databaseHelper);
-        List<String> cveIds = new ArrayList<>(FixFinder.getDatabaseHelper().getCves(FixFinderEnvVars.getCveLimit()));
-        logger.info("Successfully got {} CVEs from the database", cveIds.size());
+        VulnerabilityRepository vulnRepo = new VulnerabilityRepository(databaseHelper.getDataSource());
+        List<Integer> versionIds = new ArrayList<>(vulnRepo.getCves(FixFinderEnvVars.getCveLimit()));
+        logger.info("Successfully got {} CVEs from the database", versionIds.size());
 
-        for (String cveId : cveIds) FixFinder.run(cveId);
+        for (int versionId : versionIds) FixFinder.run(versionId);
     }
 
     // TODO: Support end message
@@ -99,9 +101,9 @@ public class FixFinderMain extends Thread {
 
     private void runDev() {
         // Manually enter CVEs for development
-        List<String> cveIds = new ArrayList<>();
-        cveIds.add("CVE-2023-38571");
+        List<Integer> versionIds = new ArrayList<>();
+        versionIds.add(1234);
 
-        for (String cveId : cveIds) FixFinder.run(cveId);
+        for (int id : versionIds) FixFinder.run(id);
     }
 }

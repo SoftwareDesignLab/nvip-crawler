@@ -4,7 +4,6 @@ package fixes.parsers;
 import edu.rit.se.nvip.db.model.Fix;
 import org.jsoup.Jsoup;
 import org.junit.Test;
-import org.junit.jupiter.api.Test;
 
 import java.util.HashSet;
 import java.util.Set;

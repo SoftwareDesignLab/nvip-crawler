@@ -1,6 +1,8 @@
 package edu.rit.se.nvip;
 
 import com.rabbitmq.client.ConnectionFactory;
+import edu.rit.se.nvip.db.DatabaseHelper;
+import edu.rit.se.nvip.db.repositories.*;
 import edu.rit.se.nvip.reconciler.filter.FilterHandler;
 import edu.rit.se.nvip.messenger.Messenger;
 import edu.rit.se.nvip.mitre.MitreCveController;
@@ -11,6 +13,7 @@ import edu.rit.se.nvip.utils.ReconcilerEnvVars;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import javax.sql.DataSource;
 import java.io.IOException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
@@ -70,7 +73,14 @@ public class ReconcilerMain {
                 MitreCveController mitreController = new MitreCveController();
                 mitreController.initializeController();
 
-                ReconcilerController rc = new ReconcilerController(DatabaseHelper.getInstance(), filterHandler, reconciler, nvdController, mitreController);
+                DataSource ds = DatabaseHelper.getInstance().getDataSource();
+                RawDescriptionRepository rawRepo = new RawDescriptionRepository(ds);
+                VulnerabilityRepository vulnRepo = new VulnerabilityRepository(ds);
+                CharacterizationRepository charRepo = new CharacterizationRepository(ds);
+                NvdMitreRepository nmRepo = new NvdMitreRepository(ds);
+                RunHistoryRepository rhRepo = new RunHistoryRepository(ds);
+
+                ReconcilerController rc = new ReconcilerController(rawRepo, vulnRepo, charRepo, nmRepo, rhRepo, filterHandler, reconciler, nvdController, mitreController);
 
                 Messenger messenger = new Messenger(connectionFactory, inputQueueName, outputQueueName, rc);
                 messenger.run();

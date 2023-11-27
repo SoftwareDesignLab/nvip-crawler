@@ -24,7 +24,9 @@
 
 import edu.rit.se.nvip.db.DatabaseHelper;
 import edu.rit.se.nvip.db.model.CpeGroup;
+import edu.rit.se.nvip.db.repositories.PatchFixRepository;
 import edu.rit.se.nvip.db.repositories.ProductRepository;
+import edu.rit.se.nvip.db.repositories.VulnerabilityRepository;
 import env.PatchFinderEnvVars;
 import env.SharedEnvVars;
 import messenger.Messenger;
@@ -58,7 +60,7 @@ public class PatchFinderMain extends Thread {
     public void run() {
         logger.info("Starting PatchFinder...");
         // Init PatchFinder
-        PatchFinder.init(this.databaseHelper);
+        PatchFinder.init(this.databaseHelper, new ProductRepository(this.databaseHelper.getDataSource()), new PatchFixRepository(this.databaseHelper.getDataSource()));
 
         // Determine run mode and start PatchFinder
         switch (PatchFinderEnvVars.getInputMode()) {
@@ -76,7 +78,8 @@ public class PatchFinderMain extends Thread {
 
     private void runDb() {
         // Fetch affectedProducts from db
-        Map<String, CpeGroup> affectedProducts = PatchFinder.getDatabaseHelper().getAffectedProducts(null);
+        ProductRepository prodRepo = new ProductRepository(PatchFinder.getDatabaseHelper().getDataSource());
+        Map<String, CpeGroup> affectedProducts = prodRepo.getAffectedProducts(-1);
         final int affectedProductsCount = affectedProducts.values().stream().map(CpeGroup::getVersionsCount).reduce(0, Integer::sum);
         logger.info("Successfully got {} CVEs mapped to {} affected products from the database", affectedProducts.size(), affectedProductsCount);
         try {

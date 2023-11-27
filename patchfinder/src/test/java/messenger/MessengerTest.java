@@ -109,11 +109,11 @@ public class MessengerTest {
     // Test that CVE strings are validated
     @Test
     public void testParseIds_ValidJsonString() {
-        String expectedId = "{\"cveId\": \"CVE-2023-0001\"}";
+        String expectedId = "{\"vulnVersionId\": \"1234\"}";
 
-        String actualId = Messenger.parseMessage(expectedId);
+        int actualId = Messenger.parseMessage(expectedId);
 
-        assertEquals("CVE-2023-0001", actualId);
+        assertEquals(1234, actualId);
     }
 
     // Test invalid CVE string
@@ -121,8 +121,8 @@ public class MessengerTest {
     public void testParseIds_InvalidJsonString() {
         String jsonString = "invalidJsonString";
 
-        String actualId = Messenger.parseMessage(jsonString);
+        int actualId = Messenger.parseMessage(jsonString);
 
-        assertNull(actualId);
+        assertEquals(-1, actualId);
     }
 }

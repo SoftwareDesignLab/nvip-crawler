@@ -1,10 +1,10 @@
 package edu.rit.se.nvip.messenger;
 
 import com.rabbitmq.client.*;
-import edu.rit.se.nvip.DatabaseHelper;
 import edu.rit.se.nvip.ReconcilerController;
-import edu.rit.se.nvip.model.CompositeVulnerability;
-import edu.rit.se.nvip.model.RawVulnerability;
+import edu.rit.se.nvip.db.DatabaseHelper;
+import edu.rit.se.nvip.db.model.CompositeVulnerability;
+import edu.rit.se.nvip.db.model.RawVulnerability;
 import edu.rit.se.nvip.utils.ReconcilerEnvVars;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -106,18 +106,16 @@ class MessengerTest {
                 callback.handle("", new Delivery(null, null, body));
                 return null;
             }).when(channelMock).basicConsume(anyString(), anyBoolean(), any(DeliverCallback.class), (CancelCallback) any());
+            CompositeVulnerability cv = new CompositeVulnerability(new RawVulnerability(1, "CVE-1234-5678", "description1", null, null, null, ""));
+            cv.setVersionId(1234);
 
-            when(mockRc.reconcileCves(anySet())).thenReturn(Set.of(
-                    new CompositeVulnerability(
-                            new RawVulnerability(1, "CVE-1234-5678", "description1", null, null, null, "")
-                    )
-            ));
+            when(mockRc.reconcileCves(anySet())).thenReturn(Set.of(cv));
 
             Messenger messenger = new Messenger(factoryMock, "IN", "OUT", mockRc);
             messenger.run();
 
             verify(channelMock, times(1)).basicConsume(anyString(), anyBoolean(), any(DeliverCallback.class), (CancelCallback) any());
-            verify(channelMock, times(1)).basicPublish(eq(""), eq("OUT"), eq(null), eq("{\"cveId\":\"CVE-1234-5678\"}".getBytes(StandardCharsets.UTF_8)));
+            verify(channelMock, times(1)).basicPublish(eq(""), eq("OUT"), eq(null), eq("{\"vulnVersionId\":\"1234\"}".getBytes(StandardCharsets.UTF_8)));
 
             verify(mockRc, times(1)).reconcileCves(any());
             verify(mockRc, times(1)).characterizeCves(any());

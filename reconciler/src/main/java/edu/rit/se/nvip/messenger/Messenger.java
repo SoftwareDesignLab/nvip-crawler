@@ -6,9 +6,9 @@ import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.DeliverCallback;
-import edu.rit.se.nvip.DatabaseHelper;
 import edu.rit.se.nvip.ReconcilerController;
-import edu.rit.se.nvip.model.CompositeVulnerability;
+import edu.rit.se.nvip.db.DatabaseHelper;
+import edu.rit.se.nvip.db.model.CompositeVulnerability;
 import edu.rit.se.nvip.utils.ReconcilerEnvVars;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -101,7 +101,7 @@ public class Messenger {
                 reconciledVulns.stream()
                         .filter(v -> v.getReconciliationStatus() == CompositeVulnerability.ReconciliationStatus.NEW ||
                                 v.getReconciliationStatus() == CompositeVulnerability.ReconciliationStatus.UPDATED)
-                        .map(CompositeVulnerability::getCveId)
+                        .map(CompositeVulnerability::getVersionId)
                         .forEach(vuln -> {
                             try {
                                 channel.basicPublish("", outputQueue, null, genJson(vuln).getBytes(StandardCharsets.UTF_8));
@@ -152,12 +152,12 @@ public class Messenger {
 
     /**
      * generates the json string from the list of strings
-     * @param cveId
+     * @param vulnVersionId
      * @return
      */
-    private String genJson(String cveId) {
+    private String genJson(int vulnVersionId) {
         try {
-            Map<String, String> cveJson = Map.of("cveId", cveId);
+            Map<String, String> cveJson = Map.of("vulnVersionId", String.valueOf(vulnVersionId));
             return OM.writeValueAsString(cveJson);
         } catch (JsonProcessingException e) {
             logger.error("Failed to convert list of ids to json string: {}", e.toString());

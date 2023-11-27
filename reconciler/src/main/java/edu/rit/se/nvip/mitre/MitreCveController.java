@@ -65,9 +65,6 @@ public class MitreCveController {
 
     public void initializeController(){
         //if it is the first run do them all otherwise only run the last 2 years
-
-        dbRepo = new NvdMitreRepository(DatabaseHelper.getInstance().getDataSource());
-
         List<String> list = new ArrayList<>();
         if(dbRepo.isMitreTableEmpty()){
             list.add("nvip_data/mitre-cve/" );

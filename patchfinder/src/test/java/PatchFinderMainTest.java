@@ -22,7 +22,9 @@
  * SOFTWARE.
  */
 
+import edu.rit.se.nvip.db.DatabaseHelper;
 import edu.rit.se.nvip.db.model.CpeGroup;
+import edu.rit.se.nvip.db.repositories.PatchFixRepository;
 import edu.rit.se.nvip.db.repositories.ProductRepository;
 import messenger.Messenger;
 import org.junit.Test;
@@ -48,13 +50,15 @@ public class PatchFinderMainTest {
        String[] args = new String[]{"CVE-2023-1001"};
        // Create a mock DatabaseHelper
        DatabaseHelper databaseHelperMock = mock(DatabaseHelper.class);
-       PatchFinder.init(databaseHelperMock);
+       ProductRepository prodRepoMock = mock(ProductRepository.class);
+       PatchFixRepository pfRepoMock = mock(PatchFixRepository.class);
+       PatchFinder.init(databaseHelperMock, prodRepoMock, pfRepoMock);
 
        // Create a mock Map of affected products
        Map<String, CpeGroup> affectedProductsMock = new HashMap<>();
 
        // Configure mock DatabaseHelper to return the affected products
-       when(databaseHelperMock.getAffectedProducts(null)).thenReturn(affectedProductsMock);
+       when(prodRepoMock.getAffectedProducts(-1)).thenReturn(affectedProductsMock);
 
        // Create a mock Messenger
        Messenger messengerMock = mock(Messenger.class);
@@ -66,7 +70,7 @@ public class PatchFinderMainTest {
 //       });
 
        // Initialize PatchFinder with the mock Messenger
-       PatchFinder.init(databaseHelperMock);
+       PatchFinder.init(databaseHelperMock, prodRepoMock, pfRepoMock);
 
        // Call the main method then timeout after 10 seconds
        CountDownLatch latch = new CountDownLatch(1);

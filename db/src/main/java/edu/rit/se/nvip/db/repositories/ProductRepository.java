@@ -27,19 +27,17 @@ public class ProductRepository {
      * Insert affected products into the database. First deletes existing data
      * in the database for the affected products in the list, then inserts the new data.
      *
-     * @param cpeCollections list of affected products to be inserted
+     * @param cpeCollection list of affected products to be inserted
      */
-    public void insertAffectedProductsToDB(List<CpeCollection> cpeCollections) {
+    public void insertAffectedProductsToDB(CpeCollection cpeCollection) {
         log.info("Inserting Affected Products to DB!");
-        for (CpeCollection cpes : cpeCollections) {
-            // insert into cpeset table
-            int cpeSetId = insertCpeSet(cpes.getCve().getCveId());
-            cpes.setCpeSetId(cpeSetId);
-            // insert into affectedproduct table
-            insertAffectedProducts(cpes);
-            // update the cpeset fk in vulnversion
-            updateVulnVersion(cpes.getCve().getVersionId(), cpeSetId);
-        }
+        // insert into cpeset table
+        int cpeSetId = insertCpeSet(cpeCollection.getCve().getCveId());
+        cpeCollection.setCpeSetId(cpeSetId);
+        // insert into affectedproduct table
+        insertAffectedProducts(cpeCollection);
+        // update the cpeset fk in vulnversion
+        updateVulnVersion(cpeCollection.getCve().getVersionId(), cpeSetId);
     }
 
 
@@ -159,10 +157,10 @@ public class ProductRepository {
      * Collects a map of CPEs with their correlated CVE and Vuln ID used for
      * collecting patches given a list of CVE ids.
      *
-     * @param vulnVersionIds CVEs to get affected products for
+     * @param vulnVersionId CVE version to get affected products for
      * @return a map of affected products
      */
-    public Map<String, CpeGroup> getAffectedProducts(List<Integer> vulnVersionIds) {
+    public Map<String, CpeGroup> getAffectedProducts(int vulnVersionId) {
         Map<String, CpeGroup> affectedProducts = new HashMap<>();
         // Prepare statement
         try (Connection conn = dataSource.getConnection();
@@ -171,16 +169,14 @@ public class ProductRepository {
         ) {
             // Execute correct statement and get result set
             ResultSet res = null;
-            if(vulnVersionIds == null) {
+            if(vulnVersionId == -1) {
                 res = getAll.executeQuery();
                 parseAffectedProducts(affectedProducts, res);
             }
             else {
-                for (int id : vulnVersionIds) {
-                    getById.setInt(1, id);
-                    res = getById.executeQuery();
-                    parseAffectedProducts(affectedProducts, res);
-                }
+                getById.setInt(1, vulnVersionId);
+                res = getById.executeQuery();
+                parseAffectedProducts(affectedProducts, res);
             }
 
         } catch (Exception e) {

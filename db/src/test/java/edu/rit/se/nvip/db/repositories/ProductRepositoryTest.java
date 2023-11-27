@@ -87,7 +87,7 @@ class ProductRepositoryTest {
         //dont actually want to insert anything into the db
         repository = spy(repository);
         doNothing().when(repository).insertAffectedProducts(any());
-        repository.insertAffectedProductsToDB(new ArrayList<>());
+        repository.insertAffectedProductsToDB(new CpeCollection(null, new ArrayList<>()));
         verify(repository).insertAffectedProducts(any());
     }
 
@@ -105,7 +105,7 @@ class ProductRepositoryTest {
 
     @Test
     public void testGetAffectedProducts() {
-        Map<String, CpeGroup> affectedProducts = repository.getAffectedProducts(null);
+        Map<String, CpeGroup> affectedProducts = repository.getAffectedProducts(-1);
         assertNotNull(affectedProducts);
     }
 

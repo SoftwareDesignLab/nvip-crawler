@@ -24,7 +24,6 @@ package edu.rit.se.nvip.characterizer;
  */
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import edu.rit.se.nvip.DatabaseHelper;
 import edu.rit.se.nvip.automatedcvss.CvssScoreCalculator;
 import edu.rit.se.nvip.automatedcvss.PartialCvssVectorGenerator;
 import edu.rit.se.nvip.automatedcvss.preprocessor.CvePreProcessor;
@@ -34,6 +33,7 @@ import edu.rit.se.nvip.db.model.enums.VDOLabel;
 import edu.rit.se.nvip.db.model.CompositeVulnerability;
 import edu.rit.se.nvip.db.model.RawVulnerability;
 import edu.rit.se.nvip.db.model.SSVC;
+import edu.rit.se.nvip.db.repositories.CharacterizationRepository;
 import edu.rit.se.nvip.utils.CsvUtils;
 import edu.rit.se.nvip.utils.ReconcilerEnvVars;
 import org.apache.commons.io.FileUtils;
@@ -169,7 +169,7 @@ public class CveCharacterizerTest {
 			when(mockPartialCvssVectorGenerator.getCVssVector(anySet())).thenReturn(new String[8]);
 			//create characterizer with the mocks manually injected
 			CveCharacterizer cveCharacterizer = new CveCharacterizer(mockPreProcessor, mockCveClassifierFactory, mockCvssScoreCalculator, mockPartialCvssVectorGenerator,
-					trainingDataInfo[0], trainingDataInfo[1], "ML", "NB", mock(DatabaseHelper.class)); // TODO: Add/mock dbh
+					trainingDataInfo[0], trainingDataInfo[1], "ML", "NB", mock(CharacterizationRepository.class)); // TODO: Add/mock dbh
 
 
 			CompositeVulnerability vulnerability = new CompositeVulnerability(new RawVulnerability(1, "CVE-1234-5678", "Buffer overflow in NFS mountd gives root access to remote attackers, mostly in Linux systems.", null, null, null, ""));

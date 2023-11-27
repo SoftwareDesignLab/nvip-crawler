@@ -22,7 +22,10 @@ package fixes; /**
  * SOFTWARE.
  */
 
-import db.DatabaseHelper;
+
+import edu.rit.se.nvip.db.DatabaseHelper;
+import edu.rit.se.nvip.db.repositories.PatchFixRepository;
+import edu.rit.se.nvip.db.repositories.VulnerabilityRepository;
 import env.FixFinderEnvVars;
 import env.SharedEnvVars;
 import org.junit.jupiter.api.BeforeEach;
@@ -36,13 +39,8 @@ import org.junit.jupiter.api.Test;
 public class FixFinderTest {
     static {
         SharedEnvVars.initializeEnvVars(true);
-        final DatabaseHelper dbh = new DatabaseHelper(
-                SharedEnvVars.getDatabaseType(),
-                SharedEnvVars.getHikariUrl(),
-                SharedEnvVars.getHikariUser(),
-                SharedEnvVars.getHikariPassword()
-        );
-        FixFinder.init(dbh);
+        final DatabaseHelper dbh = DatabaseHelper.getInstance();
+        FixFinder.init(dbh, new PatchFixRepository(dbh.getDataSource()), new VulnerabilityRepository(dbh.getDataSource()));
     }
 
     @BeforeEach

@@ -26,7 +26,8 @@ package messenger;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.*;
-import db.DatabaseHelper;
+import edu.rit.se.nvip.db.repositories.ProductRepository;
+import edu.rit.se.nvip.db.repositories.VulnerabilityRepository;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -68,7 +69,7 @@ public class MessengerTest {
         when(mockConn.createChannel()).thenReturn(channelMock);
 
         // Create a Messenger instance with the mock ConnectionFactory
-        Messenger messenger = new Messenger(factoryMock, "RECONCILER_OUT", "PNE_OUT_PATCH", "PNE_OUT_FIX", affectedProductIdentifier, mock(DatabaseHelper.class));
+        Messenger messenger = new Messenger(factoryMock, "RECONCILER_OUT", "PNE_OUT_PATCH", "PNE_OUT_FIX", affectedProductIdentifier, mock(ProductRepository.class), mock(VulnerabilityRepository.class));
 
         Map<String, String> message = new HashMap<>();
         message.put("cveId", "job1");
@@ -97,7 +98,7 @@ public class MessengerTest {
         when(mockConn.createChannel()).thenReturn(channelMock);
 
         // Create a Messenger instance with the mock ConnectionFactory
-        Messenger messenger = new Messenger(factoryMock, "RECONCILER_OUT", "PNE_OUT_PATCH", "PNE_OUT_FIX", affectedProductIdentifier, mock(DatabaseHelper.class));
+        Messenger messenger = new Messenger(factoryMock, "RECONCILER_OUT", "PNE_OUT_PATCH", "PNE_OUT_FIX", affectedProductIdentifier, mock(ProductRepository.class), mock(VulnerabilityRepository.class));
 
         Map<String, String> message = new HashMap<>();
         ObjectMapper objectMapper = new ObjectMapper();
