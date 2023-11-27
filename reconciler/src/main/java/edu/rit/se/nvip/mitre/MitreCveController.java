@@ -25,9 +25,10 @@ package edu.rit.se.nvip.mitre;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import edu.rit.se.nvip.DatabaseHelper;
-import edu.rit.se.nvip.model.CompositeVulnerability;
-import edu.rit.se.nvip.model.MitreVulnerability;
+import edu.rit.se.nvip.db.DatabaseHelper;
+import edu.rit.se.nvip.db.model.CompositeVulnerability;
+import edu.rit.se.nvip.db.model.MitreVulnerability;
+import edu.rit.se.nvip.db.repositories.NvdMitreRepository;
 import edu.rit.se.nvip.utils.GitController;
 import edu.rit.se.nvip.utils.ReconcilerEnvVars;
 import org.apache.commons.io.FileUtils;
@@ -55,7 +56,7 @@ public class MitreCveController {
     private final String gitLocalPath = "nvip_data/mitre-cve/";
     private GitController gitController;
     private File f = new File(gitLocalPath);
-    private static DatabaseHelper dbh;
+    private static NvdMitreRepository dbRepo;
 
     public MitreCveController() {
         this.mitreGithubUrl = ReconcilerEnvVars.getMitreGithubUrl();
@@ -65,10 +66,10 @@ public class MitreCveController {
     public void initializeController(){
         //if it is the first run do them all otherwise only run the last 2 years
 
-        dbh = DatabaseHelper.getInstance();
+        dbRepo = new NvdMitreRepository(DatabaseHelper.getInstance().getDataSource());
 
         List<String> list = new ArrayList<>();
-        if(dbh.isMitreTableEmpty()){
+        if(dbRepo.isMitreTableEmpty()){
             list.add("nvip_data/mitre-cve/" );
         }else{
             // Getting the year as a string
@@ -85,9 +86,9 @@ public class MitreCveController {
         logger.info("{} cves found from MITRE", results.size());
         long numReserved = results.stream().filter(v -> v.getStatus() == MitreVulnerability.MitreStatus.RESERVED).count();
         logger.info("Found {} reserved CVEs from MITRE", numReserved);
-        Set<MitreVulnerability> toBackfill = dbh.upsertMitreData(results);
+        Set<MitreVulnerability> toBackfill = dbRepo.upsertMitreData(results);
         logger.info("{} mitre cves were new", toBackfill.size());
-        dbh.backfillMitreTimegaps(toBackfill); // todo get the number of inserted gaps
+        dbRepo.backfillMitreTimegaps(toBackfill); // todo get the number of inserted gaps
     }
 
     /**
@@ -181,7 +182,7 @@ public class MitreCveController {
     }
 
     public Set<CompositeVulnerability> compareWithMitre(Set<CompositeVulnerability> reconciledVulns) {
-        Set<CompositeVulnerability> affected = dbh.attachMitreVulns(reconciledVulns); // returns compvulns with attached mitrevulns
+        Set<CompositeVulnerability> affected = dbRepo.attachMitreVulns(reconciledVulns); // returns compvulns with attached mitrevulns
         int inMitre = (int) reconciledVulns.stream().filter(CompositeVulnerability::isInMitre).count(); // comp vuln decides what "in" means
         int notInMitre = reconciledVulns.size() - inMitre;
         Set<MitreVulnerability> mitreVulns = affected.stream().map(CompositeVulnerability::getMitreVuln).collect(Collectors.toSet()); // pull out the matching nvdvulns
@@ -213,8 +214,8 @@ public class MitreCveController {
         return affected;
     }
 
-    public void setDatabaseHelper(DatabaseHelper dbHelper){
-        dbh = dbHelper;
+    public void setDatabaseHelper(NvdMitreRepository nvdMitreRepository){
+        dbRepo = nvdMitreRepository;
     }
     public void setGitController(GitController git){ gitController = git;}
     public void setFile(File file){ f = file;}

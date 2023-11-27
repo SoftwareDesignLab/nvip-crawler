@@ -3,17 +3,21 @@ FROM maven:3.8.7-openjdk-18-slim AS builder
 WORKDIR /home/app
 
 ADD pom.xml .
+ADD db/pom.xml db/pom.xml
 ADD crawler/pom.xml crawler/pom.xml
 ADD exploitfinder/pom.xml exploitfinder/pom.xml
 ADD patchfinder/pom.xml patchfinder/pom.xml
 ADD productnameextractor/pom.xml productnameextractor/pom.xml
 ADD reconciler/pom.xml reconciler/pom.xml
 
-RUN mvn dependency:go-offline
+ADD db/src/main db/src/main
+RUN mvn install -Dmaven.test.skip=true --projects=db
+
+RUN mvn dependency:go-offline --projects=db,crawler
 
 ADD crawler/src/main crawler/src/main
 
-RUN mvn package -Dmaven.test.skip=true --projects=crawler
+RUN mvn package -Dmaven.test.skip=true --projects=db,crawler
 
 ### Crawler Run Stage
 FROM eclipse-temurin:17-jre AS crawler

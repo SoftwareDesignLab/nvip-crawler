@@ -25,8 +25,10 @@ package fixes;
  */
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import edu.rit.se.nvip.db.DatabaseHelper;
+import edu.rit.se.nvip.db.repositories.PatchFixRepository;
+import edu.rit.se.nvip.db.model.Fix;
 import env.FixFinderEnvVars;
-import db.DatabaseHelper;
 import fixes.urlfinders.FixUrlFinder;
 import fixes.urlfinders.NvdFixUrlFinder;
 import fixes.urlfinders.VulnerabilityFixUrlFinder;
@@ -65,12 +67,7 @@ public class FixFinder {
 
 		// Init db helper
 		logger.info("Initializing DatabaseHelper...");
-		databaseHelper = new DatabaseHelper(
-				FixFinderEnvVars.getDatabaseType(),
-				FixFinderEnvVars.getHikariUrl(),
-				FixFinderEnvVars.getHikariUser(),
-				FixFinderEnvVars.getHikariPassword()
-		);
+		databaseHelper = DatabaseHelper.getInstance();
 
 		// Init FixUrlFinders
 		logger.info("Initializing FixUrlFinders...");
@@ -85,6 +82,7 @@ public class FixFinder {
 	// TODO: at some point, need to figure out how we are going to get input for which cves to find fixes
 	// 	right now, just doing a list of cveIds
 	public static void run(List<String> cveIds) {
+		PatchFixRepository pfRepo = new PatchFixRepository(databaseHelper.getDataSource());
 		Map<String, List<String>> cveToUrls = new HashMap<>();
 		ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors()); // Adjust the thread pool size as needed
 		List<Future<?>> futures = new ArrayList<>();
@@ -141,7 +139,7 @@ public class FixFinder {
 
 		for (Fix fix : fixes) {
 			try {
-				final int result = databaseHelper.insertFix(fix);
+				final int result = pfRepo.insertFix(fix);
 
 				// Result of operation, 0 for OK, 1 for error, 2 for already exists
 				switch (result) {

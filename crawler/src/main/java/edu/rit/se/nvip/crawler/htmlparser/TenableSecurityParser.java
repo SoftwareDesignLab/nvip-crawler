@@ -24,7 +24,7 @@
 package edu.rit.se.nvip.crawler.htmlparser;
 
 // import edu.rit.se.nvip.model.Product;
-import edu.rit.se.nvip.model.RawVulnerability;
+import edu.rit.se.nvip.db.model.RawVulnerability;
 import edu.rit.se.nvip.utils.UtilHelper;
 
 import org.apache.logging.log4j.LogManager;
@@ -49,7 +49,6 @@ import java.time.LocalDate;
  * Ex: <a href="https://www.tenable.com/security/research/tra-2023-5">Source</a>
  */
 public class TenableSecurityParser extends AbstractCveParser {
-	private static final Logger logger = LogManager.getLogger(TenableSecurityParser.class);
 
 	public static final String DOMAIN_NAME = "tenable";
 

@@ -23,8 +23,8 @@ package fixes.parsers;
  * SOFTWARE.
  */
 
-import fixes.Fix;
 
+import edu.rit.se.nvip.db.model.Fix;
 import java.util.ArrayList;
 import java.util.List;
 

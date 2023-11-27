@@ -1,7 +1,7 @@
 package edu.rit.se.nvip.reconciler;
 
-import edu.rit.se.nvip.model.CompositeVulnerability;
-import edu.rit.se.nvip.model.RawVulnerability;
+import edu.rit.se.nvip.db.model.CompositeVulnerability;
+import edu.rit.se.nvip.db.model.RawVulnerability;
 
 import java.util.HashSet;
 import java.util.Set;

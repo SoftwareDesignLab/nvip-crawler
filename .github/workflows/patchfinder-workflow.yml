@@ -13,10 +13,17 @@ on:
       - dev
       - 'cicd/**'
     paths-ignore:
+      - '.github/workflows/crawler-workflow.yml'
+      - '.github/workflows/pne-workflow.yml'
+      - '.github/workflows/reconciler-workflow.yml'
       - 'crawler/**'
       - 'exploitfinder/**'
       - 'productnameextractor/**'
       - 'reconciler/**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 env:
   AWS_REGION: 'us-east-1'
@@ -67,13 +74,11 @@ jobs:
           LIQUIBASE_COMMAND_PASSWORD: ${{ env.HIKARI_PASSWORD }}
         run: |
           mysql -e 'CREATE DATABASE nvip;' -u${{ env.HIKARI_USER }} -p${{ env.HIKARI_PASSWORD }} 
-          mvn liquibase:update --no-transfer-progress --projects=patchfinder
+          mvn liquibase:update --no-transfer-progress --projects=db
 
       - name: Test and Build PatchFinder with Maven
         run: |
-          cd patchfinder
-          mvn dependency:go-offline
-          mvn package
+          mvn test --projects=db,patchfinder
 
       - name: Publish Test Report
         if: success() || failure()

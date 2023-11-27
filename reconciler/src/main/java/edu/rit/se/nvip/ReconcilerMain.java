@@ -1,14 +1,12 @@
 package edu.rit.se.nvip;
 
-import edu.rit.se.nvip.characterizer.CveCharacterizer;
+import edu.rit.se.nvip.db.repositories.CveJobTrackRepository;
 import edu.rit.se.nvip.messenger.Messenger;
-import edu.rit.se.nvip.model.CompositeVulnerability;
-import edu.rit.se.nvip.model.RawVulnerability;
 import edu.rit.se.nvip.utils.ReconcilerEnvVars;
+import edu.rit.se.nvip.db.DatabaseHelper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.sql.Timestamp;
 import java.util.*;
 
 public class ReconcilerMain {
@@ -37,7 +35,7 @@ public class ReconcilerMain {
         switch(ReconcilerEnvVars.getInputMode()){
             case "db":
                 logger.info("Using Database for acquiring jobs");
-                Set<String> jobs = dbh.getJobs();
+                Set<String> jobs = new CveJobTrackRepository(dbh.getDataSource()).getJobs();
                 if (jobs == null){
                     logger.error("No Jobs found in database");
                     break;
@@ -63,6 +61,10 @@ public class ReconcilerMain {
                         break;
                     }
                 }
+            case "dev":
+                final Set<String> devJobs = new HashSet<>();
+                devJobs.add("CVE-2023-2825");
+                rc.main(devJobs);
         }
 
     }

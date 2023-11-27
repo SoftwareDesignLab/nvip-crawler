@@ -23,15 +23,14 @@
  */
 package edu.rit.se.nvip.crawler.htmlparser;
 
-import edu.rit.se.nvip.model.RawVulnerability;
 import edu.rit.se.nvip.crawler.SeleniumDriver;
 
+import edu.rit.se.nvip.db.model.RawVulnerability;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-import org.openqa.selenium.JavascriptExecutor;
-
 
 import java.io.*;
 import java.net.HttpURLConnection;
@@ -52,6 +51,7 @@ import java.util.regex.Pattern;
  * @author axoeec
  *
  */
+@Slf4j
 public abstract class AbstractCveParser {
 
 	protected final String regexCVEID = "CVE-[0-9]+-[0-9]+";
@@ -268,8 +268,8 @@ public abstract class AbstractCveParser {
 			PDDocument pdf = PDDocument.load(file);
 			pdfText = new PDFTextStripper().getText(pdf);
 			pdf.close();
-		} catch (IOException ie) {
-			ie.printStackTrace();
+		} catch (IOException e) {
+			log.error("", e);
 		}
 		return pdfText;
 	}

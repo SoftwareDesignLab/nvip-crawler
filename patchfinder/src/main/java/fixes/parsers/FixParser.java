@@ -24,7 +24,8 @@ package fixes.parsers;
  * SOFTWARE.
  */
 
-import fixes.Fix;
+
+import edu.rit.se.nvip.db.model.Fix;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jsoup.Jsoup;
@@ -110,6 +111,9 @@ public abstract class FixParser {
                 break;
             case "access.redhat.com":
                 parser = new RedhatParser(cveId, url);
+                break;
+            case "cxsecurity.com":
+                parser = new CXSecurityParser(cveId, url);
                 break;
             default:
                 parser = new GenericParser(cveId, url);

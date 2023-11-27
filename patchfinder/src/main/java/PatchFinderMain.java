@@ -22,10 +22,12 @@
  * SOFTWARE.
  */
 
+import edu.rit.se.nvip.db.DatabaseHelper;
+import edu.rit.se.nvip.db.model.CpeGroup;
+import edu.rit.se.nvip.db.repositories.ProductRepository;
 import env.PatchFinderEnvVars;
 import messenger.Messenger;
 import messenger.PFInputMessage;
-import model.CpeGroup;
 
 import java.io.IOException;
 import java.util.List;
@@ -68,7 +70,10 @@ public class PatchFinderMain extends Thread {
 
     private void runDb() {
         // Fetch affectedProducts from db
-        Map<String, CpeGroup> affectedProducts = PatchFinder.getDatabaseHelper().getAffectedProducts(null);
+        DatabaseHelper dbh = PatchFinder.getDatabaseHelper();
+        ProductRepository prodRepo = new ProductRepository(dbh.getDataSource());
+
+        Map<String, CpeGroup> affectedProducts = prodRepo.getAffectedProducts(null);
         final int affectedProductsCount = affectedProducts.values().stream().map(CpeGroup::getVersionsCount).reduce(0, Integer::sum);
         logger.info("Successfully got {} CVEs mapped to {} affected products from the database", affectedProducts.size(), affectedProductsCount);
         try {

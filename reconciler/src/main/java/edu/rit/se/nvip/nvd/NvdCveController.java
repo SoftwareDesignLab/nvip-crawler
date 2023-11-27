@@ -23,12 +23,11 @@
  */
 package edu.rit.se.nvip.nvd;
 
-import edu.rit.se.nvip.DatabaseHelper;
-import edu.rit.se.nvip.model.CompositeVulnerability;
-import edu.rit.se.nvip.model.NvdVulnerability;
-import edu.rit.se.nvip.reconciler.Reconciler;
+import edu.rit.se.nvip.db.DatabaseHelper;
+import edu.rit.se.nvip.db.model.CompositeVulnerability;
+import edu.rit.se.nvip.db.model.NvdVulnerability;
+import edu.rit.se.nvip.db.repositories.NvdMitreRepository;
 import edu.rit.se.nvip.utils.ReconcilerEnvVars;
-import org.apache.http.HttpConnection;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.JSONArray;
@@ -36,7 +35,6 @@ import org.json.JSONObject;
 
 import java.io.*;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
@@ -55,7 +53,7 @@ import java.util.stream.Collectors;
 public class NvdCveController {
 	private final Logger logger = LogManager.getLogger(NvdCveController.class);
 
-	private static DatabaseHelper dbh;
+	private static NvdMitreRepository dbRepo;
 	private final String startDate;
 	private final String endDate;
 	private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS");
@@ -79,10 +77,10 @@ public class NvdCveController {
 		this.endDate = endDate.format(formatter);
 	}
 	public void createDatabaseInstance(){
-		dbh = DatabaseHelper.getInstance();
+		dbRepo = new NvdMitreRepository(DatabaseHelper.getInstance().getDataSource());
 	}
 	public Set<CompositeVulnerability> compareWithNvd(Set<CompositeVulnerability> reconciledVulns) {
-		Set<CompositeVulnerability> affected = dbh.attachNvdVulns(reconciledVulns); // returns the compvulns that got an nvdvuln attached
+		Set<CompositeVulnerability> affected = dbRepo.attachNvdVulns(reconciledVulns); // returns the compvulns that got an nvdvuln attached
 		int inNvd = (int) reconciledVulns.stream().filter(CompositeVulnerability::isInNvd).count(); // let the compvuln decide for itself if it's in nvd
 		int notInNvd = reconciledVulns.size() - inNvd;
 		Set<NvdVulnerability> nvdVulns = affected.stream().map(CompositeVulnerability::getNvdVuln).collect(Collectors.toSet()); // pull out the matching nvdvulns
@@ -127,9 +125,9 @@ public class NvdCveController {
 				.replaceAll("<EndDate>", this.endDate));
 
 		logger.info("Grabbed {} cves from NVD for the past month", nvdCves.size());
-		Set<NvdVulnerability> toBackfill = dbh.upsertNvdData(nvdCves); // return the ones that were inserted/updated
+		Set<NvdVulnerability> toBackfill = dbRepo.upsertNvdData(nvdCves); // return the ones that were inserted/updated
 		logger.info("Inserted {} new CVEs from NVD into NVD Database Table", toBackfill.size());
-		dbh.backfillNvdTimegaps(toBackfill); // todo return number of time gaps
+		dbRepo.backfillNvdTimegaps(toBackfill); // todo return number of time gaps
 	}
 
 
@@ -191,8 +189,8 @@ public class NvdCveController {
 
 		return nvdCves;
 	}
-	public void setDatabaseHelper(DatabaseHelper dbHelper){
-		dbh = dbHelper;
+	public void setDbRepo(NvdMitreRepository nvdMitreRepository){
+		dbRepo = nvdMitreRepository;
 	}
 
 	public void setUrl(URL nvdUrl){

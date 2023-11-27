@@ -24,8 +24,6 @@
 package edu.rit.se.nvip.utils;
 
 import com.opencsv.*;
-import edu.rit.se.nvip.model.CompositeVulnerability;
-import edu.rit.se.nvip.model.VdoCharacteristic;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

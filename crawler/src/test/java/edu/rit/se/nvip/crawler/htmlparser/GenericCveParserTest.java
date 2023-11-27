@@ -23,8 +23,8 @@
  */
 package edu.rit.se.nvip.crawler.htmlparser;
 
-import edu.rit.se.nvip.model.RawVulnerability;
-import edu.rit.se.nvip.model.Vulnerability;
+import edu.rit.se.nvip.db.model.RawVulnerability;
+import edu.rit.se.nvip.db.model.Vulnerability;
 import edu.rit.se.nvip.crawler.SeleniumDriver;
 
 import org.apache.commons.io.IOUtils;
@@ -74,7 +74,7 @@ public class GenericCveParserTest extends AbstractParserTest {
 	public void testOpenwall() {
 		String html = safeReadHtml("src/test/resources/test-openwall.html");
 		List<RawVulnerability> list = parser.parseWebPage("openwall", html);
-		Vulnerability vuln = getVulnerability(list, "CVE-2015-4852");
+		RawVulnerability vuln = getVulnerability(list, "CVE-2015-4852");
 		assertNotNull(vuln);
 		boolean fine = vuln.getDescription().contains("Oracle");
 		assertTrue(fine);

@@ -22,9 +22,9 @@
  * SOFTWARE.
  */
 
-import db.DatabaseHelper;
+import edu.rit.se.nvip.db.model.CpeGroup;
+import edu.rit.se.nvip.db.repositories.ProductRepository;
 import messenger.Messenger;
-import model.CpeGroup;
 import org.junit.Test;
 import patches.PatchFinder;
 
@@ -51,14 +51,14 @@ public class PatchFinderMainTest {
        PatchFinder.getPatchCommits().clear();
 
        // Create a mock DatabaseHelper
-       DatabaseHelper databaseHelperMock = mock(DatabaseHelper.class);
+       ProductRepository prodRepoMock = mock(ProductRepository.class);
        PatchFinder.init();
 
        // Create a mock Map of affected products
        Map<String, CpeGroup> affectedProductsMock = new HashMap<>();
 
        // Configure mock DatabaseHelper to return the affected products
-       when(databaseHelperMock.getAffectedProducts(null)).thenReturn(affectedProductsMock);
+       when(prodRepoMock.getAffectedProducts(null)).thenReturn(affectedProductsMock);
 
        // Create a mock Messenger
        Messenger messengerMock = mock(Messenger.class);

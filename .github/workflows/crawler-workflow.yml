@@ -13,10 +13,17 @@ on:
       - dev
       - 'cicd/**'
     paths-ignore:
+      - '.github/workflows/patchfinder-workflow.yml'
+      - '.github/workflows/pne-workflow.yml'
+      - '.github/workflows/reconciler-workflow.yml'
       - 'productnameextractor/**'
       - 'exploitfinder/**'
       - 'patchfinder/**'
       - 'reconciler/**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 env:
   AWS_REGION: 'us-east-1'
@@ -52,9 +59,6 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
-      - name: Set up dependencies
-        run: mvn dependency:resolve
-
       # Setup MySQL DB for tests that require connection (Might not need this)
       - name: Initialize Database
         env:
@@ -67,13 +71,11 @@ jobs:
 
       - name: Run Liquibase Update
         run: |
-          mvn liquibase:update --projects=crawler
+          mvn liquibase:update --projects=db
 
       - name: Test Crawler
         run: |
-          cd crawler
-          mvn dependency:go-offline
-          mvn test
+          mvn test --projects=db,crawler
 
       - name: Publish Test Report
         if: success() || failure()

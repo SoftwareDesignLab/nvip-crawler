@@ -22,13 +22,12 @@ package productdetection; /**
  * SOFTWARE.
  */
 
+import edu.rit.se.nvip.db.model.CpeGroup;
 import env.ProductNameExtractorEnvVars;
-import model.cpe.AffectedProduct;
-import model.cve.CompositeVulnerability;
-import model.cpe.CpeGroup;
-import org.junit.Test;
+import edu.rit.se.nvip.db.model.AffectedProduct;
+import edu.rit.se.nvip.db.model.CompositeVulnerability;
+import org.junit.jupiter.api.Test;
 import dictionary.ProductDictionary;
-import org.mockito.Mockito;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -36,8 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 /**
@@ -62,7 +60,7 @@ public class AffectedProductIdentifierTest {
 
 		String description = "In Redhat Linux 1.10.x before 1.10.8 and 1.11.x before 1.11.5, HTML autoescaping was disabled in a portion of the template for the technical 500 debug page. Given the right circumstances, this allowed a cross-site scripting attack. This vulnerability shouldn't affect most production sites since you shouldn't run with \"DEBUG = True\" (which makes this page accessible) in your production settings.";
 		List<CompositeVulnerability> vulnList = new ArrayList<>();
-		CompositeVulnerability v = new CompositeVulnerability(0, null, "CVE-2017-12794", "", null, null, description, CompositeVulnerability.CveReconcileStatus.UPDATE);
+		CompositeVulnerability v = new CompositeVulnerability(0, "CVE-2017-12794", description, CompositeVulnerability.ReconciliationStatus.UPDATED);
 		vulnList.add(v);
 
 		AffectedProductIdentifier affectedProductIdentifier = new AffectedProductIdentifier(12, vulnList);
@@ -80,7 +78,7 @@ public class AffectedProductIdentifierTest {
 
 		System.out.println(v.getAffectedProducts());
 
-		assertTrue("Test failed: No affected releases found", (v.getAffectedProducts().size() > 0));
+		assertTrue((v.getAffectedProducts().size() > 0), "Test failed: No affected releases found");
 	}
 
 	@Test
@@ -93,7 +91,7 @@ public class AffectedProductIdentifierTest {
 
 		String description = "In Redhat Linux 1.10.x before 1.10.8 and 1.11.x before 1.11.5, HTML autoescaping was disabled in a portion of the template for the technical 500 debug page. Given the right circumstances, this allowed a cross-site scripting attack. This vulnerability shouldn't affect most production sites since you shouldn't run with \"DEBUG = True\" (which makes this page accessible) in your production settings.";
 		List<CompositeVulnerability> vulnList = new ArrayList<>();
-		CompositeVulnerability v = new CompositeVulnerability(0, null, "CVE-2017-12794", "", null, null, description, CompositeVulnerability.CveReconcileStatus.UPDATE);
+		CompositeVulnerability v = new CompositeVulnerability(0, "CVE-2017-12794", description, CompositeVulnerability.ReconciliationStatus.UPDATED);
 		vulnList.add(v);
 
 		AffectedProductIdentifier affectedProductIdentifier = new AffectedProductIdentifier(12, vulnList);

@@ -1,17 +1,17 @@
 package edu.rit.se.nvip.mitre;
 
 import com.google.gson.JsonObject;
-import edu.rit.se.nvip.DatabaseHelper;
-import edu.rit.se.nvip.model.CompositeVulnerability;
-import edu.rit.se.nvip.model.MitreVulnerability;
-import edu.rit.se.nvip.model.RawVulnerability;
+import edu.rit.se.nvip.db.DatabaseHelper;
+import edu.rit.se.nvip.db.repositories.NvdMitreRepository;
+import edu.rit.se.nvip.db.model.CompositeVulnerability;
+import edu.rit.se.nvip.db.model.MitreVulnerability;
+import edu.rit.se.nvip.db.model.RawVulnerability;
 import edu.rit.se.nvip.utils.GitController;
-import org.apache.commons.io.FileUtils;
 import org.junit.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
-import org.mockito.Mockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.File;
 import java.io.IOException;
@@ -23,12 +23,12 @@ import java.util.Set;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.*;
 
-
+@ExtendWith(MockitoExtension.class)
 public class MitreCveControllerTest {
 
     private final MitreCveController mitreCveController = new MitreCveController();
     @Mock
-    DatabaseHelper mockDbh = mock(DatabaseHelper.class);
+    NvdMitreRepository mockDbh = mock(NvdMitreRepository.class);
     //verifies update tables works correctly with mocks for database methods
     @Test
     public void updateMitreTables() {

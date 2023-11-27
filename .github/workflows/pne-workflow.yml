@@ -13,10 +13,17 @@ on:
       - dev
       - 'cicd/**'
     paths-ignore:
+      - '.github/workflows/patchfinder-workflow.yml'
+      - '.github/workflows/crawler-workflow.yml'
+      - '.github/workflows/reconciler-workflow.yml'
       - 'crawler/**'
       - 'exploitfinder/**'
       - 'patchfinder/**'
       - 'reconciler/**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 env:
   AWS_REGION: 'us-east-1'
@@ -78,14 +85,12 @@ jobs:
           LIQUIBASE_COMMAND_USERNAME: ${{ env.HIKARI_USER }}
           LIQUIBASE_COMMAND_PASSWORD: ${{ env.HIKARI_PASSWORD }}
         run: |
-          mysql -e 'CREATE DATABASE nvip;' -u${{ env.HIKARI_USER }} -p${{ env.HIKARI_PASSWORD }} 
-          mvn liquibase:update --no-transfer-progress --projects=productnameextractor
+          mysql -e 'CREATE DATABASE nvip;' -u${{ env.HIKARI_USER }} -p${{ env.HIKARI_PASSWORD }}
+          mvn liquibase:update --no-transfer-progress --projects=db
 
       - name: Test and Build Product Extractor with Maven
         run: |
-          cd productnameextractor
-          mvn dependency:go-offline
-          mvn package
+          mvn test --projects=db,productnameextractor
 
       - name: Publish Test Report
         if: success() || failure()

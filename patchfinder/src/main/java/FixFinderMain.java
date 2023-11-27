@@ -22,11 +22,13 @@
  * SOFTWARE.
  */
 
+import edu.rit.se.nvip.db.repositories.VulnerabilityRepository;
 import env.FixFinderEnvVars;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import fixes.FixFinder;
 
+import javax.sql.DataSource;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -67,7 +69,9 @@ public class FixFinderMain extends Thread {
 
     private void runDb() {
         // Fetch cves from db
-        List<String> cveIds = new ArrayList<>(FixFinder.getDatabaseHelper().getCves(FixFinderEnvVars.getCveLimit()));
+        DataSource ds = FixFinder.getDatabaseHelper().getDataSource();
+        VulnerabilityRepository vulnRepo = new VulnerabilityRepository(ds);
+        List<String> cveIds = vulnRepo.getCves(FixFinderEnvVars.getCveLimit());
         logger.info("Successfully got {} CVEs from the database", cveIds.size());
 
         try {
@@ -85,9 +89,7 @@ public class FixFinderMain extends Thread {
     private void runDev() {
         // Manually enter CVEs for development
         List<String> cveIds = new ArrayList<>();
-        cveIds.add("CVE-2022-27911");
-        cveIds.add("CVE-2023-30367");
-        cveIds.add("CVE-2022-0847");
+        cveIds.add("CVE-2023-38571");
 
         try {
             FixFinder.run(cveIds);
@@ -97,6 +99,7 @@ public class FixFinderMain extends Thread {
     }
 
     public static void main(String[] args) {
-//        run();
+        FixFinderMain finder = new FixFinderMain();
+        finder.start();
     }
 }

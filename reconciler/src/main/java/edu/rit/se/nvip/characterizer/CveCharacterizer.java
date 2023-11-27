@@ -22,22 +22,27 @@ package edu.rit.se.nvip.characterizer; /**
  * SOFTWARE.
  */
 
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.rit.se.nvip.automatedcvss.CvssScoreCalculator;
 import edu.rit.se.nvip.automatedcvss.PartialCvssVectorGenerator;
 import edu.rit.se.nvip.automatedcvss.preprocessor.CvePreProcessor;
 import edu.rit.se.nvip.characterizer.classifier.AbstractCveClassifier;
 import edu.rit.se.nvip.characterizer.classifier.CveClassifierFactory;
-import edu.rit.se.nvip.characterizer.enums.CVSSSeverityClass;
-import edu.rit.se.nvip.characterizer.enums.VDOLabel;
-import edu.rit.se.nvip.characterizer.enums.VDONounGroup;
-import edu.rit.se.nvip.model.CompositeVulnerability;
-import edu.rit.se.nvip.model.CvssScore;
-import edu.rit.se.nvip.model.VdoCharacteristic;
+import edu.rit.se.nvip.db.model.enums.VDOLabel;
+import edu.rit.se.nvip.db.model.enums.VDONounGroup;
+import edu.rit.se.nvip.db.repositories.CharacterizationRepository;
+import edu.rit.se.nvip.db.model.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.File;
+import java.io.*;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLEncoder;
 import java.nio.file.Paths;
 import java.util.*;
 
@@ -50,6 +55,8 @@ import java.util.*;
 public class CveCharacterizer {
 	private Logger logger = LogManager.getLogger(CveCharacterizer.class.getSimpleName());
 	private final Map<VDONounGroup, AbstractCveClassifier> nounGroupToClassifier = new HashMap<>();
+	private final static ObjectMapper OM = new ObjectMapper();
+	private final CharacterizationRepository dbh;
 
 	/**
 	 * these two vars are used to derive the CVSS vector from VDO labels and then
@@ -73,10 +80,12 @@ public class CveCharacterizer {
 							CveClassifierFactory cveClassifierFactory,
 							CvssScoreCalculator cvssScoreCalculator,
 							PartialCvssVectorGenerator partialCvssVectorGenerator,
-							String trainingDataPath, String trainingDataFiles, String approach, String method) {
+							String trainingDataPath, String trainingDataFiles, String approach, String method,
+							CharacterizationRepository dbh) {
 		this.cvssScoreCalculator = cvssScoreCalculator;
 		this.partialCvssVectorGenerator = partialCvssVectorGenerator;
 		this.cvePreProcessor = cvePreProcessor;
+		this.dbh = dbh;
 		try {
 
 			/**
@@ -132,8 +141,8 @@ public class CveCharacterizer {
 	 */
 
 	//removed  boolean loadSerializedModels as well as exploitability package
-	public CveCharacterizer(String trainingDataPath, String trainingDataFiles, String approach, String method) {
-		this(new CvePreProcessor(true), new CveClassifierFactory(), new CvssScoreCalculator(), new PartialCvssVectorGenerator(), trainingDataPath, trainingDataFiles, approach, method);
+	public CveCharacterizer(String trainingDataPath, String trainingDataFiles, String approach, String method, CharacterizationRepository dbh) {
+		this(new CvePreProcessor(true), new CveClassifierFactory(), new CvssScoreCalculator(), new PartialCvssVectorGenerator(), trainingDataPath, trainingDataFiles, approach, method, dbh);
 	}
 
 	/**
@@ -192,6 +201,7 @@ public class CveCharacterizer {
 					countNotChanged++;
 					continue;
 				}
+
 				// characterize CVE
 				Map<VDOLabel, Double> prediction = characterizeCveForVDO(vuln.getDescription(), true);
 				for (VDOLabel label : prediction.keySet()) {
@@ -205,6 +215,9 @@ public class CveCharacterizer {
 				CvssScore score = new CvssScore(vuln.getCveId(), cvssScore, 0.5); //confidence isn't used or stored anywhere
 				vuln.addCvssScore(score);
 //				logger.info("CVSS Score predicted for {}", vulnerability.getCveId());
+
+				// Get SSVC
+				vuln.setSSVC(characterizeCveForSSVC(vuln));
 
 				// log
 				if (totCharacterized % 100 == 0 && totCharacterized > 0) {
@@ -224,6 +237,30 @@ public class CveCharacterizer {
 		logger.info("{} CVEs did not have a good description, and {} CVEs had the same description (after reconciliation) and skipped!", countBadDescription, countNotChanged);
 	}
 
+	// Query SSVC AI models for scoring
+	private SSVC characterizeCveForSSVC(CompositeVulnerability vuln) {
+		try {
+			// Create parameter dict
+			final Map<String, String> params = new HashMap<>();
+			params.put("cveId", vuln.getCveId());
+			params.put("description", vuln.getDescription());
+			params.put("exploitStatus", dbh.exploitExists(vuln.getCveId()) ? "POC" : "NONE");
+
+			// Create url object
+			final URL url = new URL("http://localhost:5000/ssvc" + getParamsString(params));
+
+			// Build object from request response
+			return OM.readValue(url, SSVC.class);
+		} catch (MalformedURLException e) {
+			logger.error("Invalid URL found when attempting to access SSVC API: {}", e.toString());
+		} catch (JsonProcessingException | UnsupportedEncodingException e) {
+			logger.error("Unable to parse response from SSVC API: {}", e.toString());
+		} catch (IOException e) {
+			logger.error("Unable to access SSVC API: {}", e.toString());
+		}
+		return null;
+	}
+
 	/**
 	 * get VDO labels and return a double array that includes the
 	 * mean/minimum/maximum and standard deviation of the CVSS scores in NVD
@@ -239,5 +276,22 @@ public class CveCharacterizer {
 		// get CVSS median/min/max/std dev from Python script, return median
 		// return cvssScoreCalculator.getCvssScoreJython(cvssVec)[0]; // old way of doing it
 		return cvssScoreCalculator.lookupCvssScore(cvssVec); // should return same number as the old way but doesn't rely on python
+	}
+
+	private static String getParamsString(Map<String, String> params)
+			throws UnsupportedEncodingException {
+		StringBuilder result = new StringBuilder("?");
+
+		for (Map.Entry<String, String> entry : params.entrySet()) {
+			result.append(URLEncoder.encode(entry.getKey(), "UTF-8"));
+			result.append("=");
+			result.append(URLEncoder.encode(entry.getValue(), "UTF-8"));
+			result.append("&");
+		}
+
+		String resultString = result.toString();
+		return resultString.length() > 0
+				? resultString.substring(0, resultString.length() - 1)
+				: resultString;
 	}
 }

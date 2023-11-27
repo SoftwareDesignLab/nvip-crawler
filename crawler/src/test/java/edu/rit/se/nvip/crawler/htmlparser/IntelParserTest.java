@@ -22,15 +22,12 @@
  * SOFTWARE.
  */
 package edu.rit.se.nvip.crawler.htmlparser;
-import edu.rit.se.nvip.model.RawVulnerability;
-import jnr.ffi.annotations.In;
-import org.junit.Test;
+import edu.rit.se.nvip.db.model.RawVulnerability;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static junit.framework.TestCase.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class IntelParserTest extends AbstractParserTest {
 

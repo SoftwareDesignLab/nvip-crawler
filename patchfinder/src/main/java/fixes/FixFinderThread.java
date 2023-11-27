@@ -25,9 +25,8 @@ package fixes;
  */
 
 import fixes.parsers.FixParser;
-import fixes.parsers.CISAParser;
-import fixes.parsers.GenericParser;
-import fixes.parsers.NVDParser;
+
+import edu.rit.se.nvip.db.model.Fix;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

@@ -24,8 +24,10 @@ package fixes.urlfinders;
  * SOFTWARE.
  */
 
+import edu.rit.se.nvip.db.repositories.NvdMitreRepository;
 import fixes.FixFinder;
 
+import javax.sql.DataSource;
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -44,7 +46,8 @@ public class NvdFixUrlFinder extends FixUrlFinder {
         ArrayList<String> urlList = new ArrayList<>();
 
         // Get all sources for the cve
-        ArrayList<String> sources = FixFinder.getDatabaseHelper().getCveSourcesNVD(cveId);
+        DataSource ds = FixFinder.getDatabaseHelper().getDataSource();
+        ArrayList<String> sources = new NvdMitreRepository(ds).getCveSourcesNVD(cveId);
 
         // Test each source for a valid connection
         for (String source : sources) {

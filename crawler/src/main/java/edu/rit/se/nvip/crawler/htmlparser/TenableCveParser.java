@@ -23,7 +23,8 @@
  */
 package edu.rit.se.nvip.crawler.htmlparser;
 
-import edu.rit.se.nvip.model.RawVulnerability;
+import edu.rit.se.nvip.db.model.RawVulnerability;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jsoup.Jsoup;
@@ -46,9 +47,9 @@ import java.time.LocalDate;
  *
  * Ex: https://www.tenable.com/cve/CVE-2022-21953
  */
+@Slf4j
 public class TenableCveParser extends AbstractCveParser {
 
-	private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
 	public static final String DOMAIN_NAME = "tenable";
 
 	public TenableCveParser() {
@@ -105,7 +106,7 @@ public class TenableCveParser extends AbstractCveParser {
 		try {
 			publishDate = UtilHelper.longDateFormat.format(dateFormat.parse(publishDate));
 		} catch (ParseException | NullPointerException e) {
-			logger.error("Failed to parse date on {}, format not known!", sSourceURL);
+			log.error("Failed to parse date on {}, format not known!", sSourceURL);
 			publishDate = null;
 		}
 

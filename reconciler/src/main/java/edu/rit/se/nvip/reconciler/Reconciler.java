@@ -27,13 +27,14 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import edu.rit.se.nvip.DatabaseHelper;
-import edu.rit.se.nvip.model.RawVulnerability;
-import edu.rit.se.nvip.model.Vulnerability;
+import edu.rit.se.nvip.db.DatabaseHelper;
+import edu.rit.se.nvip.db.model.RawVulnerability;
+import edu.rit.se.nvip.db.repositories.RawDescriptionRepository;
+import edu.rit.se.nvip.db.repositories.VulnerabilityRepository;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import edu.rit.se.nvip.model.CompositeVulnerability;
+import edu.rit.se.nvip.db.model.CompositeVulnerability;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
 /**
@@ -87,7 +88,7 @@ public abstract class Reconciler {
 			}
 			// if there are also new non-user sources, store a copy of the composite user description and then continue reconciling on top of it
 			else {
-				DatabaseHelper.getInstance().insertDescription(existingVuln.getSystemDescription());
+				new VulnerabilityRepository(DatabaseHelper.getInstance().getDataSource()).insertDescription(existingVuln.getSystemDescription());
 			}
 		}
 		// if the existing vuln only uses low prio sources and the new ones are high prio, we dump the old sources and rebuild
@@ -167,7 +168,7 @@ public abstract class Reconciler {
 	private List<RawVulnerability> extractUserSources(Set<RawVulnerability> rawVulns) {
 		List<RawVulnerability> out = rawVulns.stream()
 				.filter(v->v.getSourceType()== RawVulnerability.SourceType.USER)
-				.sorted(Comparator.comparing(Vulnerability::getCreateDate).reversed())
+				.sorted(Comparator.comparing(RawVulnerability::getCreateDate).reversed())
 				.collect(Collectors.toList());
 		out.forEach(rawVulns::remove);
 		return out;

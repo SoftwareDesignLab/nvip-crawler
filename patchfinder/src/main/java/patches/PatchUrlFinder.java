@@ -23,7 +23,7 @@ package patches; /**
  */
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import model.CpeGroup;
+import edu.rit.se.nvip.db.model.CpeGroup;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eclipse.jgit.api.LsRemoteCommand;
@@ -110,6 +110,7 @@ public class PatchUrlFinder {
 	 * @param vendor vendor name
 	 * @throws IOException if an IO error occurs while testing the url connection
 	 */
+	// TODO: Consider using https://www.cve.org to lookup existing github references to repos/PRs
 	private ArrayList<String> parseURL(String vendor, String product) throws IOException {
 		ArrayList<String> newAddresses = new ArrayList<>();
 

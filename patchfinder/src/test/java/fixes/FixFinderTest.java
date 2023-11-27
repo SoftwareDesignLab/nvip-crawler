@@ -23,16 +23,9 @@ package fixes; /**
  */
 
 import env.FixFinderEnvVars;
-import model.CpeEntry;
-import model.CpeGroup;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.ThreadPoolExecutor;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -50,4 +43,13 @@ public class FixFinderTest {
         FixFinderEnvVars.initializeEnvVars(true);
     }
 
+    @Test
+    public void testInit() {
+        // TODO: Test init
+    }
+
+    @Test
+    public void testRun() {
+        // TODO: Test init
+    }
 }

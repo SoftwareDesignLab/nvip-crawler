@@ -22,8 +22,8 @@ package patches; /**
  * SOFTWARE.
  */
 
-import model.CpeEntry;
-import model.CpeGroup;
+import edu.rit.se.nvip.db.model.CpeEntry;
+import edu.rit.se.nvip.db.model.CpeGroup;
 import org.junit.jupiter.api.Assertions;
 import org.junit.Test;
 import patches.PatchUrlFinder;

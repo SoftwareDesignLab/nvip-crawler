@@ -23,19 +23,12 @@
  */
 package edu.rit.se.nvip.crawler.htmlparser;
 
-import edu.rit.se.nvip.crawler.CveCrawler;
-import edu.rit.se.nvip.model.RawVulnerability;
-import edu.rit.se.nvip.model.Vulnerability;
+import edu.rit.se.nvip.db.model.RawVulnerability;
 import org.apache.commons.io.FileUtils;
-import org.junit.BeforeClass;
-import org.junit.AfterClass;
 
 import java.io.IOException;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.Assert.fail;

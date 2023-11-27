@@ -25,10 +25,12 @@ package patches; /**
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
-import db.DatabaseHelper;
+import edu.rit.se.nvip.db.DatabaseHelper;
+import edu.rit.se.nvip.db.model.CpeGroup;
+import edu.rit.se.nvip.db.repositories.PatchFixRepository;
+import edu.rit.se.nvip.db.repositories.ProductRepository;
 import env.PatchFinderEnvVars;
 import messenger.PFInputJob;
-import model.CpeGroup;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eclipse.jgit.util.FileUtils;
@@ -58,7 +60,7 @@ public class PatchFinder {
 	private static DatabaseHelper databaseHelper;
 	private static PatchUrlFinder patchURLFinder;
 
-	private static final ArrayList<PatchCommit> patchCommits = new ArrayList<>();
+	private static final Set<PatchCommit> patchCommits = new HashSet<>();
 	private static Map<String, ArrayList<String>> sourceDict;
 	protected static Instant urlDictLastCompilationDate = Instant.parse("2000-01-01T00:00:00.00Z");
 	protected static final String[] addressBases = PatchFinderEnvVars.getAddressBases();
@@ -77,12 +79,7 @@ public class PatchFinder {
 
 		// Init db helper
 		logger.info("Initializing DatabaseHelper...");
-		databaseHelper = new DatabaseHelper(
-				PatchFinderEnvVars.getDatabaseType(),
-				PatchFinderEnvVars.getHikariUrl(),
-				PatchFinderEnvVars.getHikariUser(),
-				PatchFinderEnvVars.getHikariPassword()
-		);
+		databaseHelper = DatabaseHelper.getInstance();
 
 		// Init PatchUrlFinder
 		logger.info("Initializing PatchUrlFinder...");
@@ -96,9 +93,10 @@ public class PatchFinder {
 	 * @throws InterruptedException if a thread interrupted error occurs while attempting to find patches
 	 */
 	public static void run(List<PFInputJob> jobs) throws IOException, InterruptedException {
+		ProductRepository prodRepo = new ProductRepository(databaseHelper.getDataSource());
 		// Get affected products via CVE ids
 		List<Integer> vulnVersionIds = jobs.stream().map(PFInputJob::getVulnVersionId).collect(Collectors.toList());
-		final Map<String, CpeGroup> affectedProducts = databaseHelper.getAffectedProducts(vulnVersionIds);
+		final Map<String, CpeGroup> affectedProducts = prodRepo.getAffectedProducts(vulnVersionIds);
 		logger.info("Successfully got affected products for {} CVEs from the database", affectedProducts.size());
 		PatchFinder.run(affectedProducts, 0);
 	}
@@ -111,6 +109,7 @@ public class PatchFinder {
 	 * @return number of successfully imported patch commits
 	 */
 	public static int run(Map<String, CpeGroup> affectedProducts, int cveLimit) throws IOException {
+		PatchFixRepository pfRepo = new PatchFixRepository(databaseHelper.getDataSource());
 		final long totalStart = System.currentTimeMillis();
 		int successfulInserts = 0;
 
@@ -175,7 +174,7 @@ public class PatchFinder {
 		PatchFinder.findPatchesMultiThreaded(possiblePatchURLs);
 
 		// Get found patches from patchfinder
-		ArrayList<PatchCommit> patchCommits = PatchFinder.getPatchCommits();
+		Set<PatchCommit> patchCommits = PatchFinder.getPatchCommits();
 
 		// Insert found patch commits (if any)
 		if(patchCommits.size() > 0) {
@@ -186,10 +185,10 @@ public class PatchFinder {
 			);
 
 			// Get existing sources
-			final Map<String, Integer> existingSources = databaseHelper.getExistingSourceUrls();
+			final Map<String, Integer> existingSources = pfRepo.getExistingSourceUrls();
 
 			// Get existing patch commits
-			final Set<String> existingCommitShas = databaseHelper.getExistingPatchCommitShas();
+			final Set<String> existingCommitShas = pfRepo.getExistingPatchCommitShas();
 
 			// Insert patches
 			int failedInserts = 0;
@@ -199,7 +198,7 @@ public class PatchFinder {
 			for (PatchCommit patchCommit : patchCommits) {
 				final String sourceUrl = patchCommit.getCommitUrl();
 				// Insert source
-				final int sourceUrlId = databaseHelper.insertPatchSourceURL(existingSources, patchCommit.getCveId(), sourceUrl);
+				final int sourceUrlId = pfRepo.insertPatchSourceURL(existingSources, patchCommit.getCveId(), sourceUrl);
 				//convert the timeline to a string
 
 				// Insert patch commit
@@ -207,7 +206,7 @@ public class PatchFinder {
 					// Ensure patch commit does not already exist
 					final String commitSha = patchCommit.getCommitId();
 					if (!existingCommitShas.contains(commitSha)) {
-						databaseHelper.insertPatchCommit(
+						pfRepo.insertPatchCommit(
 								sourceUrlId, patchCommit.getCveId(), commitSha, patchCommit.getCommitDate(),
 								patchCommit.getCommitMessage(), patchCommit.getUniDiff(),
 								patchCommit.getTimeline(), patchCommit.getTimeToPatch(), patchCommit.getLinesChanged()
@@ -313,7 +312,7 @@ public class PatchFinder {
 		}
 	}
 
-	public static ArrayList<PatchCommit> getPatchCommits() {
+	public static Set<PatchCommit> getPatchCommits() {
 		return patchCommits;
 	}
 

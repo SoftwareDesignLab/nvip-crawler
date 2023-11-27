@@ -1,27 +1,36 @@
 package edu.rit.se.nvip;
 
 import edu.rit.se.nvip.characterizer.CveCharacterizer;
+import edu.rit.se.nvip.db.repositories.*;
 import edu.rit.se.nvip.filter.FilterHandler;
 import edu.rit.se.nvip.filter.FilterReturn;
 import edu.rit.se.nvip.messenger.Messenger;
 import edu.rit.se.nvip.messenger.PNEInputJob;
 import edu.rit.se.nvip.messenger.PNEInputMessage;
 import edu.rit.se.nvip.mitre.MitreCveController;
-import edu.rit.se.nvip.model.*;
+import edu.rit.se.nvip.db.model.*;
+import edu.rit.se.nvip.model.VulnSetWrapper;
 import edu.rit.se.nvip.nvd.NvdCveController;
 import edu.rit.se.nvip.reconciler.Reconciler;
 import edu.rit.se.nvip.reconciler.ReconcilerFactory;
 import edu.rit.se.nvip.utils.ReconcilerEnvVars;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import edu.rit.se.nvip.db.DatabaseHelper;
 
+import javax.sql.DataSource;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 public class ReconcilerController {
     private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
-    private DatabaseHelper dbh;
+    private DataSource dataSource;
+    private RawDescriptionRepository rawRepo;
+    private VulnerabilityRepository compRepo;
+    private NvdMitreRepository nvdMitreRepo;
+    private CharacterizationRepository charRepo;
+    private RunHistoryRepository runRepo;
     private Reconciler reconciler;
     private FilterHandler filterHandler;
     private Messenger messenger = new Messenger();
@@ -31,7 +40,7 @@ public class ReconcilerController {
 
 
     public void initialize(){
-        this.dbh = DatabaseHelper.getInstance();
+        this.dataSource = DatabaseHelper.getInstance().getDataSource();
         filterHandler = new FilterHandler(ReconcilerEnvVars.getFilterList());
         this.reconciler = ReconcilerFactory.createReconciler(ReconcilerEnvVars.getReconcilerType());
         this.reconciler.setKnownCveSources(ReconcilerEnvVars.getKnownSourceMap());
@@ -43,6 +52,15 @@ public class ReconcilerController {
             this.mitreController = new MitreCveController();
             this.mitreController.initializeController();
         }
+        dbSetup();
+    }
+
+    private void dbSetup() {
+        this.rawRepo = new RawDescriptionRepository(dataSource);
+        this.compRepo = new VulnerabilityRepository(dataSource);
+        this.charRepo = new CharacterizationRepository(dataSource);
+        this.nvdMitreRepo = new NvdMitreRepository(dataSource);
+        this.runRepo = new RunHistoryRepository(dataSource);
     }
 
     public void main(Set<String> jobs) {
@@ -92,10 +110,10 @@ public class ReconcilerController {
         Set<CompositeVulnerability> inNvdOrMitre = attachNvdMitre(reconciledVulns.stream()
                 .filter(v -> v.getReconciliationStatus() == CompositeVulnerability.ReconciliationStatus.NEW)
                 .collect(Collectors.toSet()));
-        dbh.insertTimeGapsForNewVulns(inNvdOrMitre);
+        nvdMitreRepo.insertTimeGapsForNewVulns(inNvdOrMitre);
 
         logger.info("Updating runstats");
-        dbh.insertRun(new RunStats(reconciledVulns));
+        runRepo.insertRun(new RunStats(reconciledVulns));
 
         logger.info("Starting characterization");
         //run characterizer
@@ -112,7 +130,8 @@ public class ReconcilerController {
             Set<CompositeVulnerability> recharacterized = reconciledVulns.stream()
                     .filter(CompositeVulnerability::isRecharacterized).collect(Collectors.toSet());
 
-            dbh.insertVdoCvssBatch(recharacterized);
+            charRepo.insertVdoCvssBatch(recharacterized);
+            charRepo.insertSSVCSet(recharacterized);
         }
         // PNE team no longer wants a finish message
         //messenger.sendPNEFinishMessage();
@@ -146,7 +165,7 @@ public class ReconcilerController {
            try {
                 String[] trainingDataInfo = {ReconcilerEnvVars.getTrainingDataDir(), ReconcilerEnvVars.getTrainingData()};
                 logger.info("Setting NVIP_CVE_CHARACTERIZATION_LIMIT to {}", ReconcilerEnvVars.getCharacterizationLimit());
-                return new CveCharacterizer(trainingDataInfo[0], trainingDataInfo[1], ReconcilerEnvVars.getCharacterizationApproach(), ReconcilerEnvVars.getCharacterizationMethod());
+                return new CveCharacterizer(trainingDataInfo[0], trainingDataInfo[1], ReconcilerEnvVars.getCharacterizationApproach(), ReconcilerEnvVars.getCharacterizationMethod(),charRepo);
            } catch (NullPointerException | NumberFormatException e) {
                 logger.warn("Could not fetch NVIP_CVE_CHARACTERIZATION_TRAINING_DATA or NVIP_CVE_CHARACTERIZATION_TRAINING_DATA_DIR from env vars");
                 return null;
@@ -161,18 +180,18 @@ public class ReconcilerController {
 
     private CompositeVulnerability handleReconcilerJob(String cveId) {
         // pull data
-        Set<RawVulnerability> rawVulns = dbh.getRawVulnerabilities(cveId);
+        Set<RawVulnerability> rawVulns = rawRepo.getRawVulnerabilities(cveId);
         int rawCount = rawVulns.size();
         VulnSetWrapper wrapper = new VulnSetWrapper(rawVulns);
         // mark new vulns as unevaluated
         int newRawCount = wrapper.setNewToUneval();
         // get an existing vuln from prior reconciliation if one exists
-        CompositeVulnerability existing = dbh.getCompositeVulnerability(cveId);
+        CompositeVulnerability existing = compRepo.getCompositeVulnerability(cveId);
         // filter in waves by priority
         FilterReturn firstWaveReturn = filterHandler.runFilters(wrapper.firstFilterWave()); //high prio sources
         FilterReturn secondWaveReturn = filterHandler.runFilters(wrapper.secondFilterWave()); //either empty or low prio depending on filter status of high prio sources
         // update the filter status in the db for new and newly evaluated vulns
-        dbh.updateFilterStatus(wrapper.toUpdate());
+        rawRepo.updateFilterStatus(wrapper.toUpdate());
         logger.info("{} raw vulnerabilities with CVE ID {} were found and {} were new.\n" +
                         "The first wave of filtering passed {} out of {} new high priority sources.\n" +
                         "The second wave of filtering passed {} out of {} new backup low priority sources.\n" +
@@ -192,7 +211,7 @@ public class ReconcilerController {
         // we do this because publish dates and mod dates should be determined by all sources, not just those with good descriptions
         out.setPotentialSources(rawVulns);
 
-        dbh.insertOrUpdateVulnerabilityFull(out);
+        compRepo.insertOrUpdateVulnerabilityFull(out);
 
         logger.info("Finished job for cveId " + out.getCveId());
 
@@ -218,8 +237,9 @@ public class ReconcilerController {
         return affected;
     }
 
-    public void setDbh(DatabaseHelper db){
-        dbh = db;
+    public void setDbh(DataSource db){
+        dataSource = db;
+        dbSetup();
     }
     public void setReconciler(Reconciler rc){
         reconciler = rc;

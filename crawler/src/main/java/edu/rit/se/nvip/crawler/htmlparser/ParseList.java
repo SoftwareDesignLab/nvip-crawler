@@ -1,7 +1,8 @@
 package edu.rit.se.nvip.crawler.htmlparser;
 
-import edu.rit.se.nvip.model.RawVulnerability;
+import edu.rit.se.nvip.db.model.RawVulnerability;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -16,9 +17,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.time.LocalDate;
 
+@Slf4j
 public class ParseList extends AbstractCveParser implements ParserStrategy {
-
-    private final Logger logger = LogManager.getLogger(getClass().getSimpleName());
 
     /**
      * Generic parser list strategy
@@ -181,7 +181,7 @@ public class ParseList extends AbstractCveParser implements ParserStrategy {
 
         }
         if (datesNotFound) {
-            logger.warn("Some dates not found for CVEs from " + sSourceURL + ", using current date...");
+            log.warn("Some dates not found for CVEs from " + sSourceURL + ", using current date...");
         }
         return vulnList;
     }
