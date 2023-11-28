@@ -82,10 +82,13 @@ public class Messenger {
             Connection connection = factory.newConnection();
             Channel channel = connection.createChannel();
 
-            // TODO: Needed?
-            channel.queueDeclare(inputQueue, true, false, false, null);
-            channel.queueDeclare(patchFinderOutputQueue, true, false, false, null);
-            channel.queueDeclare(fixFinderOutputQueue, true, false, false, null);
+            channel.queueDeclareNoWait(inputQueue, true, false, false, null);
+            channel.queueDeclareNoWait(patchFinderOutputQueue, true, false, false, null);
+            channel.queueDeclareNoWait(fixFinderOutputQueue, true, false, false, null);
+            // TODO: Remove when queue issue is resolved (errors thrown likely when producer does not receive info from consumer)
+//            channel.queueDeclare(inputQueue, true, false, false, null);
+//            channel.queueDeclare(patchFinderOutputQueue, true, false, false, null);
+//            channel.queueDeclare(fixFinderOutputQueue, true, false, false, null);
 
             channel.basicConsume(inputQueue, false, new DefaultConsumer(channel) {
                 @Override
