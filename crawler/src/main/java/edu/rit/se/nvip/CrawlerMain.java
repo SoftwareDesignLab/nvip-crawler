@@ -474,8 +474,8 @@ public class CrawlerMain {
             for (ArrayList<RawVulnerability> vulnList : crawledCVEs.values()) {
                 for (RawVulnerability vuln : vulnList) {
                     String desc = vuln.getDescription().replace("\r\n", ". ").replace("\n", ". ").replace("\r", ". ").replace("\t", " ");
-                    String[] data = {vuln.getCveId(), desc, vuln.getCreateDate().toString(), vuln.getPublishDate().toString(),
-                        vuln.getLastModifiedDate().toString(), vuln.getSourceUrl(), vuln.getSourceType().type};
+                    String[] data = {vuln.getCveId(), desc, vuln.getCreateDateString(), vuln.getPublishDateString(),
+                        vuln.getLastModifiedDateString(), vuln.getSourceUrl(), vuln.getSourceType().type};
                     writer.writeNext(data, false);
                     lineCount++;
                 }
