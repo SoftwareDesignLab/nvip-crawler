@@ -30,7 +30,7 @@ public class ParseCVEDescriptionTest extends AbstractParserTest {
         RawVulnerability vuln = getVulnerability(list, "CVE-2023-1017");
         assertNotNull(vuln);
         String current_date = LocalDate.now() + " 00:00:00";
-        assertEquals(current_date, vuln.getPublishDate());
+        assertEquals(current_date, vuln.getPublishDateString());
         assertTrue(vuln.getDescription().contains("Crestron is aware of an issue with TPM’s 2.0 Module Library in which an out of bounds attack can be executed"));
     }
 
@@ -47,7 +47,7 @@ public class ParseCVEDescriptionTest extends AbstractParserTest {
         RawVulnerability vuln = getVulnerability(list, "CVE-2022-30564");
         assertNotNull(vuln);
         String current_date = LocalDate.now() + " 00:00:00";
-        assertEquals(current_date, vuln.getPublishDate());
+        assertEquals(current_date, vuln.getPublishDateString());
         assertTrue(vuln.getDescription().contains("Some Dahua embedded products have a vulnerability of unauthorized modification of the device timestamp. "));
     }
 
@@ -64,7 +64,7 @@ public class ParseCVEDescriptionTest extends AbstractParserTest {
         RawVulnerability vuln = getVulnerability(list, "CVE-2023-1031");
         assertNotNull(vuln);
         String current_date = LocalDate.now() + " 00:00:00";
-        assertEquals(current_date, vuln.getPublishDate());
+        assertEquals(current_date, vuln.getPublishDateString());
         assertTrue(vuln.getDescription().contains("MonicaHQ version 4.0.0 allows an authenticated remote attacker to execute malicious code in the application."));
     }
 
@@ -81,7 +81,7 @@ public class ParseCVEDescriptionTest extends AbstractParserTest {
         RawVulnerability vuln = getVulnerability(list, "CVE-2022-21673");
         assertNotNull(vuln);
         String current_date = LocalDate.now() + " 00:00:00";
-        assertEquals(current_date, vuln.getPublishDate());
+        assertEquals(current_date, vuln.getPublishDateString());
         assertTrue(vuln.getDescription().contains("In affected versions when a data source has the Forward OAuth Identity feature enabled, sending a query to that datasource with an API token"));
     }
 
@@ -98,7 +98,7 @@ public class ParseCVEDescriptionTest extends AbstractParserTest {
         RawVulnerability vuln = getVulnerability(list, "CVE-2023-32978");
         assertNotNull(vuln);
         String current_date = LocalDate.now() + " 00:00:00";
-        assertEquals(current_date, vuln.getPublishDate());
+        assertEquals(current_date, vuln.getPublishDateString());
         assertTrue(vuln.getDescription().contains("LDAP Plugin 673.v034ec70ec2b_b_ and earlier does not require POST requests for a form validation method, resulting in a cross-site request forgery (CSRF) vulnerability"));
     }
 
@@ -115,7 +115,7 @@ public class ParseCVEDescriptionTest extends AbstractParserTest {
         RawVulnerability vuln = getVulnerability(list, "CVE-2023-0383");
         assertNotNull(vuln);
         String current_date = LocalDate.now() + " 00:00:00";
-        assertEquals(current_date, vuln.getPublishDate());
+        assertEquals(current_date, vuln.getPublishDateString());
         assertTrue(vuln.getDescription().contains("User-controlled operations could have allowed Denial of Service in M-Files Server before 23.4.12528.1 due to uncontrolled memory consumption."));
     }
 
@@ -132,7 +132,7 @@ public class ParseCVEDescriptionTest extends AbstractParserTest {
         RawVulnerability vuln = getVulnerability(list, "CVE-2021-44862");
         assertNotNull(vuln);
         String current_date = LocalDate.now() + " 00:00:00";
-        assertEquals(current_date, vuln.getPublishDate());
+        assertEquals(current_date, vuln.getPublishDateString());
         assertTrue(vuln.getDescription().contains("Netskope client is impacted by a vulnerability where an authenticated, local attacker can view sensitive information stored in NSClient logs which should be restricted"));
     }
 
@@ -149,7 +149,7 @@ public class ParseCVEDescriptionTest extends AbstractParserTest {
         RawVulnerability vuln = getVulnerability(list, "CVE-2022-4259");
         assertNotNull(vuln);
         String current_date = LocalDate.now() + " 00:00:00";
-        assertEquals(current_date, vuln.getPublishDate());
+        assertEquals(current_date, vuln.getPublishDateString());
         assertTrue(vuln.getDescription().contains("A SQL Injection vulnerability in Nozomi Networks Guardian and CMC, due to improper input validation in the Alerts controller"));
     }
 
@@ -166,7 +166,7 @@ public class ParseCVEDescriptionTest extends AbstractParserTest {
         RawVulnerability vuln = getVulnerability(list, "CVE-2023-0089");
         assertNotNull(vuln);
         String current_date = LocalDate.now() + " 00:00:00";
-        assertEquals(current_date, vuln.getPublishDate());
+        assertEquals(current_date, vuln.getPublishDateString());
         assertTrue(vuln.getDescription().contains("CVE-2023-0089 describes a vulnerability which allows for remote code execution by an authenticated user"));
     }
 
@@ -183,7 +183,7 @@ public class ParseCVEDescriptionTest extends AbstractParserTest {
         RawVulnerability vuln = getVulnerability(list, "CVE-2022-27914");
         assertNotNull(vuln);
         String current_date = LocalDate.now() + " 00:00:00";
-        assertEquals(current_date, vuln.getPublishDate());
+        assertEquals(current_date, vuln.getPublishDateString());
         assertTrue(vuln.getDescription().contains("Inadequate filtering of potentially malicious user input leads to reflected XSS vulnerabilities in com_media"));
     }
 }

@@ -45,8 +45,8 @@ public class CoreParserTest extends AbstractParserTest {
         assertEquals(1, list.size());
         RawVulnerability vuln = list.get(0);
         assertEquals("CVE-2021-1567", vuln.getCveId());
-        assertEquals("2021-06-16 00:00:00", vuln.getPublishDate());
-        assertEquals("2021-06-16 00:00:00", vuln.getLastModifiedDate());
+        assertEquals("2021-06-16 00:00:00", vuln.getPublishDateString());
+        assertEquals("2021-06-16 00:00:00", vuln.getLastModifiedDateString());
         assertTrue(vuln.getDescription().contains("AnyConnect Posture Module uses the HostScan"));
         assertTrue(vuln.getDescription().contains("accepting commands given in a certain packet format"));
     }
@@ -61,8 +61,8 @@ public class CoreParserTest extends AbstractParserTest {
         assertEquals(7, list.size());
         RawVulnerability vuln = list.get(2);
         assertEquals("CVE-2020-12853", vuln.getCveId());
-        assertEquals("2020-05-28 00:00:00", vuln.getPublishDate());
-        assertEquals("2020-05-28 00:00:00", vuln.getLastModifiedDate());
+        assertEquals("2020-05-28 00:00:00", vuln.getPublishDateString());
+        assertEquals("2020-05-28 00:00:00", vuln.getLastModifiedDateString());
         assertTrue(vuln.getDescription().contains("The attacker could leverage a public file share link to gain"));
         assertTrue(vuln.getDescription().contains("A malicious user can either upload or create a new file"));
     }

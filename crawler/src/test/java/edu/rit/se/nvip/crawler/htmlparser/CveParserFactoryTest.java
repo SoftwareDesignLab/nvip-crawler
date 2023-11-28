@@ -55,7 +55,7 @@ public class CveParserFactoryTest extends AbstractParserTest{
         assertEquals(1, list.size());
         RawVulnerability vuln = list.get(0);
         assertEquals("CVE-2022-21953", vuln.getCveId());
-        assertEquals("2023-02-07 00:00:00", vuln.getPublishDate());
+        assertEquals("2023-02-07 00:00:00", vuln.getPublishDateString());
         assertEquals(TenableCveParserTest.TEST_DESCRIPTION, vuln.getDescription());
     }
 
@@ -70,7 +70,7 @@ public class CveParserFactoryTest extends AbstractParserTest{
         assertEquals(1, list.size());
         RawVulnerability vuln = list.get(0);
         assertEquals("CVE-2023-0587", vuln.getCveId());
-        assertEquals("2023-01-30 00:00:00", vuln.getPublishDate());
+        assertEquals("2023-01-30 00:00:00", vuln.getPublishDateString());
         assertTrue(vuln.getDescription().contains("A file upload vulnerability in exists in Trend Micro Apex One"));
         assertFalse(vuln.getDescription().contains("View More Research Advisories"));
     }
@@ -86,7 +86,7 @@ public class CveParserFactoryTest extends AbstractParserTest{
         assertEquals(1, list.size());
         RawVulnerability vuln = list.get(0);
         assertEquals("CVE-2022-37661", vuln.getCveId());
-        assertEquals("2022-11-11 00:00:00", vuln.getPublishDate());
+        assertEquals("2022-11-11 00:00:00", vuln.getPublishDateString());
         assertTrue(vuln.getDescription().contains("Remote Code Execution"));
     }
 
@@ -102,7 +102,7 @@ public class CveParserFactoryTest extends AbstractParserTest{
         RawVulnerability vuln = list.get(0);
         assertEquals("CVE-2021-33164", vuln.getCveId());
         assertTrue(vuln.getDescription().contains("access and validation of the SMRAM"));
-        assertEquals("2022-11-08 00:00:00", vuln.getPublishDate());
+        assertEquals("2022-11-08 00:00:00", vuln.getPublishDateString());
     }
 
     @Test
@@ -117,7 +117,7 @@ public class CveParserFactoryTest extends AbstractParserTest{
         RawVulnerability vuln = getVulnerability(list, "CVE-2022-20705");
         assertNotNull(vuln);
         assertTrue(vuln.getDescription().contains("Cisco RV160, RV260, RV340, and RV345 Small Business Routers, allowing attackers to execute arbitrary commands"));
-        assertEquals("2023-02-14 00:00:00", vuln.getPublishDate());
+        assertEquals("2023-02-14 00:00:00", vuln.getPublishDateString());
     }
 
     @Test
@@ -131,7 +131,7 @@ public class CveParserFactoryTest extends AbstractParserTest{
         assertEquals(1, list.size());
         RawVulnerability vuln = list.get(0);
         assertEquals("CVE-2022-40224", vuln.getCveId());
-        assertEquals("2022-10-14 00:00:00", vuln.getPublishDate());
+        assertEquals("2022-10-14 00:00:00", vuln.getPublishDateString());
         assertTrue(vuln.getDescription().contains("A denial of service vulnerability exists"));
     }
 

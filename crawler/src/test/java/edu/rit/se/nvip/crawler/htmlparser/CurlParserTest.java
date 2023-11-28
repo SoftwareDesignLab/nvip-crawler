@@ -43,7 +43,7 @@ public class CurlParserTest extends AbstractParserTest {
         assertEquals(1, list.size());
         RawVulnerability vuln = list.get(0);
         assertEquals("CVE-2023-23916", vuln.getCveId());
-        assertEquals("2023-02-15 00:00:00", vuln.getPublishDate());
+        assertEquals("2023-02-15 00:00:00", vuln.getPublishDateString());
         assertTrue(vuln.getDescription().contains("\"chained\" HTTP compression algorithms"));
         assertTrue(vuln.getDescription().contains("Automatic decompression of content needs to be enabled"));
     }
@@ -56,7 +56,7 @@ public class CurlParserTest extends AbstractParserTest {
         assertEquals(1, list.size());
         RawVulnerability vuln = list.get(0);
         assertEquals("CVE-2022-43552", vuln.getCveId());
-        assertEquals("2022-12-21 00:00:00", vuln.getPublishDate());
+        assertEquals("2022-12-21 00:00:00", vuln.getPublishDateString());
         assertTrue(vuln.getDescription().contains("curl can be asked to tunnel"));
         assertTrue(vuln.getDescription().contains("introduced for TELNET"));
     }

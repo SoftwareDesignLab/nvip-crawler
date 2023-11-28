@@ -24,7 +24,7 @@ public class AnquankeParserTest extends AbstractParserTest {
         RawVulnerability vuln = getVulnerability(list, "CVE-2020-5764");
         assertNotNull(vuln);
         assertTrue(vuln.getDescription().contains("安卓MX Player播放器路径穿越和代码执行漏洞"));
-        assertEquals("2020-07-10 16:30:16", vuln.getPublishDate());
-        assertEquals("2020-07-10 16:30:16", vuln.getLastModifiedDate());
+        assertEquals("2020-07-10 16:30:16", vuln.getPublishDateString());
+        assertEquals("2020-07-10 16:30:16", vuln.getLastModifiedDateString());
     }
 }

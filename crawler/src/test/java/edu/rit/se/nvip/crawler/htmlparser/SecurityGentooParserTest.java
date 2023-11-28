@@ -40,7 +40,7 @@ public class SecurityGentooParserTest extends AbstractParserTest {
 		assertEquals(1, list.size());
 		RawVulnerability vuln = list.get(0);
 		assertEquals("CVE-2005-0453", vuln.getCveId());
-		assertEquals("2005-02-15 00:00:00", vuln.getPublishDate());
+		assertEquals("2005-02-15 00:00:00", vuln.getPublishDateString());
 		assertEquals("lighttpd uses file extensions to determine which elements are programs that should be executed and which are static pages that should be sent as-is. By appending %00 to the filename, you can evade the extension detection mechanism while still accessing the file. A remote attacker could send specific queries and access the source of scripts that should have been executed as CGI or FastCGI applications.",
 				vuln.getDescription());
 	}
@@ -52,7 +52,7 @@ public class SecurityGentooParserTest extends AbstractParserTest {
 		assertEquals(3, list.size());
 		RawVulnerability vuln = getVulnerability(list, "CVE-2022-3171");
 		assertNotNull(vuln);
-		assertEquals("2023-01-11 00:00:00", vuln.getPublishDate());
+		assertEquals("2023-01-11 00:00:00", vuln.getPublishDateString());
 		assertEquals("Inputs containing multiple instances of non-repeated embedded messages with repeated or unknown fields causes objects to be converted back and forth between mutable and immutable forms, resulting in potentially long garbage collection pauses. Crafted input can trigger a denial of service via long garbage collection pauses.",
 				vuln.getDescription());
 	}

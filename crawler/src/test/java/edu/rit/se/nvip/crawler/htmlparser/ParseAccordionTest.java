@@ -29,7 +29,7 @@ public class ParseAccordionTest extends AbstractParserTest{
         assertTrue(vulnerabilities.size() > 0);
         RawVulnerability vuln = getVulnerability(vulnerabilities, "CVE-2022-42718");
         assertNotNull(vuln);
-        assertEquals("2022-12-01 00:00:00", vuln.getPublishDate());
+        assertEquals("2022-12-01 00:00:00", vuln.getPublishDateString());
         assertTrue(vuln.getDescription().contains("Incorrect default permissions in the installation folder for NI LabVIEW"));
         assertFalse(vuln.getDescription().contains("An update is available for FlexLogger 2019"));
     }
@@ -42,7 +42,7 @@ public class ParseAccordionTest extends AbstractParserTest{
         assertTrue(vulnerabilities.size() > 0);
         RawVulnerability vuln = getVulnerability(vulnerabilities, "CVE-2022-3602");
         assertNotNull(vuln);
-        assertEquals("2022-11-01 00:00:00", vuln.getPublishDate());
+        assertEquals("2022-11-01 00:00:00", vuln.getPublishDateString());
         assertTrue(vuln.getDescription().contains("OpenVPN Access Server uses the OpenSSL library that comes with the operating system. On most operating systems this is"));
         assertFalse(vuln.getDescription().contains("Our OpenVPN Connect v2 and v3 client software for macOS is signed using our official digital signature"));
     }
@@ -55,7 +55,7 @@ public class ParseAccordionTest extends AbstractParserTest{
         assertTrue(vulnerabilities.size() > 0);
         RawVulnerability vuln = getVulnerability(vulnerabilities, "CVE-2022-23531");
         assertNotNull(vuln);
-        assertEquals("2023-03-16 00:00:00", vuln.getPublishDate());
+        assertEquals("2023-03-16 00:00:00", vuln.getPublishDateString());
         assertTrue(vuln.getDescription().contains("Three vulnerabilities were recently identified in the JsonWebToken software that could lead to unintended actions"));
         assertFalse(vuln.getDescription().contains("A bad actor with non-admin user access to a client desktop, with Pega Synchronization Engine"));
     }
@@ -68,7 +68,7 @@ public class ParseAccordionTest extends AbstractParserTest{
         assertTrue(vulnerabilities.size() > 0);
         RawVulnerability vuln = getVulnerability(vulnerabilities, "CVE-2020-24588");
         assertNotNull(vuln);
-        assertEquals("2021-05-24 00:00:00", vuln.getPublishDate());
+        assertEquals("2021-05-24 00:00:00", vuln.getPublishDateString());
         assertTrue(vuln.getDescription().contains("ASUS is aware of newly discovered industry-wide WiFi protocol vulnerabilities that affect every brand of WiFi router. The vulnerabilities are known as Fragmentation"));
         assertFalse(vuln.getDescription().contains("ASUS has released the new BIOS version 303 for the ASUS ZenBook Pro Duo 15 OLED (UX582LR) laptop, which includes important security updates"));
     }

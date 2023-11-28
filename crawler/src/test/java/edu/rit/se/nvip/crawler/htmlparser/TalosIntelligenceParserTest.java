@@ -39,7 +39,7 @@ public class TalosIntelligenceParserTest extends AbstractParserTest {
 		assertEquals(1, list.size());
 		RawVulnerability vuln = list.get(0);
 		assertEquals("CVE-2022-40224", vuln.getCveId());
-		assertEquals("2022-10-14 00:00:00", vuln.getPublishDate());
+		assertEquals("2022-10-14 00:00:00", vuln.getPublishDateString());
 		assertTrue(vuln.getDescription().contains("A denial of service vulnerability exists"));
 		assertTrue(vuln.getDescription().contains("An HTTP request to port 443"));
 		assertFalse(vuln.getDescription().contains("Discovered by Patrick"));
@@ -53,7 +53,7 @@ public class TalosIntelligenceParserTest extends AbstractParserTest {
 		assertEquals(3, list.size());
 		RawVulnerability vuln = getVulnerability(list, "CVE-2022-41313");
 		assertNotNull(vuln);
-		assertEquals("2022-10-14 00:00:00", vuln.getPublishDate());
+		assertEquals("2022-10-14 00:00:00", vuln.getPublishDateString());
 		assertTrue(vuln.getDescription().contains("The SDS-3008 is an 8-port smart Ethernet switch"));
 		assertTrue(vuln.getDescription().contains("A stored cross-site scripting vulnerability"));
 		assertFalse(vuln.getDescription().contains("The following input in"));

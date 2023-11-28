@@ -29,8 +29,8 @@ public class PyPaYamlFileTest {
                         " The likelihood of this vulnerability is possible as it requires minimal skills to" +
                         " pull off, especially given the underlying login functionality for Piccolo based" +
                         " sites is open source. This issue has been patched in version 0.121.0.",
-                "Tue Sep 12 21:15:00 UTC 2023",
-                "Tue Sep 19 05:26:00 UTC 2023",
+                "Tue Sep 12 17:15:00 EDT 2023",
+                "Tue Sep 19 01:26:00 EDT 2023",
                 List.of("CVE-2023-41885", "GHSA-h7cm-mrvq-wcfr")
         );
 
@@ -48,7 +48,7 @@ public class PyPaYamlFileTest {
                         " that are vulnerable to CVE-2023-4863. imagecodecs v2023.9.18 upgrades the bundled" +
                         " libwebp binary to v1.3.2.",
                 "",
-                "Wed Sep 20 05:12:42 UTC 2023",
+                "Wed Sep 20 01:12:42 EDT 2023",
                 List.of()
         );
 

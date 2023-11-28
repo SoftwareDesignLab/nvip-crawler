@@ -45,7 +45,7 @@ public class MicrosoftParserTest extends AbstractParserTest {
         assertEquals(1, list.size());
         RawVulnerability vuln = list.get(0);
         assertEquals("CVE-2023-21809", vuln.getCveId());
-        assertEquals("2023-02-14 00:00:00", vuln.getPublishDate());
-        assertEquals("2023-02-21 00:00:00", vuln.getLastModifiedDate());
+        assertEquals("2023-02-14 00:00:00", vuln.getPublishDateString());
+        assertEquals("2023-02-21 00:00:00", vuln.getLastModifiedDateString());
     }
 }

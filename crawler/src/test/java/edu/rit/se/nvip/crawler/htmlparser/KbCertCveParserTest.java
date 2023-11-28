@@ -58,6 +58,6 @@ public class KbCertCveParserTest extends AbstractParserTest {
         RawVulnerability vuln = getVulnerability(list, "CVE-2021-33164");
         assertNotNull(vuln);
         assertTrue(vuln.getDescription().contains("access and validation of the SMRAM"));
-        assertEquals("2022-11-08 00:00:00", vuln.getPublishDate());
+        assertEquals("2022-11-08 00:00:00", vuln.getPublishDateString());
     }
 }

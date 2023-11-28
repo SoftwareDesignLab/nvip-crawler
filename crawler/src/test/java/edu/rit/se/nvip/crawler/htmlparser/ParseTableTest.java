@@ -26,7 +26,7 @@ public class ParseTableTest extends AbstractParserTest {
         assertTrue(vulnerabilities.size() > 190);
         RawVulnerability vuln = getVulnerability(vulnerabilities, "CVE-2023-22809");
         assertNotNull(vuln);
-        assertEquals("2023-06-15 00:00:00", vuln.getPublishDate());
+        assertEquals("2023-06-15 00:00:00", vuln.getPublishDateString());
         assertTrue(vuln.getDescription().contains("A vulnerability has been reported in sudo. The vulnerability affects the following QNAP operating system"));
         assertFalse(vuln.getDescription().contains("Multiple vulnerabilities have been reported in OpenSSL. These vulnerabilities affect the following QNAP operating systems: QTS, QuTS hero, QuTScloud, QVP (QVR Pro appliances), QVR, QES"));
     }
@@ -41,7 +41,7 @@ public class ParseTableTest extends AbstractParserTest {
         assertTrue(vulnerabilities.size() > 70);
         RawVulnerability vuln = getVulnerability(vulnerabilities, "CVE-2021-22035");
         assertNotNull(vuln);
-        assertTrue(vuln.getPublishDate().equals("2021-10-11 00:00:00") || vuln.getPublishDate().equals("2021-10-12 00:00:00"));
+        assertTrue(vuln.getPublishDateString().equals("2021-10-11 00:00:00") || vuln.getPublishDateString().equals("2021-10-12 00:00:00"));
         assertTrue(vuln.getDescription().contains("VMware vRealize Log Insight"));
         assertFalse(vuln.getDescription().contains("VMware Aria Operations for"));
     }
@@ -56,7 +56,7 @@ public class ParseTableTest extends AbstractParserTest {
         assertTrue(vulnerabilities.size() > 400);
         RawVulnerability vuln = getVulnerability(vulnerabilities, "CVE-2017-5715");
         assertNotNull(vuln);
-        assertEquals("2018-10-16 00:00:00", vuln.getPublishDate());
+        assertEquals("2018-10-16 00:00:00", vuln.getPublishDateString());
         assertTrue(vuln.getDescription().contains("NVIDIA SHIELD TV – October 2018"));
         assertFalse(vuln.getDescription().contains("NVIDIA Shield TV Security Updates for CPU Speculative Side Channel Vulnerabilities"));
     }

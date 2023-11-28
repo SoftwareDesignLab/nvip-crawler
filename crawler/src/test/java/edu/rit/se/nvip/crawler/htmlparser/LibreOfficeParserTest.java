@@ -22,7 +22,7 @@ public class LibreOfficeParserTest extends AbstractParserTest {
         RawVulnerability vuln = getVulnerability(list, "CVE-2019-9850");
         assertNotNull(vuln);
         assertTrue(vuln.getDescription().contains("to block calling LibreLogo from script event handers."));
-        assertEquals("2019-08-15 00:00:00", vuln.getPublishDate());
+        assertEquals("2019-08-15 00:00:00", vuln.getPublishDateString());
     }
 
 }

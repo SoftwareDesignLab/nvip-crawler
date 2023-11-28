@@ -47,8 +47,8 @@ public class AcronisParserTest extends AbstractParserTest {
         RawVulnerability vuln = list.get(0);
         assertEquals("CVE-2022-3405", vuln.getCveId());
         assertTrue(vuln.getDescription().contains("Code execution and sensitive information disclosure due"));
-        assertEquals("2022-11-17 00:00:00", vuln.getPublishDate());
-        assertEquals("2023-03-09 00:00:00", vuln.getLastModifiedDate());
+        assertEquals("2022-11-17 00:00:00", vuln.getPublishDateString());
+        assertEquals("2023-03-09 00:00:00", vuln.getLastModifiedDateString());
     }
 
     // Multiple CVE, nothing above title, located in description
@@ -63,8 +63,8 @@ public class AcronisParserTest extends AbstractParserTest {
         RawVulnerability vuln = getVulnerability(list, "CVE-2022-3602");
         assertNotNull(vuln);
         assertTrue(vuln.getDescription().contains("OpenSSL project team released a security advisory"));
-        assertEquals("2022-11-01 00:00:00", vuln.getPublishDate());
-        assertEquals("2022-11-01 00:00:00", vuln.getLastModifiedDate());
+        assertEquals("2022-11-01 00:00:00", vuln.getPublishDateString());
+        assertEquals("2022-11-01 00:00:00", vuln.getLastModifiedDateString());
     }
 
 }

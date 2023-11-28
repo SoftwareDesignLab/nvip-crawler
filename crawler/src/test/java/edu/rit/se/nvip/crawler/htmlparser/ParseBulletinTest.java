@@ -29,8 +29,8 @@ public class ParseBulletinTest extends AbstractParserTest {
         RawVulnerability vuln = getVulnerability(list, "CVE-2023-20933");
         assertNotNull(vuln);
         assertTrue(vuln.getDescription().contains("with no additional execution privileges needed"));
-        assertEquals("2023-02-06 00:00:00", vuln.getPublishDate());
-        assertEquals("2023-02-08 00:00:00", vuln.getLastModifiedDate());
+        assertEquals("2023-02-06 00:00:00", vuln.getPublishDateString());
+        assertEquals("2023-02-08 00:00:00", vuln.getLastModifiedDateString());
     }
 
 
@@ -45,11 +45,11 @@ public class ParseBulletinTest extends AbstractParserTest {
         RawVulnerability vuln6 = getVulnerability(list, "CVE-2022-2588");
         assertNotNull(vuln1);
         assertNotNull(vuln6);
-        assertEquals("2023-01-11 00:00:00", vuln1.getPublishDate());
-        assertEquals("2023-01-11 00:00:00", vuln1.getLastModifiedDate());
+        assertEquals("2023-01-11 00:00:00", vuln1.getPublishDateString());
+        assertEquals("2023-01-11 00:00:00", vuln1.getLastModifiedDateString());
         assertTrue(vuln1.getDescription().contains("OpenSSL v3.0.6 that can potentially cause a crash."));
-        assertEquals("2022-11-09 00:00:00", vuln6.getPublishDate());
-        assertEquals("2023-01-19 00:00:00", vuln6.getLastModifiedDate());
+        assertEquals("2022-11-09 00:00:00", vuln6.getPublishDateString());
+        assertEquals("2023-01-19 00:00:00", vuln6.getLastModifiedDateString());
         assertTrue(vuln6.getDescription().contains("Linux kernel that can lead to a full container break out to root on the node."));
     }
 }
