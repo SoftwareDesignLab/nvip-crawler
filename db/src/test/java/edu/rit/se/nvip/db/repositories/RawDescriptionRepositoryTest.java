@@ -222,7 +222,7 @@ public class RawDescriptionRepositoryTest {
     @SneakyThrows
     public void getUsedRawVulnerabilitiesTest() {
         when(mockRS.next()).thenReturn(true, true, false);
-        when(mockRS.getInt(anyString())).thenReturn(1);
+        when(mockRS.getInt(anyString())).thenReturn(1,2);
         when(mockRS.getString(anyString())).thenReturn("desc");
         when(mockRS.getTimestamp(anyString())).thenReturn(new Timestamp(System.currentTimeMillis()));
 
