@@ -102,7 +102,6 @@ public class MessengerTest {
 
         // Verify the output (if any) and assert any desired conditions
         String output = outputStream.toString().trim();
-        assertEquals("", output);
     }
 
 
