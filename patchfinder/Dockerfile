@@ -17,7 +17,7 @@ RUN mvn dependency:go-offline
 
 ADD patchfinder/src/main patchfinder/src/main
 
-RUN mvn package -Dmaven.test.skip=true --projects=patchfinder
+RUN mvn package -Dmaven.test.skip=true --projects=db,patchfinder
 
 ### Patchfinder Run Stage
 FROM eclipse-temurin:17-jre AS patchfinder
