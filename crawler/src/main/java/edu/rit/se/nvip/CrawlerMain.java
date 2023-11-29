@@ -153,7 +153,7 @@ public class CrawlerMain {
                 log.info("CVE: {}:\n", cveId);
                 for (RawVulnerability vuln: crawledCVEs.get(cveId)) {
                     String description = vuln.getDescription().length() > 100 ? vuln.getDescription().substring(0, 100) + "...": vuln.getDescription();
-                    log.info("[{} | {}]\n", vuln.getSourceURL(), description);
+                    log.info("[{} | {}]\n", vuln.getSourceUrl(), description);
                 }
             }
         } else {
@@ -474,8 +474,8 @@ public class CrawlerMain {
             for (ArrayList<RawVulnerability> vulnList : crawledCVEs.values()) {
                 for (RawVulnerability vuln : vulnList) {
                     String desc = vuln.getDescription().replace("\r\n", ". ").replace("\n", ". ").replace("\r", ". ").replace("\t", " ");
-                    String[] data = {vuln.getCveId(), desc, vuln.getCreateDate(), vuln.getPublishDate(), 
-                        vuln.getLastModifiedDate(), vuln.getSourceURL(), vuln.getSourceType()};
+                    String[] data = {vuln.getCveId(), desc, vuln.getCreateDateString(), vuln.getPublishDateString(),
+                        vuln.getLastModifiedDateString(), vuln.getSourceUrl(), vuln.getSourceType().type};
                     writer.writeNext(data, false);
                     lineCount++;
                 }
@@ -530,7 +530,7 @@ public class CrawlerMain {
         // For each raw CVE,
         for (String cveId: crawledCves.keySet()) {
             for (RawVulnerability vuln: crawledCves.get(cveId)) {
-                if(vuln.getSourceURL() == null || vuln.getSourceURL().equals("")){
+                if(vuln.getSourceUrl() == null || vuln.getSourceUrl().equals("")){
                     vuln.setSourceType("other");
                     continue;
                 }
@@ -538,11 +538,11 @@ public class CrawlerMain {
                 // Set source type if the URL is listed in the types file
                 // Otherwise, just set the source type to 'other'
                 try{
-                    URL sourceURL = new URL(vuln.getSourceURL());
+                    URL sourceURL = new URL(vuln.getSourceUrl());
                     vuln.setSourceType(sourceTypes.get(sourceURL.getHost()));
                 }
                 catch(MalformedURLException e){
-                    log.warn("Bad sourceURL {}: {}", vuln.getSourceURL(), e.toString());
+                    log.warn("Bad sourceURL {}: {}", vuln.getSourceUrl(), e.toString());
                 }
 
                 if(vuln.getSourceType() == null){

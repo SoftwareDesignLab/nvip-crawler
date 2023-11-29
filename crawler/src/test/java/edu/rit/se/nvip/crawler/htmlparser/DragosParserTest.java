@@ -33,8 +33,8 @@ public class DragosParserTest extends AbstractParserTest {
         RawVulnerability vuln = getVulnerability(list, "CVE-2022-2006");
         assertNotNull(vuln);
         assertTrue(vuln.getDescription().contains("Automation Direct’s DirectLogic 06 PLC"));
-        assertEquals("2022-05-31 00:00:00", vuln.getPublishDate());
-        assertEquals("2022-05-31 00:00:00", vuln.getLastModifiedDate());
+        assertEquals("2022-05-31 00:00:00", vuln.getPublishDateString());
+        assertEquals("2022-05-31 00:00:00", vuln.getLastModifiedDateString());
     }
 
 }

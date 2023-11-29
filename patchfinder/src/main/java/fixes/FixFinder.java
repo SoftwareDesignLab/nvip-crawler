@@ -25,8 +25,11 @@ package fixes;
  */
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import edu.rit.se.nvip.db.DatabaseHelper;
+import edu.rit.se.nvip.db.repositories.PatchFixRepository;
+import edu.rit.se.nvip.db.model.Fix;
+import edu.rit.se.nvip.db.repositories.VulnerabilityRepository;
 import env.FixFinderEnvVars;
-import db.DatabaseHelper;
 import fixes.urlfinders.FixUrlFinder;
 import fixes.urlfinders.NvdFixUrlFinder;
 import fixes.urlfinders.VulnerabilityFixUrlFinder;
@@ -49,6 +52,8 @@ public class FixFinder {
 	private static final Logger logger = LogManager.getLogger(FixFinder.class.getName());
 	private static final ObjectMapper OM = new ObjectMapper();
 	private static DatabaseHelper databaseHelper;
+	private static PatchFixRepository pfRepo;
+	private static VulnerabilityRepository vulnRepo;
 	private static final List<FixUrlFinder> fixURLFinders = new ArrayList<>();
 	protected static int cveLimit = FixFinderEnvVars.getCveLimit();
 	protected static int maxThreads = FixFinderEnvVars.getMaxThreads();
@@ -58,12 +63,14 @@ public class FixFinder {
 	/**
 	 * Initialize the FixFinder and its subcomponents
 	 */
-	public static void init(DatabaseHelper dbh) {
+	public static void init(DatabaseHelper dbh, PatchFixRepository pfRepo, VulnerabilityRepository vulnRepo) {
 		logger.info("Initializing FixFinder...");
 
 		// Init db helper
 		logger.info("Initializing DatabaseHelper...");
 		databaseHelper = dbh;
+		FixFinder.pfRepo = pfRepo;
+		FixFinder.vulnRepo = vulnRepo;
 
 		// Init FixUrlFinders
 		logger.info("Initializing FixUrlFinders...");
@@ -77,12 +84,13 @@ public class FixFinder {
 
 	// TODO: at some point, need to figure out how we are going to get input for which cves to find fixes
 	// 	right now, just doing a list of cveIds
-	public static void run(String cveId) {
+	public static void run(int vulnVersionId) {
 		// Find fixes with multithreading (on sources)
+		String cveId = vulnRepo.getCveIdFromVulnVersion(vulnVersionId);
 		final Set<Fix> fixes = FixFinder.findFixesMultiThreaded(cveId);
 
 		// Insert found fixes
-		final int[] insertStats = databaseHelper.insertFixes(fixes);
+		final int[] insertStats = pfRepo.insertFixes(fixes);
 		final int failedInserts = insertStats[0];
 		final int existingInserts = insertStats[1];
 

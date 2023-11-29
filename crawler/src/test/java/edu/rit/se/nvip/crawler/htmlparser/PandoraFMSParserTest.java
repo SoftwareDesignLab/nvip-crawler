@@ -22,6 +22,6 @@ public class PandoraFMSParserTest extends AbstractParserTest {
         RawVulnerability vuln = getVulnerability(list, "CVE-2023-24517");
         assertNotNull(vuln);
         assertTrue(vuln.getDescription().contains("Remote Code Execution via Unrestricted File Upload"));
-        assertEquals("2023-02-21 00:00:00", vuln.getPublishDate());
+        assertEquals("2023-02-21 00:00:00", vuln.getPublishDateString());
     }
 }

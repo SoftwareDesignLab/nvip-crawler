@@ -43,8 +43,8 @@ public class IntelParserTest extends AbstractParserTest {
         assertEquals(1, list.size());
         RawVulnerability vuln = list.get(0);
         assertEquals("CVE-2022-21216", vuln.getCveId());
-        assertEquals("2023-02-14 00:00:00", vuln.getPublishDate());
-        assertEquals("2023-02-14 00:00:00", vuln.getLastModifiedDate());
+        assertEquals("2023-02-14 00:00:00", vuln.getPublishDateString());
+        assertEquals("2023-02-14 00:00:00", vuln.getLastModifiedDateString());
         assertTrue(vuln.getDescription().contains("potentially enable escalation of privilege via adjacent network access"));
     }
 
@@ -58,8 +58,8 @@ public class IntelParserTest extends AbstractParserTest {
         assertEquals(5, list.size());
         RawVulnerability vuln = list.get(2);
         assertEquals("CVE-2022-26840", vuln.getCveId());
-        assertEquals("2023-02-14 00:00:00", vuln.getPublishDate());
-        assertEquals("2023-02-14 00:00:00", vuln.getLastModifiedDate());
+        assertEquals("2023-02-14 00:00:00", vuln.getPublishDateString());
+        assertEquals("2023-02-14 00:00:00", vuln.getLastModifiedDateString());
         assertTrue(vuln.getDescription().contains("Improper neutralization in the Intel"));
         assertFalse(vuln.getDescription().contains("Improper authentication in the Intel"));
     }

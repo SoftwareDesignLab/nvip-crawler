@@ -24,7 +24,8 @@ package fixes.parsers;
  * SOFTWARE.
  */
 
-import fixes.Fix;
+
+import edu.rit.se.nvip.db.model.Fix;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jsoup.Jsoup;

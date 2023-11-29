@@ -22,23 +22,17 @@ package edu.rit.se.nvip.characterizer; /**
  * SOFTWARE.
  */
 
-import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import edu.rit.se.nvip.DatabaseHelper;
 import edu.rit.se.nvip.automatedcvss.CvssScoreCalculator;
 import edu.rit.se.nvip.automatedcvss.PartialCvssVectorGenerator;
 import edu.rit.se.nvip.automatedcvss.preprocessor.CvePreProcessor;
 import edu.rit.se.nvip.characterizer.classifier.AbstractCveClassifier;
 import edu.rit.se.nvip.characterizer.classifier.CveClassifierFactory;
-import edu.rit.se.nvip.characterizer.enums.CVSSSeverityClass;
-import edu.rit.se.nvip.characterizer.enums.VDOLabel;
-import edu.rit.se.nvip.characterizer.enums.VDONounGroup;
-import edu.rit.se.nvip.model.CompositeVulnerability;
-import edu.rit.se.nvip.model.CvssScore;
-import edu.rit.se.nvip.model.SSVC;
-import edu.rit.se.nvip.model.VdoCharacteristic;
+import edu.rit.se.nvip.db.model.enums.VDOLabel;
+import edu.rit.se.nvip.db.model.enums.VDONounGroup;
+import edu.rit.se.nvip.db.repositories.CharacterizationRepository;
+import edu.rit.se.nvip.db.model.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -60,7 +54,7 @@ public class CveCharacterizer {
 	private Logger logger = LogManager.getLogger(CveCharacterizer.class.getSimpleName());
 	private final Map<VDONounGroup, AbstractCveClassifier> nounGroupToClassifier = new HashMap<>();
 	private ObjectMapper OM = new ObjectMapper();
-	private final DatabaseHelper dbh;
+	private final CharacterizationRepository charRepo;
 
 	/**
 	 * these two vars are used to derive the CVSS vector from VDO labels and then
@@ -89,11 +83,11 @@ public class CveCharacterizer {
 							CvssScoreCalculator cvssScoreCalculator,
 							PartialCvssVectorGenerator partialCvssVectorGenerator,
 							String trainingDataPath, String trainingDataFiles, String approach, String method,
-							DatabaseHelper dbh) {
+							CharacterizationRepository charRepo) {
 		this.cvssScoreCalculator = cvssScoreCalculator;
 		this.partialCvssVectorGenerator = partialCvssVectorGenerator;
 		this.cvePreProcessor = cvePreProcessor;
-		this.dbh = dbh;
+		this.charRepo = charRepo;
 		try {
 
 			/**
@@ -149,8 +143,8 @@ public class CveCharacterizer {
 	 */
 
 	//removed  boolean loadSerializedModels as well as exploitability package
-	public CveCharacterizer(String trainingDataPath, String trainingDataFiles, String approach, String method, DatabaseHelper dbh) {
-		this(new CvePreProcessor(true), new CveClassifierFactory(), new CvssScoreCalculator(), new PartialCvssVectorGenerator(), trainingDataPath, trainingDataFiles, approach, method, dbh);
+	public CveCharacterizer(String trainingDataPath, String trainingDataFiles, String approach, String method, CharacterizationRepository charRepo) {
+		this(new CvePreProcessor(true), new CveClassifierFactory(), new CvssScoreCalculator(), new PartialCvssVectorGenerator(), trainingDataPath, trainingDataFiles, approach, method, charRepo);
 	}
 
 	/**
@@ -252,7 +246,7 @@ public class CveCharacterizer {
 			final Map<String, String> params = new HashMap<>();
 			params.put("cveId", vuln.getCveId());
 			params.put("description", vuln.getDescription());
-			params.put("exploitStatus", dbh.exploitExists(vuln.getCveId()) ? "POC" : "NONE");
+			params.put("exploitStatus", charRepo.exploitExists(vuln.getCveId()) ? "POC" : "NONE");
 
 			// Create url object
 			final URL url = new URL(this.getSSVCUrl() + getParamsString(params));

@@ -25,8 +25,8 @@ public class DotCMSParserTest extends AbstractParserTest {
         RawVulnerability vuln = getVulnerability(list, "CVE-2020-6754");
         assertNotNull(vuln);
         assertTrue(vuln.getDescription().contains("dotCMS fails to normalize the URI string when checking if a user should have access"));
-        assertEquals("2020-01-09 10:30:00", vuln.getPublishDate());
-        assertEquals("2020-01-09 10:30:00", vuln.getLastModifiedDate());
+        assertEquals("2020-01-09 10:30:00", vuln.getPublishDateString());
+        assertEquals("2020-01-09 10:30:00", vuln.getLastModifiedDateString());
     }
 
     // CVE standalone id found in references
@@ -41,8 +41,8 @@ public class DotCMSParserTest extends AbstractParserTest {
         RawVulnerability vuln = getVulnerability(list, "CVE-2022-45783");
         assertNotNull(vuln);
         assertTrue(vuln.getDescription().contains("An authenticated directory traversal vulnerability in dotCMS API can lead to RCE"));
-        assertEquals("2022-12-15 11:15:00", vuln.getPublishDate());
-        assertEquals("2022-12-15 11:15:00", vuln.getLastModifiedDate());
+        assertEquals("2022-12-15 11:15:00", vuln.getPublishDateString());
+        assertEquals("2022-12-15 11:15:00", vuln.getLastModifiedDateString());
     }
 
     // no CVE referenced on page

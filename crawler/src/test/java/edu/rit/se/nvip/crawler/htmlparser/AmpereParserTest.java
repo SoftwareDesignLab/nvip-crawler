@@ -45,7 +45,7 @@ public class AmpereParserTest extends AbstractParserTest {
         assertEquals(6, list.size());
         RawVulnerability vuln = getVulnerability(list, "CVE-2022-46892");
         assertTrue(vuln.getDescription().contains("A Root complex is typically disabled during boot via the BIOS"));
-        assertEquals("2023-02-14 00:00:00", vuln.getPublishDate());
-        assertEquals("2023-02-14 00:00:00", vuln.getLastModifiedDate());
+        assertEquals("2023-02-14 00:00:00", vuln.getPublishDateString());
+        assertEquals("2023-02-14 00:00:00", vuln.getLastModifiedDateString());
     }
 }

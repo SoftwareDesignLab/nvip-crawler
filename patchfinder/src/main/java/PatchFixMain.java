@@ -1,4 +1,4 @@
-import db.DatabaseHelper;
+import edu.rit.se.nvip.db.DatabaseHelper;
 import env.SharedEnvVars;
 import messenger.Messenger;
 
@@ -7,12 +7,7 @@ public class PatchFixMain {
         SharedEnvVars.initializeEnvVars(false);
 
         // Init dbh
-        final DatabaseHelper dbh = new DatabaseHelper(
-                SharedEnvVars.getDatabaseType(),
-                SharedEnvVars.getHikariUrl(),
-                SharedEnvVars.getHikariUser(),
-                SharedEnvVars.getHikariPassword()
-        );
+        final DatabaseHelper dbh = DatabaseHelper.getInstance();
 
         // Init messenger
         final Messenger m = new Messenger(

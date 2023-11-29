@@ -1,7 +1,7 @@
 package edu.rit.se.nvip.reconciler.filter;
 
-import edu.rit.se.nvip.model.RawVulnerability;
 import edu.rit.se.nvip.reconciler.openai.GPTFilterModel;
+import edu.rit.se.nvip.db.model.RawVulnerability;
 
 public class GPTFilter extends AsyncFilter {
     private GPTFilterModel model;

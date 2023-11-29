@@ -1,13 +1,11 @@
 package edu.rit.se.nvip.nvd;
 
-import edu.rit.se.nvip.DatabaseHelper;
-import edu.rit.se.nvip.model.CompositeVulnerability;
-import edu.rit.se.nvip.model.MitreVulnerability;
-import edu.rit.se.nvip.model.NvdVulnerability;
-import edu.rit.se.nvip.model.RawVulnerability;
+import edu.rit.se.nvip.db.repositories.NvdMitreRepository;
+import edu.rit.se.nvip.db.model.CompositeVulnerability;
+import edu.rit.se.nvip.db.model.NvdVulnerability;
+import edu.rit.se.nvip.db.model.RawVulnerability;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
-import org.mockito.MockedConstruction;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -19,7 +17,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -27,14 +24,14 @@ class NvdCveControllerTest {
 
     private NvdCveController nvdCveController;
     @Mock
-    DatabaseHelper mockDbh = mock(DatabaseHelper.class);
+    NvdMitreRepository mockDbh = mock(NvdMitreRepository.class);
     //verifies compare with Nvd properly compares Nvd vulns
     @Test
     void compareWithNvd() throws IOException {
 
         nvdCveController = new NvdCveController();
 
-        nvdCveController.setDatabaseHelper(mockDbh);
+        nvdCveController.setDbRepo(mockDbh);
 
         Set<CompositeVulnerability> reconciledVulns = new HashSet<>();
         CompositeVulnerability vuln1 = new CompositeVulnerability(new RawVulnerability(1, "CVE-2021-123455", "Description", null, null, null, ""));
@@ -92,7 +89,7 @@ class NvdCveControllerTest {
                         "               \"id\": \"CVE-2023-1234\"," +
                         "               \"published\": \"2023-08-21T12:34:56.789\"," +
                         "               \"vulnStatus\": \"open\"," +
-                        "               \"references\": []" +
+                        "               \"references\":[]" +
                         "           }" +
                         "       }," +
                         "       {" +
@@ -100,14 +97,14 @@ class NvdCveControllerTest {
                         "               \"id\": \"CVE-2023-5678\"," +
                         "               \"published\": \"2023-08-15T08:00:00.123\"," +
                         "               \"vulnStatus\": \"closed\"," +
-                        "               \"references\": []" +
+                        "               \"references\":[]" +
                         "           }" +
                         "       }" +
                         "   ]" +
                         "}";
         when(mockBR.readLine()).thenReturn(jsonString, null);
         nvdCveController.setUrl(mockURL);
-        nvdCveController.setDatabaseHelper(mockDbh);
+        nvdCveController.setDbRepo(mockDbh);
 
         Set<NvdVulnerability> mockResults = new HashSet<>();
 

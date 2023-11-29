@@ -57,8 +57,8 @@ public class VeritasParserTest extends AbstractParserTest {
         RawVulnerability vuln = list.get(0);
         assertEquals("CVE-2022-45461", vuln.getCveId());
         assertTrue(vuln.getDescription().contains("OS Command Injection vulnerability affecting the NetBackup Java Admin Console"));
-        assertEquals("2022-11-15 00:00:00", vuln.getPublishDate());
-        assertEquals("2022-11-18 00:00:00", vuln.getLastModifiedDate());
+        assertEquals("2022-11-15 00:00:00", vuln.getPublishDateString());
+        assertEquals("2022-11-18 00:00:00", vuln.getLastModifiedDateString());
     }
 
     // Multiple CVE on page
@@ -73,7 +73,7 @@ public class VeritasParserTest extends AbstractParserTest {
         RawVulnerability vuln = getVulnerability(list, "CVE-2022-42301");
         assertNotNull(vuln);
         assertTrue(vuln.getDescription().contains("Veritas has addressed vulnerabilities affecting NetBackup Primary and Media "));
-        assertEquals("2022-09-01 00:00:00", vuln.getPublishDate());
-        assertEquals("2022-09-01 00:00:00", vuln.getLastModifiedDate());
+        assertEquals("2022-09-01 00:00:00", vuln.getPublishDateString());
+        assertEquals("2022-09-01 00:00:00", vuln.getLastModifiedDateString());
     }
 }

@@ -1,12 +1,14 @@
 package edu.rit.se.nvip;
 
 import edu.rit.se.nvip.characterizer.CveCharacterizer;
+import edu.rit.se.nvip.db.DatabaseHelper;
+import edu.rit.se.nvip.db.model.CompositeVulnerability;
+import edu.rit.se.nvip.db.model.RawVulnerability;
+import edu.rit.se.nvip.db.model.RunStats;
+import edu.rit.se.nvip.db.repositories.*;
 import edu.rit.se.nvip.reconciler.filter.FilterHandler;
 import edu.rit.se.nvip.reconciler.filter.FilterReturn;
 import edu.rit.se.nvip.mitre.MitreCveController;
-import edu.rit.se.nvip.model.CompositeVulnerability;
-import edu.rit.se.nvip.model.RawVulnerability;
-import edu.rit.se.nvip.model.RunStats;
 import edu.rit.se.nvip.nvd.NvdCveController;
 import edu.rit.se.nvip.reconciler.Reconciler;
 import edu.rit.se.nvip.utils.ReconcilerEnvVars;
@@ -56,16 +58,18 @@ class ReconcilerControllerTest {
         CompositeVulnerability vuln = new CompositeVulnerability(raw);
 
         //create mocks
-        DatabaseHelper mockDbh = mock(DatabaseHelper.class);
-        when(mockDbh.getRawVulnerabilities(anyString())).thenReturn(rawVulns);
-        when(mockDbh.getCompositeVulnerability(anyString())).thenReturn(vuln);
-        doNothing().when(mockDbh).updateFilterStatus(anySet());
-        when(mockDbh.insertOrUpdateVulnerabilityFull(any(CompositeVulnerability.class))).thenReturn(1);
-        when(mockDbh.insertTimeGapsForNewVulns(anySet())).thenReturn(1);
-        when(mockDbh.insertRun(any(RunStats.class))).thenReturn(1);
-        when(mockDbh.insertCvssBatch(anySet())).thenReturn(1);
-        when(mockDbh.insertVdoBatch(anySet())).thenReturn(1);
-        mockedDb.when(DatabaseHelper::getInstance).thenReturn(mockDbh);
+        RawDescriptionRepository mockRawRepo = mock(RawDescriptionRepository.class);
+        VulnerabilityRepository mockVulnRepo = mock(VulnerabilityRepository.class);
+        CharacterizationRepository mockCharRepo = mock(CharacterizationRepository.class);
+        NvdMitreRepository mockNmRepo = mock(NvdMitreRepository.class);
+        RunHistoryRepository mockRhRepo = mock(RunHistoryRepository.class);
+        when(mockRawRepo.getRawVulnerabilities(anyString())).thenReturn(rawVulns);
+        when(mockVulnRepo.getCompositeVulnerability(anyString())).thenReturn(vuln);
+        doNothing().when(mockRawRepo).updateFilterStatus(anySet());
+        when(mockVulnRepo.insertOrUpdateVulnerabilityFull(any(CompositeVulnerability.class))).thenReturn(1);
+        when(mockNmRepo.insertTimeGapsForNewVulns(anySet())).thenReturn(1);
+        when(mockRhRepo.insertRun(any(RunStats.class))).thenReturn(1);
+        when(mockCharRepo.insertVdoCvssBatch(anySet())).thenReturn(1);
 
         FilterHandler mockFH = mock(FilterHandler.class);
         when(mockFH.runFilters(anySet())).thenReturn(mock(FilterReturn.class));
@@ -81,7 +85,7 @@ class ReconcilerControllerTest {
 
         CveCharacterizer mockChar = mock(CveCharacterizer.class);
 
-        ReconcilerController rc = new ReconcilerController(mockDbh, mockFH, mockRecon, mockNvd, mockMitre);
+        ReconcilerController rc = new ReconcilerController(mockRawRepo, mockVulnRepo, mockCharRepo, mockNmRepo, mockRhRepo, mockFH, mockRecon, mockNvd, mockMitre);
         rc.setCveCharacterizer(mockChar);
 
         //create mock functionality

@@ -5,7 +5,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import edu.rit.se.nvip.reconciler.filter.Filter;
 import edu.rit.se.nvip.reconciler.filter.FilterHandler;
-import edu.rit.se.nvip.model.RawVulnerability;
+import edu.rit.se.nvip.db.model.RawVulnerability;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import java.text.ParseException;

@@ -22,7 +22,7 @@ public class CyberArkParserTest extends AbstractParserTest {
         RawVulnerability vuln = getVulnerability(list, "CVE-2022-23774");
         assertNotNull(vuln);
         assertTrue(vuln.getDescription().contains("Docker"));
-        assertEquals("2022-01-25 00:00:00", vuln.getPublishDate());
-        assertEquals("2022-01-25 00:00:00", vuln.getLastModifiedDate());
+        assertEquals("2022-01-25 00:00:00", vuln.getPublishDateString());
+        assertEquals("2022-01-25 00:00:00", vuln.getLastModifiedDateString());
     }
 }

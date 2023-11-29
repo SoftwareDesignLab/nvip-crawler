@@ -23,7 +23,7 @@
  */
 package edu.rit.se.nvip.reconciler.filter;
 
-import edu.rit.se.nvip.model.RawVulnerability;
+import edu.rit.se.nvip.db.model.RawVulnerability;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

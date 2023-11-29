@@ -4,7 +4,7 @@ import com.theokanning.openai.OpenAiHttpException;
 import com.theokanning.openai.completion.chat.ChatCompletionRequest;
 import com.theokanning.openai.completion.chat.ChatCompletionResult;
 import com.theokanning.openai.completion.chat.ChatMessage;
-import edu.rit.se.nvip.model.CompositeVulnerability;
+import edu.rit.se.nvip.db.model.CompositeVulnerability;
 import edu.rit.se.nvip.reconciler.openai.OpenAIRequestHandler;
 import edu.rit.se.nvip.reconciler.openai.RequestorIdentity;
 import org.apache.logging.log4j.LogManager;

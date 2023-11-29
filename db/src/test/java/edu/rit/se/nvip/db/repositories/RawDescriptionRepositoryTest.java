@@ -10,18 +10,24 @@ import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import javax.sql.DataSource;
 import java.sql.*;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.*;
 
 
+
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class RawDescriptionRepositoryTest {
 
     @Mock DataSource dataSource;
@@ -34,6 +40,7 @@ public class RawDescriptionRepositoryTest {
     @SneakyThrows
     @BeforeEach
     void initializeMocks(){
+        when(mockPS.executeQuery()).thenReturn(mockRS);
         when(mockConnection.prepareStatement(anyString())).thenReturn(mockPS);
         when(dataSource.getConnection()).thenReturn(mockConnection);
 
@@ -51,17 +58,18 @@ public class RawDescriptionRepositoryTest {
                 "Test",
                 "TestParser"
         );
+        testVuln.setSourceType("CNA");
 
         int insertedCount = repository.insertRawVulnerability(testVuln);
 
         InOrder inOrder = Mockito.inOrder(mockPS);
         inOrder.verify(mockPS).setString(1, testVuln.getDescription());
         inOrder.verify(mockPS).setString(2, testVuln.getCveId());
-        inOrder.verify(mockPS).setTimestamp(3, Timestamp.valueOf(testVuln.getCreatedDateAsDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
-        inOrder.verify(mockPS).setTimestamp(4, Timestamp.valueOf(testVuln.getPublishDateAsDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
-        inOrder.verify(mockPS).setTimestamp(5, Timestamp.valueOf(testVuln.getLastModifiedDateAsDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
-        inOrder.verify(mockPS).setString(6, testVuln.getSourceURL());
-        inOrder.verify(mockPS).setString(7, testVuln.getSourceType());
+        inOrder.verify(mockPS).setTimestamp(3, testVuln.getCreateDate());
+        inOrder.verify(mockPS).setTimestamp(4, testVuln.getPublishDate());
+        inOrder.verify(mockPS).setTimestamp(5, testVuln.getLastModifiedDate());
+        inOrder.verify(mockPS).setString(6, testVuln.getSourceUrl());
+        inOrder.verify(mockPS).setString(7, testVuln.getSourceType().type);
         inOrder.verify(mockPS).setString(8, testVuln.getParserType());
         inOrder.verify(mockPS).execute();
 
@@ -81,18 +89,20 @@ public class RawDescriptionRepositoryTest {
                 "Test",
                 "TestParser"
         );
+        testVuln.setSourceType("CNA");
 
         int insertedCount = repository.insertRawVulnerability(testVuln);
 
         InOrder inOrder = Mockito.inOrder(mockPS);
         inOrder.verify(mockPS).setString(1, testVuln.getDescription());
         inOrder.verify(mockPS).setString(2, testVuln.getCveId());
-        inOrder.verify(mockPS).setTimestamp(3, Timestamp.valueOf(testVuln.getCreatedDateAsDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
-        inOrder.verify(mockPS).setTimestamp(4, Timestamp.valueOf(testVuln.getPublishDateAsDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
-        inOrder.verify(mockPS).setTimestamp(5, Timestamp.valueOf(testVuln.getLastModifiedDateAsDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
-        inOrder.verify(mockPS).setString(6, testVuln.getSourceURL());
-        inOrder.verify(mockPS).setString(7, testVuln.getSourceType());
+        inOrder.verify(mockPS).setTimestamp(3, testVuln.getCreateDate());
+        inOrder.verify(mockPS).setTimestamp(4, testVuln.getPublishDate());
+        inOrder.verify(mockPS).setTimestamp(5, testVuln.getLastModifiedDate());
+        inOrder.verify(mockPS).setString(6, testVuln.getSourceUrl());
+        inOrder.verify(mockPS).setString(7, testVuln.getSourceType().type);
         inOrder.verify(mockPS).setString(8, testVuln.getParserType());
+        inOrder.verify(mockPS).setString(9, testVuln.getDomain());
         inOrder.verify(mockPS).execute();
 
         assertThat(insertedCount).isZero();
@@ -165,5 +175,62 @@ public class RawDescriptionRepositoryTest {
         Map<String, LocalDateTime> data = repository.getRawCVEForNVDComparisons();
 
         assertThat(data).containsExactly(entry(expectedVulnId, expectedTime.toLocalDateTime()));
+    }
+
+    @Test
+    @SneakyThrows
+    public void getRawVulnerabilitiesTest() {
+        when(mockRS.next()).thenReturn(true, false);
+
+        // Set up the expected data
+        String cveId = "CVE-2023-5678";
+
+        // Call the method under test
+        Set<RawVulnerability> result = repository.getRawVulnerabilities(cveId);
+
+        // Verify the expected output
+        assertEquals(1, result.size());
+
+        // Verify pstmt.setString() call
+        verify(mockPS).setString(1, cveId);
+    }
+
+    @Test
+    @SneakyThrows
+    public void markGarbageTest() {
+
+        Set<RawVulnerability> mockedRawVulns = new HashSet<>();
+        mockedRawVulns.add(new RawVulnerability(1, "CVE-2021-1234", "Description", null, null, null, ""));
+        mockedRawVulns.add(new RawVulnerability(2, "CVE-2021-5678", "Description", null, null, null, ""));
+
+        // Call the updateFilterStatus method
+        repository.updateFilterStatus(mockedRawVulns);
+
+        // Verify that pstmt.setInt() is called with the correct arguments
+        verify(mockPS, times(2)).setInt(eq(1), eq(1));
+        verify(mockPS).setInt(eq(2), eq(1));
+        verify(mockPS).setInt(eq(2), eq(2));
+
+        // Verify that pstmt.addBatch() is called for each RawVulnerability
+        verify(mockPS, times(2)).addBatch();
+
+        // Verify that pstmt.executeBatch() is called once
+        verify(mockPS).executeBatch();
+    }
+
+    @Test
+    @SneakyThrows
+    public void getUsedRawVulnerabilitiesTest() {
+        when(mockRS.next()).thenReturn(true, true, false);
+        when(mockRS.getInt(anyString())).thenReturn(1,2);
+        when(mockRS.getString(anyString())).thenReturn("desc");
+        when(mockRS.getTimestamp(anyString())).thenReturn(new Timestamp(System.currentTimeMillis()));
+
+        Set<RawVulnerability> rawVulns = repository.getUsedRawVulnerabilities("cveId");
+
+       verify(mockPS).setString(1, "cveId");
+
+        assertEquals(2, rawVulns.size());
+
     }
 }

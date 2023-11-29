@@ -23,7 +23,8 @@ package fixes.parsers;
  * SOFTWARE.
  */
 
-import fixes.Fix;
+
+import edu.rit.se.nvip.db.model.Fix;
 
 import java.io.IOException;
 import java.util.Set;

@@ -24,10 +24,10 @@ package productdetection;
  * SOFTWARE.
  */
 
-import model.cpe.CpeGroup;
+import edu.rit.se.nvip.db.model.CpeGroup;
 import model.cpe.ProductItem;
-import model.cpe.AffectedProduct;
-import model.cve.CompositeVulnerability;
+import edu.rit.se.nvip.db.model.AffectedProduct;
+import edu.rit.se.nvip.db.model.CompositeVulnerability;
 import opennlp.tools.tokenize.WhitespaceTokenizer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -132,7 +132,7 @@ public class AffectedProductIdentifier {
 
 		// if a CVE did change, no need to extract products, assuming they are
 		// already in DB!!
-		if (vulnerability.getCveReconcileStatus() == CompositeVulnerability.CveReconcileStatus.DO_NOT_CHANGE) {
+		if (vulnerability.getReconciliationStatus() == CompositeVulnerability.ReconciliationStatus.UNCHANGED) {
 //			counterOfSkippedCVEs.getAndIncrement();
 			return -1;
 		}
@@ -334,7 +334,7 @@ public class AffectedProductIdentifier {
 		final int result = processVulnerability(productDetector, cpeLookUp, vuln);
 
 		List<AffectedProduct> affectedProducts = new ArrayList<>();
-		if (vuln.getCveReconcileStatus() != CompositeVulnerability.CveReconcileStatus.DO_NOT_CHANGE)
+		if (vuln.getReconciliationStatus() != CompositeVulnerability.ReconciliationStatus.UNCHANGED)
 			affectedProducts.addAll(vuln.getAffectedProducts());
 
 		return affectedProducts;

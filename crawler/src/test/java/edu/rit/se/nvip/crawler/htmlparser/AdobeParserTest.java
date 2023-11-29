@@ -47,8 +47,8 @@ public class AdobeParserTest extends AbstractParserTest {
         RawVulnerability vuln = getVulnerability(list, "CVE-2023-22247");
         assertNotNull(vuln);
         assertTrue(vuln.getDescription().contains("Adobe has released a security update for Adobe Commerce and Magento Open Source."));
-        assertEquals("2023-03-14 00:00:00", vuln.getPublishDate());
-        assertEquals("2023-03-14 00:00:00", vuln.getLastModifiedDate());
+        assertEquals("2023-03-14 00:00:00", vuln.getPublishDateString());
+        assertEquals("2023-03-14 00:00:00", vuln.getLastModifiedDateString());
 
     }
 }

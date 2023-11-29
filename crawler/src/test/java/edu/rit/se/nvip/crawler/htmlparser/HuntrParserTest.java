@@ -50,9 +50,9 @@ public class HuntrParserTest extends AbstractParserTest {
         assertEquals("CVE-2023-1127", vuln.getCveId());
         assertTrue(vuln.getDescription().contains("division by zero in fuction"));
         assertFalse(vuln.getDescription().contains("was it not verification as a vulnerability?"));
-        assertEquals("2023-02-19 00:00:00", vuln.getPublishDate());
+        assertEquals("2023-02-19 00:00:00", vuln.getPublishDateString());
         String date = LocalDate.now().minusDays(6).toString() + " 00:00:00";
-        assertEquals(date, vuln.getLastModifiedDate());
+        assertEquals(date, vuln.getLastModifiedDateString());
     }
 
     @Test

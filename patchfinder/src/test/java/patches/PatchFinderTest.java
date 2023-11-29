@@ -22,10 +22,12 @@ package patches; /**
  * SOFTWARE.
  */
 
-import db.DatabaseHelper;
+import edu.rit.se.nvip.db.DatabaseHelper;
+import edu.rit.se.nvip.db.model.CpeEntry;
+import edu.rit.se.nvip.db.model.CpeGroup;
+import edu.rit.se.nvip.db.repositories.PatchFixRepository;
+import edu.rit.se.nvip.db.repositories.ProductRepository;
 import env.PatchFinderEnvVars;
-import model.CpeEntry;
-import model.CpeGroup;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -50,7 +52,7 @@ public class PatchFinderTest {
     @BeforeEach
     public void setUp() {
         PatchFinderEnvVars.initializeEnvVars(true);
-        PatchFinder.init(databaseHelperMock);
+        PatchFinder.init(databaseHelperMock, mock(ProductRepository.class), mock(PatchFixRepository.class));
     }
 
     @Test
@@ -95,8 +97,9 @@ public class PatchFinderTest {
         //(String vendor, String product, String commonTitle, HashMap<String, CpeEntry> versions)
         //1	CVE-2023-1001	cpe:2.3:a:apache:airflow:1.7.0:rc1:*:*:*:*:*:*	2023-06-20 10:00:00	product_name_value	version_value
         CpeGroup cpeGroup = new CpeGroup("apache", "airflow", "product_name_value", new HashMap<>());
-
-        PatchFinder.init(databaseHelperMock);
+        ProductRepository prodMock = mock(ProductRepository.class);
+        PatchFixRepository pfMock = mock(PatchFixRepository.class);
+        PatchFinder.init(databaseHelperMock, prodMock, pfMock);
         try {
             final int numPatches = PatchFinder.run("CVE-2023-1001", cpeGroup);
 

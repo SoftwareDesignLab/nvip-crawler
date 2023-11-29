@@ -23,6 +23,8 @@
  */
 package edu.rit.se.nvip.db.model;
 
+import edu.rit.se.nvip.db.model.enums.VDOLabel;
+import edu.rit.se.nvip.db.model.enums.VDONounGroup;
 import lombok.Data;
 
 /**
@@ -33,15 +35,41 @@ import lombok.Data;
 @Data
 public class VdoCharacteristic {
 	private String cveId;
-	private final int vdoLabelId;
+	private final VDOLabel vdoLabel;
 	private final double vdoConfidence;
-	private final int vdoNounGroupId;
+	private final VDONounGroup vdoNounGroup;
 
-	public VdoCharacteristic(String cveId, int vdoLabelId, double vdoConfidence, int vdoNounGroupId) {
+	public VdoCharacteristic(String cveId, VDOLabel vdoLabel, double vdoConfidence) {
 		super();
 		this.cveId = cveId;
-		this.vdoLabelId = vdoLabelId;
+		this.vdoLabel = vdoLabel;
 		this.vdoConfidence = vdoConfidence;
-		this.vdoNounGroupId = vdoNounGroupId;
+		this.vdoNounGroup = vdoLabel.vdoNounGroup;
 	}
+
+	public String getCveId() {
+		return cveId;
+	}
+
+	public void setCveId(String cveId) {
+		this.cveId = cveId;
+	}
+
+	public double getVdoConfidence() {
+		return vdoConfidence;
+	}
+
+	public VDOLabel getVdoLabel() {
+		return vdoLabel;
+	}
+
+	public VDONounGroup getVdoNounGroup() {
+		return vdoNounGroup;
+	}
+
+	@Override
+	public String toString() {
+		return "VdoCharacteristic [cveId=" + cveId + ", vdoLabel=" + vdoLabel + ", vdoConfidence=" + vdoConfidence + "]";
+	}
+
 }

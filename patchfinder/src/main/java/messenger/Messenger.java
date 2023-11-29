@@ -28,7 +28,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.*;
-import db.DatabaseHelper;
+import edu.rit.se.nvip.db.DatabaseHelper;
+import edu.rit.se.nvip.db.repositories.ProductRepository;
 import fixes.FixFinder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -117,10 +118,10 @@ public class Messenger {
                 @Override
                 public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
                     String message = new String(body, StandardCharsets.UTF_8);
-                    String cveId = parseMessage(message);
+                    int vulnVersionId = parseMessage(message);
 
-                    if(cveId != null) {
-                        try { PatchFinder.run(cveId); }
+                    if(vulnVersionId != -1) {
+                        try { PatchFinder.run(vulnVersionId); }
                         catch (IOException e) {
                             throw new RuntimeException(e);
                         }
@@ -151,9 +152,9 @@ public class Messenger {
                 @Override
                 public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
                     String message = new String(body, StandardCharsets.UTF_8);
-                    String cveId = parseMessage(message);
+                    int vulnVersionId = parseMessage(message);
 
-                    if(cveId != null) FixFinder.run(cveId);
+                    if(vulnVersionId != -1) FixFinder.run(vulnVersionId);
                     else logger.warn("Could not parse cveId from message '{}'", message);
                     inputChannel.basicAck(envelope.getDeliveryTag(), false);
                 }
@@ -169,14 +170,14 @@ public class Messenger {
      * @param jsonString a JSON representation of an array of String CVE ids
      * @return parsed list of ids
      */
-    public static String parseMessage(String jsonString) {
+    public static int parseMessage(String jsonString) {
         try {
             logger.info("Incoming CVE: '{}'", jsonString);
             final JsonNode messageNode = OM.readTree(jsonString);
-            return messageNode.get("cveId").asText();
+            return Integer.parseInt(messageNode.get("vulnVersionId").asText());
         } catch (JsonProcessingException e) {
             logger.error("Failed to parse id from json string: {}", e.toString());
-            return null;
+            return -1;
         }
     }
 
@@ -203,8 +204,9 @@ public class Messenger {
         final String PF_INPUT_QUEUE = "PNE_OUT_FIX";
         final String FF_INPUT_QUEUE = "PNE_OUT_PATCH";
         final Messenger m = new Messenger("localhost", "/", 5672 , "guest", "guest");
-        DatabaseHelper dbh = new DatabaseHelper("mysql", "jdbc:mysql://localhost:3306/nvip?useSSL=false&allowPublicKeyRetrieval=true", "root", "root");
-        final Set<String> cveIds = dbh.getAffectedProducts(null).keySet();
+        DatabaseHelper dbh = DatabaseHelper.getInstance();
+        ProductRepository prodRepo = new ProductRepository(dbh.getDataSource());
+        final Set<String> cveIds = prodRepo.getAffectedProducts(-1).keySet();
 //        final Set<String> cveIds = new HashSet<>();
 //        try {
 //            ResultSet results = dbh.getConnection().prepareStatement("""

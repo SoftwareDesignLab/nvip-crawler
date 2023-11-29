@@ -23,7 +23,7 @@ public class EatonParserTest extends AbstractParserTest {
         RawVulnerability vuln = getVulnerability(list, "CVE-2020-14509");
         assertNotNull(vuln);
         assertTrue(vuln.getDescription().contains("CodeMeter Runtime for protecting the codes and managing the licenses"));
-        assertEquals("2020-10-05 00:00:00", vuln.getPublishDate());
-        assertEquals("2021-03-04 00:00:00", vuln.getLastModifiedDate());
+        assertEquals("2020-10-05 00:00:00", vuln.getPublishDateString());
+        assertEquals("2021-03-04 00:00:00", vuln.getLastModifiedDateString());
     }
 }

@@ -1,6 +1,7 @@
 package fixes.parsers;
 
-import fixes.Fix;
+
+import edu.rit.se.nvip.db.model.Fix;
 
 import java.util.HashSet;
 import java.util.Set;

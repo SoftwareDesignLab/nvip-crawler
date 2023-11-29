@@ -23,9 +23,9 @@
  */
 package edu.rit.se.nvip.filter;
 
-import edu.rit.se.nvip.model.RawVulnerability;
 import edu.rit.se.nvip.reconciler.filter.Filter;
 import edu.rit.se.nvip.reconciler.filter.MultipleCveDescriptionsFilter;
+import edu.rit.se.nvip.db.model.RawVulnerability;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;

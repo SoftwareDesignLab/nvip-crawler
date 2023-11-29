@@ -33,8 +33,8 @@ public class AsustorParserTest extends AbstractParserTest {
         RawVulnerability vuln = getVulnerability(list, "CVE-2022-0847");
         assertNotNull(vuln);
         assertTrue(vuln.getDescription().contains("A flaw was found in the way the \"flags\" member of the new pipe buffer structure was lacking prope"));
-        assertEquals("2022-03-11 00:00:00", vuln.getPublishDate());
-        assertEquals("2022-07-07 00:00:00", vuln.getLastModifiedDate());
+        assertEquals("2022-03-11 00:00:00", vuln.getPublishDateString());
+        assertEquals("2022-07-07 00:00:00", vuln.getLastModifiedDateString());
     }
 
     @Test
@@ -49,8 +49,8 @@ public class AsustorParserTest extends AbstractParserTest {
         assertNotNull(vuln);
         assertTrue(vuln.getDescription().contains("The vulnerability affects all RSA padding modes: PKCS#1 v1.5, RSA-OEAP and RSASVE."));
         assertFalse(vuln.getDescription().contains("This could be exploited by an attacker who has the ability to supply malicious PEM files for parsing to achieve a denial of service attack."));
-        assertEquals("2023-03-31 00:00:00", vuln.getPublishDate());
-        assertEquals("2023-03-31 00:00:00", vuln.getLastModifiedDate());
+        assertEquals("2023-03-31 00:00:00", vuln.getPublishDateString());
+        assertEquals("2023-03-31 00:00:00", vuln.getLastModifiedDateString());
     }
 
 

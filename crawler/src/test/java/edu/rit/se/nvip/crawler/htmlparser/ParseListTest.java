@@ -25,7 +25,7 @@ public class ParseListTest extends AbstractParserTest {
         RawVulnerability vuln = getVulnerability(list, "CVE-2022-24666");
         assertNotNull(vuln);
         String current_date = LocalDate.now() + " 00:00:00";
-        assertEquals(current_date, vuln.getPublishDate());
+        assertEquals(current_date, vuln.getPublishDateString());
         assertTrue(vuln.getDescription().contains("A program using swift-nio-http2 is vulnerable to a denial of service attack"));
     }
 
@@ -42,7 +42,7 @@ public class ParseListTest extends AbstractParserTest {
         RawVulnerability vuln = getVulnerability(list, "CVE-2022-24077");
         assertNotNull(vuln);
         String current_date = LocalDate.now() + " 00:00:00";
-        assertEquals(current_date, vuln.getPublishDate());
+        assertEquals(current_date, vuln.getPublishDateString());
         assertTrue(vuln.getDescription().contains("Naver Cloud Explorer Beta allows the attacker to execute arbitrary code"));
     }
 
@@ -58,7 +58,7 @@ public class ParseListTest extends AbstractParserTest {
         assertTrue(list.size() > 190);
         RawVulnerability vuln = getVulnerability(list, "CVE-2023-0465");
         assertNotNull(vuln);
-        assertEquals("2023-03-23 00:00:00", vuln.getPublishDate());
+        assertEquals("2023-03-23 00:00:00", vuln.getPublishDateString());
         assertTrue(vuln.getDescription().contains("Applications that use a non-default option when verifying certificates may be vulnerable "));
     }
 }

@@ -25,8 +25,8 @@ package productdetection;
  */
 
 import aimodels.NERModel;
+import edu.rit.se.nvip.db.model.CpeGroup;
 import model.cpe.ClassifiedWord;
-import model.cpe.CpeGroup;
 import env.ProductNameExtractorEnvVars;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;

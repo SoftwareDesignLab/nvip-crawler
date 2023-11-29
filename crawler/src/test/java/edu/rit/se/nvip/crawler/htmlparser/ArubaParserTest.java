@@ -46,8 +46,8 @@ public class ArubaParserTest extends AbstractParserTest {
         RawVulnerability vuln = getVulnerability(list, "CVE-2022-23678");
         assertNotNull(vuln);
         assertTrue(vuln.getDescription().contains("A vulnerability exists in the Aruba VIA client for Microsoft"));
-        assertEquals("2022-07-26 00:00:00", vuln.getPublishDate());
-        assertEquals("2022-08-19 00:00:00", vuln.getLastModifiedDate());
+        assertEquals("2022-07-26 00:00:00", vuln.getPublishDateString());
+        assertEquals("2022-08-19 00:00:00", vuln.getLastModifiedDateString());
     }
 
 
@@ -63,8 +63,8 @@ public class ArubaParserTest extends AbstractParserTest {
         assertNotNull(vuln);
         assertTrue(vuln.getDescription().contains("further privileges on the ClearPass instance"));
         assertFalse(vuln.getDescription().contains("execute arbitrary script code in a victim's"));
-        assertEquals("2023-03-14 00:00:00", vuln.getPublishDate());
-        assertEquals("2023-03-14 00:00:00", vuln.getLastModifiedDate());
+        assertEquals("2023-03-14 00:00:00", vuln.getPublishDateString());
+        assertEquals("2023-03-14 00:00:00", vuln.getLastModifiedDateString());
     }
 
     @Test

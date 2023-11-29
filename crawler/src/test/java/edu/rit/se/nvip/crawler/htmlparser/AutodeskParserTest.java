@@ -52,8 +52,8 @@ public class AutodeskParserTest extends AbstractParserTest{
         assertNotNull(vuln);
         assertTrue(vuln.getDescription().contains("Expat"));
         assertTrue(vuln.getDescription().contains("Autodesk products leveraging internal components"));
-        assertEquals("2022-07-28 00:00:00", vuln.getLastModifiedDate());
-        assertEquals("2022-10-12 00:00:00", vuln.getPublishDate());
+        assertEquals("2022-07-28 00:00:00", vuln.getLastModifiedDateString());
+        assertEquals("2022-10-12 00:00:00", vuln.getPublishDateString());
 
         vuln = getVulnerability(list, "CVE-2021-22947");
         assertNotNull(vuln);
@@ -69,7 +69,7 @@ public class AutodeskParserTest extends AbstractParserTest{
         assertNotNull(vuln);
         assertTrue(vuln.getDescription().contains("A maliciously crafted PCT"));
         assertFalse(vuln.getDescription().contains("Applications and services that utilize"));
-        assertEquals("2022-12-14 00:00:00", vuln.getPublishDate());
-        assertEquals("2022-12-14 00:00:00", vuln.getLastModifiedDate());
+        assertEquals("2022-12-14 00:00:00", vuln.getPublishDateString());
+        assertEquals("2022-12-14 00:00:00", vuln.getLastModifiedDateString());
     }
 }

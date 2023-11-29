@@ -49,8 +49,8 @@ public class AndroidParserTest extends AbstractParserTest {
         assertEquals("CVE-2023-20933", vuln.getCveId());
         assertTrue(vuln.getDescription().contains("local escalation of privilege with no additional execution privileges needed"));
         assertFalse(vuln.getDescription().contains("lead to remote code execution with no additional"));
-        assertEquals("2023-02-06 00:00:00", vuln.getPublishDate());
-        assertEquals("2023-02-08 00:00:00", vuln.getLastModifiedDate());
+        assertEquals("2023-02-06 00:00:00", vuln.getPublishDateString());
+        assertEquals("2023-02-08 00:00:00", vuln.getLastModifiedDateString());
     }
 
 }

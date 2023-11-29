@@ -45,7 +45,7 @@ public class JenkinsParserTest extends AbstractParserTest {
         assertEquals("CVE-2022-23521", vuln1.getCveId());
         assertEquals("CVE-2022-41903", vuln2.getCveId());
         assertTrue(vuln1.getDescription().contains("Affected Jenkins controller and agent images"));
-        assertEquals("2023-02-09 00:00:00", vuln1.getPublishDate());
+        assertEquals("2023-02-09 00:00:00", vuln1.getPublishDateString());
     }
 
     @Test
@@ -60,7 +60,7 @@ public class JenkinsParserTest extends AbstractParserTest {
         assertNotNull(vuln40);
         assertEquals("CVE-2022-34816", vuln40.getCveId());
         assertTrue(vuln40.getDescription().contains("on the Jenkins controller as part of its configuration"));
-        assertEquals("2022-06-30 00:00:00", vuln40.getPublishDate());
+        assertEquals("2022-06-30 00:00:00", vuln40.getPublishDateString());
     }
 
 }

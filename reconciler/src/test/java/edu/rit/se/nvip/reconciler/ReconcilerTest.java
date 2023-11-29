@@ -1,8 +1,8 @@
 package edu.rit.se.nvip.reconciler;
 
-import edu.rit.se.nvip.model.CompositeDescription;
-import edu.rit.se.nvip.model.CompositeVulnerability;
-import edu.rit.se.nvip.model.RawVulnerability;
+import edu.rit.se.nvip.db.model.CompositeDescription;
+import edu.rit.se.nvip.db.model.CompositeVulnerability;
+import edu.rit.se.nvip.db.model.RawVulnerability;
 import org.junit.jupiter.api.Test;
 
 import java.sql.Timestamp;
@@ -10,7 +10,7 @@ import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-import static edu.rit.se.nvip.model.CompositeDescription.equivalentBuildStrings;
+import static edu.rit.se.nvip.db.model.CompositeDescription.equivalentBuildStrings;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 

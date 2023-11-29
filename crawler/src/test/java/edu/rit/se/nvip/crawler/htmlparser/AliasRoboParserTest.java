@@ -48,8 +48,8 @@ public class AliasRoboParserTest extends AbstractParserTest {
         RawVulnerability vuln = getVulnerability(list, "CVE-2023-24012");
         assertNotNull(vuln);
         assertTrue(vuln.getDescription().contains("Attacker can arbitrarily craft malicious DDS Participants"));
-        assertEquals("2023-02-25 04:55:00", vuln.getPublishDate());
-        assertEquals("2023-02-25 04:55:00", vuln.getLastModifiedDate());
+        assertEquals("2023-02-25 04:55:00", vuln.getPublishDateString());
+        assertEquals("2023-02-25 04:55:00", vuln.getLastModifiedDateString());
 
     }
 
@@ -65,8 +65,8 @@ public class AliasRoboParserTest extends AbstractParserTest {
         RawVulnerability vuln = getVulnerability(list, "CVE-2020-10292");
         assertNotNull(vuln);
         assertTrue(vuln.getDescription().contains("Visual Components (owned by KUKA) is a robotic simulator that allows"));
-        assertEquals("2020-11-06 04:26:00", vuln.getPublishDate());
-        assertEquals("2020-11-06 04:26:00", vuln.getLastModifiedDate());
+        assertEquals("2020-11-06 04:26:00", vuln.getPublishDateString());
+        assertEquals("2020-11-06 04:26:00", vuln.getLastModifiedDateString());
 
     }
 

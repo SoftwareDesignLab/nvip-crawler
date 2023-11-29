@@ -24,9 +24,9 @@ package productdetection;
  * SOFTWARE.
  */
 
+import edu.rit.se.nvip.db.model.CpeGroup;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import model.cpe.CpeGroup;
 import model.cpe.ProductItem;
 import dictionary.ProductDictionary;
 

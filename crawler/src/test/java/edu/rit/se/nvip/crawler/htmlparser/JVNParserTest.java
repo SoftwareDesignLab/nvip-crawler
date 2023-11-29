@@ -49,8 +49,8 @@ public class JVNParserTest extends AbstractParserTest {
         assertTrue(vuln.getDescription().contains("ビートレンド株式会社が開発し、株式会社一蘭が提供するスマートフ"));
         // Please update to the latest version based on the information
         assertFalse(vuln.getDescription().contains("開発者が提供する情報をも"));
-        assertEquals("2023-02-06 00:00:00", vuln.getPublishDate());
-        assertEquals("2023-03-06 00:00:00", vuln.getLastModifiedDate());
+        assertEquals("2023-02-06 00:00:00", vuln.getPublishDateString());
+        assertEquals("2023-03-06 00:00:00", vuln.getLastModifiedDateString());
     }
 
     @Test
@@ -67,8 +67,8 @@ public class JVNParserTest extends AbstractParserTest {
         assertTrue(vuln.getDescription().contains("Medtronicが提供する臨床医アプリに"));
         // The developer has provided an update.
         assertFalse(vuln.getDescription().contains("開発者は、アップデートを提供しています"));
-        assertEquals("2023-03-03 00:00:00", vuln.getPublishDate());
-        assertEquals("2023-03-03 00:00:00", vuln.getLastModifiedDate());
+        assertEquals("2023-03-03 00:00:00", vuln.getPublishDateString());
+        assertEquals("2023-03-03 00:00:00", vuln.getLastModifiedDateString());
     }
 
     @Test
@@ -83,8 +83,8 @@ public class JVNParserTest extends AbstractParserTest {
         assertNotNull(vuln);
         // Multiple Mitsubishi Electric FA engineering software products
         assertTrue(vuln.getDescription().contains("複数の三菱電機製 FA エンジニアリングソフトウェア製品には"));
-        assertEquals("2020-07-30 00:00:00", vuln.getPublishDate());
-        assertEquals("2023-03-02 00:00:00", vuln.getLastModifiedDate());
+        assertEquals("2020-07-30 00:00:00", vuln.getPublishDateString());
+        assertEquals("2023-03-02 00:00:00", vuln.getLastModifiedDateString());
     }
 
 }

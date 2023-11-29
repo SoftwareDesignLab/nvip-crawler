@@ -24,6 +24,7 @@ package fixes;
  * SOFTWARE.
  */
 
+import edu.rit.se.nvip.db.model.Fix;
 import fixes.parsers.FixParser;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

@@ -33,8 +33,6 @@ import edu.uci.ics.crawler4j.url.WebURL;
 import edu.rit.se.nvip.db.model.RawVulnerability;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -147,7 +145,7 @@ public class CveCrawler extends WebCrawler {
 			} else {
 				for (RawVulnerability vulnerability : vulnerabilityList) {
 					if (vulnerability.getCveId().isEmpty()) {
-						log.info("A cve found by the {} parser at the URL {} has an empty cve_id and will not be inserted", vulnerability.getParserType(), vulnerability.getSourceURL());
+						log.info("A cve found by the {} parser at the URL {} has an empty cve_id and will not be inserted", vulnerability.getParserType(), vulnerability.getSourceUrl());
 						continue;
 					}
 					if (foundCVEs.get(vulnerability.getCveId()) != null) {

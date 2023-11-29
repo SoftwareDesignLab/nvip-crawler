@@ -24,8 +24,11 @@ package productdetection;
  * SOFTWARE.
  */
 
-import edu.stanford.nlp.util.Scored;
-import model.cpe.*;
+
+import edu.rit.se.nvip.db.model.CpeEntry;
+import edu.rit.se.nvip.db.model.CpeGroup;
+import model.cpe.ProductItem;
+import model.cpe.ProductVersion;
 import opennlp.tools.tokenize.WhitespaceTokenizer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

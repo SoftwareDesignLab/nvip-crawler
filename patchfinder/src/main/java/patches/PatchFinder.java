@@ -25,12 +25,15 @@ package patches; /**
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
-import db.DatabaseHelper;
+import edu.rit.se.nvip.db.DatabaseHelper;
+import edu.rit.se.nvip.db.model.CpeGroup;
+import edu.rit.se.nvip.db.repositories.PatchFixRepository;
+import edu.rit.se.nvip.db.repositories.ProductRepository;
 import env.PatchFinderEnvVars;
-import model.CpeGroup;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import javax.sound.midi.Patch;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -52,6 +55,8 @@ public class PatchFinder {
 
 	private static final ObjectMapper OM = new ObjectMapper();
 	private static DatabaseHelper databaseHelper;
+	private static ProductRepository prodRepo;
+	private static PatchFixRepository pfRepo;
 
 //	private static final Set<PatchCommit> patchCommits = new HashSet<>();
 	private static Map<String, List<String>> sourceDict;
@@ -68,27 +73,29 @@ public class PatchFinder {
 	/**
 	 * Initialize the Patchfinder and its subcomponents
 	 */
-	public static void init(DatabaseHelper dbh) {
+	public static void init(DatabaseHelper dbh, ProductRepository prodRepo, PatchFixRepository pfRepo) {
 		logger.info("Initializing PatchFinder...");
 
-		// Init db helper
-		logger.info("Initializing DatabaseHelper...");
 		databaseHelper = dbh;
+		PatchFinder.prodRepo = prodRepo;
+		PatchFinder.pfRepo = pfRepo;
 	}
 
 	/**
 	 * Run a list of given jobs through the Patchfinder
-	 * @param cveId CVE to get affected products and patches for
+	 * @param vulnVersionId CVE to get affected products and patches for
 	 * @throws IOException if an IO error occurs while attempting to find patches
 	 */
-	public static void run(String cveId) throws IOException {
+	public static void run(int vulnVersionId) throws IOException {
 		// Get affected products via CVE ids
-		final Map<String, CpeGroup> affectedProducts = databaseHelper.getAffectedProducts(cveId);
+		final Map<String, CpeGroup> affectedProducts = prodRepo.getAffectedProducts(vulnVersionId);
+		// that db call will return a map with at most one key, the cve id corresponding to the version id
+		String cveId = affectedProducts.keySet().iterator().next();
 		final CpeGroup affectedProduct = affectedProducts.get(cveId);
-		if(affectedProduct != null) {
-			logger.info("Successfully got {} affected products for CVE '{}' from the database", affectedProduct.getVersionsCount(), cveId);
+		if(!affectedProducts.keySet().isEmpty() && affectedProduct != null) {
+			logger.info("Successfully got {} affected products for CVE '{}' from the database", affectedProduct.getVersionsCount(), vulnVersionId);
 			PatchFinder.run(cveId, affectedProduct);
-		} else logger.warn("No affected products found matching CVE '{}', cannot find patches.", cveId);
+		} else logger.warn("No affected products found matching CVE '{}', cannot find patches.", vulnVersionId);
 	}
 
 	/**
@@ -147,10 +154,10 @@ public class PatchFinder {
 			);
 
 			// Get existing sources
-			final Map<String, Integer> existingSources = databaseHelper.getExistingSourceUrls();
+			final Map<String, Integer> existingSources = pfRepo.getExistingSourceUrls();
 
 			// Get existing patch commits
-			final Set<String> existingCommitShas = databaseHelper.getExistingPatchCommitShas();
+			final Set<String> existingCommitShas = pfRepo.getExistingPatchCommitShas();
 
 			// Insert patches
 			int failedInserts = 0;
@@ -160,7 +167,7 @@ public class PatchFinder {
 			for (PatchCommit patchCommit : patchCommits) {
 				final String sourceUrl = patchCommit.getCommitUrl();
 				// Insert source
-				final int sourceUrlId = databaseHelper.insertPatchSourceURL(existingSources, patchCommit.getCveId(), sourceUrl);
+				final int sourceUrlId = pfRepo.insertPatchSourceURL(existingSources, patchCommit.getCveId(), sourceUrl);
 				//convert the timeline to a string
 
 				// Insert patch commit
@@ -168,7 +175,7 @@ public class PatchFinder {
 					// Ensure patch commit does not already exist
 					final String commitSha = patchCommit.getCommitId();
 					if (!existingCommitShas.contains(commitSha)) {
-						databaseHelper.insertPatchCommit(
+						pfRepo.insertPatchCommit(
 								sourceUrlId, patchCommit.getCveId(), commitSha, patchCommit.getCommitDate(),
 								patchCommit.getCommitMessage(), patchCommit.getUniDiff(),
 								patchCommit.getTimeline(), patchCommit.getTimeToPatch(), patchCommit.getLinesChanged()
