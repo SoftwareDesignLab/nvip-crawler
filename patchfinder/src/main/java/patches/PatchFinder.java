@@ -90,6 +90,10 @@ public class PatchFinder {
 		// Get affected products via CVE ids
 		final Map<String, CpeGroup> affectedProducts = prodRepo.getAffectedProducts(vulnVersionId);
 		// that db call will return a map with at most one key, the cve id corresponding to the version id
+		if (affectedProducts.keySet().isEmpty()) {
+			logger.warn("No affected products found matching CVE '{}', cannot find patches.", vulnVersionId);
+			return;
+		}
 		String cveId = affectedProducts.keySet().iterator().next();
 		final CpeGroup affectedProduct = affectedProducts.get(cveId);
 		if(!affectedProducts.keySet().isEmpty() && affectedProduct != null) {
