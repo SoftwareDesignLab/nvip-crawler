@@ -13,7 +13,7 @@ ADD reconciler/pom.xml reconciler/pom.xml
 ADD db/src/main db/src/main
 RUN mvn install -Dmaven.test.skip=true --projects=db
 
-RUN mvn dependency:go-offline --projects=reconciler
+RUN mvn dependency:go-offline --projects=db,reconciler
 
 ADD reconciler/src/main reconciler/src/main
 
