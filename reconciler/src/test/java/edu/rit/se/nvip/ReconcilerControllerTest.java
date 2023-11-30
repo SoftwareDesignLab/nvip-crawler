@@ -66,7 +66,7 @@ class ReconcilerControllerTest {
         when(mockRawRepo.getRawVulnerabilities(anyString())).thenReturn(rawVulns);
         when(mockVulnRepo.getCompositeVulnerability(anyString())).thenReturn(vuln);
         doNothing().when(mockRawRepo).updateFilterStatus(anySet());
-        when(mockVulnRepo.insertOrUpdateVulnerabilityFull(any(CompositeVulnerability.class))).thenReturn(1);
+        when(mockVulnRepo.insertOrUpdateVulnerabilityFull(any(CompositeVulnerability.class), anyBoolean())).thenReturn(1);
         when(mockNmRepo.insertTimeGapsForNewVulns(anySet())).thenReturn(1);
         when(mockRhRepo.insertRun(any(RunStats.class))).thenReturn(1);
         when(mockCharRepo.insertVdoCvssBatch(anySet())).thenReturn(1);

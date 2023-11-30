@@ -172,6 +172,7 @@ public class ReconcilerController {
         int newRawCount = wrapper.setNewToUneval();
         // get an existing vuln from prior reconciliation if one exists
         CompositeVulnerability existing = vulnRepo.getCompositeVulnerability(cveId);
+        boolean newVuln = existing == null;
         // filter in waves by priority
         FilterReturn firstWaveReturn = filterHandler.runFilters(wrapper.firstFilterWave()); //high prio sources
         FilterReturn secondWaveReturn = filterHandler.runFilters(wrapper.secondFilterWave()); //either empty or low prio depending on filter status of high prio sources
@@ -196,7 +197,7 @@ public class ReconcilerController {
         // we do this because publish dates and mod dates should be determined by all sources, not just those with good descriptions
         out.setPotentialSources(rawVulns);
 
-        vulnRepo.insertOrUpdateVulnerabilityFull(out);
+        vulnRepo.insertOrUpdateVulnerabilityFull(out, newVuln);
 
         logger.info("Finished job for cveId " + out.getCveId());
 
