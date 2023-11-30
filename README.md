@@ -78,9 +78,10 @@ It scrapes disclosed CVEs, scores/characterizes them automatically and stores th
 * Click on "Database/Connect To Database" menu on MySQL Workbench and Click "Ok". Enter the password you set for user "root" earlier. You should be connected to the MySQL database.
 
 
-* Open a new query editor in MySQL Workbench and execute the script provided at '\nvip_data\mysql-database\CreateAndInitializeDb.sql' to create and initialize the MySQL database.
-> Please make sure the MySQL user name and password parameters in the Docker 
-> environment variables are updated! (Refer to **Environment Variables** section for specific DB parameters needed)
+* Once you have a database created, run this command in the mysql-database/newDB directory:
+
+> liquibase --changeLogFile=db.init.xml --classpath=./mysql-connector-j-8.0.33.jar --url="jdbc:mysql://localhost:3306/DB Name" --username=USERNAME --password=PASSWORD update
+
 
 ## 3. Build & Package
 Make sure you can build the project before setting it up with docker
@@ -103,34 +104,6 @@ If you're using Docker (which is the prefferred way of running it), you don't ha
 
 ## 4. Install Docker and Build via Docker CLI
 
-#### Build Crawler Image
-    $ docker build -t crawler .
-
-#### Run with Env List
-    $ docker run -m=10g --env-file env.list crawler
-
-Where `-m` is the maximum memory (RAM) the container can use during runtime, and `--env-file` is the path to 
-the environment variable file (in `.list` format)
-
-Make sure your MySQL service is running. If not, try the following:
-
-  - (Windows) Go to services panel via windows explorer, navigate to where your MySQL service is (named MySQL80), select 
-the service and click "start".
-
-
-  - You can verify the service running by logging into MySQL via MySQL Command Line or MySQL Workbench
-(Login will automatically fail if the service isn't running, so be sure the login credentials are correct!)
-
-    
-  - Make sure the **NVIP_DATA_DIR** points to the nvip_data directory and the database user and password in the **Environment Variables** are correct.
-
-### Installation & Configuration Checklist
-- All parameters are in **Environment Variables** at the moment. For more information, see each module's README and env.list.
-
-
-- Required training data and resources are stored under the `nvip_data` folder (the data directory). 
-You need to configure the data directory of the project (in the **Environment Variables** and (maybe) `nvip.properties`) 
-to point to the `nvip_data` directory.
 
 ### Running the Crawler
 
