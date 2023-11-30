@@ -125,146 +125,34 @@ the service and click "start".
   - Make sure the **NVIP_DATA_DIR** points to the nvip_data directory and the database user and password in the **Environment Variables** are correct.
 
 ### Installation & Configuration Checklist
-- All parameters are in **Environment Variables** at the moment.
+- All parameters are in **Environment Variables** at the moment. For more information, see each module's README and env.list.
 
 
 - Required training data and resources are stored under the `nvip_data` folder (the data directory). 
 You need to configure the data directory of the project (in the **Environment Variables** and (maybe) `nvip.properties`) 
 to point to the `nvip_data` directory.
 
+### Running the Crawler
 
-### Environment Variables
+`docker run -d --rm --memory=10g --env-file=./nvip.env --volume=./crawler-output:/usr/local/lib/output --volume=exploit-repo:/usr/local/lib/nvip_data/exploit-repo --volume=mitre-cve:/usr/local/lib/nvip_data/mitre-cve --name=nvip-crawler ghcr.io/softwaredesignlab/nvip-crawler:latest` 
 
-The `env.list` file contains a set of environment variables that the crawler requires in order to run.
-Some variables contain default values for if they're not specified, but it is advised to have them configured based on your usage.
+### Running the Reconciler
 
-Like stated previously, you can provide these variables when running the application with Docker via the `env.list` file.
-If you want to run it locally without Docker, you'll need to provide the environment variables through whatever tool or IDE you're using.
+`docker run -d --env-file=./nvip.env --name=nvip-reconciler ghcr.io/softwaredesignlab/nvip-reconciler:latest`
 
-- Setting up environment variables w/ **IntelliJ**: https://www.jetbrains.com/help/objc/add-environment-variables-and-program-arguments.html
+### Running the Product Name Extractor
 
+`docker run -d --env-file=./nvip.env --name=nvip-productnameextractor ghcr.io/softwaredesignlab/nvip-productnameextractor:latest`
 
-- Setting up environment variables w/ **VS Code**: https://code.visualstudio.com/remote/advancedcontainers/environment-variables
+### Running the Patchfinder
 
-**NOTE** If you're running the application with Docker, you will not need to worry about setting up the Env Vars via your IDE.
-IF there's any change in your Env Vars, you don't need to rebuild the image (unless there's changes in the code or properties files).
-
-A list of the environment variables is provided below:
-
-### Database
-
-* **HIKARI_URL**: JDBC URL used for connecting to the MySQL Database.
-  - There is no default value.
-  - Use mysql://localhost:3306 for running locally, and mysql://host.docker.internal:3306 to run with docker
-
-
-* **HIKARI_USER**: Database username used to login to the MySQL database
-  - There is no default value
-  
-
-* **HIKARI_PASSWORD**: Database password used to login to the MySQL database
-  - There is no default value
-
-### Runtime Data
-
-* **NVIP_DATA_DIR**: Directory path for data resources used by NVIP at runtime
-    - Default value: nvip_data
-
-
-* **NVIP_REFRESH_NVD_LIST**: Boolean parameter that determines whether or not NVIP should refresh the existing NVD data in the nvd-cve.csv file
-    - Default value: true
-
-
-* **NVIP_PARALLEL_PROCESS_THREAD_LIMIT**: Maximum # of threads for the DBParallelProcess class to use
-    - Default value: 9
-
-* **NVIP_OUTPUT_DIR**: Output directory path for the web crawler(s)
-  - Default value: output/crawlers
-
-
-* **NVIP_SEED_URLS**: Directory path for seed URLs .txt file for NVIP's web crawler(s)
-  - Default value: nvip_data/url-sources/nvip-seeds.txt
-
-
-* **NVIP_WHITELIST_URLS**: Directory path for whitelisted URLs/domains for NVIP's web crawler(s)
-  - Default value: nvip_data/url-sources/nvip-whitelist.txt
-
-
-* **NVIP_ENABLE_GITHUB**: Boolean parameter for enabling pulling CVEs from CVE GitHib repo: https://github.com/CVEProject/cvelist
-  - Default value: true
-
-### Crawler
-
-* **NVIP_CRAWLER_POLITENESS**: Time (ms) for how long the crawler should wait for each page to load
-  - Default value: 3000
-
-
-* **NVIP_CRAWLER_MAX_PAGES**: Maximum # of pages for the crawler to navigate to
-  - Default value: 3000
-
-
-* **NVIP_CRAWLER_DEPTH**: Maximum depth for the web crawler
-  - Default value: 1
-
-
-* **NVIP_CRAWLER_REPORT_ENABLED**: Boolean parameter for enabling error report for crawler sources. Output is logged in the specified output directory
-  - Default value: true
-
-
-* **NVIP_NUM_OF_CRAWLER**: Max # of crawler threads
-  - Default value: 10
-
-### NVD Comparison
-
-* **NVD_API_URL**: URL for NVD API endpoint for grabbing CVEs from NVD
-  - Default value: https://services.nvd.nist.gov/rest/json/cves/2.0?pubstartDate=<StartDate>&pubEndDate=<EndDate>
-  - Where <StartDate> is the start date of the request and <EndDate> is the end date for the request
-  - Start and end date values are determined on runtime, end date being the current date and start date is 120 days before
-  - Example: https://services.nvd.nist.gov/rest/json/cves/2.0/?pubStartDate=2021-08-04T00:00:00.000&pubEndDate=2021-10-22T00:00:00.000
-  
-
-* **NVD_API_REQUEST_LIMIT**: Max # of requests NVIP should make to NVD to collect CVEs for performance comparison 
-  - Default value: 10
-  - Each requests grabs 2000 CVEs from NVD
-
-### MITRE Comparison
-
-* **MITRE_GITHUB_URL**: Github URL used to pull MITRE's CVE repo and compare with MITREs results
-  - Default value: https://github.com/CVEProject/cvelist
-
-### Characterizer
-
-* **NVIP_CVE_CHARACTERIZATION_TRAINING_DATA_DIR**: Directory path for folder that contains Characterizer traning data
-  - Default value: characterization
-
-
-* **NVIP_CVE_CHARACTERIZATION_TRAINING_DATA**: List of Characterization training data files (*.csv) (Ordered aplhabetically, and separated by comma (","))
-  - Default value: AttackTheater.csv,Context.csv,ImpactMethod.csv,LogicalImpact.csv,Mitigation.csv 
-
-
-* **NVIP_CVE_CHARACTERIZATION_LIMIT**: Limit for maximum # of CVEs to run through the characterizer
-  - Default value: 5000
-
-
-### Patch Finder
-
-* **PATCHFINDER_ENABLED**: Boolean parameter for enabling the patch finder
-  - Default value: true
-
-
-* **PATCHFINDER_SOURCE_LIMIT**: Limit of maximum # of repos to scrape for patches
-  - Default value: 10
-  
-
-* **PATCHFINDER_MAX_THREADS**: Limit of maximum # of threads for patch finder
-  - Default value: 10
-
+`docker run -d --env-file=./nvip.env --name=nvip-patchfinder ghcr.io/softwaredesignlab/nvip-patchfinder:latest`
 
 # Component Documentation
 
 
 ### Overview
-This project consists of 6 main components
+This project consists of 6 main components.
 
 *  **CVE Web Crawler**
    - Uses Multi Threaded Web Crawling for navigating source pages to grab raw CVE data
@@ -305,3 +193,33 @@ This project consists of 6 main components
    - Product repos are cloned in `nvip_data`, then deleted afterwards after being used
    - **NOTE** This component relies directly on the affected product data from product extraction
    - Fixes are found with web-scrapers similarly to the CVE crawler
+
+# Project Team
+- Mehdi Mirakhorli, Principal Investigator
+- Ahmet Okutan, Senior Research Developer
+- Chris Enoch, Senior Project Manager
+- Peter Mell, Collaborator
+- Igor Khokhlov, Researcher
+- Joanna Cecilia Da Silva Santos, Researcher
+- Danielle Gonzalez, Researcher
+- Celeste Gambardella, Researcher
+- Olivia Gallucci, Vulnerability Researcher
+- Steven Simmons, Developer
+- Ryan Bryla, Developer
+- Andrew Pickard, Developer
+- Brandon Cooper, Developer
+- Braden Little, Developer
+- Adam Pang, Developer
+- Anthony Ioppolo, Developer
+- Andromeda Sawtelle, Developer
+- Corey Urbanke, Developer
+- James McGrath, Developer
+- Matt Moon, Developer
+- Stephen Shadders, Developer
+- Paul Vickers, Developer
+- Richard Sawh, Developer
+- Greg Lynskey, Developer
+- Eli MacDonald, Developer
+- Ryan Moore, Developer
+- Mackenzie Wade, Developer
+
