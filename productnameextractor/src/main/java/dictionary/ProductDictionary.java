@@ -120,10 +120,11 @@ public class ProductDictionary {
             final long timeSinceLastFullPull = Duration.between(productDictLastCompilationDate, Instant.now()).getSeconds();
             final long timeSinceLastRefresh = Duration.between(productDictLastRefreshDate, Instant.now()).getSeconds();
 
-            logger.info("Successfully read {} products from file '{}' ({} day(s) old)",
+            logger.info("Successfully read {} products from file '{}' ({} day(s) since refresh, {} day(s) since full query)",
                     productDict.size(),
-                    productDictName,
-                    Math.floor((float) timeSinceLastRefresh / 3600 / 24 * 10) / 10 // seconds -> hours
+                    productDictPath,
+                    Math.floor((float) timeSinceLastRefresh / 3600 / 24 * 10) / 10, // seconds -> hours
+                    Math.floor((float) timeSinceLastFullPull / 3600 / 24 * 10) / 10 // seconds -> hours
             );
 
             // Update dictionary as needed
