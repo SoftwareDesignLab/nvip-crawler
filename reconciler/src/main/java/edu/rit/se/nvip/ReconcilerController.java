@@ -196,7 +196,7 @@ public class ReconcilerController {
         // we do this because publish dates and mod dates should be determined by all sources, not just those with good descriptions
         out.setPotentialSources(rawVulns);
 
-        vulnRepo.insertOrUpdateVulnerabilityFull(out);
+        vulnRepo.insertOrUpdateVulnerabilityFull(out, existing == null);
 
         logger.info("Finished job for cveId " + out.getCveId());
 
