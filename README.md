@@ -11,7 +11,8 @@ It scrapes disclosed CVEs, scores/characterizes them automatically and stores th
 * Automatically extracts affected Common Platform Enumeration (CPE) products from free-form CVE descriptions.
 * Maintains an updated list of CVE source URLs, takes a seed URL list as input and searches for additional CVE sources. 
 * Compares crawled CVEs against NVD and MITRE and records the comparison results under the "output" directory. 
-(If NVIP is run at date "MM/dd/yyyy", the output will be at "output//yyyyMMdd" path.) 
+(If NVIP is run at date "MM/dd/yyyy", the output will be at "output//yyyyMMdd" path.)
+* NVIP consists of multiple modules which send jobs to each other via RabbitMQ, and share the `db` module as a common dependency.
 
 ## System Requirements
 * NVIP requires at least Java version 8.
