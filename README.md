@@ -124,11 +124,7 @@ the service and click "start".
   - Make sure the **NVIP_DATA_DIR** points to the nvip_data directory and the database user and password in the **Environment Variables** are correct.
 
 ### Installation & Configuration Checklist
-- Not all parameters are in **Environment Variables** at the moment.
-There are two additional legacy config files used for some parameters. 
-`src/main/resources/nvip.properties` is used to set program parameters, and `src/main/resources/db-mysql.properties` 
-is used to set database parameters (We might not need that anymore though). When the system is run, the config files are first searched in the application root, 
-if they are not found there the ones at `\src\main\resources` are used!
+- All parameters are in **Environment Variables** at the moment.
 
 
 - Required training data and resources are stored under the `nvip_data` folder (the data directory). 
@@ -248,14 +244,6 @@ A list of the environment variables is provided below:
 * **NVIP_CVE_CHARACTERIZATION_LIMIT**: Limit for maximum # of CVEs to run through the characterizer
   - Default value: 5000
 
-### Exploit Finder
-
-* **EXPLOIT_FINDER_ENABLED**: Boolean parameter for enabling the exploit finder
-  - Default value: true
-
-
-* **EXPLOIT_DB_URL**: URL used for cloning and scraping the ExploitDB Git repo
-  - Default value: https://gitlab.com/exploit-database/exploitdb
 
 ### Patch Finder
 
@@ -270,37 +258,12 @@ A list of the environment variables is provided below:
 * **PATCHFINDER_MAX_THREADS**: Limit of maximum # of threads for patch finder
   - Default value: 10
 
-### Email Notification Service
-
-* **NVIP_EMAIL_USER**: Email user name for NVIP notifications 
-  - There is no default value.
-
-
-* **NVIP_EMAIL_PASSWORD**: Email password for NVIP notifications 
-  - There is no default value.
-
-
-* **NVIP_EMAIL_FROM**: Email from address for NVIP notifications (data@cve.live)
-  - There is no default value.
-
-
-* **NVIP_EMAIL_PORT**: SMTP port # for NVIP notifications (ex. 587)
-  - There is no default value.
-
-
-* **NVIP_EMAIL_HOST**: SMTP host domain for NVIP notifications
-  - There is no default value.
-
-
-* **NVIP_EMAIL_MESSAGE_URL**: URL domain for links in NVIP email notifications (ex. http://www.cve.live)
-  - There is no default value.
-
 
 # Component Documentation
 
 
 ### Overview
-This project consists of 8 main components
+This project consists of 6 main components
 
 *  **CVE Web Crawler**
    - Uses Multi Threaded Web Crawling for navigating source pages to grab raw CVE data
@@ -312,15 +275,14 @@ This project consists of 8 main components
    description for each CVE.
 
 
-
-*  **CVE Characterizer**
+*  **CVE Characterizer** (included in the reconciler module)
    - This component provides automated CVSS scores and VDO Labels for each CVE via a Natural Language Processing model, which is trained
-   via the data provided in `nvip_data` (Model is also here as well)
+   via the data provided in `nvip_data` (Model is also here as well). It also uses an SSVC API running in the NVIP environment for SSVC scoring.
    - NIST's CVSS score summary: https://nvd.nist.gov/vuln-metrics/cvss
    - NIST's VDO Label summary: https://csrc.nist.gov/csrc/media/publications/nistir/8138/draft/documents/nistir_8138_draft.pdf 
 
 
-*  **CVE Processor**
+*  **NVD/MITRE Comparisons** (included in the reconciler module)
    - This component processes the compiled CVEs by storing them in the Database, then compares each CVE in NVIP to the 
    CVEs in NVD and MITRE to compare performance of NVIP vs NVD and MITRE.
    - NVD: https://nvd.nist.gov/
@@ -328,28 +290,17 @@ This project consists of 8 main components
    - For comparing with NVD, we're currently transitioning to NVD's 2.0 API: https://nvd.nist.gov/developers/vulnerabilities 
 
 
-*  **CVE Product Extractor**
+*  **Product Name Extractor**
    - This component identifies affected products in a CVE via a Named Entity Recognition (NER) model.
-   - The model and it's training data is provided in `nvip_data`
+   - The model and its training data is provided in `nvip_data`
    - Each extracted product is converted as a Common Product Enumeration (CPE) string 
    - CPE Definition and Dictionary(s): https://nvd.nist.gov/products/cpe
+   - 
 
-
-*  **CVE Exploit Finder**
-   - This component identifies exploits for CVEs in NVIP
-   - Currently, we just pull exploit data from ExploitDB: https://gitlab.com/exploit-database/exploitdb
-    
-
-*  **CVE Patch Finder**
+*  **CVE Patch/Fix Finder**
    - This component identifies possible patches for CVEs
    - Patches are found by crawling available repos for the affected products of a CVE
    - Each repo is cloned, then each commit is navigated to identify patches by checking for keywords in the commit messages
    - Product repos are cloned in `nvip_data`, then deleted afterwards after being used
    - **NOTE** This component relies directly on the affected product data from product extraction
-
-
-*  **NVIP Cache Updater and NVIP Email Notifications Service**
-   - This last component makes sure the Web App is up-to-date with the recent vulnerabilities found in NVIP.
-   - This is done via collecting the CVEs found in the past week (7 days), and adds them to the `vulnerabilityaggregate` table in the database.
-   - The `vulnerabilityaggregate` table acts as a cache table for the Web API.
-   - After the cache is updated, the service sends an email notification to all admin users in NVIP. Each email notification contains a list of CVEs added to NVIP.
+   - Fixes are found with web-scrapers similarly to the CVE crawler
