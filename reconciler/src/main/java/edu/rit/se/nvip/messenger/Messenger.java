@@ -157,6 +157,7 @@ public class Messenger {
      */
     private String genJson(int vulnVersionId) {
         try {
+            logger.info("about to send a vuln version id of {}", String.valueOf(vulnVersionId));
             Map<String, String> cveJson = Map.of("vulnVersionId", String.valueOf(vulnVersionId));
             return OM.writeValueAsString(cveJson);
         } catch (JsonProcessingException e) {
