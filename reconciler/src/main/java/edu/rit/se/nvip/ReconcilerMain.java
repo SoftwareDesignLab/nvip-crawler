@@ -67,18 +67,20 @@ public class ReconcilerMain {
                 Reconciler reconciler = ReconcilerFactory.createReconciler(ReconcilerEnvVars.getReconcilerType());
                 reconciler.setKnownCveSources(ReconcilerEnvVars.getKnownSourceMap());
 
-                NvdCveController nvdController = new NvdCveController();
-                nvdController.createDatabaseInstance();
-
-                MitreCveController mitreController = new MitreCveController();
-                mitreController.initializeController();
-
                 DataSource ds = DatabaseHelper.getInstance().getDataSource();
                 RawDescriptionRepository rawRepo = new RawDescriptionRepository(ds);
                 VulnerabilityRepository vulnRepo = new VulnerabilityRepository(ds);
                 CharacterizationRepository charRepo = new CharacterizationRepository(ds);
                 NvdMitreRepository nmRepo = new NvdMitreRepository(ds);
                 RunHistoryRepository rhRepo = new RunHistoryRepository(ds);
+
+                NvdCveController nvdController = new NvdCveController();
+                nvdController.createDatabaseInstance();
+
+                MitreCveController mitreController = new MitreCveController();
+                mitreController.setDatabaseHelper(nmRepo);
+                mitreController.initializeController();
+
 
                 ReconcilerController rc = new ReconcilerController(rawRepo, vulnRepo, charRepo, nmRepo, rhRepo, filterHandler, reconciler, nvdController, mitreController);
 
