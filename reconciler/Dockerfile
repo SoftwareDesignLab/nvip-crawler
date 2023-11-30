@@ -17,7 +17,7 @@ RUN mvn dependency:go-offline --projects=reconciler
 
 ADD reconciler/src/main reconciler/src/main
 
-RUN mvn package -Dmaven.test.skip=true --projects=reconciler
+RUN mvn package -Dmaven.test.skip=true --projects=db,reconciler
 
 ### Reconciler Run Stage
 FROM openjdk:11-jre-slim
