@@ -211,11 +211,23 @@ If you want to run it locally without Docker, the program will attempt to automa
 * **RABBIT_PASSWORD**: The password for the RabbitMQ server connection.
     - Default value: `guest`
 
+* **PNE_INPUT_QUEUE**: The RabbitMQ queue name to watch for input.
+  * Default value: 'RECONCILER_OUT'
+
+* **PNE_OUTPUT_QUEUE**: The RabbitMQ queue name to send jobs to the Pathfinder.
+    * Default value: 'PNE_OUT_PATCH'
+
+* **PNE_INPUT_QUEUE**: The RabbitMQ queue name to watch jobs to the Fixfinder.
+    * Default value: 'PNE_OUT_FIX'
+
 
 ### Product Name Extractor Variables
 
+* **INPUT_MODE**: The way the PNE will receive input.
+	- Default value: `rabbit`
+
 * **CHAR_2_VEC_CONFIG**: Name of the configuration file for the Char2Vec model.
-	- Default value: `c2v_model_config_50.json`
+    - Default value: `c2v_model_config_50.json`
 
 
 * **CHAR_2_VEC_WEIGHTS**: Name of the weights file for the Char2Vec model.
