@@ -228,9 +228,11 @@ public class NvdMitreRepository {
             String cveId = null;
             String lastCveId = null;
             Map<String, List<String>> sourceMap = new HashMap<>();
+            boolean foundOne = false;
             while (res.next()) { // goes through each matching cve_id, creates the NvdVuln and attaches it to the CompVuln
                 // Store last cve id to determine duplicate entries
                 lastCveId = cveId;
+                foundOne = true;
 
                 // Update cveId value
                 cveId = res.getString("cve_id");
@@ -256,7 +258,7 @@ public class NvdMitreRepository {
             }
 
             // If only one result was found
-            if(lastCveId == null) {
+            if(lastCveId == null && foundOne) {
                 NvdVulnerability nvdVuln = new NvdVulnerability(
                         cveId,
                         res.getTimestamp("published_date"),
