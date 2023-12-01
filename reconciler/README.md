@@ -185,7 +185,7 @@ A list of the environment variables is provided below:
 * **NVD_API_URL**: URL to NVD's CVE 2.0 API
 	- Default value:https://services.nvd.nist.gov/rest/json/cves/2.0?pubStartDate=<StartDate>&pubEndDate=<EndDate>
 
-* **OPENAI_KEY**: Session key for OpenAI
+* **OPENAI_KEY**: Session key for OpenAI [no longer used]
 	- Default value:sk-xxxxxxxxxxxxx
 
 * **DATA_DIR**: Path to the data directory

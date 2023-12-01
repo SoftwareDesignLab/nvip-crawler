@@ -204,6 +204,14 @@ If you want to run it locally without Docker, the program will attempt to automa
     - Default value: `host.docker.internal`
 
 
+* **RABBIT_VHOST**: The virtual host for the RabbitMQ server.
+    - Default value: `/`
+
+
+* **RABBIT_PORT**: The port for the RabbitMQ server.
+    - Default value: `5672`
+
+
 * **RABBIT_USERNAME**: The username for the RabbitMQ server connection.
     - Default value: `guest`
 
@@ -212,10 +220,30 @@ If you want to run it locally without Docker, the program will attempt to automa
     - Default value: `guest`
 
 
+* **PNE_INPUT_QUEUE**: The RabbitMQ queue name to watch for input.
+  * Default value: 'RECONCILER_OUT'
+
+
+* **PNE_OUTPUT_QUEUE_PATCH**: The RabbitMQ queue name to send jobs to the Pathfinder.
+    * Default value: 'PNE_OUT_PATCH'
+
+
+* **PNE_OUTPUT_QUEUE_FIX**: The RabbitMQ queue name to send jobs to the Fixfinder.
+    * Default value: 'PNE_OUT_FIX'
+
+
 ### Product Name Extractor Variables
 
+* **INPUT_MODE**: The way the PNE will receive input.
+	- Default value: `rabbit`
+
+
+* **MAX_ATTEMPTS_PER_PAGE**: The maximum number of attempts to scrape any given page.
+    - Default value: `rabbit`
+
+
 * **CHAR_2_VEC_CONFIG**: Name of the configuration file for the Char2Vec model.
-	- Default value: `c2v_model_config_50.json`
+    - Default value: `c2v_model_config_50.json`
 
 
 * **CHAR_2_VEC_WEIGHTS**: Name of the weights file for the Char2Vec model.

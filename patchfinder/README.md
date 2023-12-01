@@ -189,8 +189,8 @@ If you want to run it locally without Docker, the program will attempt to automa
 
 * **HIKARI_URL**: JDBC URL used for connecting to the MySQL Database.
   - By default, assumes that application will be run with Docker
-  - Use `mysql://localhost:3306/DB_NAME?useSSL=false&allowPublicKeyRetrieval=true` for running locally
-  - Use `mysql://host.docker.internal:3306/DB_NAME?useSSL=false&allowPublicKeyRetrieval=true` to run with Docker
+  - Use `mysql://localhost:3306/nvip?useSSL=false&allowPublicKeyRetrieval=true` for running locally
+  - Use `mysql://host.docker.internal:3306/nvip?useSSL=false&allowPublicKeyRetrieval=true` to run with Docker
 
 
 * **HIKARI_USER**: Database username used to log in to the database.
@@ -212,6 +212,14 @@ If you want to run it locally without Docker, the program will attempt to automa
   - Default value: `host.docker.internal`
 
 
+* **RABBIT_VHOST**: The virtual host for the RabbitMQ server.
+  - Default value: `/`
+
+
+* **RABBIT_PORT**: The port for the RabbitMQ server.
+  - Default value: `5672`
+
+
 * **RABBIT_USERNAME**: The username for the RabbitMQ server connection.
   - Default value: `guest`
 
@@ -223,8 +231,16 @@ If you want to run it locally without Docker, the program will attempt to automa
 ### Patch Finder Variables
 
 * **PF_INPUT_MODE**: Method of input for Patch Finder jobs, either 'db' or 'rabbit'.
-  - Default value: `db`
-  
+  - Default value: `rabbit`
+
+
+* **PF_INPUT_QUEUE**: Input message queue for Patch Finder jobs, either 'db' or 'rabbit'.
+  - Default value: `PNE_OUT_PATCH`
+
+
+* **FF_INPUT_QUEUE**: Input message queue for Fix Finder jobs, either 'db' or 'rabbit'.
+  - Default value: `PNE_OUT_FIX`
+
 
 * **CVE_LIMIT**: The limit for CVEs to be processed by the Patch Finder during runtime.
   - Default value: `20`
