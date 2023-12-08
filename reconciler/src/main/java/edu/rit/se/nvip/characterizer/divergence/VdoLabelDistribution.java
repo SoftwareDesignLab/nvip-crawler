@@ -1,4 +1,4 @@
-/ **
+/**
 * Copyright 2021 Rochester Institute of Technology (RIT). Developed with
 * government support under contract 70RCSA22C00000008 awarded by the United
 * States Department of Homeland Security for Cybersecurity and Infrastructure Security Agency.
@@ -20,7 +20,7 @@
 * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 * SOFTWARE.
-* /
+*/
 
 /**
  * Copyright 2023 Rochester Institute of Technology (RIT). Developed with
@@ -163,11 +163,11 @@ public class VdoLabelDistribution {
 	/**
 	 * cross entropy between the <cveHistogram> and this cve model histogram
 	 * 
-	 * // int numOfFeatureValuesInModel = cveModelHistogram.size(); // double
+	 *// int numOfFeatureValuesInModel = cveModelHistogram.size(); // double
 	 * modelEntropyForFeature = getEntropy(); // double dRedistributedUnitEntropy =
 	 * modelEntropyForFeature / nBaseCount; // double dTotalDistributedEntropy =
 	 * (dRedistributedUnitEntropy * (nBaseCount - numOfFeatureValuesInModel)); // //
-	 * // probability for model // q = 0; // if
+	 *// probability for model // q = 0; // if
 	 * (cveModelHistogram.get(featureValueKey) != null) { // double realProb =
 	 * cveModelHistogram.get(featureValueKey) / totalObservationsOnCveModel; //
 	 * double epsilon = dTotalDistributedEntropy * realProb; // q = realProb -

@@ -130,10 +130,10 @@ Some variables contain default values for if they're not specified, but it is ad
 Like stated previously, you can provide these variables when running the application with Docker via the `env.list` file.
 If you want to run it locally without Docker, you'll need to provide the environment variables through whatever tool or IDE you're using.
 
-- Setting up environment variables w/ **IntelliJ**: https://www.jetbrains.com/help/objc/add-environment-variables-and-program-arguments.html
+- Setting up environment variables w/**IntelliJ**: https://www.jetbrains.com/help/objc/add-environment-variables-and-program-arguments.html
 
 
-- Setting up environment variables w/ **VS Code**: https://code.visualstudio.com/remote/advancedcontainers/environment-variables
+- Setting up environment variables w/**VS Code**: https://code.visualstudio.com/remote/advancedcontainers/environment-variables
 
 **NOTE** If you're running the application with Docker, you will not need to worry about setting up the Env Vars via your IDE.
 IF there's any change in your Env Vars, you don't need to rebuild the image (unless there's changes in the code or properties files).

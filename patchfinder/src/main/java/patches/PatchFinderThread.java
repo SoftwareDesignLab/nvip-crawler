@@ -1,4 +1,4 @@
-/ **
+/**
 * Copyright 2021 Rochester Institute of Technology (RIT). Developed with
 * government support under contract 70RCSA22C00000008 awarded by the United
 * States Department of Homeland Security for Cybersecurity and Infrastructure Security Agency.
@@ -20,7 +20,7 @@
 * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 * SOFTWARE.
-* /
+*/
 
 package patches; /**
  * Copyright 2023 Rochester Institute of Technology (RIT). Developed with
@@ -363,7 +363,7 @@ public class PatchFinderThread implements Runnable {
 		return timeline;
 	}
 
-	/** // TODO: Is this accurate?
+	/**// TODO: Is this accurate?
 	 * Extracts the date of the patch commit
 	 * @param commitPage DOM to extract from
 	 * @return extracted time to patch
