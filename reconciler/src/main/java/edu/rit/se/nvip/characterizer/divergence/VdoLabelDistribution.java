@@ -163,11 +163,11 @@ public class VdoLabelDistribution {
 	/**
 	 * cross entropy between the <cveHistogram> and this cve model histogram
 	 * 
-	 *// int numOfFeatureValuesInModel = cveModelHistogram.size(); // double
+	 * int numOfFeatureValuesInModel = cveModelHistogram.size(); // double
 	 * modelEntropyForFeature = getEntropy(); // double dRedistributedUnitEntropy =
 	 * modelEntropyForFeature / nBaseCount; // double dTotalDistributedEntropy =
 	 * (dRedistributedUnitEntropy * (nBaseCount - numOfFeatureValuesInModel)); // //
-	 *// probability for model // q = 0; // if
+	 * probability for model // q = 0; // if
 	 * (cveModelHistogram.get(featureValueKey) != null) { // double realProb =
 	 * cveModelHistogram.get(featureValueKey) / totalObservationsOnCveModel; //
 	 * double epsilon = dTotalDistributedEntropy * realProb; // q = realProb -
