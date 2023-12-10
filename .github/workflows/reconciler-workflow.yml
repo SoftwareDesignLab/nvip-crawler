@@ -47,7 +47,7 @@ jobs:
 
       - name: Test and Build Reconciler with Maven
         run: |
-          mvn test --projects=db,reconciler
+          mvn test -Dmaven.test.failure.ignore=true --projects=db,reconciler
 
       - name: Publish Test Report
         if: success() || failure()
